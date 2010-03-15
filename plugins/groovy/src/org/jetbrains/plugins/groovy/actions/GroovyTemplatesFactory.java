@@ -40,13 +40,12 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
     }
   }
 
-  private static GroovyTemplatesFactory myInstance = null;
+  private static class GroovyTemplatesFactoryHolder {
+    private static final GroovyTemplatesFactory myInstance = new GroovyTemplatesFactory();
+  }
 
   public static GroovyTemplatesFactory getInstance() {
-    if (myInstance == null) {
-      myInstance = new GroovyTemplatesFactory();
-    }
-    return myInstance;
+    return GroovyTemplatesFactoryHolder.myInstance;
   }
 
   private final ArrayList<String> myCustomTemplates = new ArrayList<String>();

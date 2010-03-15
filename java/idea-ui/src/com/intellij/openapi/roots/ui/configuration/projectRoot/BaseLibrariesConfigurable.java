@@ -274,21 +274,21 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
           for (VirtualFile file : files) {
             if (mySaveAsCb.isSelected() && myPathTf.getText().trim().length() > 0) {
               final File copy = new File(new File(myPathTf.getText()), file.getName());
-              if (copy.mkdirs()) {
-                try {
-                  final File fromFile = VfsUtil.virtualToIoFile(file);
-                  if (fromFile.isFile()) {
-                    FileUtil.copy(fromFile, copy);
-                  } else {
-                    FileUtil.copyDir(fromFile, copy);
-                  }
-                  model.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(copy), type);
+              if (!copy.getParentFile().exists() && !copy.getParentFile().mkdirs()) continue;
+              try {
+                final File fromFile = VfsUtil.virtualToIoFile(file);
+                if (fromFile.isFile()) {
+                  FileUtil.copy(fromFile, copy);
+                } else {
+                  FileUtil.copyDir(fromFile, copy);
                 }
-                catch (IOException e1) {
-                  //skip
-                }
-                continue;
+                model.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(copy), type);
               }
+              catch (IOException e1) {
+                LOG.error(e1);
+              }
+
+              continue;
             }
 
             model.addRoot(file, type);

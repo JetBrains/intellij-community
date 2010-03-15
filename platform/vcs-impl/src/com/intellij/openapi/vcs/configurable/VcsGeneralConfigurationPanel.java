@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -60,8 +59,7 @@ public class VcsGeneralConfigurationPanel implements Configurable {
   private JPanel myAddConfirmationPanel;
   private JCheckBox myCbOfferToMoveChanges;
   private JComboBox myFailedCommitChangelistCombo;
-  private JLabel myRemoveConfirmationLabel;
-  private JLabel myAddConfirmationLabel;
+  private ButtonGroup myEmptyChangelistRemovingGroup;
 
   public VcsGeneralConfigurationPanel(final Project project) {
 
@@ -93,8 +91,6 @@ public class VcsGeneralConfigurationPanel implements Configurable {
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
 
-    myAddConfirmationLabel.setText(VcsBundle.message("add.confirmation.label.text", ApplicationNamesInfo.getInstance().getProductName()));
-    myRemoveConfirmationLabel.setText(VcsBundle.message("remove.confirmation.label.text", ApplicationNamesInfo.getInstance().getProductName()));
   }
 
   public void apply() throws ConfigurationException {
@@ -103,6 +99,7 @@ public class VcsGeneralConfigurationPanel implements Configurable {
 
     settings.FORCE_NON_EMPTY_COMMENT = myForceNonEmptyComment.isSelected();
     settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = myCbOfferToMoveChanges.isSelected();
+    settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS = getSelected(myEmptyChangelistRemovingGroup);
     settings.MOVE_TO_FAILED_COMMIT_CHANGELIST = getFailedCommitConfirm();
 
     for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
@@ -141,6 +138,15 @@ public class VcsGeneralConfigurationPanel implements Configurable {
     return VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
   }
 
+  private static VcsShowConfirmationOption.Value getSelected(ButtonGroup group) {
+    switch (UIUtil.getSelectedButton(group)) {
+      case 0:
+        return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+      case 1:
+        return VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
+    }
+    return VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
+  }
 
   private ReadonlyStatusHandlerImpl getReadOnlyStatusHandler() {
     return ((ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject));
@@ -153,6 +159,9 @@ public class VcsGeneralConfigurationPanel implements Configurable {
       return true;
     }
     if (settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT != myCbOfferToMoveChanges.isSelected()){
+      return true;
+    }
+    if (settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS != getSelected(myEmptyChangelistRemovingGroup)){
       return true;
     }
 
@@ -178,6 +187,8 @@ public class VcsGeneralConfigurationPanel implements Configurable {
     VcsConfiguration settings = VcsConfiguration.getInstance(myProject);
     myForceNonEmptyComment.setSelected(settings.FORCE_NON_EMPTY_COMMENT);
     myCbOfferToMoveChanges.setSelected(settings.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT);
+    int id = settings.REMOVE_EMPTY_INACTIVE_CHANGELISTS.getId();
+    UIUtil.setSelectedButton(myEmptyChangelistRemovingGroup, id == 0 ? 0 : id == 1 ? 2 : 1);
     myShowReadOnlyStatusDialog.setSelected(getReadOnlyStatusHandler().getState().SHOW_DIALOG);
     if (settings.MOVE_TO_FAILED_COMMIT_CHANGELIST == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       myFailedCommitChangelistCombo.setSelectedIndex(0);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.diff.impl.patch.apply;
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 17:53:24
- */
-package com.intellij.openapi.diff.impl.patch;
-
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,77 +26,39 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public abstract class FilePatch {
-  private String myBeforeName;
-  private String myAfterName;
-  private String myBeforeVersionId;
-  private String myAfterVersionId;
+public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFilePatch {
+  protected final T myPatch;
 
-  public String getBeforeName() {
-    return myBeforeName;
+  public ApplyFilePatchBase(T patch) {
+    myPatch = patch;
   }
 
-  public String getAfterName() {
-    return myAfterName;
+  public T getPatch() {
+    return myPatch;
   }
 
-  public String getBeforeFileName() {
-    String[] pathNameComponents = myBeforeName.split("/");
-    return pathNameComponents [pathNameComponents.length-1];
-  }
-
-  public String getAfterFileName() {
-    String[] pathNameComponents = myAfterName.split("/");
-    return pathNameComponents [pathNameComponents.length-1];
-  }
-
-  public void setBeforeName(final String fileName) {
-    myBeforeName = fileName;  
-  }
-
-  public void setAfterName(final String fileName) {
-    myAfterName = fileName;
-  }
-
-  public String getBeforeVersionId() {
-    return myBeforeVersionId;
-  }
-
-  public void setBeforeVersionId(final String beforeVersionId) {
-    myBeforeVersionId = beforeVersionId;
-  }
-
-  public String getAfterVersionId() {
-    return myAfterVersionId;
-  }
-
-  public void setAfterVersionId(final String afterVersionId) {
-    myAfterVersionId = afterVersionId;
-  }
-
-  public String getAfterNameRelative(int skipDirs) {
-    String[] components = myAfterName.split("/");
-    return StringUtil.join(components, skipDirs, components.length, "/");
-  }
-
-  public FilePath getTarget(final VirtualFile file) {
-    if (isNewFile()) {
-      return new FilePathImpl(file, getBeforeFileName(), false);
+  private FilePath getTarget(final VirtualFile file) {
+    if (myPatch.isNewFile()) {
+      return new FilePathImpl(file, myPatch.getBeforeFileName(), false);
     }
     return new FilePathImpl(file);
   }
 
-  public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context, final Project project) throws IOException, ApplyPatchException {
+  public ApplyPatchStatus apply(final VirtualFile fileToPatch, final ApplyPatchContext context, final Project project) throws
+                                                                                                                       IOException, ApplyPatchException {
     context.addAffectedFile(getTarget(fileToPatch));
     return applyImpl(fileToPatch, project);
   }
 
   public ApplyPatchStatus applyImpl(final VirtualFile fileToPatch, final Project project) throws IOException, ApplyPatchException {
-    if (isNewFile()) {
+    if (myPatch.isNewFile()) {
       applyCreate(fileToPatch);
     }
-    else if (isDeletedFile()) {
+    else if (myPatch.isDeletedFile()) {
       FileEditorManagerImpl.getInstance(project).closeFile(fileToPatch);
       fileToPatch.delete(this);
     }
@@ -113,11 +69,12 @@ public abstract class FilePatch {
   }
 
   protected abstract void applyCreate(VirtualFile newFile) throws IOException, ApplyPatchException;
+  @Nullable
   protected abstract ApplyPatchStatus applyChange(VirtualFile fileToPatch) throws IOException, ApplyPatchException;
 
   @Nullable
   public VirtualFile findFileToPatch(@NotNull ApplyPatchContext context) throws IOException {
-    return findPatchTarget(context, myBeforeName, myAfterName, isNewFile());
+    return findPatchTarget(context, myPatch.getBeforeName(), myPatch.getAfterName(), myPatch.isNewFile());
   }
 
   @Nullable
@@ -217,7 +174,25 @@ public abstract class FilePatch {
     return patchedDir;
   }
 
-  public abstract boolean isNewFile();
-
-  public abstract boolean isDeletedFile();
+  @Nullable
+  public static ApplyPatchStatus applyModifications(final TextFilePatch patch, final CharSequence text, final StringBuilder newText) throws
+                                                                                                                                     ApplyPatchException {
+    final List<PatchHunk> hunks = patch.getHunks();
+    if (hunks.isEmpty()) {
+      return ApplyPatchStatus.SUCCESS;
+    }
+    List<String> lines = new ArrayList<String>();
+    Collections.addAll(lines, LineTokenizer.tokenize(text, false));
+    ApplyPatchStatus result = null;
+    for(PatchHunk hunk: hunks) {
+      result = ApplyPatchStatus.and(result, new ApplyPatchHunk(hunk).apply(lines));
+    }
+    for(int i=0; i<lines.size(); i++) {
+      newText.append(lines.get(i));
+      if (i < lines.size()-1 || !hunks.get(hunks.size()-1).isNoNewLineAtEnd()) {
+        newText.append("\n");
+      }
+    }
+    return result;
+  }
 }

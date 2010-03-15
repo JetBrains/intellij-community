@@ -25,11 +25,16 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -111,7 +116,23 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     private static void selectWithGuide(Editor editor, IndentGuideDescriptor guide) {
       final Document doc = editor.getDocument();
       int startOffset = editor.logicalPositionToOffset(new LogicalPosition(guide.startLine, 0));
-      int endOffset = Math.min(editor.logicalPositionToOffset(new LogicalPosition(guide.endLine + 1, 0)), doc.getTextLength());
+      int endOffset = Math.min(doc.getLineStartOffset(guide.endLine), doc.getTextLength());
+
+      final VirtualFile file = ((EditorEx)editor).getVirtualFile();
+      if (file != null) {
+        // Make sure selection contains closing matching brace.
+
+        final CharSequence chars = doc.getCharsSequence();
+        int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t\n");
+        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(nonWhitespaceOffset);
+        if (BraceMatchingUtil.isRBraceToken(iterator, chars, file.getFileType())) {
+          if (((EditorEx)editor).calcColumnNumber(iterator.getStart(), doc.getLineNumber(iterator.getStart())) == guide.indentLevel) {
+            endOffset = iterator.getEnd();
+            endOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t");
+            if (endOffset < chars.length() && chars.charAt(endOffset) == '\n') endOffset++;
+          }
+        }
+      }
 
       editor.getSelectionModel().setSelection(startOffset, endOffset);
     }

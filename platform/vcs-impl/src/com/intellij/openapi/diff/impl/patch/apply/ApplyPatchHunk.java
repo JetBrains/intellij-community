@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,57 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.diff.impl.patch.apply;
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 20:20:15
- */
-package com.intellij.openapi.diff.impl.patch;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
+import com.intellij.openapi.diff.impl.patch.PatchHunk;
+import com.intellij.openapi.diff.impl.patch.PatchLine;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class PatchHunk {
-  private final int myStartLineBefore;
-  private final int myEndLineBefore;
-  private final int myStartLineAfter;
-  private final int myEndLineAfter;
-  private final List<PatchLine> myLines = new ArrayList<PatchLine>();
+public class ApplyPatchHunk {
+  private final PatchHunk myHunk;
 
-  public PatchHunk(final int startLineBefore, final int endLineBefore, final int startLineAfter, final int endLineAfter) {
-    myStartLineBefore = startLineBefore;
-    myEndLineBefore = endLineBefore;
-    myStartLineAfter = startLineAfter;
-    myEndLineAfter = endLineAfter;
+  public ApplyPatchHunk(final PatchHunk hunk) {
+    myHunk = hunk;
   }
-
-  public int getStartLineBefore() {
-    return myStartLineBefore;
-  }
-
-  public int getEndLineBefore() {
-    return myEndLineBefore;
-  }
-
-  public int getStartLineAfter() {
-    return myStartLineAfter;
-  }
-
-  public int getEndLineAfter() {
-    return myEndLineAfter;
-  }
-
-  public void addLine(final PatchLine line) {
-    myLines.add(line);
-  }
-
-  public List<PatchLine> getLines() {
-    return Collections.unmodifiableList(myLines);
-  }
-
+  
   public ApplyPatchStatus apply(final List<String> lines) throws ApplyPatchException {
     List<String> originalLines = new ArrayList<String>(lines);
     try {
@@ -77,9 +43,10 @@ public class PatchHunk {
   }
 
   private ApplyPatchStatus tryApply(final List<String> lines, boolean acceptPartial) throws ApplyPatchException {
+    final List<PatchLine> hunkLines = myHunk.getLines();
     ApplyPatchStatus result = null;
-    int curLine = findStartLine(lines);
-    for(PatchLine line: myLines) {
+    int curLine = findStartLine(hunkLines, lines);
+    for(PatchLine line: hunkLines) {
       final String patchLineText = line.getText();
       switch (line.getType()) {
         case CONTEXT:
@@ -130,15 +97,16 @@ public class PatchHunk {
     }
   }
 
-  private int findStartLine(final List<String> lines) throws ApplyPatchException {
-    int totalContextLines = countContextLines();
-    if (getLinesProcessingContext(lines, myStartLineBefore) == totalContextLines) {
-      return myStartLineBefore;
+  private int findStartLine(final List<PatchLine> hunkLines, final List<String> lines) throws ApplyPatchException {
+    int totalContextLines = countContextLines(hunkLines);
+    final int startLineBefore = myHunk.getStartLineBefore();
+    if (getLinesProcessingContext(hunkLines, lines, startLineBefore) == totalContextLines) {
+      return startLineBefore;
     }
     int maxContextStartLine = -1;
     int maxContextLines = 0;
     for(int i=0;i< lines.size(); i++) {
-      int contextLines = getLinesProcessingContext(lines, i);
+      int contextLines = getLinesProcessingContext(hunkLines, lines, i);
       if (contextLines == totalContextLines) {
         return i;
       }
@@ -153,9 +121,9 @@ public class PatchHunk {
     return maxContextStartLine;
   }
 
-  private int countContextLines() {
+  private int countContextLines(final List<PatchLine> hunkLines) {
     int count = 0;
-    for(PatchLine line: myLines) {
+    for(PatchLine line: hunkLines) {
       if (line.getType() == PatchLine.Type.CONTEXT || line.getType() == PatchLine.Type.REMOVE) {
         count++;
       }
@@ -163,9 +131,9 @@ public class PatchHunk {
     return count;
   }
 
-  private int getLinesProcessingContext(final List<String> lines, int startLine) {
+  private int getLinesProcessingContext(final List<PatchLine> hunkLines, final List<String> lines, int startLine) {
     int count = 0;
-    for(PatchLine line: myLines) {
+    for(PatchLine line: hunkLines) {
       PatchLine.Type type = line.getType();
       if (type == PatchLine.Type.REMOVE || type == PatchLine.Type.CONTEXT) {
         // TODO: smarter algorithm (search outward from non-context lines)
@@ -177,28 +145,5 @@ public class PatchHunk {
       }
     }
     return count;
-  }
-
-  public boolean isNewContent() {
-    return myStartLineBefore == -1 && myEndLineBefore == -1;
-  }
-
-  public boolean isDeletedContent() {
-    return myStartLineAfter == -1 && myEndLineAfter == -1;
-  }
-
-  public String getText() {
-    StringBuilder builder = new StringBuilder();
-    for(PatchLine line: myLines) {
-      builder.append(line.getText()).append("\n");
-    }
-    return builder.toString();
-  }
-
-  public boolean isNoNewLineAtEnd() {
-    if (myLines.size() == 0) {
-      return false;
-    }
-    return myLines.get(myLines.size()-1).isSuppressNewLine();
   }
 }

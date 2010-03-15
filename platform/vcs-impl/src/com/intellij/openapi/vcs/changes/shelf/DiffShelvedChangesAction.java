@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.MergedDiffRequestPresentable;
@@ -51,7 +53,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   }
 
   public static void showShelvedChangesDiff(final DataContext dc) {
-    Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = PlatformDataKeys.PROJECT.getData(dc);
     ShelvedChangeList[] changeLists = ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY.getData(dc);
     if (changeLists == null) {
       changeLists = ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY.getData(dc);
@@ -68,7 +70,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
     int toSelectIdx = 0;
     final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>();
-    ApplyPatchContext context = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
+    final ApplyPatchContext context = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     final PatchesPreloader preloader = new PatchesPreloader();
 
     final List<String> missing = new LinkedList<String>();
@@ -76,7 +78,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       final Change change = shelvedChange.getChange(project);
       final String beforePath = shelvedChange.getBeforePath();
       try {
-        VirtualFile f = FilePatch.findPatchTarget(context, beforePath, shelvedChange.getAfterPath(), beforePath == null);
+        final VirtualFile f = ApplyTextFilePatch.findPatchTarget(context, beforePath, shelvedChange.getAfterPath(), beforePath == null);
         if ((f == null) || (! f.exists())) {
           if (beforePath != null) {
             missing.add(beforePath);
@@ -84,22 +86,27 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           continue;
         }
 
-        if (isConflictingChange(change)) {
-          TextFilePatch patch = preloader.getPatch(shelvedChange);
-          if (patch == null) continue;
+        diffRequestPresentables.add(new DiffRequestPresentableProxy() {
+          @Override
+          protected DiffRequestPresentable init() {
+            if (isConflictingChange(change)) {
+              TextFilePatch patch = preloader.getPatch(shelvedChange);
+              if (patch == null) return null;
 
-          final FilePath pathBeforeRename = context.getPathBeforeRename(f);
+              final FilePath pathBeforeRename = context.getPathBeforeRename(f);
 
-          final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, f, pathBeforeRename, patch);
-          if ((threeTexts == null) || (threeTexts.getStatus() == null) || (ApplyPatchStatus.FAILURE.equals(threeTexts.getStatus()))) {
-            continue;
+              final ApplyPatchForBaseRevisionTexts threeTexts = ApplyPatchForBaseRevisionTexts.create(project, f, pathBeforeRename, patch);
+              if ((threeTexts == null) || (threeTexts.getStatus() == null) || (ApplyPatchStatus.FAILURE.equals(threeTexts.getStatus()))) {
+                return null;
+              }
+
+              return new MergedDiffRequestPresentable(project, threeTexts, f, "Shelved Version");
+            }
+            else {
+              return new ChangeDiffRequestPresentable(project, change);
+            }
           }
-
-          diffRequestPresentables.add(new MergedDiffRequestPresentable(project, threeTexts, f, "Shelved Version"));
-        }
-        else {
-          diffRequestPresentables.add(new ChangeDiffRequestPresentable(project, change));
-        }
+        });
       }
       catch (IOException e) {
         continue;
@@ -114,7 +121,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       ChangesViewBalloonProblemNotifier.showMe(project, "Show Diff: Cannot find base for: " + StringUtil.join(missing, ",\n"), MessageType.WARNING);
     }
 
-    ShowDiffAction.showDiffImpl(project, diffRequestPresentables, toSelectIdx, ShowDiffAction.DiffExtendUIFactory.NONE, true);
+    ShowDiffAction.showDiffImpl(project, diffRequestPresentables, toSelectIdx, ShowDiffAction.DiffExtendUIFactory.NONE, false);
   }
 
   private static class PatchesPreloader {

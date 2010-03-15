@@ -32,6 +32,8 @@ import java.util.Set;
 
 public class MavenGotoSettingsFileContibutor implements ChooseByNameContributor, DumbAware {
   public String[] getNames(Project project, boolean includeNonProjectItems) {
+    if (!includeNonProjectItems) return ArrayUtil.EMPTY_STRING_ARRAY;
+
     Set<String> result = new THashSet<String>();
     for (VirtualFile each : getSettingsFiles(project)) {
       result.add(each.getName());
@@ -40,6 +42,8 @@ public class MavenGotoSettingsFileContibutor implements ChooseByNameContributor,
   }
 
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
+    if (!includeNonProjectItems) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
+
     List<NavigationItem> result = new ArrayList<NavigationItem>();
     for (VirtualFile each : getSettingsFiles(project)) {
       if (each.getName().equals(name)) {

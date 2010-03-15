@@ -25,7 +25,6 @@ import org.junit.runner.manipulation.Filter;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.InitializationError;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -114,18 +113,24 @@ public class JUnit4TestRunnerUtil {
       else {
         int index = suiteClassName.indexOf(',');
         if (index != -1) {
-          final Class clazz = loadTestClass(suiteClassName.substring(0, index));
-          final Request classRequest = new ClassRequest(clazz){
-            public Runner getRunner() {
-              try {
-                return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
+          try {
+            Class.forName("org.junit.runners.model.InitializationError");
+            final Class clazz = loadTestClass(suiteClassName.substring(0, index));
+            final Request classRequest = new ClassRequest(clazz) {
+              public Runner getRunner() {
+                try {
+                  return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
+                }
+                catch (Exception ignored) {
+                }
+                return super.getRunner();
               }
-              catch (InitializationError ignored) {
-              }
-              return super.getRunner();
-            }
-          };
-          return classRequest.filterWith(Description.createTestDescription(clazz, suiteClassName.substring(index + 1)));
+            };
+            return classRequest.filterWith(Description.createTestDescription(clazz, suiteClassName.substring(index + 1)));
+          }
+          catch (ClassNotFoundException e) {
+            return Request.method(loadTestClass(suiteClassName.substring(0, index)), suiteClassName.substring(index + 1));
+          }
         }
         appendTestClass(result, suiteClassName);
       }
@@ -174,7 +179,7 @@ public class JUnit4TestRunnerUtil {
 
 
   private static class IgnoreIgnoredTestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
-    public IgnoreIgnoredTestJUnit4ClassRunner(Class clazz) throws InitializationError {
+    public IgnoreIgnoredTestJUnit4ClassRunner(Class clazz) throws Exception {
       super(clazz);
     }
 

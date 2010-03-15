@@ -40,7 +40,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
       myParameters[i] = new GrClosureParameterImpl(parameters[i], substitutor);
     }
     if (length > 0) {
-      myIsVarargs = parameters[length - 1].isVarArgs() || myParameters[length - 1].getType() instanceof PsiArrayType;
+      myIsVarargs = /*parameters[length - 1].isVarArgs() ||*/ myParameters[length - 1].getType() instanceof PsiArrayType;
     }
     else {
       myIsVarargs = false;

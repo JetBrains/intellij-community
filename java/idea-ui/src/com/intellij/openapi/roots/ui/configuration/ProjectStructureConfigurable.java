@@ -383,7 +383,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public ActionCallback select(@NotNull LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
     final Library lib = libraryOrderEntry.getLibrary();
-    if (lib != null && lib.getTable() == null) {
+    if (lib == null || lib.getTable() == null) {
       Place place = new Place().putPath(CATEGORY, myModulesConfig);
       place.putPath(BaseStructureConfigurable.TREE_OBJECT, libraryOrderEntry.getOwnerModule());
       return navigateTo(place, requestFocus);

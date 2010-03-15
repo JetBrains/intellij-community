@@ -84,6 +84,9 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     final CompileContext context = builderContext.getCompileContext();
 
     final Set<Artifact> artifactsToBuild = ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("artifacts to build: " + artifactsToBuild);
+    }
     List<Artifact> additionalArtifacts = new ArrayList<Artifact>();
     for (BuildParticipantProvider provider : BuildParticipantProvider.EXTENSION_POINT_NAME.getExtensions()) {
       for (Module module : ModuleManager.getInstance(project).getModules()) {
@@ -92,6 +95,9 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
           ContainerUtil.addIfNotNull(participant.createArtifact(context), additionalArtifacts);
         }
       }
+    }
+    if (LOG.isDebugEnabled() && !additionalArtifacts.isEmpty()) {
+      LOG.debug("additional artifacts to build: " + additionalArtifacts);
     }
     artifactsToBuild.addAll(additionalArtifacts);
 
@@ -120,7 +126,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
         ArtifactPackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
 
         if (LOG.isDebugEnabled()) {
-          int num = Math.min(100, allProcessingItems.length);
+          int num = Math.min(5000, allProcessingItems.length);
           LOG.debug("All files (" + num + " of " + allProcessingItems.length + "):");
           for (int i = 0; i < num; i++) {
             LOG.debug(allProcessingItems[i].getFile().getPath());
@@ -203,7 +209,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
 
     if (LOG.isDebugEnabled()) {
-      int num = Math.min(100, items.length);
+      int num = Math.min(200, items.length);
       LOG.debug("Files to process (" + num + " of " + items.length + "):");
       for (int i = 0; i < num; i++) {
         LOG.debug(items[i].getFile().getPath());

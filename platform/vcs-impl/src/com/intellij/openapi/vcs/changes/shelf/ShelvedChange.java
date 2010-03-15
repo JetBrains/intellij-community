@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -203,7 +204,7 @@ public class ShelvedChange {
         return null;
       }
       StringBuilder newText = new StringBuilder();
-      patch.applyModifications(getBaseContent(), newText);
+      ApplyFilePatchBase.applyModifications(patch, getBaseContent(), newText);
       return newText.toString();
     }
 

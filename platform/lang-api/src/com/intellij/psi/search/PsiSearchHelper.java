@@ -179,4 +179,10 @@ public interface PsiSearchHelper {
                                   @NotNull String text,
                                   short searchContext,
                                   boolean caseSensitive);
+
+  SearchCostResult isCheapEnoughToSearch(@NotNull String name, @NotNull GlobalSearchScope scope, @Nullable PsiFile fileToIgnoreOccurencesIn);
+
+  enum SearchCostResult {
+    ZERO_OCCURRENCES, FEW_OCCURRENCES, TOO_MANY_OCCURRENCES
+  }
 }
