@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
@@ -73,11 +74,11 @@ public class VcsConfirmationDialog extends OptionsDialog {
   @Override
   protected Action[] createActions() {
     return new Action[] {
-      new AbstractAction("Yes") {
+      new AbstractAction(CommonBundle.getYesButtonText()) {
         public void actionPerformed(ActionEvent e) {
           doOKAction();
         }
-    }, new AbstractAction("No") {
+    }, new AbstractAction(CommonBundle.getNoButtonText()) {
         public void actionPerformed(ActionEvent e) {
           doCancelAction();
         }
