@@ -19,8 +19,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.IndentGuideDescriptor;
+import com.intellij.openapi.editor.IndentsModel;
+import com.intellij.openapi.editor.LogicalPosition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +38,12 @@ public class IndentsModelImpl implements IndentsModel {
     final LogicalPosition pos = myEditor.getCaretModel().getLogicalPosition();
     final int column = pos.column;
     final int line = pos.line;
-    for (IndentGuideDescriptor indent : myIndents) {
-      if (column == indent.indentLevel && line >= indent.startLine && line < indent.endLine) {
-        return indent;
+
+    if (column > 0) {
+      for (IndentGuideDescriptor indent : myIndents) {
+        if (column == indent.indentLevel && line >= indent.startLine && line < indent.endLine) {
+          return indent;
+        }
       }
     }
     return null;
