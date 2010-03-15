@@ -216,4 +216,9 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
+
+  public void testClassIsNotMemberOfItself() throws Exception {
+    PsiElement targetElement = resolve();
+    assertNull(targetElement);
+  }
 }

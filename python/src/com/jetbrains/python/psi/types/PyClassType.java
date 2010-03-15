@@ -65,7 +65,7 @@ public class PyClassType implements PyType {
     myClass.processDeclarations(processor, ResolveState.initial(), null, myClass); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
     //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
-    if (resolveResult != null) {
+    if (resolveResult != null && resolveResult != myClass) {
       return resolveResult;
     }
     /*
