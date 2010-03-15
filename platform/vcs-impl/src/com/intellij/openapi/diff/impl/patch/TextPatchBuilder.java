@@ -44,11 +44,11 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PatchBuilder {
+public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
 
-  private PatchBuilder() {
+  private TextPatchBuilder() {
   }
 
   private static void checkCanceled(final ProgressIndicator ind) {
@@ -57,8 +57,7 @@ public class PatchBuilder {
     }
   }
 
-  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean allowRename,
-                                           final boolean reversePatch) throws VcsException {
+  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
     final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
     
     List<FilePatch> result = new ArrayList<FilePatch>();

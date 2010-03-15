@@ -30,9 +30,9 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.options.StreamProvider;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -170,7 +170,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       if (ind != null && ind.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      final List<FilePatch> patches = PatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), true, false);
+      final List<FilePatch> patches = TextPatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), false);
       if (ind != null && ind.isCanceled()) {
         throw new ProcessCanceledException();
       }
