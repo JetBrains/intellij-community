@@ -26,6 +26,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
 
 /**
  * @author max
@@ -263,7 +263,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       @NonNls final String template = description.getDescriptionTemplate();
       int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
       final String text = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement().getText() : "";
-      @NonNls String problemText = template.replaceAll("#ref", Matcher.quoteReplacement(text)).replaceAll(" #loc ", " ");
+      @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", StringUtil.quoteReplacement(text)), " #loc ", " ");
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));

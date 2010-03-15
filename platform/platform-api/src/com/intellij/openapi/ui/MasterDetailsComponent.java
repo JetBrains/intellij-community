@@ -777,6 +777,10 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
     public boolean isDisplayInBold() {
       return myDisplayInBold;
     }
+
+    public void setDisplayInBold(boolean displayInBold) {
+      myDisplayInBold = displayInBold;
+    }
   }
 
   @SuppressWarnings({"ConstantConditions"})

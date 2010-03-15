@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,36 +32,36 @@ import java.util.List;
  * @since 9.0
  */
 public class FileSaverDescriptor extends FileChooserDescriptor implements Cloneable {
-  private final List<String> extentions;
+  private final List<String> extensions;
 
   /**
    * Constructs save dialog properties
    *
    * @param title save dialog text title (not window title)
    * @param description description
-   * @param extentions accepted file extentions: "txt", "jpg", etc. Accept all if empty
+   * @param extensions accepted file extensions: "txt", "jpg", etc. Accepts all if empty
    */
-  public FileSaverDescriptor(@NotNull String title, @NotNull String description, String... extentions) {
+  public FileSaverDescriptor(@NotNull String title, @NotNull String description, String... extensions) {
     super(true, true, true, true, false, false);
     setTitle(title);
     setDescription(description);
-    this.extentions = Arrays.asList(extentions);
+    this.extensions = Arrays.asList(extensions);
   }
 
   @Override
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-    return extentions.isEmpty() || file.isDirectory() ?
+    return extensions.isEmpty() || file.isDirectory() ?
            super.isFileVisible(file, showHiddenFiles)
            :
-           extentions.contains(file.getExtension());
+           extensions.contains(file.getExtension());
   }
 
   /**
-   * Returns accepted file extentions
+   * Returns accepted file extensions
    *
-   * @return accepted file extentions
+   * @return accepted file extensions
    */
-  public String[] getFileExtentions() {
-    return ArrayUtil.toStringArray(extentions);
+  public String[] getFileExtensions() {
+    return ArrayUtil.toStringArray(extensions);
   }
 }

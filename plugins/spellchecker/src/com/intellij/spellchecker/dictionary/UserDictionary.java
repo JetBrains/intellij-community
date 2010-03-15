@@ -16,19 +16,16 @@
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.spellchecker.trie.Action;
-import com.intellij.spellchecker.trie.CharSequenceKeyAnalyzer;
-import com.intellij.spellchecker.trie.PatriciaTrie;
-import com.intellij.spellchecker.trie.Trie;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 public class UserDictionary implements Dictionary {
 
   private String name;
-  private Trie<String, String> trie = new PatriciaTrie<String, String>(new CharSequenceKeyAnalyzer());
+  private THashSet<String> dictionary = new THashSet<String>();
 
   public UserDictionary(String name) {
     this.name = name;
@@ -39,17 +36,17 @@ public class UserDictionary implements Dictionary {
   }
 
   public boolean contains(String word) {
-    return word != null && trie.containsKey(word);
+    return word != null && dictionary.contains(word);
   }
 
   @Nullable
   public Set<String> getWords() {
-    return trie.keySet();
+    return dictionary;
   }
 
   @Nullable
   public Set<String> getEditableWords() {
-    return trie.keySet();
+    return dictionary;
   }
 
   @Nullable
@@ -58,7 +55,7 @@ public class UserDictionary implements Dictionary {
   }
 
   public void clear() {
-    trie.clear();
+    dictionary.clear();
   }
 
 
@@ -66,14 +63,14 @@ public class UserDictionary implements Dictionary {
     if (word == null) {
       return;
     }
-    trie.put(word, word);
+    dictionary.add(word);
   }
 
   public void removeFromDictionary(String word) {
     if (word == null) {
       return;
     }
-    trie.remove(word);
+    dictionary.remove(word);
   }
 
   public void replaceAll(@Nullable Collection<String> words) {
@@ -91,7 +88,7 @@ public class UserDictionary implements Dictionary {
   }
 
   public boolean isEmpty() {
-    return (trie == null || trie.size() == 0);
+    return (dictionary == null || dictionary.size() == 0);
   }
 
   @Override
@@ -106,12 +103,12 @@ public class UserDictionary implements Dictionary {
   }
 
   public void traverse(final Action action){
-    trie.traverse(new PatriciaTrie.Cursor<String, String>() {
-          public SelectStatus select(Map.Entry<? extends String, ? extends String> entry) {
-            action.run(entry);
-            return SelectStatus.CONTINUE;
-          }
-        });
+    if (dictionary==null){
+      return;
+    }
+    for (String s : dictionary) {
+      action.run(s);
+    }
   }
 
   @Override
@@ -121,6 +118,6 @@ public class UserDictionary implements Dictionary {
 
   @Override
   public String toString() {
-    return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + trie.size() + '}';
+    return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + dictionary.size() + '}';
   }
 }
