@@ -644,11 +644,11 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
-                     "<name>${<caret>env.TEMP}</name>");
+                     "<name>${<caret>env." + getEnvVar() + "}</name>");
 
     assertResolved(myProjectPom, MavenDomUtil.findProperty(myProject,
                                                            MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                                           "TEMP"));
+                                                           getEnvVar()));
   }
 
   public void testHighlightUnresolvedProperties() throws Exception {
@@ -751,7 +751,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertContain(variants, "basedir", "project.basedir", "pom.basedir");
     assertContain(variants, "settingsXmlProp");
     assertContain(variants, "settings.localRepository");
-    assertContain(variants, "user.home", "env.TEMP");
+    assertContain(variants, "user.home", "env." + getEnvVar());
   }
 
   public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {

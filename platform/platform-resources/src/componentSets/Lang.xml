@@ -152,6 +152,10 @@
       <skipForDefaultProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.IndentsPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.InjectedCodeFoldingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>

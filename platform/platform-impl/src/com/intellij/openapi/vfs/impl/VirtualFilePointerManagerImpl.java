@@ -27,6 +27,7 @@ import com.intellij.openapi.util.objectTree.ObjectNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.*;
@@ -187,6 +188,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     else {
       protocol = null;
       fileSystem = file.getFileSystem();
+    }
+    if (fileSystem == TempFileSystem.getInstance()) {
+      // for tests, recreate always since
+      VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
+      return new IdentityVirtualFilePointer(found, url);
     }
     if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
       // we are unable to track alien file systems for now

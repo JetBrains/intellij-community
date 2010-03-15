@@ -446,7 +446,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   List<VirtualFile> getUnversionedFiles() {
-    return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles());
+    return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+  }
+
+  Pair<Integer, Integer> getUnversionedFilesSize() {
+    final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
+    return new Pair<Integer, Integer>(holder.getSize(), holder.getNumDirs());
   }
 
   List<VirtualFile> getModifiedWithoutEditing() {

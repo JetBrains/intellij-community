@@ -68,6 +68,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
@@ -237,6 +238,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public ConsoleViewImpl(final Project project, boolean viewer, FileType fileType) {
+    this(project, GlobalSearchScope.allScope(project), viewer, fileType);
+  }
+
+
+  public ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType) {
     super(new BorderLayout());
     isViewer = viewer;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
@@ -245,8 +251,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     myCustomFilter = new CompositeFilter(project);
     myPredefinedMessageFilter = new CompositeFilter(project);
-    for (ConsoleFilterProvider filterProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-      for (Filter filter : filterProvider.getDefaultFilters(project)) {
+    for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
+      Filter[] filters = eachProvider instanceof ConsoleFilterProviderEx
+                         ? ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope)
+                         : eachProvider.getDefaultFilters(project);
+      for (Filter filter : filters) {
         myPredefinedMessageFilter.addFilter(filter);
       }
     }

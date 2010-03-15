@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultScopesProvider implements CustomScopesProvider {
-  private static NamedScope myAllScope;
   private NamedScope myProblemsScope;
   private final Project myProject;
 
@@ -55,27 +54,28 @@ public class DefaultScopesProvider implements CustomScopesProvider {
     return list;
   }
 
+  private static class NamedScopeHolder {
+    private static final NamedScope myAllScope = new NamedScope("All", new PackageSet() {
+      public boolean contains(final PsiFile file, final NamedScopesHolder holder) {
+        return true;
+      }
+
+      public PackageSet createCopy() {
+        return this;
+      }
+
+      public String getText() {
+        return FilePatternPackageSet.SCOPE_FILE + ":*//*";
+      }
+
+      public int getNodePriority() {
+        return 0;
+      }
+    });
+  }
+
   public static NamedScope getAllScope() {
-    if (myAllScope == null) {
-      myAllScope = new NamedScope("All", new PackageSet() {
-        public boolean contains(final PsiFile file, final NamedScopesHolder holder) {
-          return true;
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return FilePatternPackageSet.SCOPE_FILE + ":*//*";
-        }
-
-        public int getNodePriority() {
-          return 0;
-        }
-      });
-    }
-    return myAllScope;
+    return NamedScopeHolder.myAllScope;
   }
 
    public NamedScope getProblemsScope() {

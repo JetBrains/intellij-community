@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vcs.changes.actions.ChangeDiffRequestPresentable;
 import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentable;
+import com.intellij.openapi.vcs.changes.actions.DiffRequestPresentableProxy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -220,19 +221,24 @@ public class FilePatchInProgress implements Strippable {
 
     @Nullable
     public DiffRequestPresentable createDiffRequestPresentable(final Project project) {
-      if (myPatchInProgress.isConflictingChange()) {
-        final ApplyPatchForBaseRevisionTexts texts = ApplyPatchForBaseRevisionTexts
-          .create(project, myPatchInProgress.getCurrentBase(), new FilePathImpl(myPatchInProgress.getCurrentBase()),
-                  myPatchInProgress.getPatch());
-        if ((texts != null) &&
-            (ApplyPatchStatus.SUCCESS.equals(texts.getStatus()) || ApplyPatchStatus.ALREADY_APPLIED.equals(texts.getStatus()))) {
-          return new MergedDiffRequestPresentable(project, texts,
-                  myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
+      return new DiffRequestPresentableProxy() {
+        @Override
+        protected DiffRequestPresentable init() {
+          if (myPatchInProgress.isConflictingChange()) {
+            final ApplyPatchForBaseRevisionTexts texts = ApplyPatchForBaseRevisionTexts
+              .create(project, myPatchInProgress.getCurrentBase(), new FilePathImpl(myPatchInProgress.getCurrentBase()),
+                      myPatchInProgress.getPatch());
+            if ((texts != null) &&
+                (ApplyPatchStatus.SUCCESS.equals(texts.getStatus()) || ApplyPatchStatus.ALREADY_APPLIED.equals(texts.getStatus()))) {
+              return new MergedDiffRequestPresentable(project, texts,
+                      myPatchInProgress.getCurrentBase(), myPatchInProgress.getPatch().getAfterVersionId());
+            }
+            return null;
+          } else {
+            return new ChangeDiffRequestPresentable(project, PatchChange.this);
+          }
         }
-        return null;
-      } else {
-        return new ChangeDiffRequestPresentable(project, this);
-      }
+      };
     }
   }
 

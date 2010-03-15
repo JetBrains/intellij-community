@@ -23,7 +23,7 @@ import java.util.*;
 
 public class DFAEngine<E> {
   private static final Logger LOG = Logger.getInstance(DFAEngine.class.getName());
-  private static final double TIME_LIMIT = 5*10e9;
+  private static final double TIME_LIMIT = 3*10e9;
 
   private final Instruction[] myFlow;
 
@@ -86,6 +86,9 @@ public class DFAEngine<E> {
         worklist.add(instruction);
         visited[number] = true;
 
+        // It is essential to apply this check!!!
+        // This gives us more chances that resulting info will be closer to expected result
+        // Also it is used as indicator that "equals" method is implemented correctly in E
         while (true) {
           count++;
           if (count > limit){
@@ -105,6 +108,9 @@ public class DFAEngine<E> {
           final DFAMap<E> joinedE = join(currentInstruction, info);
           final DFAMap<E> newE = myDfa.fun(joinedE, currentInstruction);
           if (!mySemilattice.eq(newE, oldE)) {
+            if (LOG.isDebugEnabled()){
+              LOG.debug("Number: " + currentNumber + " old: " + oldE.keySet() + " new: " + newE.keySet());
+            }
             info.set(currentNumber, newE);
             for (Instruction next : getNext(currentInstruction)) {
               worklist.add(next);

@@ -34,10 +34,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -187,23 +188,22 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     final SourcePosition position = getSourcePosition();
     if (position != null) {
       final VirtualFile breakpointFile = position.getFile().getVirtualFile();
-      if (breakpointFile != null) {
-        final Collection<VirtualFile> candidates = findClassFileCandidates(className, debugProcess.getSearchScope());
-        if (!candidates.isEmpty()) {
-          for (VirtualFile classFile : candidates) {
-            if (breakpointFile.equals(classFile)) {
-              return true;
-            }
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      if (breakpointFile != null && fileIndex.isInSourceContent(breakpointFile)) {
+        // apply filtering to breakpoints from content sources only, not for sources attached to libraries
+        for (VirtualFile classFile : findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex)) {
+          if (breakpointFile.equals(classFile)) {
+            return true;
           }
-          return false;
         }
+        return false;
       }
     }
     return true;
   }
 
   @NotNull
-  private Collection<VirtualFile> findClassFileCandidates(final String className, final GlobalSearchScope scope) {
+  private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
@@ -217,7 +217,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
           final PsiFile psiFile = aClass.getContainingFile();
           if (psiFile != null) {
             final VirtualFile vFile = psiFile.getVirtualFile();
-            if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
+            if (vFile != null && fileIndex.isInSourceContent(vFile)) {
               list.add(vFile);
             }
           }

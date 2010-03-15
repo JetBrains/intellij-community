@@ -40,7 +40,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
 
   public BaseTestsOutputConsoleView(final TestConsoleProperties properties) {
     myProperties = properties;
-    myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(properties.getProject()).getConsole();
+    myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(properties.getProject(), myProperties.getScope()).getConsole();
     myPrinter = new TestsOutputConsolePrinter(myConsole, properties);
     myProperties.setConsole(this);
 

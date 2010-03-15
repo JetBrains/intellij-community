@@ -56,9 +56,10 @@ public class GrClosureSignatureUtil {
 
     if (signature.isVarargs()) {
       if (isApplicable(params, args, params.length - 1, args.length, manager, scope)) return true;
-
       PsiType lastType = params[params.length - 1].getType();
       assert lastType instanceof PsiArrayType;
+      if (TypesUtil.isAssignableByMethodCallConversion(lastType, args[args.length - 1], manager, scope)) return true;
+      
       PsiType varargType = ((PsiArrayType)lastType).getComponentType();
 
       for (int argCount = args.length - 1; argCount >= notOptional; argCount--) {

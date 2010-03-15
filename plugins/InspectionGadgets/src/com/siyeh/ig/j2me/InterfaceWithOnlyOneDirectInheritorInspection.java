@@ -26,8 +26,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 public class InterfaceWithOnlyOneDirectInheritorInspection
         extends BaseInspection {
 
@@ -71,8 +69,7 @@ public class InterfaceWithOnlyOneDirectInheritorInspection
                   ClassInheritorsSearch.search(aClass, searchScope, false).forEach(new PsiElementProcessorAdapter<PsiClass>(processor));
                 }
             }, null);
-            final Collection<PsiClass> collection = processor.getCollection();
-            return collection.size() == 1;
+          return !processor.isOverflow();
         }
     }
 }

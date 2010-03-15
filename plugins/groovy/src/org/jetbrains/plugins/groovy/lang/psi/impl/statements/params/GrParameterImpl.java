@@ -200,7 +200,7 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
   private static PsiType getEntryForMap(PsiType map, PsiElementFactory factory, PsiElement context) {
     PsiType key = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 0, true);
     PsiType value = PsiUtil.substituteTypeParameter(map, CommonClassNames.JAVA_UTIL_MAP, 1, true);
-    if (key != null && value != null) {
+    if (key != null && key != PsiType.NULL && value != null && value != PsiType.NULL) {
       return factory.createTypeFromText("java.util.Map.Entry<" + key.getCanonicalText() + ", " + value.getCanonicalText() + ">", context);
     }
     return null;

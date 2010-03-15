@@ -23,13 +23,11 @@ public class IndentGuideDescriptor {
   public final int indentLevel;
   public final int startLine;
   public final int endLine;
-  public int indentSize;
 
-  public IndentGuideDescriptor(int indentLevel, int startLine, int endLine, int indentSize) {
+  public IndentGuideDescriptor(int indentLevel, int startLine, int endLine) {
     this.indentLevel = indentLevel;
     this.startLine = startLine;
     this.endLine = endLine;
-    this.indentSize = indentSize;
   }
 
   @Override

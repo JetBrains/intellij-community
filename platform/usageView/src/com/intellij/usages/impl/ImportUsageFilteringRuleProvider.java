@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.usages.impl.rules;
+package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usages.rules.ImportFilteringRule;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.impl.RuleAction;
-import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageFilteringRule;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import org.jetbrains.annotations.NotNull;
@@ -32,17 +32,18 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author yole
  */
-public class JavaUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
+public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvider {
   @NotNull
   public UsageFilteringRule[] getActiveRules(@NotNull final Project project) {
     final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
-    if (!JavaUsageViewSettings.getInstance().SHOW_IMPORTS) {
-      rules.add(new ImportFilteringRule());
+    if (!ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS) {
+      rules.addAll(Arrays.asList(Extensions.getExtensions(ImportFilteringRule.EP_NAME)));
     }
     return rules.toArray(new UsageFilteringRule[rules.size()]);
   }
@@ -73,12 +74,11 @@ public class JavaUsageFilteringRuleProvider implements UsageFilteringRuleProvide
     }
 
     protected boolean getOptionValue() {
-      return JavaUsageViewSettings.getInstance().SHOW_IMPORTS;
+      return ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS;
     }
 
     protected void setOptionValue(boolean value) {
-      JavaUsageViewSettings.getInstance().SHOW_IMPORTS = value;
+      ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS = value;
     }
   }
-
 }

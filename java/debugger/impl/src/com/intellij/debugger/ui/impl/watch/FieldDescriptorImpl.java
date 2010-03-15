@@ -39,6 +39,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
+  public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
   private final Field myField;
   private final ObjectReference myObject;
   private Boolean myIsPrimitive = null;
@@ -66,7 +67,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     final ReferenceType type = myField.declaringType();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final String fieldName = myField.name();
-    if (fieldName.startsWith("val$")) {
+    if (fieldName.startsWith(OUTER_LOCAL_VAR_FIELD_PREFIX)) {
       // this field actually mirrors a local variable in the outer class
       String varName = fieldName.substring(fieldName.lastIndexOf('$') + 1);
       PsiElement element = PositionUtil.getContextElement(context);
@@ -137,7 +138,17 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   }
 
   public String getName() {
-    return myField.name();
+    final String fieldName = myField.name();
+    return isOuterLocalVariableValue()? fieldName.substring(OUTER_LOCAL_VAR_FIELD_PREFIX.length()) : fieldName;
+  }
+
+  public boolean isOuterLocalVariableValue() {
+    try {
+      return DebuggerUtils.isSynthetic(myField) && myField.name().startsWith(OUTER_LOCAL_VAR_FIELD_PREFIX);
+    }
+    catch (UnsupportedOperationException e) {
+      return false;
+    }
   }
 
   public String calcValueName() {
@@ -166,10 +177,10 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     }
     else {
       //noinspection HardCodedStringLiteral
-      fieldName = "this." + getName();
+      fieldName = isOuterLocalVariableValue()? getName() : "this." + getName();
     }
     try {
-      return (PsiReferenceExpression)elementFactory.createExpressionFromText(fieldName, null);
+      return elementFactory.createExpressionFromText(fieldName, null);
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(DebuggerBundle.message("error.invalid.field.name", getName()), e);

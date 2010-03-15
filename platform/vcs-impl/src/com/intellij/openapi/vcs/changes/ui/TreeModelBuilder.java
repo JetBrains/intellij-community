@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
@@ -118,7 +119,7 @@ public class TreeModelBuilder {
   }
 
   public DefaultTreeModel buildModel(final List<? extends ChangeList> changeLists,
-                                     final List<VirtualFile> unversionedFiles,
+                                     final Trinity<List<VirtualFile>, Integer, Integer> unversionedFiles,
                                      final List<LocallyDeletedChange> locallyDeletedFiles,
                                      final List<VirtualFile> modifiedWithoutEditing,
                                      final MultiMap<String, VirtualFile> switchedFiles,
@@ -132,9 +133,16 @@ public class TreeModelBuilder {
       resetGrouping();
       buildVirtualFiles(modifiedWithoutEditing, ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG);
     }
-    if (!unversionedFiles.isEmpty()) {
+    final boolean manyUnversioned = unversionedFiles.getSecond() > unversionedFiles.getFirst().size();
+    if (manyUnversioned || (! unversionedFiles.getFirst().isEmpty())) {
       resetGrouping();
-      buildVirtualFiles(unversionedFiles, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+
+      if (manyUnversioned) {
+        final ChangesBrowserNode baseNode = new ChangesBrowserManyUnversionedFilesNode(myProject, unversionedFiles.getSecond(), unversionedFiles.getThird());
+        model.insertNodeInto(baseNode, root, root.getChildCount());
+      } else {
+        buildVirtualFiles(unversionedFiles.getFirst(), ChangesBrowserNode.UNVERSIONED_FILES_TAG);
+      }
     }
     if (switchedRoots != null && (! switchedRoots.isEmpty())) {
       resetGrouping();

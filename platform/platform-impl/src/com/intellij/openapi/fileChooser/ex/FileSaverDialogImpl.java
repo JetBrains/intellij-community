@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
@@ -43,7 +44,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     super(chooserDescriptor, project);
     myDescriptor = chooserDescriptor;
     setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
-    for (String ext : chooserDescriptor.getFileExtentions()) {
+    for (String ext : chooserDescriptor.getFileExtensions()) {
       myExtentions.addItem(ext);
     }
   }
@@ -90,7 +91,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     boolean correctExt = true;
-    for (String ext : myDescriptor.getFileExtentions()) {
+    for (String ext : myDescriptor.getFileExtensions()) {
       correctExt = path.endsWith("." + ext);
       if (correctExt) break;
     }
@@ -159,5 +160,19 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   protected void setOKActionEnabled(boolean isEnabled) {
     //double check. FileChooserFactoryImpl sets enable ok button 
     super.setOKActionEnabled(isFileNameExist());
+  }
+
+  @Override
+  protected void doOKAction() {
+    final File file = getFile();
+    if (file != null && file.exists()) {
+      if (OK_EXIT_CODE != Messages.showYesNoDialog(this.getRootPane(),
+                                                  UIBundle.message("file.chooser.save.dialog.confirmation", file.getName()),
+                                                  UIBundle.message("file.chooser.save.dialog.confirmation.title"),
+                                                  Messages.getWarningIcon())) {
+        return;
+      }
+    }
+    super.doOKAction();
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -776,7 +777,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testDependencyWithEnvironmentENVProperty() throws Exception {
-    String envDir = FileUtil.toSystemIndependentName(System.getenv("TEMP"));
+    String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
+    if (envDir.endsWith("/")) envDir = envDir.substring(0, envDir.length() - 1);
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -788,7 +790,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <artifactId>direct-system-dependency</artifactId>" +
                   "    <version>1.0</version>" +
                   "    <scope>system</scope>" +
-                  "    <systemPath>${env.TEMP}/lib/tools.jar</systemPath>" +
+                  "    <systemPath>${env." + getEnvVar() + "}/lib/tools.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
 
@@ -1362,7 +1364,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <artifactId>yyy</artifactId>" +
                   "    <version>1</version>" +
                   "    <scope>system</scope>" +
-                  "    <systemPath>c:/foo/foo.jar</systemPath>" +
+                  "    <systemPath>" + getRoot() + "/foo/foo.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
 
@@ -1370,13 +1372,13 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: xxx:yyy:1");
 
     // add sources and javadoc near the jar, just like in the local repository
-    addLibraryRoot("Maven: xxx:yyy:1", OrderRootType.SOURCES, "jar://c:/foo/foo-sources.jar!/");
-    addLibraryRoot("Maven: xxx:yyy:1", JavadocOrderRootType.getInstance(), "jar://c:/foo/foo-javadoc.jar!/");
+    addLibraryRoot("Maven: xxx:yyy:1", OrderRootType.SOURCES, "jar://" + getRoot() + "/foo/foo-sources.jar!/");
+    addLibraryRoot("Maven: xxx:yyy:1", JavadocOrderRootType.getInstance(), "jar://" + getRoot() + "/foo/foo-javadoc.jar!/");
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://c:/foo/foo.jar!/"),
-                       Arrays.asList("jar://c:/foo/foo-sources.jar!/"),
-                       Arrays.asList("jar://c:/foo/foo-javadoc.jar!/"));
+                       Arrays.asList("jar://" + getRoot() + "/foo/foo.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/foo-sources.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/foo-javadoc.jar!/"));
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1388,16 +1390,16 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "    <artifactId>yyy</artifactId>" +
                      "    <version>1</version>" +
                      "    <scope>system</scope>" +
-                     "    <systemPath>c:/bar/bar.jar</systemPath>" +
+                     "    <systemPath>" + getRoot() + "/bar/bar.jar</systemPath>" +
                      "  </dependency>" +
                      "</dependencies>");
     scheduleResolveAll();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://c:/bar/bar.jar!/"),
-                       Arrays.asList("jar://c:/foo/foo-sources.jar!/"),
-                       Arrays.asList("jar://c:/foo/foo-javadoc.jar!/"));
+                       Arrays.asList("jar://" + getRoot() + "/bar/bar.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/foo-sources.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/foo-javadoc.jar!/"));
   }
 
   public void testUpdateRootEntriesWithActualPath() throws Exception {
@@ -1506,12 +1508,12 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <artifactId>yyy</artifactId>" +
                   "    <version>1</version>" +
                   "    <scope>system</scope>" +
-                  "    <systemPath>c:/foo/bar.jar</systemPath>" +
+                  "    <systemPath>" + getRoot() + "/foo/bar.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://c:/foo/bar.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
                        Collections.<String>emptyList(),
                        Collections.<String>emptyList());
 
@@ -1521,7 +1523,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://c:/foo/bar.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
                        Collections.<String>emptyList(),
                        Collections.<String>emptyList());
   }
@@ -1537,12 +1539,12 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "    <artifactId>yyy</artifactId>" +
                   "    <version>1</version>" +
                   "    <scope>system</scope>" +
-                  "    <systemPath>c:/foo/bar.jar</systemPath>" +
+                  "    <systemPath>" + getRoot() + "/foo/bar.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://c:/foo/bar.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/bar.jar!/"),
                        Collections.<String>emptyList(),
                        Collections.<String>emptyList());
 
@@ -1556,7 +1558,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "    <artifactId>yyy</artifactId>" +
                      "    <version>1</version>" +
                      "    <scope>system</scope>" +
-                     "    <systemPath>c:/foo/xxx.jar</systemPath>" +
+                     "    <systemPath>" + getRoot() + "/foo/xxx.jar</systemPath>" +
                      "  </dependency>" +
                      "</dependencies>");
 
@@ -1564,7 +1566,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
-                       Arrays.asList("jar://c:/foo/xxx.jar!/"),
+                       Arrays.asList("jar://" + getRoot() + "/foo/xxx.jar!/"),
                        Collections.<String>emptyList(),
                        Collections.<String>emptyList());
   }
