@@ -75,6 +75,9 @@ public class VcsConfirmationDialog extends OptionsDialog {
   protected Action[] createActions() {
     return new Action[] {
       new AbstractAction(CommonBundle.getYesButtonText()) {
+        {
+          putValue(DEFAULT_ACTION, Boolean.TRUE);
+        }
         public void actionPerformed(ActionEvent e) {
           doOKAction();
         }
