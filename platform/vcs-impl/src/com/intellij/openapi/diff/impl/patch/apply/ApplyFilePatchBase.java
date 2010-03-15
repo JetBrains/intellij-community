@@ -186,7 +186,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     Collections.addAll(lines, LineTokenizer.tokenize(text, false));
     ApplyPatchStatus result = null;
     for(PatchHunk hunk: hunks) {
-      result = ApplyPatchStatus.and(result, hunk.apply(lines));
+      result = ApplyPatchStatus.and(result, new ApplyPatchHunk(hunk).apply(lines));
     }
     for(int i=0; i<lines.size(); i++) {
       newText.append(lines.get(i));

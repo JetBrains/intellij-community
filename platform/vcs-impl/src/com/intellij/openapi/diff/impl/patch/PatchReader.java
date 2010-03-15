@@ -22,17 +22,14 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.List;
-import java.util.ArrayList;
 
 public class PatchReader {
   @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
@@ -47,12 +44,6 @@ public class PatchReader {
   @NonNls private static final Pattern ourUnifiedHunkStartPattern = Pattern.compile("@@ -(\\d+)(,(\\d+))? \\+(\\d+)(,(\\d+))? @@.*");
   @NonNls private static final Pattern ourContextBeforeHunkStartPattern = Pattern.compile("\\*\\*\\* (\\d+),(\\d+) \\*\\*\\*\\*");
   @NonNls private static final Pattern ourContextAfterHunkStartPattern = Pattern.compile("--- (\\d+),(\\d+) ----");
-
-  public PatchReader(VirtualFile virtualFile) throws IOException {
-    byte[] patchContents = virtualFile.contentsToByteArray();
-    CharSequence patchText = LoadTextUtil.getTextByBinaryPresentation(patchContents, virtualFile);
-    myLines = LineTokenizer.tokenize(patchText, false);
-  }
 
   public PatchReader(CharSequence patchContent) {
     myLines = LineTokenizer.tokenize(patchContent, false);
