@@ -353,7 +353,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <relativePath><caret>xxx</relativePath>" +
                      "</parent>");
 
-    IntentionAction i = getIntentionAtCaret("Fix relative path");
+    IntentionAction i = getIntentionAtCaret("Fix Relative Path");
     assertNotNull(i);
 
     myFixture.launchAction(i);
