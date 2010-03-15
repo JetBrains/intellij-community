@@ -221,4 +221,10 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertNull(targetElement);
   }
+
+  public void testSuper() throws Exception {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyFunction);
+    assertEquals("A", ((PyFunction) targetElement).getContainingClass().getName());
+  }
 }
