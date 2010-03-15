@@ -122,6 +122,22 @@ public class WildcardTypeMigrationTest extends TypeMigrationTestBase{
 
   }
 
+  //list -> array
+  public void testGetAssignmentExtendsToType() throws Exception {
+    doTestFirstParamType("method", myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<? extends java.lang.Number>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null).createArrayType());
+  }
+
+  public void testGetAssignmentExtendsToSuperType() throws Exception {
+    doTestFirstParamType("method", myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<? extends java.lang.Number>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null).createArrayType());
+  }
+
+  public void testGetAssignmentExtendsToChildType() throws Exception {
+    doTestFirstParamType("method", myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<? extends java.lang.Number>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
+  }
+
   // -> threadlocal with wildcard
   public void testThreadLocalProducerExtends() throws Exception {
     doTestFirstParamType("method",
