@@ -127,10 +127,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
           oldDefaultList instanceof LocalChangeList &&
-          !((LocalChangeList)oldDefaultList).isDefault() &&
           oldDefaultList.getChanges().isEmpty()) {
 
-          SwingUtilities.invokeLater(new Runnable() {
+          invokeAfterUpdate(new Runnable() {
             public void run() {
               switch (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS) {
 
@@ -157,7 +156,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
               }
               removeChangeList((LocalChangeList)oldDefaultList);
             }
-          });
+          }, InvokeAfterUpdateMode.SILENT, null, null);
         }
       }
     });
