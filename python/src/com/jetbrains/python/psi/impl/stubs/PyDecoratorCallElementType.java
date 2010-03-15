@@ -34,23 +34,16 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   public PyDecoratorStub createStub(PyDecorator psi, StubElement parentStub) {
-    boolean is_builtin = false;
-    PyExpression target = psi.getCallee(); 
-    if (target != null) {
-       is_builtin = PyBuiltinCache.getInstance(psi).hasInBuiltins(target);
-    }
-    return new PyDecoratorStubImpl(psi.getName(), is_builtin, parentStub);
+    return new PyDecoratorStubImpl(psi.getName(), parentStub);
   }
 
   public void serialize(PyDecoratorStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    dataStream.writeBoolean(stub.isBuiltin());
   }
 
   public PyDecoratorStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
-    boolean builtin = dataStream.readBoolean();
-    return new PyDecoratorStubImpl(name, builtin, parentStub);
+    return new PyDecoratorStubImpl(name, parentStub);
   }
 
 }
