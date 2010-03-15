@@ -28,7 +28,7 @@ import java.awt.*;
 
 public abstract class OptionsDialog extends DialogWrapper {
 
-  private JCheckBox myCheckBoxDoNotShowDialog;
+  protected JCheckBox myCheckBoxDoNotShowDialog;
 
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -68,6 +68,7 @@ public abstract class OptionsDialog extends DialogWrapper {
 
     final JPanel panel = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
     myCheckBoxDoNotShowDialog.setSelected(!isToBeShown());
+    DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
     return panel;
   }
 

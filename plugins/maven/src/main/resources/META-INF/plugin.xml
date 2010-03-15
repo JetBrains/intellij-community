@@ -196,7 +196,6 @@
             text="Remove Projects"
             description="Remove selected Maven projects from the project tree"
             icon="/general/remove.png">
-      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
     <action id="Maven.OpenSettingsXml"

@@ -48,7 +48,7 @@ public abstract class GotoActionBase extends AnAction {
 
   protected abstract void gotoActionPerformed(AnActionEvent e);
 
-  public final void update(final AnActionEvent event) {
+  public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);

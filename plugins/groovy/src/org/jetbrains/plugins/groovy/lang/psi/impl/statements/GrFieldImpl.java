@@ -190,26 +190,20 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
       final PsiClass clazz = getContainingClass();
       name = GroovyPropertyUtils.capitalize(name);
       GrAccessorMethod getter1 = new GrAccessorMethodImpl(this, false, "get" + name);
-      if (hasContradictingMethods(getter1, clazz)) getter1 = null;
+      if (!hasContradictingMethods(getter1, clazz)) {
+        GrAccessorMethod getter2 = null;
+        if (PsiType.BOOLEAN.equals(getDeclaredType())) {
+          getter2 = new GrAccessorMethodImpl(this, false, "is" + name);
+          if (hasContradictingMethods(getter2, clazz)) getter2 = null;
+        }
 
-      GrAccessorMethod getter2 = null;
-      if (PsiType.BOOLEAN.equals(getDeclaredType())) {
-        getter2 = new GrAccessorMethodImpl(this, false, "is" + name);
-        if (hasContradictingMethods(getter2, clazz)) getter2 = null;
-      }
-
-      if (getter1 != null || getter2 != null) {
-        if (getter1 != null && getter2 != null) {
+        if (getter2 != null) {
           myGetters = new GrAccessorMethod[]{getter1, getter2};
         }
-        else if (getter1 != null) {
+        else {
           myGetters = new GrAccessorMethod[]{getter1};
         }
-        else {
-          myGetters = new GrAccessorMethod[]{getter2};
-        }
       }
-
     }
 
     myGettersInitialized = true;
