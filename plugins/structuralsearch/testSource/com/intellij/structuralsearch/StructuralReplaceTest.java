@@ -1,20 +1,18 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.idea.Bombed;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.testFramework.IdeaTestUtil;
 
 import java.io.IOException;
-import java.util.Calendar;
 
 /**
  * @by Maxim.Mossienko
  */
 @SuppressWarnings({"ALL"})
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
-  public void _testReplaceInLiterals() {
+  public void testReplaceInLiterals() {
     String s1 = "String ID_SPEED = \"Speed\";";
     String s2 = "String 'name = \"'string\";";
     String s2_2 = "String 'name = \"'string:[regex( .* )]\";";
@@ -71,10 +69,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "    checkResultByFile(path + \"1_after3.html\");";
     String s11 = "\"'a.html\"";
     String s12 = "\"$a$.\"+ext";
-    String expectedResult4 = "configureByFile(path + (\"1.\"+ext));\n" +
-                             "    checkResultByFile(path + (\"1_after.\"+ext));\n" +
-                             "    checkResultByFile(path + (\"1_after2.\"+ext));\n" +
-                             "    checkResultByFile(path + (\"1_after3.\"+ext));";
+    String expectedResult4 = "configureByFile(path + \"1.\"+ext);\n" +
+                             "    checkResultByFile(path + \"1_after.\"+ext);\n" +
+                             "    checkResultByFile(path + \"1_after2.\"+ext);\n" +
+                             "    checkResultByFile(path + \"1_after3.\"+ext);";
 
     actualResult = replacer.testReplace(s10,s11,s12,options);
     assertEquals(
@@ -529,7 +527,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
   }
 
-  @Bombed(day = 29, month = Calendar.OCTOBER)
   public void testReplaceExpr() {
     String s1 = "new SimpleDateFormat(\"yyyyMMddHHmmss\")";
     String s2 = "'expr";
@@ -1495,7 +1492,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  @Bombed(day = 28, description = "support it", month = Calendar.JULY, user = "maxim.mossienko")
   public void _testClassReplacement10() throws IOException {
     String s1 = TestUtils.loadFile("before2.java");
     String s2 = "class '_Class {\n" +
