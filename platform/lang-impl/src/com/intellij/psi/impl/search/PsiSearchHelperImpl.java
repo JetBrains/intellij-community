@@ -425,10 +425,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     myManager.getCacheManager().processFilesWithWord(processor, word, UsageSearchContext.IN_STRINGS, scope, true);
   }
 
-  public static enum Result {
-    ZERO_OCCURRENCES, FEW_OCCURRENCES, TOO_MANY_OCCURRENCES
-  }
-  public Result isItCheapEnoughToSearch(@Nullable final PsiFile fileToIgnoreOccurencesIn, @NotNull String name, @NotNull GlobalSearchScope scope) {
+  public SearchCostResult isCheapEnoughToSearch(@NotNull String name, @NotNull GlobalSearchScope scope, @Nullable final PsiFile fileToIgnoreOccurencesIn) {
     final int[] count = {0};
     if (!processFilesWithText(scope, UsageSearchContext.ANY, true, name, new Processor<PsiFile>() {
       public boolean process(PsiFile file) {
@@ -439,11 +436,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       }
     })) {
-      return Result.TOO_MANY_OCCURRENCES;
+      return SearchCostResult.TOO_MANY_OCCURRENCES;
     }
 
     synchronized (count) {
-      return count[0] == 0 ? Result.ZERO_OCCURRENCES : Result.FEW_OCCURRENCES;
+      return count[0] == 0 ? SearchCostResult.ZERO_OCCURRENCES : SearchCostResult.FEW_OCCURRENCES;
     }
   }
 }
