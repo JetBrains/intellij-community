@@ -110,7 +110,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
             }
 
             if (!VfsUtil.isAncestor(outputDir, outputClassFile, true)) {
-              LOG.assertTrue(false, outputClassFile.getPath() + " should be located under the output root " + outputDir.getPath());
+              LOG.error(outputClassFile.getPath() + " should be located under the output root " + outputDir.getPath());
             }
 
             final ProcessingItem item = createProcessingItem(module, outputClassFile, outputDir,

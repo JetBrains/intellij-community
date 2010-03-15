@@ -39,7 +39,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class StaticMethodOnlyUsedInOneClassInspection
         extends BaseInspection {
@@ -105,10 +105,10 @@ public class StaticMethodOnlyUsedInOneClassInspection
     }
 
     public BaseInspectionVisitor buildVisitor() {
-        return new StaticmethodOnlyUsedInOneClassVisitor();
+        return new StaticMethodOnlyUsedInOneClassVisitor();
     }
 
-    private static class StaticmethodOnlyUsedInOneClassVisitor
+    private static class StaticMethodOnlyUsedInOneClassVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(PsiMethod method) {
@@ -151,23 +151,16 @@ public class StaticMethodOnlyUsedInOneClassInspection
     }
 
     private static class UsageProcessor implements Processor<PsiReference> {
-
-        private PsiClass usageClass = null;
+        private final AtomicReference<PsiClass> foundClass = new AtomicReference<PsiClass>();
 
         public boolean process(PsiReference reference) {
             ProgressManager.checkCanceled();
             final PsiElement element = reference.getElement();
-            final PsiClass usageClass =
-                    ClassUtils.getContainingClass(element);
-          synchronized (this) {
-            if (this.usageClass != null &&
-                    !this.usageClass.equals(usageClass)) {
-                this.usageClass = null;
-                return false;
-            }
-            this.usageClass = usageClass;
-          }
-          return true;
+            PsiClass usageClass = ClassUtils.getContainingClass(element);
+          if (usageClass == null) return true;
+          if (foundClass.compareAndSet(null, usageClass)) return true;
+          PsiClass aClass = foundClass.get();
+          return usageClass.getManager().areElementsEquivalent(aClass, usageClass);
         }
 
         /**
@@ -183,42 +176,18 @@ public class StaticMethodOnlyUsedInOneClassInspection
             final String name = method.getName();
             final GlobalSearchScope scope =
                     GlobalSearchScope.allScope(method.getProject());
-            final FindUsagesCostProcessor costProcessor =
-                    new FindUsagesCostProcessor();
-            searchHelper.processAllFilesWithWord(name, scope,
-                    costProcessor, true);
-            if (costProcessor.isCostTooHigh()) {
-                return null;
-            }
+            if (searchHelper.isCheapEnoughToSearch(name, scope, null)
+                == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return null;
             progressManager.runProcess(new Runnable() {
                 public void run() {
                     final Query<PsiReference> query =
                             MethodReferencesSearch.search(method);
-                    query.forEach(UsageProcessor.this);
+                    if (!query.forEach(UsageProcessor.this)) {
+                      foundClass.set(null);
+                    }
                 }
             }, null);
-          synchronized (this) {
-            return usageClass;
-          }
-        }
-
-        private static class FindUsagesCostProcessor
-                implements Processor<PsiFile> {
-
-            private final AtomicInteger counter = new AtomicInteger();
-            private volatile boolean costTooHigh = false;
-
-            public boolean process(PsiFile psiFile) {
-              if (counter.incrementAndGet() >= 10) {
-                costTooHigh = true;
-                return false;
-              }
-                return true;
-            }
-
-            public boolean isCostTooHigh() {
-                return costTooHigh;
-            }
+            return foundClass.get();
         }
     }
 }

@@ -315,7 +315,14 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       buffer.append("no parameters");
     }
     else if (element instanceof GrVariable) {
-      final PsiType type = ((GrVariable)element).getTypeGroovy();
+      final PsiElement parent = context.getParameterOwner().getParent();
+      final PsiType type;
+      if (parent instanceof GrMethodCallExpression) {
+        type = ((GrMethodCallExpression)parent).getInvokedExpression().getType();
+      }
+      else {
+        type = ((GrVariable)element).getTypeGroovy();
+      }
       if (type instanceof GrClosureType) {
         GrClosureParameter[] parameters = ((GrClosureType)type).getSignature().getParameters();
         if (parameters.length > 0) {

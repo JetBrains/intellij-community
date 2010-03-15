@@ -326,4 +326,27 @@ print ba<caret>r
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrReferenceExpression);
   }
+
+  public void testBooleanProperty() throws Exception {
+    myFixture.configureByText("Abc.groovy", """class A{
+    boolean getFoo(){return true}
+ boolean isFoo(){return false}
+ }
+ print new A().f<caret>oo""");
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertNotNull resolved
+    assertEquals resolved.getName(), "isFoo"
+  }
+
+  public void testExplicitBooleanProperty() throws Exception {
+    myFixture.configureByText("Abc.groovy", """class A{
+    boolean foo
+ }
+ print new A().f<caret>oo""");
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertNotNull resolved
+    assertEquals resolved.getName(), "isFoo"
+  }
 }

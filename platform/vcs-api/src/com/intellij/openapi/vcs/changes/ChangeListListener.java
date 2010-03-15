@@ -21,6 +21,9 @@ import java.util.Collection;
 
 /**
  * @author max
+ *
+ * @see com.intellij.openapi.vcs.changes.ChangeListManager#addChangeListListener(ChangeListListener)
+ * @see com.intellij.openapi.vcs.changes.ChangeListManager#removeChangeListListener(ChangeListListener)  
  */
 public interface ChangeListListener extends EventListener {
   void changeListAdded(ChangeList list);

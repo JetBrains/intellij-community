@@ -205,6 +205,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testStringAndGStringUpperBound() throws Exception {doTest();}
 
   public void testWithMethod() throws Exception {doTest();}
+  public void testByteArrayArgument() throws Exception {doTest();}
 
   public void testForLoopWithNestedEndlessLoop() throws Exception {doTest(new UnassignedVariableAccessInspection());}
   public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection()); }

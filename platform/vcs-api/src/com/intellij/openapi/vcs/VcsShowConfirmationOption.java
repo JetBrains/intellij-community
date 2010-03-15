@@ -27,7 +27,10 @@ public interface VcsShowConfirmationOption {
       myId = id;
     }
 
-
+    public int getId() {
+      return myId;
+    }
+    
     public String toString() {
       return String.valueOf(myId);
     }

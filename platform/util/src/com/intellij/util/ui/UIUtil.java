@@ -42,10 +42,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
@@ -1062,6 +1060,29 @@ public class UIUtil {
 
   public static boolean isPrinting(Graphics g) {
     return g instanceof PrintGraphics;
+  }
+
+  public static int getSelectedButton(ButtonGroup group) {
+    Enumeration<AbstractButton> enumeration = group.getElements();
+    int i = 0;
+    while (enumeration.hasMoreElements()) {
+      AbstractButton button = enumeration.nextElement();
+      if (group.isSelected(button.getModel())) {
+        return i;
+      }
+      i++;
+    }
+    return -1;
+  }
+
+  public static void setSelectedButton(ButtonGroup group, int index) {
+    Enumeration<AbstractButton> enumeration = group.getElements();
+    int i = 0;
+    while (enumeration.hasMoreElements()) {
+      AbstractButton button = enumeration.nextElement();
+      group.setSelected(button.getModel(), index == i);
+      i++;
+    }
   }
 
 }
