@@ -34,12 +34,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
+//TeamCity inherits StringUtil: do not add private constructors!!!
 public class StringUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
   @NonNls private static final String VOWELS = "aeiouy";
-
-  private StringUtil() {
-  }
 
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @Nullable String newS) {
     return replace(text, oldS, newS, false);
