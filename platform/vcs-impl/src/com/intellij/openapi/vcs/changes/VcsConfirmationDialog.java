@@ -38,7 +38,7 @@ public class VcsConfirmationDialog extends OptionsDialog {
     myOption = option;
     myMessage = message;
     myDoNotShowMessage = doNotShowMessage;
-
+    setTitle("Confirmation");
     init();
   }
 
@@ -59,9 +59,9 @@ public class VcsConfirmationDialog extends OptionsDialog {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout(15, 0));
     panel.add(new JLabel(myMessage));
-    panel.add(new JLabel(Messages.getQuestionIcon()));
+    panel.add(new JLabel(Messages.getQuestionIcon()), BorderLayout.WEST);
     return panel;
   }
 

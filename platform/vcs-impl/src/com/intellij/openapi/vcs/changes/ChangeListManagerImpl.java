@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
@@ -141,7 +142,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                     public void setValue(Value value) {
                       config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
                     }
-                  }, "<html>The empty changelist is no longer active.<br>" +
+                  }, "<html>The empty changelist '" + StringUtil.last(oldDefaultList.getName(), 30, true) + "' is no longer active.<br>" +
                      "Do you want to remove it?</html>", "Remember my choice");
                   dialog.show();
                   if (!dialog.isOK()) {
