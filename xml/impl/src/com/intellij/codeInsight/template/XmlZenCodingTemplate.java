@@ -66,7 +66,6 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     final String myKey;
     final List<Pair<String, String>> myAttribute2Value;
     TemplateImpl myTemplate;
-    String myTemplateString;
 
     MyTemplateToken(String key, List<Pair<String, String>> attribute2value) {
       myKey = key;
@@ -249,7 +248,6 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
       return false;
     }
     token.myTemplate = template;
-    token.myTemplateString = template.getString();
     return true;
   }
 
@@ -481,7 +479,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     if (callback.isLiveTemplateApplicable(token.myKey)) {
       if (token.myTemplate != null) {
         TemplateImpl modifiedTemplate = token.myTemplate.copy();
-        XmlTag tag = parseXmlTagInTemplate(token.myTemplateString, callback.getProject());
+        XmlTag tag = parseXmlTagInTemplate(token.myTemplate.getString(), callback.getProject());
         assert tag != null;
         for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
           Pair<String, String> pair = iterator.next();
