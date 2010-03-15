@@ -21,10 +21,12 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -36,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.IntStack;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +185,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   private List<IndentGuideDescriptor> buildDescriptors() {
     if (!myEditor.getSettings().isIndentGuidesShown()) return Collections.emptyList();
     
-    int[] lineIndents = calcIndents(myDocument);
+    int[] lineIndents = calcIndents();
 
     List<IndentGuideDescriptor> descriptors = new ArrayList<IndentGuideDescriptor>();
 
@@ -219,17 +222,31 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     return descriptors;
   }
 
-  private int[] calcIndents(Document doc) {
+  private int[] calcIndents() {
+    final Document doc = myDocument;
     CharSequence chars = doc.getCharsSequence();
     int[] lineIndents = new int[doc.getLineCount()];
+    TokenSet comments = LanguageParserDefinitions.INSTANCE.forLanguage(myFile.getLanguage()).getCommentTokens();
 
+    int prevColumn = -1;
+    final EditorHighlighter highlighter = myEditor.getHighlighter();
     for (int line = 0; line < lineIndents.length; line++) {
-      int lineStart = myDocument.getLineStartOffset(line);
-      int lineEnd = myDocument.getLineEndOffset(line);
+      int lineStart = doc.getLineStartOffset(line);
+      int lineEnd = doc.getLineEndOffset(line);
 
       int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
       if (nonWhitespaceOffset < lineEnd) {
-        lineIndents[line] = myEditor.calcColumnNumber(nonWhitespaceOffset, line);
+        final int column = myEditor.calcColumnNumber(nonWhitespaceOffset, line);
+        if (column < prevColumn) {
+          final HighlighterIterator it = highlighter.createIterator(nonWhitespaceOffset);
+          if (comments.contains(it.getTokenType())) {
+            lineIndents[line] = -1;
+            continue;
+          }
+        }
+
+        lineIndents[line] = column;
+        prevColumn = column;
       }
       else {
         lineIndents[line] = -1;
@@ -243,13 +260,17 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
       else {
         int startLine = line;
-        for (; line < lineIndents.length && lineIndents[line] == -1; line++);
+        while (line < lineIndents.length && lineIndents[line] == -1) {
+          //noinspection AssignmentToForLoopParameter
+          line++;
+        }
+
         int bottomIndent = line < lineIndents.length ? lineIndents[line] : topIndent;
 
         int indent = Math.min(topIndent, bottomIndent);
         if (bottomIndent < topIndent) {
-          int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, myDocument.getLineStartOffset(line), " \t");
-          HighlighterIterator iterator = myEditor.getHighlighter().createIterator(nonWhitespaceOffset);
+          int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, doc.getLineStartOffset(line), " \t");
+          HighlighterIterator iterator = highlighter.createIterator(nonWhitespaceOffset);
           if (BraceMatchingUtil.isRBraceToken(iterator, chars, myFile.getFileType())) {
             indent = topIndent;
           }
@@ -260,6 +281,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
           lineIndents[blankLine] = Math.min(topIndent, indent);
         }
 
+        //noinspection AssignmentToForLoopParameter
         line--; // will be incremented back at the end of the loop;
       }
     }
