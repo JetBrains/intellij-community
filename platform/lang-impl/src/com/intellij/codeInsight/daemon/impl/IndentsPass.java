@@ -194,13 +194,14 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     lines.push(0);
     indents.push(0);
+    final CharSequence chars = myDocument.getCharsSequence();
     for (int line = 1; line < lineIndents.length; line++) {
       int curIndent = lineIndents[line];
 
       while (!indents.empty() && curIndent <= indents.peek()) {
         final int level = indents.pop();
         int startLine = lines.pop();
-        descriptors.add(new IndentGuideDescriptor(level, startLine, line));
+        descriptors.add(createDescriptor(level, startLine, line, chars));
       }
 
       int prevLine = line - 1;
@@ -216,10 +217,20 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       final int level = indents.pop();
       if (level > 0) {
         int startLine = lines.pop();
-        descriptors.add(new IndentGuideDescriptor(level, startLine, myDocument.getLineCount()));
+        descriptors.add(createDescriptor(level, startLine, myDocument.getLineCount(), chars));
       }
     }
     return descriptors;
+  }
+
+  private IndentGuideDescriptor createDescriptor(int level, int startLine, int endLine, CharSequence chars) {
+    while (startLine > 0 && isBlankLine(startLine, chars)) startLine--;
+    return new IndentGuideDescriptor(level, startLine, endLine);
+  }
+
+  private boolean isBlankLine(int line, CharSequence chars) {
+    int startOffset = myDocument.getLineStartOffset(line);
+    return CharArrayUtil.shiftForward(chars, startOffset, " \t") >= myDocument.getLineEndOffset(line);
   }
 
   private int[] calcIndents() {
