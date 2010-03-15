@@ -49,7 +49,7 @@ import java.util.Set;
 public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.CheckEmptyTagInspection");
   @NonNls private static final String SCRIPT_TAG_NAME = "script";
-  private static Set<String> ourTagsWithEmptyEndsNotAllowed = new THashSet<String>(Arrays.asList(SCRIPT_TAG_NAME, "div", "iframe"));
+  private static final Set<String> ourTagsWithEmptyEndsNotAllowed = new THashSet<String>(Arrays.asList(SCRIPT_TAG_NAME, "div", "iframe"));
 
   public boolean isEnabledByDefault() {
     return true;
@@ -59,55 +59,57 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
-        if (isTagWithEmptyEndNotAllowed(tag)) {
-          final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
-
-          if (child != null) {
-
-            final LocalQuickFix fix = new LocalQuickFix() {
-              @NotNull
-              public String getName() {
-                return XmlBundle.message("html.inspections.check.empty.script.tag.fix.message");
-              }
-
-              public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                final XmlTag tag = (XmlTag)descriptor.getPsiElement();
-                if (tag == null) return;
-                final PsiFile psiFile = tag.getContainingFile();
-
-                if (psiFile == null) return;
-                ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(psiFile.getVirtualFile());
-
-                final StringBuilder builder = new StringBuilder(tag.getText());
-                builder.replace(builder.length() - 2, builder.length(), "></" + tag.getLocalName() + ">");
-
-                try {
-                  final FileType fileType = psiFile.getFileType();
-                  PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
-                    "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == HTMLLanguage.INSTANCE ? "html" : "xml"), builder.toString());
-
-                  tag.replace(((XmlFile)file).getDocument().getRootTag());
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-              }
-
-              //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-              @NotNull
-              public String getFamilyName() {
-                return getName();
-              }
-            };
-
-            holder.registerProblem(tag,
-                                   XmlBundle.message("html.inspections.check.empty.script.message"),
-                                   tag.getContainingFile().getContext() != null ? 
-                                     ProblemHighlightType.INFORMATION:
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, 
-                                   fix);
-          }
+        if (!isTagWithEmptyEndNotAllowed(tag)) {
+          return;
         }
+        final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
+
+        if (child == null) {
+          return;
+        }
+
+        final LocalQuickFix fix = new LocalQuickFix() {
+          @NotNull
+          public String getName() {
+            return XmlBundle.message("html.inspections.check.empty.script.tag.fix.message");
+          }
+
+          public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+            final XmlTag tag = (XmlTag)descriptor.getPsiElement();
+            if (tag == null) return;
+            final PsiFile psiFile = tag.getContainingFile();
+
+            if (psiFile == null) return;
+            ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(psiFile.getVirtualFile());
+
+            final StringBuilder builder = new StringBuilder(tag.getText());
+            builder.replace(builder.length() - 2, builder.length(), "></" + tag.getLocalName() + ">");
+
+            try {
+              final FileType fileType = psiFile.getFileType();
+              PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
+                "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == HTMLLanguage.INSTANCE ? "html" : "xml"), builder.toString());
+
+              tag.replace(((XmlFile)file).getDocument().getRootTag());
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
+          }
+
+          //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+          @NotNull
+          public String getFamilyName() {
+            return getName();
+          }
+        };
+
+        holder.registerProblem(tag,
+                               XmlBundle.message("html.inspections.check.empty.script.message"),
+                               tag.getContainingFile().getContext() != null ?
+                               ProblemHighlightType.INFORMATION:
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                               fix);
       }
     };
   }
@@ -117,11 +119,8 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     if (tag instanceof HtmlTag) tagName = tagName.toLowerCase();
 
     Language language = tag.getLanguage();
-    return (ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&
-           language != XMLLanguage.INSTANCE) ||
-           (language == HTMLLanguage.INSTANCE &&
-            ( !HtmlUtil.isSingleHtmlTagL(tagName) && tagName.indexOf(':') == -1))
-      ;
+    return ourTagsWithEmptyEndsNotAllowed.contains(tagName) && language != XMLLanguage.INSTANCE ||
+           language == HTMLLanguage.INSTANCE && !HtmlUtil.isSingleHtmlTagL(tagName) && tagName.indexOf(':') == -1;
   }
 
   @NotNull
