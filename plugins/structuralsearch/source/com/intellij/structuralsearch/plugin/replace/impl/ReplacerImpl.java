@@ -622,10 +622,20 @@ public class ReplacerImpl {
       if (replacementNamedElement == null && originalNamedElements.size() == 1 && replacedNamedElements.size() == 1) {
         replacementNamedElement = replacedNamedElements.entrySet().iterator().next().getValue();
       }
-      PsiDocComment comment = null;
+      
+      PsiElement comment = null;
 
       if (originalNamedElement instanceof PsiDocCommentOwner) {
         comment = ((PsiDocCommentOwner)originalNamedElement).getDocComment();
+        if (comment == null) {
+          PsiElement prevElement = originalNamedElement.getPrevSibling();
+          if (prevElement instanceof PsiWhiteSpace) {
+            prevElement = prevElement.getPrevSibling();
+          }
+          if (prevElement instanceof PsiComment) {
+            comment = prevElement;
+          }
+        }
       }
 
       if (replacementNamedElement != null && searchNamedElement != null) {
@@ -636,8 +646,9 @@ public class ReplacerImpl {
           !(replacementNamedElement.getFirstChild() instanceof PsiDocComment)
          ) {
         final PsiElement nextSibling = comment.getNextSibling();
+        PsiElement prevSibling = comment.getPrevSibling();
         replacementNamedElement.addRangeBefore(
-          comment,
+          prevSibling instanceof PsiWhiteSpace ? prevSibling:comment,
           nextSibling instanceof PsiWhiteSpace ? nextSibling:comment,
           replacementNamedElement.getFirstChild()
         );
