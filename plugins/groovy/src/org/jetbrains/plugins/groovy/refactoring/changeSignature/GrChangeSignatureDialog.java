@@ -17,17 +17,23 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCodeFragment;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
+import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -44,13 +50,12 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrChangeSignatureDialog extends DialogWrapper {
+public class GrChangeSignatureDialog extends RefactoringDialog {
   private EditorTextField myNameField;
   private EditorTextField myReturnTypeField;
   private JRadioButton myPublicRadioButton;
-
   private JRadioButton myProtectedRadioButton;
-  private JRadioButton myPrivateRadioButton1;
+  private JRadioButton myPrivateRadioButton;
   private JPanel myParametersPanel;
   private Table myParameterTable;
   private JButton myAddButton;
@@ -61,12 +66,12 @@ public class GrChangeSignatureDialog extends DialogWrapper {
   private JLabel mySignatureLabel;
   private GrParameterTableModel myParameterModel;
   private GrMethod myMethod;
-  private Project myProject;
+//  private Project myProject;
   private PsiTypeCodeFragment myReturnTypeCodeFragment;
+  private GroovyCodeFragment myNameCodeFragment;
 
   public GrChangeSignatureDialog(@NotNull Project project, GrMethod method) {
     super(project, true);
-    myProject = project;
     myMethod = method;
     init();
     configureParameterButtons();
@@ -121,10 +126,8 @@ public class GrChangeSignatureDialog extends DialogWrapper {
     super.init();
   }
 
-  @Override
-  protected void doOKAction() {
-    super.doOKAction();
-
+  private void stopEditing() {
+    TableUtil.stopEditing(myParameterTable);
   }
 
   @Override
@@ -139,7 +142,10 @@ public class GrChangeSignatureDialog extends DialogWrapper {
   }
 
   private void createNameAndReturnTypeEditors() {
-    myNameField = new EditorTextField("", myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    myNameCodeFragment = new GroovyCodeFragment(myProject, "");
+    myNameField = new EditorTextField(PsiDocumentManager.getInstance(myProject).getDocument(myNameCodeFragment), myProject,
+                                      myNameCodeFragment.getFileType());
+
     myReturnTypeCodeFragment = JavaPsiFacade.getInstance(myProject).getElementFactory().createTypeCodeFragment("", myMethod, true, true);
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
     myReturnTypeField = new EditorTextField(document, myProject, myReturnTypeCodeFragment.getFileType());
@@ -166,8 +172,10 @@ public class GrChangeSignatureDialog extends DialogWrapper {
     myParameterTable.getColumnModel().getColumn(2).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
     myParameterTable.getColumnModel().getColumn(3).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
 
-    myParameterTable.setRowSelectionInterval(0, 0);
-    myParameterTable.setColumnSelectionInterval(0, 0);
+    if (myParameterTable.getRowCount() > 0) {
+      myParameterTable.setRowSelectionInterval(0, 0);
+      myParameterTable.setColumnSelectionInterval(0, 0);
+    }
 
     myParameterModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
@@ -188,13 +196,19 @@ public class GrChangeSignatureDialog extends DialogWrapper {
   }
 
   private String generateSignatureText() {
-    String name = myNameField.getText().trim();
+    String name = getNewName();
     String type = myReturnTypeField.getText().trim();
-    if (type.length() == 0) {
-      type = GrModifier.DEF;
-    }
 
     StringBuilder builder = new StringBuilder();
+    if (myPublicRadioButton.isSelected() && type.length() == 0) {
+      builder.append(GrModifier.DEF);
+    }
+    if (myPrivateRadioButton.isSelected()) {
+      builder.append(GrModifier.PRIVATE).append(' ');
+    }
+    else if (myProtectedRadioButton.isSelected()) {
+      builder.append(GrModifier.PROTECTED).append(' ');
+    }
     builder.append(type).append(' ');
     builder.append(name).append('(');
     final List<GrParameterInfo> infos = myParameterModel.getParameterInfos();
@@ -214,7 +228,7 @@ public class GrChangeSignatureDialog extends DialogWrapper {
   private static void generateParameterText(GrParameterInfo info, StringBuilder builder) {
     final PsiTypeCodeFragment typeFragment = info.getType();
     builder.append(typeFragment != null ? typeFragment.getText().trim() : GrModifier.DEF).append(' ');
-    final GroovyCodeFragment nameFragment = info.getName();
+    final GroovyCodeFragment nameFragment = info.getNameFragment();
     builder.append(nameFragment != null ? nameFragment.getText().trim() : "");
     final GroovyCodeFragment defaultInitializer = info.getDefaultInitializer();
 
@@ -222,5 +236,92 @@ public class GrChangeSignatureDialog extends DialogWrapper {
     if (defaultInitializerText.length() > 0) {
       builder.append(" = ").append(defaultInitializerText);
     }
+  }
+
+  @Override
+  protected void doAction() {
+    if (!validateInputData()) {
+      return;
+    }
+
+    stopEditing();
+    String modifier = "";
+    if (myPublicRadioButton.isSelected()) {
+      modifier = GrModifier.PUBLIC;
+    }
+    else if (myPrivateRadioButton.isSelected()) {
+      modifier = GrModifier.PRIVATE;
+    }
+    else if (myProtectedRadioButton.isSelected()) {
+      modifier = GrModifier.PROTECTED;
+    }
+
+    PsiType returnType = null;
+    try {
+      returnType = myReturnTypeCodeFragment.getType();
+    }
+    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
+    catch (PsiTypeCodeFragment.NoTypeException e) {
+      returnType = PsiType.NULL;
+    }
+
+    String newName = getNewName();
+    final List<GrParameterInfo> parameterInfos = myParameterModel.getParameterInfos();
+    invokeRefactoring(new GrChangeSignatureProcessor(myProject, new GrChangeSignatureProcessor.GrChangeInfoImpl(myMethod, modifier,
+                                                                                                                CanonicalTypes.createTypeWrapper(
+                                                                                                                  returnType), newName,
+                                                                                                                parameterInfos)));
+
+  }
+
+  private String getNewName() {
+    return myNameField.getText().trim();
+  }
+
+  private boolean validateInputData() {
+    if (!checkName()) {
+      CommonRefactoringUtil.showErrorHint(myProject, null, "Name is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+      return false;
+    }
+
+    if (!checkType(myReturnTypeCodeFragment)) {
+      CommonRefactoringUtil.showErrorHint(myProject, null, "Return type is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+    }
+
+    for (GrParameterInfo info : myParameterModel.getParameterInfos()) {
+      if (!checkType(info.getType())) {
+        CommonRefactoringUtil
+          .showErrorHint(myProject, null, "Type for parameter " + info.getName() + " is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean checkType(PsiTypeCodeFragment typeCodeFragment) {
+    try {
+      typeCodeFragment.getType();
+    }
+    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+      return false;
+    }
+    catch (PsiTypeCodeFragment.NoTypeException e) {
+      return true;
+    }
+    return true;
+  }
+
+  private boolean checkName() {
+    final String newName = getNewName();
+    if (StringUtil.isJavaIdentifier(newName)) return true;
+    try {
+      GroovyPsiElementFactory.getInstance(myProject).createMethodFromText("def " + newName + "(){}");
+    }
+    catch (Throwable e) {
+      return false;
+    }
+    return true;
   }
 }

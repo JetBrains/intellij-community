@@ -20,16 +20,16 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
+public class ChangeSignatureViewDescriptor implements UsageViewDescriptor {
 
   private final PsiMethod myMethod;
   private final String myProcessedElementsHeader;

@@ -20,6 +20,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCodeFragment;
+import com.intellij.refactoring.changeSignature.ParameterInfo;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -27,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 /**
  * @author Maxim.Medvedev
  */
-public class GrParameterInfo {
+public class GrParameterInfo implements ParameterInfo{
   private GroovyCodeFragment myName;
   private GroovyCodeFragment myDefaultValue;
   private PsiTypeCodeFragment myType;
@@ -56,11 +57,11 @@ public class GrParameterInfo {
     myDefaultInitializer = new GroovyCodeFragment(project, "");
   }
 
-  public GroovyCodeFragment getName() {
+  public GroovyCodeFragment getNameFragment() {
     return myName;
   }
 
-  public GroovyCodeFragment getDefaultValue() {
+  public GroovyCodeFragment getDefaultValueFragment() {
     return myDefaultValue;
   }
 
@@ -72,7 +73,15 @@ public class GrParameterInfo {
     return myDefaultInitializer;
   }
 
-  public int getPosition() {
+  public String getName() {
+    return myName.getText().trim();
+  }
+
+  public int getOldIndex() {
     return myPosition;
+  }
+
+  public String getDefaultValue() {
+    return myDefaultValue.getText().trim();
   }
 }
