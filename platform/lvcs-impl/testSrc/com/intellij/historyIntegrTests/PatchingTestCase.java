@@ -16,6 +16,7 @@
 
 package com.intellij.historyIntegrTests;
 
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
@@ -52,6 +53,6 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
       patches.add(p);
     }
 
-    new PatchApplier(myProject, root, patches, null, null).execute();
+    new PatchApplier<BinaryFilePatch>(myProject, root, patches, null, null).execute();
   }
 }

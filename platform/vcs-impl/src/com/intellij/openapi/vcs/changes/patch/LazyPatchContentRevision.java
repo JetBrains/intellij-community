@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.FilePath;
@@ -50,7 +51,7 @@ public class LazyPatchContentRevision implements ContentRevision {
         }
         final String baseContent = doc.getText();
         final StringBuilder newText = new StringBuilder();
-        myPatch.applyModifications(baseContent, newText);
+        ApplyFilePatchBase.applyModifications(myPatch, baseContent, newText);
 
         myContent = newText.toString();
       } catch (ApplyPatchException e) {

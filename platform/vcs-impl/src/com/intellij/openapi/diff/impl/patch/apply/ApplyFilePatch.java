@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.patch.formove;
+package com.intellij.openapi.diff.impl.patch.apply;
 
+import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
+import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.List;
 
-public interface CustomBinaryPatchApplier<T extends FilePatch> {
-  @NotNull
-  ApplyPatchStatus apply(List<Pair<VirtualFile, ApplyFilePatchBase<T>>> patches) throws IOException;
-  @NotNull
-  List<FilePatch> getAppliedPatches();
+public interface ApplyFilePatch {
+  ApplyPatchStatus apply(VirtualFile fileToPatch, ApplyPatchContext context, Project project) throws IOException, ApplyPatchException;
+
+  ApplyPatchStatus applyImpl(VirtualFile fileToPatch, Project project) throws IOException, ApplyPatchException;
+
+  @Nullable
+  VirtualFile findFileToPatch(@NotNull ApplyPatchContext context) throws IOException;
 }
