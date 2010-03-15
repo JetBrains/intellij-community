@@ -174,7 +174,6 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return patchedDir;
   }
 
-  // todo move somewhere?
   @Nullable
   public static ApplyPatchStatus applyModifications(final TextFilePatch patch, final CharSequence text, final StringBuilder newText) throws
                                                                                                                                      ApplyPatchException {
