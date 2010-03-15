@@ -25,7 +25,12 @@ import javax.swing.*;
  * @since 5.1
  */
 public class DialogUtil {
+
   public static void registerMnemonic(AbstractButton button) {
+    registerMnemonic(button, UIUtil.MNEMONIC);
+  }
+
+  public static void registerMnemonic(AbstractButton button, char mn) {
     String text = button.getText();
 
     if (text != null) {
@@ -34,7 +39,7 @@ public class DialogUtil {
       int index = -1;
       for (int i = 0; i < text.length(); i++) {
         char ch = text.charAt(i);
-        if (ch != UIUtil.MNEMONIC) {
+        if (ch != mn) {
           realText.append(ch);
         }
         else if (i + 1 < text.length()) {
