@@ -154,7 +154,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   private static final Function<GrMethod, PsiType> ourTypesCalculator = new NullableFunction<GrMethod, PsiType>() {
     public PsiType fun(GrMethod method) {
       PsiType nominal = getNominalType(method);
-      if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
+      if (PsiType.VOID.equals(nominal)) return nominal;
       PsiType inferred = getInferredType(method);
       if (nominal == null) {
         if (inferred == null) {

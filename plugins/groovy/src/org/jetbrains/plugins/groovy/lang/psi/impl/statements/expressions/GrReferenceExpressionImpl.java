@@ -443,13 +443,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         final boolean isLValue = PsiUtil.isLValue(refExpr);
         String[] names;
         names = isLValue ? GroovyPropertyUtils.suggestSettersName(name) : GroovyPropertyUtils.suggestGettersName(name);
-        List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>();
         for (String getterName : names) {
           AccessorResolverProcessor accessorResolver = new AccessorResolverProcessor(getterName, refExpr, !isLValue);
           resolveImpl(refExpr, accessorResolver);
-          list.addAll(Arrays.asList(accessorResolver.getCandidates()));
+          final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
+          if (candidates.length > 0) return candidates;
         }
-        if (list.size() > 0) return list.toArray(new GroovyResolveResult[list.size()]);
         if (fieldCandidates.length > 0) return fieldCandidates;
 
         EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression

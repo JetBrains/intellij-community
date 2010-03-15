@@ -287,13 +287,12 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private static FileBasedIndex ourInstance = CachedSingletonsRegistry.markCachedField(FileBasedIndex.class);
-  public static FileBasedIndex getInstance() {
-    if (ourInstance == null) {
-      ourInstance = ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
-    }
+  private static class FileBasedIndexHolder {
+    private static final FileBasedIndex ourInstance = ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
+  }
 
-    return ourInstance;
+  public static FileBasedIndex getInstance() {
+    return FileBasedIndexHolder.ourInstance;
   }
 
   /**
