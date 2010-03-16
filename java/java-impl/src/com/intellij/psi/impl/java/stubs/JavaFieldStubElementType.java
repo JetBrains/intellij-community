@@ -20,10 +20,7 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.impl.cache.InitializerTooLongException;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsEnumConstantImpl;
@@ -40,6 +37,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -73,24 +71,26 @@ public class JavaFieldStubElementType extends JavaStubElementType<PsiFieldStub, 
     final byte flags = PsiFieldStubImpl.packFlags(psi instanceof PsiEnumConstant,
                                                   RecordUtil.isDeprecatedByDocComment(psi),
                                                   RecordUtil.isDeprecatedByAnnotation(psi));
-    return new PsiFieldStubImpl(parentStub, psi.getName(), type, initializer != null ? initializer.getText() : null, flags);
+    return new PsiFieldStubImpl(parentStub, psi.getName(), type, encodeInitializer(initializer), flags);
+  }
+
+  @Nullable
+  private static String encodeInitializer(PsiExpression initializer) {
+    if (initializer == null) return null;
+
+    if (initializer instanceof PsiNewExpression || initializer instanceof PsiMethodCallExpression) {
+      return PsiFieldStub.INITIALIZER_NOT_STORED;
+    }
+
+    return initializer.getText();
   }
 
   public void serialize(final PsiFieldStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
-    dataStream.writeName(getInitializerText(stub));
+    dataStream.writeName(stub.getInitializerText());
     dataStream.writeByte(((PsiFieldStubImpl)stub).getFlags());
-  }
-
-  private static String getInitializerText(final PsiFieldStub stub) {
-    try {
-      return stub.getInitializerText();
-    }
-    catch (InitializerTooLongException e) {
-      return StringRef.toString(PsiFieldStubImpl.INITIALIZER_TOO_LONG);
-    }
   }
 
   public PsiFieldStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {

@@ -19,7 +19,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.InitializerTooLongException;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
@@ -131,14 +130,9 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
     synchronized (LAZY_BUILT_LOCK) {
       if (!myInitializerInitialized) {
         myInitializerInitialized = true;
-        try {
-          String initializerText = getStub().getInitializerText();
-          if (initializerText != null) {
-            myInitializer = ClsParsingUtil.createExpressionFromText(initializerText, getManager(), this);
-          }
-        }
-        catch (InitializerTooLongException e) {
-          myInitializer = null;
+        String initializerText = getStub().getInitializerText();
+        if (initializerText != null) {
+          myInitializer = ClsParsingUtil.createExpressionFromText(initializerText, getManager(), this);
         }
       }
 

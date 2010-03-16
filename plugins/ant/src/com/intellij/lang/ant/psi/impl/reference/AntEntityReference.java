@@ -62,6 +62,7 @@ public class AntEntityReference implements PsiReference {
     return myXmlRef.isReferenceTo(element);
   }
 
+  @NotNull
   public Object[] getVariants() {
     return EMPTY_ARRAY;
   }

@@ -646,7 +646,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       myLifecycleNode = new LifecycleNode(this);
       myPluginsNode = new PluginsNode(this);
-      myDependenciesNode = new DependenciesNode(this);
+      myDependenciesNode = new DependenciesNode(this, mavenProject);
       myModulesNode = new ModulesNode(this);
 
       setUniformIcon(MavenIcons.MAVEN_PROJECT_ICON);
@@ -681,7 +681,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       setErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
       myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
-      myDependenciesNode.updateDependencies(myMavenProject);
+      myDependenciesNode.updateDependencies();
 
       myTooltipCache = makeDescription();
 
@@ -1016,10 +1016,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public abstract class BaseDependenciesNode extends GroupNode {
+    protected final MavenProject myMavenProject;
     private List<DependencyNode> myChildren = new ArrayList<DependencyNode>();
 
-    protected BaseDependenciesNode(MavenSimpleNode parent) {
+    protected BaseDependenciesNode(MavenSimpleNode parent, MavenProject mavenProject) {
       super(parent);
+      myMavenProject = mavenProject;
+    }
+
+    public MavenProject getMavenProject() {
+      return myMavenProject;
     }
 
     @Override
@@ -1045,11 +1051,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
       return new DependencyNode(this, artifact, mavenProject);
     }
+
+    @Override
+    String getMenuId() {
+      return "Maven.DependencyMenu";
+    }
   }
 
   public class DependenciesNode extends BaseDependenciesNode {
-    public DependenciesNode(ProjectNode parent) {
-      super(parent);
+    public DependenciesNode(ProjectNode parent, MavenProject mavenProject) {
+      super(parent, mavenProject);
       setIcons(MavenIcons.CLOSED_DEPENDENCIES_ICON, MavenIcons.OPEN_DEPENDENCIES_ICON);
     }
 
@@ -1058,20 +1069,22 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return message("view.node.dependencies");
     }
 
-    public void updateDependencies(MavenProject mavenProject) {
-      updateChildren(mavenProject.getDependenciesNodes(), mavenProject);
+    public void updateDependencies() {
+      updateChildren(myMavenProject.getDependenciesNodes(), myMavenProject);
     }
   }
 
   public class DependencyNode extends BaseDependenciesNode {
     private final MavenArtifact myArtifact;
-    private final MavenProject myMavenProject;
 
     public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject) {
-      super(parent);
-      myMavenProject = mavenProject;
+      super(parent, mavenProject);
       myArtifact = artifactNode.getArtifact();
       setUniformIcon(MavenIcons.DEPENDENCY_ICON);
+    }
+
+    public MavenArtifact getArtifact() {
+      return myArtifact;
     }
 
     @Override

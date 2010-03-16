@@ -153,6 +153,7 @@ public class AntTargetReference extends AntGenericReference {
     }
   }
 
+  @NotNull
   public Object[] getVariants() {
     final AntElement element = getElement();
     if (element instanceof AntAntImpl) {

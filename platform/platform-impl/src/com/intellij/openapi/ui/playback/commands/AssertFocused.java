@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.ui.playback.commands;
 
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -77,8 +77,8 @@ public class AssertFocused extends AbstractCommand {
     Component eachParent = owner;
     final LinkedHashMap<String, String> actual = new LinkedHashMap<String, String>();
     while (eachParent != null) {
-      if (eachParent instanceof TestableUi) {
-        ((TestableUi)eachParent).putInfo(actual);
+      if (eachParent instanceof Queryable) {
+        ((Queryable)eachParent).putInfo(actual);
       }
 
       eachParent = eachParent.getParent();

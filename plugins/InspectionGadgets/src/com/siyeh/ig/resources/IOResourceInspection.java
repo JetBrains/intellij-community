@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,46 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.ui.IGTable;
+import com.siyeh.ig.ui.ListWrappingTableModel;
+import com.siyeh.ig.ui.RemoveAction;
+import com.siyeh.ig.ui.TreeClassChooserAction;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.List;
+
 public class IOResourceInspection extends ResourceInspection {
+
+    @NonNls
+    @SuppressWarnings({"PublicField"})
+    public String ignoredTypesString = "java.io.ByteArrayOutputStream" +
+                                       ',' + "java.io.ByteArrayInputStream" +
+                                       ',' + "java.io.StringBufferInputStream" +
+                                       ',' + "java.io.CharArrayWriter" +
+                                       ',' + "java.io.CharArrayReader" +
+                                       ',' + "java.io.StringWriter" +
+                                       ',' + "java.io.StringReader";
+    final List<String> ignoredTypes = new ArrayList();
+
+    public IOResourceInspection() {
+        parseString(ignoredTypesString, ignoredTypes);
+    }
 
     @Override
     @NotNull
@@ -49,11 +81,54 @@ public class IOResourceInspection extends ResourceInspection {
     }
 
     @Override
+    public JComponent createOptionsPanel() {
+        final JComponent panel = new JPanel(new GridBagLayout());
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.gridheight = 2;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        final IGTable table =
+                new IGTable(new ListWrappingTableModel(ignoredTypes,
+                        "ignored io resource types"));
+        final JScrollPane scrollPane = new JScrollPane(table);
+        panel.add(scrollPane, constraints);
+        constraints.gridx = 1;
+        constraints.weightx = 0.0;
+        constraints.weighty = 0.0;
+        constraints.gridheight = 1;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        final JButton addButton =
+                new JButton(new TreeClassChooserAction(table,
+                        "Choose io resource type to ignore"));
+        panel.add(addButton, constraints);
+        constraints.gridy = 1;
+        final JButton removeButton = new JButton(new RemoveAction(table));
+        panel.add(removeButton, constraints);
+        return panel;
+    }
+
+    @Override
+    public void readSettings(Element element) throws InvalidDataException {
+        super.readSettings(element);
+        parseString(ignoredTypesString, ignoredTypes);
+    }
+
+    @Override
+    public void writeSettings(Element element) throws WriteExternalException {
+        ignoredTypesString = formatString(ignoredTypes);
+        super.writeSettings(element);
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new IOResourceVisitor();
     }
 
-    private static class IOResourceVisitor extends BaseInspectionVisitor{
+    private class IOResourceVisitor extends BaseInspectionVisitor{
 
         @Override public void visitNewExpression(
                 @NotNull PsiNewExpression expression){
@@ -94,53 +169,26 @@ public class IOResourceInspection extends ResourceInspection {
 
     }
 
-    public static boolean isIOResource(PsiExpression expression){
-        return isNonTrivialInputStream(expression) ||
-                isNonTrivialWriter(expression) ||
-                isNonTrivialReader(expression) ||
-                TypeUtils.expressionHasTypeOrSubtype(expression,
-		                "java.io.RandomAccessFile") ||
-                isNonTrivialOutputStream(expression);
-    }
-
-    private static boolean isNonTrivialOutputStream(PsiExpression expression){
+    public boolean isIOResource(PsiExpression expression){
         return TypeUtils.expressionHasTypeOrSubtype(expression,
-                "java.io.OutputStream") &&
-                !TypeUtils.expressionHasTypeOrSubtype(expression,
-                "java.io.ByteArrayOutputStream");
+                "java.io.InputStream", "java.io.Writer", "java.io.Reader",
+                "java.io.RandomAccessFile", "java.io.OutputStream") != null &&
+               !isIgnoredType(expression);
     }
 
-    private static boolean isNonTrivialReader(PsiExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype(expression,
-                "java.io.Reader") &&
-                TypeUtils.expressionHasTypeOrSubtype(expression,
-                        "java.io.CharArrayReader", "java.io.StringReader") == null;
+    private boolean isIgnoredType(PsiExpression expression) {
+        return TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes);
     }
 
-    private static boolean isNonTrivialWriter(PsiExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype(expression,
-                "java.io.Writer") &&
-                TypeUtils.expressionHasTypeOrSubtype(expression,
-                        "java.io.CharArrayWriter", "java.io.StringWriter") == null;
-    }
-
-    private static boolean isNonTrivialInputStream(PsiExpression expression){
-        return TypeUtils.expressionHasTypeOrSubtype(expression,
-                "java.io.InputStream") &&
-                TypeUtils.expressionHasTypeOrSubtype(expression,
-                        "java.io.ByteArrayInputStream",
-                        "java.io.StringBufferInputStream") == null;
-    }
-
-    private static boolean isArgumentOfResourceCreation(
+    private boolean isArgumentOfResourceCreation(
             PsiVariable boundVariable, PsiElement scope){
         final UsedAsIOResourceArgumentVisitor visitor =
                 new UsedAsIOResourceArgumentVisitor(boundVariable);
         scope.accept(visitor);
-        return visitor.usedAsArgToResourceCreation();
+        return visitor.usedAsArgumentToResourceCreation();
     }
 
-    private static class UsedAsIOResourceArgumentVisitor
+    private class UsedAsIOResourceArgumentVisitor
             extends JavaRecursiveElementVisitor{
 
         private boolean usedAsArgToResourceCreation = false;
@@ -180,7 +228,7 @@ public class IOResourceInspection extends ResourceInspection {
             usedAsArgToResourceCreation = true;
         }
 
-        public boolean usedAsArgToResourceCreation(){
+        public boolean usedAsArgumentToResourceCreation(){
             return usedAsArgToResourceCreation;
         }
     }

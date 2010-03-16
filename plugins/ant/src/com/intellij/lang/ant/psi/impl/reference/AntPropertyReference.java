@@ -119,6 +119,7 @@ public class AntPropertyReference extends AntGenericReference {
     return AntBundle.message("unknown.property", getCanonicalText());
   }
 
+  @NotNull
   public Object[] getVariants() {
     final AntElement currentElement = getElement();
     final Set<PsiElement> variants = PsiElementSetSpinAllocator.alloc();

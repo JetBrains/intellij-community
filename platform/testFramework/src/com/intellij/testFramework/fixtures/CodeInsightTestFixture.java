@@ -295,9 +295,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @Nullable LookupElement[] complete(CompletionType type);
 
-  void checkResult(final String text) throws IOException;
+  void checkResult(final String text);
 
-  void checkResult(final String text, boolean stripTrailingSpaces) throws IOException;
+  void checkResult(final String text, boolean stripTrailingSpaces);
 
   Document getDocument(PsiFile file);
 

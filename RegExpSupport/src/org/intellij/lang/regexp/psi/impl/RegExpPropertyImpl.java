@@ -118,6 +118,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             return false;
         }
 
+        @NotNull
         public Object[] getVariants() {
             final ASTNode categoryNode = getCategoryNode();
             if (categoryNode != null && categoryNode.getText().startsWith("In") && !categoryNode.getText().startsWith("Intelli")) {

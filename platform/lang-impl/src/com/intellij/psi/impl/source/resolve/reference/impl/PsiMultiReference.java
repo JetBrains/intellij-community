@@ -127,6 +127,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return false;
   }
 
+  @NotNull
   public Object[] getVariants() {
     Set<Object> variants = new HashSet<Object>();
     for(PsiReference ref: myReferences) {

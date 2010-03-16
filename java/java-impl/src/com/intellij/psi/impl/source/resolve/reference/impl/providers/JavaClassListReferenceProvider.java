@@ -24,6 +24,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -102,6 +103,6 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
         ProgressManager.checkCanceled();
       }
     }
-    return results.toArray(new PsiReference[results.size()]);
+    return ContainerUtil.toArray(results, new PsiReference[results.size()]);
   }
 }

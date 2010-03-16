@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 

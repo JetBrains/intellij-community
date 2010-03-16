@@ -35,7 +35,7 @@ import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
- */ 
+ */
 class XmlZenCodingInterpreter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.zencoding.XmlZenCodingInterpreter");
   private static final String ATTRS = "ATTRS";
@@ -46,10 +46,7 @@ class XmlZenCodingInterpreter {
   private static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
   private State myState;
 
-  XmlZenCodingInterpreter(List<Token> tokens,
-                          CustomTemplateCallback callback,
-                          State initialState,
-                          TemplateInvokationListener listener) {
+  XmlZenCodingInterpreter(List<Token> tokens, CustomTemplateCallback callback, State initialState, TemplateInvokationListener listener) {
     myTokens = tokens;
     myCallback = callback;
     myListener = listener;
@@ -380,37 +377,42 @@ class XmlZenCodingInterpreter {
     List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
     if (callback.isLiveTemplateApplicable(token.myKey)) {
       if (token.myTemplate != null) {
-        TemplateImpl modifiedTemplate = token.myTemplate.copy();
-        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback.getProject());
-        assert tag != null;
-        for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-          Pair<String, String> pair = iterator.next();
-          if (tag.getAttribute(pair.first) != null) {
-            tag.setAttribute(pair.first, getValue(pair, numberInIteration));
-            iterator.remove();
-          }
-        }
-        String text = null;
-        if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
-          String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
-          if (textWithAttrs != null) {
-            text = textWithAttrs;
-          }
-          else {
-            for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-              Pair<String, String> pair = iterator.next();
+        if (attr2value.size() > 0) {
+          TemplateImpl modifiedTemplate = token.myTemplate.copy();
+          XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback.getProject());
+          assert tag != null;
+          for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+            Pair<String, String> pair = iterator.next();
+            if (tag.getAttribute(pair.first) != null) {
               tag.setAttribute(pair.first, getValue(pair, numberInIteration));
               iterator.remove();
             }
           }
+          String text = null;
+          if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
+            String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
+            if (textWithAttrs != null) {
+              text = textWithAttrs;
+            }
+            else {
+              for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+                Pair<String, String> pair = iterator.next();
+                tag.setAttribute(pair.first, getValue(pair, numberInIteration));
+                iterator.remove();
+              }
+            }
+          }
+          if (text == null) {
+            text = tag.getContainingFile().getText();
+          }
+          modifiedTemplate.setString(text);
+          removeVariablesWhichHasNoSegment(modifiedTemplate);
+          Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+          return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
         }
-        if (text == null) {
-          text = tag.getContainingFile().getText();
+        else {
+          return callback.startTemplate(token.myTemplate, null, listener);
         }
-        modifiedTemplate.setString(text);
-        removeVariablesWhichHasNoSegment(modifiedTemplate);
-        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-        return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
       }
       else {
         Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);

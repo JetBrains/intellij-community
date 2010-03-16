@@ -16,7 +16,7 @@
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.UserDictionary;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -39,24 +39,24 @@ public class DictionaryState implements PersistentStateComponent<DictionaryState
   public String name;
 
   @Transient
-  private Dictionary dictionary;
+  private EditableDictionary dictionary;
 
   public DictionaryState() {
   }
 
-  public DictionaryState(@NotNull Dictionary dictionary) {
+  public DictionaryState(@NotNull EditableDictionary dictionary) {
     setDictionary(dictionary);
   }
 
   @Transient
-  public void setDictionary(@NotNull Dictionary dictionary) {
+  public void setDictionary(@NotNull EditableDictionary dictionary) {
     this.dictionary = dictionary;
     this.name = dictionary.getName();
     synchronizeWords();
   }
 
   @Transient
-  public Dictionary getDictionary() {
+  public EditableDictionary getDictionary() {
     return dictionary;
   }
 

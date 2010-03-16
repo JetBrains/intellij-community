@@ -31,8 +31,11 @@
  */
 package com.intellij.projectView;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -65,13 +68,23 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
       final StructureViewComponent structureViewComponent =
         (StructureViewComponent)fileEditor.getStructureViewBuilder().createStructureView(fileEditor, myProject);
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
-      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" + " -Class1\n" + "  getValue():int\n" +
-                                                                     "  hashCode():int\n" + "  finalize():void\n" + "  notify():void\n" +
-                                                                     "  notifyAll():void\n" + "  wait():void\n" + "  wait(long):void\n" +
-                                                                     "  wait(long, int):void\n" + "  getClass():Class\n" +
-                                                                     "  clone():Object\n" + "  equals(Object):boolean\n" +
-                                                                     "  toString():String\n" + "  myField1:boolean\n" +
-                                                                     "  myField2:boolean\n");
+      IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
+                                   "-Class1.java\n" +
+                                   " -Class1\n" +
+                                   "  getValue():int\n" +
+                                   "  getClass():Class<? extends Object>\n" +
+                                   "  hashCode():int\n" +
+                                   "  equals(Object):boolean\n" +
+                                   "  clone():Object\n" +
+                                   "  toString():String\n" +
+                                   "  notify():void\n" +
+                                   "  notifyAll():void\n" +
+                                   "  wait(long):void\n" +
+                                   "  wait(long, int):void\n" +
+                                   "  wait():void\n" +
+                                   "  finalize():void\n" +
+                                   "  myField1:boolean\n" +
+                                   "  myField2:boolean\n");
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
@@ -89,17 +102,17 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
       IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
                                                                      " -Class1\n" + "  getValue():int\n" +
+                                                                     "  getClass():Class<? extends Object>\n" +
                                                                      "  hashCode():int\n" +
-                                                                     "  finalize():void\n" +
+                                                                     "  equals(Object):boolean\n" +
+                                                                     "  clone():Object\n" +
+                                                                     "  toString():String\n" +
                                                                      "  notify():void\n" +
                                                                      "  notifyAll():void\n" +
-                                                                     "  wait():void\n" +
                                                                      "  wait(long):void\n" +
                                                                      "  wait(long, int):void\n" +
-                                                                     "  getClass():Class\n" +
-                                                                     "  clone():Object\n" +
-                                                                     "  equals(Object):boolean\n" +
-                                                                     "  toString():String\n" +
+                                                                     "  wait():void\n" +
+                                                                     "  finalize():void\n" +
                                                                      "  myField1:boolean\n" +
                                                                      "  myField2:boolean\n" +
                                                                      "  myNewField:boolean = false\n");
@@ -224,4 +237,15 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     }
 
   }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdkCE();
+  }
+
 }

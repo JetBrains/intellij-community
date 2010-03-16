@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
@@ -119,8 +120,7 @@ public class ArrayUtil {
   @NotNull
   public static String[] toStringArray(@NotNull Collection<String> collection) {
     if (collection.isEmpty()) return EMPTY_STRING_ARRAY;
-    //noinspection SSBasedInspection
-    return collection.toArray(new String[collection.size()]);
+    return ContainerUtil.toArray(collection, new String[collection.size()]);
   }
 
   @NotNull

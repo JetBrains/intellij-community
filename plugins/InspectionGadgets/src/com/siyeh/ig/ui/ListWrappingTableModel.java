@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.siyeh.ig.ui;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ListWrappingTableModel extends AbstractTableModel {
 
@@ -75,6 +75,23 @@ public class ListWrappingTableModel extends AbstractTableModel {
         addRow(strings);
     }
 
+    @Override
+    public Class<String> getColumnClass(int columnIndex) {
+        return String.class;
+    }
+
+    public int getColumnCount() {
+        return columnNames.size();
+    }
+
+    @Override
+    public String getColumnName(int columnIndex) {
+        if (columnIndex < columnNames.size()) {
+            return columnNames.get(columnIndex);
+        }
+        return null;
+    }
+
     public int getRowCount() {
         final List<String> column0 = list.get(0);
         if (column0 == null) {
@@ -83,31 +100,17 @@ public class ListWrappingTableModel extends AbstractTableModel {
         return column0.size();
     }
 
-    public int getColumnCount() {
-        return columnNames.size();
-    }
-
-    public String getColumnName(int columnIndex) {
-        if (columnIndex < columnNames.size()) {
-            return columnNames.get(columnIndex);
-        }
-        return null;
-    }
-
-    public Class<String> getColumnClass(int columnIndex) {
-        return String.class;
-    }
-
     public Object getValueAt(int rowIndex, int columnIndex) {
         return list.get(columnIndex).get(rowIndex);
     }
 
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-        return true;
+    public int indexOf(String value, int columnIndex) {
+        return list.get(columnIndex).indexOf(value);
     }
 
-    public void setValueAt(Object value, int rowIndex, int columnIndex) {
-        list.get(columnIndex).set(rowIndex, String.valueOf(value));
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return true;
     }
 
     public void removeRow(int rowIndex) {
@@ -115,5 +118,10 @@ public class ListWrappingTableModel extends AbstractTableModel {
             column.remove(rowIndex);
         }
         fireTableRowsDeleted(rowIndex, rowIndex);
+    }
+
+    @Override
+    public void setValueAt(Object value, int rowIndex, int columnIndex) {
+        list.get(columnIndex).set(rowIndex, String.valueOf(value));
     }
 }

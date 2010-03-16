@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 public class TypeUtils {
 
     private TypeUtils() {}
@@ -73,6 +75,7 @@ public class TypeUtils {
         return aClass != null && ClassUtils.isSubclass(aClass, typeName);
     }
 
+    //getTypeIfOneOfOrSubtype
     public static String expressionHasTypeOrSubtype(
             @Nullable PsiExpression expression,
             @NonNls @NotNull String... typeNames) {
@@ -97,5 +100,31 @@ public class TypeUtils {
             }
         }
         return null;
+    }
+
+    public static boolean expressionHasTypeOrSubtype(
+            @Nullable PsiExpression expression,
+            @NonNls @NotNull Collection<String> typeNames) {
+        if (expression == null) {
+            return false;
+        }
+        final PsiType type = expression.getType();
+        if (type == null) {
+            return false;
+        }
+        if (!(type instanceof PsiClassType)) {
+            return false;
+        }
+        final PsiClassType classType = (PsiClassType) type;
+        final PsiClass aClass = classType.resolve();
+        if (aClass == null) {
+            return false;
+        }
+        for (String typeName : typeNames) {
+            if (ClassUtils.isSubclass(aClass, typeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

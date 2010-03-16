@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -61,12 +62,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
+public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageImpl");
 
   private final PsiManagerEx myManager;
@@ -100,7 +98,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   @NotNull
   public PsiDirectory[] getDirectories() {
     final Collection<PsiDirectory> collection = getAllDirectories();
-    return collection.toArray(new PsiDirectory[collection.size()]);
+    return ContainerUtil.toArray(collection, new PsiDirectory[collection.size()]);
   }
 
   private Collection<PsiDirectory> getAllDirectories() {
@@ -642,5 +640,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   public PsiQualifiedNamedElement getContainer() {
     return getParentPackage();
+  }
+
+  public void putInfo(Map<String, String> info) {
+    info.put("packageName", getName());
+    info.put("packageQualifiedName", getQualifiedName());
   }
 }

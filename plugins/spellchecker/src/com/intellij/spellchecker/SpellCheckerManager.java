@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.SpellCheckerEngine;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
@@ -33,7 +33,6 @@ import com.intellij.spellchecker.state.StateLoader;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.Consumer;
-import com.sun.net.ssl.internal.ssl.SSLEngineImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +50,7 @@ public class SpellCheckerManager {
 
   private SpellCheckerEngine spellChecker;
 
-  private Dictionary userDictionary;
-
+  private EditableDictionary userDictionary;
 
 
   @NotNull
@@ -67,26 +65,73 @@ public class SpellCheckerManager {
   public SpellCheckerManager(Project project, SpellCheckerSettings settings) {
     this.project = project;
     this.settings = settings;
-    reloadConfiguration();
+    fullConfigurationReload();
+  }
 
+  public void fullConfigurationReload() {
+    spellChecker = SpellCheckerFactory.create();
+    fillEngineDictionary();
+  }
+
+
+  public void updateBundledDictionaries() {
+    for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
+      for (String dictionary : provider.getBundledDictionaries()) {
+        boolean dictionaryShouldBeLoad = this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary);
+        boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(dictionary);
+        if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
+          spellChecker.removeDictionary(dictionary);
+        }
+        else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
+          final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
+          final InputStream stream = loaderClass.getResourceAsStream(dictionary);
+          if (stream != null) {
+            spellChecker.loadDictionary(new StreamLoader(stream, dictionary));
+          }
+          else {
+            LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
+          }
+        }
+      }
+    }
+    if (this.settings != null && this.settings.getDictionaryFoldersPaths() != null) {
+      final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
+      for (String folder : this.settings.getDictionaryFoldersPaths()) {
+        SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
+          public void consume(final String s) {
+            boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
+            boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
+            if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
+              spellChecker.removeDictionary(s);
+            }
+            else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
+              spellChecker.loadDictionary(new FileLoader(s, s));
+            }
+
+          }
+        });
+
+      }
+    }
+    restartInspections();
   }
 
   public Project getProject() {
     return project;
   }
 
-  public Dictionary getUserDictionary() {
+  public EditableDictionary getUserDictionary() {
     return userDictionary;
-  }
-
-  public void reloadConfiguration() {
-    spellChecker = SpellCheckerFactory.create();
-    fillEngineDictionary();
   }
 
   private void fillEngineDictionary() {
     spellChecker.reset();
     final StateLoader stateLoader = new StateLoader(project);
+    stateLoader.load(new Consumer<String>() {
+      public void consume(String s) {
+        //do nothing - in this loader we don't worry about word list itself - the whole dictionary will be restored
+      }
+    });
     final List<Loader> loaders = new ArrayList<Loader>();
     // Load bundled dictionaries from corresponding jars
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
@@ -94,10 +139,11 @@ public class SpellCheckerManager {
         if (this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
           final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
           final InputStream stream = loaderClass.getResourceAsStream(dictionary);
-          if (stream != null){
-            loaders.add(new StreamLoader(stream));
-          } else {
-            LOG.warn("Couldn't load dictionary '" + dictionary + "' for loader '" + loaderClass + "'");
+          if (stream != null) {
+            loaders.add(new StreamLoader(stream, dictionary));
+          }
+          else {
+            LOG.warn("Couldn't load dictionary '" + dictionary + "' with loader '" + loaderClass + "'");
           }
         }
       }
@@ -108,7 +154,7 @@ public class SpellCheckerManager {
         SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
           public void consume(final String s) {
             if (!disabledDictionaries.contains(s)) {
-              loaders.add(new FileLoader(s));
+              loaders.add(new FileLoader(s, s));
             }
           }
         });
@@ -120,6 +166,7 @@ public class SpellCheckerManager {
       spellChecker.loadDictionary(loader);
     }
     userDictionary = stateLoader.getDictionary();
+
   }
 
 
@@ -131,15 +178,14 @@ public class SpellCheckerManager {
     final String transformed = spellChecker.getTransformation().transform(word);
     if (transformed != null) {
       userDictionary.addToDictionary(transformed);
-      spellChecker.addToDictionary(transformed);
     }
   }
 
-  public void update(@Nullable Collection<String> words, SpellCheckerSettings allDictionaries) {
+  public void updateUserDictionary(@Nullable Collection<String> words) {
     userDictionary.replaceAll(words);
-    reloadConfiguration();
     restartInspections();
   }
+
 
 
   @NotNull
@@ -162,7 +208,6 @@ public class SpellCheckerManager {
   }
 
 
-  
   @NotNull
   protected List<String> getRawSuggestions(@NotNull String word) {
     if (!spellChecker.isCorrect(word)) {

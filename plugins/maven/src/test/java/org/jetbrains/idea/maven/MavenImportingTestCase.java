@@ -31,13 +31,13 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.idea.maven.project.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -45,10 +45,7 @@ import org.jetbrains.idea.maven.execution.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
@@ -410,7 +407,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void downloadArtifacts() {
-    myProjectsManager.scheduleArtifactsDownloadingForAllProjects();
+    downloadArtifacts(myProjectsManager.getProjects(), null);
+  }
+
+  protected void downloadArtifacts(Collection<MavenProject> projects, List<MavenArtifact> artifacts) {
+    myProjectsManager.scheduleArtifactsDownloading(projects, artifacts, true, true);
     myProjectsManager.waitForArtifactsDownloadingCompletion();
   }
 

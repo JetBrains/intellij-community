@@ -19,8 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.ui.TestableUi;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusCommand;
@@ -56,7 +56,7 @@ import java.util.*;
 import java.util.List;
 
 public class JBTabsImpl extends JComponent
-  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, TestableUi {
+  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
