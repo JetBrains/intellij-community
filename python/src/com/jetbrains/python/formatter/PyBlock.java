@@ -120,8 +120,21 @@ public class PyBlock implements ASTBlock {
         childAlignment = _childListAlignment;
       }
     }
-    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.ARGUMENT_LIST) {
-      childIndent = Indent.getContinuationIndent();
+    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
+      if (childType == PyTokenTypes.RBRACKET) {
+        childIndent = Indent.getNoneIndent();
+      }
+      else {
+        childIndent = Indent.getContinuationIndent();
+      }
+    }
+    else if (parentType == PyElementTypes.ARGUMENT_LIST) {
+      if (childType == PyTokenTypes.RPAR) {
+        childIndent = Indent.getNoneIndent();
+      }
+      else {
+        childIndent = Indent.getContinuationIndent();
+      }
     }
     try { // maybe enter was pressed and cut us from a previous (nested) statement list
       PsiElement prev = sure(child.getPsi().getPrevSibling());

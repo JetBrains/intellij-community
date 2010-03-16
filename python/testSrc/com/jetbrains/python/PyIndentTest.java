@@ -1,19 +1,17 @@
 package com.jetbrains.python;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 import java.io.IOException;
-import java.util.Calendar;
 
 /**
  * @author yole
  */
 public class PyIndentTest extends PyLightFixtureTestCase {
-  private void doTest(final String before, String after) throws Exception {
+  private void doTest(final String before, String after) {
     final String name = getTestName(false);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -35,63 +33,61 @@ public class PyIndentTest extends PyLightFixtureTestCase {
     myFixture.checkResult(after);
   }
 
-  public void testSimpleIndent() throws Exception {
+  public void testSimpleIndent() {
     doTest("a=1<caret>", "a=1\n<caret>");
   }
 
-  public void testIndentColon() throws Exception {
+  public void testIndentColon() {
     doTest("if a:<caret>", "if a:\n    <caret>");
   }
 
-  public void testIndentStatementList() throws Exception {
+  public void testIndentStatementList() {
     doTest("if a:<caret>\n    print a", "if a:\n    <caret>\n    print a");
   }
 
-  public void testIndentStatementList2() throws Exception {
+  public void testIndentStatementList2() {
     doTest("while a:\n    print a<caret>", "while a:\n    print a\n    <caret>");
   }
 
-  public void testIndentStatementList3() throws Exception {
+  public void testIndentStatementList3() {
     doTest("if a:\n    print a<caret>\n\nprint b", "if a:\n    print a\n    <caret>\n\nprint b");
   }
 
-  public void testIndentOneLineStatementList() throws Exception {
+  public void testIndentOneLineStatementList() {
     doTest("if a:\n    if b: print c<caret>\n    print d", "if a:\n    if b: print c\n    <caret>\n    print d");
   }
 
-  public void testIndentOneLineStatementListBreak() throws Exception {
+  public void testIndentOneLineStatementListBreak() {
     doTest("if a:\n    if b:<caret> print c\n    print d", "if a:\n    if b:\n        <caret>print c\n    print d");
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 17, user = "yole")
-  public void testAlignInList() throws Exception {
+  public void testAlignInList() {
     doTest("__all__ = [a,<caret>", "__all__ = [a,\n" + "           <caret>");
   }
 
-  public void testAlignInListMiddle() throws Exception {
+  public void testAlignInListMiddle() {
     doTest("__all__ = [a,<caret>\n" + "           c]", "__all__ = [a,\n" + "           <caret>\n" + "           c]");
   }
 
-  public void testAlignInListMiddle2() throws Exception {
+  public void testAlignInListMiddle2() {
     doTest("__all__ = [a,\n" + "           b,<caret>\n" + "           c]",
            "__all__ = [a,\n" + "           b,\n" + "           <caret>\n" + "           c]");
   }
 
-  @Bombed(month = Calendar.FEBRUARY, day = 17, user = "yole")
-  public void testAlignInListComp() throws Exception {
+  public void testAlignInListComp() {
     doTest("__all__ = [a for<caret>", "__all__ = [a for\n" + "           <caret>");
   }
 
-  public void testClass() throws Exception {
+  public void testClass() {
     doTest("class A:\n" + "    print a<caret>", "class A:\n" + "    print a\n" + "    <caret>");
   }
 
-  public void testClass2() throws Exception {
+  public void testClass2() {
     doTest("class CombatExpertiseFeat(Ability):\n" + "    if a: print b\n" + "    def getAvailableActions(self):<caret>",
            "class CombatExpertiseFeat(Ability):\n" + "    if a: print b\n" + "    def getAvailableActions(self):\n" + "        <caret>");
   }
 
-  public void testClass2_1() throws Exception {
+  public void testClass2_1() {
     doTest(
       "class CombatExpertiseFeat(Ability):\n" + "    if a: print b\n" + "    def getAvailableActions(self):<caret>\n" + "class C2: pass",
 
@@ -102,7 +98,7 @@ public class PyIndentTest extends PyLightFixtureTestCase {
       "class C2: pass");
   }
 
-  public void testMultiDedent() throws Exception {
+  public void testMultiDedent() {
     doTest("class CombatExpertiseFeat(Ability):\n" + "    def getAvailableActions(self):\n" + "        result = ArrayList()<caret>",
            "class CombatExpertiseFeat(Ability):\n" +
            "    def getAvailableActions(self):\n" +
@@ -110,22 +106,34 @@ public class PyIndentTest extends PyLightFixtureTestCase {
            "        <caret>");
   }
 
-  public void testMultiDedent1() throws Exception {
+  public void testMultiDedent1() {
     doTest("class CombatExpertiseFeat(Ability):\n" + "    def getAvailableActions(self):\n" + "        if a:<caret>",
            "class CombatExpertiseFeat(Ability):\n" + "    def getAvailableActions(self):\n" + "        if a:\n" + "            <caret>");
   }
 
-  public void testMultiDedent2() throws Exception {
+  public void testMultiDedent2() {
     doTest("class CombatExpertiseFeat(Ability):\n" + "    def getAvailableActions(self): result = ArrayList()<caret>",
            "class CombatExpertiseFeat(Ability):\n" + "    def getAvailableActions(self): result = ArrayList()\n" + "    <caret>");
   }
 
-  public void testIfElse() throws Exception {
+  public void testIfElse() {
     doTest("if a:<caret>\n" + "    b\n" + "else:\n" + "    c", "if a:\n" + "    <caret>\n" + "    b\n" + "else:\n" + "    c");
   }
 
-  public void testIfElse2() throws Exception {
+  public void testIfElse2() {
     doTest("if a:\n" + "    b\n" + "else:<caret>\n" + "    c", "if a:\n" + "    b\n" + "else:\n" + "    <caret>\n" + "    c");
+  }
+
+  public void testEnterInEmptyParens() {      // PY-433
+    doTest("foo(<caret>)", "foo(\n    <caret>\n)");
+  }
+
+  public void testEnterInEmptyList() {
+    doTest("[<caret>]", "[\n]");
+  }
+
+  public void testEnterInEmptyDict() {
+    doTest("{<caret>}", "{\n    <caret>\n}");
   }
 
   /*
