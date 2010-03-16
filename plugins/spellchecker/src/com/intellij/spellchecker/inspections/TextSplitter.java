@@ -48,7 +48,7 @@ public class TextSplitter {
   @NonNls
   private static final Pattern SPECIAL = Pattern.compile("^&\\p{Alnum}{4};");
 
-  private static final String delimiters = ".,;:!?*/&";
+  private static final String delimiters = ".,;:!?*/&\"";
 
 
   private TextSplitter() {
@@ -172,7 +172,13 @@ public class TextSplitter {
 
   private static void addWord(String text, List<CheckArea> results, boolean flag, TextRange found) {
     boolean tooShort = (found.getEndOffset() - found.getStartOffset()) <= 3;
-    results.add(new CheckArea(text, found, flag || tooShort));
+    for (int i = found.getStartOffset(); i<found.getEndOffset();i++){
+      if (!Character.isLetter(text.charAt(i)) && text.charAt(i)!='\''){
+         return;
+      }
+    }
+    final CheckArea area = new CheckArea(text, found, flag || tooShort);
+    results.add(area);
   }
 
 

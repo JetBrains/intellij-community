@@ -174,7 +174,21 @@ public class SplitterTest extends TestCase {
     String text = "test &nbsp; test";
     List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"test", "test"});
-    correctIgnored(checkAreas, text, new String[]{"&nbsp;"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testColorUC() {
+    String text = "#AABBFF";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testColorLC() {
+    String text = "#fff";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{});
+    correctIgnored(checkAreas, text, new String[]{});
   }
 
   public void testTooShort() {
@@ -270,13 +284,12 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{});
   }
 
-  public void testNoWordsInHugeBinaryWithXmlFile() {
+  public void testTCData() {
     final InputStream stream = SplitterTest.class.getResourceAsStream("contents.txt");
     String text = convertStreamToString(stream);
     List<CheckArea> checkAreas = TextSplitter.splitText(text);
     List<String> words = wordsToCheck(checkAreas, text);
-    assertNotNull(words);
-    assertEquals(45284, words.size());
+    assertNull(words);
   }
 
 

@@ -38,36 +38,30 @@ public class DictionaryTest extends TestCase {
   private Dictionary dictionary;
 
   private Map<String, Integer> sizes = new HashMap<String, Integer>();
-    private Map<String, Integer> times = new HashMap<String, Integer>();
+  private Map<String, Integer> times = new HashMap<String, Integer>();
+  private static final String JETBRAINS_DIC = "jetbrains.dic";
+  private static final String ENGLISH_DIC = "english.dic";
 
   {
-    sizes.put("jetbrains.dic", 1000);
-    sizes.put("english.dic", 140000);
-    sizes.put("russian-utf8.dic", 1200000);
+    sizes.put(JETBRAINS_DIC, 1000);
+    sizes.put(ENGLISH_DIC, 140000);
   }
-
   {
-    times.put("jetbrains.dic", 100);
-    times.put("english.dic", 2700);
-    times.put("russian-utf8.dic", 32000);
+    times.put(JETBRAINS_DIC, 100);
+    times.put(ENGLISH_DIC, 3500);
   }
 
   public void testDictionary() throws IOException {
-
-    DefaultBundledDictionariesProvider dp = new DefaultBundledDictionariesProvider();
-    final String[] names = dp.getBundledDictionaries();
+    final String[] names = new String[]{JETBRAINS_DIC,ENGLISH_DIC};
     for (String name : names) {
-      StreamLoader loader = createLoader(name);
-      loadDictionaryTest(loader, sizes.get(name), name);
-      loadHalfDictionaryTest(50000, name);
+      loadDictionaryTest(name, sizes.get(name));
+      loadHalfDictionaryTest(name, 50000);
     }
-
   }
 
-
-  public void loadDictionaryTest(final Loader loader, int wordCount, final String name) throws IOException {
+  public void loadDictionaryTest(@NotNull final String name, int wordCount) throws IOException {
     final Transformation transform = new Transformation();
-
+    final Loader loader = new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name);
     IdeaTestUtil
       .assertTiming("Dictionary load depends on words count. Approximate word count: " + wordCount + ".", times.get(name), new Runnable() {
         public void run() {
@@ -76,7 +70,7 @@ public class DictionaryTest extends TestCase {
       });
 
     final Set<String> wordsToStoreAndCheck = createWordSets(name, 50000, 1).getFirst();
-    IdeaTestUtil.assertTiming("Invoke 'contains'  " + wordsToStoreAndCheck.size() + " times", 1000, new Runnable() {
+    IdeaTestUtil.assertTiming("Invoke 'contains'  " + wordsToStoreAndCheck.size() + " times", 2000, new Runnable() {
       public void run() {
         for (String s : wordsToStoreAndCheck) {
           assertTrue(dictionary.contains(s));
@@ -84,10 +78,6 @@ public class DictionaryTest extends TestCase {
       }
     });
 
-  }
-
-  private static StreamLoader createLoader(String name) {
-    return new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name);
   }
 
   private static Loader createLoader(final Set<String> words) {
@@ -106,7 +96,7 @@ public class DictionaryTest extends TestCase {
 
   @SuppressWarnings({"unchecked"})
   private static Pair<Set<String>, Set<String>> createWordSets(String name, final int maxCount, final int mod) {
-    Loader loader = createLoader(name);
+    Loader loader = new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name);
     final Set<String> wordsToStore = new THashSet<String>();
     final Set<String> wordsToCheck = new THashSet<String>();
     final Transformation transform = new Transformation();
@@ -135,10 +125,10 @@ public class DictionaryTest extends TestCase {
   }
 
 
-  public void loadHalfDictionaryTest(final int maxCount, final String name) throws IOException {
-
+  public static void loadHalfDictionaryTest(final String name, final int maxCount) throws IOException {
     final Pair<Set<String>, Set<String>> sets = createWordSets(name, maxCount, 2);
-    CompressedDictionary dictionary = CompressedDictionary.create(createLoader(sets.getFirst()), new Transformation());
+    final Loader loader = createLoader(sets.getFirst());
+    CompressedDictionary dictionary = CompressedDictionary.create(loader, new Transformation());
     for (String s : sets.getSecond()) {
       if (!sets.getFirst().contains(s)) {
         assertFalse(dictionary.contains(s));
