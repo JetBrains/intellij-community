@@ -1,6 +1,5 @@
 package com.jetbrains.python.console;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.ConsoleHighlighter;
@@ -8,15 +7,11 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.PyHighlighter;
 
-import javax.swing.plaf.TextUI;
 import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -132,6 +127,6 @@ class PyConsoleProcessHandler extends OSProcessHandler {
         final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
         console.addToHistory(string, attributes);
       }
-    });
+    }, ModalityState.stateForComponent(console.getComponent()));
   }
 }
