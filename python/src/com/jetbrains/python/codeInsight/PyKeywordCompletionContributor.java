@@ -92,6 +92,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
           PsiElement prev = p.getPrevSibling();
           while (prev instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
           if (prev == null) return true; // there was only whitespace before us
+          if (prev.getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) return true; // a valid comment comes before us
           if (prev instanceof PyStatement) { // a non-stmt would be something strange
             if (prev.getLastChild() instanceof PsiErrorElement) {
               // prev stmt ends with an error. are we on the same line?
