@@ -159,9 +159,7 @@ def layoutFull(String home, String targetDirectory) {
       layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
       layoutPlugin("ToString", "generate-tostring", "toString")
 
-      layoutPlugin("SpellChecker", "spellchecker", "spellchecker-core") {
-        fileset(dir: "$home/plugins/spellchecker/lib")
-      }
+      layoutPlugin("SpellChecker", "spellchecker", "spellchecker-core")
 
 
       layoutPlugin("maven") {
