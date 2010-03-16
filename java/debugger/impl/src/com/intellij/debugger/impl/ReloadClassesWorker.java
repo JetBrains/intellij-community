@@ -101,14 +101,15 @@ class ReloadClassesWorker {
       return;
     }
 
-    final VirtualMachineProxyImpl virtualMachineProxy = getDebugProcess().getVirtualMachineProxy();
+    final DebugProcessImpl debugProcess = getDebugProcess();
+    final VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
     if(virtualMachineProxy == null) {
       return;
     }
 
-    final Project project = getDebugProcess().getProject();
+    final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
-    breakpointManager.disableBreakpoints(getDebugProcess());
+    breakpointManager.disableBreakpoints(debugProcess);
     
     virtualMachineProxy.suspend();
            
@@ -176,23 +177,33 @@ class ReloadClassesWorker {
         }
         final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
         breakpointManager.reloadBreakpoints();
-        breakpointManager.updateAllRequests();
+        debugProcess.getRequestsManager().clearWarnings();
         if (LOG.isDebugEnabled()) {
           LOG.debug("requests updated");
           LOG.debug("time stamp set");
         }
         myDebuggerSession.refresh(false);
 
-        getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
-              protected void action() throws Exception {
-                try {
-                  virtualMachineProxy.resume();
-                }
-                catch (Exception e) {
-                  processException(e);
-                }
-              }
-            });
+        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+          protected void action() throws Exception {
+            try {
+              breakpointManager.enableBreakpoints(debugProcess);
+            }
+            catch (Exception e) {
+              processException(e);
+            }
+            try {
+              virtualMachineProxy.resume();
+            }
+            catch (Exception e) {
+              processException(e);
+            }
+          }
+
+          public Priority getPriority() {
+            return Priority.HIGH;
+          }
+        });
       }
     });
   }
