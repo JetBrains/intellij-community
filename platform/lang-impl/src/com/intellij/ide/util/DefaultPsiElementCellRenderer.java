@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 
-public class DefaultPsiElementCellRenderer extends PsiElementListCellRenderer {
+public class DefaultPsiElementCellRenderer extends PsiElementListCellRenderer<PsiElement> {
   protected int getIconFlags() {
     return Iconable.ICON_FLAG_VISIBILITY;
   }

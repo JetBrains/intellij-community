@@ -64,6 +64,7 @@ class SelfReference implements PsiReference {
         return false;
     }
 
+    @NotNull
     public Object[] getVariants() {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

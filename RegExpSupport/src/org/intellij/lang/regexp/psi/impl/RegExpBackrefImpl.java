@@ -104,6 +104,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                 return RegExpBackrefImpl.this.resolve();
             }
             
+            @NotNull
             public Object[] getVariants() {
                 return ArrayUtil.EMPTY_OBJECT_ARRAY;
             }

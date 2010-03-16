@@ -46,10 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 
 public final class TodoPackageNode extends PackageElementNode implements HighlightedRegionProvider {
   private final ArrayList<HighlightedRegion> myHighlightedRegions;
@@ -142,6 +139,12 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
       LOG.info(e);
       data.setPresentableText("N/A");
     }
+  }
+
+  @Override
+  public void apply(Map<String, String> info) {
+    info.put("toDoFileCount", String.valueOf(getFileCount(getValue())));
+    info.put("toDoItemCount", String.valueOf(getTodoItemCount(getValue())));
   }
 
   private int getFileCount(final PackageElement packageElement) {

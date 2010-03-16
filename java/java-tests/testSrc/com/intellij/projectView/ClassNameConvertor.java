@@ -6,8 +6,8 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +35,11 @@ class ClassNameConvertor implements TreeStructureProvider {
           @NotNull
           public Collection<AbstractTreeNode> getChildren() {
             return Collections.emptyList();
+          }
+
+          @Override
+          public String toTestString(Queryable.PrintInfo printInfo) {
+            return super.toTestString(printInfo) + " converted";
           }
 
           public String getTestPresentation() {

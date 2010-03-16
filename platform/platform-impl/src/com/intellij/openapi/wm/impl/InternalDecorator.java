@@ -28,7 +28,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -59,7 +59,7 @@ import java.util.Map;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public final class InternalDecorator extends JPanel implements TestableUi, TypeSafeDataProvider {
+public final class InternalDecorator extends JPanel implements Queryable, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.InternalDecorator");
 
   private static final int DIVIDER_WIDTH = 5;

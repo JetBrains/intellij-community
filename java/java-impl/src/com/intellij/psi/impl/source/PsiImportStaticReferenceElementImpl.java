@@ -383,6 +383,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 
+  @NotNull
   public Object[] getVariants() {
     // IMPLEMENT[dsl]
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

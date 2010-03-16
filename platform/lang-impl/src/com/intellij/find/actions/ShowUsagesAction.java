@@ -184,6 +184,7 @@ public class ShowUsagesAction extends AnAction {
     usageViewSettings.GROUP_BY_MODULE = false;
     usageViewSettings.GROUP_BY_PACKAGE = false;
     usageViewSettings.GROUP_BY_USAGE_TYPE = false;
+    usageViewSettings.GROUP_BY_SCOPE = false;
 
     UsageViewManager manager = UsageViewManager.getInstance(handler.getProject());
     final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
@@ -194,6 +195,7 @@ public class ShowUsagesAction extends AnAction {
         usageViewSettings.GROUP_BY_MODULE = save.GROUP_BY_MODULE;
         usageViewSettings.GROUP_BY_PACKAGE = save.GROUP_BY_PACKAGE;
         usageViewSettings.GROUP_BY_USAGE_TYPE = save.GROUP_BY_USAGE_TYPE;
+        usageViewSettings.GROUP_BY_SCOPE = save.GROUP_BY_SCOPE;
       }
     });
 

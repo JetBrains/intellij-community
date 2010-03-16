@@ -56,6 +56,7 @@ public class FacetErrorPanel {
       public void actionPerformed(final ActionEvent e) {
         if (myCurrentQuickFix != null) {
           myCurrentQuickFix.run(myQuickFixButton);
+          myValidatorsManager.validate();
         }
       }
     });

@@ -767,11 +767,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  public void checkResult(final String text) throws IOException {
+  public void checkResult(final String text) {
     checkResult(text, false);
   }
 
-  public void checkResult(String text, boolean stripTrailingSpaces) throws IOException {
+  public void checkResult(String text, boolean stripTrailingSpaces) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());

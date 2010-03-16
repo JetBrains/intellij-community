@@ -116,6 +116,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       }
     }
 
+    @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -170,6 +171,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       return myElement.getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -454,6 +456,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       }
     }
 
+    @NotNull
     public Object[] getVariants() {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myElement, XmlTag.class);
       if (tag == null) return null;

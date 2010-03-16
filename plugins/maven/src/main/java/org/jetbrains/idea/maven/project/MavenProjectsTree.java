@@ -1063,7 +1063,8 @@ public class MavenProjectsTree {
                         });
   }
 
-  public void downloadArtifacts(MavenProject mavenProject,
+  public void downloadArtifacts(Collection<MavenProject> projects,
+                                Collection<MavenArtifact> artifacts,
                                 boolean downloadSources,
                                 boolean downloadDocs,
                                 MavenEmbeddersManager embeddersManager,
@@ -1073,8 +1074,10 @@ public class MavenProjectsTree {
     embedder.customizeForResolve(console, process);
 
     try {
-      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), downloadSources, downloadDocs, embedder, process);
-      fireArtifactsDownloaded(mavenProject);
+      MavenArtifactDownloader.download(this, projects, artifacts, downloadSources, downloadDocs, embedder, process);
+      for (MavenProject each : projects) {
+        fireArtifactsDownloaded(each);
+      }
     }
     finally {
       embeddersManager.release(embedder);

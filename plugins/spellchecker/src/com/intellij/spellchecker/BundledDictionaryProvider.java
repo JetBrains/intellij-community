@@ -17,9 +17,6 @@ package com.intellij.spellchecker;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 
-/**
- * @author oleg
- */
 public interface BundledDictionaryProvider {
   ExtensionPointName<BundledDictionaryProvider> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.bundledDictionaryProvider");
   

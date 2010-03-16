@@ -17,7 +17,7 @@ package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
@@ -40,7 +40,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Tree extends JTree implements Autoscroll, TestableUi {
+public class Tree extends JTree implements Autoscroll, Queryable {
 
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;

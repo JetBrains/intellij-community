@@ -99,12 +99,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
           }
         }
 
-        SimpleTextAttributes nameAttributes;
         if (isProblemFile) {
           attributes = TextAttributes.merge(new TextAttributes(color, null, Color.red, EffectType.WAVE_UNDERSCORE, Font.PLAIN),attributes);
         }
 
-        nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes):null;
+        SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
         if (nameAttributes == null)  nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
 

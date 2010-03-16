@@ -17,10 +17,7 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -213,7 +210,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
     PatchReader reader;
     try {
-      reader = new PatchReader(patchFile);
+      reader = PatchVirtualFileReader.create(patchFile);
     }
     catch (IOException e) {
       //todo

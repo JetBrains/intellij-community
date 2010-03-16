@@ -46,6 +46,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
            (PsiPackage)myReferenceSet.getReference(myIndex - 1).resolve();
   }
 
+  @NotNull
   public Object[] getVariants() {
     final PsiPackage psiPackage = getContext();
     if (psiPackage == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;

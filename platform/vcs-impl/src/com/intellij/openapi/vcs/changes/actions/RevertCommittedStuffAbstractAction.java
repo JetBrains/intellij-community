@@ -18,8 +18,9 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchBuilder;
+import com.intellij.openapi.diff.impl.patch.TextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -70,13 +71,13 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
 
     List<FilePatch> patches;
     try {
-      patches = PatchBuilder.buildPatch(changesList, baseDir.getPresentableUrl(), false, true);
+      patches = TextPatchBuilder.buildPatch(changesList, baseDir.getPresentableUrl(), true);
     }
     catch (VcsException ex) {
       Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title"));
       return;
     }
-    new PatchApplier(project, baseDir, patches, chooser.getSelectedList(), null).execute();
+    new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null).execute();
   }
 
   public void update(final AnActionEvent e) {

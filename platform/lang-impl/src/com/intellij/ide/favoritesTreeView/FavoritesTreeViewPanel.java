@@ -59,6 +59,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -457,14 +458,15 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       }
     }
 
-    private PsiDirectory getDirectory() {
+    @Nullable
+    private PsiDirectory[] getSelectedDirectories() {
       if (myBuilder == null) return null;
       final Object[] selectedNodeElements = getSelectedNodeElements();
       if (selectedNodeElements.length != 1) return null;
       for (FavoriteNodeProvider nodeProvider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
         final PsiElement psiElement = nodeProvider.getPsiElement(selectedNodeElements[0]);
         if (psiElement instanceof PsiDirectory) {
-          return (PsiDirectory)psiElement;
+          return new PsiDirectory[]{(PsiDirectory)psiElement};
         } else if (psiElement instanceof PsiDirectoryContainer) {
           final String moduleName = nodeProvider.getElementModuleName(selectedNodeElements[0]);
           GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
@@ -474,16 +476,15 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
               searchScope = GlobalSearchScope.moduleScope(module);
             }
           }
-          final PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
-          if (directories.length == 1) return directories[0];
+          return ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
         }
       }
       return null;
     }
 
     public PsiDirectory[] getDirectories() {
-      PsiDirectory directory = getDirectory();
-      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
+      final PsiDirectory[] directories = getSelectedDirectories();
+      return directories == null ? PsiDirectory.EMPTY_ARRAY : directories;
     }
 
     public PsiDirectory getOrChooseDirectory() {

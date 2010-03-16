@@ -16,7 +16,7 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -29,7 +29,7 @@ import java.beans.PropertyChangeSupport;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-public final class TabInfo implements TestableUi {
+public final class TabInfo implements Queryable {
 
   public static final String ACTION_GROUP = "actionGroup";
   public static final String ICON = "icon";
@@ -80,7 +80,7 @@ public final class TabInfo implements TestableUi {
   private boolean myEnabled = true;
   private Color myTabColor = null;
 
-  private TestableUi myTestableUi;
+  private Queryable myQueryable;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -343,14 +343,14 @@ public final class TabInfo implements TestableUi {
     return myTabColor;
   }
 
-  public TabInfo setTestableUi(TestableUi testableUi) {
-    myTestableUi = testableUi;
+  public TabInfo setTestableUi(Queryable queryable) {
+    myQueryable = queryable;
     return this;
   }
 
   public void putInfo(Map<String, String> info) {
-    if (myTestableUi != null) {
-      myTestableUi.putInfo(info);
+    if (myQueryable != null) {
+      myQueryable.putInfo(info);
     }
   }
 }

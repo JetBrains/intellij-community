@@ -15,10 +15,9 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.spellchecker.trie.Action;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Set;
 
 public interface Dictionary {
@@ -29,26 +28,10 @@ public interface Dictionary {
 
   boolean isEmpty();
 
-  void addToDictionary(String word);
-
-  void removeFromDictionary(String word);
-
-  void addToDictionary(@Nullable Collection<String> words);
-
-  void replaceAll(@Nullable Collection<String> words);
-
-  void clear();
-
-  void traverse(final Action action);
+  void traverse(final Consumer<String> action);
 
   @Nullable
   Set<String> getWords();
 
-  @Nullable
-  Set<String> getEditableWords();
-
-  @Nullable
-  Set<String> getNotEditableWords();
-
-
+  int size();
 }

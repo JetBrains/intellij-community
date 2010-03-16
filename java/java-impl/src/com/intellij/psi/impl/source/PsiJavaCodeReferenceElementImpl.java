@@ -694,6 +694,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     myCachedTextSkipWhiteSpaceAndComments = null;
   }
 
+  @NotNull
   public Object[] getVariants() {
     final ElementFilter filter;
     switch (getKind()) {

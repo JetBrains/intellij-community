@@ -56,20 +56,23 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
+
+    checkParametersNumber(conflicts, myActualParameterTypes.length, true);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     checkSameSignatures(conflicts);
-
     if (conflicts.size() == 1) return conflicts.get(0);
+
     checkAccessLevels(conflicts);
-
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkParametersNumber(conflicts, myActualParameterTypes.length);
+    checkParametersNumber(conflicts, myActualParameterTypes.length, false);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     final int applicabilityLevel = checkApplicability(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
-    checkSpecifics(conflicts, applicabilityLevel);
 
+    checkSpecifics(conflicts, applicabilityLevel);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
@@ -196,9 +199,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return ((MethodCandidateInfo)info).isApplicable();
   }
 
-  private static void checkParametersNumber(final List<CandidateInfo> conflicts, final int argumentsCount) {
+  private static void checkParametersNumber(final List<CandidateInfo> conflicts,
+                                            final int argumentsCount,
+                                            boolean checkForStaticAccessProblem) {
     boolean parametersNumberMatch = false;
     for (CandidateInfo info : conflicts) {
+      if (checkForStaticAccessProblem && !info.isStaticsScopeCorrect()) return;
       if (info instanceof MethodCandidateInfo) {
         final PsiMethod method = ((MethodCandidateInfo)info).getElement();
         if (method.isVarArgs()) return;

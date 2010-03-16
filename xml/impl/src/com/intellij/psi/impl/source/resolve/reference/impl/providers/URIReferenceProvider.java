@@ -88,6 +88,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return myReference.resolve();
     }
 
+    @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

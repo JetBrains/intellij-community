@@ -30,7 +30,6 @@ public interface SpellCheckerEngine {
 
   boolean isCorrect(@NotNull String word);
 
-  void addToDictionary(String word);
 
   @NotNull
   List<String> getSuggestions(@NotNull String word, int threshold, int quality);
@@ -38,9 +37,10 @@ public interface SpellCheckerEngine {
   @NotNull
   List<String> getVariants(@NotNull String prefix);
 
-  /**
-   * This method must clean up user dictionary words and ignored words.
-   */
+
   void reset();
 
+  boolean isDictionaryLoad(@NotNull String name);
+
+  void removeDictionary(@NotNull String name);
 }

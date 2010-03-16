@@ -156,6 +156,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
             }
         }
 
+        @NotNull
         public Object[] getVariants() {
             return EMPTY_ARRAY;
         }

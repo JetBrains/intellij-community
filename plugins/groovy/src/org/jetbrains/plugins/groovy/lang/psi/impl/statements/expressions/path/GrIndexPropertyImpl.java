@@ -17,16 +17,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -74,19 +74,26 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
           argTypes[i] = argType;
         }
 
-        final PsiType overloadedOperatorType = TypesUtil.getOverloadedOperatorType(thisType, "getAt", this, argTypes);
-        if (overloadedOperatorType!=null) {
-          return overloadedOperatorType;
+        if (thisType instanceof GrTupleType) {
+          PsiType[] types = ((GrTupleType)thisType).getParameters();
+          return types.length == 1 ? types[0] : null;
+        }
+
+        PsiType overloadedOperatorType = null;
+        final GroovyResolveResult[] candidates = TypesUtil.getOverloadedOperatorCandidates(thisType, "getAt", this, argTypes);
+        if (candidates.length == 1) {
+          final PsiElement element = candidates[0].getElement();
+          if (element instanceof PsiMethod) {
+            overloadedOperatorType = candidates[0].getSubstitutor().substitute(((PsiMethod)element).getReturnType());
+            if (overloadedOperatorType != null && !(element instanceof GrGdkMethod)) {   //gdk 'getAt' methods don't have information about type parameters
+              return overloadedOperatorType;
+            }
+          }
         }
 
         if (thisType instanceof PsiArrayType) {
           PsiType componentType = ((PsiArrayType)thisType).getComponentType();
           return TypesUtil.boxPrimitiveType(componentType, getManager(), getResolveScope());
-        }
-
-        if (thisType instanceof GrTupleType) {
-          PsiType[] types = ((GrTupleType)thisType).getParameters();
-          return types.length == 1 ? types[0] : null;
         }
 
         if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_LIST)) {
@@ -97,6 +104,8 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         if (InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP)) {
           return PsiUtil.substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
         }
+
+        return overloadedOperatorType;
       }
     }
     return null;

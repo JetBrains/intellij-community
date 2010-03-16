@@ -21,12 +21,14 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.ProjectDictionary;
 import com.intellij.spellchecker.state.ProjectDictionarySplitter;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
+import gnu.trove.THashSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,9 +70,9 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
   public void setProjectDictionary(ProjectDictionary projectDictionary) {
     currentUser = projectDictionary.getActiveName();
     dictionaryStates.clear();
-    Set<Dictionary> projectDictionaries = projectDictionary.getDictionaries();
+    Set<EditableDictionary> projectDictionaries = projectDictionary.getDictionaries();
     if (projectDictionaries != null) {
-      for (Dictionary dic : projectDictionary.getDictionaries()) {
+      for (EditableDictionary dic : projectDictionary.getDictionaries()) {
         dictionaryStates.add(new DictionaryState(dic));
       }
     }
@@ -101,7 +103,7 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
   }
 
   private void retrieveProjectDictionaries() {
-    Set<Dictionary> dictionaries = new HashSet<Dictionary>();
+    Set<EditableDictionary> dictionaries = new THashSet<EditableDictionary>();
     if (dictionaryStates != null) {
       for (DictionaryState dictionaryState : dictionaryStates) {
         dictionaryState.loadState(dictionaryState);

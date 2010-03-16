@@ -116,6 +116,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         }
 
         return new MyReference(method) {
+          @NotNull
           public PsiElement[] getVariants() {
             final List<PsiMethod> lst = new ArrayList<PsiMethod>();
             for (PsiMethod method : methods) {
@@ -240,6 +241,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return myReferencee == null ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{new CandidateInfo(myReferencee, PsiSubstitutor.EMPTY)};
     }
 
+    @NotNull
     public PsiElement[] getVariants(){
       final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
       final PsiElement scope = getScope();

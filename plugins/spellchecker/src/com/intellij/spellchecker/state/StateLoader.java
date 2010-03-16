@@ -17,40 +17,48 @@ package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.spellchecker.dictionary.Dictionary;
-import com.intellij.spellchecker.dictionary.Loader;
+import com.intellij.spellchecker.dictionary.EditableDictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionaryLoader;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 
-public class StateLoader implements Loader {
+public class StateLoader implements EditableDictionaryLoader {
 
-    private Project project;
-    private Dictionary dictionary;
+  private Project project;
+  private EditableDictionary dictionary;
 
-    public StateLoader(Project project) {
-        this.project = project;
+  public StateLoader(Project project) {
+    this.project = project;
+  }
+
+
+  public void load(@NotNull Consumer<String> consumer) {
+    AggregatedDictionaryState state = ServiceManager.getService(project, AggregatedDictionaryState.class);
+    state.setProject(project);
+    state.loadState();
+    dictionary = state.getDictionary();
+    if (dictionary == null) {
+      return;
+    }
+    final Set<String> storedWords = dictionary.getWords();
+    if (storedWords != null) {
+      for (String word : storedWords) {
+        consumer.consume(word);
+      }
     }
 
+  }
 
-    public void load(@NotNull Consumer<String> consumer) {
-        AggregatedDictionaryState state = ServiceManager.getService(project, AggregatedDictionaryState.class);
-        state.setProject(project);
-        state.loadState();
-        dictionary = state.getDictionary();
-        final Set<String> storedWords = dictionary.getWords();
-        if (storedWords!=null){
-            for (String word : storedWords) {
-                consumer.consume(word);
-            }
-        }
-    }
+  public EditableDictionary getDictionary() {
+    return dictionary;
+  }
 
-    public Dictionary getDictionary() {
-        return dictionary;
-    }
+  public String getName() {
+    return (dictionary != null ? dictionary.getName() : "");
+  }
 }
 
 
