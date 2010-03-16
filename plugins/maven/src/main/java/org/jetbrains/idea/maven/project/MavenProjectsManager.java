@@ -716,14 +716,6 @@ public class MavenProjectsManager extends SimpleProjectComponent
     });
   }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects) {
-    scheduleArtifactsDownloading(projects, true, true);
-  }
-
-  public void scheduleArtifactsDownloadingForAllProjects() {
-    scheduleArtifactsDownloading(getProjects());
-  }
-
   private void scheduleImport(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges, boolean forceImport) {
     scheduleForNextImport(projectsWithChanges);
     scheduleImport(forceImport);

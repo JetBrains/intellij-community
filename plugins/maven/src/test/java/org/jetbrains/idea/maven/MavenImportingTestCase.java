@@ -410,7 +410,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void downloadArtifacts() {
-    myProjectsManager.scheduleArtifactsDownloadingForAllProjects();
+    myProjectsManager.scheduleArtifactsDownloading(myProjectsManager.getProjects(), true, true);
     myProjectsManager.waitForArtifactsDownloadingCompletion();
   }
 

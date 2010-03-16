@@ -49,7 +49,8 @@ public class MavenArtifactDownloader {
   public static void download(MavenProjectsTree projectsTree,
                               List<MavenProject> mavenProjects,
                               boolean downloadSources,
-                              boolean downloadDocs, MavenEmbedderWrapper embedder,
+                              boolean downloadDocs,
+                              MavenEmbedderWrapper embedder,
                               MavenProgressIndicator p) throws MavenProcessCanceledException {
     new MavenArtifactDownloader(projectsTree, mavenProjects, embedder, p).download(downloadSources, downloadDocs);
   }
@@ -70,6 +71,13 @@ public class MavenArtifactDownloader {
       List<MavenExtraArtifactType> types = new ArrayList<MavenExtraArtifactType>(2);
       if (downloadSources) types.add(MavenExtraArtifactType.SOURCES);
       if (downloadDocs) types.add(MavenExtraArtifactType.DOCS);
+
+      String caption = downloadSources && downloadDocs
+                       ? ProjectBundle.message("maven.downloading")
+                       : (downloadSources
+                          ? ProjectBundle.message("maven.downloading.sources")
+                          : ProjectBundle.message("maven.downloading.docs"));
+      myProgress.setText(caption);
 
       Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(types);
       download(artifacts, downloadedFiles);

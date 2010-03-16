@@ -165,13 +165,33 @@
             icon="/images/updateFolders.png">
     </action>
 
-    <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsAction"
-            text="Download Sources And Documentation For All Projects" description="Download sources and documentation for all dependencies"
+    <action id="Maven.DownloadSources" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesAction"
+            text="Download Sources" description="Download sources for all dependencies"
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.DownloadArtifactsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsForProjectAction"
+    <action id="Maven.DownloadDocs" class="org.jetbrains.idea.maven.project.actions.DownloadDocsAction"
+            text="Download Documentation" description="Download documentation for all dependencies"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesAndDocsAction"
+            text="Download Sources And Documentation" description="Download sources and documentation for all dependencies"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadSourcesAndDocsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesAndDocsForProjectAction"
             text="Download Sources And Documentation" description="Download sources and documentation for all dependencies for selected projects"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadSourcesForProject" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesForProjectAction"
+            text="Download Sources" description="Download sources for all dependencies for selected projects"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadDocsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadDocsForProjectAction"
+            text="Download Documentation" description="Download documentation for all dependencies for selected projects"
             icon="/images/download.png">
     </action>
 
@@ -271,10 +291,16 @@
       </action>
     </group>
 
+    <group id="Maven.DownloadGroup" popup="true" icon="/images/download.png">
+      <reference id="Maven.DownloadSources"/>
+      <reference id="Maven.DownloadDocs"/>
+      <reference id="Maven.DownloadSourcesAndDocs"/>
+    </group>
+
     <group id="Maven.NavigatorActionsToolbar">
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
-      <reference id="Maven.DownloadArtifacts"/>
+      <reference id="Maven.DownloadGroup"/>
       <separator/>
       <reference id="Maven.AddManagedFiles"/>
       <separator/>
@@ -308,7 +334,10 @@
     <group id="Maven.BaseProjectMenu">
       <reference id="Maven.ReimportProject"/>
       <reference id="Maven.UpdateFoldersForProject"/>
-      <reference id="Maven.DownloadArtifactsForProject"/>
+      <separator/>
+      <reference id="Maven.DownloadSourcesForProject"/>
+      <reference id="Maven.DownloadDocsForProject"/>
+      <reference id="Maven.DownloadSourcesAndDocsForProject"/>
       <separator/>
       <reference id="Maven.IgnoreProjects"/>
       <reference id="Maven.RemoveManagedFiles"/>
