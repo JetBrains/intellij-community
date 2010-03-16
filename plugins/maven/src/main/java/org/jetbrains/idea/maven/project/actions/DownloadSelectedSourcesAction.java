@@ -15,13 +15,8 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-
-import java.util.List;
-
-public class DownloadDocsForProjectAction extends DownloadSourcesAndDocsForProjectAction {
-  public DownloadDocsForProjectAction() {
-    super(false, true);
+public class DownloadSelectedSourcesAction extends DownloadSelectedSourcesAndDocsAction {
+  public DownloadSelectedSourcesAction() {
+    super(true, false);
   }
 }

@@ -165,32 +165,32 @@
             icon="/images/updateFolders.png">
     </action>
 
-    <action id="Maven.DownloadSources" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesAction"
+    <action id="Maven.DownloadAllSources" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAction"
             text="Download Sources" description="Download sources for all dependencies"
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.DownloadDocs" class="org.jetbrains.idea.maven.project.actions.DownloadDocsAction"
+    <action id="Maven.DownloadAllDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllDocsAction"
             text="Download Documentation" description="Download documentation for all dependencies"
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.DownloadSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesAndDocsAction"
+    <action id="Maven.DownloadAllSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAndDocsAction"
             text="Download Sources And Documentation" description="Download sources and documentation for all dependencies"
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.DownloadSourcesAndDocsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesAndDocsForProjectAction"
+    <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
             text="Download Sources And Documentation" description="Download sources and documentation for all dependencies for selected projects"
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.DownloadSourcesForProject" class="org.jetbrains.idea.maven.project.actions.DownloadSourcesForProjectAction"
+    <action id="Maven.DownloadSelectedSources" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAction"
             text="Download Sources" description="Download sources for all dependencies for selected projects"
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.DownloadDocsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadDocsForProjectAction"
+    <action id="Maven.DownloadSelectedDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedDocsAction"
             text="Download Documentation" description="Download documentation for all dependencies for selected projects"
             icon="/images/download.png">
     </action>
@@ -291,16 +291,16 @@
       </action>
     </group>
 
-    <group id="Maven.DownloadGroup" popup="true" icon="/images/download.png">
-      <reference id="Maven.DownloadSources"/>
-      <reference id="Maven.DownloadDocs"/>
-      <reference id="Maven.DownloadSourcesAndDocs"/>
+    <group id="Maven.DownloadAllGroup" popup="true" icon="/images/download.png">
+      <reference id="Maven.DownloadAllSources"/>
+      <reference id="Maven.DownloadAllDocs"/>
+      <reference id="Maven.DownloadAllSourcesAndDocs"/>
     </group>
 
     <group id="Maven.NavigatorActionsToolbar">
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
-      <reference id="Maven.DownloadGroup"/>
+      <reference id="Maven.DownloadAllGroup"/>
       <separator/>
       <reference id="Maven.AddManagedFiles"/>
       <separator/>
@@ -330,20 +330,23 @@
               icon="/images/filterPhases.png"/>
     </group>
 
+    <group id="Maven.DependencyMenu">
+      <reference id="Maven.DownloadSelectedSources"/>
+      <reference id="Maven.DownloadSelectedDocs"/>
+      <reference id="Maven.DownloadSelectedSourcesAndDocs"/>
+    </group>
 
     <group id="Maven.BaseProjectMenu">
       <reference id="Maven.ReimportProject"/>
       <reference id="Maven.UpdateFoldersForProject"/>
-      <separator/>
-      <reference id="Maven.DownloadSourcesForProject"/>
-      <reference id="Maven.DownloadDocsForProject"/>
-      <reference id="Maven.DownloadSourcesAndDocsForProject"/>
       <separator/>
       <reference id="Maven.IgnoreProjects"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="Maven.OpenSettingsXml"/>
       <reference id="Maven.OpenProfilesXml"/>
+      <separator/>
+      <reference ref="Maven.DependencyMenu"/>
       <separator/>
     </group>
 

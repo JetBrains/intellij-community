@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
-public class DownloadSourcesForProjectAction extends DownloadSourcesAndDocsForProjectAction {
-  public DownloadSourcesForProjectAction() {
-    super(true, false);
+public class DownloadSelectedDocsAction extends DownloadSelectedSourcesAndDocsAction {
+  public DownloadSelectedDocsAction() {
+    super(false, true);
   }
 }

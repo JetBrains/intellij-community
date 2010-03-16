@@ -344,6 +344,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
             schedulePluginsResolving(projectWithChanges.first, nativeMavenProject);
           }
           scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
+                                       null,
                                        getImportingSettings().shouldDownloadSourcesAutomatically(),
                                        getImportingSettings().shouldDownloadDocsAutomatically());
           scheduleForNextImport(projectWithChanges);
@@ -703,15 +704,13 @@ public class MavenProjectsManager extends SimpleProjectComponent
     });
   }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, final boolean sources, final boolean docs) {
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, @Nullable final Collection<MavenArtifact> artifacts,
+                                           final boolean sources, final boolean docs) {
     if (!sources && !docs) return;
-
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        for (MavenProject each : projects) {
-          myArtifactsDownloadingProcessor
-            .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, docs));
-        }
+        myArtifactsDownloadingProcessor
+          .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myProjectsTree, sources, docs));
       }
     });
   }
@@ -854,7 +853,6 @@ public class MavenProjectsManager extends SimpleProjectComponent
       myResolvingProcessor.removeTask(dummyTask);
       myPluginsResolvingProcessor.removeTask(dummyTask);
       myFoldersResolvingProcessor.removeTask(dummyTask);
-      myArtifactsDownloadingProcessor.removeTask(dummyTask);
       myPostProcessor.removeTask(dummyTask);
     }
   }
@@ -865,7 +863,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   public void waitForReadingCompletion() {
-    waitForTasksCompletion(Collections.<MavenProjectsProcessor>emptyList());
+    waitForTasksCompletion(null);
   }
 
   public void waitForResolvingCompletion() {
@@ -881,7 +879,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   public void waitForArtifactsDownloadingCompletion() {
-    waitForTasksCompletion(Arrays.asList(myResolvingProcessor, myArtifactsDownloadingProcessor));
+    waitForTasksCompletion(myArtifactsDownloadingProcessor);
   }
 
   public void waitForPostImportTasksCompletion() {
@@ -889,16 +887,10 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   private void waitForTasksCompletion(MavenProjectsProcessor processor) {
-    waitForTasksCompletion(Collections.singletonList(processor));
-  }
-
-  private void waitForTasksCompletion(List<MavenProjectsProcessor> processors) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     myReadingProcessor.waitForCompletion();
-    for (MavenProjectsProcessor each : processors) {
-      each.waitForCompletion();
-    }
+    if (processor != null) processor.waitForCompletion();
   }
 
   public void updateProjectTargetFolders() {
