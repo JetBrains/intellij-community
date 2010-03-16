@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -120,7 +121,7 @@ public class PyConsoleRunner {
     });
 
 // Setup default prompt
-    myConsoleView.getConsole().setPrompt(">>>");
+    myConsoleView.getConsole().setPrompt(PyConsoleProcessHandler.ORDINARY_PROMPT.trim());
 
 // Attach to process
     myConsoleView.attachToProcess(myProcessHandler);
@@ -185,8 +186,8 @@ public class PyConsoleRunner {
       }
 
       public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(!myProcessHandler.isProcessTerminated() &&
-                                       getLanguageConsole().getEditorDocument().getTextLength() > 0);
+        e.getPresentation().setEnabled(!myProcessHandler.isProcessTerminated() /*&&
+                                       getLanguageConsole().getEditorDocument().getTextLength() > 0*/);
       }
     };
     EmptyAction.setupAction(myRunAction, "Console.Python.Execute", null);
@@ -241,9 +242,15 @@ public class PyConsoleRunner {
     if (erase) {
       getLanguageConsole().setInputText("");
     }
-    final String line = documentText.trim();
-    myHistory.addToHistory(line);
-    sendInput(line +"\n", myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
+    final String line = documentText;
+    if (!StringUtil.isEmptyOrSpaces(line)){
+      myHistory.addToHistory(line);          
+    }
+    if (line.length() == 0){
+      sendInput("\n\n", myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
+    } else {
+      sendInput(line +"\n", myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
+    }
   }
 
   protected String getProviderCommandLine() {
@@ -255,5 +262,9 @@ public class PyConsoleRunner {
       builder.append(s);
     }
     return builder.toString();
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

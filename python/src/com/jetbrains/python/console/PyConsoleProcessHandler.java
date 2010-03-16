@@ -1,5 +1,6 @@
 package com.jetbrains.python.console;
 
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.ConsoleHighlighter;
@@ -7,10 +8,12 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.PyHighlighter;
 
 import javax.swing.plaf.TextUI;
@@ -34,7 +37,12 @@ class PyConsoleProcessHandler extends OSProcessHandler {
     myCharset = charset;
   }
 
-  private final String[] PROMPTS = new String[]{">>>", "help>"};
+  public static final String ORDINARY_PROMPT =  ">>> ";
+  private static final String INDENT_PROMPT =   "... ";
+  private static final String HELP_PROMPT =     "help> ";
+
+
+  private final String[] PROMPTS = new String[]{ORDINARY_PROMPT, INDENT_PROMPT, HELP_PROMPT};
 
   public static final Key STRING_KEY = new Key("PYTHON_STRING");
   public static final Key NUMBER_KEY = new Key("PYTHON_NUMBER");
@@ -58,18 +66,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   @Override
   public void notifyTextAvailable(final String text, final Key attributes) {
     final LanguageConsoleImpl languageConsole = myPyConsoleRunner.getLanguageConsole();
-    String string = StringUtil.convertLineSeparators(text);
-    // Change prompt
-    for (String prompt : PROMPTS) {
-      if (string.startsWith(prompt)) {
-        final String currentPrompt = languageConsole.getPrompt();
-        if (!currentPrompt.equals(prompt)) {
-          languageConsole.setPrompt(prompt);
-        }
-        string = string.substring(prompt.length()).trim();
-        break;
-      }
-    }
+    String string = processPrompts(languageConsole, StringUtil.convertLineSeparators(text));
 
     // Highlight output by pattern
     Matcher matcher;
@@ -89,6 +86,44 @@ class PyConsoleProcessHandler extends OSProcessHandler {
       string = string.substring(matcher.end());
     }
     printToConsole(languageConsole, string, ConsoleViewContentType.NORMAL_OUTPUT);
+  }
+
+  private String processPrompts(final LanguageConsoleImpl languageConsole, String string) {
+    // Change prompt
+    for (String prompt : PROMPTS) {
+      if (string.startsWith(prompt)) {
+        // Process multi prompts here
+        if (prompt != HELP_PROMPT){
+          final StringBuilder builder = new StringBuilder();
+          builder.append(prompt).append(prompt);
+          while (string.startsWith(builder.toString())){
+            builder.append(prompt);
+          }
+          final String multiPrompt = builder.toString().substring(prompt.length());
+          if (prompt == INDENT_PROMPT){
+            prompt = multiPrompt;
+          }
+          string = string.substring(multiPrompt.length());
+        } else {
+          string = string.substring(prompt.length());
+        }
+
+        // Change console editor prompt if required
+        final String currentPrompt = languageConsole.getPrompt();
+        final String trimmedPrompt = prompt.trim();
+        if (!currentPrompt.equals(trimmedPrompt)) {
+          languageConsole.setPrompt(trimmedPrompt);
+          //LaterInvocator.invokeLater(new Runnable() {
+          //  public void run() {
+          //    PsiDocumentManager.getInstance(myPyConsoleRunner.getProject()).commitDocument(languageConsole.getEditorDocument());
+          //    languageConsole.getConsoleEditor().repaint(0, trimmedPrompt.length());
+          //  }
+          //});
+        }
+        break;
+      }
+    }
+    return string;
   }
 
   private static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
