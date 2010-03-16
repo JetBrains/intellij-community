@@ -31,8 +31,8 @@ public abstract class MavenProjectsAction extends MavenAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    perform(MavenActionUtil.getProjectsManager(e), MavenActionUtil.getMavenProjects(e));
+    perform(MavenActionUtil.getProjectsManager(e), MavenActionUtil.getMavenProjects(e), e);
   }
 
-  protected abstract void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects);
+  protected abstract void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e);
 }

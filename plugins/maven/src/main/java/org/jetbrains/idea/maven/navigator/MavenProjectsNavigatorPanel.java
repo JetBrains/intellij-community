@@ -26,10 +26,12 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.SimpleTree;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
+import org.jetbrains.idea.maven.project.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
@@ -57,7 +59,8 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     final ActionManager actionManager = ActionManager.getInstance();
     ActionToolbar actionToolbar = actionManager.createActionToolbar("Maven Navigator Toolbar",
-                                                                    (DefaultActionGroup)actionManager.getAction("Maven.NavigatorActionsToolbar"),
+                                                                    (DefaultActionGroup)actionManager
+                                                                      .getAction("Maven.NavigatorActionsToolbar"),
                                                                     true);
 
     actionToolbar.setTargetComponent(tree);
@@ -109,6 +112,8 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals();
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
+
+    if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) return extractDependencies();
 
     return null;
   }
@@ -183,6 +188,28 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       profiles.add(node.getProfileName());
     }
     return profiles;
+  }
+
+  private Set<MavenArtifact> extractDependencies() {
+    Set<MavenArtifact> result = new THashSet<MavenArtifact>();
+
+    List<MavenProjectsStructure.ProjectNode> projectNodes = getSelectedProjectNodes();
+    if (!projectNodes.isEmpty()) {
+      for (MavenProjectsStructure.ProjectNode each : projectNodes) {
+        result.addAll(each.getMavenProject().getDependencies());
+      }
+      return result;
+    }
+
+    List<MavenProjectsStructure.BaseDependenciesNode> nodes = getSelectedNodes(MavenProjectsStructure.BaseDependenciesNode.class);
+    for (MavenProjectsStructure.BaseDependenciesNode each : nodes) {
+      if (each instanceof MavenProjectsStructure.DependenciesNode) {
+        result.addAll(each.getMavenProject().getDependencies());
+      } else {
+        result.add(((MavenProjectsStructure.DependencyNode)each).getArtifact());
+      }
+    }
+    return result;
   }
 
   private <T extends MavenProjectsStructure.MavenSimpleNode> List<T> getSelectedNodes(Class<T> aClass) {

@@ -15,14 +15,24 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.util.List;
+public class DownloadAllSourcesAndDocsAction extends MavenProjectsManagerAction {
+  private boolean mySources;
+  private boolean myDocs;
 
-public class ReimportProjectAction extends MavenProjectsAction {
-  protected void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
-    manager.forceUpdateProjects(mavenProjects);
+  @SuppressWarnings({"UnusedDeclaration"})
+  public DownloadAllSourcesAndDocsAction() {
+    this(true, true);
+  }
+
+  public DownloadAllSourcesAndDocsAction(boolean sources, boolean docs) {
+    mySources = sources;
+    myDocs = docs;
+  }
+
+  @Override
+  protected void perform(MavenProjectsManager manager) {
+    manager.scheduleArtifactsDownloading(manager.getProjects(), null, mySources, myDocs);
   }
 }
