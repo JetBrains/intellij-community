@@ -17,6 +17,7 @@ public class PythonAllTestsSuite {
 
   public static final Class[] tests = {
     PythonLexerTest.class,
+    PyEncodingTest.class,
     PythonParsingTest.class,
     PyStringLiteralTest.class,
     PyIndentTest.class,
@@ -47,6 +48,7 @@ public class PythonAllTestsSuite {
     PyPushDownTest.class,
     PyExtractSuperclassTest.class,
     PyInlineLocalTest.class,
+    PyAutoUnindentTest.class
   };
 
   public static TestSuite suite() {
