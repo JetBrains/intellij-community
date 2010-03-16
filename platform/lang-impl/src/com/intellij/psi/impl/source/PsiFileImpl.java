@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatus;
@@ -64,12 +65,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport {
+public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
 
   private IElementType myElementType;
@@ -935,5 +933,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       FileBasedIndex.getInstance().requestReindex(vFile);
     }
+  }
+
+  public void putInfo(Map<String, String> info) {
+    putInfo(this, info);
+  }
+
+  public static void putInfo(PsiFile psiFile, Map<String, String> info) {
+    info.put("fileName", psiFile.getName());
+    info.put("fileType", psiFile.getFileType().toString());
   }
 }

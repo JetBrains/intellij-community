@@ -18,13 +18,13 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ApplyPatchForBaseRevisionTexts {
@@ -58,7 +58,7 @@ public class ApplyPatchForBaseRevisionTexts {
           public boolean process(final CharSequence text) {
             newText.setLength(0);
             try {
-              myStatus = patch.applyModifications(text, newText);
+              myStatus = ApplyFilePatchBase.applyModifications(patch, text, newText);
             }
             catch(ApplyPatchException ex) {
               return true;  // continue to older versions

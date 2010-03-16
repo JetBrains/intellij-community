@@ -203,9 +203,13 @@ public class RefreshVFsSynchronously {
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        // common lock for all refreshes inside
-        runnable.run();
-        semaphore.up();
+        try {
+          // common lock for all refreshes inside
+          runnable.run();
+        }
+        finally {
+          semaphore.up();
+        }
       }
     });
     semaphore.waitFor();

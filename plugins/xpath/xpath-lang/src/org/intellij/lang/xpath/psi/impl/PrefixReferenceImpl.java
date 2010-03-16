@@ -22,6 +22,7 @@ import org.intellij.lang.xpath.psi.QNameElement;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
@@ -45,6 +46,7 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
         return element.equals(resolve());
     }
 
+    @NotNull
     public Object[] getVariants() {
         // handled in XPathCompletionData
         return EMPTY_ARRAY;

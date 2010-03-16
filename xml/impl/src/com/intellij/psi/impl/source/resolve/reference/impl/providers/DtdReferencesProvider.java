@@ -136,6 +136,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       return myElement.getManager().areElementsEquivalent(element, resolve());
     }
 
+    @NotNull
     public Object[] getVariants() {
       final XmlNSDescriptor rootTagNSDescriptor = getNsDescriptor();
       return rootTagNSDescriptor != null ?
@@ -226,6 +227,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       return myElement.getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

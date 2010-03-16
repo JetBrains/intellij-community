@@ -19,7 +19,6 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -138,7 +137,7 @@ public class MavenUtil {
       return;
     }
 
-    if (!StartupManagerEx.getInstanceEx(project).postStartupActivityPassed()) {
+    if (!project.isInitialized()) {
       StartupManager.getInstance(project).registerPostStartupActivity(r);
       return;
     }

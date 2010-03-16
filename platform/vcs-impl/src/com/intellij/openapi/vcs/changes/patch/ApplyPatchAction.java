@@ -32,6 +32,7 @@ import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -72,7 +73,7 @@ public class ApplyPatchAction extends AnAction {
         final Collection<PatchApplier> appliers = new LinkedList<PatchApplier>();
         for (VirtualFile base : patchGroups.keySet()) {
           final PatchApplier patchApplier =
-            new PatchApplier(project, base, ObjectsConvertor.convert(patchGroups.get(base), new Convertor<FilePatchInProgress, FilePatch>() {
+            new PatchApplier<BinaryFilePatch>(project, base, ObjectsConvertor.convert(patchGroups.get(base), new Convertor<FilePatchInProgress, FilePatch>() {
               public FilePatch convert(FilePatchInProgress o) {
                 return o.getPatch();
               }
@@ -107,20 +108,21 @@ public class ApplyPatchAction extends AnAction {
     return sb.toString();
   }
 
-  public static ApplyPatchStatus applyOnly(final Project project, final FilePatch patch, final ApplyPatchContext context, final VirtualFile file) {
+  public static<T extends FilePatch> ApplyPatchStatus applyOnly(final Project project, final ApplyFilePatchBase<T> patch, final ApplyPatchContext context, final VirtualFile file) {
+    final T patchBase = patch.getPatch();
     try {
       return patch.apply(file, context, project);
     }
     catch(ApplyPatchException ex) {
-      if (!patch.isNewFile() && !patch.isDeletedFile() && patch instanceof TextFilePatch) {
+      if (!patchBase.isNewFile() && !patchBase.isDeletedFile() && patchBase instanceof TextFilePatch) {
         //final VirtualFile beforeRename = (pathBeforeRename == null) ? file : pathBeforeRename;
-        ApplyPatchStatus mergeStatus = mergeAgainstBaseVersion(project, file, new FilePathImpl(file), (TextFilePatch) patch,
+        ApplyPatchStatus mergeStatus = mergeAgainstBaseVersion(project, file, new FilePathImpl(file), (TextFilePatch) patchBase,
                                                                ApplyPatchMergeRequestFactory.INSTANCE);
         if (mergeStatus != null) {
           return mergeStatus;
         }
       }
-      Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", patch.getBeforeName(), ex.getMessage()),
+      Messages.showErrorDialog(project, VcsBundle.message("patch.apply.error", patchBase.getBeforeName(), ex.getMessage()),
                                VcsBundle.message("patch.apply.dialog.title"));
     }
     catch (Exception ex) {

@@ -228,6 +228,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @NotNull
   public Object[] getVariants() {
     throw new RuntimeException("Variants are not available for light references");
   }

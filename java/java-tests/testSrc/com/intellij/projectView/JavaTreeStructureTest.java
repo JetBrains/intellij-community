@@ -141,7 +141,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
-  public void _testVisibilitySorter() throws Exception {
+  public void testVisibilitySorter() throws Exception {
     dotest(new CheckAction() {
       public void testClassStructure(StructureViewComponent structureViewComponent) {
         structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);

@@ -246,7 +246,6 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         int caretOffset = editor.getCaretModel().getOffset();
         if (customLiveTemplate.isApplicable(file, caretOffset, false)) {
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
-          callback.fixInitialEditorState();
           String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
             int offsetBeforeKey = caretOffset - key.length();

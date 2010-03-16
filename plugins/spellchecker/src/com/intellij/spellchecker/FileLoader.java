@@ -25,14 +25,21 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 
+@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class FileLoader implements Loader {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.FileLoader");
 
-  private String url;
+  private final String url;
+  private final String name;
 
-  public FileLoader(String url) {
+  public FileLoader(String url, String name) {
     this.url = url;
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public void load(@NotNull Consumer<String> consumer) {
@@ -40,7 +47,7 @@ public class FileLoader implements Loader {
     FileInputStream stream = null;
     try {
       stream = new FileInputStream(file);
-      StreamLoader loader = new StreamLoader(stream);
+      StreamLoader loader = new StreamLoader(stream, file.getName());
       loader.load(consumer);
     }
     catch (Exception e) {

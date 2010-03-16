@@ -152,7 +152,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
     myLastUpdated = fsModCount;
 
     if (myFile == null) {
-      LOG.assertTrue(myUrl != null);
+      LOG.assertTrue(myUrl != null, "Both file & url are null");
       myFile = myVirtualFileManager.findFileByUrl(myUrl);
       if (myFile != null) {
         myUrl = null;

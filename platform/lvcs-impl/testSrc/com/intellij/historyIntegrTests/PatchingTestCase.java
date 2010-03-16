@@ -16,8 +16,10 @@
 
 package com.intellij.historyIntegrTests;
 
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
+import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -44,7 +46,7 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
 
   protected void applyPatch() throws Exception {
     List<FilePatch> patches = new ArrayList<FilePatch>();
-    PatchReader reader = new PatchReader(getFS().refreshAndFindFileByPath(patchFilePath));
+    PatchReader reader = PatchVirtualFileReader.create(getFS().refreshAndFindFileByPath(patchFilePath));
 
     while (true) {
       FilePatch p = reader.readNextPatch();
@@ -52,6 +54,6 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
       patches.add(p);
     }
 
-    new PatchApplier(myProject, root, patches, null, null).execute();
+    new PatchApplier<BinaryFilePatch>(myProject, root, patches, null, null).execute();
   }
 }

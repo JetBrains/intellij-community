@@ -80,9 +80,12 @@ public class ModuleOutputPackagingElement extends PackagingElement<ModuleOutputP
                                                      @NotNull ArtifactIncrementalCompilerContext compilerContext, @NotNull ArtifactType artifactType) {
     final Module module = findModule(resolvingContext);
     if (module != null) {
-      final VirtualFile output = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-      if (output != null) {
-        creator.addDirectoryCopyInstructions(output, null);
+      final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
+      if (extension != null) {
+        final VirtualFile output = extension.getCompilerOutputPath();
+        if (output != null) {
+          creator.addDirectoryCopyInstructions(output, null);
+        }
       }
     }
   }

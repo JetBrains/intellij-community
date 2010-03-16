@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,28 +34,33 @@ public class InstanceVariableUninitializedUseInspection
     /** @noinspection PublicField*/
     public boolean m_ignorePrimitives = false;
 
+    @Override
     @NotNull
     public String getID() {
         return "InstanceVariableUsedBeforeInitialized";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "instance.variable.used.before.initialized.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
       return InspectionGadgetsBundle.message(
               "instance.variable.used.before.initialized.problem.descriptor");
     }
 
+    @Override
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "primitive.fields.ignore.option"), this, "m_ignorePrimitives");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new InstanceVariableInitializationVisitor();
     }
@@ -80,8 +85,11 @@ public class InstanceVariableUninitializedUseInspection
             if (aClass == null) {
                 return;
             }
-            for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-                if (provider.isImplicitWrite(field)) return;
+            for(ImplicitUsageProvider provider:
+                    Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+                if (provider.isImplicitWrite(field)) {
+                    return;
+                }
             }
             final UninitializedReadCollector uninitializedReadsCollector =
                     new UninitializedReadCollector();

@@ -44,6 +44,9 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   public UsageGroupingRule[] getActiveRules(Project project) {
     List<UsageGroupingRule> rules = new ArrayList<UsageGroupingRule>();
     rules.add(new NonCodeUsageGroupingRule());
+    if (UsageViewSettings.getInstance().GROUP_BY_SCOPE) {
+      rules.add(new UsageScopeGroupingRule());
+    }
     if (UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE) {
       rules.add(new UsageTypeGroupingRule());
     }
@@ -88,6 +91,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       }
     });
 
+    final GroupByScopeAction groupByScopeAction = new GroupByScopeAction(impl);
     if(view.getPresentation().isCodeUsages()) {
       final GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
       groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component);
@@ -104,15 +108,17 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
       return new AnAction[] {
         groupByUsageTypeAction,
+        groupByScopeAction,
         groupByModuleTypeAction,
         groupByPackageAction,
-        groupByFileStructureAction
+        groupByFileStructureAction,
       };
     }
     else {
       return new AnAction[] {
+        groupByScopeAction,
         groupByModuleTypeAction,
-        groupByFileStructureAction
+        groupByFileStructureAction,
       };
     }
   }
@@ -126,6 +132,18 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     protected void setOptionValue(boolean value) {
       UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE = value;
+    }
+  }
+
+  private static class GroupByScopeAction extends RuleAction {
+    private GroupByScopeAction(UsageViewImpl view) {
+      super(view, "Group by test/production", Icons.TEST_SOURCE_FOLDER);
+    }
+    protected boolean getOptionValue() {
+      return UsageViewSettings.getInstance().GROUP_BY_SCOPE;
+    }
+    protected void setOptionValue(boolean value) {
+      UsageViewSettings.getInstance().GROUP_BY_SCOPE = value;
     }
   }
 

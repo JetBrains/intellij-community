@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.startup.StartupManager;
@@ -49,6 +50,8 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected AbstractTreeStructure myStructure;
   protected boolean myShowMembers = false;
   private List<AbstractProjectViewPSIPane> myPanes = new ArrayList<AbstractProjectViewPSIPane>();
+
+  protected Queryable.PrintInfo myPrintInfo;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -113,7 +116,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   private void assertStructureEqual(Object rootNode, String expected, int maxRowCount, Comparator comparator) {
     checkGetParentConsistency(rootNode);
-    StringBuffer actual = IdeaTestUtil.print(myStructure, rootNode, 0, comparator, maxRowCount, ' ');
+    StringBuffer actual = IdeaTestUtil.print(myStructure, rootNode, 0, comparator, maxRowCount, ' ', myPrintInfo);
     assertEquals(expected, actual.toString());
   }
 

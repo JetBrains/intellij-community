@@ -109,6 +109,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
+    @NotNull
     public Object[] getVariants() {
       final List<Object> list = new ArrayList<Object>();
       final PsiClass cls = PsiUtil.getTopLevelClass(getElement());
@@ -159,6 +160,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
+    @NotNull
     public Object[] getVariants() {
       List<Object> list = new ArrayList<Object>();
       PsiClass cls = PsiUtil.getTopLevelClass(getElement());
@@ -189,6 +191,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
+    @NotNull
     public Object[] getVariants() {
       List<Object> list = new ArrayList<Object>();
 

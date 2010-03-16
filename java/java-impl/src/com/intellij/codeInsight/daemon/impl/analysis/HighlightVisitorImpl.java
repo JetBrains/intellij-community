@@ -69,6 +69,17 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<String, Pair<PsiImportStatementBase, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatementBase, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
   private PsiFile myFile;
+  private final PsiElementVisitor REGISTER_REFERENCES_VISITOR = new PsiRecursiveElementWalkingVisitor() {
+    @Override public void visitElement(PsiElement element) {
+      super.visitElement(element);
+      for (PsiReference reference : element.getReferences()) {
+        PsiElement resolved = reference.resolve();
+        if (resolved instanceof PsiNamedElement) {
+          myRefCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
+        }
+      }
+    }
+  };
   
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
   public HighlightVisitorImpl(Project project) {
@@ -108,6 +119,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
         // no op
+      }
+    }, false);
+  }
+  
+  private void registerReferencesFromInjectedFragments(final PsiElement element) {
+    InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        injectedPsi.accept(REGISTER_REFERENCES_VISITOR);
       }
     }, false);
   }
@@ -269,6 +288,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitComment(PsiComment comment) {
     super.visitComment(comment);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
+    if (!myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(comment);
   }
 
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
@@ -499,6 +519,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitLiteralExpression(expression);
     if (myHolder.hasErrorResults()) return;
     myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression));
+    if (!myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(expression);
   }
 
   @Override public void visitMethod(PsiMethod method) {

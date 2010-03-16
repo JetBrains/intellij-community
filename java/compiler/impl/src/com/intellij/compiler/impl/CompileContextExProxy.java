@@ -141,11 +141,11 @@ public class CompileContextExProxy implements CompileContextEx {
     return myDelegate.isRebuild();
   }
 
-  public <T> T getUserData(final Key<T> key) {
+  public <T> T getUserData(@NotNull final Key<T> key) {
     return myDelegate.getUserData(key);
   }
 
-  public <T> void putUserData(final Key<T> key, final T value) {
+  public <T> void putUserData(@NotNull final Key<T> key, final T value) {
     myDelegate.putUserData(key, value);
   }
 

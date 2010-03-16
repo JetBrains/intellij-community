@@ -31,10 +31,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -87,9 +84,10 @@ public class ArtifactCompileScope {
     Set<Artifact> artifacts = new HashSet<Artifact>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(project);
     final Set<Module> modules = new HashSet<Module>(Arrays.asList(compileScope.getAffectedModules()));
+    final List<Module> allModules = Arrays.asList(ModuleManager.getInstance(project).getModules());
     for (Artifact artifact : artifactManager.getArtifacts()) {
       if (artifact.isBuildOnMake()) {
-        if (modules.containsAll(Arrays.asList(ModuleManager.getInstance(project).getModules()))
+        if (modules.containsAll(allModules)
             || containsModuleOutput(artifact, modules, artifactManager)) {
           artifacts.add(artifact);
         }
