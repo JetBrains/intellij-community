@@ -15,9 +15,7 @@
  */
 package com.intellij.spellchecker;
 
-/**
- * @author oleg
- */
+
 public class DefaultBundledDictionariesProvider implements BundledDictionaryProvider {
   public String[] getBundledDictionaries() {
     return new String[]{"english.dic", "jetbrains.dic"};

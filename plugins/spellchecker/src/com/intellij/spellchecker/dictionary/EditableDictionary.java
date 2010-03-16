@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker;
+package com.intellij.spellchecker.dictionary;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nullable;
 
-public interface BundledDictionaryProvider {
-  ExtensionPointName<BundledDictionaryProvider> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.bundledDictionaryProvider");
-  
-  String[] getBundledDictionaries();
+import java.util.Collection;
+import java.util.Set;
+
+public interface EditableDictionary extends Dictionary {
+
+  void addToDictionary(@Nullable String word);
+
+  void removeFromDictionary(@Nullable String word);
+
+  void addToDictionary(@Nullable Collection<String> words);
+
+  void replaceAll(@Nullable Collection<String> words);
+
+  void clear();
+
+  @Nullable
+  Set<String> getEditableWords();
+
+
 }

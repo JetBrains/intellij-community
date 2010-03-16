@@ -33,7 +33,7 @@ public class BaseSuggestionProvider implements SuggestionProvider {
 
   @NotNull
   public List<String> getSuggestions(@NotNull String text) {
-   
+
     String[] words = NameUtil.nameToWords(text);
 
     int index = 0;
@@ -54,7 +54,7 @@ public class BaseSuggestionProvider implements SuggestionProvider {
       index = end;
     }
 
-    String[] all = null;
+    String[] all;
     int[] counter = new int[i];
     int size = 1;
     for (int j = 0; j < i; j++) {

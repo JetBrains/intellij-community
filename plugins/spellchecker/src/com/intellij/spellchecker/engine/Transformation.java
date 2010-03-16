@@ -21,10 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
+@SuppressWarnings({"ALL"})
 public class Transformation {
   
   @Nullable
-  public String transform(@Nullable String word) {
+  public  String transform(@Nullable String word) {
     if (word == null || word.trim().length() < 3) {
       return null;
     }
@@ -32,7 +33,7 @@ public class Transformation {
   }
 
   @Nullable
-  public Set<String> transform(@Nullable Collection<String> words) {
+  public  Set<String> transform(@Nullable Collection<String> words) {
     if (words == null || words.isEmpty()) {
       return null;
     }

@@ -19,11 +19,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @author shkate@jetbrains.com
- */
 public class Tokenizer<T extends PsiElement> {
 
   @Nullable
