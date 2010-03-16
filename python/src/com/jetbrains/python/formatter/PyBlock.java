@@ -215,6 +215,10 @@ public class PyBlock implements ASTBlock {
     if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
       return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
     }
+
+    if (type1 == PyTokenTypes.COMMA) {
+      return getSpacingForOption(mySettings.SPACE_AFTER_COMMA);
+    }
 /*
         if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
             return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
@@ -237,6 +241,11 @@ public class PyBlock implements ASTBlock {
     //return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
 
     return null;
+  }
+
+  private Spacing getSpacingForOption(boolean isOptionSet) {
+    int spaces = isOptionSet ? 1 : 0;
+    return Spacing.createSpacing(spaces, spaces, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   private static boolean isStatementOrDeclaration(final IElementType type) {
