@@ -22,8 +22,6 @@
 <body>
     <div title="div <TYPO descr="Typo: In word 'ttitle'">ttitle</TYPO>">Test <TYPO descr="Typo: In word 'ccontent'">ccontent</TYPO> goes here</div>
     <a href="#">test link</a>
-    <table>
-      <tr bgcolor="#EFEBEF">
-    </table>
+    
 </body>
 </html>
