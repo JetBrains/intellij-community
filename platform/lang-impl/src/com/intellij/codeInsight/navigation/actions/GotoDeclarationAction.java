@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -65,10 +66,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    PsiElement element;
     try {
       int offset = editor.getCaretModel().getOffset();
-      element = findTargetElement(project, editor, offset);
+      PsiElement element = findTargetElement(project, editor, offset);
       if (element == null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
         chooseAmbiguousTarget(editor, offset);
@@ -109,7 +109,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         return true;
       }
     };
-    chooseAmbiguousTarget(editor, offset,navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"));
+    boolean found = chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"));
+    if (!found) {
+      HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to");
+    }
   }
 
   // returns true if processor is run or is going to be run after showing popup
@@ -127,7 +130,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       processor.execute(element);
       return true;
     }
-    else if (candidates.size() > 1) {
+    if (candidates.size() > 1) {
       PsiElement[] elements = candidates.toArray(new PsiElement[candidates.size()]);
       final TextRange range = reference.getRangeInElement();
       final String refText = range.substring(reference.getElement().getText());
