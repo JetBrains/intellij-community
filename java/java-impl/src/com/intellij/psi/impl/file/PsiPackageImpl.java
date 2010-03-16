@@ -98,7 +98,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
   @NotNull
   public PsiDirectory[] getDirectories() {
     final Collection<PsiDirectory> collection = getAllDirectories();
-    return collection.toArray(new PsiDirectory[collection.size()]);
+    return ContainerUtil.toArray(collection, new PsiDirectory[collection.size()]);
   }
 
   private Collection<PsiDirectory> getAllDirectories() {

@@ -145,5 +145,20 @@ public class SmartList<E> extends AbstractList<E> {
   public boolean isEmpty() {
     return mySize == 0;
   }
+
+  public void sort(Comparator<E> comparator) {
+    if (mySize < 2) return;
+    if (mySize == 2) {
+      final Object[] array = (Object[])myElem;
+      if (comparator.compare((E)array[0], (E)array[1]) > 0) {
+        Object t = array[0];
+        array[0] = array[1];
+        array[1] = t;
+      }
+    }
+    else {
+      Collections.sort((List<E>)myElem, comparator);
+    }
+  }
 }
 
