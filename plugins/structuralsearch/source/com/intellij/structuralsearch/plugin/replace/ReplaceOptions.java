@@ -10,6 +10,7 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -148,12 +149,12 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable, UserDataHo
     }
   }
 
-  public <T> T getUserData(Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     if (myUserMap==null) return null;
     return (T)myUserMap.get(key);
   }
 
-  public <T> void putUserData(Key<T> key, T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
     if (myUserMap==null) myUserMap = new THashMap(1);
     myUserMap.put(key,value);
   }
