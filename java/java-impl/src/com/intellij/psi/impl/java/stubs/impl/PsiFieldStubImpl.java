@@ -19,8 +19,8 @@
  */
 package com.intellij.psi.impl.java.stubs.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.impl.cache.InitializerTooLongException;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
@@ -30,13 +30,10 @@ import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
-import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
   private static final int INITIALIZER_LENGTH_LIMIT = 1000;
-  @NonNls public static final StringRef INITIALIZER_TOO_LONG = StringRef.fromString(";INITIALIZER_TOO_LONG;");
 
   private final StringRef myName;
   private final TypeInfo myType;
@@ -55,7 +52,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     super(parent, isEnumConst(flags) ? JavaStubElementTypes.ENUM_CONSTANT : JavaStubElementTypes.FIELD);
 
     if (initializer != null && initializer.length() > INITIALIZER_LENGTH_LIMIT) {
-      myInitializer = INITIALIZER_TOO_LONG;
+      myInitializer = StringRef.fromString(INITIALIZER_TOO_LONG);
     }
     else {
       myInitializer = initializer;
@@ -88,8 +85,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return typeInfo;
   }
 
-  public String getInitializerText() throws InitializerTooLongException {
-    if (INITIALIZER_TOO_LONG.equals(myInitializer)) throw new InitializerTooLongException();
+  public String getInitializerText() {
     return StringRef.toString(myInitializer);
   }
 
