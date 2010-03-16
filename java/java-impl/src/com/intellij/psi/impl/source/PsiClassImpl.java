@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -60,8 +61,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
-public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement {
+public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
   private final ClassInnerStuffCache innersCache = new ClassInnerStuffCache(this);
@@ -644,5 +646,18 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     final PsiDirectory dir;
     return file == null ? null : (dir = file.getContainingDirectory()) == null
                                  ? null : JavaDirectoryService.getInstance().getPackage(dir);
+  }
+
+  public void putInfo(Map<String, String> info) {
+    putInfo(this, info);
+  }
+
+  public static void putInfo(PsiClass psiClass, Map<String, String> info) {
+    info.put("className", psiClass.getName());
+    info.put("qualifiedClassName", psiClass.getQualifiedName());
+    PsiFile file = psiClass.getContainingFile();
+    if (file instanceof Queryable) {
+      ((Queryable)file).putInfo(info);
+    }
   }
 }

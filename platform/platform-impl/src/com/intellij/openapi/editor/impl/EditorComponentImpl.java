@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
 
@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  *
  */
-public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, TestableUi, TypingTarget {
+public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, Queryable, TypingTarget {
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(EditorImpl editor) {
