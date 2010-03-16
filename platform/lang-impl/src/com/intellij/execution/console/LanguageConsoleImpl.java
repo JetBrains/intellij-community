@@ -214,6 +214,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myUiUpdateRunnable = uiUpdateRunnable;
   }
 
+  public void flushAllUiUpdates() {
+    myUpdateQueue.flush();
+  }
+
   public LightVirtualFile getHistoryFile() {
     return myHistoryFile;
   }

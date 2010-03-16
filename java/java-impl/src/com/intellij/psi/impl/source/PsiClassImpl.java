@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -52,7 +51,6 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -304,16 +302,12 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @NotNull
   public PsiField[] getFields() {
-    final PsiField[] owns = getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
-    final List<PsiField> augments = PsiAugmentProvider.collectAugments(this, PsiField.class);
-    return ArrayUtil.mergeArrayAndCollection(owns, augments, PsiField.ARRAY_FACTORY);
+    return getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
   }
 
   @NotNull
   public PsiMethod[] getMethods() {
-    final PsiMethod[] owns = getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
-    final List<PsiMethod> augments = PsiAugmentProvider.collectAugments(this, PsiMethod.class);
-    return ArrayUtil.mergeArrayAndCollection(owns, augments, PsiMethod.ARRAY_FACTORY);
+    return getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
   }
 
   @NotNull

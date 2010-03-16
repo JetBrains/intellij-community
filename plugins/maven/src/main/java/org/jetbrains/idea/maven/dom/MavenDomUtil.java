@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import java.io.File;
@@ -87,7 +88,11 @@ public class MavenDomUtil {
   }
 
   public static String calcRelativePath(VirtualFile parent, VirtualFile child) {
-    String result = FileUtil.getRelativePath(new File(parent.getPath()), new File(child.getPath()));
+    String result = FileUtil.getRelativePath(parent.getPath(), child.getPath(), '/');
+    if (result == null) {
+      MavenLog.LOG.warn("cannot calculate relative path for\nparent: " + parent + "\nchild: " + child);
+      result = child.getPath();
+    }
     return FileUtil.toSystemIndependentName(result);
   }
 

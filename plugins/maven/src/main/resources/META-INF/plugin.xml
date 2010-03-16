@@ -196,7 +196,6 @@
             text="Remove Projects"
             description="Remove selected Maven projects from the project tree"
             icon="/general/remove.png">
-      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
     <action id="Maven.OpenSettingsXml"
@@ -233,12 +232,6 @@
             icon="/images/mavenSettings.png">
     </action>
 
-    <action id="Maven.ShowTemplateSettings"
-            class="org.jetbrains.idea.maven.project.actions.EditTemplateSettingsAction" text="Template Maven Settings"
-            description="Edit Maven integration settings for the template project"
-            icon="/general/applicationSettings.png">
-    </action>
-
     <action id="Maven.ToggleOffline"
             class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
             description="Toggle offline mode for Maven builds"
@@ -253,24 +246,6 @@
 
     <action id="Maven.Help"
             class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
-
-    <group id="Maven.NavigatorSettingsGroup">
-      <action id="Maven.GroupProjects"
-              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
-              text="Group Projects"
-              description="Group projects according to Maven structure"
-              icon="/nodes/folder.png"/>
-      <action id="Maven.ShowIgnored"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-              text="Show Ignored Projects"
-              description="Show ignored projects"
-              icon="/actions/showHiddens.png"/>
-      <action id="Maven.ShowBasicPhasesOnly"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
-              text="Show Basic Phases Only"
-              description="Show basic phases only"
-              icon="/images/filterPhases.png"/>
-    </group>
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
@@ -296,7 +271,7 @@
       </action>
     </group>
 
-    <group id="Maven.NavigatorToolbar" description="Maven Projects Navigator Toolbar">
+    <group id="Maven.NavigatorActionsToolbar">
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
       <reference id="Maven.DownloadArtifacts"/>
@@ -308,12 +283,27 @@
       <reference id="Maven.ToggleSkipTests"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
-      <reference id="Maven.ShowTemplateSettings"/>
-      <separator/>
-      <reference id="Maven.NavigatorSettingsGroup"/>
-      <separator/>
       <reference id="Maven.Help"/>
+      <action id="Maven.GroupProjects"
+              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
+              text="Group Modules"
+              description="Group projects according to Maven structure"
+              secondary="true"
+              icon="/nodes/folder.png"/>
+      <action id="Maven.ShowIgnored"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
+              text="Show Ignored Projects"
+              description="Show ignored projects"
+              secondary="true"
+              icon="/actions/showHiddens.png"/>
+      <action id="Maven.ShowBasicPhasesOnly"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
+              text="Show Basic Phases Only"
+              description="Show basic phases only"
+              secondary="true"
+              icon="/images/filterPhases.png"/>
     </group>
+
 
     <group id="Maven.BaseProjectMenu">
       <reference id="Maven.ReimportProject"/>
@@ -355,7 +345,7 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
 
       <action id="GenerateDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
-      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateOverridingDependencyAction"/>
+      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateAddManagedDependencyAction"/>
       <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
     </group>
   </actions>

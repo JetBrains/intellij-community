@@ -305,6 +305,10 @@ public class TemplateImpl extends Template implements SchemeElement {
     return variable;
   }
 
+  public void removeVariable(int i) {
+    myVariables.remove(i);
+  }
+
   public int getVariableCount() {
     return myVariables.size();
   }

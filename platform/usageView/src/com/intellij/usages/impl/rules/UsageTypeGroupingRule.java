@@ -72,9 +72,6 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-
-
-
   private class UsageTypeGroup implements UsageGroup {
     private final UsageType myUsageType;
 

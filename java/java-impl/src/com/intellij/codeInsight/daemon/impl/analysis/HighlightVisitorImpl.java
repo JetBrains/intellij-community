@@ -80,7 +80,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
   };
-
+  
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
   public HighlightVisitorImpl(Project project) {
     this(JavaPsiFacade.getInstance(project).getResolveHelper());
@@ -111,10 +111,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     element.accept(this);
 
     if (myRefCountHolder != null) {
-      registerReferencesFromInjectedFragments(element);
+      instantiateInjections(element);
     }
   }
 
+  private void instantiateInjections(final PsiElement element) {
+    InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
+        // no op
+      }
+    }, false);
+  }
+  
   private void registerReferencesFromInjectedFragments(final PsiElement element) {
     InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
@@ -280,6 +288,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitComment(PsiComment comment) {
     super.visitComment(comment);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
+    if (!myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(comment);
   }
 
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
@@ -510,6 +519,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitLiteralExpression(expression);
     if (myHolder.hasErrorResults()) return;
     myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression));
+    if (!myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(expression);
   }
 
   @Override public void visitMethod(PsiMethod method) {

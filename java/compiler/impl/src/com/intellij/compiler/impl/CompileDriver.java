@@ -1703,6 +1703,9 @@ public class CompileDriver {
     if (context.getMessageCount(CompilerMessageCategory.ERROR) > 0) {
       return false;
     }
+    if (LOG.isDebugEnabled() && items.length > 0) {
+      LOG.debug("Start processing files by " + adapter.getCompiler().getDescription());
+    }
     final CompileScope scope = context.getCompileScope();
     final List<FileProcessingCompiler.ProcessingItem> toProcess = new ArrayList<FileProcessingCompiler.ProcessingItem>();
     final Set<String> allUrls = new HashSet<String>();
@@ -1806,7 +1809,6 @@ public class CompileDriver {
           final VirtualFile file = aProcessed.getFile();
           vFiles.add(file);
           if (LOG.isDebugEnabled()) {
-            LOG.debug("File processed by " + adapter.getCompiler().getDescription());
             LOG.debug("\tFile processed " + file.getPresentableUrl() + "; ts=" + file.getTimeStamp());
           }
 

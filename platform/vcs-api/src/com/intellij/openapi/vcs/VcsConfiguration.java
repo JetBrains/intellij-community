@@ -63,6 +63,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean PERFORM_ROLLBACK_IN_BACKGROUND = false;
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = false;
   public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+  public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public boolean ENABLE_BACKGROUND_PROCESSES = false;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
 

@@ -21,6 +21,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
@@ -52,25 +54,25 @@ import java.util.List;
 /**
  * for patches. for shelve.
  */
-public class PatchApplier {
+public class PatchApplier<BinaryType extends FilePatch> {
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
   private final List<FilePatch> myPatches;
-  private final CustomBinaryPatchApplier myCustomForBinaries;
+  private final CustomBinaryPatchApplier<BinaryType> myCustomForBinaries;
   private final LocalChangeList myTargetChangeList;
 
   private final List<FilePatch> myRemainingPatches;
-  private final PathsVerifier myVerifier;
+  private final PathsVerifier<BinaryType> myVerifier;
 
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
-                      final LocalChangeList targetChangeList, final CustomBinaryPatchApplier customForBinaries) {
+                      final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
     myTargetChangeList = targetChangeList;
     myCustomForBinaries = customForBinaries;
     myRemainingPatches = new ArrayList<FilePatch>();
-    myVerifier = new PathsVerifier(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
+    myVerifier = new PathsVerifier<BinaryType>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
       @Nullable
       public VirtualFile getFile(FilePatch patch, String path) {
         return PathMerger.getFile(myBaseDirectory, path);
@@ -137,7 +139,7 @@ public class PatchApplier {
               return;
             }
 
-            final List<Pair<VirtualFile, FilePatch>> textPatches = myVerifier.getTextPatches();
+            final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = myVerifier.getTextPatches();
             if (! fileTypesAreOk(textPatches)) {
               return;
             }
@@ -184,8 +186,8 @@ public class PatchApplier {
   }
 
   @Nullable
-  private ApplyPatchStatus actualApply(final PathsVerifier verifier) {
-    final List<Pair<VirtualFile, FilePatch>> textPatches = verifier.getTextPatches();
+  private ApplyPatchStatus actualApply(final PathsVerifier<BinaryType> verifier) {
+    final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = verifier.getTextPatches();
     final ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     ApplyPatchStatus status = null;
 
@@ -195,7 +197,7 @@ public class PatchApplier {
       if (myCustomForBinaries == null) {
         status = applyList(verifier.getBinaryPatches(), context, status);
       } else {
-        final List<Pair<VirtualFile, FilePatch>> binaryPatches = verifier.getBinaryPatches();
+        final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> binaryPatches = verifier.getBinaryPatches();
         ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
         final List<FilePatch> appliedPatches = myCustomForBinaries.getAppliedPatches();
         moveForCustomBinaries(binaryPatches, appliedPatches);
@@ -211,24 +213,24 @@ public class PatchApplier {
     return status;
   }
 
-  private void moveForCustomBinaries(final List<Pair<VirtualFile, FilePatch>> patches,
+  private void moveForCustomBinaries(final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> patches,
                                      final List<FilePatch> appliedPatches) throws IOException {
-    for (Pair<VirtualFile, FilePatch> patch : patches) {
-      if (appliedPatches.contains(patch.getSecond())) {
+    for (Pair<VirtualFile, ApplyFilePatchBase<BinaryType>> patch : patches) {
+      if (appliedPatches.contains(patch.getSecond().getPatch())) {
         myVerifier.doMoveIfNeeded(patch.getFirst());
       }
     }
   }
 
-  private ApplyPatchStatus applyList(final List<Pair<VirtualFile, FilePatch>> patches, final ApplyPatchContext context,
+  private <V extends FilePatch, T extends ApplyFilePatchBase<V>> ApplyPatchStatus applyList(final List<Pair<VirtualFile, T>> patches, final ApplyPatchContext context,
                                      ApplyPatchStatus status) throws IOException {
-    for (Pair<VirtualFile, FilePatch> patch : patches) {
+    for (Pair<VirtualFile, T> patch : patches) {
       ApplyPatchStatus patchStatus = ApplyPatchAction.applyOnly(myProject, patch.getSecond(), context, patch.getFirst());
       myVerifier.doMoveIfNeeded(patch.getFirst());
 
       status = ApplyPatchStatus.and(status, patchStatus);
       if (patchStatus != ApplyPatchStatus.FAILURE) {
-        myRemainingPatches.remove(patch.getSecond());
+        myRemainingPatches.remove(patch.getSecond().getPatch());
       } else {
         // interrupt if failure
         return status;
@@ -259,8 +261,8 @@ public class PatchApplier {
     return (! readonlyStatus.hasReadonlyFiles());
   }
 
-  private boolean fileTypesAreOk(final List<Pair<VirtualFile, FilePatch>> textPatches) {
-    for (Pair<VirtualFile, FilePatch> textPatch : textPatches) {
+  private boolean fileTypesAreOk(final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches) {
+    for (Pair<VirtualFile, ApplyTextFilePatch> textPatch : textPatches) {
       final VirtualFile file = textPatch.getFirst();
       if (! file.isDirectory()) {
         FileType fileType = file.getFileType();

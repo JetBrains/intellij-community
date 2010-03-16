@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -29,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
@@ -162,15 +164,14 @@ public class ClassRenderer extends NodeRendererImpl{
     builder.setChildren(children);
   }
 
-  private boolean shouldDisplay(TypeComponent component) {
-    if (!SHOW_SYNTHETICS && DebuggerUtils.isSynthetic(component)) {
+  private boolean shouldDisplay(Field field) {
+    final boolean isSynthetic = DebuggerUtils.isSynthetic(field);
+    if (!SHOW_SYNTHETICS && isSynthetic) {
       return false;
     }
-    if (!(component instanceof Field)) {
-      return true;
+    if (isSynthetic && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+      return false;
     }
-    final Field field = (Field)component;
-
     if(!SHOW_STATIC && field.isStatic()) {
       return false;
     }

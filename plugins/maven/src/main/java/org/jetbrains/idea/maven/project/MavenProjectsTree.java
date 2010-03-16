@@ -669,7 +669,7 @@ public class MavenProjectsTree {
   }
 
   private long getFileTimestamp(VirtualFile file) {
-    if (file == null) return -1;
+    if (file == null || !file.isValid()) return -1;
     return file.getTimeStamp();
   }
 

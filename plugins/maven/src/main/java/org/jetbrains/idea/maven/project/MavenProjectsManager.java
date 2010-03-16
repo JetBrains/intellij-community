@@ -170,23 +170,25 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   private void doInit(final boolean isNew) {
-    if (isInitialized.getAndSet(true)) return;
+    synchronized (isInitialized) {
+      if (isInitialized.getAndSet(true)) return;
 
-    initProjectsTree(!isNew);
+      initProjectsTree(!isNew);
 
-    initWorkers();
-    listenForSettingsChanges();
-    listenForProjectsTreeChanges();
+      initWorkers();
+      listenForSettingsChanges();
+      listenForProjectsTreeChanges();
 
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-      public void run() {
-        if (!isUnitTestMode()) {
-          fireActivated();
-          listenForExternalChanges();
+      MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
+        public void run() {
+          if (!isUnitTestMode()) {
+            fireActivated();
+            listenForExternalChanges();
+          }
+          scheduleUpdateAllProjects(isNew);
         }
-        scheduleUpdateAllProjects(isNew);
-      }
-    });
+      });
+    }
   }
 
   private void initProjectsTree(boolean tryToLoadExisting) {
@@ -380,24 +382,26 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
   @Override
   public void projectClosed() {
-    if (!isInitialized.getAndSet(false)) return;
+    synchronized (isInitialized) {
+      if (!isInitialized.getAndSet(false)) return;
 
-    Disposer.dispose(mySchedulesQueue);
-    Disposer.dispose(myImportingQueue);
+      Disposer.dispose(mySchedulesQueue);
+      Disposer.dispose(myImportingQueue);
 
-    myWatcher.stop();
+      myWatcher.stop();
 
-    myReadingProcessor.stop();
-    myResolvingProcessor.stop();
-    myPluginsResolvingProcessor.stop();
-    myFoldersResolvingProcessor.stop();
-    myArtifactsDownloadingProcessor.stop();
-    myPostProcessor.stop();
+      myReadingProcessor.stop();
+      myResolvingProcessor.stop();
+      myPluginsResolvingProcessor.stop();
+      myFoldersResolvingProcessor.stop();
+      myArtifactsDownloadingProcessor.stop();
+      myPostProcessor.stop();
 
-    myEmbeddersManager.release();
+      myEmbeddersManager.release();
 
-    if (isUnitTestMode()) {
-      FileUtil.delete(getProjectsTreesDir());
+      if (isUnitTestMode()) {
+        FileUtil.delete(getProjectsTreesDir());
+      }
     }
   }
 

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import org.jetbrains.annotations.NotNull;
 
 public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
@@ -56,7 +57,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   }
 
-  private static Document getDocumentToBeUsedFor(final PsiFile file) {
+  public static Document getDocumentToBeUsedFor(final PsiFile file) {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return null;
@@ -90,5 +91,12 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel{
 
   public PsiFile getFile() {
     return myFile;
+  }
+
+  public static boolean canUseDocumentModel(@NotNull Document document,@NotNull PsiFile file) {
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
+    return !psiDocumentManager.isUncommited(document) &&
+           !psiDocumentManager.isDocumentBlockedByPsi(document) &&
+           file.getText().equals(document.getText());
   }
 }

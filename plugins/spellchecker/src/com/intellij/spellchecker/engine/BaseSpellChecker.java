@@ -15,67 +15,156 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionaryLoader;
 import com.intellij.spellchecker.dictionary.Loader;
-import com.intellij.spellchecker.dictionary.UserDictionary;
-import com.intellij.spellchecker.trie.Action;
 import com.intellij.util.Consumer;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public class BaseSpellChecker implements SpellCheckerEngine {
 
-  private Dictionary engineDictionary;
 
   private Transformation transform = new Transformation();
 
+  private final Set<EditableDictionary> dictionaries = new THashSet<EditableDictionary>();
+  private final Set<Dictionary> bundledDictionaries = new THashSet<Dictionary>();
   private Metrics metrics = new LevenshteinDistance();
 
-  private Consumer<String> consumer = new Consumer<String>() {
-    public void consume(@Nullable String word) {
-      final String transformed = transform.transform(word);
-      if (transformed != null) {
-        engineDictionary.addToDictionary(transformed);
-      }
-    }
-  };
 
   public BaseSpellChecker() {
-    ensureEngineDictionary();
   }
 
+
   public void loadDictionary(@NotNull Loader loader) {
-    loader.load(consumer);
+    if (loader instanceof EditableDictionaryLoader) {
+      final EditableDictionary dictionary = ((EditableDictionaryLoader)loader).getDictionary();
+      if (dictionary != null) {
+        addModifiableDictionary(dictionary);
+      }
+    }
+    else {
+      loadFixedDictionary(loader);
+    }
+
+  }
+
+  private void loadFixedDictionary(final @NotNull Loader loader) {
+    /*if (ApplicationManager.getApplication().isUnitTestMode()) {
+      loadCompressedDictionary(loader);
+    }
+    else {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          loadCompressedDictionary(loader);
+        }
+      });
+    }*/
+    loadCompressedDictionary(loader);
+  }
+
+  private void loadCompressedDictionary(@NotNull Loader loader) {
+    final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
+    if (dictionary != null) {
+      addCompressedFixedDictionary(dictionary);
+    }
+  }
+
+  private void addModifiableDictionary(@NotNull EditableDictionary dictionary) {
+    dictionaries.add(dictionary);
+  }
+
+  private void addCompressedFixedDictionary(@NotNull Dictionary dictionary) {
+    bundledDictionaries.add(dictionary);
   }
 
   public Transformation getTransformation() {
     return transform;
   }
 
-  private void ensureEngineDictionary() {
-    if (engineDictionary == null) {
-      engineDictionary = new UserDictionary("engine");
+  @NotNull
+  private static List<String> restore(@NotNull Character startFrom, int i, int j, @Nullable Collection dictionaries) {
+    if (dictionaries == null) {
+      return Collections.emptyList();
     }
+    List<String> results = new ArrayList<String>();
+
+    for (Object o : dictionaries) {
+      if (o instanceof Dictionary) {
+        results.addAll(restore(startFrom, i, j, (Dictionary)o));
+      }
+
+    }
+    return results;
   }
 
-
-  public void addToDictionary(String word) {
-    final String transformed = transform.transform(word);
-    if (transformed != null) {
-      engineDictionary.addToDictionary(transformed);
+  @NotNull
+  private static List<String> restore(@NotNull final Character first, final int i, final int j, @Nullable Dictionary dictionary) {
+    if (dictionary == null) {
+      return Collections.emptyList();
     }
+    final List<String> result = new ArrayList<String>();
+    if (dictionary instanceof CompressedDictionary) {
+      result.addAll(((CompressedDictionary)dictionary).getWords(first));
+    }
+    else {
+      dictionary.traverse(new Consumer<String>() {
+        public void consume(String s) {
+          if (StringUtil.isEmpty(s)) {
+            return;
+          }
+          if (s.charAt(0) == first && s.length() >= i && s.length() <= j) {
+            result.add(s);
+          }
+        }
+      });
+    }
+
+    return result;
+  }
+
+  private static boolean isCorrect(@NotNull String transformed, @Nullable Collection dictionaries) {
+    if (dictionaries == null) {
+      return true;
+    }
+
+    for (Object o : dictionaries) {
+      if (o instanceof Dictionary) {
+        boolean result = isCorrect(transformed, (Dictionary)o);
+        if (result) {
+          return true;
+        }
+      }
+
+    }
+    return false;
+  }
+
+  private static boolean isCorrect(@NotNull String transformed, @Nullable Dictionary dictionary) {
+    if (dictionary == null) {
+      return true;
+    }
+
+    return dictionary.contains(transformed);
   }
 
   public boolean isCorrect(@NotNull String word) {
     final String transformed = transform.transform(word);
-    return transformed != null && engineDictionary.contains(transformed);
+    if (transformed == null) {
+      return true;
+    }
+    return isCorrect(transformed, bundledDictionaries) || isCorrect(transformed, dictionaries);
+
+
   }
+
 
   @NotNull
   public List<String> getSuggestions(final @NotNull String word, int threshold, int quality) {
@@ -84,14 +173,12 @@ public class BaseSpellChecker implements SpellCheckerEngine {
       return Collections.emptyList();
     }
     final List<Suggestion> suggestions = new ArrayList<Suggestion>();
-    engineDictionary.traverse(new Action() {
-      public void run(Map.Entry<? extends String, ? extends String> entry) {
-        if (transformed.charAt(0) == entry.getKey().charAt(0)/* && Math.abs(mpw.length() - entry.getKey().length()) <= 1*/) {
-          final int distance = metrics.calculateMetrics(transformed, entry.getKey());
-          suggestions.add(new Suggestion(entry.getKey(), distance));
-        }
-      }
-    });
+    List<String> rawSuggestions = restore(transformed.charAt(0), 0, Integer.MAX_VALUE, bundledDictionaries);
+    rawSuggestions.addAll(restore(word.charAt(0), 0, Integer.MAX_VALUE, dictionaries));
+    for (String rawSuggestion : rawSuggestions) {
+      final int distance = metrics.calculateMetrics(transformed, rawSuggestion);
+      suggestions.add(new Suggestion(rawSuggestion, distance));
+    }
     List<String> result = new ArrayList<String>();
     if (suggestions.isEmpty()) {
       return result;
@@ -108,13 +195,44 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     return result;
   }
 
+
   @NotNull
   public List<String> getVariants(@NotNull String prefix) {
-    return null;
+    //if (StringUtil.isEmpty(prefix)) {
+    return Collections.emptyList();
+    //}
+
   }
 
   public void reset() {
-    engineDictionary = null;
-    ensureEngineDictionary();
+    bundledDictionaries.clear();
+    dictionaries.clear();
+  }
+
+  public boolean isDictionaryLoad(@NotNull String name) {
+    return getBundledDictionaryByName(name) != null;
+  }
+
+  public void removeDictionary(@NotNull String name) {
+    for (Iterator<Dictionary> iterator = bundledDictionaries.iterator(); iterator.hasNext();) {
+      Dictionary dictionary = iterator.next();
+      if (name.equals(dictionary.getName())) {
+        iterator.remove();
+        break;
+      }
+    }
+  }
+
+  @Nullable
+  public Dictionary getBundledDictionaryByName(@NotNull String name) {
+    if (bundledDictionaries == null) {
+      return null;
+    }
+    for (Dictionary dictionary : bundledDictionaries) {
+      if (name.equals(dictionary.getName())) {
+        return dictionary;
+      }
+    }
+    return null;
   }
 }

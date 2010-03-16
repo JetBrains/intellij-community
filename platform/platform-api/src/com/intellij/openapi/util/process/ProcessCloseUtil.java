@@ -19,8 +19,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.concurrency.Semaphore;
 
-import java.util.concurrent.Future;
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 public class ProcessCloseUtil {
   private static final long ourSynchronousWaitTimeout = 1000;
@@ -34,25 +34,32 @@ public class ProcessCloseUtil {
     outerSemaphore.down();
 
     final Application application = ApplicationManager.getApplication();
-    final Future<?> future = application.executeOnPooledThread(new Runnable() {
+    application.executeOnPooledThread(new Runnable() {
       public void run() {
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
+        try {
+          final Semaphore semaphore = new Semaphore();
+          semaphore.down();
 
-        final Runnable closeRunnable = new Runnable() {
-          public void run() {
-            closeProcessImpl(process);
-            semaphore.up();
+          final Runnable closeRunnable = new Runnable() {
+            public void run() {
+              try {
+                closeProcessImpl(process);
+              }
+              finally {
+                semaphore.up();
+              }
+            }
+          };
+
+          final Future<?> innerFuture = application.executeOnPooledThread(closeRunnable);
+          semaphore.waitFor(ourAsynchronousWaitTimeout);
+          if ( ! (innerFuture.isDone() || innerFuture.isCancelled())) {
+            innerFuture.cancel(true); // will call interrupt()
           }
-        };
-
-        final Future<?> innerFuture = application.executeOnPooledThread(closeRunnable);
-        semaphore.waitFor(ourAsynchronousWaitTimeout);
-        if ( ! (innerFuture.isDone() || innerFuture.isCancelled())) {
-          innerFuture.cancel(true); // will call interrupt()
         }
-
-        outerSemaphore.up();
+        finally {
+          outerSemaphore.up();
+        }
       }
     });
 

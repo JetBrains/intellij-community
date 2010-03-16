@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.diff.impl.patch.formove;
 
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchFactory;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -25,6 +29,7 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 
-public class PathsVerifier {
+public class PathsVerifier<BinaryType extends FilePatch> {
   // in
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
@@ -44,8 +49,8 @@ public class PathsVerifier {
   private final List<FilePath> myBeforePaths;
   private final List<VirtualFile> myCreatedDirectories;
   // out
-  private final List<Pair<VirtualFile, FilePatch>> myTextPatches;
-  private final List<Pair<VirtualFile, FilePatch>> myBinaryPatches;
+  private final List<Pair<VirtualFile, ApplyTextFilePatch>> myTextPatches;
+  private final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> myBinaryPatches;
   private final List<VirtualFile> myWritableFiles;
   private final BaseMapper myBaseMapper;
 
@@ -58,8 +63,8 @@ public class PathsVerifier {
     myMovedFiles = new HashMap<VirtualFile, MovedFileData>();
     myBeforePaths = new ArrayList<FilePath>();
     myCreatedDirectories = new ArrayList<VirtualFile>();
-    myTextPatches = new ArrayList<Pair<VirtualFile,FilePatch>>();
-    myBinaryPatches = new ArrayList<Pair<VirtualFile,FilePatch>>();
+    myTextPatches = new ArrayList<Pair<VirtualFile, ApplyTextFilePatch>>();
+    myBinaryPatches = new ArrayList<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>>();
     myWritableFiles = new ArrayList<VirtualFile>();
   }
 
@@ -284,11 +289,14 @@ public class PathsVerifier {
   }
 
   private void addPatch(final FilePatch patch, final VirtualFile file) {
-    final Pair<VirtualFile, FilePatch> patchPair = new Pair<VirtualFile, FilePatch>(file, patch);
+    final Pair<VirtualFile, ApplyFilePatchBase> patchPair = new Pair<VirtualFile, ApplyFilePatchBase>(file, ApplyFilePatchFactory.createGeneral(patch));
     if (patch instanceof TextFilePatch) {
-      myTextPatches.add(patchPair);
+      myTextPatches.add(new Pair<VirtualFile, ApplyTextFilePatch>(file, ApplyFilePatchFactory.create((TextFilePatch) patch)));
     } else {
-      myBinaryPatches.add(patchPair);
+      final ApplyFilePatchBase<BinaryType> applyBinaryPatch = (ApplyFilePatchBase<BinaryType>) ((patch instanceof BinaryFilePatch) ? ApplyFilePatchFactory
+        .create((BinaryFilePatch) patch) :
+              ApplyFilePatchFactory.create((ShelveChangesManager.ShelvedBinaryFilePatch) patch));
+      myBinaryPatches.add(new Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>(file, applyBinaryPatch));
     }
     myWritableFiles.add(file);
   }
@@ -410,11 +418,11 @@ public class PathsVerifier {
     return child;
   }
 
-  public List<Pair<VirtualFile, FilePatch>> getTextPatches() {
+  public List<Pair<VirtualFile, ApplyTextFilePatch>> getTextPatches() {
     return myTextPatches;
   }
 
-  public List<Pair<VirtualFile, FilePatch>> getBinaryPatches() {
+  public List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> getBinaryPatches() {
     return myBinaryPatches;
   }
 

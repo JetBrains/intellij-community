@@ -36,7 +36,7 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
 
   public Map<String, PsiType> join(ArrayList<Map<String, PsiType>> ins) {
     if (ins.size() == 0) return new HashMap<String, PsiType>();
-    
+
     Map<String, PsiType> result = new HashMap<String, PsiType>(ins.get(0));
 
     for (int i = 1; i < ins.size(); i++) {
@@ -48,10 +48,9 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
         if (result.containsKey(name)) {
           final PsiType t2 = result.get(name);
           if (t1 != null && t2 != null) {
-            if (t1.isAssignableFrom(t2)) result.put(name, t1);
-            else if (t2.isAssignableFrom(t1)) result.put(name, t2);
-            else result.put(name, TypesUtil.getLeastUpperBound(t1, t2, myManager));
-          } else {
+            result.put(name, TypesUtil.getLeastUpperBound(t1, t2, myManager));
+          }
+          else {
             result.put(name, null);
           }
         }
@@ -71,7 +70,8 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
       final PsiType t2 = e2.get(name);
       if (t1 == null || t2 == null) {
         if (t1 != null || t2 != null) return false;
-      } else {
+      }
+      else {
         if (!t1.equals(t2)) return false;
       }
     }

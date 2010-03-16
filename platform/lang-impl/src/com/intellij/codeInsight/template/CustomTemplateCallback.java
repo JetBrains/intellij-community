@@ -43,23 +43,13 @@ public class CustomTemplateCallback {
   private Project myProject;
   private RangeMarker myGlobalMarker;
   private RangeMarker myEndOffsetMarker;
-
-  //private final Map<Object, MyCheckpoint> myCheckpoints = new HashMap<Object, MyCheckpoint>();
   private final Map<Object, RangeMarker> myCheckpoints = new HashMap<Object, RangeMarker>();
-
-  /*private static class MyCheckpoint {
-    int myFixedLength = null;
-    RangeMarker myFixedOffset;
-  }*/
 
   public CustomTemplateCallback(Editor editor, PsiFile file) {
     myEditor = editor;
     myFile = file;
     myProject = file.getProject();
     myTemplateManager = TemplateManagerImpl.getInstance(myProject);
-  }
-
-  public void fixInitialEditorState() {
     myStartOffset = myEditor.getCaretModel().getOffset();
     myGlobalMarker = myEditor.getDocument().createRangeMarker(myStartOffset, myStartOffset);
     myGlobalMarker.setGreedyToLeft(true);
