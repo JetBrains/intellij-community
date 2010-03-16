@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -66,7 +67,7 @@ public class TextSplitter {
     List<CheckArea> results = new ArrayList<CheckArea>();
     String[] pieces = text.substring(i).split(WORD_SPLITTER);
     for (String s : pieces) {
-      //ProgressManager.checkCanceled();
+      ProgressManager.checkCanceled();
       if (s.length() > 0 && startWithLetterOrDelimiter(s)) {
         int p1 = text.indexOf(s, i);
         TextRange range = TextRange.from(p1, s.length());
@@ -81,10 +82,7 @@ public class TextSplitter {
   }
 
   private static boolean startWithLetterOrDelimiter(@NotNull String s) {
-   // Matcher matcher = PRINTABLE.matcher(s);
-   // return matcher.find();
     return Character.isLetter(s.charAt(0)) || delimiters.contains(s.substring(0,1));
-  //  return true;
   }
 
   @Nullable
