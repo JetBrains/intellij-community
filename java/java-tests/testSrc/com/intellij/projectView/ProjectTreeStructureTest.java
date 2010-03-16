@@ -35,21 +35,21 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                                                 " Class4.java\n");
     assertStructureEqual("Project\n" +
            " External Libraries\n" +
-           "  Library: < java 1.4 >\n" +
-           "   jsp-api.jar\n" +
+           "  Library: < java 1.5 >\n" +
+           "   annotations.jar\n" +
+           "    classpath.index\n" +
            "    META-INF\n" +
            "     MANIFEST.MF\n" +
-           "    javax\n" +
-           "     servlet\n" +
-           "      jsp\n" +
-           "       ErrorData\n" +
-           "       HttpJspPage\n" +
-           "       JspContext\n" +
-           "       JspEngineInfo\n" +
-           "       JspException\n" +
-           "       JspFactory\n" +
-           "       JspPage\n" +
-           "       JspTagException\n"
+           "    org\n" +
+           "     intellij\n" +
+           "      lang\n" +
+           "       annotations\n" +
+           "        Identifier\n" +
+           "        Language\n" +
+           "        Pattern\n" +
+           "        PrintFormat\n" +
+           "        PrintFormatPattern\n" +
+           "        RegExp\n"
     );
 
     getProjectTreeStructure().setProviders();
@@ -65,21 +65,22 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
     assertStructureEqual("Project\n" +
            " External Libraries\n" +
-           "  Library: < java 1.4 >\n" +
-           "   jsp-api.jar\n" +
+           "  Library: < java 1.5 >\n" +
+           "   annotations.jar\n" +
+           "    classpath.index\n" +
            "    META-INF\n" +
            "     MANIFEST.MF\n" +
-           "    javax\n" +
-           "     servlet\n" +
-           "      jsp\n" +
-           "       el\n" +
-           "        ELException.class\n" +
-           "        ELParseException.class\n" +
-           "        Expression.class\n" +
-           "        ExpressionEvaluator.class\n" +
-           "        FunctionMapper.class\n" +
-           "        VariableResolver.class\n" +
-           "       resources\n");
+           "    org\n" +
+           "     intellij\n" +
+           "      lang\n" +
+           "       annotations\n" +
+           "        Identifier.class\n" +
+           "        Language.class\n" +
+           "        Pattern.class\n" +
+           "        PrintFormat.class\n" +
+           "        PrintFormatPattern.class\n" +
+           "        RegExp.class\n"
+);
   }
 
   public void testShowClassMembers() {

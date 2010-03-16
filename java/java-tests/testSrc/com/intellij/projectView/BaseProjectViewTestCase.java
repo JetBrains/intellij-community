@@ -15,6 +15,7 @@
  */
 package com.intellij.projectView;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
@@ -23,6 +24,8 @@ import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -275,5 +278,15 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
     public void disposeComponent() {
 
     }
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdkCE();
   }
 }
