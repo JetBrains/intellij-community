@@ -43,7 +43,7 @@ import java.util.zip.ZipFile;
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
   private final Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
   @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
-  @NonNls private static final String IDEA_JAR = "idea.jar";
+  private File myNoCopyJarDir;
 
   private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
 
@@ -127,6 +127,11 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   public void initComponent() {
+    //We want to prevent Platform from copying its own jars when running from dist to save system resources
+    final boolean isRunningFromDist = new File(PathManager.getLibPath() + File.separatorChar + "openapi.jar").exists();
+    if(isRunningFromDist) {
+      myNoCopyJarDir = new File(new File(PathManager.getLibPath()).getParent());
+    }
   }
 
   public void disposeComponent() {
@@ -244,13 +249,13 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     if (!SystemInfo.isFileSystemCaseSensitive) {
       path = path.toLowerCase();
     }
-    if (myNoCopyJarPaths.contains(path)) return false;
 
-    String name = originalJar.getName();
-    if (name.equalsIgnoreCase(IDEA_JAR)) {
-      if (originalJar.getParent().equalsIgnoreCase(PathManager.getLibPath())) {
-        return false;
-      }
+    if (myNoCopyJarPaths.contains(path)) return false;
+    try {
+      if (myNoCopyJarDir!=null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
 
     return true;
