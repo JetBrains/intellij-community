@@ -6,10 +6,12 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +25,10 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.PairProcessor;
 import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
@@ -145,7 +151,12 @@ public class PyConsoleRunner {
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
 
 // Request focus
-    IdeFocusManager.getInstance(myProject).requestFocus(myConsoleView.getPreferredFocusableComponent(), true);
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
+    window.activate(new Runnable() {
+      public void run() {
+        IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getCurrentEditor().getContentComponent(), true);
+      }
+    });
   }
 
   private void registerActionShortcuts(final AnAction[] actions, final JComponent component) {
