@@ -423,7 +423,7 @@
   </injection>
   <injection language="SQL" injector-id="php">
     <display-name>"SELECT "</display-name>
-    <place><![CDATA[phpLiteralExpression().withText(string().matches("SELECT .*"))]]></place>
+    <place><![CDATA[phpLiteralExpression().withText(string().matches(".?SELECT .*"))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="php">
     <display-name>&lt;&lt;&lt; JS</display-name>
