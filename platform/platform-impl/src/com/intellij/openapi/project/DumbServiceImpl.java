@@ -227,10 +227,10 @@ public class DumbServiceImpl extends DumbService {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     runWhenSmart(new Runnable() {
-          public void run() {
-            semaphore.up();
-          }
-        });
+      public void run() {
+        semaphore.up();
+      }
+    });
     semaphore.waitFor();
   }
 
