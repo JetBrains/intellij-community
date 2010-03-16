@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,8 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProject;
-
-import java.util.List;
-
-public class ReimportProjectAction extends MavenProjectsAction {
-  protected void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
-    manager.forceUpdateProjects(mavenProjects);
+public class DownloadSelectedSourcesAction extends DownloadSelectedSourcesAndDocsAction {
+  public DownloadSelectedSourcesAction() {
+    super(true, false);
   }
 }

@@ -1072,7 +1072,7 @@ public class OldXmlParsing implements XmlElementType {
             }
             current = treeNext;
           }
-          if (insertAfter != null) insertAfter.rawInsertAfterMe(firstMissing);
+          if (insertAfter != null && firstMissing != null) insertAfter.rawInsertAfterMe(firstMissing);
         }
       }
       passTokenOrChameleon(next, lexer);

@@ -77,6 +77,7 @@ public class AntRefIdReference extends AntGenericReference {
     }
   }
 
+  @NotNull
   public Object[] getVariants() {
     final Set<PsiElement> variants = PsiElementSetSpinAllocator.alloc();
     try {

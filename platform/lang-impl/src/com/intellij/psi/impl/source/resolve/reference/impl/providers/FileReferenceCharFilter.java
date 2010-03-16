@@ -35,6 +35,8 @@ public class FileReferenceCharFilter extends CharFilter{
 
     final LookupElement item = lookup.getCurrentItem();
     if (item != null && item.getObject() instanceof PsiFileSystemItem) {
+      if ('.' == c) return Result.ADD_TO_PREFIX;
+
       final PsiReference reference = file.findReferenceAt(lookup.getEditor().getCaretModel().getOffset());
       if (reference instanceof FileReference) return Result.HIDE_LOOKUP;
 

@@ -254,11 +254,11 @@ public class PsiUtilBase {
         return null;
       }
 
-      public <T> T getUserData(Key<T> key) {
+      public <T> T getUserData(@NotNull Key<T> key) {
         return null;
       }
 
-      public <T> void putUserData(Key<T> key, T value) {
+      public <T> void putUserData(@NotNull Key<T> key, T value) {
 
       }
 

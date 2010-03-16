@@ -98,7 +98,7 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   public abstract ArtifactsStructureConfigurableContext getArtifactsStructureContext();
 
   @Nullable
-  public <T> T getUserData(final Key<T> key) {
+  public <T> T getUserData(@NotNull final Key<T> key) {
     T t = super.getUserData(key);
     if (t == null && myParentContext != null) {
       t = myParentContext.getUserData(key);

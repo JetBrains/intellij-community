@@ -117,6 +117,7 @@ public class AntElementNameReference extends AntGenericReference {
     return true;
   }
 
+  @NotNull
   public Object[] getVariants() {
     if (getAttribute() != null) {
       return EMPTY_ARRAY; // scriptdef or mactodef params will be handled by XML implementation

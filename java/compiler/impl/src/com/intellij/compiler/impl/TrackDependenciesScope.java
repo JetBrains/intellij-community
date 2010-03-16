@@ -66,7 +66,7 @@ public class TrackDependenciesScope extends UserDataHolderBase implements Compil
     }
   }
 
-  public <T> T getUserData(final Key<T> key) {
+  public <T> T getUserData(@NotNull final Key<T> key) {
     T userData = myDelegate.getUserData(key);
     if (userData != null) {
       return userData;

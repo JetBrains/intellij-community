@@ -177,6 +177,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return null;
   }
 
+  @NotNull
   public Object[] getVariants() {
     final Converter<T> converter = getConverter();
     if (converter instanceof EnumConverter || converter == ResolvingConverter.BOOLEAN_CONVERTER) {

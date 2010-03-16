@@ -20,21 +20,30 @@ import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
-public class MavenProjectsProcessorArtifactsDownloadingTask extends MavenProjectsProcessorBasicTask {
+import java.util.Collection;
+import java.util.List;
+
+public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProjectsProcessorTask {
+  private final Collection<MavenProject> myProjects;
+  private final Collection<MavenArtifact> myArtifacts;
+  private final MavenProjectsTree myTree;
   private final boolean myDownloadSources;
   private final boolean myDownloadDocs;
 
-  public MavenProjectsProcessorArtifactsDownloadingTask(MavenProject project,
+  public MavenProjectsProcessorArtifactsDownloadingTask(Collection<MavenProject> projects,
+                                                        Collection<MavenArtifact> artifacts, 
                                                         MavenProjectsTree tree,
                                                         boolean downloadSources,
                                                         boolean downloadDocs) {
-    super(project, tree);
+    myProjects = projects;
+    myArtifacts = artifacts;
+    myTree = tree;
     myDownloadSources = downloadSources;
     myDownloadDocs = downloadDocs;
   }
 
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.downloadArtifacts(myMavenProject, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
+    myTree.downloadArtifacts(myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
   }
 }

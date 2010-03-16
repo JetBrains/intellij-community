@@ -185,6 +185,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
       return resolveReference(convertString(value, myContext), myContext);
     }
 
+    @NotNull
     public Object[] getVariants() {
       return getReferenceVariants(myContext, myGenericDomValue);
     }

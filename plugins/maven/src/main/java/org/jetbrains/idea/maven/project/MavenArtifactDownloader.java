@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
@@ -27,10 +28,7 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -41,25 +39,30 @@ public class MavenArtifactDownloader {
   private final static ThreadPoolExecutor EXECUTOR =
     new ThreadPoolExecutor(5, Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
-  private final MavenEmbedderWrapper myEmbedder;
-  private final MavenProgressIndicator myProgress;
   private final MavenProjectsTree myProjectsTree;
-  private final List<MavenProject> myMavenProjects;
+  private final Collection<MavenProject> myMavenProjects;
+  private final Collection<MavenArtifact> myArtifacts;
+  private final MavenProgressIndicator myProgress;
+  private final MavenEmbedderWrapper myEmbedder;
 
   public static void download(MavenProjectsTree projectsTree,
-                              List<MavenProject> mavenProjects,
+                              Collection<MavenProject> mavenProjects,
+                              Collection<MavenArtifact> artifacts,
                               boolean downloadSources,
-                              boolean downloadDocs, MavenEmbedderWrapper embedder,
+                              boolean downloadDocs,
+                              MavenEmbedderWrapper embedder,
                               MavenProgressIndicator p) throws MavenProcessCanceledException {
-    new MavenArtifactDownloader(projectsTree, mavenProjects, embedder, p).download(downloadSources, downloadDocs);
+    new MavenArtifactDownloader(projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
   }
 
   private MavenArtifactDownloader(MavenProjectsTree projectsTree,
-                                  List<MavenProject> mavenProjects,
+                                  Collection<MavenProject> mavenProjects,
+                                  Collection<MavenArtifact> artifacts,
                                   MavenEmbedderWrapper embedder,
                                   MavenProgressIndicator p) {
     myProjectsTree = projectsTree;
     myMavenProjects = mavenProjects;
+    myArtifacts = artifacts == null ? null : new THashSet<MavenArtifact>(artifacts);
     myEmbedder = embedder;
     myProgress = p;
   }
@@ -70,6 +73,13 @@ public class MavenArtifactDownloader {
       List<MavenExtraArtifactType> types = new ArrayList<MavenExtraArtifactType>(2);
       if (downloadSources) types.add(MavenExtraArtifactType.SOURCES);
       if (downloadDocs) types.add(MavenExtraArtifactType.DOCS);
+
+      String caption = downloadSources && downloadDocs
+                       ? ProjectBundle.message("maven.downloading")
+                       : (downloadSources
+                          ? ProjectBundle.message("maven.downloading.sources")
+                          : ProjectBundle.message("maven.downloading.docs"));
+      myProgress.setText(caption);
 
       Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(types);
       download(artifacts, downloadedFiles);
@@ -102,6 +112,8 @@ public class MavenArtifactDownloader {
       List<MavenRemoteRepository> repositories = eachProject.getRemoteRepositories();
 
       for (MavenArtifact eachDependency : eachProject.getDependencies()) {
+        if (myArtifacts != null && !myArtifacts.contains(eachDependency)) continue;
+        
         if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
         if (!eachProject.isSupportedDependency(eachDependency)) continue;

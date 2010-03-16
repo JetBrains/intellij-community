@@ -68,7 +68,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
 
             if (parent instanceof XmlTag && !(token.getNextSibling() instanceof OuterLanguageElement)) {
               XmlTag tag = (XmlTag)parent;
-              checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix(), token, holder);
+              checkUnboundNamespacePrefix(tag, tag, tag.getNamespacePrefix(), token, holder, isOnTheFly);
             }
           }
         }
@@ -94,13 +94,13 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
 
         final String name = attribute.getName();
 
-        checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name), null, holder);
+        checkUnboundNamespacePrefix(attribute, tag, XmlUtil.findPrefixByQualifiedName(name), null, holder, isOnTheFly);
       }
     };
   }
 
   private static void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix, final XmlToken token,
-                                                  final ProblemsHolder holder) {
+                                                  final ProblemsHolder holder, boolean withFixes) {
 
     if (namespacePrefix.length() == 0 && (!(element instanceof XmlTag) || !(element.getParent() instanceof XmlDocument))
       || XML.equals(namespacePrefix)) {
@@ -125,7 +125,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
     if (namespacePrefix.length() == 0) {
       final XmlTag tag = (XmlTag)element;
       if (!XmlUtil.JSP_URI.equals(tag.getNamespace())) {
-        reportTagProblem(tag, localizedMessage, null, ProblemHighlightType.INFORMATION, new CreateNSDeclarationIntentionFix(context, namespacePrefix, token),
+        reportTagProblem(tag, localizedMessage, null, ProblemHighlightType.INFORMATION, 
+                         withFixes ? new CreateNSDeclarationIntentionFix(context, namespacePrefix, token):null,
                          holder);
       }
       return;
@@ -136,7 +137,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
     final HighlightInfoType infoType = extension.getHighlightInfoType(containingFile);
     final ProblemHighlightType highlightType = infoType == HighlightInfoType.ERROR ? ProblemHighlightType.ERROR : ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
     if (element instanceof XmlTag) {
-      final CreateNSDeclarationIntentionFix fix = new CreateNSDeclarationIntentionFix(context, namespacePrefix, token);
+      final CreateNSDeclarationIntentionFix fix = withFixes ? new CreateNSDeclarationIntentionFix(context, namespacePrefix, token):null;
       reportTagProblem(element, localizedMessage, range, highlightType, fix, holder);
     } else {
       holder.registerProblem(element, localizedMessage, highlightType, range);

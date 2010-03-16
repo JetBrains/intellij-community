@@ -85,9 +85,16 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       final VisualPosition startPosition = editor.offsetToVisualPosition(off);
       if (startPosition.column <= 0) return;
 
-      if (editor.getFoldingModel().isOffsetCollapsed(off)) return;
+      final FoldingModel foldingModel = editor.getFoldingModel();
+      if (foldingModel.isOffsetCollapsed(off)) return;
 
       final int endOffset = highlighter.getEndOffset();
+
+      final FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(off)));
+      final FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
+      
+      if (tailRegion != null && tailRegion == headerRegion) return;
+
       final boolean selected;
       final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
       if (guide != null) {

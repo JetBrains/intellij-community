@@ -23,6 +23,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -93,6 +94,7 @@ public class MethodPropertyReference extends BasicAttributeValueReference {
     return super.handleElementRename(newElementName);
   }
 
+  @NotNull
   public Object[] getVariants() {
     return JspSpiUtil.getMethodPropertyReferenceVariants(this, resolveClass(), myReadable);
   }

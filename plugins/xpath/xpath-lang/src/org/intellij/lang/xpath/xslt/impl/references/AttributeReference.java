@@ -33,6 +33,7 @@ class AttributeReference extends SimpleAttributeReference {
         mySoft = soft;
     }
 
+    @NotNull
     public Object[] getVariants() {
         return ResolveUtil.collect(myMatcher.variantMatcher());
     }

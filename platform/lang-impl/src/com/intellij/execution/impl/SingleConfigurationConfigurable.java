@@ -208,6 +208,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JPanel myOutlinePanel;
     private JLabel myWarningLabel;
     private JButton myFixButton;
+    private JScrollPane myScrollPane;
     private Runnable myQuickFix = null;
 
     public MyValidatableComponent() {
@@ -222,6 +223,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
       myWarningLabel.setIcon(IconLoader.getIcon("/runConfigurations/configurationWarning.png"));
 
+      myScrollPane.setBorder(null);
       myComponentPlace.setLayout(new GridBagLayout());
       myComponentPlace.add(getEditorComponent(),
                            new GridBagConstraints(0, 0, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,

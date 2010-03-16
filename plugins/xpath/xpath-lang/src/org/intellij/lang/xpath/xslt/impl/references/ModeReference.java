@@ -64,6 +64,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
         return myImplicitModeElement.getModeRange();
     }
 
+    @NotNull
     public Object[] getVariants() {
         final PsiFile containingFile = myAttribute.getContainingFile();
         if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile)) {
@@ -146,6 +147,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
             super(attribute);
         }
 
+        @NotNull
         public Object[] getVariants() {
             return getPrefixCompletions(myAttribute);
         }

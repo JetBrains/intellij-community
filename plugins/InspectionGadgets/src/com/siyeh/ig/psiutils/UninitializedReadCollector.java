@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,6 +168,8 @@ public class UninitializedReadCollector {
                     (PsiSwitchStatement) statement;
             return switchStatementAssignsVariable(switchStatement, variable,
                     stamp, checkedMethods);
+        } else if(statement instanceof PsiSwitchLabelStatement){
+            return false;
         } else{
             throw new RuntimeException("unknown statement: " + statement);
             // unknown statement type
@@ -577,7 +579,7 @@ public class UninitializedReadCollector {
 
         // Can remark out this block to continue chase outside of of
         // current class
-        if(!calledClass.equals(containingClass)){
+        if(calledClass == null || !calledClass.equals(containingClass)){
             return false;
         }
 

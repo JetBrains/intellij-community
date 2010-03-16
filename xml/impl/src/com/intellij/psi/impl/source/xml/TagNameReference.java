@@ -169,6 +169,7 @@ public class TagNameReference implements PsiReference {
     return getElement().getManager().areElementsEquivalent(element, resolve());
   }
 
+  @NotNull
   public Object[] getVariants(){
     final PsiElement element = getElement();
     if(!myStartTagFlag){

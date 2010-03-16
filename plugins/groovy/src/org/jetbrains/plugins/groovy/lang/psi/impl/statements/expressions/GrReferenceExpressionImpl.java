@@ -222,7 +222,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (getParent() instanceof GrReferenceExpression) {
         result = facade.getElementFactory().createType((PsiClass) resolved);
       } else {
-        PsiClass javaLangClass = facade.findClass("java.lang.Class", getResolveScope());
+        PsiClass javaLangClass = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, getResolveScope());
         if (javaLangClass != null) {
           PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
@@ -239,14 +239,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else
     if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
       if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-        return facade.getElementFactory().createTypeByFQClassName("groovy.lang.Closure", getResolveScope());
+        return facade.getElementFactory().createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
       }
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         result = method.getParameterList().getParameters()[0].getType();
       } else {
         PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null && "java.lang.Object".equals(containingClass.getQualifiedName()) &&
+        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
                 "getClass".equals(method.getName())) {
           result = getTypeForObjectGetClass(facade, method);
         } else {
@@ -283,7 +283,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           PsiClassType.ClassResolveResult qResult = ((PsiClassType) qType).resolveGenerics();
           PsiClass clazz = qResult.getElement();
           if (clazz != null) {
-            PsiClass mapClass = facade.findClass("java.util.Map", getResolveScope());
+            PsiClass mapClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, getResolveScope());
             if (mapClass != null && mapClass.getTypeParameters().length == 2) {
               PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
               if (substitutor != null) {
