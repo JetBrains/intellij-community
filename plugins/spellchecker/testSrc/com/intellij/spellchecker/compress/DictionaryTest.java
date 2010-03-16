@@ -49,7 +49,7 @@ public class DictionaryTest extends TestCase {
 
   {
     times.put(JETBRAINS_DIC, 100);
-    times.put(ENGLISH_DIC, 3500);
+    times.put(ENGLISH_DIC, 5000);
   }
 
   public void testDictionary() throws IOException {
