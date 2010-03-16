@@ -33,6 +33,8 @@ import java.util.List;
 
 public class SplitterTest extends TestCase {
 
+  
+
 
   public void testSplitSimpleCamelCase() {
     String text = "simpleCamelCase";
@@ -184,6 +186,13 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{});
   }
 
+   public void testColorUCSurrounded() {
+    String text = "\"#AABBFF\"";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
   public void testColorLC() {
     String text = "#fff";
     List<CheckArea> checkAreas = TextSplitter.splitText(text);
@@ -198,8 +207,15 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{"bg", "car"});
   }
 
-  public void testComplex() {
-    String text = "shkate@gmail.com";
+  public void testEmail() {
+    String text = "shkate.test@gmail.com";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testUrl() {
+    String text = "http://www.jetbrains.com/idea";
     List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{});
     correctIgnored(checkAreas, text, new String[]{});
@@ -262,12 +278,47 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{});
   }
 
- /* public void testWordsWithDots() {
+  public void testCommaSeparatedList() {
+    String text = "properties,test,properties";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"properties", "test", "properties"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testSemicolonSeparatedList() {
+    String text = "properties;test;properties";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"properties", "test", "properties"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testProperties1() {
     String text = "properties.test.properties";
     List<CheckArea> checkAreas = TextSplitter.splitText(text);
     correctListToCheck(checkAreas, text, new String[]{"properties", "test", "properties"});
     correctIgnored(checkAreas, text, new String[]{});
-  }*/
+  }
+
+  public void testProperties2() {
+    String text = ".properties";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"properties"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+   public void testProperties3() {
+    String text = "properties.";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"properties"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
+
+  public void testPropertiesWithCamelCase() {
+    String text = "upgrade.testCommit.propertiesSomeNews";
+    List<CheckArea> checkAreas = TextSplitter.splitText(text);
+    correctListToCheck(checkAreas, text, new String[]{"upgrade", "test", "Commit", "properties","Some","News"});
+    correctIgnored(checkAreas, text, new String[]{});
+  }
 
   public void testWordUpperCasedWithUmlautsInTheBeginning() {
     String text = "\u00DCNDIG";
