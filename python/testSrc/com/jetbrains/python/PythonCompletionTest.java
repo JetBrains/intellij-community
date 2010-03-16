@@ -51,6 +51,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testKeywordAfterComment() throws Exception {  // PY-697
+    doTest();
+  }
+
   public void testPy255() throws Exception {
     final String dirname = "completion/";
     final String testName = dirname + "moduleClass";
