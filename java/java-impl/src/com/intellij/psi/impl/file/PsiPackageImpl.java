@@ -507,7 +507,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
       }
       else {
         PsiClass[] classes = getClasses(scope);
-        if (!processClasses(processor, state, place, classes)) return false;
+        if (!processClasses(processor, state, classes)) return false;
         if (migration != null) {
           for (PsiClass psiClass : migration.getMigrationClasses(getQualifiedName())) {
             if (!processor.execute(psiClass, state)) {
@@ -552,17 +552,12 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
 
   private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope, String className) {
     final PsiClass[] classes = findClassesByName(className, scope);
-    return !processClasses(processor, state, place, classes);
+    return !processClasses(processor, state, classes);
   }
 
-  private boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiElement place, PsiClass[] classes) {
-    boolean placePhysical = place.isPhysical();
-
-    final PsiResolveHelper helper = getFacade().getResolveHelper();
+  private static boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiClass[] classes) {
     for (PsiClass aClass : classes) {
-      if (!placePhysical || helper.isAccessible(aClass, place, null)) {
-        if (!processor.execute(aClass, state)) return false;
-      }
+      if (!processor.execute(aClass, state)) return false;
     }
     return true;
   }
