@@ -239,6 +239,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a,b", new String[]{"b"}, new String[]{"self,"});
   }
 
+  public void testInheritedClassInit() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self,a,b", new String[]{"a,"}, new String[]{"self,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a,b", new String[]{"b"}, new String[]{"self,"});
+  }
+
   // TODO: add method tests with decorators when a mock SDK is available
 
   /**
