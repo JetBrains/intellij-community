@@ -65,11 +65,11 @@ public class RangeMarkerWindow implements RangeMarkerEx {
     myHostMarker.setGreedyToRight(greedy);
   }
 
-  public <T> T getUserData(final Key<T> key) {
+  public <T> T getUserData(@NotNull final Key<T> key) {
     return myHostMarker.getUserData(key);
   }
 
-  public <T> void putUserData(final Key<T> key, final T value) {
+  public <T> void putUserData(@NotNull final Key<T> key, final T value) {
     myHostMarker.putUserData(key, value);
   }
 

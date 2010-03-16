@@ -133,6 +133,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return false;
     }
 
+    @NotNull
     public Object[] getVariants() {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

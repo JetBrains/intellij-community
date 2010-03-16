@@ -102,6 +102,7 @@ class ExternalResourceReference implements PsiReference, QuickFixProvider<Extern
         return element == resolve();
     }
 
+    @NotNull
     public Object[] getVariants() {
         return myResourceManager.getResourceUrls(null, false);
     }

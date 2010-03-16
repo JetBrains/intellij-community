@@ -48,6 +48,7 @@ public class LightClassReferenceExpression extends LightClassReference implement
     return getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @NotNull
   public Object[] getVariants() {
     throw new RuntimeException("Variants are not available for light references");
   }

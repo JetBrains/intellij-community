@@ -86,6 +86,7 @@ public class PsiLabelReference implements PsiReference{
       return resolve() == element;
     }
 
+    @NotNull
     public Object[] getVariants(){
       final List result = new ArrayList();
       PsiElement context = myStatement;

@@ -118,6 +118,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
         return resolveTo;
       }
 
+      @NotNull
       public Object[] getVariants() {
         return EMPTY_ARRAY;
       }

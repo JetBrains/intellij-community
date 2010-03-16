@@ -185,6 +185,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return element instanceof PsiMethod && element.equals(resolve());
       }
 
+      @NotNull
       public Object[] getVariants() {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }

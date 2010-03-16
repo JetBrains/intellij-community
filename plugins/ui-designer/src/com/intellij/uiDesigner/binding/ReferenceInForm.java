@@ -25,6 +25,7 @@ import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -75,6 +76,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return resolve() == element;
   }
 
+  @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
