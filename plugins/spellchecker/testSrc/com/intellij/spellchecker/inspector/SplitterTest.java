@@ -165,7 +165,7 @@ public class SplitterTest extends TestCase {
     correctIgnored(checkAreas, text, new String[]{});
   }
 
-  @Bombed(month = Calendar.APRIL, day=1, description = "html tag without any attribute should be ignored along with htl tags with attributes")
+
   public void testCommentWithHtml() {
     String text = "<!--<li>something go here</li> <li>next content</li> foooo barrrr <p> text -->";
     List<CheckArea> checkAreas = SplitterFactory.getCommentSplitter().split(text);
