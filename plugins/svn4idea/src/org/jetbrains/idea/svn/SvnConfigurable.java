@@ -180,12 +180,14 @@ public class SvnConfigurable implements Configurable {
       return true;
     }
     final int annotateRevisions = configuration.getMaxAnnotateRevisions();
-    final boolean useMaxInAnnot = annotateRevisions == -1;
+    final boolean useMaxInAnnot = annotateRevisions != -1;
     if (useMaxInAnnot != myMaximumNumberOfRevisionsCheckBox.isSelected()) {
       return true;
     }
-    if (annotateRevisions != myNumRevsInAnnotations.getComponentCount()) {
-      return true;
+    if (myMaximumNumberOfRevisionsCheckBox.isSelected()) {
+      if (annotateRevisions != ((SpinnerNumberModel) myNumRevsInAnnotations.getModel()).getNumber().intValue()) {
+        return true;
+      }
     }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }

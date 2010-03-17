@@ -16,6 +16,11 @@
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.spellchecker.inspections.CheckArea;
+import com.intellij.spellchecker.inspections.Splitter;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 
 public class Token<T extends PsiElement> {
@@ -25,25 +30,18 @@ public class Token<T extends PsiElement> {
   private T element;
   private boolean useRename;
   private int offset;
+  private final Splitter splitter;
 
-  public Token(T element, String text, boolean useRename) {
+  public Token(T element, String text, boolean useRename, Splitter splitter) {
     this.element = element;
     this.text = text;
     this.useRename = useRename;
+    this.splitter = splitter;
   }
 
-  public Token(T element, String text, boolean useRename, int offset) {
-    this.element = element;
-    this.text = text;
-    this.useRename = useRename;
+  public Token(T element, String text, boolean useRename, int offset, Splitter splitter) {
+    this(element, text, useRename, splitter);
     this.offset = offset;
-  }
-
-  public Token(T element, String text, String description, boolean useRename) {
-    this.element = element;
-    this.text = text;
-    this.description = description;
-    this.useRename = useRename;
   }
 
   public String getText() {
@@ -64,5 +62,14 @@ public class Token<T extends PsiElement> {
 
   public int getOffset() {
     return offset;
+  }
+
+
+  @Nullable
+  public List<CheckArea> getAreas() {
+    if (splitter == null || text == null) {
+      return null;
+    }
+    return splitter.split(text);
   }
 }

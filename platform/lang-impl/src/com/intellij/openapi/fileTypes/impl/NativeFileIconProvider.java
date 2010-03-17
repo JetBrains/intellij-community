@@ -45,9 +45,8 @@ public class NativeFileIconProvider implements FileIconProvider {
   private static final Ext NO_EXT = new Ext(null);
 
   public Icon getIcon(VirtualFile file, int flags, @Nullable Project project) {
-    if (!(file.getFileType() instanceof NativeFileType) && !(file.getFileType() instanceof UnknownFileType)) {
-      return null;
-    }
+    if (!isNativeFileType(file)) return null;
+
     final Ext ext = file.getExtension() != null ? new Ext(file.getExtension()) : NO_EXT;
     final String filePath = file.getPath();
 
@@ -89,6 +88,10 @@ public class NativeFileIconProvider implements FileIconProvider {
         return icon;
       }
     });
+  }
+
+  protected boolean isNativeFileType(VirtualFile file) {
+    return file.getFileType() instanceof NativeFileType || file.getFileType() instanceof UnknownFileType;
   }
 
   private static class Ext extends ComparableObject.Impl {
