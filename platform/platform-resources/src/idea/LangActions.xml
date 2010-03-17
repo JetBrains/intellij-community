@@ -418,6 +418,10 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="/actions/sync.png"/>
+      <separator/>
+      <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
+      <reference ref="ShowFilePath"/>
+      <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
       <separator/>
