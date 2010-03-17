@@ -322,14 +322,7 @@ public class SplitterTest extends TestCase {
 
   
 
-  public void testNoWordsInHugeBinaryFile() {
-    final InputStream stream = SplitterTest.class.getResourceAsStream("crt.txt");
-    String text = convertStreamToString(stream);
-    List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{});
-    List<String> words = wordsToCheck(checkAreas, text);
-    assertNull(words);
-  }
+ 
 
   public void testTCData() {
     final InputStream stream = SplitterTest.class.getResourceAsStream("contents.txt");

@@ -42,7 +42,7 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
       parent = PsiTreeUtil.findCommonParent(identifier, element);
       offset = identifier.getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
     }
-    return new Token[]{new Token<PsiElement>(parent, identifier.getText(), true, offset, SplitterFactory.getIdentifierSplitter())};
+    return new Token[]{new Token<PsiElement>(parent, identifier.getText(), true, offset, SplitterFactory.getInstance().getIdentifierSplitter())};
   }
 
 
