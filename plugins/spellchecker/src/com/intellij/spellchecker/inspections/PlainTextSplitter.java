@@ -28,22 +28,11 @@ import java.util.regex.Pattern;
 
 public class PlainTextSplitter extends BaseSplitter {
 
-  private static final String delimiters = ".,;:!?*/&\"";
 
   @NonNls
   private static final Pattern COMPLEX =
     Pattern.compile("([\\p{L}0-9\\.\\-\\_]+@([\\p{L}0-9\\-\\_]+\\.)+(com|net|[a-z]{2}))|((ftp|http|file|https)://([^/]+)(/.*)?(/.*))");
 
-
-  private static final String WORD_SPLITTER = "\\s+|<[^>]+>";
-
-  @NonNls
-  private static final Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{4};|#\\p{Alnum}{3,6}");
-
-  @NonNls
-  private static final Pattern SPLITTABLE = Pattern.compile("(\\.*)|(_*)");
-
-  private static final Pattern EXTENDED_WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}(_*\\p{L})*");
 
   private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile("[&#]?\\p{L}*'?\\p{L}(_*\\p{L})*");
 
@@ -53,7 +42,7 @@ public class PlainTextSplitter extends BaseSplitter {
       return null;
     }
 
-    List<TextRange> toCheck = excludeByPattern(text, range, COMPLEX,0);
+    List<TextRange> toCheck = excludeByPattern(text, range, COMPLEX, 0);
 
     if (toCheck == null) return null;
 

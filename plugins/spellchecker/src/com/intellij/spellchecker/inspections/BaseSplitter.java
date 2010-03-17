@@ -87,7 +87,7 @@ public abstract class BaseSplitter implements Splitter {
     return split(text, new TextRange(0, text.length()));
   }
 
-  protected static boolean checkRange(int from, int till) {
+  protected static boolean tooSmall(int from, int till) {
     return till - from <= MIN_RANGE_LENGTH;
   }
 
@@ -101,23 +101,22 @@ public abstract class BaseSplitter implements Splitter {
     while (matcher.find()) {
       TextRange found = matcherRange(range, matcher);
       till = found.getStartOffset() - 1;
-      if (range.getEndOffset() - found.getEndOffset() < 3) {
+      if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
         addLast = false;
       }
-      if (checkRange(from, till)) {
-        continue;
+      if (!tooSmall(from, till)) {
+        toCheck.add(new TextRange(from, till));
       }
-      toCheck.add(new TextRange(from, till));
       if (groupToInclude > 0) {
         TextRange contentFound = matcherRange(range, matcher, groupToInclude);
-        if (checkRange(contentFound.getEndOffset(), contentFound.getStartOffset())) {
+        if (tooSmall(contentFound.getEndOffset(), contentFound.getStartOffset())) {
           toCheck.add(new TextRange(contentFound.getStartOffset(), contentFound.getEndOffset()));
         }
       }
       from = found.getEndOffset();
     }
     till = range.getEndOffset();
-    if (checkRange(from, till)) {
+    if (tooSmall(from, till)) {
       return null;
     }
     if (addLast) {

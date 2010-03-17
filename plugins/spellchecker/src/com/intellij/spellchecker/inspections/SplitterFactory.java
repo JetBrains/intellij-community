@@ -25,6 +25,9 @@ public class SplitterFactory {
   private static Splitter common = new PlainTextSplitter();
   private static CommentSplitter commentSpl = new CommentSplitter();
 
+  private SplitterFactory() {
+  }
+
   public static IdentifierSplitter getIdentifierSplitter() {
     return idSpl;
   }
