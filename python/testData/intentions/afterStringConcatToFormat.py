@@ -1,0 +1,1 @@
+"a%sf_str%s" % (foo(), c)

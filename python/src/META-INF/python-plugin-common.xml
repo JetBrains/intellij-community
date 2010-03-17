@@ -103,6 +103,12 @@
       <descriptionDirectoryName>PyNegateComparisonIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyStringConcatenationToFormatIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>PyStringConcatenationToFormatIntention</descriptionDirectoryName>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
