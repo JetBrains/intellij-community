@@ -248,6 +248,10 @@ public class SvnFileAnnotation implements FileAnnotation {
     return result;
   }
 
+  public boolean revisionsNotEmpty() {
+    return ! myRevisionMap.isEmpty();
+  }
+
   @Nullable
   public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
     return new AnnotationSourceSwitcher() {

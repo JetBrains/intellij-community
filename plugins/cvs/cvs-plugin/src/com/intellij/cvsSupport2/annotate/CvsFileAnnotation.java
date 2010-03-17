@@ -164,6 +164,10 @@ public class CvsFileAnnotation implements FileAnnotation{
     return myRevisions;
   }
 
+  public boolean revisionsNotEmpty() {
+    return ! myRevisions.isEmpty();
+  }
+
   public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
     return null;
   }
