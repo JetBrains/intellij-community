@@ -186,8 +186,6 @@
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ReplaceMethodWithMethodObject"/>
     </action>
 
-    <action id="BuildAllArtifacts" class="com.intellij.compiler.actions.BuildAllArtifactsAction"/>
-
     <group id="BuildMenu" popup="true">
       <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="/actions/compile.png"/>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
@@ -198,7 +196,7 @@
       <separator/>
       <action id="GenerateAntBuild" class="com.intellij.compiler.actions.GenerateAntBuildAction"/>
       <separator/>
-      <group id="BuildArtifactsGroup" class="com.intellij.compiler.actions.BuildArtifactActionGroup"/>
+      <action id="BuildArtifact" class="com.intellij.compiler.actions.BuildArtifactAction"/>
 
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>
