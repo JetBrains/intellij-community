@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 /**
  * @author Maxim.Medvedev
  */
-public class GrParameterInfo implements ParameterInfo{
+public class GrParameterInfo implements ParameterInfo {
   private GroovyCodeFragment myName;
   private GroovyCodeFragment myDefaultValue;
   private PsiTypeCodeFragment myType;
@@ -43,10 +43,17 @@ public class GrParameterInfo implements ParameterInfo{
     if (type != null) {
       myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type.getCanonicalText(), parameter, true, true);
     }
+    else {
+      myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", parameter, true, true);
+    }
     final GrExpression defaultInitializer = parameter.getDefaultInitializer();
     if (defaultInitializer != null) {
       myDefaultInitializer = new GroovyCodeFragment(project, defaultInitializer.getText());
     }
+    else {
+      myDefaultInitializer = new GroovyCodeFragment(project, "");
+    }
+    myDefaultValue = new GroovyCodeFragment(project, "");
   }
 
   public GrParameterInfo(Project project, PsiElement context) {
@@ -65,7 +72,7 @@ public class GrParameterInfo implements ParameterInfo{
     return myDefaultValue;
   }
 
-  public PsiTypeCodeFragment getType() {
+  public PsiTypeCodeFragment getTypeFragment() {
     return myType;
   }
 

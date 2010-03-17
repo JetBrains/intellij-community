@@ -46,7 +46,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
       GrParameter parameter = parameters[i];
       infos.add(new GrParameterInfo(parameter, i));
     }
-    myProject=project;
+    myProject = project;
   }
 
   public void addRow() {
@@ -82,13 +82,13 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
     final GrParameterInfo info = infos.get(rowIndex);
     switch (columnIndex) {
       case 0:
-        return info.getType();
+        return info.getTypeFragment();
       case 1:
-        return info.getName();
+        return info.getNameFragment();
       case 2:
         return info.getDefaultInitializer();
       case 3:
-        return info.getDefaultValue();
+        return info.getDefaultValueFragment();
       default:
         throw new IllegalArgumentException();
     }
@@ -98,7 +98,6 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   public void setValueAt(Object value, int rowIndex, int columnIndex) {
     if (rowIndex < 0 || rowIndex >= infos.size()) return;
     if (columnIndex < 0 || columnIndex > 3) return;
-
     /*String s = value instanceof String ? (String)value : "";
     s = s.trim();
     final GrParameterInfo info = infos.get(rowIndex);
@@ -142,7 +141,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
       case 3:
         return GroovyCodeFragment.class;
       default:
-        throw  new IllegalArgumentException();
+        throw new IllegalArgumentException();
     }
   }
 

@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
@@ -30,6 +32,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -53,6 +56,7 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
+    final Collection<PsiReference> collection = MethodReferencesSearch.search(myInfo.getMethod()).findAll();
     return new UsageInfo[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
 

@@ -226,7 +226,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
 
   private static void generateParameterText(GrParameterInfo info, StringBuilder builder) {
-    final PsiTypeCodeFragment typeFragment = info.getType();
+    final PsiTypeCodeFragment typeFragment = info.getTypeFragment();
     builder.append(typeFragment != null ? typeFragment.getText().trim() : GrModifier.DEF).append(' ');
     final GroovyCodeFragment nameFragment = info.getNameFragment();
     builder.append(nameFragment != null ? nameFragment.getText().trim() : "");
@@ -291,7 +291,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     }
 
     for (GrParameterInfo info : myParameterModel.getParameterInfos()) {
-      if (!checkType(info.getType())) {
+      if (!checkType(info.getTypeFragment())) {
         CommonRefactoringUtil
           .showErrorHint(myProject, null, "Type for parameter " + info.getName() + " is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
         return false;
@@ -308,7 +308,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       return false;
     }
     catch (PsiTypeCodeFragment.NoTypeException e) {
-      return true;
+      return true; //Groovy accepts methods and parameters without explicit type
     }
     return true;
   }
