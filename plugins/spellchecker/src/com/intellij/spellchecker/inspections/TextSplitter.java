@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TextSplitter {
+public class TextSplitter implements Splitter{
 
 
   @NonNls
@@ -55,7 +55,7 @@ public class TextSplitter {
   private static final String delimiters = ".,;:!?*/&\"";
 
 
-  private TextSplitter() {
+  protected TextSplitter() {
   }
 
   @Nullable
@@ -220,5 +220,16 @@ public class TextSplitter {
   @NotNull
   private static TextRange subRange(@NotNull TextRange range, int start, int end) {
     return TextRange.from(range.getStartOffset() + start, end - start);
+  }
+
+  public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
+    if (text==null || range.getLength()<1){
+      return null;
+    }
+    return splitText(text.substring(range.getStartOffset(),range.getEndOffset()));
+  }
+
+  public List<CheckArea> split(@Nullable String text) {
+    return splitText(text);
   }
 }
