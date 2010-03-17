@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.tokenizer;
+package com.intellij.spellchecker.inspections;
 
-import com.intellij.psi.PsiComment;
-import com.intellij.spellchecker.inspections.SplitterFactory;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CommentTokenizer extends Tokenizer<PsiComment> {
+import java.util.List;
+
+
+public interface Splitter {
 
   @Nullable
-  @Override
-  public Token[] tokenize(@NotNull PsiComment element) {
-    // doccomment chameleon expands as PsiComment inside PsiComment, avoid duplication
-    if (element.getParent() instanceof PsiComment) return null;
-    return new Token[]{new Token<PsiComment>(element, element.getText(),false, SplitterFactory.getCommentSplitter())};
-  }
+  List<CheckArea> split(@Nullable String text, @NotNull TextRange range);
 
-
+  @Nullable
+  List<CheckArea> split(@Nullable String text);
 }

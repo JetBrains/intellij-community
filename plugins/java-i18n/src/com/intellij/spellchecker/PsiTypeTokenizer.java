@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,6 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
 
     final boolean isInSource = (virtualFile != null) && fileIndex.isInContent(virtualFile);
 
-    return !isInSource ? null : new Token[]{new Token<PsiTypeElement>(element, element.getText(), true)};
+    return !isInSource ? null : new Token[]{new Token<PsiTypeElement>(element, element.getText(), true, SplitterFactory.getIdentifierSplitter())};
   }
 }

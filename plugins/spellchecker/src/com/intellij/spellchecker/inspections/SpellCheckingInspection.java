@@ -157,7 +157,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
 
   private static void inspect(Token token, ProblemsHolder holder, boolean isOnTheFly,@NotNull Set<String> alreadyChecked, @NotNull SpellCheckerManager manager, NamesValidator... validators) {
-    List<CheckArea> areaList = TextSplitter.splitText(token.getText(), ProgressManager.getInstance());
+    List<CheckArea> areaList = token.getAreas();
     if (areaList == null) {
       return;
     }
