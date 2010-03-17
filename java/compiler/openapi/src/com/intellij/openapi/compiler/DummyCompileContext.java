@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DummyCompileContext implements CompileContext {
@@ -99,11 +100,11 @@ public class DummyCompileContext implements CompileContext {
     return null;
   }
 
-  public <T> T getUserData(Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
 
-  public <T> void putUserData(Key<T> key, T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
   }
 
   public boolean isMake() {

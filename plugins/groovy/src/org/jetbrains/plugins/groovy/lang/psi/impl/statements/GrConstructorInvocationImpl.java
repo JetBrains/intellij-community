@@ -160,6 +160,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
 
   }
 
+  @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

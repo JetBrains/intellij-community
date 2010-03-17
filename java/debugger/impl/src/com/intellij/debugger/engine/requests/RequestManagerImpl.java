@@ -452,4 +452,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
     });
   }
+
+  public void clearWarnings() {
+    myRequestWarnings.clear();
+  }
 }

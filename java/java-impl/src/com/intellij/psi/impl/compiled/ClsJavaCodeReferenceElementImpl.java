@@ -206,6 +206,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
            || getManager().areElementsEquivalent(resolve(), element);
   }
 
+  @NotNull
   public Object[] getVariants() {
     throw new RuntimeException("Variants are not available for references to compiled code");
   }

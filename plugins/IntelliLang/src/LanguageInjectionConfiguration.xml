@@ -422,8 +422,8 @@
     <place><![CDATA[phpLiteralExpression().withText(string().matches(".*<.*"))]]></place>
   </injection>
   <injection language="SQL" injector-id="php">
-    <display-name>"SELECT "</display-name>
-    <place><![CDATA[phpLiteralExpression().withText(string().matches("SELECT .*"))]]></place>
+    <display-name>"SELECT ... FROM ..."</display-name>
+    <place><![CDATA[phpLiteralExpression().withText(string().matches(".?SELECT .* FROM .*"))]]></place>
   </injection>
   <injection language="JavaScript" injector-id="php">
     <display-name>&lt;&lt;&lt; JS</display-name>

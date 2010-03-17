@@ -29,19 +29,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author shkate@jetbrains.com
- */
 public class TextSplitter {
 
-  @NonNls
-  private static final Pattern NON_SPACE = Pattern.compile("\\S+");
 
   @NonNls
-  private static final Pattern HTML = Pattern.compile("<(0)>");
-
-  @NonNls
-
   private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
 
   private static final Pattern EXTENDED_WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}(_*\\p{L})*");
@@ -51,19 +42,29 @@ public class TextSplitter {
 
   @NonNls
   private static final Pattern URL = Pattern.compile("(https?|ftp|mailto)\\:\\/\\/");
-  @NonNls
-  private static final Pattern COMPLEX = Pattern.compile("(\\.[^\\.]+)|([@]+)");
 
   @NonNls
-  private static final Pattern SPECIAL = Pattern.compile("^&\\p{Alnum}{4};");
+  private static final Pattern COMPLEX = Pattern.compile("([@]+)");
+
+  @NonNls
+  private static final Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{4};|#\\p{Alnum}{3,6}");
+
+  @NonNls
+  private static final Pattern DOT_SEPARATED = Pattern.compile("\\p{L}(\\.)+");
+
+  private static final String delimiters = ".,;:!?*/&\"";
 
 
   private TextSplitter() {
   }
 
-
   @Nullable
   public static List<CheckArea> splitText(@Nullable String text) {
+    return splitText(text, null);
+  }
+
+  @Nullable
+  public static List<CheckArea> splitText(@Nullable String text, @Nullable ProgressManager manager) {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
@@ -73,8 +74,10 @@ public class TextSplitter {
     List<CheckArea> results = new ArrayList<CheckArea>();
     String[] pieces = text.substring(i).split(WORD_SPLITTER);
     for (String s : pieces) {
-      ProgressManager.checkCanceled();
-      if (s.length() > 0) {
+      if (manager != null) {
+        ProgressManager.checkCanceled();
+      }
+      if (s.length() > 0 && startWithLetterOrDelimiter(s)) {
         int p1 = text.indexOf(s, i);
         TextRange range = TextRange.from(p1, s.length());
         List<CheckArea> areaList = splitNonSpace(text, range);
@@ -87,10 +90,15 @@ public class TextSplitter {
     return (results.size() == 0) ? null : results;
   }
 
+  private static boolean startWithLetterOrDelimiter(@NotNull String s) {
+    return Character.isLetter(s.charAt(0)) || delimiters.contains(s.substring(0, 1));
+  }
+
   @Nullable
   private static List<CheckArea> splitNonSpace(String text, TextRange range) {
     String nonSpaceArea = text.substring(range.getStartOffset(), range.getEndOffset());
-    if (URL.matcher(nonSpaceArea).find() || COMPLEX.matcher(nonSpaceArea).find()) {
+
+    if (URL.matcher(nonSpaceArea).find() || COMPLEX.matcher(nonSpaceArea).find() || SPECIAL.matcher(nonSpaceArea).find()) {
       return null;
     }
     return splitWord(text, range);
@@ -100,12 +108,12 @@ public class TextSplitter {
   @NotNull
   private static List<CheckArea> splitSimpleWord(String text, TextRange range) {
     List<CheckArea> results = new ArrayList<CheckArea>();
-    if (text==null || range==null || range.getLength()<1){
+    if (text == null || range == null || range.getLength() < 1) {
       return results;
     }
     String word = text.substring(range.getStartOffset(), range.getEndOffset());
     String[] words = NameUtil.splitNameIntoWords(word);
-    if (words == null || words.length==0) {
+    if (words == null || words.length == 0) {
       return results;
     }
 
@@ -132,7 +140,7 @@ public class TextSplitter {
       int start = word.indexOf(s, index);
       int end = start + s.length();
       boolean isUpperCase = Strings.isUpperCase(s);
-      boolean flag = (isUpperCase && !isAllWordsAreUpperCased) || isKeyword(s);
+      boolean flag = (isUpperCase && !isAllWordsAreUpperCased);
       Matcher matcher = WORD.matcher(s);
       if (matcher.find()) {
         TextRange found = matcherRange(subRange(range, start, end), matcher);
@@ -161,7 +169,7 @@ public class TextSplitter {
     }
 
     Matcher extendedMatcher = EXTENDED_WORD.matcher(word);
-    if (extendedMatcher.find()) {
+    while (extendedMatcher.find()) {
       TextRange found = matcherRange(range, extendedMatcher);
       results.addAll(splitSimpleWord(text, found));
     }
@@ -170,14 +178,19 @@ public class TextSplitter {
 
   }
 
+
+
   private static void addWord(String text, List<CheckArea> results, boolean flag, TextRange found) {
     boolean tooShort = (found.getEndOffset() - found.getStartOffset()) <= 3;
-    results.add(new CheckArea(text, found, flag || tooShort));
+    for (int i = found.getStartOffset(); i < found.getEndOffset(); i++) {
+      if (!Character.isLetter(text.charAt(i)) && text.charAt(i) != '\'') {
+        return;
+      }
+    }
+    final CheckArea area = new CheckArea(text, found, flag || tooShort);
+    results.add(area);
   }
 
-  private static boolean isKeyword(String s) {
-    return false;
-  }
 
   private static boolean isAllWordsAreUpperCased(String[] words) {
     if (words == null) return false;

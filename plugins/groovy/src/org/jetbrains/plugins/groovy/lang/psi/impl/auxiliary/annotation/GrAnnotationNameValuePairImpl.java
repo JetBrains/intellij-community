@@ -145,6 +145,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return element instanceof PsiMethod && getManager().areElementsEquivalent(element, resolve());
   }
 
+  @NotNull
   public Object[] getVariants() {
     GrAnnotation anno = getAnnotation();
     if (anno != null) {

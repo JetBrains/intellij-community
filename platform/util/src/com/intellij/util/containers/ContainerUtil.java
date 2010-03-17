@@ -468,6 +468,23 @@ public class ContainerUtil {
     }
   }
 
+  /**
+   * This is a replacement for {@link Collection#toArray(Object[])}. For small collections it is faster to stay at java level and refrain
+   * from calling JNI {@link System#arraycopy(Object, int, Object, int, int)}
+   */
+  public static <T> T[] toArray(Collection<T> c, T[] sample) {
+    final int size = c.size();
+    if (size == sample.length && size < 20) {
+      int i = 0;
+      for (T t : c) {
+        sample[i++] = t;
+      }
+      return sample;
+    }
+
+    return c.toArray(sample);
+  }
+
   public static <T,V> List<V> map(Iterable<? extends T> iterable, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : iterable) {

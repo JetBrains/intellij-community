@@ -226,14 +226,21 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     if (providers.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }
-    Collections.sort(providers, PRIORITY_COMPARATOR);
+
+    final Trinity<PsiReferenceProvider, ProcessingContext, Double> firstProvider = providers.get(0);
+    if (providers.size() == 1) {
+      return firstProvider.getFirst().getReferencesByElement(context, firstProvider.getSecond());
+    }
+
+    ((SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>)providers).sort(PRIORITY_COMPARATOR);
+
     if (LegacyCompletionContributor.DEBUG) {
       System.out.println("ReferenceProvidersRegistry.getReferencesFromProviders");
       System.out.println("providers = " + providers);
     }
 
-    Collection<PsiReference> result = new ArrayList<PsiReference>();
-    final Double maxPriority = providers.get(0).getThird();
+    List<PsiReference> result = new ArrayList<PsiReference>();
+    final Double maxPriority = firstProvider.getThird();
     next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
       if (!trinity.getThird().equals(maxPriority)) {
@@ -251,7 +258,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
         }
       }
     }
-    return result.toArray(new PsiReference[result.size()]);
+    return ContainerUtil.toArray(result, new PsiReference[result.size()]);
   }
 
 }

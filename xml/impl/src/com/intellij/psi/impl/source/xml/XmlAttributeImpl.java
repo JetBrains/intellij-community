@@ -420,6 +420,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       return getManager().areElementsEquivalent(element, resolve());
     }
 
+    @NotNull
     public Object[] getVariants() {
       final List<MutableLookupElement<String>> variants = new ArrayList<MutableLookupElement<String>>();
 

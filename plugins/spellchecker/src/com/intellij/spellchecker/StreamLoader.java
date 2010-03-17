@@ -25,18 +25,26 @@ import java.io.*;
 public class StreamLoader implements Loader {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.StreamLoader");
+  private static final String ENCODING = "UTF-8";
 
   private InputStream stream;
+  private String name;
 
-  public StreamLoader(InputStream stream) {
+  public StreamLoader(InputStream stream, String name) {
     this.stream = stream;
+    this.name=name;
   }
 
+  public String getName() {
+    return name;
+  }
 
   public void load(@NotNull Consumer<String> consumer) {
     DataInputStream in = new DataInputStream(stream);
-    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+    BufferedReader br = null;
+
     try {
+      br = new BufferedReader(new InputStreamReader(in, ENCODING));
       String strLine;
       while ((strLine = br.readLine()) != null) {
         consumer.consume(strLine);

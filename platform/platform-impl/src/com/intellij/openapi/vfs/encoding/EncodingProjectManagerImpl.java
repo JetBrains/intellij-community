@@ -34,6 +34,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -61,10 +63,18 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
 
-  public EncodingProjectManagerImpl(Project project, GeneralSettings generalSettings, EditorSettingsExternalizable editorSettings) {
+  public EncodingProjectManagerImpl(Project project, GeneralSettings generalSettings, EditorSettingsExternalizable editorSettings, PsiDocumentManager documentManager) {
     myProject = project;
     myGeneralSettings = generalSettings;
     myEditorSettings = editorSettings;
+    documentManager.addListener(new PsiDocumentManager.Listener() {
+      public void documentCreated(Document document, PsiFile psiFile) {
+        ((EncodingManagerImpl)EncodingManagerImpl.getInstance()).updateEncodingFromContent(document);
+      }
+
+      public void fileCreated(PsiFile file, Document document) {
+      }
+    });
   }
 
   //null key means project

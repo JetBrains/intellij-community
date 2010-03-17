@@ -17,7 +17,7 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.usageView.UsageViewBundle;
 
-public class UsageType {
+public final class UsageType {
   public static final UsageType CLASS_INSTANCE_OF = new UsageType(UsageViewBundle.message("usage.type.instanceof"));
   public static final UsageType CLASS_IMPORT = new UsageType(UsageViewBundle.message("usage.type.import"));
   public static final UsageType CLASS_CAST_TO = new UsageType(UsageViewBundle.message("usage.type.cast.target"));

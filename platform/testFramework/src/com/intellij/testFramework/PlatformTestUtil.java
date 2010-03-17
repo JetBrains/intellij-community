@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -64,9 +65,13 @@ public class PlatformTestUtil {
     });
   }
 
-  protected static String toString(Object node) {
+  protected static String toString(Object node, Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
-      return ((AbstractTreeNode)node).getTestPresentation();
+      if (printInfo != null) {
+        return ((AbstractTreeNode)node).toTestString(printInfo);
+      } else {
+        return ((AbstractTreeNode)node).getTestPresentation();
+      }
     }
     else if (node == null) {
       return "NULL";
@@ -95,7 +100,7 @@ public class PlatformTestUtil {
     final Object userObject = defaultMutableTreeNode.getUserObject();
     String nodeText;
     if (userObject != null) {
-      nodeText = toString(userObject);
+      nodeText = toString(userObject, null);
     }
     else {
       nodeText = defaultMutableTreeNode + "";
@@ -207,14 +212,34 @@ public class PlatformTestUtil {
     return Comparing.equal(who, SystemProperties.getUserName(), false);
   }
 
+  /**
+   * @deprecated use {@link #print(AbstractTreeStructure structure,
+                                   Object node,
+                                   int currentLevel,
+                                   Comparator comparator,
+                                   int maxRowCount,
+                                   char paddingChar,
+                                   String[] dumpNames)}
+   */
   public static StringBuffer print(AbstractTreeStructure structure,
                                    Object node,
                                    int currentLevel,
                                    Comparator comparator,
                                    int maxRowCount,
                                    char paddingChar) {
+
+    return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, null);
+  }
+
+  public static StringBuffer print(AbstractTreeStructure structure,
+                                   Object node,
+                                   int currentLevel,
+                                   Comparator comparator,
+                                   int maxRowCount,
+                                   char paddingChar,
+                                   Queryable.PrintInfo printInfo) {
     StringBuffer buffer = new StringBuffer();
-    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar);
+    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
     return buffer;
   }
 
@@ -226,10 +251,22 @@ public class PlatformTestUtil {
                              int maxRowCount,
                              int currentLine,
                              char paddingChar) {
+    return doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, currentLine, paddingChar, null);
+  }
+
+  private static int doPrint(StringBuffer buffer,
+                             int currentLevel,
+                             Object node,
+                             AbstractTreeStructure structure,
+                             Comparator comparator,
+                             int maxRowCount,
+                             int currentLine,
+                             char paddingChar,
+                             Queryable.PrintInfo printInfo) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
 
     StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
-    buffer.append(toString(node)).append("\n");
+    buffer.append(toString(node, printInfo)).append("\n");
     currentLine++;
     Object[] children = structure.getChildElements(node);
 
@@ -239,7 +276,7 @@ public class PlatformTestUtil {
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
-      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar);
+      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, printInfo);
     }
 
     return currentLine;
@@ -253,7 +290,7 @@ public class PlatformTestUtil {
     StringBuilder result = new StringBuilder();
     for (Iterator iterator = c.iterator(); iterator.hasNext();) {
       Object each = iterator.next();
-      result.append(toString(each));
+      result.append(toString(each, null));
       if (iterator.hasNext()) {
         result.append("\n");
       }
@@ -265,7 +302,7 @@ public class PlatformTestUtil {
   public static String print(ListModel model) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < model.getSize(); i++) {
-      result.append(toString(model.getElementAt(i)));
+      result.append(toString(model.getElementAt(i), null));
       result.append("\n");
     }
     return result.toString();

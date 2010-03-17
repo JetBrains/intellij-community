@@ -48,6 +48,7 @@ public class WordCompletionTest extends CompletionTestCase {
             return true;
           }
 
+          @NotNull
           public Object[] getVariants() {
             return new Object[]{"MySoftVariant"};
           }
@@ -66,6 +67,7 @@ public class WordCompletionTest extends CompletionTestCase {
             return false;
           }
 
+          @NotNull
           public Object[] getVariants() {
             return new Object[]{"MyHardVariant"};
           }

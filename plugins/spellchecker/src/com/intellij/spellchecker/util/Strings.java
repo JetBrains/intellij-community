@@ -17,9 +17,6 @@ package com.intellij.spellchecker.util;
 
 import java.util.List;
 
-/**
- * Text utility.
- */
 public final class Strings {
   private Strings() {
   }

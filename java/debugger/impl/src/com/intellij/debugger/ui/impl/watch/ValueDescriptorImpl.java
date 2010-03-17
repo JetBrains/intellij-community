@@ -110,8 +110,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       myStoredEvaluationContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(myStoredEvaluationContext.getSuspendContext()) {
         public void contextAction() throws Exception {
           // re-setting the context will cause value recalculation
-          setContext(myStoredEvaluationContext);
-          semaphore.up();
+          try {
+            setContext(myStoredEvaluationContext);
+          }
+          finally {
+            semaphore.up();
+          }
         }
       });
       semaphore.waitFor();

@@ -15,17 +15,20 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.spellchecker.trie.Action;
+import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
 
-public class UserDictionary implements Dictionary {
+public class UserDictionary implements EditableDictionary {
 
   private String name;
-  private THashSet<String> dictionary = new THashSet<String>();
+
+  @NotNull
+  private final THashSet<String> words = new THashSet<String>();
 
   public UserDictionary(String name) {
     this.name = name;
@@ -36,26 +39,25 @@ public class UserDictionary implements Dictionary {
   }
 
   public boolean contains(String word) {
-    return word != null && dictionary.contains(word);
+    return words.contains(word);
+  }
+
+  public int size() {
+    return words == null ? 0 : words.size();
   }
 
   @Nullable
   public Set<String> getWords() {
-    return dictionary;
+    return words;
   }
 
   @Nullable
   public Set<String> getEditableWords() {
-    return dictionary;
-  }
-
-  @Nullable
-  public Set<String> getNotEditableWords() {
-    return null;
+    return words;
   }
 
   public void clear() {
-    dictionary.clear();
+    words.clear();
   }
 
 
@@ -63,14 +65,14 @@ public class UserDictionary implements Dictionary {
     if (word == null) {
       return;
     }
-    dictionary.add(word);
+    words.add(word);
   }
 
   public void removeFromDictionary(String word) {
     if (word == null) {
       return;
     }
-    dictionary.remove(word);
+    words.remove(word);
   }
 
   public void replaceAll(@Nullable Collection<String> words) {
@@ -88,7 +90,7 @@ public class UserDictionary implements Dictionary {
   }
 
   public boolean isEmpty() {
-    return (dictionary == null || dictionary.size() == 0);
+    return words.size() == 0;
   }
 
   @Override
@@ -102,12 +104,9 @@ public class UserDictionary implements Dictionary {
 
   }
 
-  public void traverse(final Action action){
-    if (dictionary==null){
-      return;
-    }
-    for (String s : dictionary) {
-      action.run(s);
+  public void traverse(final Consumer<String> consumer) {
+    for (String word : words) {
+      consumer.consume(word);
     }
   }
 
@@ -118,6 +117,6 @@ public class UserDictionary implements Dictionary {
 
   @Override
   public String toString() {
-    return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + dictionary.size() + '}';
+    return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + words.size() + '}';
   }
 }

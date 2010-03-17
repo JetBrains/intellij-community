@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.idea.maven.project.MavenProfileState;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -100,10 +99,13 @@ public class MavenUIUtil {
       public void mousePressed(MouseEvent e) {
         int row = tree.getRowForLocation(e.getX(), e.getY());
         if (row >= 0) {
+          TreePath path = tree.getPathForRow(row);
+          if (!isCheckboxEnabledFor(path, handler)) return;
+
           Rectangle checkBounds = checkbox.getBounds();
           checkBounds.setLocation(tree.getRowBounds(row).getLocation());
           if (checkBounds.contains(e.getPoint())) {
-            handler.toggle(tree.getPathForRow(row), e);
+            handler.toggle(path, e);
             e.consume();
             tree.setSelectionRow(row);
           }
@@ -117,6 +119,7 @@ public class MavenUIUtil {
           TreePath[] treePaths = tree.getSelectionPaths();
           if (treePaths != null) {
             for (TreePath treePath : treePaths) {
+              if (!isCheckboxEnabledFor(treePath, handler)) continue;
               handler.toggle(treePath, e);
             }
             e.consume();
@@ -124,6 +127,11 @@ public class MavenUIUtil {
         }
       }
     });
+  }
+
+  private static boolean isCheckboxEnabledFor(TreePath path, CheckboxHandler handler) {
+    Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+    return handler.isVisible(userObject);
   }
 
   public interface CheckboxHandler {

@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.util.StringLiteralReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -47,6 +48,7 @@ final class LanguageReference extends StringLiteralReference {
     return false;
   }
 
+  @NotNull
   public Object[] getVariants() {
     final String[] ids = InjectedLanguage.getAvailableLanguageIDs();
     return ContainerUtil.map2Array(ids, LookupElement.class, new Function<String, LookupElement>() {

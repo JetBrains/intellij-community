@@ -353,11 +353,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     getRootElement().accept(visitor);
   }
 
-  public <T> T getUserData(Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     return (T)myUserData.get(key);
   }
 
-  public <T> void putUserData(Key<T> key, T value) {
+  public <T> void putUserData(@NotNull Key<T> key, T value) {
     myUserData.put(key, value);
   }
 

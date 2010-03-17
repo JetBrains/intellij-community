@@ -143,6 +143,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
       return multiResolveReference(convertString(value, myContext), myContext);
     }
 
+    @NotNull
     public Object[] getVariants() {
       return getReferenceVariants(myContext, myGenericDomValue, getRangeInElement());
     }

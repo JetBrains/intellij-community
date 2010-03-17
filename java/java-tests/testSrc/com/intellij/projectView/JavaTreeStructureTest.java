@@ -31,10 +31,13 @@
  */
 package com.intellij.projectView;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
 import com.intellij.ide.structureView.impl.java.PublicElementsFilter;
 import com.intellij.ide.structureView.impl.java.VisibilitySorter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -54,20 +57,21 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
   public void testJavaClassStructure() throws Exception {
     dotest(new CheckAction() {
       public void testClassStructure(StructureViewComponent structureViewComponent) {
-        IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
+        IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
+                                                                 "-Class1.java\n" +
                                                                  " -Class1\n" +
                                                                  "  getValue():int\n" +
+                                                                 "  getClass():Class<? extends Object>\n" +
                                                                  "  hashCode():int\n" +
-                                                                 "  finalize():void\n" +
+                                                                 "  equals(Object):boolean\n" +
+                                                                 "  clone():Object\n" +
+                                                                 "  toString():String\n" +
                                                                  "  notify():void\n" +
                                                                  "  notifyAll():void\n" +
-                                                                 "  wait():void\n" +
                                                                  "  wait(long):void\n" +
                                                                  "  wait(long, int):void\n" +
-                                                                 "  getClass():Class\n" +
-                                                                 "  clone():Object\n" +
-                                                                 "  equals(Object):boolean\n" +
-                                                                 "  toString():String\n" +
+                                                                 "  wait():void\n" +
+                                                                 "  finalize():void\n" +
                                                                  "  myField1:boolean\n" +
                                                                  "  myField2:boolean\n");
 
@@ -110,17 +114,17 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
                                            "  +InnerClass1\n" +
                                            "  +InnerClass2\n" +
                                            "  getValue():int\n" +
+                                           "  getClass():Class<? extends Object>\n" +
                                            "  hashCode():int\n" +
-                                           "  finalize():void\n" +
+                                           "  equals(Object):boolean\n" +
+                                           "  clone():Object\n" +
+                                           "  toString():String\n" +
                                            "  notify():void\n" +
                                            "  notifyAll():void\n" +
-                                           "  wait():void\n" +
                                            "  wait(long):void\n" +
                                            "  wait(long, int):void\n" +
-                                           "  getClass():Class\n" +
-                                           "  clone():Object\n" +
-                                           "  equals(Object):boolean\n" +
-                                           "  toString():String\n" +
+                                           "  wait():void\n" +
+                                           "  finalize():void\n" +
                                            "  myField1:boolean\n" +
                                            "  myField2:boolean\n" +
                                            "  myField3:boolean\n" +
@@ -141,7 +145,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     });
   }
 
-  public void _testVisibilitySorter() throws Exception {
+  public void testVisibilitySorter() throws Exception {
     dotest(new CheckAction() {
       public void testClassStructure(StructureViewComponent structureViewComponent) {
         structureViewComponent.setActionActive(InheritedMembersFilter.ID, true);
@@ -199,6 +203,16 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     finally {
       fileEditorManager.closeFile(virtualFile);
     }
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return JavaTestUtil.getJavaTestDataPath();
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdkCE();
   }
 
 }

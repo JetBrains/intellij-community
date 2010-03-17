@@ -540,15 +540,15 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private void addInfo(String text, int line) {
     myMessage.addElement(new ListElement(text, false, line));
-    scollToLast();
+    scrollToLast();
   }
 
   private void addError(String text, int line) {
     myMessage.addElement(new ListElement(text, true, line));
-    scollToLast();
+    scrollToLast();
   }
 
-  private void scollToLast() {
+  private void scrollToLast() {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (myMessage.size() == 0) return;

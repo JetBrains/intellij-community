@@ -56,6 +56,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     return getPsiFile(file);
   }
 
+  @NotNull
   public Object[] getVariants() {
     List<DomFileElement<MavenDomProjectModel>> files = MavenDomUtil.collectProjectModels(getProject());
 

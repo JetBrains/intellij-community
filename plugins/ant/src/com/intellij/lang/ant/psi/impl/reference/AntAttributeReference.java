@@ -51,6 +51,7 @@ public class AntAttributeReference extends AntGenericReference {
     return null;
   }
 
+  @NotNull
   public Object[] getVariants() {
     final AntTypeDefinition def = getElement().getTypeDefinition();
     return (def == null) ? EMPTY_ARRAY : def.getAttributes();

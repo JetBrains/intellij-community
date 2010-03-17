@@ -86,8 +86,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     updateEncodingFromContent.cancelAllRequests();
   }
 
-  private void updateEncodingFromContent(final DocumentEvent e) {
-    myChangedDocuments.offer(e.getDocument());
+  public void updateEncodingFromContent(Document document) {
+    myChangedDocuments.offer(document);
     updateEncodingFromContent.cancelAllRequests();
     updateEncodingFromContent.addRequest(myEncodingUpdateRunnable, 400);
   }
@@ -106,7 +106,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     final DocumentAdapter myDocumentListener = new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        updateEncodingFromContent(e);
+        updateEncodingFromContent(e.getDocument());
       }
     };
 

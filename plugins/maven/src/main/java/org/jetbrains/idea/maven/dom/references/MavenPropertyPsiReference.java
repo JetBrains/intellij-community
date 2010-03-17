@@ -50,10 +50,16 @@ import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 public class MavenPropertyPsiReference extends MavenPsiReference {
+  private static final Set<String> BASEDIR_PROPS =
+    new THashSet<String>(Arrays.asList("basedir", "project.basedir", "pom.basedir", "baseUri", "project.baseUri", "pom.baseUri"));
+
+  private static final String TIMESTAMP_PROP = "maven.build.timestamp";
+
   protected final MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;
   private final boolean mySoft;
@@ -95,8 +101,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       return resolveEnvPropety();
     }
 
-    if (myText.equals("basedir") || myText.equals("project.basedir") || myText.equals("pom.basedir")) {
+    if (BASEDIR_PROPS.contains(myText)) {
       return resolveBasedir();
+    }
+
+    if (myText.equals(TIMESTAMP_PROP)) {
+      return myElement;
     }
 
     PsiElement result = resolveSystemPropety();
@@ -204,7 +214,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   protected void collectVariants(List<Object> result) {
-    collectBasedirVariants(result);
+    collectStandardVariants(result);
     collectProjectSchemaVariants(result);
     collectSettingsXmlSchemaVariants(result);
     collectPropertiesVariants(result);
@@ -212,11 +222,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     collectSystemEnvProperties(MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE, "env.", result);
   }
 
-  private void collectBasedirVariants(List<Object> result) {
+  private void collectStandardVariants(List<Object> result) {
     PsiDirectory basedir = getBaseDir();
-    result.add(createLookupElement(basedir, "basedir", MavenIcons.MAVEN_ICON));
-    result.add(createLookupElement(basedir, "pom.basedir", MavenIcons.MAVEN_ICON));
-    result.add(createLookupElement(basedir, "project.basedir", MavenIcons.MAVEN_ICON));
+    for (String each : BASEDIR_PROPS) {
+      result.add(createLookupElement(basedir, each, MavenIcons.MAVEN_ICON));
+    }
+    result.add(createLookupElement(myElement, TIMESTAMP_PROP, MavenIcons.MAVEN_ICON));
   }
 
   private void collectProjectSchemaVariants(final List<Object> result) {
@@ -245,7 +256,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
       public LookupElement fun(XmlTag xmlTag) {
         return createLookupElement(xmlTag, xmlTag.getName());
       }
-    })) ;
+    }));
   }
 
   private void collectSystemEnvProperties(String propertiesFileName, String prefix, List<Object> result) {
@@ -276,7 +287,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     VirtualFile file = MavenSchemaProvider.getSchemaFile(schema);
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (!(psiFile instanceof XmlFile)) return null;
-    
+
     XmlFile xmlFile = (XmlFile)psiFile;
     XmlDocument document = xmlFile.getDocument();
     XmlNSDescriptor desc = (XmlNSDescriptor)document.getMetaData();
@@ -285,9 +296,9 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   }
 
   private static <T> T doProcessSchema(XmlElementDescriptor[] descriptors,
-                                String prefix,
-                                SchemaProcessor<T> processor,
-                                Set<XmlElementDescriptor> recursionGuard) {
+                                       String prefix,
+                                       SchemaProcessor<T> processor,
+                                       Set<XmlElementDescriptor> recursionGuard) {
     for (XmlElementDescriptor each : descriptors) {
       if (isCollection(each)) continue;
 
