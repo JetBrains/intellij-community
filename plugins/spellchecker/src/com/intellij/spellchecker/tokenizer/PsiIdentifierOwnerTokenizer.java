@@ -18,6 +18,7 @@ package com.intellij.spellchecker.tokenizer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
       parent = PsiTreeUtil.findCommonParent(identifier, element);
       offset = identifier.getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
     }
-    return new Token[]{new Token<PsiElement>(parent, identifier.getText(), true, offset)};
+    return new Token[]{new Token<PsiElement>(parent, identifier.getText(), true, offset, SplitterFactory.getIdentifierSplitter())};
   }
 
 

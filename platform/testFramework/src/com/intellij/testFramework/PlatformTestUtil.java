@@ -39,7 +39,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,6 +53,12 @@ import java.util.*;
  * @author yole
  */
 public class PlatformTestUtil {
+  /**
+   * Measured on dual core p4 3HZ 1gig ram
+   */
+  protected static final long ETALON_TIMING = 438;
+  public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
+
   public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
@@ -325,5 +333,56 @@ public class PlatformTestUtil {
     action.update(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
+  }
+
+  public static void assertTiming(String message, long expected, long actual) {
+    if (COVERAGE_ENABLED_BUILD) return;
+    long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / ETALON_TIMING);
+    final double acceptableChangeFactor = 1.1;
+
+    // Allow 10% more in case of test machine is busy.
+    // For faster machines (expectedOnMyMachine < expected) allow nonlinear performance rating:
+    // just perform better than acceptable expected
+    if (actual > expectedOnMyMachine * acceptableChangeFactor &&
+        (expectedOnMyMachine > expected || actual > expected * acceptableChangeFactor)) {
+      int percentage = (int)(((float)100 * (actual - expectedOnMyMachine)) / expectedOnMyMachine);
+      Assert.fail(message + ". Operation took " + percentage + "% longer than expected. Expected on my machine: " + expectedOnMyMachine +
+                  ". Actual: " + actual + ". Expected on Etalon machine: " + expected + "; Actual on Etalon: " +
+                  (actual * ETALON_TIMING / Timings.MACHINE_TIMING));
+    }
+    else {
+      int percentage = (int)(((float)100 * (actual - expectedOnMyMachine)) / expectedOnMyMachine);
+      System.out.println(message + ". Operation took " + percentage + "% longer than expected. Expected on my machine: " +
+                         expectedOnMyMachine + ". Actual: " + actual + ". Expected on Etalon machine: " + expected +
+                         "; Actual on Etalon: " + (actual * ETALON_TIMING / Timings.MACHINE_TIMING));
+    }
+  }
+
+  public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
+    assertTiming(message, expected, 4, actionToMeasure);
+  }
+
+  public static long measure(@NotNull Runnable actionToMeasure) {
+    long start = System.currentTimeMillis();
+    actionToMeasure.run();
+    long finish = System.currentTimeMillis();
+    return finish - start;
+  }
+
+  public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
+    while (true) {
+      attempts--;
+      long duration = measure(actionToMeasure);
+      try {
+        assertTiming(message, expected, duration);
+        break;
+      }
+      catch (AssertionFailedError e) {
+        if (attempts == 0) throw e;
+        System.gc();
+        System.gc();
+        System.gc();
+      }
+    }
   }
 }

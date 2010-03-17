@@ -21,6 +21,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -107,7 +108,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return new ImportHelper(getSettings()).addImport(file, refClass);
   }
 
-  public void removeRedundantImports(@NotNull PsiJavaFile file) throws IncorrectOperationException {
+  public void removeRedundantImports(final @NotNull PsiJavaFile file) throws IncorrectOperationException {
     final PsiImportList importList = file.getImportList();
     if (importList == null) return;
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
@@ -134,13 +135,25 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
             if (!reference.isQualified()) {
               final JavaResolveResult resolveResult = reference.advancedResolve(false);
-              final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
-              if (resolveScope instanceof PsiImportStatementBase) {
-                final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)resolveScope;
-                redundants.remove(importStatementBase);
+              if (!inTheSamePackage(file, resolveResult.getElement())) {
+                final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
+                if (resolveScope instanceof PsiImportStatementBase) {
+                  final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)resolveScope;
+                  redundants.remove(importStatementBase);
+                }
               }
             }
             super.visitReferenceElement(reference);
+          }
+
+          private boolean inTheSamePackage(PsiJavaFile file, PsiElement element) {
+            if (element instanceof PsiClass && ((PsiClass)element).getContainingClass() == null) {
+              final PsiFile containingFile = element.getContainingFile();
+              if (containingFile instanceof PsiJavaFile) {
+                return Comparing.strEqual(file.getPackageName(), ((PsiJavaFile)containingFile).getPackageName());
+              }
+            }
+            return false;
           }
         });
       }

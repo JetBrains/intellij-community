@@ -19,6 +19,7 @@ package com.intellij.ui.debugger.extensions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,14 +57,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.*;
 
-@State(
-    name = "PlaybackDebugger",
-    storages = {
-        @Storage(
-            id = "other",
-            file="$APP_CONFIG$/other.xml")}
-)
-public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.StatusCallback, PersistentStateComponent<Element> {
+public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.StatusCallback {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.debugger.extensions.PlaybackDebugger");
 
@@ -89,6 +83,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private Document myDocument;
   private Editor myEditor;
+  private PlaybackDebuggerState myState;
 
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
@@ -173,6 +168,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       }
     };
     LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
+
+    myState = ServiceManager.getService(PlaybackDebuggerState.class);
+    myScriptsPath.setText(myState.scriptsPath);
   }
 
   private class SaveAction extends AnAction {
@@ -217,7 +215,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
           final VirtualFile[] files =
             FileChooser.chooseFiles(myComponent, new FileChooserDescriptor(false, true, false, false, false, false));
             if (files.length > 0) {
-              myScriptsPath.setText(files[0].getPresentableUrl());
+              String presentableUrl = files[0].getPresentableUrl();
+              myScriptsPath.setText(presentableUrl);
+              myState.scriptsPath = presentableUrl;
             }
           return FINAL_CHOICE;
         }
@@ -510,22 +510,28 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     disposeUiResources();
   }
 
-  public Element getState() {
-    final Element element = new Element("playback");
+  @State(
+      name = "PlaybackDebugger",
+      storages = {
+          @Storage(
+              id = "other",
+              file="$APP_CONFIG$/other.xml")}
+  )
+  public static class PlaybackDebuggerState implements PersistentStateComponent<Element> {
+    private static final String ATTR_SCRIPTS_PATH = "scriptsPath";
+    public String scriptsPath = "";
 
-    final String text = myScriptsPath.getText();
-
-    if (text != null) {
-      element.setAttribute("scriptDir", text);
+    public Element getState() {
+      final Element element = new Element("playback");
+      element.setAttribute(ATTR_SCRIPTS_PATH, scriptsPath);
+      return element;
     }
 
-    return element;
-  }
-
-  public void loadState(Element state) {
-    final String dir = state.getAttributeValue("scriptDir");
-    if (dir != null) {
-      myScriptsPath.setText(dir);
+    public void loadState(Element state) {
+      final String dir = state.getAttributeValue(ATTR_SCRIPTS_PATH);
+      if (dir != null) {
+        scriptsPath = dir;
+      }
     }
   }
 

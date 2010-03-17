@@ -21,7 +21,7 @@ import com.intellij.spellchecker.StreamLoader;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.Transformation;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
@@ -62,7 +62,7 @@ public class DictionaryTest extends TestCase {
 
   public void loadDictionaryTest(@NotNull final String name, int wordCount) throws IOException {
     final Transformation transform = new Transformation();
-    IdeaTestUtil.assertTiming("Dictionary load time depends on words count. Approximate word count: " + wordCount + ".", times.get(name),
+    PlatformTestUtil.assertTiming("Dictionary load time depends on words count. Approximate word count: " + wordCount + ".", times.get(name),
         new Runnable() {
           public void run() {
             dictionary = CompressedDictionary.create(new StreamLoader(DefaultBundledDictionariesProvider.class.getResourceAsStream(name), name), transform);
@@ -70,7 +70,7 @@ public class DictionaryTest extends TestCase {
         });
 
     final Set<String> wordsToStoreAndCheck = createWordSets(name, 50000, 1).getFirst();
-    IdeaTestUtil.assertTiming("Invoke 'contains'  " + wordsToStoreAndCheck.size() + " times", 2000, new Runnable() {
+    PlatformTestUtil.assertTiming("Invoke 'contains'  " + wordsToStoreAndCheck.size() + " times", 2000, new Runnable() {
       public void run() {
         for (String s : wordsToStoreAndCheck) {
           assertTrue(dictionary.contains(s));

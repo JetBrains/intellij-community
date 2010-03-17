@@ -25,4 +25,7 @@ public interface MavenDomMojo extends MavenDomElement {
 
   @NotNull
   MavenDomParameters getParameters();
+
+  @NotNull
+  MavenDomElement getConfiguration();
 }
