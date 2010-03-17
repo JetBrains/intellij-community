@@ -5,8 +5,6 @@ import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -101,6 +99,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   public void testAddGlobalExistingQuickFix() throws Exception {
     doInspectionTest("AddGlobalExistingStatement.py", PyUnboundLocalVariableInspection.class,
                      PyBundle.message("QFIX.add.global"), true, true);
+  }
+
+  public void testSimplifyBooleanCheckQuickFix() throws Exception {
+    doInspectionTest("SimplifyBooleanCheck.py", PySimplifyBooleanCheckInspection.class,
+                     PyBundle.message("QFIX.simplify"), true, true);
   }
 
   @NonNls

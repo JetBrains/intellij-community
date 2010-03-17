@@ -145,4 +145,9 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     LocalInspectionTool inspection = new PyStatementEffectInspection();
     doTest(getTestName(false), inspection);
   }
+
+  public void testPySimplifyBooleanCheckInspection() throws Throwable {
+    LocalInspectionTool inspection = new PySimplifyBooleanCheckInspection();
+    doTest(getTestName(false), inspection);
+  }
 }
