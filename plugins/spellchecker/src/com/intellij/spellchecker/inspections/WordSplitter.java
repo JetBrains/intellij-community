@@ -17,6 +17,7 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,6 @@ public class WordSplitter extends BaseSplitter {
     if (text == null || range.getLength() <= 1) {
       return null;
     }
-
     List<CheckArea> results = new ArrayList<CheckArea>();
 
     Matcher specialMatcher = SPECIAL.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
