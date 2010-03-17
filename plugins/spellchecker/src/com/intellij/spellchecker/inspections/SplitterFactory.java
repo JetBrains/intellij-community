@@ -15,44 +15,51 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProgressManager;
+
 public class SplitterFactory {
 
-  
-  private static IdentifierSplitter idSpl = new IdentifierSplitter();
-  private static PlainTextSplitter textSpl = new PlainTextSplitter();
-  private static PropertiesSplitter prSpl = new PropertiesSplitter();
-  private static WordSplitter wordSpl = new WordSplitter();
-  private static Splitter common = new PlainTextSplitter();
-  private static CommentSplitter commentSpl = new CommentSplitter();
+  private static final SplitterFactory ourInstance = new SplitterFactory();
+
+  private IdentifierSplitter identifierSplitter = new IdentifierSplitter();
+  private PlainTextSplitter textSpl = new PlainTextSplitter();
+  private PropertiesSplitter prSpl = new PropertiesSplitter();
+  private WordSplitter wordSplitter = new WordSplitter();
+  private CommentSplitter comment = new CommentSplitter();
+
 
   private SplitterFactory() {
   }
 
-  public static IdentifierSplitter getIdentifierSplitter() {
-    return idSpl;
+  public static SplitterFactory getInstance() {
+    return ourInstance;
   }
 
-   public static WordSplitter getWordSplitter() {
-    return wordSpl;
+  public IdentifierSplitter getIdentifierSplitter() {
+    return identifierSplitter;
   }
 
-  public static Splitter getAttributeValueSplitter() {
-    return common;
+  public WordSplitter getWordSplitter() {
+    return wordSplitter;
   }
 
-  public static Splitter getPlainTextSplitter() {
+  public Splitter getAttributeValueSplitter() {
     return textSpl;
   }
 
-  public static CommentSplitter getCommentSplitter() {
-    return commentSpl;
+  public Splitter getPlainTextSplitter() {
+    return textSpl;
   }
 
-  public static Splitter getStringLiteralSplitter() {
-    return common;
+  public CommentSplitter getCommentSplitter() {
+    return comment;
   }
 
-  public static Splitter getPropertiesSplitter() {
+  public Splitter getStringLiteralSplitter() {
+    return textSpl;
+  }
+
+  public Splitter getPropertiesSplitter() {
     return prSpl;
   }
 }

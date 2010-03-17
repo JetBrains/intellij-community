@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -48,8 +49,11 @@ public class PlainTextSplitter extends BaseSplitter {
 
     Matcher matcher;
     List<CheckArea> results = new ArrayList<CheckArea>();
-    final WordSplitter ws = SplitterFactory.getWordSplitter();
+    final WordSplitter ws = SplitterFactory.getInstance().getWordSplitter();
     for (TextRange r : toCheck) {
+
+      checkCancelled();
+
       matcher = EXTENDED_WORD_AND_SPECIAL.matcher(text.substring(r.getStartOffset(), r.getEndOffset()));
       while (matcher.find()) {
         TextRange found = matcherRange(r, matcher);
