@@ -116,7 +116,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
     private static void selectWithGuide(Editor editor, IndentGuideDescriptor guide) {
       final Document doc = editor.getDocument();
       int startOffset = editor.logicalPositionToOffset(new LogicalPosition(guide.startLine, 0));
-      int endOffset = Math.min(doc.getLineStartOffset(guide.endLine), doc.getTextLength());
+      int endOffset = guide.endLine >= doc.getLineCount() ? doc.getTextLength() : doc.getLineStartOffset(guide.endLine);
 
       final VirtualFile file = ((EditorEx)editor).getVirtualFile();
       if (file != null) {
