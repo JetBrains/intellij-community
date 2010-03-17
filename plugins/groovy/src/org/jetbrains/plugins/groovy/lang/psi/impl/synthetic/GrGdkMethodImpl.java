@@ -22,14 +22,18 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 
+import javax.swing.*;
 import java.util.LinkedHashSet;
 
 /**
@@ -152,6 +156,7 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
     return false;
   }
 
+  @NotNull
   public PsiElement getNavigationElement() {
     return myMethod.getNavigationElement();
   }
@@ -161,5 +166,11 @@ public class GrGdkMethodImpl extends LightMethod implements GrGdkMethod {
   }
   public PsiMethodReceiver getMethodReceiver() {
     return null;
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    RowIcon baseIcon = createLayeredIcon(GroovyIcons.METHOD, ElementPresentationUtil.getFlags(this, false));
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 }
