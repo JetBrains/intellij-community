@@ -63,7 +63,7 @@
   <problem>
     <file>string-format.py</file>
     <line>26</line>
-    <description>One of keys has no following argument</description>
+    <description>Key 'name' has no following argument</description>
   </problem>
   <problem>
     <file>string-format.py</file>

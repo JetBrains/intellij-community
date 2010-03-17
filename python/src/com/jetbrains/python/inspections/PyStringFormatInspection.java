@@ -160,8 +160,11 @@ public class PyStringFormatInspection extends LocalInspectionTool {
               }
             }
           }
-          if (myUsedMappingKeys.containsValue(false)) {
-            registerProblem(rightExpression, "One of keys has no following argument");
+          for (String key : myUsedMappingKeys.keySet()) {
+            if (!myUsedMappingKeys.get(key).booleanValue()) {
+              registerProblem(rightExpression, "Key '" + key + "' has no following argument");
+              break;
+            }
           }
           return expressions.length;
         }
