@@ -11,17 +11,18 @@ import com.jetbrains.python.psi.NameDefiner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ResolveProcessor implements PyAsScopeProcessor {
-  private final String myName;
+  @NotNull private final String myName;
   private PsiElement myResult = null;
   private final List<NameDefiner> myDefiners;
 
-  public ResolveProcessor(final String name) {
+  public ResolveProcessor(@NotNull final String name) {
     myName = name;
     myDefiners = new ArrayList<NameDefiner>(2); // 1 is typical, 2 is sometimes, more is rare.
   }

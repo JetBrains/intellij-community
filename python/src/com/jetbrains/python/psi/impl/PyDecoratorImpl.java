@@ -56,19 +56,13 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   }
 
   public boolean isBuiltin() {
-    final PyDecoratorStub stub = getStub();
-    if (stub != null) {
-      return stub.isBuiltin();
+    ASTNode node = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
+    if (node != null) {
+      PyReferenceExpression ref = (PyReferenceExpression)node.getPsi();
+      PsiElement target = ref.resolve();
+      return PyBuiltinCache.getInstance(this).hasInBuiltins(target);
     }
-    else {
-      ASTNode node = getNode().findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
-      if (node != null) {
-        PyReferenceExpression ref = (PyReferenceExpression)node.getPsi();
-        PsiElement target = ref.resolve();
-        return PyBuiltinCache.getInstance(this).hasInBuiltins(target);
-      }
-      return false;
-    }
+    return false;
   }
 
   public boolean hasArgumentList() {

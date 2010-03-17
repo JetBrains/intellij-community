@@ -15,10 +15,5 @@ public interface PyDecoratorStub extends StubElement<PyDecorator> {
    */
   String getName();
 
-  /**
-   * @return true if the decorator is a name from __builtins__
-   */
-  boolean isBuiltin();
-
   //PyFunction getTarget();
 }

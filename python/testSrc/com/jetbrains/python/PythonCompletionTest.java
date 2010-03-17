@@ -35,11 +35,23 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testInitParams() throws Exception {
+    doTest();
+  }
+
+  public void testSuperInitParams() throws Exception {      // PY-505
+    doTest();
+  }
+
   public void testPredefinedMethodName() throws Exception {
     doTest();
   }
 
   public void testPredefinedMethodNot() throws Exception {
+    doTest();
+  }
+
+  public void testKeywordAfterComment() throws Exception {  // PY-697
     doTest();
   }
 

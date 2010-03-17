@@ -80,6 +80,7 @@ public class PyNames {
 
     _BuiltinMethods.put("__abs__", _only_self_descr);
     _BuiltinMethods.put("__add__", _self_other_descr);
+    _BuiltinMethods.put("__and__", _self_other_descr);
     //_BuiltinMethods.put("__all__", _only_self_descr);
     //_BuiltinMethods.put("__author__", _only_self_descr);
     //_BuiltinMethods.put("__bases__", _only_self_descr);

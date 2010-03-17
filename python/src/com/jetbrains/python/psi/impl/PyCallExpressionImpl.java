@@ -83,38 +83,9 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     if (callee instanceof PyReferenceExpression) {
       // hardwired special cases
       if ("super".equals(callee.getText())) {
-        PsiElement must_be_super_init = ((PyReferenceExpression)callee).resolve();
-        if (must_be_super_init instanceof PyFunction) {
-          PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
-          if (must_be_super == PyBuiltinCache.getInstance(this).getClass("super")) {
-            PyArgumentList arglist = getArgumentList();
-            if (arglist != null) {
-              PyExpression[] args = arglist.getArguments();
-              if (args.length > 1) {
-                PyExpression first_arg = args[0];
-                if (first_arg instanceof PyReferenceExpression) {
-                  PsiElement possible_class = ((PyReferenceExpression)first_arg).resolve();
-                  if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
-                    final PyClass first_class = (PyClass)possible_class;
-                    // check 2nd argument, too; it should be an instance
-                    PyExpression second_arg = args[1];
-                    if (second_arg != null) {
-                      PyType second_type = second_arg.getType();
-                      if (second_type instanceof PyClassType) {
-                        // imitate isinstance(second_arg, possible_class)
-                        PyClass second_class = ((PyClassType)second_type).getPyClass();
-                        assert second_class != null;
-                        if (second_class.isSubclass(first_class)) {
-                          // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
-                          return new PyClassType(first_class, false); // super(Foo, self) has type of Foo, modulo __get__()
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+        final PyType superCallType = getSuperCallType(callee);
+        if (superCallType != null) {
+          return superCallType;
         }
       }
       // normal cases
@@ -133,5 +104,48 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     }
     if (callee == null) return null;
     else return callee.getType();
+  }
+
+  private PyType getSuperCallType(PyExpression callee) {
+    PsiElement must_be_super_init = ((PyReferenceExpression)callee).resolve();
+    if (must_be_super_init instanceof PyFunction) {
+      PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
+      if (must_be_super == PyBuiltinCache.getInstance(this).getClass("super")) {
+        PyArgumentList arglist = getArgumentList();
+        if (arglist != null) {
+          PyExpression[] args = arglist.getArguments();
+          if (args.length > 1) {
+            PyExpression first_arg = args[0];
+            if (first_arg instanceof PyReferenceExpression) {
+              PsiElement possible_class = ((PyReferenceExpression)first_arg).resolve();
+              if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
+                final PyClass first_class = (PyClass)possible_class;
+                // check 2nd argument, too; it should be an instance
+                PyExpression second_arg = args[1];
+                if (second_arg != null) {
+                  PyType second_type = second_arg.getType();
+                  if (second_type instanceof PyClassType) {
+                    // imitate isinstance(second_arg, possible_class)
+                    PyClass second_class = ((PyClassType)second_type).getPyClass();
+                    assert second_class != null;
+                    if (first_class == second_class) {
+                      final PyClass[] supers = first_class.getSuperClasses();
+                      if (supers.length > 0) {
+                        return new PyClassType(supers [0], false);
+                      }
+                    }
+                    if (second_class.isSubclass(first_class)) {
+                      // TODO: super(Foo, Bar) is a superclass of Foo directly preceding Bar in MRO
+                      return new PyClassType(first_class, false); // super(Foo, self) has type of Foo, modulo __get__()
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 }

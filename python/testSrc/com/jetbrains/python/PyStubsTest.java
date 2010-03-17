@@ -69,7 +69,6 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotNull(deco);
     assertEquals("deco", deco.getName());
     assertNotParsed(file);
-    assertFalse(deco.isBuiltin());
 
     final PyTargetExpression[] instanceAttrs = pyClass.getInstanceAttributes();
     assertEquals(1, instanceAttrs.length);

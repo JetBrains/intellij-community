@@ -337,7 +337,7 @@ public class ResolveImportUtil {
       for (ContentEntry entry: rootManager.getContentEntries()) {
         VirtualFile root_file = entry.getFile();
 
-        if (!visitor.visitRoot(root_file)) return;
+        if (root_file != null && !visitor.visitRoot(root_file)) return;
         for (VirtualFile folder : entry.getSourceFolderFiles()) {
           source_entries_missing = false;
           if (!visitor.visitRoot(folder)) return;
@@ -555,9 +555,8 @@ public class ResolveImportUtil {
   @todo: Honor package's __path__ value (hard).
   */
   @Nullable
-  public static PsiElement resolveChild(
-    @Nullable final PsiElement parent, final String referencedName, final PsiFile containingFile, boolean fileOnly
-  ) {
+  public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
+                                        final PsiFile containingFile, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
     ResolveProcessor processor = null;

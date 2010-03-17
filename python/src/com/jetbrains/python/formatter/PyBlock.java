@@ -120,8 +120,21 @@ public class PyBlock implements ASTBlock {
         childAlignment = _childListAlignment;
       }
     }
-    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.ARGUMENT_LIST) {
-      childIndent = Indent.getContinuationIndent();
+    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
+      if (childType == PyTokenTypes.RBRACKET) {
+        childIndent = Indent.getNoneIndent();
+      }
+      else {
+        childIndent = Indent.getContinuationIndent();
+      }
+    }
+    else if (parentType == PyElementTypes.ARGUMENT_LIST) {
+      if (childType == PyTokenTypes.RPAR) {
+        childIndent = Indent.getNoneIndent();
+      }
+      else {
+        childIndent = Indent.getContinuationIndent();
+      }
     }
     try { // maybe enter was pressed and cut us from a previous (nested) statement list
       PsiElement prev = sure(child.getPsi().getPrevSibling());
@@ -184,6 +197,11 @@ public class PyBlock implements ASTBlock {
     IElementType parentType = _node.getElementType();
     IElementType type1 = childNode1.getElementType();
     IElementType type2 = childNode2.getElementType();
+
+    if (type1 == PyElementTypes.CLASS_DECLARATION) {
+      int blankLines = mySettings.BLANK_LINES_AROUND_CLASS + 1;
+      return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+    }
 
     if (type1 == PyElementTypes.FUNCTION_DECLARATION || (type2 == PyElementTypes.FUNCTION_DECLARATION && type1 == PyElementTypes.CLASS_DECLARATION)) {
       int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;

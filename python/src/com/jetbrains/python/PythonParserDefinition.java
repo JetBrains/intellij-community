@@ -28,12 +28,14 @@ public class PythonParserDefinition implements ParserDefinition {
 
   private final TokenSet myWhitespaceTokens;
   private final TokenSet myCommentTokens;
+  private final TokenSet myStringLiteralTokens;
 
   public PythonParserDefinition() {
     language = (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
 
     myWhitespaceTokens = TokenSet.create(PyTokenTypes.LINE_BREAK, PyTokenTypes.SPACE, PyTokenTypes.TAB, PyTokenTypes.FORMFEED);
     myCommentTokens = TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT);
+    myStringLiteralTokens = TokenSet.create(PyTokenTypes.STRING_LITERAL);
   }
 
   @NotNull
@@ -57,7 +59,7 @@ public class PythonParserDefinition implements ParserDefinition {
 
   @NotNull
   public TokenSet getStringLiteralElements() {
-    return TokenSet.EMPTY;
+    return myStringLiteralTokens;
   }
 
   @NotNull

@@ -505,18 +505,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (callee instanceof PyReferenceExpression) {
         PsiElement def = ((PyReferenceExpression)callee).resolve();
         if (def instanceof PyFunction) {
-          ((PyFunction)def).getParameterList().acceptChildren(
-            new PyElementVisitor() {
-              @Override
-              public void visitPyParameter(PyParameter par) {
-                PyNamedParameter n_param = par.getAsNamed();
-                assert n_param != null;
-                if (! n_param.isKeywordContainer() && ! n_param.isPositionalContainer()) {
-                  ret.add(LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0)));
-                }
-              }
-            }
-          );
+          addKeywordArgumentVariants((PyFunction) def, ret);
+        }
+        else if (def instanceof PyClass) {
+          PyFunction init = ((PyClass) def).findMethodByName(PyNames.INIT, true);  // search in superclasses
+          if (init != null) {
+            addKeywordArgumentVariants(init, ret);
+          }
         }
       }
     }
@@ -550,6 +545,21 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     ret.addAll(processor.getResultList());
     return ret.toArray();
+  }
+
+  private static void addKeywordArgumentVariants(PyFunction def, final List<Object> ret) {
+    def.getParameterList().acceptChildren(
+      new PyElementVisitor() {
+        @Override
+        public void visitPyParameter(PyParameter par) {
+          PyNamedParameter n_param = par.getAsNamed();
+          assert n_param != null;
+          if (! n_param.isKeywordContainer() && ! n_param.isPositionalContainer()) {
+            ret.add(LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0)));
+          }
+        }
+      }
+    );
   }
 
   public boolean isSoft() {

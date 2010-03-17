@@ -13,19 +13,13 @@ import com.jetbrains.python.psi.PyDecorator;
  */
 public class PyDecoratorStubImpl extends StubBase<PyDecorator> implements PyDecoratorStub {
   private final String myName;
-  private final boolean myIsBuiltin;
 
-  protected PyDecoratorStubImpl(final String name, final boolean builtuin, final StubElement parent) {
+  protected PyDecoratorStubImpl(final String name, final StubElement parent) {
     super(parent, PyElementTypes.DECORATOR_CALL);
     myName = name;
-    myIsBuiltin = builtuin;
   }
 
   public String getName() {
     return myName;
-  }
-
-  public boolean isBuiltin() {
-    return myIsBuiltin;  
   }
 }
