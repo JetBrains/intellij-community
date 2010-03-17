@@ -26,7 +26,7 @@ public class XmlAttributeTokenizer  extends Tokenizer<XmlAttributeValue>{
   @Nullable
   @Override
   public Token[] tokenize(@NotNull XmlAttributeValue element) {
-    return new Token[]{new Token<XmlAttributeValue>(element, element.getText(),false, SplitterFactory.getAttributeValueSplitter())};
+    return new Token[]{new Token<XmlAttributeValue>(element, element.getText(),false, SplitterFactory.getInstance().getAttributeValueSplitter())};
   }
 
 

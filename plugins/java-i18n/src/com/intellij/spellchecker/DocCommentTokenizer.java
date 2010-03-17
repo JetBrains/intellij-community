@@ -47,12 +47,12 @@ public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
         PsiDocTag tag = (PsiDocTag)el;
         if (!Arrays.asList(excludedTags).contains(tag.getName())) {
           for (PsiElement data : tag.getDataElements()) {
-            result.add(new Token<PsiElement>(data, data.getText(),false, SplitterFactory.getCommentSplitter()));
+            result.add(new Token<PsiElement>(data, data.getText(),false, SplitterFactory.getInstance().getCommentSplitter()));
           }
         }
       }
       else {
-        result.add(new Token<PsiElement>(el, el.getText(),false, SplitterFactory.getCommentSplitter()));
+        result.add(new Token<PsiElement>(el, el.getText(),false, SplitterFactory.getInstance().getCommentSplitter()));
       }
     }
     Token[] t = new Token[result.size()];

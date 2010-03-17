@@ -25,7 +25,7 @@ public class TextTokenizer extends Tokenizer<PsiPlainText> {
   @Nullable
   @Override
   public Token[] tokenize(@NotNull PsiPlainText element) {
-    return new Token[]{new Token<PsiPlainText>(element, element.getText(),false, SplitterFactory.getPlainTextSplitter())};
+    return new Token[]{new Token<PsiPlainText>(element, element.getText(),false, SplitterFactory.getInstance().getPlainTextSplitter())};
   }
 
 

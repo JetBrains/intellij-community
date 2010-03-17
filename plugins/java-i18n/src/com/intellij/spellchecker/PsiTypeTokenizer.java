@@ -49,6 +49,6 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
 
     final boolean isInSource = (virtualFile != null) && fileIndex.isInContent(virtualFile);
 
-    return !isInSource ? null : new Token[]{new Token<PsiTypeElement>(element, element.getText(), true, SplitterFactory.getIdentifierSplitter())};
+    return !isInSource ? null : new Token[]{new Token<PsiTypeElement>(element, element.getText(), true, SplitterFactory.getInstance().getIdentifierSplitter())};
   }
 }

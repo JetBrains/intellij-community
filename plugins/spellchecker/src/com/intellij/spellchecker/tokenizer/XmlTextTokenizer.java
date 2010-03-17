@@ -26,7 +26,7 @@ public class XmlTextTokenizer extends Tokenizer<XmlText> {
   @Nullable
   @Override
   public Token[] tokenize(@NotNull XmlText element) {
-    return new Token[]{new Token<XmlText>(element, element.getText(),false, SplitterFactory.getPlainTextSplitter())};
+    return new Token[]{new Token<XmlText>(element, element.getText(),false, SplitterFactory.getInstance().getPlainTextSplitter())};
   }
 
 

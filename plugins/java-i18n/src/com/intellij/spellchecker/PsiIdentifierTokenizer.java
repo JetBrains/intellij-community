@@ -32,6 +32,6 @@ public class PsiIdentifierTokenizer extends Tokenizer<PsiIdentifier> {
    @Nullable
    @Override
   public Token[] tokenize(@NotNull PsiIdentifier element) {
-    return element.getText()==null?null:new Token[]{new Token<PsiIdentifier>(element,element.getText(),true, SplitterFactory.getIdentifierSplitter())};
+    return element.getText()==null?null:new Token[]{new Token<PsiIdentifier>(element,element.getText(),true, SplitterFactory.getInstance().getIdentifierSplitter())};
   }
 }
