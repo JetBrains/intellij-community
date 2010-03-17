@@ -43,4 +43,12 @@ public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTe
   public void testTxt() throws Throwable {
     doTest("test.txt", SpellCheckerInspectionToolProvider.getInspectionTools());
   }
+
+  public void testTCTxt() throws Throwable {
+    doTest("contents.txt", SpellCheckerInspectionToolProvider.getInspectionTools());
+  }
+
+  public void testTCTxt2() throws Throwable {
+    doTest("crt.txt", SpellCheckerInspectionToolProvider.getInspectionTools());
+  }
 }

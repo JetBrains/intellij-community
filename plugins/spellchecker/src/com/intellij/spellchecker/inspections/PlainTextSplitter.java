@@ -18,6 +18,7 @@ package com.intellij.spellchecker.inspections;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,10 @@ public class PlainTextSplitter extends BaseSplitter {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
-
+    if (Verifier.checkCharacterData(text.substring(range.getStartOffset(),range.getEndOffset()))!=null){
+         return null;
+       }
+        
     List<TextRange> toCheck = excludeByPattern(text, range, COMPLEX, 0);
 
     if (toCheck == null) return null;
@@ -57,6 +61,7 @@ public class PlainTextSplitter extends BaseSplitter {
       matcher = EXTENDED_WORD_AND_SPECIAL.matcher(text.substring(r.getStartOffset(), r.getEndOffset()));
       while (matcher.find()) {
         TextRange found = matcherRange(r, matcher);
+
         final List<CheckArea> res = ws.split(text, found);
         if (res != null) {
           results.addAll(res);

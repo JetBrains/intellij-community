@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,11 +42,6 @@ public abstract class BaseSplitter implements Splitter {
     boolean tooShort = (found.getEndOffset() - found.getStartOffset()) <= MIN_RANGE_LENGTH;
     if (tooShort) {
       return;
-    }
-    for (int i = found.getStartOffset(); i < found.getEndOffset(); i++) {
-      if (!(Character.isLetter(text.charAt(i)) || text.charAt(i) == '\'')) {
-        return;
-      }
     }
     results.add(new CheckArea(text, found, false));
   }
@@ -153,4 +149,6 @@ public abstract class BaseSplitter implements Splitter {
     catch (Throwable ignored) {
     }
   }
+
+
 }

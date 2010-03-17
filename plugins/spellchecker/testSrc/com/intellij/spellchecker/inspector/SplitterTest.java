@@ -66,6 +66,12 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{"don't", "check"});
   }
 
+  public void testCheckXmlIgnored() {
+     String text = "abcdef" + new String(new char[]{0xDC00}) + "test";
+     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
+     correctListToCheck(checkAreas, text, new String[]{});
+   }
+
 
   public void testWordWithApostrophe2() {
     String text = "customers'";
@@ -329,8 +335,7 @@ public class SplitterTest extends TestCase {
     String text = convertStreamToString(stream);
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     List<String> words = wordsToCheck(checkAreas, text);
-    assertNotNull(words);
-    assertEquals(75,words.size());
+    assertNull(words);
   }
 
  

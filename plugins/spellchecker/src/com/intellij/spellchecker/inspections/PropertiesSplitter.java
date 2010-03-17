@@ -46,7 +46,11 @@ public class PropertiesSplitter extends BaseSplitter {
         continue;
       }
       TextRange found = matcherRange(range, matcher);
-      results.addAll(splitter.split(text, found));
+      final List<CheckArea> res = splitter.split(text, found);
+      if (res != null) {
+        results.addAll(res);
+      }
+
     }
 
     return (results.size() == 0) ? null : results;
