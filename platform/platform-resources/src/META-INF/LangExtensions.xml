@@ -509,6 +509,9 @@
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>
 
+  <applicationService serviceInterface="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"
+                      serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
+
   <inspectionToolProvider implementation="com.intellij.codeInspection.PlatformInspectionToolProvider"/>
 
   <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
