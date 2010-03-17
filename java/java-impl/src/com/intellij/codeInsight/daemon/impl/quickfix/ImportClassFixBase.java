@@ -140,8 +140,9 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
     if (classes.length == 1
         && (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName()))
-        && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
-        && !JspPsiUtil.isInJspFile(psiFile)
+        && (JspPsiUtil.isInJspFile(psiFile) ?
+            CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
+            CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
         && codeAnalyzer.canChangeFileSilently(psiFile)) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         public void run() {
