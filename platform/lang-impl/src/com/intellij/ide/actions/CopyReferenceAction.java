@@ -178,7 +178,9 @@ public class CopyReferenceAction extends AnAction {
     final Project project = file.getProject();
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
     if (logicalRoot != null) {
-      return "/"+FileUtil.getRelativePath(VfsUtil.virtualToIoFile(logicalRoot.getVirtualFile()), VfsUtil.virtualToIoFile(virtualFile));
+      String logical = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(logicalRoot.getVirtualFile()).getPath());
+      String path = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(virtualFile).getPath());
+      return "/" + FileUtil.getRelativePath(logical, path, '/');
     }
 
     final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);

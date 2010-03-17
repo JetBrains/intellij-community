@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import org.jetbrains.annotations.NonNls;
@@ -275,6 +276,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   @Nullable
   public VirtualFile findFileByRelativePath(@NotNull @NonNls String relPath) {
     if (relPath.length() == 0) return this;
+    relPath = StringUtil.trimStart(relPath, "/");
 
     int index = relPath.indexOf('/');
     if (index < 0) index = relPath.length();
