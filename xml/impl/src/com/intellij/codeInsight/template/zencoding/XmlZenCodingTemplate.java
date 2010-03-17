@@ -369,9 +369,10 @@ public class XmlZenCodingTemplate {
         });
         return true;
       }
+      // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
+      TemplateManager manager = TemplateManager.getInstance(file.getProject());
+      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());
     }
-    // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
-    TemplateManager manager = TemplateManager.getInstance(file.getProject());
-    return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());
+    return false;
   }
 }
