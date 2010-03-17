@@ -174,7 +174,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     if (myPathsIndex == null || myPathsIndex.size() != size()) {
 
       final Set<Map.Entry<String, String>> entrySet = entries();
-      Map.Entry<String, String>[] entries = ContainerUtil.toArray(entrySet, new Map.Entry[entrySet.size()]);
+      Map.Entry<String, String>[] entries = entrySet.toArray(new Map.Entry[entrySet.size()]);
       ContainerUtil.sort(entries, PATHS_COMPARATOR);
       myPathsIndex = new ArrayList<String>(entries.length);
 
