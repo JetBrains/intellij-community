@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Verifier;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PlainTextSplitter extends BaseSplitter {
@@ -36,37 +34,29 @@ public class PlainTextSplitter extends BaseSplitter {
     Pattern.compile("([\\p{L}0-9\\.\\-\\_]+@([\\p{L}0-9\\-\\_]+\\.)+(com|net|[a-z]{2}))|((ftp|http|file|https)://([^/]+)(/.*)?(/.*))");
 
 
-  private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile("[&#]?\\p{L}*'?\\p{L}(_*\\p{L})*");
-
-
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
-    if (Verifier.checkCharacterData(text.substring(range.getStartOffset(),range.getEndOffset()))!=null){
-         return null;
-       }
-        
+    if (Verifier.checkCharacterData(text.substring(range.getStartOffset(), range.getEndOffset())) != null) {
+      return null;
+    }
+
     List<TextRange> toCheck = excludeByPattern(text, range, COMPLEX, 0);
 
     if (toCheck == null) return null;
 
-    Matcher matcher;
     List<CheckArea> results = new ArrayList<CheckArea>();
-    final WordSplitter ws = SplitterFactory.getInstance().getWordSplitter();
+    final TextSplitter ws = SplitterFactory.getInstance().getTextSplitterNew();
     for (TextRange r : toCheck) {
 
       checkCancelled();
 
-      matcher = EXTENDED_WORD_AND_SPECIAL.matcher(text.substring(r.getStartOffset(), r.getEndOffset()));
-      while (matcher.find()) {
-        TextRange found = matcherRange(r, matcher);
-
-        final List<CheckArea> res = ws.split(text, found);
-        if (res != null) {
-          results.addAll(res);
-        }
+      final List<CheckArea> res = ws.split(text, r);
+      if (res != null) {
+        results.addAll(res);
       }
+
     }
 
     return (results.size() == 0) ? null : results;
