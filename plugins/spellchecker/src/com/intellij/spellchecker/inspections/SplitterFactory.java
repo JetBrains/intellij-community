@@ -15,17 +15,16 @@
  */
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProgressManager;
-
 public class SplitterFactory {
 
   private static final SplitterFactory ourInstance = new SplitterFactory();
 
   private IdentifierSplitter identifierSplitter = new IdentifierSplitter();
-  private PlainTextSplitter textSpl = new PlainTextSplitter();
+  private PlainTextSplitter plainTextSpl = new PlainTextSplitter();
   private PropertiesSplitter prSpl = new PropertiesSplitter();
   private WordSplitter wordSplitter = new WordSplitter();
   private CommentSplitter comment = new CommentSplitter();
+  private TextSplitter textSpl = new TextSplitter();
 
 
   private SplitterFactory() {
@@ -48,7 +47,7 @@ public class SplitterFactory {
   }
 
   public Splitter getPlainTextSplitter() {
-    return textSpl;
+    return plainTextSpl;
   }
 
   public CommentSplitter getCommentSplitter() {
@@ -56,10 +55,14 @@ public class SplitterFactory {
   }
 
   public Splitter getStringLiteralSplitter() {
-    return textSpl;
+    return plainTextSpl;
   }
 
   public Splitter getPropertiesSplitter() {
     return prSpl;
+  }
+
+  public TextSplitter getTextSplitterNew() {
+    return textSpl;
   }
 }
