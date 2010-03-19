@@ -36,7 +36,7 @@ public class IdentifierSplitter extends BaseSplitter {
   private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
 
   @NonNls
-  private static final Pattern WORD_EXT = Pattern.compile("(\\p{L}*?)_");
+  private static final Pattern WORD_EXT = Pattern.compile("(\\p{L}*?)[_$]");
 
   public IdentifierSplitter() {
 
@@ -90,8 +90,11 @@ public class IdentifierSplitter extends BaseSplitter {
      while (matcher.find()) {
        TextRange found = matcherRange(range, matcher);
        TextRange foundWord = matcherRange(range, matcher, 1);
-       from = found.getEndOffset();
+
+       if (!tooSmall(from,foundWord.getEndOffset())){
        Strings.addAll(text, foundWord, result);
+       }
+       from = found.getEndOffset();
      }
      if (!tooSmall(from, range.getEndOffset())) {
        Strings.addAll(text, new TextRange(from, range.getEndOffset()), result);
