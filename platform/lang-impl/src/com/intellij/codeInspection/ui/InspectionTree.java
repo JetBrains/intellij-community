@@ -54,9 +54,7 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 
 public class InspectionTree extends Tree {
@@ -194,10 +192,8 @@ public class InspectionTree extends Tree {
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
       myExpandedUserObjects.add(node.getUserObject());
-      if (node instanceof RefElementNode && !node.children().hasMoreElements()) {       
-        sortChildren(node);
-      }
-
+      sortChildren(node);
+      nodeStructureChanged(node);
       // Smart expand
       if (node.getChildCount() == 1) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -307,7 +303,10 @@ public class InspectionTree extends Tree {
   }
 
   private static void sortChildren(InspectionTreeNode node) {
-    TreeUtil.sort(node, InspectionResultsViewComparator.getInstance());
+    final List<TreeNode> children = TreeUtil.childrenToArray(node);
+    Collections.sort(children, InspectionResultsViewComparator.getInstance());
+    node.removeAllChildren();
+    TreeUtil.addChildrenTo(node, children);
   }
 
   private class SelectionPath {
