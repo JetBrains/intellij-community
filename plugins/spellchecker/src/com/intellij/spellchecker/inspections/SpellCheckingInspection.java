@@ -16,7 +16,10 @@
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -44,15 +47,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public class SpellCheckingInspection extends LocalInspectionTool {
 
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
   private static final AcceptWordAsCorrect BATCH_ACCEPT_FIX = new AcceptWordAsCorrect();
-  private static final List<SpellCheckerQuickFix> BATCH_FIXES = new ArrayList<SpellCheckerQuickFix>(Arrays.asList(new SpellCheckerQuickFix[]{BATCH_ACCEPT_FIX}));
+  private static final SpellCheckerQuickFix[] BATCH_FIXES = new SpellCheckerQuickFix[]{BATCH_ACCEPT_FIX};
 
   @Nls
   @NotNull
@@ -199,9 +204,10 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   private static void addRegularDescriptor(@NotNull TextRange textRange, @NotNull Token token, @NotNull ProblemsHolder holder) {
-      List<SpellCheckerQuickFix> fixes = new ArrayList<SpellCheckerQuickFix>();
-      fixes.add((token.isUseRename()?new RenameTo():new ChangeTo()));
-      fixes.add(new AcceptWordAsCorrect());
+      SpellCheckerQuickFix[] fixes = new SpellCheckerQuickFix[]{
+        (token.isUseRename() ? new RenameTo() : new ChangeTo()),
+        new AcceptWordAsCorrect()
+      };
 
       final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes, true);
       holder.registerProblem(problemDescriptor);
@@ -209,17 +215,16 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   private static ProblemDescriptor createProblemDescriptor(Token token,
                                                            ProblemsHolder holder,
-                                                           TextRange textRange, Collection<SpellCheckerQuickFix> fixes, boolean onTheFly) {
+                                                           TextRange textRange, SpellCheckerQuickFix[] fixes, boolean onTheFly) {
     final String defaultDescription = SpellCheckerBundle.message("typo.in.word.ref");
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
     final TextRange highlightRange = TextRange.from(token.getOffset() + textRange.getStartOffset(), textRange.getLength());
     assert highlightRange.getStartOffset()>=0 : token.getText();
-    final LocalQuickFix[] quickFixes = fixes.size() > 0 ? fixes.toArray(new LocalQuickFix[fixes.size()]) : null;
 
     final ProblemDescriptor problemDescriptor = holder.getManager()
       .createProblemDescriptor(token.getElement(), highlightRange, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, holder.isOnTheFly(),
-                               quickFixes);
+                               fixes);
     if(onTheFly) {
       for (SpellCheckerQuickFix fix : fixes) {
         fix.setDescriptor(problemDescriptor);
