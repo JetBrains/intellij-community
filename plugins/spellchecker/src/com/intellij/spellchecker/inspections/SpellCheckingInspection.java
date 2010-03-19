@@ -22,7 +22,6 @@ import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -53,6 +52,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
   private static final AcceptWordAsCorrect BATCH_ACCEPT_FIX = new AcceptWordAsCorrect();
+  private static final List<SpellCheckerQuickFix> BATCH_FIXES = new ArrayList<SpellCheckerQuickFix>(Arrays.asList(new SpellCheckerQuickFix[]{BATCH_ACCEPT_FIX}));
 
   @Nls
   @NotNull
@@ -194,11 +194,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
 
   private static void addBatchDescriptor(@NotNull TextRange textRange, @NotNull Token token, @NotNull ProblemsHolder holder) {
-      List<SpellCheckerQuickFix> fixes = new ArrayList<SpellCheckerQuickFix>();
-      fixes.add(BATCH_ACCEPT_FIX);
-
-      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes, false);
-      holder.registerProblem(problemDescriptor);
+    final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, BATCH_FIXES, false);
+    holder.registerProblem(problemDescriptor);
   }
 
   private static void addRegularDescriptor(@NotNull TextRange textRange, @NotNull Token token, @NotNull ProblemsHolder holder) {
@@ -213,8 +210,6 @@ public class SpellCheckingInspection extends LocalInspectionTool {
   private static ProblemDescriptor createProblemDescriptor(Token token,
                                                            ProblemsHolder holder,
                                                            TextRange textRange, Collection<SpellCheckerQuickFix> fixes, boolean onTheFly) {
-    //TODO: these descriptions eat LOTS of HEAP on batch run - need either to make them constant or evaluate template dynamically
-    //  ( add something like #text substitution)
     final String defaultDescription = SpellCheckerBundle.message("typo.in.word.ref");
     final String tokenDescription = token.getDescription();
     final String description = tokenDescription == null ? defaultDescription : tokenDescription;
