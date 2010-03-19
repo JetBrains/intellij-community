@@ -212,9 +212,23 @@ public class SplitterTest extends TestCase {
     
   }
 
+   public void testPhpVariableCorrectSimple() {
+    String text = "$this";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"this"});
+
+  }
+
+  public void testPhpVariableCorrect() {
+    String text = "$this_this$this";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"this","this","this"});
+
+  }
+
   public void testEmail() {
     String text = "some text with email (shkate.test@gmail.com) inside";
-    List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getStringLiteralSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"some","text","with","email","inside"});
     
   }
