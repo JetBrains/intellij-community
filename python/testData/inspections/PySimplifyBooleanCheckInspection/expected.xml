@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>test.py</file>
+    <line>1</line>
+    <description>Expression can be simplified</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>2</line>
+    <description>Expression can be simplified</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>3</line>
+    <description>Expression can be simplified</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>4</line>
+    <description>Expression can be simplified</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>6</line>
+    <description>Expression can be simplified</description>
+  </problem>
+</problems>

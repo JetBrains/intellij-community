@@ -17,6 +17,8 @@ public class PyNames {
   @NonNls public static final String INIT_DOT_PY = INIT + DOT_PY;
 
   @NonNls public static final String NEW = "__new__";
+  @NonNls public static final String GETATTR = "__getattr__";
+  @NonNls public static final String GETATTRIBUTE = "__getattribute__";
 
   @NonNls public static final String OBJECT = "object";
   @NonNls public static final String NONE = "None";

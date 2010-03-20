@@ -33,7 +33,7 @@ public class PyBlock implements ASTBlock {
   private final ASTNode _node;
   private final Wrap _wrap;
   private final CodeStyleSettings mySettings;
-  private List<Block> _subBlocks = null;
+  private List<PyBlock> _subBlocks = null;
   private final Alignment _childListAlignment;
   private final TokenSet _listElementTypes;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
@@ -78,8 +78,8 @@ public class PyBlock implements ASTBlock {
     return new ArrayList<Block>(_subBlocks);
   }
 
-  private List<Block> buildSubBlocks() {
-    List<Block> blocks = new ArrayList<Block>();
+  private List<PyBlock> buildSubBlocks() {
+    List<PyBlock> blocks = new ArrayList<PyBlock>();
     for (ASTNode child = _node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
 
       IElementType childType = child.getElementType();
@@ -215,6 +215,10 @@ public class PyBlock implements ASTBlock {
     if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
       return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
     }
+
+    if (type1 == PyTokenTypes.COMMA) {
+      return getSpacingForOption(mySettings.SPACE_AFTER_COMMA);
+    }
 /*
         if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
             return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
@@ -239,6 +243,11 @@ public class PyBlock implements ASTBlock {
     return null;
   }
 
+  private Spacing getSpacingForOption(boolean isOptionSet) {
+    int spaces = isOptionSet ? 1 : 0;
+    return Spacing.createSpacing(spaces, spaces, 0, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+  }
+
   private static boolean isStatementOrDeclaration(final IElementType type) {
     return PyElementTypes.STATEMENTS.contains(type) ||
            type == PyElementTypes.CLASS_DECLARATION || 
@@ -254,7 +263,7 @@ public class PyBlock implements ASTBlock {
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
       
-      PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
+      PyBlock insertAfterBlock = _subBlocks.get(newChildIndex - 1);
 
       ASTNode prevNode = insertAfterBlock.getNode();
       PsiElement prevElt = prevNode.getPsi();
@@ -318,9 +327,12 @@ public class PyBlock implements ASTBlock {
   private Indent getChildIndent(int newChildIndex) {
     ASTNode lastChild = getLastNonSpaceChild(_node, false);
     if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && _subBlocks.size() >= newChildIndex) {
-      PyBlock insertAfterBlock = (PyBlock)_subBlocks.get(newChildIndex - 1);
+      int prevIndex = newChildIndex-1;
+      while (prevIndex > 0 && _subBlocks.get(prevIndex).getNode().getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+        prevIndex--;
+      }
+      PyBlock insertAfterBlock = _subBlocks.get(prevIndex);
       ASTNode afterNode = insertAfterBlock.getNode();
-
 
       // handle pressing Enter after colon and before first statement in
       // existing statement list

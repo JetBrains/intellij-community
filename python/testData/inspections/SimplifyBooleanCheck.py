@@ -1,0 +1,1 @@
+a = (<warning descr="Expression can be simplified"><caret>b != False</warning>)

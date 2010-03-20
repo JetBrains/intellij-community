@@ -93,4 +93,8 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   public void testNegateComparison2() throws Exception {
     doTest(PyBundle.message("INTN.negate.$0.to.$1", ">", "<="));
   }
+
+  public void testStringConcatToFormat() throws Exception {
+    doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
+  }
 }

@@ -136,6 +136,10 @@ public class PyIndentTest extends PyLightFixtureTestCase {
     doTest("{<caret>}", "{\n    <caret>\n}");
   }
 
+  public void testIndentAfterComment() {   // PY-641
+    doTest("def foo():\n    #some_call()<caret>\n    another_call()", "def foo():\n    #some_call()\n    <caret>\n    another_call()");
+  }
+
   /*
   TODO: formatter core problem?
   public void testAlignListBeforeEquals() throws Exception {

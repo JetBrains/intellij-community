@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.AddMethodQuickFix;
@@ -264,6 +265,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         if (refex.getQualifier() != null) {
           final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
+
         }
         // unqualified:
         // may be module's
@@ -308,6 +310,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
               }
               if (qtype instanceof PyClassType) {
                 PyClass cls = ((PyClassType)qtype).getPyClass();
+                if (overridesGetAttr(cls)) {
+                  return;
+                }
                 if (cls != null && ! PyBuiltinCache.getInstance(node).hasInBuiltins(cls)) {
                   if (reference.getElement().getParent() instanceof PyCallExpression) {
                     actions.add(new AddMethodQuickFix(ref_text, (PyClassType)qtype));
@@ -344,6 +349,18 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
       registerProblem(point, description, hl_type, hint_action, actions.toArray(new LocalQuickFix[actions.size()]));
+    }
+
+    private static boolean overridesGetAttr(PyClass cls) {
+      PyFunction method = cls.findMethodByName(PyNames.GETATTR, true);
+      if (method != null) {
+        return true;
+      }
+      method = cls.findMethodByName(PyNames.GETATTRIBUTE, true);
+      if (method != null && !PyBuiltinCache.getInstance(cls).hasInBuiltins(method)) {
+        return true;
+      }
+      return false;
     }
 
     private static void addPluginQuickFixes(PsiReference reference, final List<LocalQuickFix> actions) {
