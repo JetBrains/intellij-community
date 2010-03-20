@@ -15,6 +15,7 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.tree.IElementType;
 
 import java.io.IOException;
@@ -90,5 +91,11 @@ public class FlexAdapter extends LexerBase {
       myTokenType = myFlex.advance();
     }
     catch (IOException e) { /*Can't happen*/ }
+    catch (Error e) {
+      // add lexer class name to the error
+      final Error error = new Error(myFlex.getClass().getName() + ": " + e.getMessage());
+      error.setStackTrace(e.getStackTrace());
+      throw error;
+    }
   }
 }

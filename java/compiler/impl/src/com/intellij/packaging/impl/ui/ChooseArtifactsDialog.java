@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.roots.ui.configuration.artifacts;
+package com.intellij.packaging.impl.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ide.util.ChooseElementsDialog;

@@ -18,13 +18,12 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 
 import java.util.List;
 
 public class MavenPluginModelDocumentationProvider implements DocumentationProvider {
   public String getQuickNavigateInfo(PsiElement element) {
-    return getDocForMavenPluginParameter(element);
+    return getDocForMavenPluginParameter(element, false);
   }
 
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
@@ -32,7 +31,7 @@ public class MavenPluginModelDocumentationProvider implements DocumentationProvi
   }
 
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    return getDocForMavenPluginParameter(element);
+    return getDocForMavenPluginParameter(element, true);
   }
 
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
@@ -43,9 +42,22 @@ public class MavenPluginModelDocumentationProvider implements DocumentationProvi
     return null;
   }
 
-  private String getDocForMavenPluginParameter(PsiElement element) {
-    MavenDomParameter p = element.getUserData(MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY);
+  private String getDocForMavenPluginParameter(PsiElement element, boolean html) {
+    MavenPluginConfigurationDomExtender.ParameterData p = element.getUserData(MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY);
     if (p == null) return null;
-    return p.getDescription().getStringValue();
+
+    String[] ss = html ? new String[]{"<br>", "<b>", "</b>", "<i>", "</i>"}
+                       : new String[]{"\n ", "", "", "", ""};
+
+    String text = "";
+    if (html) {
+      text += "Type: " + ss[1] + p.parameter.getType().getStringValue() + ss[2] + ss[0];
+      if (p.defaultValue != null) text += "Default Value: " + ss[1] + p.defaultValue + ss[2] + ss[0];
+      if (p.expression != null) text += "Expression: " + ss[1] + p.expression + ss[2] + ss[0];
+      if (p.parameter.getRequired().getValue() == Boolean.TRUE) text += ss[1] + "Required" + ss[2] + ss[0];
+      text += ss[0];
+    }
+    text += ss[3] + p.parameter.getDescription().getStringValue() + ss[4];
+    return text;
   }
 }

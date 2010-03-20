@@ -67,6 +67,10 @@ public class MoveClassTest extends CodeInsightTestCase {
     doTest("ideadev27996", new String[] { "pack1.X" }, "pack2");
   }
 
+  public void testUnusedImport() throws Exception {
+    doTest("unusedImport", new String[]{"p2.F2"}, "p1");
+  }
+
   private void doTest(String testName, String[] classNames, String newPackageName) throws Exception{
     String root = JavaTestUtil.getJavaTestDataPath() + "/refactoring/moveClass/" + testName;
 

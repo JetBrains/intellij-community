@@ -168,7 +168,7 @@ public class ShowFilePathAction extends AnAction {
     return popup;
   }
 
-  private static void open(final File ioFile, File toSelect) {
+  public static void open(final File ioFile, File toSelect) {
     if (SystemInfo.isMac) {
       String cmd = "open";
       String path = ioFile.getAbsolutePath();

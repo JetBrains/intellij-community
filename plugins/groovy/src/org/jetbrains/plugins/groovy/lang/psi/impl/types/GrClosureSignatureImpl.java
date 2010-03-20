@@ -29,10 +29,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  */
 public class GrClosureSignatureImpl implements GrClosureSignature {
   private final boolean myIsVarargs;
-  private final PsiType myReturnType;
-  private final GrClosureParameter[] myParameters;
+  @Nullable private final PsiType myReturnType;
+  @NotNull private final GrClosureParameter[] myParameters;
 
-  public GrClosureSignatureImpl(PsiParameter[] parameters, PsiType returnType, PsiSubstitutor substitutor) {
+  public GrClosureSignatureImpl(@NotNull PsiParameter[] parameters, @Nullable PsiType returnType, @NotNull PsiSubstitutor substitutor) {
     myReturnType = substitutor.substitute(returnType);
     final int length = parameters.length;
     myParameters = new GrClosureParameter[length];
@@ -55,19 +55,19 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     this(parameters, null);
   }
 
-  public GrClosureSignatureImpl(GrClosableBlock block) {
+  public GrClosureSignatureImpl(@NotNull GrClosableBlock block) {
     this(block.getAllParameters(), block.getReturnType());
   }
 
-  public GrClosureSignatureImpl(PsiMethod method) {
+  public GrClosureSignatureImpl(@NotNull PsiMethod method) {
     this(method, PsiSubstitutor.EMPTY);
   }
 
-  public GrClosureSignatureImpl(PsiMethod method, PsiSubstitutor substitutor) {
+  public GrClosureSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     this(method.getParameterList().getParameters(), method.getReturnType(), substitutor);
   }
 
-  private GrClosureSignatureImpl(GrClosureParameter[] params, PsiType returnType, boolean isVarArgs) {
+  private GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
     myParameters = params;
     myReturnType = returnType;
     myIsVarargs = isVarArgs;
@@ -79,6 +79,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   }
 
 
+  @Nullable
   public PsiType getReturnType() {
     return myReturnType;
   }
@@ -90,6 +91,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     return result;
   }
 
+  @Nullable
   public GrClosureSignature curry(int count) {
     if (count > myParameters.length) {
       if (isVarargs()) {
@@ -122,7 +124,9 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   }
 
   @Nullable
-  public static GrClosureSignature getLeastUpperBound(GrClosureSignature signature1, GrClosureSignature signature2, PsiManager manager) {
+  public static GrClosureSignature getLeastUpperBound(@NotNull GrClosureSignature signature1,
+                                                      @NotNull GrClosureSignature signature2,
+                                                      PsiManager manager) {
     GrClosureParameter[] parameters1 = signature1.getParameters();
     GrClosureParameter[] parameters2 = signature2.getParameters();
 
@@ -131,15 +135,16 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
       for (int i = 0; i < params.length; i++) {
         final PsiType type = GenericsUtil.getGreatestLowerBound(parameters1[i].getType(), parameters2[i].getType());
         boolean opt = parameters1[i].isOptional() && parameters2[i].isOptional();
-        params[i] = new GrClosureParameterImpl(/*null, */type, opt, null);
+        params[i] = new GrClosureParameterImpl(type, opt, null);
       }
       final PsiType s1type = signature1.getReturnType();
       final PsiType s2type = signature2.getReturnType();
+      PsiType returnType = null;
       if (s1type != null && s2type != null) {
-        PsiType returnType = TypesUtil.getLeastUpperBound(s1type, s2type, manager);
-        boolean isVarArgs = signature1.isVarargs() && signature2.isVarargs();
-        return new GrClosureSignatureImpl(params, returnType, isVarArgs);
+        returnType = TypesUtil.getLeastUpperBound(s1type, s2type, manager);
       }
+      boolean isVarArgs = signature1.isVarargs() && signature2.isVarargs();
+      return new GrClosureSignatureImpl(params, returnType, isVarArgs);
     }
     return null; //todo
   }

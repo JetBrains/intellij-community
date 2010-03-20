@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.MutableTreeNode;
@@ -42,7 +43,7 @@ public abstract class InspectionRVContentProvider {
     myProject = project;
   }
 
-  protected static interface UserObjectContainer<T> {
+  protected interface UserObjectContainer<T> {
     @Nullable
     UserObjectContainer<T> getOwner();
 
@@ -195,7 +196,7 @@ public abstract class InspectionRVContentProvider {
   protected static RefElementNode addNodeToParent(UserObjectContainer container,
                                                   final InspectionTool tool,
                                                   final InspectionTreeNode parentNode) {
-    final Set<InspectionTreeNode> children = new HashSet<InspectionTreeNode>();
+    final Set<InspectionTreeNode> children = new THashSet<InspectionTreeNode>(1000);
     TreeUtil.traverseDepth(parentNode, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
         children.add((InspectionTreeNode)node);

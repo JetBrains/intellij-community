@@ -94,6 +94,10 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return myChooser.getSelectedElements();
   }
 
+  public void selectElements(@NotNull List<T> elements) {
+    myChooser.selectElements(elements);
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myChooser.getComponent();
   }

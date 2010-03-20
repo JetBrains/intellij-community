@@ -117,8 +117,7 @@ public class HighlightAnnotationsActions {
       }
       e.getPresentation().setText(text);
       e.getPresentation().setDescription(description);
-      final List<VcsFileRevision> fileRevisionList = myFileAnnotation.getRevisions();
-      e.getPresentation().setEnabled(fileRevisionList != null && (! fileRevisionList.isEmpty()));
+      e.getPresentation().setEnabled(myFileAnnotation.revisionsNotEmpty());
     }
 
     public void actionPerformed(final AnActionEvent e) {

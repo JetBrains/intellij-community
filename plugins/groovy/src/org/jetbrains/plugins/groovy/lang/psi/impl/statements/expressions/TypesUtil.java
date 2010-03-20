@@ -361,9 +361,11 @@ public class TypesUtil {
 
       if (parameters1.length == parameters2.length) {
         final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
-        GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
-        final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-        return GrClosureType.create(signature, manager, scope, languageLevel);
+        if (signature != null) {
+          GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
+          final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
+          return GrClosureType.create(signature, manager, scope, languageLevel);
+        }
       }
     }
     else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&

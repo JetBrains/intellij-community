@@ -49,6 +49,7 @@ import java.util.*;
 
 public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnConfiguration");
+  public final static int ourMaxAnnotateRevisionsDefault = 500;
 
   private final static String SERVERS_FILE_NAME = "servers";
   
@@ -73,6 +74,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
   private SvnAuthenticationManager myInteractiveManager;
   private String myUpgradeMode;
   private SvnSupportOptions mySupportOptions;
+  private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
@@ -302,6 +304,15 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     if (supportedVersion != null) {
       mySupportOptions = new SvnSupportOptions(Long.parseLong(supportedVersion.getText()));
     }
+    final Attribute maxAnnotateRevisions = element.getAttribute("maxAnnotateRevisions");
+    if (maxAnnotateRevisions != null) {
+      try {
+        myMaxAnnotateRevisions = maxAnnotateRevisions.getIntValue();
+      }
+      catch (DataConversionException e) {
+        //
+      }
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -333,6 +344,7 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
     if (mySupportOptions != null) {
       element.addContent(new Element("supportedVersion").setText("" + mySupportOptions.myVersion));
     }
+    element.setAttribute("maxAnnotateRevisions", "" + myMaxAnnotateRevisions);
   }
 
   public void projectOpened() {
@@ -454,5 +466,13 @@ public class SvnConfiguration implements ProjectComponent, JDOMExternalizable {
 
   public void clearCredentials(final String kind, final String realm) {
     RUNTIME_AUTH_CACHE.putData(kind, realm, null);
+  }
+
+  public int getMaxAnnotateRevisions() {
+    return myMaxAnnotateRevisions;
+  }
+
+  public void setMaxAnnotateRevisions(int maxAnnotateRevisions) {
+    myMaxAnnotateRevisions = maxAnnotateRevisions;
   }
 }

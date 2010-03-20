@@ -56,6 +56,8 @@ public class SvnConfigurable implements Configurable {
   private JCheckBox myDetectNestedWorkingCopiesCheckBox;
   private JCheckBox myIgnoreWhitespaceDifferenciesInCheckBox;
   private JCheckBox myShowMergeSourceInAnnotate;
+  private JSpinner myNumRevsInAnnotations;
+  private JCheckBox myMaximumNumberOfRevisionsCheckBox;
 
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
@@ -119,6 +121,13 @@ public class SvnConfigurable implements Configurable {
 
     myUseCommonProxy.setText(SvnBundle.message("use.idea.proxy.as.default", ApplicationNamesInfo.getInstance().getProductName()));
     myEditProxiesButton.addActionListener(new ConfigureProxiesListener(myProject));
+
+    myMaximumNumberOfRevisionsCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
+      }
+    });
+    myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
   }
 
   private FileChooserDescriptor createFileDescriptor() {
@@ -170,6 +179,16 @@ public class SvnConfigurable implements Configurable {
     if (configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE != myShowMergeSourceInAnnotate.isSelected()) {
       return true;
     }
+    final int annotateRevisions = configuration.getMaxAnnotateRevisions();
+    final boolean useMaxInAnnot = annotateRevisions != -1;
+    if (useMaxInAnnot != myMaximumNumberOfRevisionsCheckBox.isSelected()) {
+      return true;
+    }
+    if (myMaximumNumberOfRevisionsCheckBox.isSelected()) {
+      if (annotateRevisions != ((SpinnerNumberModel) myNumRevsInAnnotations.getModel()).getNumber().intValue()) {
+        return true;
+      }
+    }
     return !configuration.getConfigurationDirectory().equals(myConfigurationDirectoryText.getText().trim());
   }
 
@@ -185,6 +204,11 @@ public class SvnConfigurable implements Configurable {
     configuration.UPDATE_LOCK_ON_DEMAND = myLockOnDemand.isSelected();
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
     configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE = myShowMergeSourceInAnnotate.isSelected();
+    if (! myMaximumNumberOfRevisionsCheckBox.isSelected()) {
+      configuration.setMaxAnnotateRevisions(-1);
+    } else {
+      configuration.setMaxAnnotateRevisions(((SpinnerNumberModel) myNumRevsInAnnotations.getModel()).getNumber().intValue());
+    }
   }
 
   public void reset() {
@@ -204,6 +228,16 @@ public class SvnConfigurable implements Configurable {
     myLockOnDemand.setSelected(configuration.UPDATE_LOCK_ON_DEMAND);
     myIgnoreWhitespaceDifferenciesInCheckBox.setSelected(configuration.IGNORE_SPACES_IN_ANNOTATE);
     myShowMergeSourceInAnnotate.setSelected(configuration.SHOW_MERGE_SOURCES_IN_ANNOTATE);
+
+    final int annotateRevisions = configuration.getMaxAnnotateRevisions();
+    if (annotateRevisions == -1) {
+      myMaximumNumberOfRevisionsCheckBox.setSelected(false);
+      myNumRevsInAnnotations.setValue(SvnConfiguration.ourMaxAnnotateRevisionsDefault);
+    } else {
+      myMaximumNumberOfRevisionsCheckBox.setSelected(true);
+      myNumRevsInAnnotations.setValue(annotateRevisions);
+    }
+    myNumRevsInAnnotations.setEnabled(myMaximumNumberOfRevisionsCheckBox.isSelected());
   }
 
   public void disposeUIResources() {
@@ -220,6 +254,11 @@ public class SvnConfigurable implements Configurable {
         return toolTip;
       }
     };
+
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
+    int value = configuration.getMaxAnnotateRevisions();
+    value = (value == -1) ? SvnConfiguration.ourMaxAnnotateRevisionsDefault : value; 
+    myNumRevsInAnnotations = new JSpinner(new SpinnerNumberModel(value, 10, 100000, 100));
   }
 }
 

@@ -370,6 +370,9 @@
     <projectService serviceInterface="com.intellij.psi.controlFlow.ControlFlowFactory"
                     serviceImplementation="com.intellij.psi.controlFlow.ControlFlowFactory"/>
 
+    <projectService serviceInterface="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"
+                    serviceImplementation="com.intellij.packaging.impl.compiler.ArtifactsWorkspaceSettings"/>
+
     <projectService serviceInterface="com.intellij.compiler.CompilerWorkspaceConfiguration"
                     serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
 

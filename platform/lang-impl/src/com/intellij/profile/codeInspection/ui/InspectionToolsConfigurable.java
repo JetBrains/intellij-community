@@ -38,6 +38,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -62,7 +63,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable {
+public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable, SearchableConfigurable {
   private CardLayout myLayout = new CardLayout();
   private JPanel myPanel;
 
@@ -234,6 +235,18 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
   public String getHelpTopic() {
     return "preferences.inspections";
+  }
+
+  public String getId() {
+    return ID;
+  }
+
+  public Runnable enableSearch(final String option) {
+    return new Runnable(){
+      public void run() {
+        getSelectedPanel().filterTree(option);
+      }
+    };
   }
 
   public JComponent createComponent() {

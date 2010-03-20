@@ -17,7 +17,10 @@ public class UnitBitSet extends BitSet {
       this.bitsPerUnit = value;
     }
     else {
-      this.bitsPerUnit = new Double(Math.log(value) / Math.log(2)).intValue() + 1;
+      while (value != 0) {
+        bitsPerUnit++;
+        value >>= 1;
+      }
     }
   }
 
@@ -39,14 +42,14 @@ public class UnitBitSet extends BitSet {
     int result = 0;
     for (int i = 0; i < bitsPerUnit; i++) {
       if (get(startIndex + i)) {
-        result += Math.pow(2, i);
+        result += (1 << i);
       }
     }
     return result;
   }
 
   public void setUnitValue(int number, int value) {
-    if (value > Math.pow(2, bitsPerUnit) - 1) {
+    if (value > (1 << bitsPerUnit)  - 1) {
       throw new IllegalArgumentException();
     }
     int startIndex = number * bitsPerUnit;

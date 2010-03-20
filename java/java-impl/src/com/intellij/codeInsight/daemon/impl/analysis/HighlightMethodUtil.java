@@ -615,10 +615,15 @@ public class HighlightMethodUtil {
       PsiExpression expression = i < expressions.length ? expressions[i] : null;
       @NonNls String mismatchColor = showShortType(i, parameters, expressions, substitutor) ? null : "red";
 
-      s += "<tr>";
+      s += "<tr" +
+           (i%2 == 0 ? " style='background-color: #eeeeee'" : "") +
+           ">";
       s += "<td><b><nobr>";
       if (parameter != null) {
-        s += esctrim(parameter.getName()) +":";
+        String name = parameter.getName();
+        if (name != null) {
+          s += esctrim(name) +":";
+        }
       }
       s += "</nobr></b></td>";
       
