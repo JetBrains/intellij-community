@@ -191,13 +191,13 @@ public class InspectionTree extends Tree {
   private class ExpandListener implements TreeWillExpandListener {
     public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
       final InspectionTreeNode node = (InspectionTreeNode)event.getPath().getLastPathComponent();
-      myExpandedUserObjects.add(node.getUserObject());
-      System.out.println("node = " + node);
-      if (node.isValid()) {
-        //TODO: FIX PROPERLY
-        //sortChildren(node);
-        //nodeStructureChanged(node);
+      final Object userObject = node.getUserObject();
+      //TODO: never re-sort
+      if (node.isValid() && !myExpandedUserObjects.contains(userObject)) {
+        sortChildren(node);
+        nodeStructureChanged(node);
       }
+      myExpandedUserObjects.add(userObject);
       // Smart expand
       if (node.getChildCount() == 1) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
