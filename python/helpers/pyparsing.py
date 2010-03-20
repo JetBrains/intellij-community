@@ -21,7 +21,7 @@
 # TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
-#from __future__ import generators
+from __future__ import generators
 
 __doc__ = \
 """
@@ -58,9 +58,9 @@ The pyparsing module handles some of the problems that are typically vexing when
  - embedded comments
 """
 
-__version__ = "1.5.2"
+__version__ = "1.5.2 patch 2.2"
 __versionTime__ = "17 February 2009 19:45"
-__author__ = "Paul McGuire <ptmcg@users.sourceforge.net>"
+__author__ = "Paul McGuire <ptmcg@users.sourceforge.net>, patched by dmitry.cheryasov@jetbrains.com"
 
 import string
 from weakref import ref as wkref
@@ -91,18 +91,37 @@ __all__ = [
 'indentedBlock', 'originalTextFor',
 ]
 
+version_info = sys.version_info
 
 """
 Detect if we are running version 3.X and make appropriate changes
 Robert A. Clark
 """
-if sys.version_info[0] > 2:
+if version_info[0] > 2:
     _PY3K = True
     _MAX_INT = sys.maxsize
     basestring = str
 else:
     _PY3K = False
     _MAX_INT = sys.maxint
+
+if version_info[0] == 2 and version_info[1] < 4:
+    _BEFORE_24 = True # before Python 2.4
+    INT_OR_SLICE = (int, type(slice(1, 2)))
+
+    def slice_indices(a_slice, maxlen):
+        start = a_slice.start or 0
+        if start > maxlen:
+            start = maxlen
+        stop = a_slice.stop
+        if stop is None or maxlen < stop:
+            stop = maxlen
+        return (start, stop, a_slice.step or 1)
+else:
+    _BEFORE_24 = False
+    INT_OR_SLICE = (int, slice)
+    slice_indices = slice.indices
+
 
 if not _PY3K:
     def _ustr(obj):
@@ -315,7 +334,7 @@ class ParseResults(object):
                         self[name] = toklist
 
     def __getitem__( self, i ):
-        if isinstance( i, (int,slice) ):
+        if isinstance( i, INT_OR_SLICE ):
             return self.__toklist[i]
         else:
             if i not in self.__accumNames:
@@ -337,7 +356,7 @@ class ParseResults(object):
             sub.__parent = wkref(self)
 
     def __delitem__( self, i ):
-        if isinstance(i,(int,slice)):
+        if isinstance(i, INT_OR_SLICE):
             mylen = len( self.__toklist )
             del self.__toklist[i]
 
@@ -347,7 +366,7 @@ class ParseResults(object):
                     i += mylen
                 i = slice(i, i+1)
             # get removed indices
-            removed = list(range(*i.indices(mylen)))
+            removed = list(range(*slice_indices(i, mylen)))
             removed.reverse()
             # fixup indices in token dictionary
             for name in self.__tokdict:
@@ -705,6 +724,14 @@ class ParserElement(object):
         if self.copyDefaultWhiteChars:
             cpy.whiteChars = ParserElement.DEFAULT_WHITE_CHARS
         return cpy
+
+    if _BEFORE_24:
+        def __copy__(self):
+            # needed by copy.copy in e.g. Jython 2.2
+            cpy = self.__class__.__new__(self.__class__, self.saveAsList)
+            cpy.__dict__.update(self.__dict__)
+            return cpy
+
 
     def setName( self, name ):
         """Define name for this expression, for use in debugging."""
@@ -2239,6 +2266,7 @@ class ParseExpression(ParserElement):
         """Extends leaveWhitespace defined in base class, and also invokes leaveWhitespace on
            all contained expressions."""
         self.skipWhitespace = False
+        # print "My class is %s %d, dict is %r" % (self.__class__, id(self), self.__dict__)  # XXX
         self.exprs = [ e.copy() for e in self.exprs ]
         for e in self.exprs:
             e.leaveWhitespace()
@@ -2320,7 +2348,9 @@ class And(ParseExpression):
             self.leaveWhitespace()
 
     def __init__( self, exprs, savelist = True ):
+        # print "Init of %s %d, exprs = %r" % (self.__class__, id(self), exprs) # XXX
         super(And,self).__init__(exprs, savelist)
+        # print "dist is %r" % self.__dict__ # XXX
         self.mayReturnEmpty = True
         for e in self.exprs:
             if not e.mayReturnEmpty:
@@ -2547,7 +2577,7 @@ class Each(ParseExpression):
             raise ParseException(instring,loc,"Missing one or more required elements (%s)" % missing )
 
         # add any unmatched Optionals, in case they have default values defined
-        matchOrder += list(e for e in self.exprs if isinstance(e,Optional) and e.expr in tmpOpt)
+        matchOrder += [e for e in self.exprs if isinstance(e,Optional) and e.expr in tmpOpt]
 
         resultlist = []
         for e in matchOrder:

@@ -11,7 +11,7 @@ we do not support some fancier things like metaclasses.
 We use certain kind of doc comments ("f(int) -> list") as a hint for functions'
 input and output, especially in builtin functions.
 
-This code has to work with CPython versions from 2.4 to 3.0, and hopefully with
+This code has to work with CPython versions from 2.2 to 3.0+, and hopefully with
 compatible versions of Jython and IronPython.
 
 NOTE: Currently python 3 support is outright BROKEN, because bare asterisks and param decorators
@@ -72,6 +72,18 @@ else: # < 3.0
     exec (source) in context
 
 BUILTIN_MOD_NAME = the_builtins.__name__
+
+if version[0] == 2 and version[1] < 4:
+    HAS_DECORATORS = False
+    def lstrip(s, prefix):
+        i = 0
+        while s[i] == prefix:
+            i += 1
+        return s[i:]
+
+else:
+    HAS_DECORATORS = True
+    lstrip = string.lstrip
 
 #
 IDENT_PATTERN = "[A-Za-z_][0-9A-Za-z_]*" # re pattern for identifier
@@ -380,7 +392,7 @@ def makeNamesUnique(seq, name_map=None):
     if type(one) is list:
       ret.append(makeNamesUnique(one, name_map))
     else:
-      one_key = string.lstrip(one, "*") # starred parameters are unique sans stars
+      one_key = lstrip(one, "*") # starred parameters are unique sans stars
       if one_key in name_map:
         old_one = one_key
         one = one + "_" + str(name_map[old_one])
@@ -436,7 +448,7 @@ class ModuleRedeclarator(object):
     if hasattr(p_object, "__doc__"):
       the_doc = p_object.__doc__
       if p_class and the_doc == object.__init__.__doc__ and p_object is not object.__init__ and p_class.__doc__:
-        the_doc = p_class.__doc__ # replace stock init's doc with class's
+        the_doc = "%s" % p_class.__doc__ # replace stock init's doc with class's; make it a certain string.
         the_doc += "\n# (copied from class doc)"
       self.outDocstring(the_doc, indent)
     else:
@@ -449,6 +461,12 @@ class ModuleRedeclarator(object):
     "sys": (
       "modules", "path_importer_cache", "argv", "builtins",
       "last_traceback", "last_type", "last_value",
+    ),
+    "posix": (
+       "environ",
+    ),
+    "zipimport": (
+       "_zip_directory_cache",
     ),
     "*":   (BUILTIN_MOD_NAME,)
   }
@@ -504,9 +522,9 @@ class ModuleRedeclarator(object):
     del b2
 
   # Some builtin methods are decorated, but this is hard to detect.
-  # {("class_name", "method_name"): "@decorator"}
+  # {("class_name", "method_name"): "decorator"}
   KNOWN_DECORATORS = {
-    ("dict", "fromkeys"): "@static",
+    ("dict", "fromkeys"): "staticmethod",
   }
 
   def isSkippedInModule(self, p_module, p_value):
@@ -664,7 +682,7 @@ class ModuleRedeclarator(object):
 
     # add 'self' if needed
     if class_name:
-      if self.KNOWN_DECORATORS.get((class_name, func_name), None) == "@static":
+      if self.KNOWN_DECORATORS.get((class_name, func_name), None) == "staticmethod":
         pass
       elif not self.seemsToHaveSelf(seq) and func_name != "__new__":
         seq.insert(0, "self")
@@ -732,29 +750,36 @@ class ModuleRedeclarator(object):
 
     # real work
     classname = p_class and p_class.__name__ or None
+    deco = None
+    deco_comment = ""
     # any decorators?
     if self.doing_builtins and p_modname == BUILTIN_MOD_NAME:
       deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
       if deco:
-        self.out(deco + " # known case", indent)
+        #self.out(deco + " # known case", indent)
+        deco_comment = " # known case"
     elif p_class:
       func_repr = repr(p_func)
       # detect native methods declared with METH_CLASS flag
       if p_name != "__new__" and type(p_func).__name__.startswith('classmethod'):  # 'classmethod_descriptor' in Python 2.x and 3.x, 'classmethod' in Jython
-        self.out('@classmethod', indent)
+        #self.out('@classmethod', indent)
+        deco = "classmethod"
       elif type(p_func).__name__.startswith('staticmethod'): 
-        self.out('@staticmethod', indent)
+        #self.out('@staticmethod', indent)
+        deco = "staticmethod"
     if p_name == "__new__":
-      self.out("@staticmethod # known case of __new__", indent)
+      #self.out("@staticmethod # known case of __new__", indent)
+      deco = "staticmethod"
+      deco_comment = " # known case of __new__"
+    if deco and HAS_DECORATORS:
+      self.out("@" + deco + deco_comment, indent)
     if inspect and inspect.isfunction(p_func):
       self.out("def " + p_name + self.restoreByInspect(p_func) +": # reliably restored by inspect", indent)
       self.outDocAttr(p_func, indent+1, p_class)
-      self.out("pass", indent+1)
     elif self.isPredefinedBuiltin(p_modname, classname, p_name):
       spec, sig_note = self.restorePredefinedBuiltin(classname, p_name)
       self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocAttr(p_func, indent+1, p_class)
-      self.out("pass", indent+1)
 
     else:
       # __doc__ is our best source of arglist
@@ -787,7 +812,10 @@ class ModuleRedeclarator(object):
         spec = p_name + "(" + ", ".join(decl) + ")"
       self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocstring(funcdoc, indent+1)
-      self.out("pass", indent+1)
+    # empty body
+    self.out("pass", indent+1)
+    if deco and not HAS_DECORATORS:
+      self.out(p_name + " = " + deco + "(" + p_name + ")" + deco_comment, indent)
 
   def redoClass(self, p_class, p_name, indent, p_modname=None):
     """
