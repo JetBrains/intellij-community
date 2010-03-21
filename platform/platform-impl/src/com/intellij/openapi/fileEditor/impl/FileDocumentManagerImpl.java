@@ -183,7 +183,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       throw new RuntimeException("This method is only for test mode!");
     }
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myUnsavedDocuments.clear();
+    if (myUnsavedDocuments.size() > 0) {
+      myUnsavedDocuments.clear();
+      fireUnsavedDocumensDropped();
+    }
   }
 
   public void saveAllDocuments() {
@@ -597,6 +600,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   private void fireFileContentReloaded(final VirtualFile file, final Document document) {
     myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).fileContentReloaded(file, document);
+  }
+
+  private void fireUnsavedDocumensDropped() {
+    myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC).unsavedDocumentsDropped();
   }
 
   private void fireBeforeFileContentReload(final VirtualFile file, final Document document) throws VetoDocumentReloadException {

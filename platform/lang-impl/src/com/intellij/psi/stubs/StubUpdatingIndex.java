@@ -299,11 +299,21 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       return stubTree;
     }
 
-    /*MUST be called from under the WriteLock*/
+    /*MUST be called under the WriteLock*/
     private Map<Integer, SerializedStubTree> readOldData(final int key) throws StorageException {
       final Map<Integer, SerializedStubTree> result = new HashMap<Integer, SerializedStubTree>();
 
-      final ValueContainer<SerializedStubTree> valueContainer = myStorage.read(key);
+      IndexStorage<Integer, SerializedStubTree> indexStorage = myStorage;
+      if (indexStorage instanceof MemoryIndexStorage) {
+        final MemoryIndexStorage<Integer, SerializedStubTree> memIndexStorage = (MemoryIndexStorage<Integer, SerializedStubTree>)indexStorage;
+        if (!memIndexStorage.isBufferingEnabled()) {
+          // if buffering is not enabled, use backend storage to make sure
+          // the returned stub tree contains no data corresponding to unsaved documents.
+          // This will ensure that correct set of old keys is used for update
+          indexStorage = memIndexStorage.getBackendStorage();
+        }
+      }
+      final ValueContainer<SerializedStubTree> valueContainer = indexStorage.read(key);
       if (valueContainer.size() != 1) {
         LOG.assertTrue(valueContainer.size() == 0);
         return result;
