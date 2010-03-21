@@ -160,7 +160,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
     return result.toArray(new PsiClass[count]);
   }
 
-  private static boolean notClass(final PsiElement found) {
+  public static boolean notClass(final PsiElement found) {
     if (found instanceof PsiClass) return false;
 
     VirtualFile faultyContainer = PsiUtil.getVirtualFile(found);
