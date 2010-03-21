@@ -28,6 +28,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -234,6 +235,13 @@ public class TypesUtil {
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
+
+    for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
+      final Boolean result = converter.isConvertible(lType, rType, manager, scope);
+      if (result != null) {
+        return result;
+      }
+    }
 
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
