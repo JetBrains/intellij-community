@@ -115,7 +115,7 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    return createReferences(element, false);
+    return createReferences(element, true);
   }
 
   @NotNull
