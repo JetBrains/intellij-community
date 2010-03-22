@@ -289,7 +289,6 @@
                                         implementationClass="com.intellij.codeInsight.hint.XmlImplementationTextSelectioner"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.XmlBasicWordSelectionFilter"/>
     <defaultLiveTemplatesProvider implementation="com.intellij.codeInsight.template.XmlDefaultLiveTemplatesProvider"/>
-    <customLiveTemplate implementation="com.intellij.codeInsight.template.zencoding.XmlZenCodingTemplate"/>
     <productivityFeaturesProvider implementation="com.intellij.featureStatistics.XmlProductivityFeatureProvider"/>
 
     <idIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>

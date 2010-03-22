@@ -15,10 +15,9 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +30,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class IdentifierSplitter extends BaseSplitter{
+public class IdentifierSplitter extends BaseSplitter {
 
   @NonNls
   private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
 
+  @NonNls
+  private static final Pattern WORD_EXT = Pattern.compile("(\\p{L}*?)[_$]");
+
+  public IdentifierSplitter() {
+
+  }
 
   @Nullable
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
@@ -43,116 +48,58 @@ public class IdentifierSplitter extends BaseSplitter{
     if (text == null || range.getLength() < 1) {
       return null;
     }
+
+    List<TextRange> words = splitByCase(text, range);
+
+    if (words == null || words.size() == 0) {
+      return null;
+    }
+
     List<CheckArea> results = new ArrayList<CheckArea>();
-    String word = text.substring(range.getStartOffset(), range.getEndOffset());
-    String[] words = splitNameIntoWords(word);
-    if (words == null || words.length == 0) {
+
+    if (words.size() == 1) {
+      addWord(text, results, false, words.get(0));
       return results;
     }
 
-    if (words.length == 1) {
-      Matcher matcher = WORD.matcher(words[0]);
-      if (matcher.find()) {
-        TextRange found = matcherRange(range, matcher);
-        addWord(text, results, false, found);
-      }
-      return results;
-    }
-
-    boolean isCapitalized = Strings.isCapitalized(words[0]);
+    boolean isCapitalized = Strings.isCapitalized(text, words.get(0));
     boolean containsShortWord = containsShortWord(words);
 
     if (isCapitalized && containsShortWord) {
-      results.add(new CheckArea(text, range, true));
       return results;
     }
 
-    boolean isAllWordsAreUpperCased = isAllWordsAreUpperCased(words);
-    int index = 0;
-    for (String s : words) {
-      int start = word.indexOf(s, index);
-      int end = start + s.length();
-      boolean isUpperCase = Strings.isUpperCase(s);
-      boolean flag = (isUpperCase && !isAllWordsAreUpperCased);
-      Matcher matcher = WORD.matcher(s);
+    boolean isAllWordsAreUpperCased = isAllWordsAreUpperCased(text, words);
+
+    for (TextRange word : words) {
+      boolean uc = Strings.isUpperCased(text, word);
+      boolean flag = (uc && !isAllWordsAreUpperCased);
+      Matcher matcher = WORD.matcher(text.substring(word.getStartOffset(), word.getEndOffset()));
       if (matcher.find()) {
-        TextRange found = matcherRange(subRange(range, start, end), matcher);
+        TextRange found = matcherRange(word, matcher);
         addWord(text, results, flag, found);
       }
-      index = end;
     }
     return results;
   }
 
+  public static List<TextRange> splitByCase(@NotNull String text, @NotNull TextRange range) {
+     List<TextRange> result = new ArrayList<TextRange>();
+     Matcher matcher = WORD_EXT.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
+     int from = range.getStartOffset();
+     while (matcher.find()) {
+       TextRange found = matcherRange(range, matcher);
+       TextRange foundWord = matcherRange(range, matcher, 1);
 
-//TODO[shkate] - rewrite using TextRanges instead of strings
-  public static String[] splitNameIntoWords(@NotNull String name) {
-    final String[] underlineDelimited = name.split("_");
-    List<String> result = new ArrayList<String>();
-    for (String word : underlineDelimited) {
-      addAllWords(word, result);
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
-  private enum WordState { NO_WORD, PREV_UC, WORD }
-
-  private static void addAllWords(String word, List<String> result) {
-    CharacterIterator it = new StringCharacterIterator(word);
-    StringBuffer b = new StringBuffer();
-    WordState state = WordState.NO_WORD;
-    char curPrevUC = '\0';
-    for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
-      switch (state) {
-        case NO_WORD:
-          if (!Character.isUpperCase(c)) {
-            b.append(c);
-            state = WordState.WORD;
-          }
-          else {
-            state = WordState.PREV_UC;
-            curPrevUC = c;
-          }
-          break;
-        case PREV_UC:
-          if (!Character.isUpperCase(c)) {
-            b = startNewWord(result, b, curPrevUC);
-            b.append(c);
-            state = WordState.WORD;
-          }
-          else {
-            b.append(curPrevUC);
-            state = WordState.PREV_UC;
-            curPrevUC = c;
-          }
-          break;
-        case WORD:
-          if (Character.isUpperCase(c)) {
-            startNewWord(result, b, c);
-            b.setLength(0);
-            state = WordState.PREV_UC;
-            curPrevUC = c;
-          }
-          else {
-            b.append(c);
-          }
-          break;
-      }
-    }
-    if (state == WordState.PREV_UC) {
-      b.append(curPrevUC);
-    }
-    result.add(b.toString());
-  }
-
-  private static StringBuffer startNewWord(List<String> result, StringBuffer b, char c) {
-    if (b.length() > 0) {
-      result.add(b.toString());
-    }
-    b = new StringBuffer();
-    b.append(c);
-    return b;
-  }
-  
+       if (!tooSmall(from,foundWord.getEndOffset())){
+       Strings.addAll(text, foundWord, result);
+       }
+       from = found.getEndOffset();
+     }
+     if (!tooSmall(from, range.getEndOffset())) {
+       Strings.addAll(text, new TextRange(from, range.getEndOffset()), result);
+     }
+     return result;
+   }
 
 }

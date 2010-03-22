@@ -40,6 +40,7 @@ public class GlobalInspectionUtil {
   }
 
   public static String createInspectionMessage(String message) {
+    //TODO: FIXME!
     return message + LOC_MARKER;
   }
 

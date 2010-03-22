@@ -31,13 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -64,7 +64,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     if (myUI == null) {
       myUI = new MyUI();
     }
-    return myUI;
+    return myUI.getComponent();
   }
 
   public void setFilterBase(List<CommittedChangeList> changeLists) {
@@ -117,14 +117,14 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     return false;
   }
 
-  private class MyUI extends JPanel {
+  private class MyUI {
+    private final JComponent myScrollPane;
     private final Tree myStructureTree;
     private boolean myRendererInitialized;
     private final TreeModelBuilder myBuilder;
     private TreeState myState;
 
     public MyUI() {
-      setLayout(new BorderLayout());
       myStructureTree = new Tree();
       myStructureTree.setRootVisible(false);
       myStructureTree.setShowsRootHandles(true);
@@ -139,7 +139,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
           }
         }
       });
-      add(new JScrollPane(myStructureTree), BorderLayout.CENTER);
+      myScrollPane = new JScrollPane(myStructureTree);
       myBuilder = new TreeModelBuilder(myProject, false);
     }
 
@@ -148,6 +148,10 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
         myRendererInitialized = true;
         myStructureTree.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, false, false));
       }
+    }
+
+    public JComponent getComponent() {
+      return myScrollPane;
     }
 
     public void reset() {

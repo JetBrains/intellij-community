@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterator;
 
 import java.util.*;
@@ -157,7 +158,7 @@ public class SmartList<E> extends AbstractList<E> {
       }
     }
     else {
-      Collections.sort((List<E>)myElem, comparator);
+      ContainerUtil.sort((List<E>)myElem, comparator);
     }
   }
 }

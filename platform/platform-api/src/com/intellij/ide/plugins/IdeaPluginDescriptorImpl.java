@@ -25,6 +25,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
@@ -99,10 +100,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myPath;
   }
 
+  protected static StringInterner ourInterner = new StringInterner();
+
   public void readExternal(final URL url) throws InvalidDataException, FileNotFoundException {
     try {
       Document document = JDOMUtil.loadDocument(url);
       document = JDOMXIncluder.resolve(document, url.toExternalForm());
+      JDOMUtil.internElement(document.getRootElement(), ourInterner);
       readExternal(document.getRootElement());
     }
     catch (FileNotFoundException e) {

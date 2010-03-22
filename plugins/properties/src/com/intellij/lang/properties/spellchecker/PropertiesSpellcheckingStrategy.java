@@ -32,14 +32,14 @@ public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
     if (element instanceof PropertyValueImpl) {
       return new Tokenizer<PropertyValueImpl>() {
         public Token[] tokenize(@NotNull PropertyValueImpl element) {
-          return new Token[]{new Token<PropertyValueImpl>(element, element.getText(), false, SplitterFactory.getStringLiteralSplitter())};
+          return new Token[]{new Token<PropertyValueImpl>(element, element.getText(), false, SplitterFactory.getInstance().getStringLiteralSplitter())};
         }
       };
     }
     if (element instanceof PropertyImpl) {
       return new Tokenizer<PropertyImpl>() {
         public Token[] tokenize(@NotNull PropertyImpl element) {
-          return new Token[]{new Token<PropertyImpl>(element, element.getKey(), true, SplitterFactory.getPropertiesSplitter())};
+          return new Token[]{new Token<PropertyImpl>(element, element.getKey(), true, SplitterFactory.getInstance().getPropertiesSplitter())};
         }
       };
     }

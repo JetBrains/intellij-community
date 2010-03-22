@@ -22,11 +22,7 @@ import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @author shkate@jetbrains.com
- */
+
 public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwner> {
 
   @Nullable
@@ -42,7 +38,7 @@ public class PsiIdentifierOwnerTokenizer extends Tokenizer<PsiNameIdentifierOwne
       parent = PsiTreeUtil.findCommonParent(identifier, element);
       offset = identifier.getTextRange().getStartOffset() - parent.getTextRange().getStartOffset();
     }
-    return new Token[]{new Token<PsiElement>(parent, identifier.getText(), true, offset, SplitterFactory.getIdentifierSplitter())};
+    return new Token[]{new Token<PsiElement>(parent, identifier.getText(), true, offset, SplitterFactory.getInstance().getIdentifierSplitter())};
   }
 
 

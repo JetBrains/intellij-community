@@ -33,9 +33,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 public class GrClosureType extends PsiClassType {
   private final GlobalSearchScope myScope;
   private final PsiManager myManager;
-  private final GrClosureSignature mySignature;
+  private final @NotNull GrClosureSignature mySignature;
 
-  private GrClosureType(LanguageLevel languageLevel, GlobalSearchScope scope, PsiManager manager, GrClosureSignature closureSignature) {
+  private GrClosureType(LanguageLevel languageLevel, GlobalSearchScope scope, PsiManager manager, @NotNull GrClosureSignature closureSignature) {
     super(languageLevel);
     myScope = scope;
     myManager = manager;
@@ -96,6 +96,7 @@ public class GrClosureType extends PsiClassType {
     return this;
   }
 
+  @NotNull
   public String getPresentableText() {
     return "Closure";
   }
@@ -173,23 +174,23 @@ public class GrClosureType extends PsiClassType {
     return create(mySignature, myManager, myScope, languageLevel);
   }
 
-  public static GrClosureType create(GrClosableBlock closure) {
+  public static GrClosureType create(@NotNull GrClosableBlock closure) {
     return create(GrClosureSignatureUtil.createSignature(closure), closure.getManager(), closure.getResolveScope(), LanguageLevel.JDK_1_5);
   }
 
-  public static GrClosureType create(PsiMethod method, PsiSubstitutor substitutor) {
+  public static GrClosureType create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
     return create(GrClosureSignatureUtil.createSignature(method, substitutor), method.getManager(), GlobalSearchScope.allScope(method.getProject()), LanguageLevel.JDK_1_5);
   }
 
-  public static GrClosureType create(PsiParameter[] parameters,
-                                     PsiType returnType,
+  public static GrClosureType create(@NotNull PsiParameter[] parameters,
+                                     @Nullable PsiType returnType,
                                      PsiManager manager,
                                      GlobalSearchScope scope,
                                      LanguageLevel languageLevel) {
     return create(GrClosureSignatureUtil.createSignature(parameters, returnType), manager, scope, languageLevel);
   }
 
-  public static GrClosureType create(GrClosureSignature signature,
+  public static GrClosureType create(@NotNull GrClosureSignature signature,
                                      PsiManager manager,
                                      GlobalSearchScope scope,
                                      LanguageLevel languageLevel) {
@@ -203,6 +204,7 @@ public class GrClosureType extends PsiClassType {
     return create(newSignature, myManager, myScope, myLanguageLevel);
   }
 
+  @NotNull
   public GrClosureSignature getSignature() {
     return mySignature;
   }

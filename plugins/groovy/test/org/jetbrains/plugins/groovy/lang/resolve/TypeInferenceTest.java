@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -100,5 +101,11 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testGrvy1209() throws Exception {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("grvy1209/A.groovy").getElement();
     assertTrue(ref.getType().equalsToText("java.lang.String"));
+  }
+
+  public void testLeastUpperBoundClosureType() throws Exception {
+    GrReferenceExpression ref= (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").getElement();
+    System.out.println(ref.getType());
+    assertInstanceOf(ref.getType(), GrClosureType.class);
   }
 }

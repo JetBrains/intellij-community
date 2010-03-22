@@ -15,8 +15,9 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,19 +34,21 @@ public class WordSplitter extends BaseSplitter {
 
 
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
-    if (StringUtil.isEmpty(text) || range.getLength() <= 1) {
+    if (text == null || range.getLength() <= 1) {
       return null;
     }
-
     List<CheckArea> results = new ArrayList<CheckArea>();
-   
+
     Matcher specialMatcher = SPECIAL.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
     if (specialMatcher.find()) {
       TextRange found = matcherRange(range, specialMatcher);
       addWord(text, results, true, found);
     }
     else {
-      results.addAll(SplitterFactory.getIdentifierSplitter().split(text,range));
+      final List<CheckArea> res = SplitterFactory.getInstance().getIdentifierSplitter().split(text, range);
+      if (res != null) {
+        results.addAll(res);
+      }
     }
     return results;
 

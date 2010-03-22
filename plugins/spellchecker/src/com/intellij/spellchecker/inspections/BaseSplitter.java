@@ -15,12 +15,16 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,16 +36,14 @@ public abstract class BaseSplitter implements Splitter {
 
 
   protected static void addWord(@NotNull String text, @NotNull List<CheckArea> results, boolean ignore, @Nullable TextRange found) {
-    if (found == null) {
+    if (found == null || ignore) {
       return;
     }
     boolean tooShort = (found.getEndOffset() - found.getStartOffset()) <= MIN_RANGE_LENGTH;
-    for (int i = found.getStartOffset(); i < found.getEndOffset(); i++) {
-      if (!(Character.isLetter(text.charAt(i)) || text.charAt(i) == '\'')) {
-        return;
-      }
+    if (tooShort) {
+      return;
     }
-    results.add(new CheckArea(text, found, ignore || tooShort));
+    results.add(new CheckArea(text, found, false));
   }
 
 
@@ -55,10 +57,22 @@ public abstract class BaseSplitter implements Splitter {
     return true;
   }
 
-  protected static boolean containsShortWord(String[] words) {
-    if (words == null) return false;
-    for (String word : words) {
-      if (word.length() < 2) {
+  protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<TextRange> words) {
+    for (TextRange word : words) {
+      CharacterIterator it = new StringCharacterIterator(text, word.getStartOffset(), word.getEndOffset(), word.getStartOffset());
+      for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+        if (!Character.isUpperCase(c)) {
+          return false;
+        }
+      }
+    }
+    return true;
+
+  }
+
+  protected static boolean containsShortWord(@NotNull List<TextRange> words) {
+    for (TextRange word : words) {
+      if (word.getLength() < MIN_RANGE_LENGTH) {
         return true;
       }
     }
@@ -92,13 +106,16 @@ public abstract class BaseSplitter implements Splitter {
   }
 
   @Nullable
-  protected static List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
+  protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
     List<TextRange> toCheck = new ArrayList<TextRange>();
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
     Matcher matcher = toExclude.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
     while (matcher.find()) {
+
+      checkCancelled();
+
       TextRange found = matcherRange(range, matcher);
       till = found.getStartOffset() - 1;
       if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
@@ -125,5 +142,13 @@ public abstract class BaseSplitter implements Splitter {
     return toCheck;
   }
 
-  
+  public static void checkCancelled() {
+    try {
+      ProgressManager.checkCanceled();
+    }
+    catch (Throwable ignored) {
+    }
+  }
+
+
 }

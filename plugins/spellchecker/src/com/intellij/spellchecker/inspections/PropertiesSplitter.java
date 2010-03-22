@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.inspections;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +29,7 @@ import java.util.regex.Pattern;
 
 public class PropertiesSplitter extends BaseSplitter {
 
+
   @NonNls
   private static final Pattern WORD = Pattern.compile("\\p{L}*");
 
@@ -37,14 +39,18 @@ public class PropertiesSplitter extends BaseSplitter {
       return null;
     }
     List<CheckArea> results = new ArrayList<CheckArea>();
-    final WordSplitter ws = SplitterFactory.getWordSplitter();
+    final IdentifierSplitter splitter = SplitterFactory.getInstance().getIdentifierSplitter();
     Matcher matcher = WORD.matcher(text.substring(range.getStartOffset(), range.getEndOffset()));
     while (matcher.find()) {
       if (matcher.end() - matcher.start() < MIN_RANGE_LENGTH) {
         continue;
       }
       TextRange found = matcherRange(range, matcher);
-      results.addAll(ws.split(text, found));
+      final List<CheckArea> res = splitter.split(text, found);
+      if (res != null) {
+        results.addAll(res);
+      }
+
     }
 
     return (results.size() == 0) ? null : results;

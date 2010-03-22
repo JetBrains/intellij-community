@@ -43,4 +43,6 @@ public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTe
   public void testTxt() throws Throwable {
     doTest("test.txt", SpellCheckerInspectionToolProvider.getInspectionTools());
   }
+
+  
 }

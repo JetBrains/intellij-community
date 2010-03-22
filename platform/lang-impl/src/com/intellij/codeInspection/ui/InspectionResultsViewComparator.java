@@ -91,6 +91,7 @@ public class InspectionResultsViewComparator implements Comparator {
       final CommonProblemDescriptor descriptor1 = ((ProblemDescriptionNode)node1).getDescriptor();
       final CommonProblemDescriptor descriptor2 = ((ProblemDescriptionNode)node2).getDescriptor();
       if (descriptor1 instanceof ProblemDescriptor && descriptor2 instanceof ProblemDescriptor) {
+        //TODO: Do not materialise lazy pointers
         return ((ProblemDescriptor)descriptor1).getLineNumber() - ((ProblemDescriptor)descriptor2).getLineNumber();
       }
       if (descriptor1 != null && descriptor2 != null) {

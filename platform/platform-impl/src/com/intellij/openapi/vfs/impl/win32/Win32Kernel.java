@@ -67,7 +67,7 @@ public class Win32Kernel {
       return true;
     }
     catch (FileNotFoundException e) {
-      return false;
+      return false; //myKernel.checkExist(path);
     }
   }
 

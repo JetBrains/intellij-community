@@ -43,4 +43,6 @@ public interface FileDocumentManagerListener extends EventListener {
   void fileWithNoDocumentChanged(VirtualFile file);
   void fileContentReloaded(VirtualFile file, Document document);
   void fileContentLoaded(VirtualFile file, Document document);
+
+  void unsavedDocumentsDropped();
 }

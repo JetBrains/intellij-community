@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -56,6 +57,8 @@ import java.util.List;
 public abstract class ChangesTreeList<T> extends JPanel {
   private final Tree myTree;
   private final JList myList;
+  private final JScrollPane myTreeScrollPane;
+  private final JScrollPane myListScrollPane;
   protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
@@ -129,8 +132,8 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myList = new JList(new DefaultListModel());
     myList.setVisibleRowCount(10);
 
-    add(new JScrollPane(myList), LIST_CARD);
-    add(new JScrollPane(myTree), TREE_CARD);
+    add(myListScrollPane = new JScrollPane(myList), LIST_CARD);
+    add(myTreeScrollPane = new JScrollPane(myTree), TREE_CARD);
 
     new ListSpeedSearch(myList) {
       protected String getElementText(Object element) {
@@ -208,6 +211,11 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   public boolean isShowFlatten() {
     return myShowFlatten;
+  }
+
+  public void setScrollPaneBorder(Border border) {
+    myListScrollPane.setBorder(border);
+    myTreeScrollPane.setBorder(border);
   }
 
   public void setShowFlatten(final boolean showFlatten) {

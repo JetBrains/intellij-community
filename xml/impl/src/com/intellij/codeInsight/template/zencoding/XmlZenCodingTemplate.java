@@ -16,10 +16,11 @@
 package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.application.options.editor.WebEditorOptions;
-import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,18 +28,23 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
 import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlZenCodingTemplate implements CustomLiveTemplate {
+public class XmlZenCodingTemplate {
   static final char MARKER = '$';
   private static final String OPERATIONS = ">+*";
   private static final String SELECTORS = ".#[";
@@ -345,5 +351,28 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.xml", templateString);
     XmlDocument document = xmlFile.getDocument();
     return document == null ? null : document.getRootTag();
+  }
+
+  public static boolean startZenCoding(Editor editor, PsiFile file) {
+    int caretAt = editor.getCaretModel().getOffset();
+    XmlZenCodingTemplate template = new XmlZenCodingTemplate();
+    if (template.isApplicable(file, caretAt, false)) {
+      final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+      String key = template.computeTemplateKey(callback);
+      if (key != null) {
+        int offsetBeforeKey = caretAt - key.length();
+        callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretAt);
+        template.expand(key, callback, new TemplateInvokationListener() {
+          public void finished(boolean inSeparateEvent) {
+            callback.finish();
+          }
+        });
+        return true;
+      }
+      // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
+      TemplateManager manager = TemplateManager.getInstance(file.getProject());
+      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());
+    }
+    return false;
   }
 }
