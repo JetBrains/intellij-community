@@ -688,12 +688,13 @@ public final class PsiUtil extends PsiUtilBase {
         myNextObtained = true;
         return;
       }
-      if (myCurrentOwner.hasModifierProperty(PsiModifier.STATIC) || myCurrentOwner.getContainingClass() == null) {
+      final PsiClass containingClass = myCurrentOwner.getContainingClass();
+      if (myCurrentOwner.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) {
         myNext = null;
         myNextObtained = true;
         return;
       }
-      myCurrentOwner = myCurrentOwner.getContainingClass();
+      myCurrentOwner = containingClass;
       obtainCurrentParams(myCurrentOwner);
       nextElement();
     }
