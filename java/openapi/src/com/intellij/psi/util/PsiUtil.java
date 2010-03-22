@@ -29,7 +29,6 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -402,11 +401,7 @@ public final class PsiUtil extends PsiUtilBase {
     return getApplicabilityLevel(method, substitutorForMethod, argList) != ApplicabilityLevel.NOT_APPLICABLE;
   }
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpression[] argList) {
-    return getApplicabilityLevel(method, substitutorForMethod, ContainerUtil.map2Array(argList, PsiType.class, new Function<PsiExpression, PsiType>() {
-        public PsiType fun(final PsiExpression expression) {
-          return expression.getType();
-        }
-      }),getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
+    return getApplicabilityLevel(method, substitutorForMethod, ContainerUtil.map2Array(argList, PsiType.class, PsiExpression.EXPRESSION_TO_TYPE),getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   public static int getApplicabilityLevel(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
