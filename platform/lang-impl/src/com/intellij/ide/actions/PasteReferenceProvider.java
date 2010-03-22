@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
@@ -98,7 +99,10 @@ public class PasteReferenceProvider implements PasteProvider {
     final Transferable contents = CopyPasteManager.getInstance().getContents();
     if (contents == null) return null;
     try {
-      return (String)contents.getTransferData(CopyReferenceAction.OUR_DATA_FLAVOR);
+      final DataFlavor flavor = CopyReferenceAction.getFlavor();
+      if (flavor != null) {
+        return (String)contents.getTransferData(flavor);
+      }
     }
     catch (UnsupportedFlavorException e) {
       // ignore
