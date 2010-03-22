@@ -25,6 +25,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +49,11 @@ public class ResolveCache {
   private final PsiManagerEx myManager;
 
   private final List<Runnable> myRunnablesToRunOnDropCaches = ContainerUtil.createEmptyCOWList();
+  private static final ArrayFactory<Thread> THREAD_ARRAY_FACTORY = new ArrayFactory<Thread>() {
+    public Thread[] create(int count) {
+      return new Thread[count];
+    }
+  };
 
   public interface AbstractResolver<TRef extends PsiReference,TResult> {
     TResult resolve(TRef ref, boolean incompleteCode);
@@ -179,7 +185,7 @@ public class ResolveCache {
         if (ArrayUtil.find(lockingThreads, currentThread) != -1) {
           return false;
         }
-        newThreads = ArrayUtil.append(lockingThreads, currentThread);
+        newThreads = ArrayUtil.append(lockingThreads, currentThread, THREAD_ARRAY_FACTORY);
         if (((UserDataHolderEx)element).replace(key, lockingThreads, newThreads)) {
           break;
         }
@@ -216,7 +222,7 @@ public class ResolveCache {
         assert i == ArrayUtil.lastIndexOf(lockingThreads, currentThread);
         assert lockingThreads[i] == currentThread;
         
-        newThreads = ArrayUtil.remove(lockingThreads, currentThread);
+        newThreads = ArrayUtil.remove(lockingThreads, currentThread, THREAD_ARRAY_FACTORY);
         assert newThreads.length == lockingThreads.length - 1 : "Locking threads = " + Arrays.asList(lockingThreads) + "; newThreads=" + Arrays.asList(newThreads);
         assert ArrayUtil.find(newThreads, currentThread) == -1;
       }

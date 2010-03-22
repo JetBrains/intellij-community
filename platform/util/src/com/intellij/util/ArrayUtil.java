@@ -54,7 +54,7 @@ public class ArrayUtil {
     }
 
     final byte [] result = new byte [newSize];
-    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    arrayCopy(array, 0, result, 0, Math.min (oldSize, newSize));
     return result;
   }
 
@@ -70,7 +70,7 @@ public class ArrayUtil {
     }
 
     final int [] result = new int [newSize];
-    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    arrayCopy(array, 0, result, 0, Math.min (oldSize, newSize));
     return result;
   }
 
@@ -93,7 +93,7 @@ public class ArrayUtil {
     }
 
     final char[] result = new char[newSize];
-    System.arraycopy(array, 0, result, 0, Math.min (oldSize, newSize));
+    arrayCopy(array, 0, result, 0, Math.min (oldSize, newSize));
     return result;
   }
 
@@ -106,7 +106,7 @@ public class ArrayUtil {
   @NotNull
   public static<T> T[] toObjectArray(@NotNull Class<T> aClass, Object... source) {
     T[] array = (T[]) Array.newInstance(aClass, source.length);
-    System.arraycopy(source, 0, array, 0, array.length);
+    arrayCopy(source, 0, array, 0, array.length);
     return array;
   }
 
@@ -132,8 +132,8 @@ public class ArrayUtil {
       return a1;
     }
     T[] highlights =(T[])Array.newInstance(aClass, a1.length + a2.length);
-    System.arraycopy(a1, 0, highlights, 0, a1.length);
-    System.arraycopy(a2, 0, highlights, a1.length, a2.length);
+    arrayCopy(a1, 0, highlights, 0, a1.length);
+    arrayCopy(a2, 0, highlights, a1.length, a2.length);
     return highlights;
   }
 
@@ -178,8 +178,8 @@ public class ArrayUtil {
     }
 
     final T[] result = factory.create(array.length + collection.size());
-    System.arraycopy(array, 0, result, 0, array.length);
-    System.arraycopy(array2, 0, result, array.length, array2.length);
+    arrayCopy(array, 0, result, 0, array.length);
+    arrayCopy(array2, 0, result, array.length, array2.length);
     return result;
   }
 
@@ -194,11 +194,35 @@ public class ArrayUtil {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
+  public static void arrayCopy(Object src, int srcPos, Object dest, int destPos, int length) {
+    if (length > 20) {
+      //noinspection SuspiciousSystemArraycopy
+      System.arraycopy(src, srcPos, dest, destPos, length);
+    }
+    else {
+      Object[] s = (Object[])src;
+      Object[] d = (Object[])dest;
+
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        d[destPos + i] = s[srcPos + i];
+      }
+    }
+  }
+  
+  public static <T> T[] append(@NotNull final T[] src,final T element, ArrayFactory<T> factory) {
+    int length=src.length;
+    T[] result= factory.create(length + 1);
+    arrayCopy(src,0,result,0,length);
+    result[length] = element;
+    return result;
+  }
+
   @NotNull
   public static <T> T[] append(@NotNull T[] src, final T element, @NotNull Class<T> componentType) {
     int length=src.length;
     T[] result=(T[])Array.newInstance(componentType, length+ 1);
-    System.arraycopy(src,0,result,0,length);
+    arrayCopy(src,0,result,0,length);
     result[length] = element;
     return result;
   }
@@ -216,8 +240,20 @@ public class ArrayUtil {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length-1);
-    System.arraycopy(src,0,result,0,idx);
-    System.arraycopy(src,idx+1,result,idx,length-idx-1);
+    arrayCopy(src,0,result,0,idx);
+    arrayCopy(src,idx+1,result,idx,length-idx-1);
+    return result;
+  }
+
+  @NotNull
+  public static <T> T[] remove(@NotNull final T[] src,int idx, ArrayFactory<T> factory) {
+    int length=src.length;
+    if (idx < 0 || idx >= length) {
+      throw new IllegalArgumentException("invalid index: " + idx);
+    }
+    T[] result=factory.create(length-1);
+    arrayCopy(src,0,result,0,idx);
+    arrayCopy(src,idx+1,result,idx,length-idx-1);
     return result;
   }
 
@@ -230,14 +266,22 @@ public class ArrayUtil {
   }
 
   @NotNull
+  public static <T> T[] remove(@NotNull final T[] src, T element, ArrayFactory<T> factory) {
+    final int idx = find(src, element);
+    if (idx == -1) return src;
+
+    return remove(src, idx, factory);
+  }
+
+  @NotNull
   public static int[] remove(@NotNull final int[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     int[] result = new int[src.length - 1];
-    System.arraycopy(src,0,result,0,idx);
-    System.arraycopy(src,idx+1,result,idx,length-idx-1);
+    arrayCopy(src,0,result,0,idx);
+    arrayCopy(src,idx+1,result,idx,length-idx-1);
     return result;
   }
 
@@ -463,12 +507,12 @@ public class ArrayUtil {
 
   public static <T>void rotateLeft(@NotNull T[] array, int i1, int i2) {
     final T t = array[i1];
-    System.arraycopy(array, i1 + 1, array, i1, i2-i1);
+    arrayCopy(array, i1 + 1, array, i1, i2-i1);
     array[i2] = t;
   }
   public static <T>void rotateRight(@NotNull T[] array, int i1, int i2) {
     final T t = array[i2];
-    System.arraycopy(array, i1, array, i1+1, i2-i1);
+    arrayCopy(array, i1, array, i1+1, i2-i1);
     array[i1] = t;
   }
 
