@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -137,5 +138,9 @@ public class ProblemsHolder {
 
   public boolean isOnTheFly() {
     return myOnTheFly;
+  }
+
+  public final Project getProject() {
+    return myManager.getProject();
   }
 }
