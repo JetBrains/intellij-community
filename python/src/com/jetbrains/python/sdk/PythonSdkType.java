@@ -331,7 +331,7 @@ public class PythonSdkType extends SdkType {
     // binaryPath should contain an 'activate' script, and root should have bin (with us) and include and lib.
     try {
       File parent = new File(binaryPath).getParentFile();
-      sure("bin".equals(parent.getName()));
+      sure(parent != null && "bin".equals(parent.getName()));
       File activate_script = new File(parent, "activate_this.py");
       sure(activate_script.exists());
       File activate_source = null;
