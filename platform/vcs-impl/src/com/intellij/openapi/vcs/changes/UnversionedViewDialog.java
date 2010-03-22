@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -131,6 +132,13 @@ public class UnversionedViewDialog extends DialogWrapper {
     myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     myPanel.add(new JScrollPane(myView), BorderLayout.CENTER);
 
+    actions.add(new ScheduleForAdditionAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        refreshView();
+      }
+    });
     actions.add(new IgnoreUnversionedAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {

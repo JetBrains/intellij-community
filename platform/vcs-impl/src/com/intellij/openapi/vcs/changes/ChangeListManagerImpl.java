@@ -812,7 +812,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           myChangesViewManager.scheduleRefresh();
         }
-      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"), null);
+      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, VcsBundle.message("change.lists.manager.add.unversioned"), null);
     } else {
       myChangesViewManager.scheduleRefresh();
     }
