@@ -222,7 +222,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         return true;
       }
-    }, "Inspection tools", myPriority);
+    }, "Inspection tools");
 
     indicator.checkCanceled();
     inspectInjectedPsi(elements, tools);
