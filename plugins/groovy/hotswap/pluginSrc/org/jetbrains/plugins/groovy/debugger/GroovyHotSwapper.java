@@ -73,7 +73,7 @@ public class GroovyHotSwapper extends GenericDebuggerRunner {
                                                          ExecutionEnvironment env) throws ExecutionException {
     if (state instanceof JavaCommandLine && containsGroovyClasses(project)) {
       final JavaParameters params = ((JavaCommandLine)state).getJavaParameters();
-      params.getVMParametersList().addParametersString("-javaagent:" + getAgentJarPath());
+      params.getVMParametersList().add("-javaagent:" + getAgentJarPath());
     }
 
     return super.createContentDescriptor(project, executor, state, contentToReuse, env);
