@@ -126,7 +126,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     Project project = myData.getProject();
     FileType[] types = DiffUtil.chooseContentTypes(new DiffContent[]{content1, content2});
     VirtualFile baseFile = content1.getFile();
-    if (baseFile == null) {
+    if (baseFile == null && myDiffRequest != null) {
       String path = myDiffRequest.getWindowTitle();
       if (path != null) baseFile = LocalFileSystem.getInstance().findFileByPath(path);
     }
