@@ -64,6 +64,9 @@ public interface RegExpTT {
     IElementType DOT = new RegExpElementType("DOT");
     IElementType UNION = new RegExpElementType("UNION");
 
+    // > in Python named group
+    IElementType GT = new RegExpElementType("GT");
+
     // "\b" | "\t" | "\f" | "\r" | "\n"
     IElementType CTRL_CHARACTER = new RegExpElementType("CTRL_CHARACTER");
     // "\\" ("t" | "n" | "r" | "f" | "a" | "e")
@@ -99,6 +102,8 @@ public interface RegExpTT {
 
     // (?P<name>...
     IElementType PYTHON_NAMED_GROUP = new RegExpElementType("PYTHON_NAMED_GROUP");
+    // (?P=name)
+    IElementType PYTHON_NAMED_GROUP_REF = new RegExpElementType("PYTHON_NAMED_GROUP_REF");
 
     TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
 
@@ -126,8 +131,7 @@ public interface RegExpTT {
             POS_LOOKAHEAD,
             NEG_LOOKAHEAD,
             POS_LOOKBEHIND,
-            NEG_LOOKBEHIND,
-            PYTHON_NAMED_GROUP);
+            NEG_LOOKBEHIND);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }

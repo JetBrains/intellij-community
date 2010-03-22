@@ -173,7 +173,26 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         }
     }
 
-    @Override
+  @Override
+  public void visitRegExpPyNamedGroupRef(RegExpPyNamedGroupRef groupRef) {
+    RegExpLanguageHost host = findRegExpHost(groupRef);
+    if (host == null || !host.supportsPythonNamedGroups()) {
+      myHolder.createErrorAnnotation(groupRef, "This named group reference syntax is not supported");
+      return;
+    }
+    final RegExpGroup group = groupRef.resolve();
+    if (group == null) {
+        final Annotation a = myHolder.createErrorAnnotation(groupRef, "Unresolved backreference");
+        if (a != null) {
+            // IDEA-9381
+            a.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+        }
+    } else if (PsiTreeUtil.isAncestor(group, groupRef, true)) {
+      myHolder.createWarningAnnotation(groupRef, "Group reference is nested into the named group it refers to");
+    }
+  }
+
+  @Override
     public void visitComment(PsiComment comment) {
         if (comment.getText().startsWith("(?#")) {
             RegExpLanguageHost host = findRegExpHost(comment);

@@ -299,6 +299,7 @@ public class RegExpParser implements PsiParser {
         final IElementType type = builder.getTokenType();
 
         final PsiBuilder.Marker marker = builder.mark();
+
         if (RegExpTT.GROUPS.contains(type)) {
             builder.advanceLexer();
             if (!parsePattern(builder)) {
@@ -345,6 +346,21 @@ public class RegExpParser implements PsiParser {
         } else if (type == RegExpTT.BACKREF) {
             builder.advanceLexer();
             marker.done(RegExpElementTypes.BACKREF);
+        } else if (type == RegExpTT.PYTHON_NAMED_GROUP) {
+            builder.advanceLexer();
+            checkMatches(builder, RegExpTT.NAME, "Group name expected");
+            checkMatches(builder, RegExpTT.GT, "Unclosed group name");
+            if (!parsePattern(builder)) {
+                patternExpected(builder);
+            } else {
+                checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
+            }
+            marker.done(RegExpElementTypes.GROUP);
+        } else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF) {
+            builder.advanceLexer();
+            checkMatches(builder, RegExpTT.NAME, "Group name expected");
+            checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
+            marker.done(RegExpElementTypes.PY_NAMED_GROUP_REF);
         } else if (type == RegExpTT.PROPERTY) {
             parseProperty(builder);
             marker.done(RegExpElementTypes.PROPERTY);
