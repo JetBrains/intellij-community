@@ -15,17 +15,22 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -35,7 +40,10 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.PairProcessor;
 import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
+import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,6 +116,19 @@ public class PyConsoleRunner {
 
     // Init console view
     myConsoleView = new LanguageConsoleViewImpl(myProject, myConsoleTitle, PythonLanguage.getInstance());
+    // Set language level
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      final Sdk pythonSdk = PythonSdkType.findPythonSdk(module);
+      if (pythonSdk != null){
+        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(pythonSdk);
+        final VirtualFile file = getLanguageConsole().getFile().getVirtualFile();
+        if (file != null) {
+          file.putUserData(LanguageLevel.KEY, languageLevel);
+        }
+        break;
+      }
+    }
+    
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
