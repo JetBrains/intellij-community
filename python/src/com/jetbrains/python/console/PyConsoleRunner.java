@@ -1,5 +1,7 @@
 package com.jetbrains.python.console;
 
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
@@ -186,8 +188,10 @@ public class PyConsoleRunner {
       }
 
       public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(!myProcessHandler.isProcessTerminated() /*&&
-                                       getLanguageConsole().getEditorDocument().getTextLength() > 0*/);
+        final EditorEx editor = getLanguageConsole().getConsoleEditor();
+        final Lookup lookup = LookupManager.getActiveLookup(editor);
+        e.getPresentation().setEnabled(!myProcessHandler.isProcessTerminated() &&
+                                       (lookup == null || !lookup.isCompletion()));
       }
     };
     EmptyAction.setupAction(myRunAction, "Console.Python.Execute", null);
