@@ -182,10 +182,32 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                 @NonNls final String methodName =
                         methodExpression.getReferenceName();
                 if (!"print".equals(methodName) &&
-                        !"println".equals(methodName) &&
-                        !"printf".equals(methodName) &&
+                        !"println".equals(methodName)) {
+                    if (!"printf".equals(methodName) &&
                         !"format".equals(methodName)) {
-                    return false;
+                        return false;
+                    } else {
+                        final PsiExpression[] expressions =
+                                expressionList.getExpressions();
+                        if (expressions.length < 1) {
+                            return false;
+                        }
+                        final PsiType firstExpressionType =
+                                expressions[0].getType();
+                        if (firstExpressionType == null) {
+                            return false;
+                        }
+                        if (firstExpressionType.equalsToText(
+                                "java.util.Locale")) {
+                            if (expressions.length < 4) {
+                                return false;
+                            }
+                        } else {
+                            if (expressions.length < 3) {
+                                return false;
+                            }
+                        }
+                    }
                 }
                 final PsiExpression qualifier =
                         methodExpression.getQualifierExpression();
