@@ -72,6 +72,15 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_vfs_impl_win32_IdeaWin32_get
 	return CreateFileInfo(env, &data, infoClass);
 }
 
+JNIEXPORT jboolean JNICALL Java_com_intellij_openapi_vfs_impl_win32_IdeaWin32_checkExist(JNIEnv *env, jobject method, jstring path) {
+	jint result = 0;
+    WIN32_FILE_ATTRIBUTE_DATA wfad;
+	const jchar* str = env->GetStringChars(path, 0);
+
+    if (GetFileAttributesEx((LPCWSTR)path, GetFileExInfoStandard, &wfad)) return JNI_TRUE;
+	return JNI_FALSE;
+}
+
 JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_vfs_impl_win32_IdeaWin32_listChildren(JNIEnv *env, jobject method, jstring path)
 {
 
