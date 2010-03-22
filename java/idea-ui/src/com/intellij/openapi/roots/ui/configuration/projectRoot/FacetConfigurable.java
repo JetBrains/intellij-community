@@ -21,6 +21,7 @@ import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.NamedConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -33,13 +34,13 @@ import javax.swing.*;
  */
 public class FacetConfigurable extends NamedConfigurable<Facet> {
   private final Facet myFacet;
-  private final ProjectFacetsConfigurator myFacetsConfigurator;
+  private final ModulesConfigurator myModulesConfigurator;
   private String myFacetName;
 
-  public FacetConfigurable(final Facet facet, final ProjectFacetsConfigurator facetsConfigurator, final Runnable updateTree) {
+  public FacetConfigurable(final Facet facet, final ModulesConfigurator modulesConfigurator, final Runnable updateTree) {
     super(!facet.getType().isOnlyOneFacetAllowed(), updateTree);
     myFacet = facet;
-    myFacetsConfigurator = facetsConfigurator;
+    myModulesConfigurator = modulesConfigurator;
     myFacetName = myFacet.getName();
   }
 
@@ -47,9 +48,13 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
   public void setDisplayName(String name) {
     name = name.trim();
     if (!name.equals(myFacetName)) {
-      myFacetsConfigurator.getOrCreateModifiableModel(myFacet.getModule()).rename(myFacet, name);
+      getFacetsConfigurator().getOrCreateModifiableModel(myFacet.getModule()).rename(myFacet, name);
       myFacetName = name;
     }
+  }
+
+  private ProjectFacetsConfigurator getFacetsConfigurator() {
+    return myModulesConfigurator.getFacetsConfigurator();
   }
 
   public Facet getEditableObject() {
@@ -65,7 +70,7 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
   }
 
   public FacetEditorImpl getEditor() {
-    return myFacetsConfigurator.getOrCreateEditor(myFacet);
+    return getFacetsConfigurator().getOrCreateEditor(myFacet);
   }
 
   @Nls
@@ -81,7 +86,7 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    final FacetEditorImpl facetEditor = myFacetsConfigurator.getEditor(myFacet);
+    final FacetEditorImpl facetEditor = getFacetsConfigurator().getEditor(myFacet);
     return facetEditor != null ? facetEditor.getHelpTopic() : null;
   }
 
