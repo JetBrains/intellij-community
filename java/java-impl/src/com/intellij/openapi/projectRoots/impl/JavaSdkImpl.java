@@ -115,6 +115,9 @@ public class JavaSdkImpl extends JavaSdk {
     if (SystemInfo.isMac) {
       return "/System/Library/Frameworks/JavaVM.framework/Versions/";
     }
+    if (SystemInfo.isLinux) {
+      return "/usr/lib/jvm/";
+    }
     return null;
   }
 
