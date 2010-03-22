@@ -37,6 +37,7 @@ public interface RegExpElementTypes {
     IElementType BACKREF = new RegExpElementType("BACKREF");
     IElementType BOUNDARY = new RegExpElementType("BOUNDARY");
     IElementType PY_NAMED_GROUP_REF = new RegExpElementType("PY_NAMED_GROUP_REF");
+    IElementType PY_COND_REF = new RegExpElementType("PY_COND_REF");
 
     TokenSet ATOMS = TokenSet.create(CLOSURE, BOUNDARY,
             SIMPLE_CLASS, CLASS, CHAR, GROUP, PROPERTY, SET_OPTIONS, BACKREF, PY_NAMED_GROUP_REF);

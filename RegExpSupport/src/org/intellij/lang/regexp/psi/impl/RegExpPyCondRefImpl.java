@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.lang.regexp;
+package org.intellij.lang.regexp.psi.impl;
+
+import com.intellij.lang.ASTNode;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpPyCondRef;
 
 /**
  * @author yole
  */
-public interface RegExpLanguageHost {
-  boolean characterNeedsEscaping(char c);
-  boolean supportsPerl5EmbeddedComments();
-  boolean supportsPossessiveQuantifiers();
-  boolean supportsPythonNamedGroups();
-  boolean supportsPythonConditionalRefs();
+public class RegExpPyCondRefImpl extends RegExpElementImpl implements RegExpPyCondRef {
+  public RegExpPyCondRefImpl(ASTNode node) {
+    super(node);
+  }
+
+  @Override
+  public void accept(RegExpElementVisitor visitor) {
+    visitor.visitRegExpPyCondRef(this);
+  }
 }

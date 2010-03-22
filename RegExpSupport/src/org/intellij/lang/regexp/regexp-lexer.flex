@@ -64,6 +64,7 @@ import com.intellij.psi.StringEscapesTokenTypes;
 %xstate COMMENT
 %xstate PY_NAMED_GROUP
 %xstate PY_NAMED_GROUP_REF
+%xstate PY_COND_REF
 
 DIGITS=[1-9][0-9]*
 
@@ -209,6 +210,7 @@ HEX_CHAR=[0-9a-fA-F]
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
   "(?P<" { yybegin(PY_NAMED_GROUP); return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
+  "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }
@@ -230,6 +232,13 @@ HEX_CHAR=[0-9a-fA-F]
 
 <PY_NAMED_GROUP_REF> {
   [:letter:]([:letter:]|_|[:digit:])* { return RegExpTT.NAME;   }
+  ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
+  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+}
+
+<PY_COND_REF> {
+  [:letter:]([:letter:]|_|[:digit:])* { return RegExpTT.NAME; }
+  [:digit:]+          { return RegExpTT.NUMBER; }
   ")"               { yybegin(YYINITIAL); return RegExpTT.GROUP_END; }
   {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
 }

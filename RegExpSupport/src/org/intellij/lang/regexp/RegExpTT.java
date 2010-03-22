@@ -104,6 +104,9 @@ public interface RegExpTT {
     IElementType PYTHON_NAMED_GROUP = new RegExpElementType("PYTHON_NAMED_GROUP");
     // (?P=name)
     IElementType PYTHON_NAMED_GROUP_REF = new RegExpElementType("PYTHON_NAMED_GROUP_REF");
+    // (?(id/name)yes-pattern|no-pattern)
+    IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF"); 
+  
 
     TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
 

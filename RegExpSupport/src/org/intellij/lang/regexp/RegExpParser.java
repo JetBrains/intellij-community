@@ -361,6 +361,27 @@ public class RegExpParser implements PsiParser {
             checkMatches(builder, RegExpTT.NAME, "Group name expected");
             checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
             marker.done(RegExpElementTypes.PY_NAMED_GROUP_REF);
+        } else if (type == RegExpTT.PYTHON_COND_REF) {
+            builder.advanceLexer();
+            if (builder.getTokenType() == RegExpTT.NAME || builder.getTokenType() == RegExpTT.NUMBER) {
+              builder.advanceLexer();
+            }
+            else {
+              builder.error("Group name or number expected");
+            }
+            checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
+            if (!parseBranch(builder)) {
+              patternExpected(builder);
+            } else {
+              if (builder.getTokenType() == RegExpTT.UNION) {
+                builder.advanceLexer();
+                if (!parseBranch(builder)) {
+                  patternExpected(builder);
+                }
+              }
+              checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
+            }
+            marker.done(RegExpElementTypes.PY_COND_REF);
         } else if (type == RegExpTT.PROPERTY) {
             parseProperty(builder);
             marker.done(RegExpElementTypes.PROPERTY);

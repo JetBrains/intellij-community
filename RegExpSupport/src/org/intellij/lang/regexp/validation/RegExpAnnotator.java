@@ -202,7 +202,15 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         }
     }
 
-    private static boolean isEmpty(RegExpBranch[] branches) {
+  @Override
+  public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
+    RegExpLanguageHost host = findRegExpHost(condRef);
+    if (host == null || !host.supportsPythonConditionalRefs()) {
+        myHolder.createErrorAnnotation(condRef, "Conditional references are not supported");
+    }
+  }
+
+  private static boolean isEmpty(RegExpBranch[] branches) {
         for (RegExpBranch branch : branches) {
             if (branch.getAtoms().length > 0) {
                 return false;
