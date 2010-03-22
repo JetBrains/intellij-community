@@ -107,7 +107,7 @@ public class MavenDomProjectProcessorUtils {
           }
         };
 
-        processProjectDependenciesRecursively(model, collectProcessor, project);
+        processProjectDependenciesRecursively(model, collectProcessor, project, new HashSet<MavenDomProjectModel>());
       }
     }
 
@@ -116,8 +116,11 @@ public class MavenDomProjectProcessorUtils {
 
   private static void processProjectDependenciesRecursively(@Nullable MavenDomProjectModel model,
                                                             @NotNull Processor<MavenDomProjectModel> processor,
-                                                            @NotNull Project project) {
-    if (model != null) {
+                                                            @NotNull Project project,
+                                                            @NotNull Set<MavenDomProjectModel> processedModels) {
+    if (model != null && !processedModels.contains(model)) {
+      processedModels.add(model);
+
       if (processor.process(model)) return;
 
       MavenProject mavenProject = MavenDomUtil.findProject(model);
@@ -125,7 +128,7 @@ public class MavenDomProjectProcessorUtils {
         for (MavenProject childProject : MavenProjectsManager.getInstance(project).findInheritors(mavenProject)) {
           MavenDomProjectModel childProjectModel = MavenDomUtil.getMavenDomProjectModel(project, childProject.getFile());
 
-          processProjectDependenciesRecursively(childProjectModel, processor, project);
+          processProjectDependenciesRecursively(childProjectModel, processor, project, processedModels);
         }
       }
     }
