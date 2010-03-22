@@ -71,7 +71,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin");
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin");
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
@@ -87,7 +87,11 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin",
+    assertCompletionVariants(myProjectPom,
+                             "maven-compiler-plugin", 
+                             "maven-war-plugin",
+                             "build-helper-maven-plugin",
+                             "maven-surefire-plugin",
                              "maven-eclipse-plugin");
   }
 
