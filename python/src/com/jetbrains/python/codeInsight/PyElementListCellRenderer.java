@@ -11,8 +11,11 @@ import com.intellij.psi.PsiNamedElement;
  */
 public class PyElementListCellRenderer extends PsiElementListCellRenderer {
   public String getElementText(final PsiElement element) {
-    final String name = ((PsiNamedElement)element).getName();
-    return name == null ? "" : name;
+    if (element instanceof PsiNamedElement) {
+      final String name = ((PsiNamedElement)element).getName();
+      return name == null ? "" : name;
+    }
+    return element.getText();
   }
 
   protected String getContainerText(final PsiElement element, final String name) {
