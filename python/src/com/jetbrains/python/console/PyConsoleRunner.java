@@ -107,7 +107,7 @@ public class PyConsoleRunner {
     ProcessTerminatedListener.attach(myProcessHandler);
 
     // Init console view
-    myConsoleView = new LanguageConsoleViewImpl(myProject, "title", PythonLanguage.getInstance());
+    myConsoleView = new LanguageConsoleViewImpl(myProject, myConsoleTitle, PythonLanguage.getInstance());
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
