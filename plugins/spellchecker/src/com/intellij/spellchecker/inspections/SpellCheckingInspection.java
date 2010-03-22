@@ -110,6 +110,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
+
     return new PsiElementVisitor() {
       private final NamesValidator[] NAMES_VALIDATORS = getNamesValidators();
       {
@@ -146,15 +148,14 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
         final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
         final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
+
         @SuppressWarnings({"unchecked"})
         final Token[] tokens = tokenizer.tokenize(element);
-        if (tokens == null) {
-          return;
-        }
-        SpellCheckerManager manager = SpellCheckerManager.getInstance(element.getProject());
+        if (tokens == null) return;
+
         Set<String> alreadyChecked = new THashSet<String>();
         for (Token token : tokens) {
-          inspect(token, holder, isOnTheFly, alreadyChecked, manager,NAMES_VALIDATORS);
+          inspect(token, holder, isOnTheFly, alreadyChecked, manager, NAMES_VALIDATORS);
         }
       }
     };
