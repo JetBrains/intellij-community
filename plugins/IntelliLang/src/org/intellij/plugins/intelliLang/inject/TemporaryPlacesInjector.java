@@ -18,7 +18,9 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -33,6 +35,8 @@ import java.util.List;
  */
 public class TemporaryPlacesInjector implements MultiHostInjector {
 
+  public static final Logger LOG = Logger.getInstance("org.intellij.plugins.intelliLang.inject.TemporaryPlacesInjector");
+
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(PsiLanguageInjectionHost.class);
@@ -41,11 +45,14 @@ public class TemporaryPlacesInjector implements MultiHostInjector {
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement context) {
     final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
     final PsiLanguageInjectionHost originalHost = PsiUtilBase.getOriginalElement(host, host.getClass());
+    final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
+    LOG.assertTrue(manipulator != null, "No manipulator for " + host);
     final List<TemporaryPlacesRegistry.TemporaryPlace> list = TemporaryPlacesRegistry.getInstance(context.getProject()).getTempInjectionsSafe(originalHost);
-    for (final TemporaryPlacesRegistry.TemporaryPlace pair : list) {
-      InjectorUtils.registerInjection(pair.language.getLanguage(), Collections.singletonList(
-        Trinity.create(host, pair.language, ElementManipulators.getManipulator(host).getRangeInElement(host))), context.getContainingFile(),
-                                            registrar);
+    for (final TemporaryPlacesRegistry.TemporaryPlace place : list) {
+      LOG.assertTrue(place.language != null, "Language should not be NULL");
+      InjectorUtils.registerInjection(
+        place.language.getLanguage(),
+        Collections.singletonList(Trinity.create(host, place.language, manipulator.getRangeInElement(host))), context.getContainingFile(), registrar);
     }
   }
 
