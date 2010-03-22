@@ -41,6 +41,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,14 +125,19 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myData.setContents(content1, content2);
     Project project = myData.getProject();
     FileType[] types = DiffUtil.chooseContentTypes(new DiffContent[]{content1, content2});
-    myLeftSide.setHighlighterFactory(createHighlighter(types[0], project));
-    myRightSide.setHighlighterFactory(createHighlighter(types[1], project));
+    VirtualFile baseFile = content1.getFile();
+    if (baseFile == null) {
+      String path = myDiffRequest.getWindowTitle();
+      if (path != null) baseFile = LocalFileSystem.getInstance().findFileByPath(path);
+    }
+    myLeftSide.setHighlighterFactory(createHighlighter(types[0], baseFile, project));
+    myRightSide.setHighlighterFactory(createHighlighter(types[1], baseFile, project));
     rediff();
     myPanel.requestScrollEditors();
   }
 
-  private static DiffHighlighterFactory createHighlighter(FileType contentType, Project project) {
-    return new DiffHighlighterFactoryImpl(contentType, project);
+  private static DiffHighlighterFactory createHighlighter(FileType contentType, VirtualFile file, Project project) {
+    return new DiffHighlighterFactoryImpl(contentType, file, project);
   }
 
   void rediff() {
