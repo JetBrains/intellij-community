@@ -25,7 +25,6 @@ import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -88,18 +87,20 @@ public class MavenDomProjectProcessorUtils {
                                                                @NotNull final Project project) {
     final Set<MavenDomDependency> usages = new HashSet<MavenDomDependency>();
 
-    MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
+    final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
     if (model != null) {
       final String artifactId = dependency.getArtifactId().getStringValue();
       final String groupId = dependency.getGroupId().getStringValue();
       if (artifactId != null && groupId != null) {
         Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
           public boolean process(MavenDomProjectModel mavenDomProjectModel) {
-            for (MavenDomDependency domDependency : mavenDomProjectModel.getDependencies().getDependencies()) {
-              if (domDependency.equals(dependency)) continue;
-              if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
-                  groupId.equals(domDependency.getGroupId().getStringValue())) {
-                usages.add(domDependency);
+            if (!model.equals(mavenDomProjectModel)) {
+              for (MavenDomDependency domDependency : mavenDomProjectModel.getDependencies().getDependencies()) {
+                if (domDependency.equals(dependency)) continue;
+                if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
+                    groupId.equals(domDependency.getGroupId().getStringValue())) {
+                  usages.add(domDependency);
+                }
               }
             }
             return false;
@@ -136,7 +137,7 @@ public class MavenDomProjectProcessorUtils {
 
     Processor<MavenDomDependencies> collectProcessor = new Processor<MavenDomDependencies>() {
       public boolean process(MavenDomDependencies mavenDomDependencies) {
-          dependencies.addAll(mavenDomDependencies.getDependencies());
+        dependencies.addAll(mavenDomDependencies.getDependencies());
         return false;
       }
     };
@@ -153,16 +154,18 @@ public class MavenDomProjectProcessorUtils {
     final String artifactId = dependency.getArtifactId().getStringValue();
     final String groupId = dependency.getGroupId().getStringValue();
     if (artifactId != null && groupId != null) {
-      MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
+      final MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
       if (model != null) {
         Processor<MavenDomDependencies> processor = new Processor<MavenDomDependencies>() {
           public boolean process(MavenDomDependencies mavenDomDependencies) {
-            for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
-              if (domDependency.equals(dependency)) continue;
-              if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
-                  groupId.equals(domDependency.getGroupId().getStringValue())) {
-                parent[0] = domDependency;
-                return true;
+            if (!model.equals(mavenDomDependencies.getParentOfType(MavenDomProjectModel.class, true))) {
+              for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
+                if (domDependency.equals(dependency)) continue;
+                if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
+                    groupId.equals(domDependency.getGroupId().getStringValue())) {
+                  parent[0] = domDependency;
+                  return true;
+                }
               }
             }
             return false;
