@@ -48,7 +48,6 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   private final boolean myCapableOfExcludingChanges;
   protected final JPanel myHeaderPanel;
   private DefaultActionGroup myToolBarGroup;
-  private final JPanel myListPanel;
   private ShowDiffAction.DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
   private String myToggleActionTitle = VcsBundle.message("commit.dialog.include.action.name");
 
@@ -100,12 +99,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     setInitialSelection(changeLists, changes, initialListSelection);
     rebuildList();
 
-    myListPanel = new JPanel(new BorderLayout());
-    myListPanel.add(myViewer, BorderLayout.CENTER);
-
-    JComponent separator = SeparatorFactory.createSeparator(VcsBundle.message("commit.dialog.changed.files.label"), myViewer);
-    myListPanel.add(separator, BorderLayout.NORTH);
-    add(myListPanel, BorderLayout.CENTER);
+    add(myViewer, BorderLayout.CENTER);
 
     myHeaderPanel = new JPanel(new BorderLayout());
     myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
@@ -146,8 +140,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return myHeaderPanel;
   }
 
-  public JPanel getListPanel() {
-    return myListPanel;
+  public ChangesTreeList<Change> getViewer() {
+    return myViewer;
   }
 
   public void calcData(DataKey key, DataSink sink) {

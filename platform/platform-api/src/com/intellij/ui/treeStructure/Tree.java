@@ -21,7 +21,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.EmptyTextHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,15 +34,13 @@ import javax.swing.text.Position;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class Tree extends JTree implements Autoscroll, Queryable {
+  private EmptyTextHelper myEmptyTextHelper;
 
   private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
@@ -61,12 +61,42 @@ public class Tree extends JTree implements Autoscroll, Queryable {
   }
 
   private void initTree_() {
+    myEmptyTextHelper = new EmptyTextHelper(this) {
+      @Override
+      protected boolean isEmpty() {
+        TreeModel model = getModel();
+        if (model == null) return true;
+        if (model.getRoot() == null) return true;
+        return !isRootVisible() && model.getChildCount(model.getRoot()) == 0;
+      }
+    };
+
     addMouseListener(new MyMouseListener());
     if (Patches.SUN_BUG_ID_4893787) {
       addFocusListener(new MyFocusListener());
     }
 
     setCellRenderer(new NodeRenderer());
+  }
+
+  public String getEmptyText() {
+    return myEmptyTextHelper.getEmptyText();
+  }
+
+  public void setEmptyText(String emptyText) {
+    myEmptyTextHelper.setEmptyText(emptyText);
+  }
+
+  public void clearEmptyText() {
+    myEmptyTextHelper.clearEmptyText();
+  }
+
+  public void appendEmptyText(String text, SimpleTextAttributes attrs) {
+    myEmptyTextHelper.appendEmptyText(text, attrs);
+  }
+
+  public void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+    myEmptyTextHelper.appendEmptyText(text, attrs, listener);
   }
 
   @Override
@@ -108,6 +138,69 @@ public class Tree extends JTree implements Autoscroll, Queryable {
     }
   }
 
+  @Override
+  public void paint(Graphics g) {
+    super.paint(g);
+
+    final Rectangle visible = getVisibleRect();
+
+    if (!visible.equals(myLastVisibleRec)) {
+      updateBusyIconLocation();
+    }
+
+    myLastVisibleRec = visible;
+  }
+
+  public void setPaintBusy(boolean paintBusy) {
+    if (myBusy == paintBusy) return;
+
+    myBusy = paintBusy;
+    updateBusy();
+  }
+
+  private void updateBusy() {
+    if (myBusy) {
+      if (myBusyIcon == null) {
+        myBusyIcon = new AsyncProcessIcon(toString());
+        myBusyIcon.setPaintPassiveIcon(false);
+        add(myBusyIcon);
+      }
+    }
+
+    if (myBusyIcon != null) {
+      if (myBusy) {
+        myBusyIcon.resume();
+      } else {
+        myBusyIcon.suspend();
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (myBusyIcon != null) {
+              repaint();
+            }
+          }
+        });
+      }
+      updateBusyIconLocation();
+    }
+  }
+
+  protected boolean paintNodes() {
+    return false;
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    if (paintNodes()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
+
+      paintNodeContent(g);
+    }
+
+    super.paintComponent(g);
+    myEmptyTextHelper.paint(g);
+  }
+
   /**
    * Hack to prevent loosing multiple selection on Mac when clicking Ctrl+Left Mouse Button.
    * See faulty code at BasicTreeUI.selectPathForEvent():2245
@@ -147,22 +240,6 @@ public class Tree extends JTree implements Autoscroll, Queryable {
       if (realrow < getRowCount() - 1) realrow++;
     }
     scrollRowToVisible(realrow);
-  }
-
-  protected boolean paintNodes() {
-    return false;
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    if (paintNodes()) {
-      g.setColor(getBackground());
-      g.fillRect(0, 0, getWidth(), getHeight());
-
-      paintNodeContent(g);
-    }
-
-    super.paintComponent(g);
   }
 
   protected boolean highlightSingleNode() {
@@ -410,7 +487,7 @@ public class Tree extends JTree implements Autoscroll, Queryable {
     return result;
   }
 
-  public static interface NodeFilter<T> {
+  public interface NodeFilter<T> {
     boolean accept(T node);
   }
 
@@ -435,52 +512,6 @@ public class Tree extends JTree implements Autoscroll, Queryable {
 
     if (nodesText.length() > 0) {
       info.put("selectedNodes", nodesText.toString());
-    }
-  }
-
-  public void setPaintBusy(boolean paintBusy) {
-    if (myBusy == paintBusy) return;
-
-    myBusy = paintBusy;
-    updateBusy();
-  }
-
-  @Override
-  public void paint(Graphics g) {
-    super.paint(g);
-
-    final Rectangle visible = getVisibleRect();
-
-    if (!visible.equals(myLastVisibleRec)) {
-      updateBusyIconLocation();
-    }
-
-    myLastVisibleRec = visible;
-  }
-
-  private void updateBusy() {
-    if (myBusy) {
-      if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString());
-        myBusyIcon.setPaintPassiveIcon(false);
-        add(myBusyIcon);
-      }
-    }
-
-    if (myBusyIcon != null) {
-      if (myBusy) {
-        myBusyIcon.resume();
-      } else {
-        myBusyIcon.suspend();
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (myBusyIcon != null) {
-              repaint();
-            }
-          }
-        });
-      }
-      updateBusyIconLocation();
     }
   }
 }
