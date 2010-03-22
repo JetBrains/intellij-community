@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
@@ -180,7 +181,10 @@ public interface PsiSearchHelper {
                                   short searchContext,
                                   boolean caseSensitive);
 
-  SearchCostResult isCheapEnoughToSearch(@NotNull String name, @NotNull GlobalSearchScope scope, @Nullable PsiFile fileToIgnoreOccurencesIn);
+  SearchCostResult isCheapEnoughToSearch(@NotNull String name,
+                                         @NotNull GlobalSearchScope scope,
+                                         @Nullable PsiFile fileToIgnoreOccurencesIn,
+                                         ProgressIndicator progress);
 
   enum SearchCostResult {
     ZERO_OCCURRENCES, FEW_OCCURRENCES, TOO_MANY_OCCURRENCES

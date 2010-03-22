@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -87,8 +86,8 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
         elements = Collections.singletonList(psiRoot);
       }
       final List<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
-      addLineMarkers(elements, providers, lineMarkers);
-      collectLineMarkersForInjected(lineMarkers, elements, this, myFile);
+      addLineMarkers(elements, providers, lineMarkers, progress);
+      collectLineMarkersForInjected(lineMarkers, elements, this, myFile, progress);
     }
 
     myMarkers = lineMarkers;
@@ -98,10 +97,13 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     return DumbService.getInstance(project).filterByDumbAwareness(LineMarkerProviders.INSTANCE.allForLanguage(language));
   }
 
-  public void addLineMarkers(List<PsiElement> elements, final List<LineMarkerProvider> providers, final List<LineMarkerInfo> result) throws ProcessCanceledException {
+  public void addLineMarkers(@NotNull List<PsiElement> elements,
+                             @NotNull final List<LineMarkerProvider> providers,
+                             @NotNull final List<LineMarkerInfo> result,
+                             @NotNull ProgressIndicator progress) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     for (PsiElement element : elements) {
-      ProgressManager.checkCanceled();
+      progress.checkCanceled();
 
       for (LineMarkerProvider provider: providers) {
         LineMarkerInfo info = provider.getLineMarkerInfo(element);
@@ -112,13 +114,11 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     }
   }
 
-  public static void collectLineMarkersForInjected(final List<LineMarkerInfo> result, List<PsiElement> elements,
-                                                   final LineMarkersProcessor processor,
-                                                   PsiFile file) {
+  public static void collectLineMarkersForInjected(@NotNull final List<LineMarkerInfo> result, @NotNull List<PsiElement> elements,
+                                                   @NotNull final LineMarkersProcessor processor,
+                                                   @NotNull PsiFile file, @NotNull final ProgressIndicator progress) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     final List<LineMarkerInfo> injectedMarkers = new ArrayList<LineMarkerInfo>();
-
-    final boolean dumb = DumbService.getInstance(file.getProject()).isDumb();
 
     for (PsiElement element : elements) {
       InjectedLanguageUtil.enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -128,7 +128,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
           if (!(document instanceof DocumentWindow)) return;
           List<PsiElement> injElements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
           final List<LineMarkerProvider> providers = getMarkerProviders(injectedPsi.getLanguage(), project);
-          processor.addLineMarkers(injElements, providers, injectedMarkers);
+          processor.addLineMarkers(injElements, providers, injectedMarkers, progress);
           for (final LineMarkerInfo injectedMarker : injectedMarkers) {
             GutterIconRenderer gutterRenderer = injectedMarker.createGutterRenderer();
             TextRange injectedRange = new TextRange(injectedMarker.startOffset, injectedMarker.endOffset);

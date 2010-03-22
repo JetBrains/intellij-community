@@ -195,7 +195,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         final ProgressManager progressManager = ProgressManager.getInstance();
-        ProgressManager.checkCanceled();
+        indicator.checkCanceled();
         ProgressIndicator localIndicator = progressManager.getProgressIndicator();
 
         ProgressIndicator original = ((ProgressWrapper)localIndicator).getOriginalProgressIndicator();
@@ -211,20 +211,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         tool.inspectionStarted(session);
         for (PsiElement element : elements) {
-          ProgressManager.checkCanceled();
+          indicator.checkCanceled();
           element.accept(elementVisitor);
         }
         tool.inspectionFinished(session);
         advanceProgress(elements.length);
 
         if (holder.hasResults()) {
-          appendDescriptors(holder.getResults(), tool, ignoreSuppressed);
+          appendDescriptors(holder.getResults(), tool, ignoreSuppressed, indicator);
         }
         return true;
       }
-    }, "Inspection tools");
-    ProgressManager.checkCanceled();
+    }, "Inspection tools", myPriority);
 
+    indicator.checkCanceled();
     inspectInjectedPsi(elements, tools);
 
     myInfos = new ArrayList<HighlightInfo>(myDescriptors.size());
@@ -264,19 +264,19 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
     PsiElement element = problemDescriptor.getPsiElement();
     boolean isFileLevel = element instanceof PsiFile && textRange.equals(element.getTextRange());
-    HighlightInfo highlightInfo = new HighlightInfo(null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message,
-                                                    toolTip, highlightInfoType.getSeverity(element), problemDescriptor.isAfterEndOfLine(), null,
-                                                    isFileLevel);
 
-    return highlightInfo;
+    return new HighlightInfo(null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
+                             highlightInfoType.getSeverity(element), problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
   }
 
-  private synchronized void appendDescriptors(List<ProblemDescriptor> problemDescriptors, LocalInspectionTool tool, boolean ignoreSuppressed) {
-    if (problemDescriptors == null) return;
+  private synchronized void appendDescriptors(@NotNull List<ProblemDescriptor> problemDescriptors,
+                                              @NotNull LocalInspectionTool tool,
+                                              boolean ignoreSuppressed,
+                                              @NotNull ProgressIndicator progress) {
     InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
     final HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), myFile).getSeverity();
     for (ProblemDescriptor problemDescriptor : problemDescriptors) {
-      ProgressManager.checkCanceled();
+      progress.checkCanceled();
       if (!(ignoreSuppressed && InspectionManagerEx.inspectionResultSuppressed(problemDescriptor.getPsiElement(), tool))) {
         myDescriptors.add(problemDescriptor);
         HighlightInfoType type = highlightTypeFromDescriptor(problemDescriptor, severity);
