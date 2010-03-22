@@ -194,22 +194,55 @@ public class ArrayUtil {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
-  public static void arrayCopy(Object src, int srcPos, Object dest, int destPos, int length) {
+  public static void arrayCopy(Object[] src, int srcPos, Object[] dest, int destPos, int length) {
+    if (length > 20) {
+      System.arraycopy(src, srcPos, dest, destPos, length);
+    }
+    else {
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        dest[destPos + i] = src[srcPos + i];
+      }
+    }
+  }
+  
+  public static void arrayCopy(int[] src, int srcPos, int[] dest, int destPos, int length) {
     if (length > 20) {
       //noinspection SuspiciousSystemArraycopy
       System.arraycopy(src, srcPos, dest, destPos, length);
     }
     else {
-      Object[] s = (Object[])src;
-      Object[] d = (Object[])dest;
-
       //noinspection ManualArrayCopy
       for (int i = 0; i < length; i++) {
-        d[destPos + i] = s[srcPos + i];
+        dest[destPos + i] = src[srcPos + i];
       }
     }
   }
-  
+
+  public static void arrayCopy(char[] src, int srcPos, char[] dest, int destPos, int length) {
+    if (length > 20) {
+      System.arraycopy(src, srcPos, dest, destPos, length);
+    }
+    else {
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        dest[destPos + i] = src[srcPos + i];
+      }
+    }
+  }
+
+  public static void arrayCopy(byte[] src, int srcPos, byte[] dest, int destPos, int length) {
+    if (length > 20) {
+      System.arraycopy(src, srcPos, dest, destPos, length);
+    }
+    else {
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        dest[destPos + i] = src[srcPos + i];
+      }
+    }
+  }
+
   public static <T> T[] append(@NotNull final T[] src,final T element, ArrayFactory<T> factory) {
     int length=src.length;
     T[] result= factory.create(length + 1);
