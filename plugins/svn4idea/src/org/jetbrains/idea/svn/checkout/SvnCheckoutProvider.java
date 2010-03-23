@@ -60,18 +60,10 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       target.mkdirs();
     }
     final SVNException[] exception = new SVNException[1];
-    final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
 
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        // allow to select working copy format
-        if (! promptForWCopyFormat(target, project)) {
-          // cancelled
-          actionStarted.set(Boolean.FALSE);
-          return;
-        }
-
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
         client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
@@ -99,9 +91,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       }
 
       public void onSuccess() {
-        if (! Boolean.TRUE.equals(actionStarted.get())) {
-          return;
-        }
         if (exception[0] != null) {
           Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", exception[0].getMessage()), SvnBundle.message("message.title.check.out"));
         }
@@ -134,6 +123,12 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       }
     };
 
+    // allow to select working copy format
+    if (! promptForWCopyFormat(target, project)) {
+      // cancelled
+      SvnWorkingCopyFormatHolder.setPresetFormat(null);
+      return;
+    }
     ProgressManager.getInstance().run(checkoutBackgroundTask);
   }
 
