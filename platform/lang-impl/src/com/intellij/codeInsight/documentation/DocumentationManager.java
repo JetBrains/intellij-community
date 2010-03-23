@@ -262,13 +262,14 @@ public class DocumentationManager {
       }
     };
 
+    final KeyboardShortcut keyboardShortcut = ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc");
     final List<Pair<ActionListener, KeyStroke>> actions = Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           createToolWindow(element, originalElement, false);
           final JBPopup hint = getDocInfoHint();
           if (hint != null && hint.isVisible()) hint.cancel();
         }
-      }, ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc").getFirstKeyStroke()));
+      }, keyboardShortcut != null ? keyboardShortcut.getFirstKeyStroke() : null)); // Null keyStroke is ok here
 
       final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
           .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)

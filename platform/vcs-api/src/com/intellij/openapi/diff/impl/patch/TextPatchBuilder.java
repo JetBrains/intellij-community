@@ -23,8 +23,6 @@ import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -54,16 +52,20 @@ public class TextPatchBuilder {
   private final String myBasePath;
   private final boolean myIsReversePath;
   private final boolean myIsCaseSensitive;
+  @Nullable
+  private final Runnable myCancelChecker;
 
-  private TextPatchBuilder(final String basePath, final boolean isReversePath, final boolean isCaseSensitive) {
+  private TextPatchBuilder(final String basePath, final boolean isReversePath, final boolean isCaseSensitive,
+                           @Nullable final Runnable cancelChecker) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
     myIsCaseSensitive = isCaseSensitive;
+    myCancelChecker = cancelChecker;
   }
 
-  private static void checkCanceled(final ProgressIndicator ind) {
-    if (ind != null && ind.isCanceled()) {
-      throw new ProcessCanceledException();
+  private void checkCanceled() {
+    if (myCancelChecker != null) {
+      myCancelChecker.run();
     }
   }
 
@@ -72,21 +74,23 @@ public class TextPatchBuilder {
     for (Change change : changes) {
       revisions.add(new BeforeAfter<AirContentRevision>(convertRevision(change.getBeforeRevision()), convertRevision(change.getAfterRevision())));
     }
-    return buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive);
+    return buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, new Runnable() {
+      public void run() {
+        ProgressManager.checkCanceled();
+      }
+    });
   }
 
   public static List<FilePatch> buildPatch(final Collection<BeforeAfter<AirContentRevision>> changes, final String basePath,
-                                           final boolean reversePatch, final boolean isCaseSensitive) throws VcsException {
-    final TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, isCaseSensitive);
+                   final boolean reversePatch, final boolean isCaseSensitive, @Nullable final Runnable cancelChecker) throws VcsException {
+    final TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, isCaseSensitive, cancelChecker);
     return builder.build(changes);
   }
 
   private List<FilePatch> build(final Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
-    final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
-    
     List<FilePatch> result = new ArrayList<FilePatch>();
     for(BeforeAfter<AirContentRevision> c: changes) {
-      checkCanceled(ind);
+      checkCanceled();
 
       final AirContentRevision beforeRevision;
       final AirContentRevision afterRevision;
@@ -111,11 +115,11 @@ public class TextPatchBuilder {
       }
 
       if (beforeRevision == null) {
-        result.add(buildAddedFile(myBasePath, afterRevision, ind));
+        result.add(buildAddedFile(myBasePath, afterRevision));
         continue;
       }
       if (afterRevision == null) {
-        result.add(buildDeletedFile(myBasePath, beforeRevision, ind));
+        result.add(buildDeletedFile(myBasePath, beforeRevision));
         continue;
       }
 
@@ -142,7 +146,7 @@ public class TextPatchBuilder {
         int lastLine2 = 0;
 
         while(fragments.size() > 0) {
-          checkCanceled(ind);
+          checkCanceled();
 
           List<LineFragment> adjacentFragments = getAdjacentFragments(fragments);
           if (adjacentFragments.size() > 0) {
@@ -162,7 +166,7 @@ public class TextPatchBuilder {
             patch.addHunk(hunk);
 
             for(LineFragment fragment: adjacentFragments) {
-              checkCanceled(ind);
+              checkCanceled();
               
               for(int i=contextStart1; i<fragment.getStartingLine1(); i++) {
                 addLineToHunk(hunk, beforeLines [i], PatchLine.Type.CONTEXT);
@@ -268,7 +272,7 @@ public class TextPatchBuilder {
     return result;
   }
 
-  private TextFilePatch buildAddedFile(final String basePath, final AirContentRevision afterRevision, final ProgressIndicator ind) throws VcsException {
+  private TextFilePatch buildAddedFile(final String basePath, final AirContentRevision afterRevision) throws VcsException {
     final String content = afterRevision.getContentAsString();
     if (content == null) {
       throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath());
@@ -277,14 +281,14 @@ public class TextPatchBuilder {
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
-      checkCanceled(ind);
+      checkCanceled();
       addLineToHunk(hunk, line, PatchLine.Type.ADD);
     }
     result.addHunk(hunk);
     return result;
   }
 
-  private TextFilePatch buildDeletedFile(String basePath, AirContentRevision beforeRevision, final ProgressIndicator ind) throws VcsException {
+  private TextFilePatch buildDeletedFile(String basePath, AirContentRevision beforeRevision) throws VcsException {
     final String content = beforeRevision.getContentAsString();
     if (content == null) {
       throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath());
@@ -293,7 +297,7 @@ public class TextPatchBuilder {
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {
-      checkCanceled(ind);
+      checkCanceled();
       addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
     }
     result.addHunk(hunk);
