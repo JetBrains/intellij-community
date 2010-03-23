@@ -23,8 +23,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -92,6 +97,45 @@ public class UsageViewUtil {
 
   public static UsageInfo[] removeDuplicatedUsages(@NotNull UsageInfo[] usages) {
     Set<UsageInfo> set = new LinkedHashSet<UsageInfo>(Arrays.asList(usages));
+    
+    // Replace duplicates of move rename usage infos in injections from non code usages of master files
+    String newTextInNonCodeUsage = null;
+    
+    for(UsageInfo usage:usages) {
+      if (!(usage instanceof NonCodeUsageInfo)) continue;
+      newTextInNonCodeUsage = ((NonCodeUsageInfo)usage).newText;
+      break;
+    }
+    
+    if (newTextInNonCodeUsage != null) {
+      for(UsageInfo usage:usages) {
+        if (!(usage instanceof MoveRenameUsageInfo)) continue;
+        PsiFile file = usage.getFile();
+        
+        if (file != null) {
+          PsiElement context = file.getContext();
+          if (context != null) {
+  
+            PsiElement usageElement = usage.getElement();
+            if (usageElement == null) continue;
+  
+            PsiReference psiReference = usage.getReference();
+            if (psiReference == null) continue;
+            
+            int injectionOffsetInMasterFile = PsiUtilBase.findInjectedElementOffsetInRealDocument(usageElement) + usageElement.getTextOffset();
+            set.remove(
+              NonCodeUsageInfo.create(
+                context.getContainingFile(), 
+                usage.startOffset + injectionOffsetInMasterFile, 
+                usage.endOffset + injectionOffsetInMasterFile,
+                ((MoveRenameUsageInfo)usage).getReferencedElement(), 
+                newTextInNonCodeUsage
+              )
+            );
+          }
+        }
+      }
+    }
     return set.toArray(new UsageInfo[set.size()]);
   }
 }
