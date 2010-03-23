@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
+import com.intellij.codeInsight.template.zencoding.XmlZenCodingTemplate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -48,7 +49,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
         final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tagAtCaret.getNode());
         final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tagAtCaret.getNode());
         if (emptyTagEnd != null || endTagEnd != null) {
-          return false;
+          return XmlZenCodingTemplate.startZenCoding(editor, psiFile);
         }
 
         int insertionOffset = tagAtCaret.getTextRange().getEndOffset();
@@ -91,7 +92,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
             if (shouldInsertClosingTag(xmlAttribute, tagAtCaret)) {
               doc.insertString(tag.getTextRange().getEndOffset() + text2insert.length(), "</" + tagAtCaret.getName() + ">");
             }
-            
+
             caretTo = tag.getTextRange().getEndOffset() + text2insert.length();
           }
           else {

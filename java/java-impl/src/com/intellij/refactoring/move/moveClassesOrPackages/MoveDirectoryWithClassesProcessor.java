@@ -155,14 +155,18 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @Override
   public void performRefactoring(UsageInfo[] usages) {
     //try to create all directories beforehand
-    for (PsiFile psiFile : myFilesToMove.keySet()) {
-      try {
+    try {
+      //top level directories should be created even if they are empty
+      for (PsiDirectory directory : myDirectories) {
+        getTargetDirectory(directory).findOrCreateTargetDirectory();
+      }
+      for (PsiFile psiFile : myFilesToMove.keySet()) {
         myFilesToMove.get(psiFile).findOrCreateTargetDirectory();
       }
-      catch (IncorrectOperationException e) {
-        Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
-        return;
-      }
+    }
+    catch (IncorrectOperationException e) {
+      Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
+      return;
     }
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
     for (PsiFile psiFile : myFilesToMove.keySet()) {

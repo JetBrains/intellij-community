@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.intellij.lang.regexp.psi;
 
-package org.jetbrains.plugins.groovy.lang.psi;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 /**
- * @author peter
+ * @author yole
  */
-public abstract class PropertyEnhancer {
-  public static final ExtensionPointName<PropertyEnhancer> EP_NAME = ExtensionPointName.create("org.intellij.groovy.propertyEnhancer");
-
+public interface RegExpPyNamedGroupRef extends RegExpAtom {
   @Nullable
-  public PsiType getPropertyType(GrField property) {
-    return null;
-  }
-
-  /*
+  RegExpGroup resolve();
   @Nullable
-  public PsiType getPropertyType(GrMethod accessor) {
-    return null;
-  }
-  */
-
+  String getGroupName();
 }

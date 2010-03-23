@@ -90,10 +90,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
   }
 
   private static boolean isDeclarationAssignment(@NotNull GrReferenceExpression lRefExpr, @Nullable String nameHint) {
-    if (nameHint == null) {
-      return true;
-    }
-    if (nameHint.equals(lRefExpr.getName())) {
+    if (nameHint == null || nameHint.equals(lRefExpr.getName())) {
       final PsiElement target = lRefExpr.resolve(); //this is NOT quadratic since the next statement will prevent from further processing declarations upstream
       if (!(target instanceof PsiVariable) && !(target instanceof GrAccessorMethod)) {
         return true;

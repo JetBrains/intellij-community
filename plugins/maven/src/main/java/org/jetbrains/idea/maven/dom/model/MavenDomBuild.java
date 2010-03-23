@@ -46,7 +46,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = PathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getSourceDirectory();
 
   /**
@@ -60,7 +60,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = PathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getScriptSourceDirectory();
 
   /**
@@ -74,7 +74,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = PathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getTestSourceDirectory();
 
   /**
@@ -88,7 +88,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = PathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getOutputDirectory();
 
   /**
@@ -102,7 +102,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = PathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getTestOutputDirectory();
 
   /**

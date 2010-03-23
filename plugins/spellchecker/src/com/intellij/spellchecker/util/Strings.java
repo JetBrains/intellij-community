@@ -15,7 +15,14 @@
  */
 package com.intellij.spellchecker.util;
 
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
+
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
 public final class Strings {
   private Strings() {
@@ -28,8 +35,32 @@ public final class Strings {
     for (int i = 1; i < word.length() && lowCase; i++) {
       lowCase = Character.isLowerCase(word.charAt(i));
     }
-
     return Character.isUpperCase(word.charAt(0)) && lowCase;
+  }
+
+
+  public static boolean isCapitalized(@NotNull String text, @NotNull TextRange range) {
+    if (range.getLength() == 0) return false;
+    CharacterIterator it = new StringCharacterIterator(text, range.getStartOffset() + 1, range.getEndOffset(), range.getStartOffset() + 1);
+    boolean lowCase = true;
+    for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      lowCase = Character.isLowerCase(c);
+    }
+
+    return Character.isUpperCase(text.charAt(range.getStartOffset())) && lowCase;
+  }
+
+  public static boolean isUpperCased(@NotNull String text, @NotNull TextRange range) {
+    if (range.getLength() == 0) return false;
+    CharacterIterator it = new StringCharacterIterator(text, range.getStartOffset(), range.getEndOffset(), range.getStartOffset());
+
+    for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      if (!Character.isUpperCase(c)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public static boolean isUpperCase(String word) {
@@ -68,6 +99,68 @@ public final class Strings {
       words.set(i, words.get(i).toUpperCase());
     }
   }
-    
+
+ 
+  private enum WordState {
+    NO_WORD, PREV_UC, WORD
+  }
+
+  public static void addAll(@NotNull String text, @NotNull TextRange range, @NotNull List<TextRange> result) {
+    CharacterIterator it = new StringCharacterIterator(text, range.getStartOffset(), range.getEndOffset(), range.getStartOffset());
+    StringBuffer b = new StringBuffer();
+    WordState state = WordState.NO_WORD;
+    char curPrevUC = '\0';
+    int pos = range.getStartOffset();
+    for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      switch (state) {
+        case NO_WORD:
+          if (!Character.isUpperCase(c)) {
+            b.append(c);
+            state = WordState.WORD;
+          }
+          else {
+            state = WordState.PREV_UC;
+            curPrevUC = c;
+          }
+          break;
+        case PREV_UC:
+          if (!Character.isUpperCase(c)) {
+            if (b.length() > 0) {
+              result.add(new TextRange(pos, pos + b.length()));
+              pos += b.length();
+            }
+            b = new StringBuffer();
+            b.append(curPrevUC);
+            b.append(c);
+            state = WordState.WORD;
+          }
+          else {
+            b.append(curPrevUC);
+            state = WordState.PREV_UC;
+            curPrevUC = c;
+          }
+          break;
+        case WORD:
+          if (Character.isUpperCase(c)) {
+            if (b.length() > 0) {
+              result.add(new TextRange(pos, pos + b.length()));
+              pos += b.length();
+            }
+            b.setLength(0);
+            state = WordState.PREV_UC;
+            curPrevUC = c;
+          }
+          else {
+            b.append(c);
+          }
+          break;
+      }
+    }
+    if (state == WordState.PREV_UC) {
+      b.append(curPrevUC);
+    }
+    result.add(new TextRange(pos, pos + b.length()));
+  }
+
 
 }

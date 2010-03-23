@@ -25,12 +25,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -39,6 +43,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class UnversionedViewDialog extends DialogWrapper {
@@ -53,6 +58,11 @@ public class UnversionedViewDialog extends DialogWrapper {
     super(project, true);
     setTitle("Unversioned files");
     myProject = project;
+    final Runnable closer = new Runnable() {
+      public void run() {
+        UnversionedViewDialog.this.close(0);
+      }
+    };
     myView = new ChangesListView(project) {
       @Override
       public void calcData(DataKey key, DataSink sink) {
@@ -60,6 +70,12 @@ public class UnversionedViewDialog extends DialogWrapper {
         if (ChangesListView.UNVERSIONED_FILES_DATA_KEY.is(key.getName())) {
           sink.put(key, Arrays.asList(getSelectedFiles()));
         }
+      }
+
+      @Override
+      protected void editSourceRegistration() {
+        EditSourceOnDoubleClickHandler.install(this, closer);
+        EditSourceOnEnterKeyHandler.install(this, closer);
       }
     };
     myChangeListManager = ChangeListManager.getInstance(project);
@@ -92,14 +108,16 @@ public class UnversionedViewDialog extends DialogWrapper {
     myPanel = new JPanel(new BorderLayout());
 
     final DefaultActionGroup group = new DefaultActionGroup();
+
+    final List<AnAction> actions = new LinkedList<AnAction>();
     final CommonActionsManager cam = CommonActionsManager.getInstance();
     final Expander expander = new Expander();
     final AnAction expandAction = cam.createExpandAllAction(expander, myView);
-    group.add(expandAction);
+    actions.add(expandAction);
     final AnAction collapseAction = cam.createCollapseAllAction(expander, myView);
-    group.add(collapseAction);
-    group.add(new ToggleShowFlattenAction());
-    group.add(new MoveChangesToAnotherListAction() {
+    actions.add(collapseAction);
+    actions.add(new ToggleShowFlattenAction());
+    actions.add(new MoveChangesToAnotherListAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         super.actionPerformed(e);
@@ -107,12 +125,35 @@ public class UnversionedViewDialog extends DialogWrapper {
       }
     });
 
-    myView.setMenuActions(group);
-    myView.setShowFlatten(false);
-
+    for (AnAction action : actions) {
+      group.add(action);
+    }
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
     myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     myPanel.add(new JScrollPane(myView), BorderLayout.CENTER);
+
+    actions.add(new ScheduleForAdditionAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        refreshView();
+      }
+    });
+    actions.add(new IgnoreUnversionedAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        refreshView();
+      }
+    });
+
+    final DefaultActionGroup secondGroup = new DefaultActionGroup();
+    for (AnAction action : actions) {
+      secondGroup.add(action);
+    }
+
+    myView.setMenuActions(secondGroup);
+    myView.setShowFlatten(false);
   }
 
   @Override

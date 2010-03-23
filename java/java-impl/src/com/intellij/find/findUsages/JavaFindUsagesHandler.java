@@ -386,7 +386,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", aClass.getName()));
       }
       for (PsiFile file : files) {
-        ProgressManager.checkCanceled();
+        if (progress != null) {
+          progress.checkCanceled();
+        }
         ReferencesSearch.search(aClass, new LocalSearchScope(file), false).forEach(new ReadActionProcessor<PsiReference>() {
           public boolean processInReadAction(final PsiReference psiReference) {
             return addResult(results, psiReference, options, aClass);

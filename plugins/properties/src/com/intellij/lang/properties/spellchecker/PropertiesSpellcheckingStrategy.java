@@ -18,6 +18,7 @@ package com.intellij.lang.properties.spellchecker;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.psi.PsiElement;
+import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
@@ -31,15 +32,14 @@ public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
     if (element instanceof PropertyValueImpl) {
       return new Tokenizer<PropertyValueImpl>() {
         public Token[] tokenize(@NotNull PropertyValueImpl element) {
-          return new Token[]{new Token<PropertyValueImpl>(element, element.getText(), false)};
+          return new Token[]{new Token<PropertyValueImpl>(element, element.getText(), false, SplitterFactory.getInstance().getStringLiteralSplitter())};
         }
       };
     }
     if (element instanceof PropertyImpl) {
       return new Tokenizer<PropertyImpl>() {
-
         public Token[] tokenize(@NotNull PropertyImpl element) {
-          return new Token[]{new Token<PropertyImpl>(element, element.getKey(), true)};
+          return new Token[]{new Token<PropertyImpl>(element, element.getKey(), true, SplitterFactory.getInstance().getPropertiesSplitter())};
         }
       };
     }

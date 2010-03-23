@@ -59,7 +59,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   }
 
   @NotNull
-  public Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file) {
     final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
     if (item != null) {
       final PsiFileSystemItem parent = item.getParent();
@@ -102,7 +102,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     return Collections.emptyList();
   }
 
-  public boolean isMine(final Project project, final @NotNull VirtualFile file) {
+  public boolean isMine(final Project project, @NotNull final VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return index.isInSourceContent(file);
   }

@@ -56,13 +56,14 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   };
 
   public static Win32LocalFileSystem getWin32Instance() {
+    if (!isAvailable()) throw new RuntimeException("dll is not loaded");
     Win32LocalFileSystem fileSystem = THREAD_LOCAL.get();
     fileSystem.myKernel.clearCache();
     return fileSystem;
   }
 
   private final Win32Kernel myKernel = new Win32Kernel();
-  private boolean checkMe = false;
+  public static boolean checkMe = false;
 
   private Win32LocalFileSystem() {
   }

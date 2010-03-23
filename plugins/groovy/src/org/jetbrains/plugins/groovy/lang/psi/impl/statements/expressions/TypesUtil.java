@@ -28,6 +28,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -235,6 +236,13 @@ public class TypesUtil {
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     if (lType == null || rType == null) return false;
 
+    for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
+      final Boolean result = converter.isConvertible(lType, rType, manager, scope);
+      if (result != null) {
+        return result;
+      }
+    }
+
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;
       if (tuple.getComponentTypes().length == 0) {
@@ -361,9 +369,11 @@ public class TypesUtil {
 
       if (parameters1.length == parameters2.length) {
         final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
-        GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
-        final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-        return GrClosureType.create(signature, manager, scope, languageLevel);
+        if (signature != null) {
+          GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
+          final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
+          return GrClosureType.create(signature, manager, scope, languageLevel);
+        }
       }
     }
     else if (GrStringUtil.GROOVY_LANG_GSTRING.equals(type1.getCanonicalText()) &&

@@ -18,17 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -89,23 +84,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
       final String newName = ((PsiClass) element).getName();
       handleElementRename(newName);
       if (isReferenceTo(element)) return this;
-
-      final GroovyFileBase file = (GroovyFileBase) getContainingFile();
-      final PsiClass clazz = (PsiClass) element;
-      final String qName = clazz.getQualifiedName();
-      if (qName != null) {
-        if (mayInsertImport()) {
-          final GrImportStatement added = file.addImportForClass(clazz);
-          if (!bindsCorrectly(element)) {
-            file.removeImport(added);
-            return bindWithQualifiedRef(qName);
-          }
-
-          return this;
-        } else {
-          return bindWithQualifiedRef(qName);
-        }
-      }
+      return bindWithQualifiedRef(((PsiClass)element).getQualifiedName());
     } else if (element instanceof PsiMember) {
       PsiMember member = (PsiMember)element;
       if (!isPhysical()) {
@@ -126,9 +105,6 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     throw new IncorrectOperationException("Cannot bind to:" + element + " of class " + element.getClass());
   }
 
-  private boolean mayInsertImport() {
-    return PsiTreeUtil.getParentOfType(this, GrDocComment.class) == null && !(getContainingFile() instanceof GroovyCodeFragment) && PsiTreeUtil.getParentOfType(this, GrImportStatement.class) == null;
-  }
 
   protected abstract PsiElement bindWithQualifiedRef(String qName);
 

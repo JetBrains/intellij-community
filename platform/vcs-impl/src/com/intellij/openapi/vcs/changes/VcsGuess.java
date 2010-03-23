@@ -81,7 +81,9 @@ public class VcsGuess {
     if (file == null) return false;
     final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
     if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-      final VirtualFile ideaDir = myProject.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
+      final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir == null) return false;
+      final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
       return (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtil.isAncestor(ideaDir, file, false));
     }
     return false;

@@ -39,8 +39,13 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Collection;
 
 public class TestPackage extends TestObject {
@@ -90,25 +95,32 @@ public class TestPackage extends TestObject {
       LOG.error(e);
     }
 
-    findTestsWithProgress(new FindCallback() {
-      public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
-        addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
-          @Nullable
-          public String fun(PsiElement element) {
-            if (element instanceof PsiClass) {
-              return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+    try {
+      final ServerSocket serverSocket = new ServerSocket(0);
+      myJavaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
+      findTestsWithProgress(new FindCallback() {
+        public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
+          addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+            @Nullable
+            public String fun(PsiElement element) {
+              if (element instanceof PsiClass) {
+                return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+              }
+              else if (element instanceof PsiMethod) {
+                PsiMethod method = (PsiMethod)element;
+                return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+              }
+              else {
+                return null;
+              }
             }
-            else if (element instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod)element;
-              return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
-            }
-            else {
-              return null;
-            }
-          }
-        }, packageName, false, isJunit4);
-      }
-    }, filter);
+          }, packageName, false, isJunit4);
+        }
+      }, filter, serverSocket);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   private TestClassFilter getClassFilter(final PsiPackage aPackage) throws JUnitUtil.NoJUnitException {
@@ -165,7 +177,7 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
+  private static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter, final ServerSocket serverSocket) {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
@@ -176,19 +188,64 @@ public class TestPackage extends TestObject {
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
     final boolean[] isJunit4 = new boolean[1];
     ProgressManager.getInstance().run(new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
+      int myPort = -1;
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-         isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
+        try {
+          final Socket socket = serverSocket.accept();
+          final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+          try {
+            myPort = Integer.parseInt(bufferedReader.readLine());
+          } finally {
+            bufferedReader.close();
+            socket.close();
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+        isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
       }
 
       @Override
       public void onSuccess() {
-         callback.found(classes, isJunit4[0]);
+        callback.found(classes, isJunit4[0]);
+        connect();
+      }
+
+      @Override
+      public void onCancel() {
+        connect();
       }
 
       @Override
       public DumbModeAction getDumbModeAction() {
         return DumbModeAction.WAIT;
+      }
+
+      private void connect() {
+        Socket socket = null;
+        try {
+          socket = new Socket(InetAddress.getLocalHost(), myPort);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+        finally {
+          try {
+            if (socket != null) socket.close();
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+
+          try {
+            serverSocket.close();
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+        }
       }
     });
   }

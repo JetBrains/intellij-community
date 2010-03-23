@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,6 +26,11 @@ public interface PsiExpression extends PsiAnnotationMemberValue {
    * The empty array of PSI expressions which can be reused to avoid unnecessary allocations.
    */
   PsiExpression[] EMPTY_ARRAY = new PsiExpression[0];
+  Function<PsiExpression,PsiType> EXPRESSION_TO_TYPE = new Function<PsiExpression, PsiType>() {
+    public PsiType fun(final PsiExpression expression) {
+      return expression.getType();
+    }
+  };
 
   /**
    * Returns the type of the expression.

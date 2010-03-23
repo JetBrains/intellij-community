@@ -9,6 +9,7 @@ import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.VisibilityUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
@@ -62,6 +63,27 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
     final PsiClass targetClass = psiClass.findInnerClassByName("D", false);
     Assert.assertNotNull(targetClass);
     new MockIntroduceConstantHandler(targetClass).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testPartialStringLiteralAnchor() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testEscalateVisibility() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    final PsiClass[] classes = ((PsiJavaFile)getFile()).getClasses();
+    Assert.assertTrue(classes.length == 2);
+    final PsiClass targetClass = classes[1];
+    Assert.assertNotNull(targetClass);
+    new MockIntroduceConstantHandler(targetClass){
+      @Override
+      protected String getVisibility() {
+        return VisibilityUtil.ESCALATE_VISIBILITY;
+      }
+    }.invoke(getProject(), getEditor(), getFile(), null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 

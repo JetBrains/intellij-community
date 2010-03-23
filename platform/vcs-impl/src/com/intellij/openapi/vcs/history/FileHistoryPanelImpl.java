@@ -123,8 +123,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private final Alarm myUpdateAlarm;
 
-  private final String myRepositoryPath;
-
   private volatile boolean myInRefresh;
   private List<Object> myTargetSelection;
   private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
@@ -263,7 +261,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
     myProvider = provider;
     myAnnotationProvider = annotationProvider;
-    myRepositoryPath = repositoryPath;
     myProject = project;
     myRefresher = refresher;
     myHistorySession = session;         
@@ -637,7 +634,10 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
     };
     commentGroup.add(commentLabel, BorderLayout.NORTH);
-    commentGroup.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
+    pane.setBorder(BorderFactory.createMatteBorder(1, 1, myAdditionalDetails == null ? 0 : 1, 0, UIUtil.getBorderSeparatorColor()));
+
+    commentGroup.add(pane, BorderLayout.CENTER);
     detailsSplitter.setFirstComponent(commentGroup);
     detailsSplitter.setSecondComponent(myAdditionalDetails);
 
@@ -646,6 +646,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     //myLoadingLabel.setVisible(false);
     myLoadingLabel.setBackground(UIUtil.getToolTipBackground());
     wrapper.add(myLoadingLabel, BorderLayout.NORTH);
+
+    myDualView.setViewBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, UIUtil.getBorderSeparatorColor()));
     wrapper.add(myDualView, BorderLayout.CENTER);
 
     mySplitter.setFirstComponent(wrapper);

@@ -18,29 +18,30 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-/**
- * @author yole
-*/
-public class TreeWithEmptyText extends Tree {
+public abstract class EmptyTextHelper {
+  private static final int EMPTY_TEXT_TOP = 20;
+  
+  private final JComponent myOwner;
+
   private String myEmptyText = "";
   private final SimpleColoredComponent myEmptyTextComponent = new SimpleColoredComponent();
   private final ArrayList<ActionListener> myEmptyTextClickListeners = new ArrayList<ActionListener>();
-  private static final int EMPTY_TEXT_TOP = 20;
 
-  public TreeWithEmptyText(final TreeModel model) {
-    super(model);
-    addMouseListener(new MouseAdapter() {
+  public EmptyTextHelper(JComponent owner) {
+    myOwner = owner;
+    
+    myOwner.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(final MouseEvent e) {
-        if (e.getButton() == 1 && e.getClickCount() == 1 && isModelEmpty()) {
+        if (e.getButton() == 1 && e.getClickCount() == 1 && isEmpty()) {
           ActionListener actionListener = findEmptyTextActionListenerAt(e.getPoint());
           if (actionListener != null) {
             actionListener.actionPerformed(new ActionEvent(this, 0, ""));
@@ -48,15 +49,15 @@ public class TreeWithEmptyText extends Tree {
         }
       }
     });
-    addMouseMotionListener(new MouseMotionAdapter() {
+    myOwner.addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseMoved(final MouseEvent e) {
-        if (isModelEmpty()) {
+        if (isEmpty()) {
           if (findEmptyTextActionListenerAt(e.getPoint()) != null) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            myOwner.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           }
           else {
-            setCursor(Cursor.getDefaultCursor());
+            myOwner.setCursor(Cursor.getDefaultCursor());
           }
         }
       }
@@ -66,7 +67,7 @@ public class TreeWithEmptyText extends Tree {
 
   @Nullable
   private ActionListener findEmptyTextActionListenerAt(final Point point) {
-    final Rectangle bounds = getBounds();
+    final Rectangle bounds = myOwner.getBounds();
     final Dimension size = myEmptyTextComponent.getPreferredSize();
     int x = ((bounds.width - size.width)) / 2;
     if (new Rectangle(x, EMPTY_TEXT_TOP, bounds.width, bounds.height).contains(point)) {
@@ -103,13 +104,12 @@ public class TreeWithEmptyText extends Tree {
     myEmptyTextClickListeners.add(listener);
   }
 
-  protected void paintComponent(final Graphics g) {
-    super.paintComponent(g);
-    if (isModelEmpty() && myEmptyText.length() > 0) {
-      myEmptyTextComponent.setFont(getFont());
-      myEmptyTextComponent.setBackground(getBackground());
-      myEmptyTextComponent.setForeground(getForeground());
-      final Rectangle bounds = getBounds();
+  public void paint(Graphics g) {
+    if (isEmpty() && myEmptyText.length() > 0) {
+      myEmptyTextComponent.setFont(myOwner.getFont());
+      myEmptyTextComponent.setBackground(myOwner.getBackground());
+      myEmptyTextComponent.setForeground(myOwner.getForeground());
+      final Rectangle bounds = myOwner.getBounds();
       final Dimension size = myEmptyTextComponent.getPreferredSize();
       myEmptyTextComponent.setBounds(0, 0, size.width, size.height);
       int x = ((bounds.width - size.width)) / 2;
@@ -123,8 +123,5 @@ public class TreeWithEmptyText extends Tree {
     }
   }
 
-  public boolean isModelEmpty() {
-    final TreeModel model = getModel();
-    return model.getChildCount(model.getRoot()) == 0;
-  }
+  protected abstract boolean isEmpty();
 }

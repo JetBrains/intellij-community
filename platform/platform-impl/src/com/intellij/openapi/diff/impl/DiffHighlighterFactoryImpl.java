@@ -19,18 +19,24 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class DiffHighlighterFactoryImpl implements DiffHighlighterFactory {
   private final Project myProject;
   private final FileType myFileType;
+  private final VirtualFile myFile;
 
-  public DiffHighlighterFactoryImpl(FileType fileType, Project project) {
+  public DiffHighlighterFactoryImpl(FileType fileType, VirtualFile file, Project project) {
     myFileType = fileType;
     myProject = project;
+    myFile = file;
   }
 
   public EditorHighlighter createHighlighter() {
-    return (myFileType == null || myProject == null) ?
-        null : EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType);
+    if (myFileType == null || myProject == null) return null;
+    if (myFile != null && myFile.getFileType() == myFileType) {
+      return EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
+    }
+    return EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFileType);
   }
 }

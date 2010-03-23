@@ -31,7 +31,7 @@ import java.util.List;
  * // TODO: merge with FileReferenceHelper & drop
  *
  * @author spleaner
- * @deprecated Use FileReferenceHelper instead
+ * @deprecated use {@link com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper} instead
  */
 @Deprecated
 public abstract class LogicalRootsManager {

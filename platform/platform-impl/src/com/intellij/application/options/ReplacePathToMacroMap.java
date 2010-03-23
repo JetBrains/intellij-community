@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -174,7 +175,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
       final Set<Map.Entry<String, String>> entrySet = entries();
       Map.Entry<String, String>[] entries = entrySet.toArray(new Map.Entry[entrySet.size()]);
-      Arrays.sort(entries, PATHS_COMPARATOR);
+      ContainerUtil.sort(entries, PATHS_COMPARATOR);
       myPathsIndex = new ArrayList<String>(entries.length);
 
       for (Map.Entry<String, String> entry : entries) {

@@ -35,10 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
-import org.jetbrains.idea.maven.dom.model.MavenDomParent;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -156,6 +153,8 @@ public class MavenDomGutterAnnotator implements Annotator {
     if (psiElement instanceof XmlTag) {
       final DomElement element = DomManager.getDomManager(psiElement.getProject()).getDomElement((XmlTag)psiElement);
       if (element instanceof MavenDomDependency) {
+        if (element.getParentOfType(MavenDomPlugin.class, true) != null) return;
+
         MavenDomDependency dependency = (MavenDomDependency)element;
         if (isDependencyManagementSection(dependency)) {
           annotateDependencyUsages(dependency, holder);

@@ -27,8 +27,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import junit.framework.Assert;
-import junit.framework.AssertionFailedError;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -37,11 +35,6 @@ import java.util.*;
 import java.util.jar.JarFile;
 
 public class IdeaTestUtil extends PlatformTestUtil {
-
-  /**
-   * Measured on dual core p4 3HZ 1gig ram
-   */
-  private static final long ETALON_TIMING = 438;
 
 
   public static final Comparator<AbstractTreeNode> DEFAULT_COMPARATOR = new Comparator<AbstractTreeNode>() {
@@ -52,7 +45,6 @@ public class IdeaTestUtil extends PlatformTestUtil {
     }
   };
 
-  public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
   public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
 
   private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, VirtualFileFilter filter) {
@@ -151,56 +143,6 @@ public class IdeaTestUtil extends PlatformTestUtil {
       }
     });
     assertDirectoriesEqual(dirAfter, dirBefore, CVS_FILE_FILTER);
-  }
-
-  public static void assertTiming(String message, long expected, long actual) {
-    if (COVERAGE_ENABLED_BUILD) return;
-    long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / ETALON_TIMING);
-    final double acceptableChangeFactor = 1.1;
-
-    // Allow 10% more in case of test machine is busy.
-    // For faster machines (expectedOnMyMachine < expected) allow nonlinear performance rating:
-    // just perform better than acceptable expected
-    if (actual > expectedOnMyMachine * acceptableChangeFactor &&
-        (expectedOnMyMachine > expected || actual > expected * acceptableChangeFactor)) {
-      int percentage = (int)(((float)100 * (actual - expectedOnMyMachine)) / expectedOnMyMachine);
-      Assert.fail(message + ". Operation took " + percentage + "% longer than expected. Expected on my machine: " + expectedOnMyMachine +
-                  ". Actual: " + actual + ". Expected on Etalon machine: " + expected + "; Actual on Etalon: " +
-                  (actual * ETALON_TIMING / Timings.MACHINE_TIMING));
-    }
-    else {
-      int percentage = (int)(((float)100 * (actual - expectedOnMyMachine)) / expectedOnMyMachine);
-      System.out.println(message + ". Operation took " + percentage + "% longer than expected. Expected on my machine: " +
-                         expectedOnMyMachine + ". Actual: " + actual + ". Expected on Etalon machine: " + expected +
-                         "; Actual on Etalon: " + (actual * ETALON_TIMING / Timings.MACHINE_TIMING));
-    }
-  }
-
-  public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
-    assertTiming(message, expected, 4, actionToMeasure);
-  }
-
-  public static long measure(@NotNull Runnable actionToMeasure) {
-    long start = System.currentTimeMillis();
-    actionToMeasure.run();
-    long finish = System.currentTimeMillis();
-    return finish - start;
-  }
-  public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
-    while (true) {
-      attempts--;
-      long duration = measure(actionToMeasure);
-      try {
-        assertTiming(message, expected, duration);
-        break;
-      }
-      catch (AssertionFailedError e) {
-        if (attempts == 0) throw e;
-        System.gc();
-        System.gc();
-        System.gc();
-      }
-    }
   }
 
   public static void main(String[] args) {

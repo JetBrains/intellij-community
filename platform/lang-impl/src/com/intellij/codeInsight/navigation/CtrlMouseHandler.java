@@ -487,6 +487,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
+          if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
+          
           showHint(info);
         }
       });

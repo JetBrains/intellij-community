@@ -61,14 +61,17 @@ public class SlowLineMarkersPass extends TextEditorHighlightingPass implements L
       if (psiRoot == null || !HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       final List<LineMarkerProvider> providers = LineMarkersPass.getMarkerProviders(language, myProject);
-      addLineMarkers(elements, providers, markers);
-      LineMarkersPass.collectLineMarkersForInjected(markers, elements, this, myFile);
+      addLineMarkers(elements, providers, markers, progress);
+      LineMarkersPass.collectLineMarkersForInjected(markers, elements, this, myFile, progress);
     }
 
     myMarkers = markers;
   }
 
-  public void addLineMarkers(List<PsiElement> elements, List<LineMarkerProvider> providers, List<LineMarkerInfo> result) throws ProcessCanceledException {
+  public void addLineMarkers(@NotNull List<PsiElement> elements,
+                             @NotNull List<LineMarkerProvider> providers,
+                             @NotNull List<LineMarkerInfo> result,
+                             @NotNull ProgressIndicator progress) throws ProcessCanceledException {
     for (LineMarkerProvider provider : providers) {
       provider.collectSlowLineMarkers(elements, result);
     }
