@@ -376,48 +376,7 @@ class XmlZenCodingInterpreter {
                                         int numberInIteration) {
     List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
     if (callback.isLiveTemplateApplicable(token.myKey)) {
-      if (token.myTemplate != null) {
-        if (attr2value.size() > 0) {
-          TemplateImpl modifiedTemplate = token.myTemplate.copy();
-          XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback.getProject());
-          assert tag != null;
-          for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-            Pair<String, String> pair = iterator.next();
-            if (tag.getAttribute(pair.first) != null) {
-              tag.setAttribute(pair.first, getValue(pair, numberInIteration));
-              iterator.remove();
-            }
-          }
-          String text = null;
-          if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
-            String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
-            if (textWithAttrs != null) {
-              text = textWithAttrs;
-            }
-            else {
-              for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-                Pair<String, String> pair = iterator.next();
-                tag.setAttribute(pair.first, getValue(pair, numberInIteration));
-                iterator.remove();
-              }
-            }
-          }
-          if (text == null) {
-            text = tag.getContainingFile().getText();
-          }
-          modifiedTemplate.setString(text);
-          removeVariablesWhichHasNoSegment(modifiedTemplate);
-          Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-          return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
-        }
-        else {
-          return callback.startTemplate(token.myTemplate, null, listener);
-        }
-      }
-      else {
-        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-        return callback.startTemplate(token.myKey, predefinedValues, listener);
-      }
+      return invokeExistingLiveTemplate(token, callback, listener, numberInIteration, attr2value);
     }
     else {
       TemplateImpl template = new TemplateImpl("", "");
@@ -432,6 +391,55 @@ class XmlZenCodingInterpreter {
       template.setToReformat(true);
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
       return callback.startTemplate(template, predefinedValues, listener);
+    }
+  }
+
+  private static boolean invokeExistingLiveTemplate(TemplateToken token,
+                                                    CustomTemplateCallback callback,
+                                                    TemplateInvokationListener listener,
+                                                    int numberInIteration,
+                                                    List<Pair<String, String>> attr2value) {
+    if (token.myTemplate != null) {
+      if (attr2value.size() > 0) {
+        TemplateImpl modifiedTemplate = token.myTemplate.copy();
+        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback.getProject());
+        assert tag != null;
+        for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+          Pair<String, String> pair = iterator.next();
+          if (tag.getAttribute(pair.first) != null) {
+            tag.setAttribute(pair.first, getValue(pair, numberInIteration));
+            iterator.remove();
+          }
+        }
+        String text = null;
+        if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
+          String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
+          if (textWithAttrs != null) {
+            text = textWithAttrs;
+          }
+          else {
+            for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+              Pair<String, String> pair = iterator.next();
+              tag.setAttribute(pair.first, getValue(pair, numberInIteration));
+              iterator.remove();
+            }
+          }
+        }
+        if (text == null) {
+          text = tag.getContainingFile().getText();
+        }
+        modifiedTemplate.setString(text);
+        removeVariablesWhichHasNoSegment(modifiedTemplate);
+        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+        return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
+      }
+      else {
+        return callback.startTemplate(token.myTemplate, null, listener);
+      }
+    }
+    else {
+      Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+      return callback.startTemplate(token.myKey, predefinedValues, listener);
     }
   }
 
