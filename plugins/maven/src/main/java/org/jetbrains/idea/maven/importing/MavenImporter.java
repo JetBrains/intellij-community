@@ -18,10 +18,14 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import org.apache.maven.project.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +54,9 @@ public abstract class MavenImporter {
     return result;
   }
 
-  public abstract boolean isApplicable(MavenProject mavenProject);
+  public boolean isApplicable(MavenProject mavenProject) {
+    return mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
+  }
 
   public abstract boolean isSupportedDependency(MavenArtifact artifact);
 
@@ -59,23 +65,23 @@ public abstract class MavenImporter {
     return null;
   }
 
-  public boolean requiresResolvedPlugin(MavenPlugin plugin) {
-    return false;
+  public void resolve(MavenProject project, org.apache.maven.project.MavenProject nativeMavenProject, MavenEmbedderWrapper embedder)
+    throws MavenProcessCanceledException {
   }
 
   public abstract void preProcess(Module module,
-                         MavenProject mavenProject,
-                         MavenProjectChanges changes,
-                         MavenModifiableModelsProvider modifiableModelsProvider);
+                                  MavenProject mavenProject,
+                                  MavenProjectChanges changes,
+                                  MavenModifiableModelsProvider modifiableModelsProvider);
 
   public abstract void process(MavenModifiableModelsProvider modifiableModelsProvider,
-                      Module module,
-                      MavenRootModelAdapter rootModel,
-                      MavenProjectsTree mavenModel,
-                      MavenProject mavenProject,
-                      MavenProjectChanges changes,
-                      Map<MavenProject, String> mavenProjectToModuleName,
-                      List<MavenProjectsProcessorTask> postTasks);
+                               Module module,
+                               MavenRootModelAdapter rootModel,
+                               MavenProjectsTree mavenModel,
+                               MavenProject mavenProject,
+                               MavenProjectChanges changes,
+                               Map<MavenProject, String> mavenProjectToModuleName,
+                               List<MavenProjectsProcessorTask> postTasks);
 
   public void collectSourceFolders(MavenProject mavenProject, List<String> result) {
   }

@@ -206,6 +206,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return myId;
   }
 
+  @Override
+  public int hashCode() {
+    return myId >= 0 ? myId : -myId;
+  }
+
   @NotNull
   public VirtualFile createChildDirectory(final Object requestor, final String name) throws IOException {
     validateName(name);

@@ -1095,6 +1095,8 @@
 
     <problemFileHighlightFilter implementation="com.intellij.codeInsight.problems.DefaultProblemFileHighlightFilter"/>
 
+    <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
+
     <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
 
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineParameterHandler"/>

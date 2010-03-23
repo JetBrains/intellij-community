@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
@@ -61,6 +62,7 @@ public class UnscrambleDialog extends DialogWrapper{
   private TextFieldWithHistory myLogFile;
   private JCheckBox myUseUnscrambler;
   private JPanel myUnscramblePanel;
+  private JCheckBox myOnTheFly;
   protected AnalyzeStacktraceUtil.StacktraceEditorPanel myStacktraceEditorPanel;
 
   public UnscrambleDialog(Project project) {
@@ -77,6 +79,12 @@ public class UnscrambleDialog extends DialogWrapper{
     myUseUnscrambler.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         useUnscramblerChanged();
+      }
+    });
+    myOnTheFly.setSelected(Registry.get("analyze.exceptions.on.the.fly").asBoolean());
+    myOnTheFly.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        Registry.get("analyze.exceptions.on.the.fly").setValue(myOnTheFly.isSelected());
       }
     });
     createLogFileChooser();

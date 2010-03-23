@@ -23,6 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -972,15 +973,11 @@ public class MavenProjectsTree {
   }
 
   public List<MavenProject> getDependentProjects(MavenProject project) {
-    MavenId projectId = project.getMavenId();
-    List<MavenProject> result = new ArrayList<MavenProject>();
+    List<MavenProject> result = new SmartList<MavenProject>();
     for (MavenProject eachProject : getProjects()) {
       if (eachProject == project) continue;
-      for (MavenArtifact eachDependency : eachProject.getDependencies()) {
-        if (eachDependency.getMavenId().equals(projectId)) {
-          result.add(eachProject);
-          break;
-        }
+      if (!eachProject.findDependencies(project).isEmpty()) {
+        result.add(eachProject);
       }
     }
     return result;

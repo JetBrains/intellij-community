@@ -154,7 +154,8 @@ public final class PsiUtil extends PsiUtilBase {
     PsiJavaCodeReferenceElement ref;
     if (exceptionName != null) {
       ref = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
-    } else {
+    }
+    else {
       PsiClassType type = factory.createType(exceptionClass);
       ref = factory.createReferenceElementByType(type);
     }
@@ -614,23 +615,24 @@ public final class PsiUtil extends PsiUtilBase {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
   }
 
-  public static boolean isAssigned(final PsiParameter parameter) {
-    class MyProcessor implements Processor<PsiReference> {
-      boolean myIsWriteRefFound = false;
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiReferenceExpression) {
-          myIsWriteRefFound |= isAccessedForWriting((PsiExpression)element);
-        }
-        return !myIsWriteRefFound;
-      }
 
-      public boolean isWriteRefFound() {
-        return myIsWriteRefFound;
+  private static class ParamWriteProcessor implements Processor<PsiReference> {
+    private volatile boolean myIsWriteRefFound = false;
+    public boolean process(PsiReference reference) {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiReferenceExpression && isAccessedForWriting((PsiExpression)element)) {
+        myIsWriteRefFound = true;
+        return false;
       }
+      return true;
     }
 
-    MyProcessor processor = new MyProcessor();
+    public boolean isWriteRefFound() {
+      return myIsWriteRefFound;
+    }
+  }
+  public static boolean isAssigned(final PsiParameter parameter) {
+    ParamWriteProcessor processor = new ParamWriteProcessor();
     ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
     return processor.isWriteRefFound();
   }

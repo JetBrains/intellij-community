@@ -81,8 +81,8 @@ public class PathMacroEditor extends DialogWrapper {
     final boolean isNameOK = myValidator.checkName(myNameField.getText());
     getOKAction().setEnabled(isNameOK);
     if (isNameOK) {
-      final String text = myValueField.getText();
-      getOKAction().setEnabled(text.length() > 0);
+      final String text = myValueField.getText().trim();
+      getOKAction().setEnabled(text.length() > 0 && !"/".equals(text.trim()));
     }
   }
 

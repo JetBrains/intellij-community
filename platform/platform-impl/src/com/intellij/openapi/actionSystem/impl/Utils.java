@@ -114,7 +114,7 @@ public class Utils{
         ActionGroup actionGroup = (ActionGroup)child;
         if (actionGroup.isPopup()) { // popup menu has its own presentation
           // disable group if it contains no visible actions
-          final boolean enabled = hasVisibleChildren(actionGroup, presentationFactory, context, place);
+          final boolean enabled = actionGroup.canBePerformed(context) || hasVisibleChildren(actionGroup, presentationFactory, context, place);
           presentation.setEnabled(enabled);
           list.add(child);
         }
@@ -220,7 +220,7 @@ public class Utils{
           component.add(new JPopupMenu.Separator());
         }
       }
-      else if (action instanceof ActionGroup) {
+      else if (action instanceof ActionGroup && !(((ActionGroup)action).canBePerformed(context) && !hasVisibleChildren((ActionGroup)action, presentationFactory, context, place))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics);
         component.add(menu);
         children.add(menu);

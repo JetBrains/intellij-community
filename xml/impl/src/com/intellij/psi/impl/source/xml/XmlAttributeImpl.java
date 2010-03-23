@@ -66,6 +66,13 @@ import static com.intellij.codeInsight.completion.CompletionInitializationContex
 public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlAttributeImpl");
 
+  private final int myHC = ourHC++;
+
+  @Override
+  public int hashCode() {
+    return myHC;
+  }
+
   public XmlAttributeImpl() {
     super(XmlElementType.XML_ATTRIBUTE);
   }

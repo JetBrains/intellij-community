@@ -69,13 +69,6 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   public boolean CHECK_DUPLICATE_KEYS = true;
   public boolean CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = true;
 
-  private JRadioButton myFileScope;
-  private JRadioButton myModuleScope;
-  private JRadioButton myProjectScope;
-  private JCheckBox myDuplicateValues;
-  private JCheckBox myDuplicateKeys;
-  private JCheckBox myDuplicateBoth;
-  private JPanel myWholePanel;
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     scope.accept(new PsiRecursiveElementVisitor() {
@@ -391,56 +384,69 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   }
 
   public JComponent createOptionsPanel() {
-    ButtonGroup buttonGroup = new ButtonGroup();
-    buttonGroup.add(myFileScope);
-    buttonGroup.add(myModuleScope);
-    buttonGroup.add(myProjectScope);
+    return new OptionsPanel().myWholePanel;
+  }
 
-    myFileScope.setSelected(CURRENT_FILE);
-    myModuleScope.setSelected(MODULE_WITH_DEPENDENCIES);
-    myProjectScope.setSelected(!(CURRENT_FILE || MODULE_WITH_DEPENDENCIES));
+  public class OptionsPanel {
+    private JRadioButton myFileScope;
+    private JRadioButton myModuleScope;
+    private JRadioButton myProjectScope;
+    private JCheckBox myDuplicateValues;
+    private JCheckBox myDuplicateKeys;
+    private JCheckBox myDuplicateBoth;
+    private JPanel myWholePanel;
 
-    myFileScope.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        CURRENT_FILE = myFileScope.isSelected();
-      }
-    });
-    myModuleScope.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        MODULE_WITH_DEPENDENCIES = myModuleScope.isSelected();
-        if (MODULE_WITH_DEPENDENCIES){
-          CURRENT_FILE = false;
+    OptionsPanel() {
+      ButtonGroup buttonGroup = new ButtonGroup();
+      buttonGroup.add(myFileScope);
+      buttonGroup.add(myModuleScope);
+      buttonGroup.add(myProjectScope);
+
+      myFileScope.setSelected(CURRENT_FILE);
+      myModuleScope.setSelected(MODULE_WITH_DEPENDENCIES);
+      myProjectScope.setSelected(!(CURRENT_FILE || MODULE_WITH_DEPENDENCIES));
+
+      myFileScope.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          CURRENT_FILE = myFileScope.isSelected();
         }
-      }
-    });
-    myProjectScope.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (myProjectScope.isSelected()){
-          CURRENT_FILE = false;
-          MODULE_WITH_DEPENDENCIES = false;
+      });
+      myModuleScope.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          MODULE_WITH_DEPENDENCIES = myModuleScope.isSelected();
+          if (MODULE_WITH_DEPENDENCIES) {
+            CURRENT_FILE = false;
+          }
         }
-      }
-    });
+      });
+      myProjectScope.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (myProjectScope.isSelected()) {
+            CURRENT_FILE = false;
+            MODULE_WITH_DEPENDENCIES = false;
+          }
+        }
+      });
 
-    myDuplicateKeys.setSelected(CHECK_DUPLICATE_KEYS);
-    myDuplicateValues.setSelected(CHECK_DUPLICATE_VALUES);
-    myDuplicateBoth.setSelected(CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES);
+      myDuplicateKeys.setSelected(CHECK_DUPLICATE_KEYS);
+      myDuplicateValues.setSelected(CHECK_DUPLICATE_VALUES);
+      myDuplicateBoth.setSelected(CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES);
 
-    myDuplicateKeys.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        CHECK_DUPLICATE_KEYS = myDuplicateKeys.isSelected();
-      }
-    });
-    myDuplicateValues.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        CHECK_DUPLICATE_VALUES = myDuplicateValues.isSelected();
-      }
-    });
-    myDuplicateBoth.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = myDuplicateBoth.isSelected();
-      }
-    });
-    return myWholePanel;
+      myDuplicateKeys.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          CHECK_DUPLICATE_KEYS = myDuplicateKeys.isSelected();
+        }
+      });
+      myDuplicateValues.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          CHECK_DUPLICATE_VALUES = myDuplicateValues.isSelected();
+        }
+      });
+      myDuplicateBoth.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = myDuplicateBoth.isSelected();
+        }
+      });
+    }
   }
 }

@@ -19,17 +19,22 @@ package com.intellij.execution.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -38,9 +43,60 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public abstract class BaseRunConfigurationAction extends AnAction {
+public abstract class BaseRunConfigurationAction extends ActionGroup {
+  private static final Logger LOG = Logger.getInstance("#" + BaseRunConfigurationAction.class.getName());
+
   protected BaseRunConfigurationAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);
+    setPopup(true);
+  }
+
+  @NotNull
+  @Override
+  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    return e != null ? getChildren(e.getDataContext()) : EMPTY_ARRAY;
+  }
+
+  private AnAction[] getChildren(DataContext dataContext) {
+    final ConfigurationContext context = new ConfigurationContext(dataContext);
+    final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
+    if (existing == null) {
+      final List<RuntimeConfigurationProducer> producers =
+        PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
+      LOG.assertTrue(producers != null);
+      if (producers.size() > 1) {
+        final AnAction[] children = new AnAction[producers.size()];
+        int chldIdx = 0;
+        for (final RuntimeConfigurationProducer producer : producers) {
+          final ConfigurationType configurationType = producer.getConfigurationType();
+          final RunConfiguration configuration = producer.getConfiguration().getConfiguration();
+          final String actionName = configuration instanceof LocatableConfiguration
+                                    ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
+                                    : configurationType.getDisplayName();
+          children[chldIdx++] = new AnAction(actionName, configurationType.getDisplayName(), configurationType.getIcon()) {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              perform(producer, context);
+            }
+          };
+        }
+        return children;
+      }
+    }
+    return EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean canBePerformed(DataContext dataContext) {
+    final ConfigurationContext context = new ConfigurationContext(dataContext);
+    final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
+    if (existing == null) {
+      final List<RuntimeConfigurationProducer> producers =
+        PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
+      LOG.assertTrue(producers != null);
+      return producers.size() <= 1;
+    }
+    return true;
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -111,7 +167,9 @@ public abstract class BaseRunConfigurationAction extends AnAction {
       presentation.setEnabled(true);
       presentation.setVisible(true);
       final String name = suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
-      updatePresentation(presentation, " " + name, context);
+      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
+      LOG.assertTrue(producers != null);
+      updatePresentation(presentation, context.findExisting() != null || producers.size() <= 1 ? " " + name : "", context);
     }
   }
 

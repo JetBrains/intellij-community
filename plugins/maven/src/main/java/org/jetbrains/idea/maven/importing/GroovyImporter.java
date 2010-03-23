@@ -13,10 +13,6 @@ public abstract class GroovyImporter extends MavenImporter {
     super(pluginGroupID, pluginArtifactID);
   }
 
-  public boolean isApplicable(MavenProject project) {
-    return project.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
-  }
-
   @Override
   public boolean isSupportedDependency(MavenArtifact artifact) {
     return false;

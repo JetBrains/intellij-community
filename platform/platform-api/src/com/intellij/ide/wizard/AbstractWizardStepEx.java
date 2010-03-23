@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 public abstract class AbstractWizardStepEx implements Step, Disposable {
 
@@ -32,7 +31,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
 
   private String myTitle;
 
-  interface Listener extends StepListener {
+  public interface Listener extends StepListener {
     void doNextAction();
   }
 
@@ -84,7 +83,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
 
   public abstract boolean isComplete();
 
-  protected abstract void commit(CommitType commitType) throws CommitStepException;
+  public abstract void commit(CommitType commitType) throws CommitStepException;
 
   public String getTitle() {
     return myTitle;
