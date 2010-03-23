@@ -192,18 +192,23 @@ public class GitSimpleHandler extends GitHandler {
     final String[] result = new String[1];
     addListener(new GitHandlerListener() {
       public void processTerminated(final int exitCode) {
-        if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
-          result[0] = getStdout();
+        try {
+          if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
+            result[0] = getStdout();
+          }
+          else {
+            String msg = getStderr();
+            if (msg.length() == 0) {
+              msg = getStdout();
+            }
+            if (msg.length() == 0) {
+              msg = GitBundle.message("git.error.exit", exitCode);
+            }
+            ex[0] = new VcsException(msg);
+          }
         }
-        else {
-          String msg = getStderr();
-          if (msg.length() == 0) {
-            msg = getStdout();
-          }
-          if (msg.length() == 0) {
-            msg = GitBundle.message("git.error.exit", exitCode);
-          }
-          ex[0] = new VcsException(msg);
+        catch (Exception t) {
+          ex[0] = new VcsException(t.toString(), t);
         }
       }
 
