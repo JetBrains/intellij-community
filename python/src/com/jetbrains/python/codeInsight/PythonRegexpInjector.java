@@ -52,7 +52,7 @@ public class PythonRegexpInjector implements LanguageInjector {
       PyCallExpression call = PsiTreeUtil.getParentOfType(host, PyCallExpression.class);
       final PyExpression callee = call.getCallee();
       if (callee instanceof PyReferenceExpression && canBeRegexpCall(callee)) {
-        final PsiElement element = ((PyReferenceExpression)callee).resolve();
+        final PsiElement element = ((PyReferenceExpression)callee).getReference().resolve();
         if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
           List<TextRange> ranges = ((PyStringLiteralExpression)host).getStringValueTextRanges();
           if (ranges.size() == 1) {

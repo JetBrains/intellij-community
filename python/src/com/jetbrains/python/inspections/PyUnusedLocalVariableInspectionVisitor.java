@@ -124,7 +124,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
           // Check out of scope resolve elements, processes nested scopes
           if (element instanceof PyReferenceExpression){
             boolean outOfScope = false;
-            for (ResolveResult result : ((PyReferenceExpression)element).multiResolve(false)) {
+            for (ResolveResult result : ((PyReferenceExpression)element).getReference().multiResolve(false)) {
               final PsiElement resolveElement = result.getElement();
               if (!PsiTreeUtil.isAncestor(owner, resolveElement, false)){
                 outOfScope = true;

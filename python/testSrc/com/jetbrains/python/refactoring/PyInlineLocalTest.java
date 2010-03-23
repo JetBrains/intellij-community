@@ -24,7 +24,7 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
       PyReferenceExpression ref = null;
       if (element instanceof PyReferenceExpression) {
         ref = (PyReferenceExpression)element;
-        element = ((PyReferenceExpression)element).resolve();
+        element = ((PyReferenceExpression)element).getReference().resolve();
       }
       PyInlineLocalHandler.invoke(myFixture.getProject(), myFixture.getEditor(), (PyTargetExpression)element, ref);
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");

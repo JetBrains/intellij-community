@@ -188,7 +188,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   private static Pair<PyStatement, Boolean> getAssignmentToInline(ScopeOwner containerBlock, PyReferenceExpression expr,
                                                                   PyTargetExpression local, Project project) {
     if (expr != null) {
-      final PyElement[] candidates = PyDefUseUtil.getLatestDefs(containerBlock, local, (PyElement)expr.getElement());
+      final PyElement[] candidates = PyDefUseUtil.getLatestDefs(containerBlock, local, expr);
       if (candidates.length == 1) {
         PyStatement expression = getAssignmentByLeftPart(candidates[0]);
         return Pair.create(expression, false);

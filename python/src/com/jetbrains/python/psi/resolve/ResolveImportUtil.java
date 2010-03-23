@@ -288,7 +288,7 @@ public class ResolveImportUtil {
       Iterator<PyReferenceExpression> it = ref_path.iterator();
       if (ref_path.size() > 1) { // it was a qualified name
         if (it.hasNext()) {
-          last_resolved = it.next().resolve(); // our topmost qualifier, not ourselves for certain
+          last_resolved = it.next().getReference().resolve(); // our topmost qualifier, not ourselves for certain
         }
         else return null; // topmost qualifier not found
         while (it.hasNext()) {
@@ -303,7 +303,7 @@ public class ResolveImportUtil {
 
       // non-qualified name
       if (referencedName != null) {
-        return resolveChild(importRef.resolve(), referencedName, containing_file, false);
+        return resolveChild(importRef.getReference().resolve(), referencedName, containing_file, false);
         // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself
       }
       // unqualified import can be found:
@@ -668,7 +668,7 @@ public class ResolveImportUtil {
     if (from_import != null && partial_ref.getParent() != from_import) { // in "from foo import _"
       PyReferenceExpression src = from_import.getImportSource();
       if (src != null) {
-        PsiElement mod_candidate = src.resolve();
+        PsiElement mod_candidate = src.getReference().resolve();
         if (mod_candidate instanceof PyExpression) {
           addImportedNames(from_import.getImportElements(), names_already); // don't propose already imported items
           // collect what's within module file

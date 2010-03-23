@@ -93,7 +93,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
           PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
           if (maybe_type != null) return maybe_type;
-          final PsiElement resolveResult = refex.resolve();
+          final PsiElement resolveResult = refex.getReference().resolve();
           if (resolveResult == this) {
             return null;  // fix SOE on "a = a"
           }

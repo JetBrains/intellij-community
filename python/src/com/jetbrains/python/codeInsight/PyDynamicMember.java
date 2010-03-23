@@ -4,12 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyElementImpl;
-import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -64,7 +60,7 @@ public class PyDynamicMember {
   private PsiElement findResolveTarget(PyClass clazz) {
     PsiElement module = ResolveImportUtil.resolveInRoots(clazz, myResolveModuleName);
     if (module instanceof PsiDirectory) {
-      module = PyReferenceExpressionImpl.turnDirIntoInit(module);
+      module = PyUtil.turnDirIntoInit(module);
     }
     if (module == null) return null;
     final PyFile file = (PyFile)module;

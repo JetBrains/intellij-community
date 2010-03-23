@@ -53,7 +53,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     assertNotNull(doc_text);
 
     PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).resolve();
+    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
     assertEquals(doc_elt, doc_owner.getDocStringExpression());
 
     checkByHTML(myProvider.generateDoc(doc_owner, null));
@@ -74,7 +74,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testClassUndocumentedConstructor() throws Exception {
     Map<String, PsiElement> marks = loadTest();
     PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).resolve();
+    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
     checkByHTML(myProvider.generateDoc(doc_owner, null));
   }
 
@@ -99,7 +99,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     assertNotNull(doc_text);
 
     PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).resolve();
+    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
     assertNull(doc_owner.getDocStringExpression()); // no direct doc!
 
     checkByHTML(myProvider.generateDoc(doc_owner, null));

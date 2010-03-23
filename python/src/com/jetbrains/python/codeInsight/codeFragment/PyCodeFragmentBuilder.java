@@ -73,7 +73,7 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
 
     // Collect in variables
     if (position == Position.INSIDE) {
-      for (ResolveResult result : element.multiResolve(false)) {
+      for (ResolveResult result : element.getReference().multiResolve(false)) {
         final PsiElement declaration = result.getElement();
         // Ignore classes and methods declared somewhere else
         if ((declaration instanceof PyClass || declaration instanceof PyFunction) &&
@@ -106,7 +106,7 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
       if (outElements.contains(name)) {
         return;
       }
-      for (ResolveResult result : element.multiResolve(false)) {
+      for (ResolveResult result : element.getReference().multiResolve(false)) {
         final PsiElement declaration = result.getElement();
         // Handle resolve via import statement
         if (declaration instanceof PyFile && modifiedInsideMap.containsKey(name)){

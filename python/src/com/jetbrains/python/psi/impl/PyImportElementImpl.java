@@ -109,7 +109,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     }
     final PyReferenceExpression importRef = getImportReference();
     if (importRef != null) {
-      final PsiElement element = importRef.resolve();
+      final PsiElement element = importRef.getReference().resolve();
       if (element != null) {
         if (processor instanceof PyAsScopeProcessor) {
           PyTargetExpression asName = getAsNameElement();
@@ -125,7 +125,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
             if (PyResolveUtil.pathsMatch(place_path, ref_path)) {
               assert ref_path != null; // extraneous, but makes npe inspection happy
               for (PyReferenceExpression rex: ref_path) { // the thing the processor is looking for must be somewhere here
-                final PsiElement elt = rex.resolve();
+                final PsiElement elt = rex.getReference().resolve();
                 if (!processor.execute(elt, state)) return false;
               }
               return true; // none matched

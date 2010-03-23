@@ -31,7 +31,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PyReferenceExpression &&  SyntaxMatchers.IN_IMPORT.search(element) == null) {
-        if (((PyReferenceExpression)element).resolve() == null) {
+        if (((PyReferenceExpression)element).getReference().resolve() == null) {
           new AddImportAction((PsiReference)element).execute();
           return true;
         }

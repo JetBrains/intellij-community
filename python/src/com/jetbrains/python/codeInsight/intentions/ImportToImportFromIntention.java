@@ -109,7 +109,7 @@ public class ImportToImportFromIntention implements IntentionAction {
     if (reference != null) {
       myModuleName = PyResolveUtil.toPath(reference, ".");
       myQualifierName = myImportElement.getVisibleName(); 
-      myReferee = reference.resolve();
+      myReferee = reference.getReference().resolve();
       myHasModuleReference = false;
       if (myReferee != null && myModuleName != null && myQualifierName != null) {
         final Collection<PsiReference> references = new ArrayList<PsiReference>();
@@ -118,11 +118,10 @@ public class ImportToImportFromIntention implements IntentionAction {
             if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
               PyReferenceExpression ref = (PyReferenceExpression)element;
               if (myQualifierName.equals(PyResolveUtil.toPath(ref, "."))) {  // filter out other names that might resolve to our target
-                PsiElement elt = ref.getElement();
-                PsiElement parent_elt = elt.getParent();
+                PsiElement parent_elt = ref.getParent();
                 if (parent_elt instanceof PyQualifiedExpression) { // really qualified by us, not just referencing?
-                  PsiElement resolved = ref.resolve();
-                  if (resolved == myReferee) references.add(ref);
+                  PsiElement resolved = ref.getReference().resolve();
+                  if (resolved == myReferee) references.add(ref.getReference());
                 }
                 else myHasModuleReference = true;
               }

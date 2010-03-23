@@ -69,7 +69,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         }
       }
       // normal cases
-      ResolveResult[] targets = ((PyReferenceExpression)callee).multiResolve(false);
+      ResolveResult[] targets = ((PyReferenceExpression)callee).getReference().multiResolve(false);
       if (targets.length > 0) {
         PsiElement target = targets[0].getElement();
         if (target instanceof PyClass) {
@@ -87,7 +87,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   private PyType getSuperCallType(PyExpression callee) {
-    PsiElement must_be_super_init = ((PyReferenceExpression)callee).resolve();
+    PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
     if (must_be_super_init instanceof PyFunction) {
       PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
       if (must_be_super == PyBuiltinCache.getInstance(this).getClass("super")) {
@@ -97,7 +97,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (args.length > 1) {
             PyExpression first_arg = args[0];
             if (first_arg instanceof PyReferenceExpression) {
-              PsiElement possible_class = ((PyReferenceExpression)first_arg).resolve();
+              PsiElement possible_class = ((PyReferenceExpression)first_arg).getReference().resolve();
               if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
                 final PyClass first_class = (PyClass)possible_class;
                 // check 2nd argument, too; it should be an instance

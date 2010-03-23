@@ -16,16 +16,17 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
-import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
-import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.showConflicts;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyUtil.sure;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyModuleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.findDefinitions;
+import static com.jetbrains.python.codeInsight.intentions.DeclarationConflictChecker.showConflicts;
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Transforms:<ul>
@@ -102,7 +103,7 @@ public class ImportFromToImportIntention implements IntentionAction {
         for (PyImportElement import_element : myFromImportStatement.getImportElements()) {
           PyReferenceExpression ref = import_element.getImportReference();
           if (ref != null && ref.isValid()) {
-            PsiElement target = ref.resolve();
+            PsiElement target = ref.getReference().resolve();
             if (target instanceof PyExpression && ((PyExpression)target).getType() instanceof PyModuleType) return false;
           }
         }
@@ -147,12 +148,12 @@ public class ImportFromToImportIntention implements IntentionAction {
           if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null && element.isValid()) {
             PyReferenceExpression ref = (PyReferenceExpression)element;
             if (ref.getQualifier() == null) {
-              ResolveResult[] resolved = ref.multiResolve(false);
+              ResolveResult[] resolved = ref.getReference().multiResolve(false);
               for (ResolveResult rr : resolved) {
                 if (rr.isValidResult()) {
-                  if (rr.getElement() == star_ielt) star_references.add(ref);
+                  if (rr.getElement() == star_ielt) star_references.add(ref.getReference());
                   for (PyImportElement ielt : ielts) {
-                    if (rr.getElement() == ielt) references.put(ref, ielt);
+                    if (rr.getElement() == ielt) references.put(ref.getReference(), ielt);
                   }
                 }
               }

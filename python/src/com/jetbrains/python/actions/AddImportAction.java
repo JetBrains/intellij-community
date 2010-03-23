@@ -64,7 +64,7 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
 
   @Nullable
   private static String getRefName(PsiReference ref) {
-    return ((PyReferenceExpression)ref).getReferencedName();
+    return ((PyReferenceExpression)ref.getElement()).getReferencedName();
   }
 
   /**
@@ -175,14 +175,14 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class) != null) return false;
     if (PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class) != null) return false;
     // don't propose to import unknown fields, etc qualified things
-    if (myReference instanceof PyReferenceExpression) {
-      final PyExpression qual = ((PyReferenceExpression)myReference).getQualifier();
+    if (element instanceof PyReferenceExpression) {
+      final PyExpression qual = ((PyReferenceExpression)element).getQualifier();
       if (qual != null) return false;
     }
     // don't propose to import unimportable
     if (
-      !(myReference instanceof PyReferenceExpression)  ||
-      (ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)myReference, null) == null)
+      !(element instanceof PyReferenceExpression)  ||
+      (ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)element, null) == null)
     ) return false;
     // don't propose to import what's already imported, under different name or unsuccessfully for any reason
     final String referenceName = getRefName();

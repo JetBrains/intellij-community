@@ -54,7 +54,7 @@ public class PyCallExpressionHelper {
       final PyReferenceExpression refex = (PyReferenceExpression)redefining_callee;
       final String refname = refex.getReferencedName();
       if ((PyNames.CLASSMETHOD.equals(refname) || PyNames.STATICMETHOD.equals(refname))) {
-        PsiElement redefining_func = refex.resolve();
+        PsiElement redefining_func = refex.getReference().resolve();
         if (redefining_func != null) {
           PsiNamedElement true_func = PyBuiltinCache.getInstance(us).getByName(refname, PsiNamedElement.class);
           if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findMethodByName(PyNames.INIT, true);
@@ -66,7 +66,7 @@ public class PyCallExpressionHelper {
               if (args.length == 1) {
                 PyExpression possible_original_ref = args[0];
                 if (possible_original_ref instanceof PyReferenceExpression) {
-                  PsiElement original = ((PyReferenceExpression)possible_original_ref).resolve();
+                  PsiElement original = ((PyReferenceExpression)possible_original_ref).getReference().resolve();
                   if (original instanceof PyFunction) {
                     // pinned down the original; replace our resolved callee with it and add flags.
                     return new Pair<String, PyFunction>(refname, (PyFunction)original);

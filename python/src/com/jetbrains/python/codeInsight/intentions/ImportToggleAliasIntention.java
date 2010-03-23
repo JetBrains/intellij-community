@@ -108,7 +108,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         }
         remove_name = imported_name;
       }
-      final PsiElement referee = reference.resolve();
+      final PsiElement referee = reference.getReference().resolve();
       if (referee != null && imported_name != null) {
         final Collection<PsiReference> references = new ArrayList<PsiReference>();
         PsiTreeUtil.processElements(file, new PsiElementProcessor() {
@@ -116,8 +116,8 @@ public class ImportToggleAliasIntention implements IntentionAction {
             if (element instanceof PyReferenceExpression && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
               PyReferenceExpression ref = (PyReferenceExpression)element;
               if (remove_name.equals(PyResolveUtil.toPath(ref, "."))) {  // filter out other names that might resolve to our target
-                PsiElement resolved = ref.resolve();
-                if (resolved == referee) references.add(ref);
+                PsiElement resolved = ref.getReference().resolve();
+                if (resolved == referee) references.add(ref.getReference());
               }
             }
             return true;

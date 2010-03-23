@@ -48,29 +48,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     return className;
   }
 
-  public PsiReference getReference() {
-    PsiReference result;
-    PsiReference[] refs = getReferences();
-    if (refs.length == 0) {
-      result = null;
-    }
-    else {
-      //if (refs.length == 1) {
-      result = refs[0];
-      //} else {
-      //    return new PsiMultiReference(refs, this);
-      //}
-    }
-    return result;
-  }
-
-  @NotNull
-  public PsiReference[] getReferences() {
-    //return getLanguage().getReferenceProviderRegistry().getPythonReferences(
-    //        (PyElement) getOriginalElement());
-    return PsiReference.EMPTY_ARRAY;
-  }
-
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof PyElementVisitor) {
       acceptPyVisitor(((PyElementVisitor)visitor));

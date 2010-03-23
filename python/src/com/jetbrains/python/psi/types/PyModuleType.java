@@ -77,7 +77,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
-    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(referenceExpression);
+    ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(referenceExpression.getReference());
     if (role == NONE) { // when not inside import, add regular attributes
       final VariantsProcessor processor = new VariantsProcessor();
       myModule.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
