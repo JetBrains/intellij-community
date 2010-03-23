@@ -197,10 +197,19 @@ public class ArrayUtil {
   public static void arrayCopy(Object[] src, int srcPos, Object[] dest, int destPos, int length) {
     if (length > 20) {
       System.arraycopy(src, srcPos, dest, destPos, length);
+      return;
+    }
+
+    // ASSUMPTION: there are no array aliases in Java. otherwise it's impossible to determine whether these two arrays are overlapping
+    if (srcPos > destPos) {
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        dest[destPos + i] = src[srcPos + i];
+      }
     }
     else {
       //noinspection ManualArrayCopy
-      for (int i = 0; i < length; i++) {
+      for (int i = length - 1; i >= 0; i--) {
         dest[destPos + i] = src[srcPos + i];
       }
     }
@@ -208,12 +217,20 @@ public class ArrayUtil {
   
   public static void arrayCopy(int[] src, int srcPos, int[] dest, int destPos, int length) {
     if (length > 20) {
-      //noinspection SuspiciousSystemArraycopy
       System.arraycopy(src, srcPos, dest, destPos, length);
+      return;
+    }
+
+    // ASSUMPTION: there are no array aliases in Java. otherwise it's impossible to determine whether these two arrays are overlapping
+    if (srcPos > destPos) {
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        dest[destPos + i] = src[srcPos + i];
+      }
     }
     else {
       //noinspection ManualArrayCopy
-      for (int i = 0; i < length; i++) {
+      for (int i = length - 1; i >= 0; i--) {
         dest[destPos + i] = src[srcPos + i];
       }
     }
@@ -222,10 +239,19 @@ public class ArrayUtil {
   public static void arrayCopy(char[] src, int srcPos, char[] dest, int destPos, int length) {
     if (length > 20) {
       System.arraycopy(src, srcPos, dest, destPos, length);
+      return;
+    }
+
+    // ASSUMPTION: there are no array aliases in Java. otherwise it's impossible to determine whether these two arrays are overlapping
+    if (srcPos > destPos) {
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        dest[destPos + i] = src[srcPos + i];
+      }
     }
     else {
       //noinspection ManualArrayCopy
-      for (int i = 0; i < length; i++) {
+      for (int i = length - 1; i >= 0; i--) {
         dest[destPos + i] = src[srcPos + i];
       }
     }
@@ -234,10 +260,19 @@ public class ArrayUtil {
   public static void arrayCopy(byte[] src, int srcPos, byte[] dest, int destPos, int length) {
     if (length > 20) {
       System.arraycopy(src, srcPos, dest, destPos, length);
+      return;
+    }
+
+    // ASSUMPTION: there are no array aliases in Java. otherwise it's impossible to determine whether these two arrays are overlapping
+    if (srcPos > destPos) {
+      //noinspection ManualArrayCopy
+      for (int i = 0; i < length; i++) {
+        dest[destPos + i] = src[srcPos + i];
+      }
     }
     else {
       //noinspection ManualArrayCopy
-      for (int i = 0; i < length; i++) {
+      for (int i = length - 1; i >= 0; i--) {
         dest[destPos + i] = src[srcPos + i];
       }
     }
