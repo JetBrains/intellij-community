@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -218,5 +219,30 @@ public class PyPsiUtils {
       return true;
     }
     return false;
+  }
+
+
+  @Nullable
+  public static PsiElement getRealContext(@NotNull final PsiElement element) {
+    if (!element.isValid()){
+      if (LOG.isDebugEnabled()){
+        LOG.debug("PyPsiUtil.getRealContext(" + element + ") called. Returned null. Element in invalid");
+      }
+      return null;
+    }
+    final PsiFile file = element.getContainingFile();
+    if (file instanceof PyExpressionCodeFragment) {
+      final PsiElement context = file.getContext();
+      if (LOG.isDebugEnabled()){
+        LOG.debug("PyPsiUtil.getRealContext(" + element + ") is called. Returned " + context +". Element inside code fragment");
+      }
+      return context;
+    }
+    else {
+      if (LOG.isDebugEnabled()){
+        LOG.debug("PyPsiUtil.getRealContext(" + element + ") is called. Returned " + element +".");
+      }
+      return element;
+    }
   }
 }
