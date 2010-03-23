@@ -41,8 +41,8 @@ class AddImportHelper {
       // maybe we arrived at the doc comment stmt; skip over it, too
       else if (!skipped_over_imports && ! skipped_over_doc && file instanceof PyFile) {
         PsiElement doc_elt = PythonDocStringFinder.find((PyElement)file); // this gives the literal; its parent is the expr seeker may have encountered
-        if (doc_elt != null && doc_elt.getParent() == seeker) {
-        feeler = seeker.getNextSibling();
+        if (doc_elt != null && doc_elt.getParent() == feeler) {
+          feeler = feeler.getNextSibling();
           seeker = feeler; // skip over doc even if there's nothing below it
           skipped_over_doc = true;
         }

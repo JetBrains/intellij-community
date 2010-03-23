@@ -23,6 +23,10 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     doInspectionTest("AddImportDoc.py", PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
   }
 
+  public void testAddImportDocComment() throws Exception {  // PY-728
+    doInspectionTest("AddImportDocComment.py", PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
+  }
+
   public void testQualifyByImport() throws Exception {
     doInspectionTest(new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"}, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.qualify.with.module"), true, true);
   }
