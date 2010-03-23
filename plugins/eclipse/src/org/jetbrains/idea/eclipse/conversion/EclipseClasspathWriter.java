@@ -206,14 +206,9 @@ public class EclipseClasspathWriter {
         if (VfsUtil.isAncestor(contentRoot, file, false)) {
           return VfsUtil.getRelativePath(file, contentRoot, '/');
         } else {
-          final Module module = ModuleUtil.findModuleForFile(file, project);
-          if (module != null) {
-            final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-            for (VirtualFile otherRoot : contentRoots) {
-              if (VfsUtil.isAncestor(otherRoot, file, false)) {
-                return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, otherRoot, '/');
-              }
-            }
+          final String path = relativeToOtherModulePath(project, file);
+          if (path != null) {
+            return path;
           }
         }
       }
@@ -238,6 +233,20 @@ public class EclipseClasspathWriter {
 
       return ProjectRootManagerImpl.extractLocalPath(url);
     }
+  }
+
+  @Nullable
+  private static String relativeToOtherModulePath(Project project, VirtualFile file) {
+    final Module module = ModuleUtil.findModuleForFile(file, project);
+    if (module != null) {
+      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+      for (VirtualFile otherRoot : contentRoots) {
+        if (VfsUtil.isAncestor(otherRoot, file, false)) {
+          return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, otherRoot, '/');
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -266,19 +275,28 @@ public class EclipseClasspathWriter {
       if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
         final String path = VfsUtil.urlToPath(javadocPath);
         final VirtualFile contentRoot = getContentRoot();
-        final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : myModel.getModule().getProject().getBaseDir();
+        final Project project = myModel.getModule().getProject();
+        final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
         if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())) {
           final VirtualFile javadocFile =
             JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
-          if (javadocFile != null && VfsUtil.isAncestor(baseDir, javadocFile, false)) {
-            if (javadocPath.indexOf(JarFileSystem.JAR_SEPARATOR) == -1) {
-              javadocPath = StringUtil.trimEnd(javadocPath, "/") + JarFileSystem.JAR_SEPARATOR;
+          if (javadocFile != null) {
+            String relativeUrl = relativeToOtherModulePath(project, javadocFile);
+            if (relativeUrl == null && VfsUtil.isAncestor(baseDir, javadocFile, false)) {
+              relativeUrl = "/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/');
             }
-            javadocPath = EclipseXml.JAR_PREFIX +
-                          EclipseXml.PLATFORM_PROTOCOL +
-                          "resource/" +
-                          VfsUtil.getRelativePath(javadocFile, baseDir, '/') +
-                          javadocPath.substring(javadocFile.getUrl().length() - 1);
+            if (relativeUrl != null) {
+              if (javadocPath.indexOf(JarFileSystem.JAR_SEPARATOR) == -1) {
+                javadocPath = StringUtil.trimEnd(javadocPath, "/") + JarFileSystem.JAR_SEPARATOR;
+              }
+              javadocPath = EclipseXml.JAR_PREFIX +
+                            EclipseXml.PLATFORM_PROTOCOL +
+                            "resource" +
+                            relativeUrl +
+                            javadocPath.substring(javadocFile.getUrl().length() - 1);
+            } else {
+              javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + StringUtil.trimStart(path, "/");
+            }
           }
           else {
             javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + StringUtil.trimStart(path, "/");
