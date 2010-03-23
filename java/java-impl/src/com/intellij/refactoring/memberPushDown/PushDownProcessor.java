@@ -88,20 +88,28 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
     pushDownConflicts.checkSourceClassConflicts();
 
     if (usagesIn.length == 0) {
-      String noInheritors = myClass.isInterface() ?
-                            RefactoringBundle.message("interface.0.does.not.have.inheritors", myClass.getQualifiedName()) :
-                            RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
-      final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
-      final int answer = Messages.showYesNoCancelDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
-      if (answer == DialogWrapper.OK_EXIT_CODE) {
-        myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
-        if (myCreateClassDlg != null) {
-          pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
-          return showConflicts(pushDownConflicts.getConflicts());
-        } else {
+      if (myClass.isEnum() || myClass.hasModifierProperty(PsiModifier.FINAL)) {
+        if (Messages.showOkCancelDialog((myClass.isEnum() ? "Enum " + myClass.getQualifiedName() + " doesn't have constants to inline to. " : "Final class " + myClass.getQualifiedName() + "does not have inheritors. ") +
+                                        "Pushing members down will result in them being deleted. " +
+                                        "Would you like to proceed?", JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon()) != DialogWrapper.OK_EXIT_CODE) {
           return false;
         }
-      } else if (answer != 1) return false;
+      } else {
+        String noInheritors = myClass.isInterface() ?
+                              RefactoringBundle.message("interface.0.does.not.have.inheritors", myClass.getQualifiedName()) :
+                              RefactoringBundle.message("class.0.does.not.have.inheritors", myClass.getQualifiedName());
+        final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
+        final int answer = Messages.showYesNoCancelDialog(message, JavaPushDownHandler.REFACTORING_NAME, Messages.getWarningIcon());
+        if (answer == DialogWrapper.OK_EXIT_CODE) {
+          myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
+          if (myCreateClassDlg != null) {
+            pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
+            return showConflicts(pushDownConflicts.getConflicts());
+          } else {
+            return false;
+          }
+        } else if (answer != 1) return false;
+      }
     }
     for (UsageInfo usage : usagesIn) {
       final PsiElement element = usage.getElement();
