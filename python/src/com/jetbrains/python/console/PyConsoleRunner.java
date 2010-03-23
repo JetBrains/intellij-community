@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.PairProcessor;
@@ -43,6 +45,8 @@ import com.jetbrains.django.run.Runner;
 import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,9 +125,13 @@ public class PyConsoleRunner {
       final Sdk pythonSdk = PythonSdkType.findPythonSdk(module);
       if (pythonSdk != null){
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(pythonSdk);
-        final VirtualFile file = getLanguageConsole().getFile().getVirtualFile();
-        if (file != null) {
-          file.putUserData(LanguageLevel.KEY, languageLevel);
+        final PsiFile psiFile = getLanguageConsole().getFile();
+        // Set module explicitly
+        psiFile.putUserData(ModuleUtil.KEY_MODULE, module);
+        final VirtualFile vFile = psiFile.getVirtualFile();
+        if (vFile != null) {
+          // Set language level
+          vFile.putUserData(LanguageLevel.KEY, languageLevel);
         }
         break;
       }
