@@ -1051,14 +1051,16 @@ public class GenericsHighlightUtil {
     if (argumentList == null) return null;
     final PsiExpression[] expressions = argumentList.getExpressions();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < expressions.length; i++) {
-      PsiParameter parameter = parameters[Math.min(i, parameters.length - 1)];
-      final PsiExpression expression = expressions[i];
-      final PsiType parameterType = substitutor.substitute(parameter.getType());
-      final PsiType expressionType = substitutor.substitute(expression.getType());
-      if (expressionType != null) {
-        final HighlightInfo highlightInfo = checkRawToGenericAssignment(parameterType, expressionType, expression);
-        if (highlightInfo != null) return highlightInfo;
+    if (parameters.length != 0) {
+      for (int i = 0; i < expressions.length; i++) {
+        PsiParameter parameter = parameters[Math.min(i, parameters.length - 1)];
+        final PsiExpression expression = expressions[i];
+        final PsiType parameterType = substitutor.substitute(parameter.getType());
+        final PsiType expressionType = substitutor.substitute(expression.getType());
+        if (expressionType != null) {
+          final HighlightInfo highlightInfo = checkRawToGenericAssignment(parameterType, expressionType, expression);
+          if (highlightInfo != null) return highlightInfo;
+        }
       }
     }
     return null;
