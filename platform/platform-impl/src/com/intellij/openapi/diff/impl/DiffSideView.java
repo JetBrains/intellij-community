@@ -43,7 +43,7 @@ public class DiffSideView {
     MOCK_COMPONENT.setFocusable(true);
   }
 
-  private static final DiffHighlighterFactory DUMMY_HIGHLIGHTER_FACTORY = new DiffHighlighterFactoryImpl(null, null);
+  private static final DiffHighlighterFactory DUMMY_HIGHLIGHTER_FACTORY = new DiffHighlighterFactoryImpl(null, null, null);
   private final LabeledEditor myPanel = new LabeledEditor();
 
   private final DiffSidesContainer myContainer;

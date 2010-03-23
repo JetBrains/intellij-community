@@ -148,7 +148,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
           // Read the xxxx
           int value = 0;
           boolean error = false;
-          for (int i = 0; i < 4; i++) {
+          for (int i = 0; i < 4 && off < s.length(); i++) {
             aChar = s.charAt(off++);
             switch (aChar) {
               case '0':

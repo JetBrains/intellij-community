@@ -16,10 +16,12 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -27,6 +29,8 @@ import java.util.List;
  * @author cdr
  */
 public interface LineMarkersProcessor {
-  void addLineMarkers(List<PsiElement> elements, List<LineMarkerProvider> providers, List<LineMarkerInfo> result) throws
-                                                                                                                  ProcessCanceledException;
+  void addLineMarkers(@NotNull List<PsiElement> elements,
+                      @NotNull List<LineMarkerProvider> providers,
+                      @NotNull List<LineMarkerInfo> result,
+                      @NotNull ProgressIndicator progress) throws ProcessCanceledException;
 }

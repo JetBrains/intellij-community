@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -38,7 +37,6 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
   private final String myNewParentPackageName;
   private String myProcessedElementsHeader;
   private final String myCodeReferencesText;
-  private final String myHelpID;
 
   public MoveClassesOrPackagesViewDescriptor(PsiElement[] psiElements,
                                              boolean isSearchInComments,
@@ -54,16 +52,17 @@ class MoveClassesOrPackagesViewDescriptor implements UsageViewDescriptor {
       myCodeReferencesText = RefactoringBundle.message("references.in.code.to.0.1", UsageViewUtil.getType(psiElements[0]), UsageViewUtil.getLongName(psiElements[0]));
     }
     else {
-      if (psiElements[0] instanceof PsiClass) {
-        myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("move.classes.elements.header", myNewParentPackageName));
-      }
-      else if (psiElements[0] instanceof PsiDirectory){
-        myProcessedElementsHeader =
-          StringUtil.capitalize(RefactoringBundle.message("move.packages.elements.header", myNewParentPackageName));
+      if (psiElements.length > 0) {
+        if (psiElements[0] instanceof PsiClass) {
+          myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("move.classes.elements.header", myNewParentPackageName));
+        }
+        else if (psiElements[0] instanceof PsiDirectory){
+          myProcessedElementsHeader =
+            StringUtil.capitalize(RefactoringBundle.message("move.packages.elements.header", myNewParentPackageName));
+        }
       }
       myCodeReferencesText = RefactoringBundle.message("references.found.in.code");
     }
-    myHelpID = HelpID.getMoveHelpID(psiElements[0]);
   }
 
   @NotNull

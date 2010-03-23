@@ -246,9 +246,9 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
       for (PsiFile file : psiFilesWithDuplicates) {
         CharSequence text = file.getViewProvider().getContents();
-        for (int offset = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher);
+        for (int offset = LowLevelSearchUtil.searchWord(text, 0, text.length(), searcher, progress);
              offset >= 0;
-             offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length(), searcher)
+             offset = LowLevelSearchUtil.searchWord(text, offset + searcher.getPattern().length(), text.length(), searcher, progress)
           ) {
           PsiElement element = file.findElementAt(offset);
           if (element != null && element.getParent() instanceof Property) {

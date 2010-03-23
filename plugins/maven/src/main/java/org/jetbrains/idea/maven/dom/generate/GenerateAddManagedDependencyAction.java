@@ -52,7 +52,8 @@ public class GenerateAddManagedDependencyAction extends GenerateDomElementAction
     protected MavenDomDependency doGenerate(MavenDomProjectModel mavenModel, Editor editor) {
       Set<MavenDomDependency> managingDependencies = collectManagingDependencies(mavenModel);
 
-      List<MavenDomDependency> dependenciesToOverride = GenerateDependencyUtil.chooseDependencies(managingDependencies, mavenModel.getManager().getProject());
+      List<MavenDomDependency> dependenciesToOverride =
+        GenerateDependencyUtil.chooseDependencies(managingDependencies, mavenModel.getManager().getProject());
 
       for (MavenDomDependency parentDependency : dependenciesToOverride) {
         String groupId = parentDependency.getGroupId().getStringValue();
@@ -75,20 +76,22 @@ public class GenerateAddManagedDependencyAction extends GenerateDomElementAction
   }
 
   @NotNull
-  public static Set<MavenDomDependency> collectManagingDependencies(@NotNull MavenDomProjectModel model) {
+  public static Set<MavenDomDependency> collectManagingDependencies(@NotNull final MavenDomProjectModel model) {
     final Set<MavenDomDependency> dependencies = new HashSet<MavenDomDependency>();
 
     final List<MavenDomDependency> existingDependencies = model.getDependencies().getDependencies();
 
     Processor<MavenDomDependencies> collectProcessor = new Processor<MavenDomDependencies>() {
       public boolean process(MavenDomDependencies mavenDomDependencies) {
-        for (MavenDomDependency dependency : mavenDomDependencies.getDependencies()) {
-          String groupId = dependency.getGroupId().getStringValue();
-          String artifactId = dependency.getArtifactId().getStringValue();
-          if (StringUtil.isEmptyOrSpaces(groupId) || StringUtil.isEmptyOrSpaces(artifactId)) continue;
+        if (!model.equals(mavenDomDependencies.getParentOfType(MavenDomProjectModel.class, true))) {
+          for (MavenDomDependency dependency : mavenDomDependencies.getDependencies()) {
+            String groupId = dependency.getGroupId().getStringValue();
+            String artifactId = dependency.getArtifactId().getStringValue();
+            if (StringUtil.isEmptyOrSpaces(groupId) || StringUtil.isEmptyOrSpaces(artifactId)) continue;
 
-          if (!isDependencyExist(groupId, artifactId, existingDependencies)) {
-            dependencies.add(dependency);
+            if (!isDependencyExist(groupId, artifactId, existingDependencies)) {
+              dependencies.add(dependency);
+            }
           }
         }
         return false;
@@ -102,8 +105,9 @@ public class GenerateAddManagedDependencyAction extends GenerateDomElementAction
 
   private static boolean isDependencyExist(String groupId, String artifactId, List<MavenDomDependency> existingDependencies) {
     for (MavenDomDependency existingDependency : existingDependencies) {
-       if(groupId.equals(existingDependency.getGroupId().getStringValue()) || artifactId.equals(existingDependency.getArtifactId().getStringValue())) {
-         return true;
+      if (groupId.equals(existingDependency.getGroupId().getStringValue()) ||
+          artifactId.equals(existingDependency.getArtifactId().getStringValue())) {
+        return true;
       }
     }
     return false;

@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -86,13 +85,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     int caretOffset = myEditor.getCaretModel().getOffset();
     for (int i = visibleHighlights.size() - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
       HighlightInfo info = visibleHighlights.get(i);
       if (info.startOffset <= caretOffset && showAddImportHint(info)) return;
     }
 
     for (HighlightInfo visibleHighlight : visibleHighlights) {
-      ProgressManager.checkCanceled();
       if (visibleHighlight.startOffset > caretOffset && showAddImportHint(visibleHighlight)) return;
     }
   }

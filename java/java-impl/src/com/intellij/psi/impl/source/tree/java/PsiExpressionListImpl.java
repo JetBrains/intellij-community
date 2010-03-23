@@ -23,7 +23,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiExpressionListImpl extends CompositePsiElement implements PsiExpressionList {
@@ -40,7 +39,14 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
 
   @NotNull
   public PsiType[] getExpressionTypes() {
-    return ContainerUtil.map2Array(getExpressions(), PsiType.class, PsiExpression.EXPRESSION_TO_TYPE);
+    PsiExpression[] expressions = getExpressions();
+    PsiType[] types = new PsiType[expressions.length];
+
+    for (int i = 0; i < types.length; i++) {
+      types[i] = expressions[i].getType();
+    }
+
+    return types;
   }
 
   public ASTNode findChildByRole(int role) {

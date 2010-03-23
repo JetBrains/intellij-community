@@ -20,9 +20,12 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import junit.textui.TestRunner;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
-import java.util.ArrayList;
 
 /**
  * Before rename or move
@@ -33,6 +36,7 @@ public class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
   public static final String JUNIT4_PARAMETER = "-junit4";
+  private static final String SOCKET = "-socket";
 
   public static void main(String[] args) throws IOException {
     SegmentedOutputStream out = new SegmentedOutputStream(System.out);
@@ -63,6 +67,7 @@ public class JUnitStarter {
 
   private static boolean processParameters(Vector args, final List listeners) {
     boolean isJunit4 = false;
+    String tempFilePath = null;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
       String arg = (String)args.get(i);
@@ -88,19 +93,33 @@ public class JUnitStarter {
           }
           continue;
         } else if (arg.startsWith("@")) {
-          while(new File(arg.substring(1)).length() == 0); //wait for test cases
+          tempFilePath = arg.substring(1);
+        } else if (arg.startsWith(SOCKET)) {
+          final int port = Integer.parseInt(arg.substring(SOCKET.length()));
           try {
-            BufferedReader reader = new BufferedReader(new FileReader(arg.substring(1)));
+            final Socket socket = new Socket(InetAddress.getLocalHost(), port);  //start collecting tests
+            final ServerSocket serverSocket = new ServerSocket(0);
             try {
-              isJunit4 |= JUNIT4_PARAMETER.equals(reader.readLine());
+              final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+              try {
+                bufferedWriter.write(String.valueOf(serverSocket.getLocalPort())); //write port to sync
+              }
+              finally {
+                bufferedWriter.close();
+                socket.close();
+              }
+              serverSocket.accept();
             }
             finally {
-              reader.close();
+              serverSocket.close();
             }
           }
           catch (IOException e) {
             e.printStackTrace();
           }
+
+          isJunit4 = isJUnit4(isJunit4, tempFilePath);
+          continue;
         }
         result.addElement(arg);
       }
@@ -111,6 +130,22 @@ public class JUnitStarter {
       args.addElement(arg);
     }
     return isJunit4;
+  }
+
+  private static boolean isJUnit4(boolean junit4, String tempFilePath) {
+    try {
+      BufferedReader reader = new BufferedReader(new FileReader(tempFilePath));
+      try {
+        junit4 |= JUNIT4_PARAMETER.equals(reader.readLine());
+      }
+      finally {
+        reader.close();
+      }
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    return junit4;
   }
 
   public static boolean checkVersion(String[] args, SegmentedOutputStream notifications) {

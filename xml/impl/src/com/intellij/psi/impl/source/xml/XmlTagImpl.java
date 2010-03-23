@@ -138,8 +138,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       }
       refs.add(TagNameReference.create(this, startTagName, true));
     }
-    refs.addAll(Arrays.asList(ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlTag.class)));
-    
+
+    // ArrayList.addAll() makes a clone of the collection
+    //noinspection ManualArrayToCollectionCopy
+    for (PsiReference ref : ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlTag.class)) {
+      refs.add(ref);
+    }
+
     return ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
   }
 

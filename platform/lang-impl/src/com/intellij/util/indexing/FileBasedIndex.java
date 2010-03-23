@@ -1886,12 +1886,14 @@ public class FileBasedIndex implements ApplicationComponent {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
-          final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
-          final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
-          for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
-            for (VirtualFile root : roots) {
-              if (visitedRoots.add(root)) {
-                iterateRecursively(root, processor, indicator);
+          if (orderEntry.isValid()) {
+            final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
+            final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
+            for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
+              for (VirtualFile root : roots) {
+                if (visitedRoots.add(root)) {
+                  iterateRecursively(root, processor, indicator);
+                }
               }
             }
           }

@@ -340,7 +340,13 @@ public class JavaDocExternalFilter {
      String externalDoc = getExternalDocInfo(docURL);
      if (externalDoc != null) {
        if (element instanceof PsiMethod) {
-         String className = ((PsiMethod) element).getContainingClass().getQualifiedName();
+         final String className = ApplicationManager.getApplication().runReadAction(
+             new Computable<String>() {
+               public String compute() {
+                 return ((PsiMethod) element).getContainingClass().getQualifiedName();
+               }
+             }
+         );
          Matcher matcher = ourMethodHeading.matcher(externalDoc);
          final StringBuilder buffer = new StringBuilder();
          DocumentationManager.createHyperlink(buffer, className, className, false);

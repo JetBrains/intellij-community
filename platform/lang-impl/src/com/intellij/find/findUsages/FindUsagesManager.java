@@ -545,12 +545,12 @@ public class FindUsagesManager implements JDOMExternalizable {
     return foundUsage[0];
   }
 
-  private static void convertToUsageTarget(final List<PsiElement2UsageTargetAdapter> targets, PsiElement elementToSearch) {
+  private static void convertToUsageTarget(@NotNull List<PsiElement2UsageTargetAdapter> targets, @NotNull PsiElement elementToSearch) {
     if (elementToSearch instanceof NavigationItem) {
       targets.add(new PsiElement2UsageTargetAdapter(elementToSearch));
     }
     else {
-      throw new IllegalArgumentException("Wrong usage target:" + elementToSearch);
+      throw new IllegalArgumentException("Wrong usage target:" + elementToSearch+"; "+elementToSearch.getClass());
     }
   }
 

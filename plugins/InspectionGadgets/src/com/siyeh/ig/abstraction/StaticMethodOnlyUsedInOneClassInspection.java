@@ -205,10 +205,8 @@ public class StaticMethodOnlyUsedInOneClassInspection
             final String name = method.getName();
             final GlobalSearchScope scope =
                     GlobalSearchScope.allScope(method.getProject());
-            if (searchHelper.isCheapEnoughToSearch(name, scope, null) ==
-                PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) {
-                return null;
-            }
+            if (searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator())
+                == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return null;
             progressManager.runProcess(new Runnable() {
                 public void run() {
                     final Query<PsiReference> query =
