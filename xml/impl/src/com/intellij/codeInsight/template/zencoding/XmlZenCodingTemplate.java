@@ -305,7 +305,8 @@ public class XmlZenCodingTemplate {
       String key = computeKey(editor, startOffset);
       List<Token> tokens = parse(key, callback);
       if (tokens != null && check(tokens)) {
-        if (tokens.size() == 2) {
+        // !! required if Zen Coding if invoked by TemplateManagerImpl action
+        /*if (tokens.size() == 2) {
           Token token = tokens.get(0);
           if (token instanceof TemplateToken) {
             if (key.equals(((TemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
@@ -313,7 +314,7 @@ public class XmlZenCodingTemplate {
               return null;
             }
           }
-        }
+        }*/
         return key;
       }
       if (element != null) {
