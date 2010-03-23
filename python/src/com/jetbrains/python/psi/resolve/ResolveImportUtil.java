@@ -234,16 +234,9 @@ public class ResolveImportUtil {
 
     if (moduleQualifiedName.getComponentCount() < 1) return null;
 
-    Iterator<String> qualifier_sequence = moduleQualifiedName.getComponents().iterator();
-    String top_module_name = qualifier_sequence.next(); // guaranteed to be unqualified
-
-    LookupRootVisitor visitor = new LookupRootVisitor(top_module_name, foothold.getManager());
+    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, foothold.getManager(), foothold_file);
     visitRoots(foothold, visitor);
-    PsiElement module = visitor.getResult();
-    while (module != null && qualifier_sequence.hasNext()) {
-      module = resolveChild(module, qualifier_sequence.next(), foothold_file, false); // only files, we want a module
-    }
-    return module;
+    return visitor.getResult();
   }
 
   /**
@@ -503,6 +496,36 @@ public class ResolveImportUtil {
         return (result == null);
       }
       return true;
+    }
+
+    public PsiElement getResult() {
+      return result;
+    }
+  }
+
+  static class ResolveInRootVisitor implements SdkRootVisitor {
+    final PsiFile foothold_file;
+    final PyQualifiedName qualifiedName;
+    final PsiManager psimgr;
+    PsiElement result;
+
+    public ResolveInRootVisitor(PyQualifiedName qName, PsiManager psimgr, PsiFile foothold_file) {
+      this.qualifiedName = qName;
+      this.psimgr = psimgr;
+      this.foothold_file = foothold_file;
+      this.result = null;
+    }
+
+    public boolean visitRoot(final VirtualFile root) {
+      PsiElement module = root.isDirectory() ? psimgr.findDirectory(root) : psimgr.findFile(root);
+      for (String component : qualifiedName.getComponents()) {
+        module = resolveChild(module, component, foothold_file, false); // only files, we want a module
+        if (module == null) {
+          return true;
+        }
+      }
+      result = module;
+      return false;
     }
 
     public PsiElement getResult() {
