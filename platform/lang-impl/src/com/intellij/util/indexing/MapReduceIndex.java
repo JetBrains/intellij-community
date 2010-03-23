@@ -19,11 +19,9 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.io.PersistentHashMap;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,35 +45,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   
-  private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private final Runnable myFlushRequest = new Runnable() {
-    public void run() {
-      if (canFlush()) {
-        try {
-          flush();
-        }
-        catch (StorageException e) {
-          LOG.info(e);
-          if (myIndexId != null) {
-            FileBasedIndex.getInstance().requestRebuild(myIndexId);
-          }
-        }
-      }
-      else {
-        myFlushAlarm.addRequest(myFlushRequest, 20000 /* 20 sec */);  // postpone flushing
-      }
-    }
-
-    private boolean canFlush() {
-      if (HeavyProcessLatch.INSTANCE.isRunning()) {
-        final Runtime runtime = Runtime.getRuntime();
-        final float used = runtime.totalMemory() - runtime.freeMemory();
-        final float memUsage = used / runtime.maxMemory();
-        return memUsage >= 0.95f;
-      }
-      return true;
-    }
-  };
   private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
 
 
@@ -118,10 +87,11 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   public void flush() throws StorageException{
     try {
       getReadLock().lock();
-      myStorage.flush();
-      if (myInputsIndex != null) {
-        myInputsIndex.flush();
+      final PersistentHashMap<Integer, Collection<Key>> inputsIndex = myInputsIndex;
+      if (inputsIndex != null && inputsIndex.isDirty()) {
+        inputsIndex.force();
       }
+      myStorage.flush();
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -270,12 +240,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     finally {
       getWriteLock().unlock();
     }
-    scheduleFlush();
-  }
-
-  private void scheduleFlush() {
-    myFlushAlarm.cancelAllRequests();
-    myFlushAlarm.addRequest(myFlushRequest, 15000 /* 15 sec */);
   }
 
 }

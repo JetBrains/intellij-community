@@ -380,11 +380,22 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public Lock getWriteLock(StubIndexKey indexKey) {
     return myIndices.get(indexKey).getWriteLock();
   }
-  
+
   public Collection<StubIndexKey> getAllStubIndexKeys() {
     return Collections.<StubIndexKey>unmodifiableCollection(myIndices.keySet());
   }
-  
+
+  public void flush(StubIndexKey key) throws StorageException {
+    final MyIndex<?> index = myIndices.get(key);
+    index.getReadLock().lock();
+    try {
+      index.flush();
+    }
+    finally {
+      index.getReadLock().unlock();
+    }
+  }
+
   public <K> void updateIndex(StubIndexKey key, int fileId, final Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);

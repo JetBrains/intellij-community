@@ -55,10 +55,8 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   }
 
   public void updatingDone() {
-    myIndex.flushCaches();
   }
 
   public void canceled() {
-    myIndex.flushCaches();
   }
 }
