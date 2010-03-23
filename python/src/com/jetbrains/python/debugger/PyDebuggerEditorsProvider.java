@@ -1,13 +1,15 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.*;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,19 +28,15 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
     text = text.trim();
     final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "fragment.py", text, true);
 
-    /*
+    // Bind to context
     final PsiElement element = getContextElement(project, sourcePosition);
-    System.out.println("element:" + element);
     fragment.setContext(element);
-    */
 
-    // todo: bind to context
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
-  /*
   @Nullable
-  private static PsiElement getContextElement(Project project, XSourcePosition sourcePosition) {
+  private static PsiElement getContextElement(final Project project, XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(sourcePosition.getFile());
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -48,23 +46,13 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
         do {
           PsiElement element = psiFile.findElementAt(offset);
           if (element != null && !(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
-            PsiElement e = PsiTreeUtil.getParentOfType(element, PyElement.class);
-            while (e != null) {
-              if (e instanceof PyPrintStatement) {
-                return e;
-              }
-              e = e.getParent();
-            }
-            //return RControlFlowBuilder.getControlFlowNodeElement(element);
+            return PyPsiUtils.getStatement(element);
           }
           offset = element.getTextRange().getEndOffset() + 1;
         }
         while (offset < lineEndOffset);
       }
     }
-
     return null;
   }
-  */
-
 }
