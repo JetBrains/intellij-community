@@ -32,7 +32,6 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,9 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
     XmlTag tagAtCaret = PsiTreeUtil.getParentOfType(atCaret, XmlTag.class);
     if (tagAtCaret != null) {
       try {
-        if (XmlUtil.isTagClosed(tagAtCaret)) {
+        final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tagAtCaret.getNode());
+        final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tagAtCaret.getNode());
+        if (emptyTagEnd != null || endTagEnd != null) {
           return XmlZenCodingTemplate.startZenCoding(editor, psiFile);
         }
 
