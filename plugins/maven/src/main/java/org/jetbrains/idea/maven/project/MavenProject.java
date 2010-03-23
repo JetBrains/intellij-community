@@ -450,13 +450,8 @@ public class MavenProject {
                                                             locator);
     MavenProjectChanges changes = set(result, false, result.readingProblems.isEmpty(), false);
 
-    List<MavenImporter> importers = getSuitableImporters();
-    for (MavenPlugin eachPlugin : getPlugins()) {
-      for (MavenImporter eachImporter : importers) {
-        if (eachImporter.requiresResolvedPlugin(eachPlugin)) {
-          embedder.resolvePlugin(eachPlugin, result.nativeMavenProject, true);
-        }
-      }
+    for (MavenImporter eachImporter : getSuitableImporters()) {
+      eachImporter.resolve(this, result.nativeMavenProject, embedder);
     }
     return Pair.create(changes, result.nativeMavenProject);
   }
@@ -703,9 +698,21 @@ public class MavenProject {
   }
 
   public List<MavenArtifact> findDependencies(MavenProject depProject) {
+    return findDependencies(depProject.getMavenId());
+  }
+
+  public List<MavenArtifact> findDependencies(MavenId id) {
     List<MavenArtifact> result = new SmartList<MavenArtifact>();
     for (MavenArtifact each : getDependencies()) {
-      if (each.getMavenId().equals(depProject.getMavenId())) result.add(each);
+      if (each.getMavenId().equals(id)) result.add(each);
+    }
+    return result;
+  }
+
+  public List<MavenArtifact> findDependencies(String groupId, String artifactId) {
+    List<MavenArtifact> result = new SmartList<MavenArtifact>();
+    for (MavenArtifact each : getDependencies()) {
+      if (each.getMavenId().equals(groupId, artifactId)) result.add(each);
     }
     return result;
   }
