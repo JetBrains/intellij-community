@@ -61,7 +61,7 @@ public class EclipseClasspathWriter {
         final Element oldChild = (Element)o;
         final String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
         final String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
-        myOldEntries.put(oldKind + oldPath, oldChild);
+        myOldEntries.put(oldKind + getJREKey(oldPath), oldChild);
       }
     }
 
@@ -294,7 +294,7 @@ public class EclipseClasspathWriter {
   }
 
   private Element addOrderEntry(String kind, String path, Element classpathRoot) {
-    final Element element = myOldEntries.get(kind + path);
+    final Element element = myOldEntries.get(kind + getJREKey(path));
     if (element != null){
       final Element clonedElement = (Element)element.clone();
       classpathRoot.addContent(clonedElement);
@@ -307,6 +307,10 @@ public class EclipseClasspathWriter {
     }
     classpathRoot.addContent(orderEntry);
     return orderEntry;
+  }
+
+  private static String getJREKey(String path) {
+    return path.startsWith(EclipseXml.JRE_CONTAINER) ? EclipseXml.JRE_CONTAINER : path;
   }
 
   private static void setExported(Element orderEntry, ExportableOrderEntry dependency) {

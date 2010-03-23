@@ -153,6 +153,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testSrcBinJRESpecific() throws Exception {
+    doTest();
+  }
+
   public void testAccessrulez() throws Exception {
     doTest();
   }
