@@ -18,9 +18,7 @@ package com.intellij.codeInsight.template.zencoding;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -380,8 +378,8 @@ public class XmlZenCodingTemplate {
         return true;
       }
       // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
-      TemplateManager manager = TemplateManager.getInstance(file.getProject());
-      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());
+      /*TemplateManager manager = TemplateManager.getInstance(file.getProject());
+      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());*/
     }
     return false;
   }
