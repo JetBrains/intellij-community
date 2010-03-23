@@ -15,6 +15,8 @@
  */
 package git4idea.commands;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A parser of strings that is oriented to scanning typical git outputs
  */
@@ -33,7 +35,7 @@ public class StringScanner {
    *
    * @param text the text to scan
    */
-  public StringScanner(final String text) {
+  public StringScanner(@NotNull final String text) {
     myText = text;
     myPosition = 0;
   }
