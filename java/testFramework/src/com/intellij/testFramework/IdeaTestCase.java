@@ -26,6 +26,12 @@ import org.jetbrains.annotations.NonNls;
  * @author mike
  */
 @NonNls public abstract class IdeaTestCase extends PlatformTestCase {
+  private static boolean ourPlatformPrefixInitialized;
+
+  protected IdeaTestCase() {
+    initPlatformPrefix();
+  }
+
   public final JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(myProject);
   }
@@ -40,27 +46,19 @@ import org.jetbrains.annotations.NonNls;
     return StdModuleTypes.JAVA;
   }
 
-  //private void cleanTheWorld() throws IllegalAccessException, NoSuchFieldException {
-  //  try {
-  //    ((JobSchedulerImpl)JobScheduler.getInstance()).waitForCompletion();
-  //  }
-  //  catch (Throwable throwable) {
-  //    LOG.error(throwable);
-  //  }
-  //  UIUtil.dispatchAllInvocationEvents();
-  //
-  //  Thread thread = Thread.currentThread();
-  //  Field locals = Thread.class.getDeclaredField("threadLocals");
-  //  locals.setAccessible(true);
-  //  locals.set(thread, null);
-  //
-  //  String path = HeapWalker.findObjectUnder(ourApplication, Project.class);
-  //  if (path != null) {
-  //    throw new RuntimeException(getName() + " " + path);
-  //  }
-  //}
-
-  static {
-    System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
+  public static void initPlatformPrefix() {
+    if (!ourPlatformPrefixInitialized) {
+      ourPlatformPrefixInitialized = true;
+      boolean isUltimate = true;
+      try {
+        IdeaTestCase.class.getClassLoader().loadClass("com.intellij.idea.IdeaUltimateApplication");
+      }
+      catch (ClassNotFoundException e) {
+        isUltimate = false;
+      }
+      if (!isUltimate) {
+        System.setProperty("idea.platform.prefix", "Idea");
+      }
+    }
   }
 }
