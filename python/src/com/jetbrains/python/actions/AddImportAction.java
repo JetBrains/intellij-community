@@ -10,7 +10,8 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -202,14 +203,15 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
   }
 
   private void execute(final PsiFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    new WriteCommandAction(file.getProject(), file) {
+      @Override
+      protected void run(Result result) throws Throwable {
         String name = getRefName();
         if (ResolveImportUtil.resolveInRoots(file, name) != null) { // TODO: think about multiple possible resole results
           AddImportHelper.addImportStatement(file, name, null, file.getProject());
         }
       }
-    });
+    }.execute();
   }
 
   public boolean startInWriteAction() {
