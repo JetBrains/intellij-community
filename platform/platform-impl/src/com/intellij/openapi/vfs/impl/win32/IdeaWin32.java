@@ -22,7 +22,5 @@ public class IdeaWin32 {
 
     public native FileInfo getInfo(String path);
 
-    public native boolean checkExist(String path);
-
     public native FileInfo[] listChildren(String path); 
 }
