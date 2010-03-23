@@ -473,7 +473,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
       final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
 
-      if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed())) {
+      if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
           return JBPopupFactory.getInstance().createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, false, null, myContext, false);
       }
       else {
