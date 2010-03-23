@@ -24,6 +24,7 @@ public class PyDynamicMember {
 
   private final String myResolveShortName;
   private final String myResolveModuleName;
+  private final PsiElement myTarget;
 
   public PyDynamicMember(final String name, final String type, final boolean resolveToInstance) {
     this(name, type, type, resolveToInstance);
@@ -37,6 +38,17 @@ public class PyDynamicMember {
     int split = resolveTo.lastIndexOf('.');
     myResolveShortName = resolveTo.substring(split + 1);
     myResolveModuleName = resolveTo.substring(0, split);
+
+    myTarget = null;
+  }
+
+  public PyDynamicMember(final String name, final PsiElement target) {
+    myName = name;
+    myTarget = target;
+    myResolveToInstance = false;
+    myTypeName = null;
+    myResolveModuleName = null;
+    myResolveShortName = null;
   }
 
   public String getName() {
@@ -49,6 +61,9 @@ public class PyDynamicMember {
 
   @Nullable
   public PsiElement resolve(Project project, PyClass modelClass) {
+    if (myTarget != null) {
+      return myTarget;
+    }
     PyClass targetClass = PyClassNameIndex.findClass(myTypeName, project);
     if (targetClass != null) {
       return new MyInstanceElement(targetClass, findResolveTarget(modelClass));
@@ -71,9 +86,13 @@ public class PyDynamicMember {
     return module;
   }
 
+  @Nullable
   public String getShortType() {
+    if (myTypeName == null) {
+      return null;
+    }
     int pos = myTypeName.lastIndexOf('.');
-    return myTypeName.substring(pos+1);
+    return myTypeName.substring(pos + 1);
   }
 
   private class MyInstanceElement extends PyElementImpl implements PyExpression {
