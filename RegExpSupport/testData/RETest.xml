@@ -806,7 +806,7 @@
       <expected>OK</expected>
     </test>
     <test verify="false">
-      <pattern><![CDATA[\s*@return(?:s)?\s*(?:(?:\{|:)?\s*(?<error>(</error><error>[</error><error>^</error><error>\</error>s<error>\</error>}<error>]</error><error>+</error><error>)</error><error>\</error>s<error>*</error><error>\</error>}<error>?</error><error>\</error>s<error>*</error><error>)</error><error>?</error><error>(</error><error>.</error><error>*</error><error>)</error>]]></pattern>
+      <pattern><![CDATA[\s*@return(?:s)?\s*(?:(?:\{|:)?\s*(?(<error descr="Group name or number expected">[</error><error descr="Pattern expected">^</error><error descr="Pattern expected">\</error>s<error descr="Pattern expected">\</error>}<error descr="Pattern expected">]</error><error descr="Dangling metacharacter">+</error><error descr="Unmatched closing ')'">)</error><error descr="Pattern expected">\</error>s<error descr="Dangling metacharacter">*</error><error descr="Pattern expected">\</error>}<error descr="Dangling metacharacter">?</error><error descr="Pattern expected">\</error>s<error descr="Dangling metacharacter">*</error><error descr="Unmatched closing ')'">)</error><error descr="Dangling metacharacter">?</error><error descr="Pattern expected">(</error><error descr="Pattern expected">.</error><error descr="Dangling metacharacter">*</error><error descr="Unmatched closing ')'">)</error>]]></pattern>
       <expected>OK</expected>
     </test>
   </regressions>

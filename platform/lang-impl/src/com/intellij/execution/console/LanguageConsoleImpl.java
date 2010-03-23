@@ -260,6 +260,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void addToHistory(final String text, final TextAttributes attributes) {
+    final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
     final int offset = history.getTextLength();
@@ -269,6 +270,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                     HighlighterLayer.SYNTAX,
                                     attributes,
                                     HighlighterTargetArea.EXACT_RANGE);
+    queueUiUpdate(scrollToEnd);
   }
 
   public String addCurrentToHistory(final TextRange textRange, final boolean erase) {
