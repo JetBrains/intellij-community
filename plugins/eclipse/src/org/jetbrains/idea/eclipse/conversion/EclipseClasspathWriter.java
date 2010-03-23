@@ -148,7 +148,9 @@ public class EclipseClasspathWriter {
       }
       else {
         final Element orderEntry;
-        if (Comparing.strEqual(libraryName, IdeaXml.ECLIPSE_LIBRARY)) {
+        if (EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getUnknownCons().contains(libraryName)) {
+          orderEntry = addOrderEntry(EclipseXml.CON_KIND, libraryName, classpathRoot);
+        } else if (Comparing.strEqual(libraryName, IdeaXml.ECLIPSE_LIBRARY)) {
           orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.ECLIPSE_PLATFORM, classpathRoot);
         }
         else {
@@ -159,7 +161,9 @@ public class EclipseClasspathWriter {
     }
     else if (entry instanceof JdkOrderEntry) {
       if (entry instanceof InheritedJdkOrderEntry) {
-        addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JRE_CONTAINER, classpathRoot);
+        if (!EclipseModuleManager.getInstance(entry.getOwnerModule()).isForceConfigureJDK()) {
+          addOrderEntry(EclipseXml.CON_KIND, EclipseXml.JRE_CONTAINER, classpathRoot);
+        }
       }
       else {
         final Sdk jdk = ((JdkOrderEntry)entry).getJdk();
