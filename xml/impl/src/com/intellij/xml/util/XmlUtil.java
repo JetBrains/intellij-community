@@ -542,14 +542,6 @@ public class XmlUtil {
     return null;
   }
 
-  public static boolean isTagClosed(@NotNull XmlTag tag) {
-    ASTNode node = tag.getNode();
-    assert node != null;
-    final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(node);
-    final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(node);
-    return emptyTagEnd != null || endTagEnd != null;
-  }
-
   private static class XmlElementProcessor {
     private final PsiElementProcessor processor;
     private final PsiFile targetFile;
