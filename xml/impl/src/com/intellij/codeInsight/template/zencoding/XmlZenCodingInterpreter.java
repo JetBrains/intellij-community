@@ -18,17 +18,27 @@ package com.intellij.codeInsight.template.zencoding;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -376,11 +386,34 @@ class XmlZenCodingInterpreter {
                                         int numberInIteration) {
     List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
     if (callback.isLiveTemplateApplicable(token.myKey)) {
-      if (token.myTemplate != null) {
-        if (attr2value.size() > 0) {
-          TemplateImpl modifiedTemplate = token.myTemplate.copy();
-          XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback.getProject());
-          assert tag != null;
+      return invokeExistingLiveTemplate(token, callback, listener, numberInIteration, attr2value);
+    }
+    else {
+      TemplateImpl template = new TemplateImpl("", "");
+      template.addTextSegment('<' + token.myKey);
+      if (attr2value.size() > 0) {
+        template.addVariable(ATTRS, "", "", false);
+        template.addVariableSegment(ATTRS);
+      }
+      template.addTextSegment(">");
+      template.addVariableSegment(TemplateImpl.END);
+      template.addTextSegment("</" + token.myKey + ">");
+      template.setToReformat(true);
+      Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+      return callback.startTemplate(template, predefinedValues, listener);
+    }
+  }
+
+  private static boolean invokeExistingLiveTemplate(TemplateToken token,
+                                                    CustomTemplateCallback callback,
+                                                    TemplateInvokationListener listener,
+                                                    int numberInIteration,
+                                                    List<Pair<String, String>> attr2value) {
+    if (token.myTemplate != null) {
+      if (attr2value.size() > 0 || callback.getFileType() == StdFileTypes.XHTML) {
+        TemplateImpl modifiedTemplate = token.myTemplate.copy();
+        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback, true);
+        if (tag != null) {
           for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
             Pair<String, String> pair = iterator.next();
             if (tag.getAttribute(pair.first) != null) {
@@ -388,6 +421,7 @@ class XmlZenCodingInterpreter {
               iterator.remove();
             }
           }
+          closeUnclosingTags(tag);
           String text = null;
           if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
             String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
@@ -410,29 +444,55 @@ class XmlZenCodingInterpreter {
           Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
           return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
         }
-        else {
-          return callback.startTemplate(token.myTemplate, null, listener);
-        }
       }
-      else {
-        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-        return callback.startTemplate(token.myKey, predefinedValues, listener);
-      }
+      return callback.startTemplate(token.myTemplate, null, listener);
     }
     else {
-      TemplateImpl template = new TemplateImpl("", "");
-      template.addTextSegment('<' + token.myKey);
-      if (attr2value.size() > 0) {
-        template.addVariable(ATTRS, "", "", false);
-        template.addVariableSegment(ATTRS);
-      }
-      template.addTextSegment(">");
-      template.addVariableSegment(TemplateImpl.END);
-      template.addTextSegment("</" + token.myKey + ">");
-      template.setToReformat(true);
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-      return callback.startTemplate(template, predefinedValues, listener);
+      return callback.startTemplate(token.myKey, predefinedValues, listener);
     }
+  }
+
+  private static boolean isTagClosed(@NotNull XmlTag tag) {
+    ASTNode node = tag.getNode();
+    assert node != null;
+    final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(node);
+    final ASTNode endTagEnd = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(node);
+    return emptyTagEnd != null || endTagEnd != null;
+  }
+
+  @SuppressWarnings({"ConstantConditions"})
+  private static void closeUnclosingTags(@NotNull XmlTag root) {
+    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<SmartPsiElementPointer<XmlTag>>();
+    Project project = root.getProject();
+    final SmartPointerManager manager = SmartPointerManager.getInstance(project);
+    root.accept(new XmlRecursiveElementVisitor() {
+      @Override
+      public void visitXmlTag(final XmlTag tag) {
+        if (!isTagClosed(tag)) {
+          tagToClose.add(manager.createLazyPointer(tag));
+        }
+      }
+    });
+    for (final SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
+      final XmlTag tag = pointer.getElement();
+      if (tag != null) {
+        final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
+        if (child != null) {
+          final int offset = child.getTextRange().getStartOffset();
+          VirtualFile file = tag.getContainingFile().getVirtualFile();
+          if (file != null) {
+            final Document document = FileDocumentManager.getInstance().getDocument(file);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+              }
+            });
+          }
+        }
+      }
+    }
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
   }
 
   private static void fail() {
