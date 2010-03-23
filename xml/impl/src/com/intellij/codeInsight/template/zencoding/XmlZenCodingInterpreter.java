@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -410,7 +409,7 @@ class XmlZenCodingInterpreter {
                                                     int numberInIteration,
                                                     List<Pair<String, String>> attr2value) {
     if (token.myTemplate != null) {
-      if (attr2value.size() > 0 || callback.getFileType() == StdFileTypes.XHTML) {
+      if (attr2value.size() > 0 || XmlZenCodingTemplate.autoclosingAvailable(callback)) {
         TemplateImpl modifiedTemplate = token.myTemplate.copy();
         XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback, true);
         if (tag != null) {
@@ -421,7 +420,9 @@ class XmlZenCodingInterpreter {
               iterator.remove();
             }
           }
-          closeUnclosingTags(tag);
+          if (XmlZenCodingTemplate.autoclosingAvailable(callback)) {
+            closeUnclosingTags(tag);
+          }
           String text = null;
           if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
             String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
