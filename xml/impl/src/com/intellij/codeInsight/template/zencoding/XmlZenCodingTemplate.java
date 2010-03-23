@@ -176,7 +176,7 @@ public class XmlZenCodingTemplate {
     return template;
   }
 
-  public static boolean autoclosingAvailable(CustomTemplateCallback callback) {
+  public static boolean isTrueXml(CustomTemplateCallback callback) {
     FileType type = callback.getFileType();
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX;
   }
@@ -208,7 +208,7 @@ public class XmlZenCodingTemplate {
           if (token == null) {
             return null;
           }
-          if (applicable && (token.myAttribute2Value.size() > 0 || autoclosingAvailable(callback))) {
+          if (applicable && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
             assert prefix.equals(token.myKey);
             TemplateImpl template = cacheTemplate(token, callback);
             if (token.myAttribute2Value.size() > 0) {

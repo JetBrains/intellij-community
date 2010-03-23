@@ -37,6 +37,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -395,8 +396,10 @@ class XmlZenCodingInterpreter {
         template.addVariableSegment(ATTRS);
       }
       template.addTextSegment(">");
-      template.addVariableSegment(TemplateImpl.END);
-      template.addTextSegment("</" + token.myKey + ">");
+      if (XmlZenCodingTemplate.isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(token.myKey)) {
+        template.addVariableSegment(TemplateImpl.END);
+        template.addTextSegment("</" + token.myKey + ">");
+      }
       template.setToReformat(true);
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
       return callback.startTemplate(template, predefinedValues, listener);
@@ -409,7 +412,7 @@ class XmlZenCodingInterpreter {
                                                     int numberInIteration,
                                                     List<Pair<String, String>> attr2value) {
     if (token.myTemplate != null) {
-      if (attr2value.size() > 0 || XmlZenCodingTemplate.autoclosingAvailable(callback)) {
+      if (attr2value.size() > 0 || XmlZenCodingTemplate.isTrueXml(callback)) {
         TemplateImpl modifiedTemplate = token.myTemplate.copy();
         XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback, true);
         if (tag != null) {
@@ -420,7 +423,7 @@ class XmlZenCodingInterpreter {
               iterator.remove();
             }
           }
-          if (XmlZenCodingTemplate.autoclosingAvailable(callback)) {
+          if (XmlZenCodingTemplate.isTrueXml(callback)) {
             closeUnclosingTags(tag);
           }
           String text = null;
