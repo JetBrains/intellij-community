@@ -134,7 +134,7 @@ public abstract class BaseSplitter implements Splitter {
     }
     till = range.getEndOffset();
     if (tooSmall(from, till)) {
-      return null;
+      return toCheck;
     }
     if (addLast) {
       toCheck.add(new TextRange(from, till));

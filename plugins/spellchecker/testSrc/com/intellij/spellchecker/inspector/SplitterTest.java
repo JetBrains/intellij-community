@@ -48,6 +48,24 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{"camel", "Case"});
   }
 
+   public void testArrays() {
+    String text = "Token[]";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"Token"});
+  }
+
+  public void testWordInBr1() {
+    String text = "'fill'";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"fill"});
+  }
+
+  public void testWordInBr2() {
+    String text = "\"fill\"";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"fill"});
+  }
+
   public void testCapitalizedWithShortWords() {
     String text = "IntelliJ";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
