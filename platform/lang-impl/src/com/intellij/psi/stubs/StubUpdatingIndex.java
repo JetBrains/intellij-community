@@ -242,6 +242,19 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
     }
 
+    @Override
+    public void flush() throws StorageException {
+      final StubIndexImpl stubIndex = myStubIndex;
+      try {
+        for (StubIndexKey key : stubIndex.getAllStubIndexKeys()) {
+          stubIndex.flush(key);
+        }
+      }
+      finally {
+        super.flush();
+      }
+    }
+
     protected void updateWithMap(final int inputId, final Map<Integer, SerializedStubTree> newData, Callable<Collection<Integer>> oldKeysGetter)
         throws StorageException {
 
