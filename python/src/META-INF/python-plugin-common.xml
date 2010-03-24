@@ -109,6 +109,12 @@
       <descriptionDirectoryName>PyStringConcatenationToFormatIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.ConvertFormatOperatorToMethodIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>ConvertFormatOperatorToMethodIntention</descriptionDirectoryName>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 

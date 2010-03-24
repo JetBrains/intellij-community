@@ -1,0 +1,1 @@
+print("%20.2sfdfdf% 2.3Fsdfsdfsv fgvd" <caret>% ("a", 12))

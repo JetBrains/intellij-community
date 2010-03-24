@@ -97,4 +97,8 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   public void testStringConcatToFormat() throws Exception {
     doTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
   }
+
+  public void testConvertFormatOperatorToMethod() throws Exception {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON30);
+  }
 }
