@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.MoveFromFutureImportQuickFix;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
@@ -62,7 +63,7 @@ public class PyFromFutureImportInspection extends LocalInspectionTool {
     @Override
     public void visitPyFromImportStatement(PyFromImportStatement node) {
       PyReferenceExpression importSource = node.getImportSource();
-      if (importSource != null && "__future__".equals(importSource.getName())) {
+      if (importSource != null && PyNames.FUTURE_MODULE.equals(importSource.getName())) {
         PsiFile file = importSource.getContainingFile();
         if (file instanceof PyFile) {
           final List<PyStatement> statementList = ((PyFile)file).getStatements();
@@ -72,7 +73,7 @@ public class PyFromFutureImportInspection extends LocalInspectionTool {
                 return;
               }
               PyReferenceExpression source = ((PyFromImportStatement)statement).getImportSource();
-              if (source != null && "__future__".equals(source.getName())) {
+              if (source != null && PyNames.FUTURE_MODULE.equals(source.getName())) {
                 continue;
               }
             }
