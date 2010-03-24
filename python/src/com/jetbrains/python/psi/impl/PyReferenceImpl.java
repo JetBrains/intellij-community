@@ -194,7 +194,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     ResolveProcessor processor = new ResolveProcessor(referencedName);
-    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, myElement, myElement.getContainingFile());
+
+    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
+    PsiElement realContext = PyPsiUtils.getRealContext(myElement);
+    if (realContext == null){
+      realContext = myElement;
+    }
+    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, realContext.getContainingFile());
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
         // is it a case of the bizarre "class Foo(Foo)" construct?
@@ -211,19 +217,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (uexpr == null) {
       // ...as a part of current module
-      PyType otype = PyBuiltinCache.getInstance(myElement).getObjectType(); // "object" as a closest kin to "module"
+      PyType otype = PyBuiltinCache.getInstance(realContext).getObjectType(); // "object" as a closest kin to "module"
       if (otype != null) uexpr = otype.resolveMember(myElement.getName());
     }
     if (uexpr == null) {
       // ...as a builtin symbol
-      PyFile bfile = PyBuiltinCache.getInstance(myElement).getBuiltinsFile();
+      PyFile bfile = PyBuiltinCache.getInstance(realContext).getBuiltinsFile();
       if (bfile != null) {
         uexpr = bfile.getElementNamed(referencedName);
       }
     }
     if (uexpr == null) {
       //uexpr = PyResolveUtil.resolveOffContext(this);
-      uexpr = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), myElement);
+      uexpr = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext);
     }
     uexpr = PyUtil.turnDirIntoInit(uexpr); // treeCrawlUp might have found a dir
     if (uexpr != null) ret.poke(uexpr, getRate(uexpr));
@@ -346,50 +352,30 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @NotNull
   public Object[] getVariants() {
-    // qualifier limits the namespace
-    final PyExpression qualifier = myElement.getQualifier();
-    if (qualifier != null) {
-      PyType qualifierType = qualifier.getType();
-      ProcessingContext ctx = new ProcessingContext();
-      final Set<String> names_already = new HashSet<String>();
-      ctx.put(PyType.CTX_NAMES, names_already);
-      if (qualifierType != null) {
-        Collection<Object> variants = new ArrayList<Object>();
-        if (qualifier instanceof PyQualifiedExpression) {
-          Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
-          variants.addAll(attrs);
-          for (PyExpression ex : attrs) {
-            if (ex instanceof PyReferenceExpression) {
-              PyReferenceExpression refex = (PyReferenceExpression)ex;
-              names_already.add(refex.getReferencedName());
-            }
-            else if (ex instanceof PyTargetExpression) {
-              PyTargetExpression targetExpr = (PyTargetExpression) ex;
-              names_already.add(targetExpr.getName());
-            }
-          }
-          Collections.addAll(variants, qualifierType.getCompletionVariants(myElement, ctx));
-          return variants.toArray();
-        }
-        else {
-          return qualifierType.getCompletionVariants(myElement, ctx);
-        }
-      }
-      return NO_VARIANTS;
-    }
-
     // imports are another special case
     if (PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class) != null) {
       // complete to possible modules
       return ResolveImportUtil.suggestImportVariants(myElement);
     }
 
+    // qualifier limits the namespace
+    final PyExpression qualifier = myElement.getQualifier();
+    if (qualifier != null) {
+      return getQualifiedReferenceVariants(qualifier);
+    }
+
     final List<Object> ret = new ArrayList<Object>();
+
+    // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
+    PsiElement realContext = PyPsiUtils.getRealContext(myElement);
+    if (realContext == null){
+      realContext = myElement;
+    }
 
     // include our own names
     final VariantsProcessor processor = new VariantsProcessor();
-    PyResolveUtil.treeCrawlUp(processor, myElement); // names from here
-    PyResolveUtil.scanOuterContext(processor, myElement); // possible names from around us at call time
+    PyResolveUtil.treeCrawlUp(processor, realContext); // names from here
+    PyResolveUtil.scanOuterContext(processor, realContext); // possible names from around us at call time
 
     // in a call, include function's arg names
     PyCallExpression call_expr = PsiTreeUtil.getParentOfType(myElement, PyCallExpression.class);
@@ -412,7 +398,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // scan all "import *" and include names provided by them
     CollectProcessor collect_proc;
     collect_proc = new CollectProcessor(PyStarImportElement.class);
-    PyResolveUtil.treeCrawlUp(collect_proc, myElement);
+    PyResolveUtil.treeCrawlUp(collect_proc, realContext);
     List<PsiElement> stars = collect_proc.getResult();
     for (PsiElement star_elt : stars) {
       final PyFromImportStatement from_import_stmt = (PyFromImportStatement)star_elt.getParent();
@@ -429,7 +415,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getElement()).getBuiltinsFile()); // names from __builtin__
 
     // if we're a normal module, add module's attrs
-    PsiFile f = myElement.getContainingFile();
+    PsiFile f = realContext.getContainingFile();
     if (f instanceof PyFile) {
       for (String name : PyModuleType.getPossibleInstanceMembers()) {
         ret.add(LookupElementBuilder.create(name).setIcon(Icons.FIELD_ICON));
@@ -438,6 +424,36 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     ret.addAll(processor.getResultList());
     return ret.toArray();
+  }
+
+  private Object[] getQualifiedReferenceVariants(PyExpression qualifier) {
+    PyType qualifierType = qualifier.getType();
+    ProcessingContext ctx = new ProcessingContext();
+    final Set<String> names_already = new HashSet<String>();
+    ctx.put(PyType.CTX_NAMES, names_already);
+    if (qualifierType != null) {
+      Collection<Object> variants = new ArrayList<Object>();
+      if (qualifier instanceof PyQualifiedExpression) {
+        Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
+        variants.addAll(attrs);
+        for (PyExpression ex : attrs) {
+          if (ex instanceof PyReferenceExpression) {
+            PyReferenceExpression refex = (PyReferenceExpression)ex;
+            names_already.add(refex.getReferencedName());
+          }
+          else if (ex instanceof PyTargetExpression) {
+            PyTargetExpression targetExpr = (PyTargetExpression) ex;
+            names_already.add(targetExpr.getName());
+          }
+        }
+        Collections.addAll(variants, qualifierType.getCompletionVariants(myElement, ctx));
+        return variants.toArray();
+      }
+      else {
+        return qualifierType.getCompletionVariants(myElement, ctx);
+      }
+    }
+    return NO_VARIANTS;
   }
 
   private static void addKeywordArgumentVariants(PyFunction def, final List<Object> ret) {

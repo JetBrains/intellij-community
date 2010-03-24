@@ -160,7 +160,7 @@ public class PyResolveUtil {
    * @return the element for which processor's {@code execute()} returned true, or null.
    */
   @Nullable
-  public static PsiElement scanOuterContext(@NotNull PsiScopeProcessor processor, @NotNull PyElement start) {
+  public static PsiElement scanOuterContext(@NotNull PsiScopeProcessor processor, @NotNull PsiElement start) {
     // if we're under a cap, an external object that we want to use might be also defined below us.
     // look through all contexts, closest first.
     PsiElement ret = null;
