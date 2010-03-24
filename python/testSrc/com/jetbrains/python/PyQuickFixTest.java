@@ -110,6 +110,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.simplify"), true, true);
   }
 
+  public void testFromFutureImportQuickFix() throws Exception {
+    doInspectionTest("MoveFromFutureImport.py", PyFromFutureImportInspection.class,
+                     PyBundle.message("QFIX.move.from.future.import"), true, true);
+  }
+
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
