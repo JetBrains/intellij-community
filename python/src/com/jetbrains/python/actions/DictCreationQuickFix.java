@@ -56,6 +56,6 @@ public class DictCreationQuickFix implements LocalQuickFix {
       statement.delete();
     }
     myStatement.getAssignedValue().replace(elementGenerator.createFromText(project, PyExpressionStatement.class,
-                                                                                   "{" + stringBuilder.substring(0, stringBuilder.length() - 2) + "}"));
+                                                                                   "{" + stringBuilder.substring(0, stringBuilder.length() - 2) + "}").getExpression());
   }
 }
