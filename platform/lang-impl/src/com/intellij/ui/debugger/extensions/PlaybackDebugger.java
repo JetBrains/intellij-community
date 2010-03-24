@@ -23,9 +23,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
@@ -40,10 +45,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.debugger.UiDebuggerExtension;
@@ -123,6 +124,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     loadGroup.add(new LoadFromFileAction());
     loadGroup.addSeparator();
     loadGroup.add(new SetScriptDirAction());
+    loadGroup.addSeparator();
+    loadGroup.add(new SetScriptFileAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, loadGroup, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -195,6 +198,25 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private VirtualFile getCurrentScriptFile() {
     final String text = myCurrentScript.getText();
     return text != null ? LocalFileSystem.getInstance().findFileByIoFile(new File(text)) : null;
+  }
+
+  private class SetScriptFileAction extends AnAction {
+    FileChooserDescriptor descriptor;
+
+    private SetScriptFileAction() {
+      super("Set Script File", "", IconLoader.getIcon("/nodes/packageOpen.png"));
+      descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
+      descriptor.putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
+      descriptor.putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      VirtualFile[] files = FileChooser.chooseFiles(myComponent, descriptor);
+      if (files.length > 0) {
+        myCurrentScript.setText(files[0].getPresentableUrl());
+      }
+    }
   }
 
   private class SetScriptDirAction extends AnAction {
