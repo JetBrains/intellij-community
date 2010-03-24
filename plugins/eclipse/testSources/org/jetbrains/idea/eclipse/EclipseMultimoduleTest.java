@@ -25,9 +25,12 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import junit.framework.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +52,20 @@ public class EclipseMultimoduleTest extends IdeaTestCase {
       LOG.error(e);
     }
     final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
-    model.addContentEntry(LocalFileSystem.getInstance().findFileByPath(getProject().getBaseDir().getPath() + "/eclipse-ws-3.4.1-a/ws-internals"));
+    final VirtualFile file =
+      ApplicationManager.getApplication().runWriteAction(
+          new Computable<VirtualFile>() {
+            public VirtualFile compute() {
+              return LocalFileSystem.getInstance().refreshAndFindFileByPath(getProject().getBaseDir().getPath() + "/eclipse-ws-3.4.1-a/ws-internals");
+            }
+          }
+      );
+    if (file != null) {
+      model.addContentEntry(file);
+    } else {
+      model.dispose();
+      Assert.assertTrue("File not found", false);
+    }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run(){
             model.commit();
