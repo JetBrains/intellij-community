@@ -196,10 +196,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     ResolveProcessor processor = new ResolveProcessor(referencedName);
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-    if (realContext == null){
-      realContext = myElement;
-    }
+    final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
     PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, realContext.getContainingFile());
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
@@ -367,10 +364,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<Object> ret = new ArrayList<Object>();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-    if (realContext == null){
-      realContext = myElement;
-    }
+    final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
 
     // include our own names
     final VariantsProcessor processor = new VariantsProcessor();

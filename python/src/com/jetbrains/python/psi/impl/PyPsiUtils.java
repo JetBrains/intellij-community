@@ -222,13 +222,13 @@ public class PyPsiUtils {
   }
 
 
-  @Nullable
+  @NotNull
   public static PsiElement getRealContext(@NotNull final PsiElement element) {
     if (!element.isValid()){
       if (LOG.isDebugEnabled()){
         LOG.debug("PyPsiUtil.getRealContext(" + element + ") called. Returned null. Element in invalid");
       }
-      return null;
+      return element;
     }
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyExpressionCodeFragment) {
@@ -236,7 +236,7 @@ public class PyPsiUtils {
       if (LOG.isDebugEnabled()){
         LOG.debug("PyPsiUtil.getRealContext(" + element + ") is called. Returned " + context +". Element inside code fragment");
       }
-      return context;
+      return context != null ? context : element;
     }
     else {
       if (LOG.isDebugEnabled()){
