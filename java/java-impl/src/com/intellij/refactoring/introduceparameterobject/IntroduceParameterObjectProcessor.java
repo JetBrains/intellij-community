@@ -437,6 +437,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       this.setter = setter;
     }
 
+    @Nullable
     public PsiField getField() {
       return field;
     }

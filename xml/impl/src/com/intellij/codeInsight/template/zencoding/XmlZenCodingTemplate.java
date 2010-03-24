@@ -18,11 +18,10 @@ package com.intellij.codeInsight.template.zencoding;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -177,6 +176,11 @@ public class XmlZenCodingTemplate {
     return template;
   }
 
+  public static boolean isTrueXml(CustomTemplateCallback callback) {
+    FileType type = callback.getFileType();
+    return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX;
+  }
+
   @Nullable
   private static List<Token> parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
     text += MARKER;
@@ -204,7 +208,7 @@ public class XmlZenCodingTemplate {
           if (token == null) {
             return null;
           }
-          if (applicable && (token.myAttribute2Value.size() > 0 || callback.getFileType() == StdFileTypes.XHTML)) {
+          if (applicable && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
             assert prefix.equals(token.myKey);
             TemplateImpl template = cacheTemplate(token, callback);
             if (token.myAttribute2Value.size() > 0) {
@@ -305,7 +309,8 @@ public class XmlZenCodingTemplate {
       String key = computeKey(editor, startOffset);
       List<Token> tokens = parse(key, callback);
       if (tokens != null && check(tokens)) {
-        if (tokens.size() == 2) {
+        // !! required if Zen Coding if invoked by TemplateManagerImpl action
+        /*if (tokens.size() == 2) {
           Token token = tokens.get(0);
           if (token instanceof TemplateToken) {
             if (key.equals(((TemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
@@ -313,7 +318,7 @@ public class XmlZenCodingTemplate {
               return null;
             }
           }
-        }
+        }*/
         return key;
       }
       if (element != null) {
@@ -373,8 +378,8 @@ public class XmlZenCodingTemplate {
         return true;
       }
       // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
-      TemplateManager manager = TemplateManager.getInstance(file.getProject());
-      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());
+      /*TemplateManager manager = TemplateManager.getInstance(file.getProject());
+      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());*/
     }
     return false;
   }

@@ -203,13 +203,13 @@ public class PersistentEnumerator<Data> implements Forceable {
     boolean accept(int id);
   }
 
-  public synchronized void putMetaData(int data) throws IOException {
+  protected final synchronized void putMetaData(int data) throws IOException {
     synchronized (ourLock) {
       myStorage.putInt(META_DATA_OFFSET, data);
     }
   }
 
-  public synchronized int getMetaData() throws IOException {
+  protected final synchronized int getMetaData() throws IOException {
     synchronized (ourLock) {
       return myStorage.getInt(META_DATA_OFFSET);
     }
@@ -517,7 +517,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     return myDirty;
   }
 
-  public synchronized void flush() throws IOException {
+  private synchronized void flush() throws IOException {
     synchronized (ourLock) {
       if (myStorage.isDirty() || isDirty()) {
         markDirty(false);
@@ -540,7 +540,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  private void markDirty(boolean dirty) throws IOException {
+  protected final void markDirty(boolean dirty) throws IOException {
     synchronized (ourLock) {
       if (myDirty) {
         if (!dirty) {

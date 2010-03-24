@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
@@ -748,12 +747,12 @@ public class MavenIndex {
     }
 
     public void flush() throws IOException {
-      groups.flush();
-      groupsWithArtifacts.flush();
-      groupsWithArtifactsWithVersions.flush();
+      groups.force();
+      groupsWithArtifacts.force();
+      groupsWithArtifactsWithVersions.force();
 
-      groupToArtifactMap.flush();
-      groupWithArtifactToVersionMap.flush();
+      groupToArtifactMap.force();
+      groupWithArtifactToVersionMap.force();
     }
   }
 

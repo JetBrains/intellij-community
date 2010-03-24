@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="lang-impl" exported="" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="execution-impl" exported="" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

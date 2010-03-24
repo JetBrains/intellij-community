@@ -208,9 +208,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void launchAction(@NotNull IntentionAction action) throws Exception;
 
-  void configureByFile(@TestDataFile @NonNls String file) throws Exception;
+  void configureByFile(@TestDataFile @NonNls String file);
 
-  void configureByFiles(@NonNls String... files) throws Exception;
+  void configureByFiles(@NonNls String... files);
 
   PsiFile configureByText(FileType fileType, @NonNls String text) throws IOException;
 

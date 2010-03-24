@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.impl;
 
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
@@ -33,7 +34,7 @@ import java.util.Set;
 public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
   public static final byte IS_PROPERTY = 0x01;
   public static final byte IS_ENUM_CONSTANT = 0x02;
-  public static final byte IS_DEPRECATED = 0x04;
+  public static final byte IS_DEPRECATED_BY_DOC_TAG = 0x04;
 
   private final byte myFlags;
   private final StringRef myName;
@@ -75,8 +76,8 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
     return (myFlags & IS_PROPERTY) != 0;
   }
 
-  public boolean isDeprecated() {
-    return (myFlags & IS_DEPRECATED) != 0;
+  public boolean isDeprecatedByDocTag() {
+    return (myFlags & IS_DEPRECATED_BY_DOC_TAG) != 0;
   }
 
   public byte getFlags() {
@@ -93,8 +94,8 @@ public class GrFieldStubImpl extends StubBase<GrField> implements GrFieldStub {
       f |= IS_PROPERTY;
     }
 
-    if (field.isDeprecated()) {
-      f|= IS_DEPRECATED;
+    if (PsiImplUtil.isDeprecatedByDocTag(field)) {
+      f|= IS_DEPRECATED_BY_DOC_TAG;
     }
     return f;
   }

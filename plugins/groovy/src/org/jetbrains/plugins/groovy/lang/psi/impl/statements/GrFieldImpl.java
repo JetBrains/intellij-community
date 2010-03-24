@@ -88,10 +88,12 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   public boolean isDeprecated() {
     final GrFieldStub stub = getStub();
-    if (stub != null) {
-      return stub.isDeprecated();
+    boolean byDocTag = stub == null ? PsiImplUtil.isDeprecatedByDocTag(this) : stub.isDeprecatedByDocTag();
+    if (byDocTag) {
+      return true;
     }
-    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
+
+    return PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @Override
