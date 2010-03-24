@@ -134,7 +134,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     TreeElement decl = getJavaParsingContext(holderElement, level).getDeclarationParsing().parseDeclarationText(myManager, level, text,
                                                                                                                 DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != JavaElementType.METHOD) {
-      throw new IncorrectOperationException("Incorrect method \"" + text + "\".");
+      throw new IncorrectOperationException("Incorrect method '" + text + "'. Context:"+context+"; Level:"+level+"; parsed: "+(decl == null ? null : DebugUtil.treeToString(decl, false)));
     }
     holderElement.rawAddChildren(decl);
     return (PsiMethod)SourceTreeToPsiMap.treeElementToPsi(decl);
