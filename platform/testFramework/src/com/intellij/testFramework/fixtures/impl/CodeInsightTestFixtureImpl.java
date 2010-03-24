@@ -914,7 +914,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return configureByFileInner(filePaths[0]);
   }
 
-  public void configureByFile(final String file) throws IOException {
+  public void configureByFile(final String file) {
     assertInitialized();
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Exception {
@@ -923,7 +923,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute();
   }
 
-  public void configureByFiles(@NonNls final String... files) throws Exception {
+  public void configureByFiles(@NonNls final String... files) {
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Exception {
         configureByFilesInner(files);

@@ -69,7 +69,6 @@ public class EclipseClasspathReader {
 
   public void init(ModifiableRootModel model) {
     myContentEntry = model.addContentEntry(VfsUtil.pathToUrl(myRootPath));
-    model.inheritSdk();
   }
 
   public static void collectVariables(Set<String> usedVariables, Element classpathElement) {
@@ -121,6 +120,10 @@ public class EclipseClasspathReader {
       catch (ConversionException e) {
         ErrorLog.rethrow(ErrorLog.Level.Warning, null, EclipseXml.CLASSPATH_FILE, e);
       }
+    }
+    if (!model.isSdkInherited() && model.getSdkName() == null) {
+      EclipseModuleManager.getInstance(model.getModule()).setForceConfigureJDK();
+      model.inheritSdk();
     }
   }
 
@@ -274,6 +277,9 @@ public class EclipseClasspathReader {
         final Library.ModifiableModel modifiableModel = library.getModifiableModel();
         modifiableModel.addRoot(getJunitClsUrl(junitName.contains("4")), OrderRootType.CLASSES);
         modifiableModel.commit();
+      } else {
+        EclipseModuleManager.getInstance(rootModel.getModule()).registerUnknownCons(path);
+        addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, LibraryTablesRegistrar.APPLICATION_LEVEL);
       }
     }
     else {

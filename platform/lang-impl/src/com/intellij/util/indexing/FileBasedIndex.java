@@ -17,6 +17,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
@@ -65,6 +66,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TIntHashSet;
@@ -77,6 +79,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -121,6 +125,8 @@ public class FileBasedIndex implements ApplicationComponent {
   private @Nullable String myConfigPath;
   private @Nullable String mySystemPath;
   private final boolean myIsUnitTestMode;
+  private ScheduledFuture<?> myFlushingFuture;
+  private volatile int myLocalModCount;
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, true);
@@ -239,11 +245,13 @@ public class FileBasedIndex implements ApplicationComponent {
 
     myChangedFilesCollector = new ChangedFilesCollector();
 
+    /*
     final File workInProgressFile = getMarkerFile();
     if (workInProgressFile.exists()) {
       // previous IDEA session was closed incorrectly, so drop all indices
       FileUtil.delete(PathManager.getIndexRoot());
     }
+    */
 
     try {
       final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
@@ -282,8 +290,18 @@ public class FileBasedIndex implements ApplicationComponent {
           performShutdown();
         }
       });
-      FileUtil.createIfDoesntExist(workInProgressFile);
+      //FileUtil.createIfDoesntExist(workInProgressFile);
       saveRegisteredIndices(myIndices.keySet());
+      myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+        int lastModCount = 0;
+        public void run() {
+          if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
+            flushAllIndices();
+          }
+          lastModCount = myLocalModCount;
+        }
+      }, 5000, 5000, TimeUnit.MILLISECONDS);
+
     }
   }
 
@@ -520,6 +538,11 @@ public class FileBasedIndex implements ApplicationComponent {
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
+    if (myFlushingFuture != null) {
+      myFlushingFuture.cancel(false);
+      myFlushingFuture = null;
+    }
+
     myFileDocumentManager.saveAllDocuments();
     
     LOG.info("START INDEX SHUTDOWN");
@@ -536,7 +559,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
       myVfManager.removeVirtualFileListener(myChangedFilesCollector);
 
-      FileUtil.delete(getMarkerFile());
+      //FileUtil.delete(getMarkerFile());
     }
     catch (Throwable e) {
       LOG.info("Problems during index shutdown", e);
@@ -545,22 +568,20 @@ public class FileBasedIndex implements ApplicationComponent {
     LOG.info("END INDEX SHUTDOWN");
   }
 
-  public void flushCaches() {
+  private void flushAllIndices() {
     IndexingStamp.flushCache();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        for (ID<?, ?> indexId : myIndices.keySet()) {
-          //noinspection ConstantConditions
-          try {
-            getIndex(indexId).flush();
-          }
-          catch (StorageException e) {
-            LOG.info(e);
-            requestRebuild(indexId);
-          }
+    for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
+      try {
+        final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+        if (index != null) {
+          index.flush();
         }
       }
-    });
+      catch (StorageException e) {
+        LOG.info(e);
+        requestRebuild(indexId);
+      }
+    }
   }
 
   /**
@@ -1274,6 +1295,7 @@ public class FileBasedIndex implements ApplicationComponent {
     if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
     }
+    myLocalModCount++;
 
     final StorageGuard.Holder lock = setDataBufferingEnabled(false);
 

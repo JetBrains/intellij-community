@@ -2,7 +2,7 @@
   <id>org.intellij.groovy.hotswap</id>
   <name>Groovy HotSwap</name>
   <description>Enables HotSwap functionality in Groovy classes</description>
-  <version>0.2</version>
+  <version>0.3</version>
   <idea-version since-build="93.90" until-build="96.1"/>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.</vendor>
   <depends>org.intellij.groovy</depends>

@@ -102,7 +102,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents) {
-    return parseActionHint(file, contents, " \"([^\"]*)\" \"(\\S*)\".*");
+    return parseActionHint(file, contents, " \"(.*)\" \"(true|false)\".*");
   }
 
   public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents, @NonNls @RegExp String actionPattern) {
@@ -117,7 +117,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     // "quick fix action text to perform" "should be available"
     Pattern pattern = Pattern.compile("^" + comment.replace("*", "\\*") + actionPattern, Pattern.DOTALL);
     Matcher matcher = pattern.matcher(contents);
-    assertTrue("No comment found", matcher.matches());
+    assertTrue("No comment found in "+file.getVirtualFile(), matcher.matches());
     final String text = matcher.group(1);
     final Boolean actionShouldBeAvailable = Boolean.valueOf(matcher.group(2));
     return Pair.create(text, actionShouldBeAvailable);

@@ -20,11 +20,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class EclipseModuleManager {
   private CachedXmlDocumentSet myDocumentSet;
   private Map<String, String> myEclipseVariablePaths = new HashMap<String, String>();
+  private Set<String> myUnknownCons = new HashSet<String>();
+  private boolean myForceConfigureJDK = false;
   private static final String SRC_PREFIX = "src:";
 
   public EclipseModuleManager(Module module) {}
@@ -55,5 +59,21 @@ public class EclipseModuleManager {
 
   public String getEclipseSrcVariablePath(String path) {
     return myEclipseVariablePaths.get(SRC_PREFIX + path);
+  }
+
+  public void registerUnknownCons(String con) {
+    myUnknownCons.add(con);
+  }
+
+  public Set<String> getUnknownCons() {
+    return myUnknownCons;
+  }
+
+  public boolean isForceConfigureJDK() {
+    return myForceConfigureJDK;
+  }
+
+  public void setForceConfigureJDK() {
+    myForceConfigureJDK = true;
   }
 }

@@ -18,12 +18,11 @@ package com.intellij.codeInsight.template.zencoding;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,6 +30,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashSet;
 import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
@@ -168,15 +168,17 @@ public class XmlZenCodingTemplate {
     return XML11Char.isXML11ValidNCName(str);
   }
 
-  private static boolean generateTemplateAndAddToToken(TemplateToken token, CustomTemplateCallback callback) {
+  @NotNull
+  private static TemplateImpl cacheTemplate(TemplateToken token, CustomTemplateCallback callback) {
     TemplateImpl template = callback.findApplicableTemplate(token.myKey);
     assert template != null;
-    XmlTag tag = parseXmlTagInTemplate(template.getString(), callback.getProject());
-    if (tag == null) {
-      return false;
-    }
     token.myTemplate = template;
-    return true;
+    return template;
+  }
+
+  public static boolean isTrueXml(CustomTemplateCallback callback) {
+    FileType type = callback.getFileType();
+    return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX;
   }
 
   @Nullable
@@ -206,10 +208,14 @@ public class XmlZenCodingTemplate {
           if (token == null) {
             return null;
           }
-          if (applicable && token.myAttribute2Value.size() > 0) {
+          if (applicable && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
             assert prefix.equals(token.myKey);
-            if (!generateTemplateAndAddToToken(token, callback)) {
-              return null;
+            TemplateImpl template = cacheTemplate(token, callback);
+            if (token.myAttribute2Value.size() > 0) {
+              XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, false);
+              if (tag == null) {
+                return null;
+              }
             }
           }
           result.add(token);
@@ -303,7 +309,8 @@ public class XmlZenCodingTemplate {
       String key = computeKey(editor, startOffset);
       List<Token> tokens = parse(key, callback);
       if (tokens != null && check(tokens)) {
-        if (tokens.size() == 2) {
+        // !! required if Zen Coding if invoked by TemplateManagerImpl action
+        /*if (tokens.size() == 2) {
           Token token = tokens.get(0);
           if (token instanceof TemplateToken) {
             if (key.equals(((TemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
@@ -311,7 +318,7 @@ public class XmlZenCodingTemplate {
               return null;
             }
           }
-        }
+        }*/
         return key;
       }
       if (element != null) {
@@ -347,8 +354,9 @@ public class XmlZenCodingTemplate {
   }
 
   @Nullable
-  static XmlTag parseXmlTagInTemplate(String templateString, Project project) {
-    XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.xml", templateString);
+  static XmlTag parseXmlTagInTemplate(String templateString, CustomTemplateCallback callback, boolean createPhysicalFile) {
+    XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(callback.getProject())
+      .createFileFromText("dummy.xml", StdFileTypes.XML, templateString, LocalTimeCounter.currentTime(), createPhysicalFile);
     XmlDocument document = xmlFile.getDocument();
     return document == null ? null : document.getRootTag();
   }
@@ -370,8 +378,8 @@ public class XmlZenCodingTemplate {
         return true;
       }
       // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
-      TemplateManager manager = TemplateManager.getInstance(file.getProject());
-      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());
+      /*TemplateManager manager = TemplateManager.getInstance(file.getProject());
+      return manager.startTemplate(editor, TemplateSettings.getInstance().getDefaultShortcutChar());*/
     }
     return false;
   }

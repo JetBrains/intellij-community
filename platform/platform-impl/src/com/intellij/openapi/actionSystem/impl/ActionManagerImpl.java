@@ -1047,9 +1047,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     final ShortcutSet shortcutSet = action.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     for (final Shortcut shortcut : shortcuts) {
-      KeyboardShortcut kb = (KeyboardShortcut)shortcut;
-      if (kb.getSecondKeyStroke() == null) {
-        return (KeyboardShortcut)shortcut;
+      // Shortcut can be MouseShortcut here.
+      // For example IdeaVIM often assigns them
+      if (shortcut instanceof KeyboardShortcut){
+        final KeyboardShortcut kb = (KeyboardShortcut)shortcut;
+        if (kb.getSecondKeyStroke() == null) {
+          return (KeyboardShortcut)shortcut;
+        }
       }
     }
 

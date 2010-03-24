@@ -137,7 +137,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   public void flush() {
     l.lock();
     try {
-      if (!myMap.isClosed()) {
+      if (!myMap.isClosed() && myMap.isDirty()) {
         myCache.clear();
         myMap.force();
       }
@@ -245,16 +245,34 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    read(key).addValue(inputId, value);
+    try {
+      myMap.markDirty();
+      read(key).addValue(inputId, value);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    read(key).removeValue(inputId, value);
+    try {
+      myMap.markDirty();
+      read(key).removeValue(inputId, value);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
   }
 
   public void removeAllValues(Key key, int inputId) throws StorageException {
-    // important: assuming the key exists in the index
-    read(key).removeAllValues(inputId);
+    try {
+      myMap.markDirty();
+      // important: assuming the key exists in the index
+      read(key).removeAllValues(inputId);
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
   }
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<ValueContainer<T>> {

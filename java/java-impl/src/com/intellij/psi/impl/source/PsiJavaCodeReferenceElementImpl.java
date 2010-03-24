@@ -58,6 +58,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public static final int CLASS_FQ_OR_PACKAGE_NAME_KIND = 5;
   public static final int CLASS_IN_QUALIFIED_NEW_KIND = 6;
 
+  private final int myHC = ourHC++;
+
+  @Override
+  public int hashCode() {
+    return myHC;
+  }
+
   public PsiJavaCodeReferenceElementImpl() {
     super(JavaElementType.JAVA_CODE_REFERENCE);
   }

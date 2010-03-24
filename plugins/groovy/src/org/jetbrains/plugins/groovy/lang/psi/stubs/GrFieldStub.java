@@ -38,7 +38,7 @@ public interface GrFieldStub extends NamedStub<GrField> {
 
   boolean isProperty();
 
-  boolean isDeprecated();
+  boolean isDeprecatedByDocTag();
 
   byte getFlags();
 }

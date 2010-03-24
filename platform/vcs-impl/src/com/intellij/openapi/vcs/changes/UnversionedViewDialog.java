@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction;
 import com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
@@ -132,6 +133,15 @@ public class UnversionedViewDialog extends DialogWrapper {
     myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     myPanel.add(new JScrollPane(myView), BorderLayout.CENTER);
 
+    final DeleteUnversionedFilesAction deleteUnversionedFilesAction = new DeleteUnversionedFilesAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        super.actionPerformed(e);
+        refreshView();
+      }
+    };
+    actions.add(deleteUnversionedFilesAction);
+    deleteUnversionedFilesAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myView);
     actions.add(new ScheduleForAdditionAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {

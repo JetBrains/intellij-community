@@ -93,6 +93,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
   @NonNls private static final String XML_NS_PREFIX = "xml";
 
+  private final int myHC = ourHC++;
+
+  @Override
+  public int hashCode() {
+    return myHC;
+  }
+
   public XmlTagImpl() {
     this(XmlElementType.XML_TAG);
   }

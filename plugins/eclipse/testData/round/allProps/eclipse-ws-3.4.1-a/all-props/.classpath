@@ -8,6 +8,7 @@
 	<classpathentry excluding="excl/" including="incl/" kind="src" path="src-props-1">
 		<attributes>
 			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="ws-internals/native"/>
+			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/doNotDeleteUnknownAttribute"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" output="bin-props-2" path="src-props-2">
@@ -31,6 +32,7 @@
 	<classpathentry exported="true" kind="lib" path="$ROOT$/eclipse-externals/lib-3/copy-every/lib-3" sourcepath="$ROOT$/eclipse-externals/lib-3/copy-every/src">
 		<attributes>
 			<attribute name="javadoc_location" value="http://open-space.org"/>
+			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/doNotDeleteUnknownAttribute"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="lib-4/jar-every/lib-4.jar" sourcepath="lib-4/jar-every/src.zip">
@@ -41,6 +43,7 @@
 	<classpathentry exported="true" kind="lib" path="/ws-internals/lib-5/jar-every/lib-5.jar" sourcepath="/ws-internals/lib-5/jar-every/src.zip">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/ws-internals/lib-5/jar-all-5.zip!/doc/api"/>
+			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/doNotDeleteUnknownAttribute"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="$ROOT$/eclipse-externals/lib-6/jar-every/lib-6.jar" sourcepath="$ROOT$/eclipse-externals/lib-6/jar-every/src.zip">

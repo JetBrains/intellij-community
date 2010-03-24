@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -126,6 +127,17 @@ public class CollectHighlightsUtil {
       return ((PsiFile)root).getViewProvider().findElementAt(offset, root.getLanguage());
     }
     return root.findElementAt(offset);
+  }
+
+  public static boolean shouldHighlightFile(@Nullable final PsiFile psiFile) {
+    if (psiFile == null) return true;
+
+    final ProblemHighlightFilter[] filters = ProblemHighlightFilter.EP_NAME.getExtensions();
+    for (ProblemHighlightFilter filter : filters) {
+      if (!filter.shouldHighlight(psiFile)) return false;
+    }
+
+    return true;
   }
 
   public static boolean isOutsideSourceRootJavaFile(@Nullable PsiFile psiFile) {

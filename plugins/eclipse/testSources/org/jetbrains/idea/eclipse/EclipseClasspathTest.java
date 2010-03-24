@@ -25,6 +25,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -65,29 +66,29 @@ public class EclipseClasspathTest extends IdeaTestCase {
   }
 
   private void doTest() throws Exception {
-    doTest("/test");
+    doTest("/test", getProject());
   }
 
-  private void doTest(final String relativePath) throws Exception {
-    final String path = getProject().getBaseDir().getPath() + relativePath;
-    checkModule(path, setUpModule(path));
+  protected static void doTest(final String relativePath, final Project project) throws Exception {
+    final String path = project.getBaseDir().getPath() + relativePath;
+    checkModule(path, setUpModule(path, project));
   }
 
-  private Module setUpModule(final String path) throws IOException, JDOMException, ConversionException {
+  private static Module setUpModule(final String path, final Project project) throws IOException, JDOMException, ConversionException {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
-        return ModuleManager.getInstance(getProject())
+        return ModuleManager.getInstance(project)
           .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
       }
     });
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, getProject(), null);
+    final EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
     classpathReader
       .readClasspath(rootModel, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(), null,
@@ -96,10 +97,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
     return module;
   }
 
-  private void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
+  private static void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
     final File classpathFile1 = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     if (!classpathFile1.exists()) return;
-    String fileText1 = new String(FileUtil.loadFileText(classpathFile1)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    String fileText1 = new String(FileUtil.loadFileText(classpathFile1)).replaceAll("\\$ROOT\\$", module.getProject().getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
       fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
@@ -110,7 +111,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     model.dispose();
 
     String resulted = new String(JDOMUtil.printDocument(new Document(resultClasspathElement), "\n"));
-    Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
+    Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
                       JDOMUtil.areElementsEqual(classpathElement1, resultClasspathElement));
   }
 
@@ -119,7 +120,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
     List<String> paths = Arrays.asList(getProject().getBaseDir().getPath() + "/multi/m1", getProject().getBaseDir().getPath() + "/multi/m2/m22");
 
     for (final String path: paths) {
-      setUpModule(path);
+      setUpModule(path, getProject());
     }
 
     for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
@@ -129,7 +130,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
 
 
   public void testAbsolutePaths() throws Exception {
-    doTest("/parent/parent/test");
+    doTest("/parent/parent/test", getProject());
   }
 
 
@@ -150,6 +151,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
   }
 
   public void testSrcBinJRE() throws Exception {
+    doTest();
+  }
+
+  public void testSrcBinJRESpecific() throws Exception {
     doTest();
   }
 
@@ -177,10 +182,6 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
-  public void testAllProps() throws Exception {
-    doTest("/eclipse-ws-3.4.1-a/all-props");
-  }
-
   public void testHome() throws Exception {
     doTest();
   }
@@ -198,6 +199,10 @@ public class EclipseClasspathTest extends IdeaTestCase {
   }
 
   public void testRoot() throws Exception {
+    doTest();
+  }
+
+  public void testUnknownCon() throws Exception {
     doTest();
   }
 
