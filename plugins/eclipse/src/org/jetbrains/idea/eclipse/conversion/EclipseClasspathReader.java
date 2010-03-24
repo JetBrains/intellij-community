@@ -167,11 +167,11 @@ public class EclipseClasspathReader {
       final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
       final Library.ModifiableModel modifiableModel = library.getModifiableModel();
 
-      modifiableModel.addRoot(getUrl(path), OrderRootType.CLASSES);
+      modifiableModel.addRoot(getUrl(path, rootModel), OrderRootType.CLASSES);
 
       final String sourcePath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (sourcePath != null) {
-        modifiableModel.addRoot(getUrl(sourcePath), OrderRootType.SOURCES);
+        modifiableModel.addRoot(getUrl(sourcePath, rootModel), OrderRootType.SOURCES);
       }
 
       final List<String> docPaths = getJavadocAttribute(element);
@@ -208,7 +208,8 @@ public class EclipseClasspathReader {
       }
       usedVariables.add(clsVar);
 
-      final String url = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath)));
+      final String url = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath)),
+                                rootModel);
       EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseVariablePath(url, path);
       modifiableModel.addRoot(url, OrderRootType.CLASSES);
 
@@ -228,7 +229,8 @@ public class EclipseClasspathReader {
           srcPath = null;
         }
         usedVariables.add(srcVar);
-        final String srcUrl = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath)));
+        final String srcUrl = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath)),
+                                     rootModel);
         EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
       }
@@ -356,7 +358,7 @@ public class EclipseClasspathReader {
     return var == null ? null : ("$" + var + "$" + (path == null ? "" : ("/" + path)));
   }
 
-  private String getUrl(final String path) {
+  private String getUrl(final String path, ModifiableRootModel model) {
     String url = null;
     if (path.startsWith("/")) {
       final String relativePath = new File(myRootPath).getParent() + "/" + path;
@@ -371,7 +373,7 @@ public class EclipseClasspathReader {
         final String relativeToRootPath = getRelativeToRootPath(path);
 
         final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(rootPath);
-        if (otherModule != null) {
+        if (otherModule != null && otherModule != model.getModule()) {
           url = relativeToOtherModule(otherModule, relativeToRootPath);
         }
         else if (myCurrentRoots != null) {
