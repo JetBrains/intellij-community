@@ -49,11 +49,12 @@ public class IdentifierSplitter extends BaseSplitter {
       return null;
     }
 
-    List<TextRange> extracted = excludeByPattern(text, range, WORD_BRACES, 2);
+    List<TextRange> extracted = new ArrayList<TextRange>();
+    extracted.add(range);
 
-    if (extracted == null) {
+    /*if (extracted == null) {
       return null;
-    }
+    }*/
 
     List<CheckArea> results = new ArrayList<CheckArea>();
 
@@ -63,7 +64,6 @@ public class IdentifierSplitter extends BaseSplitter {
       if (words == null || words.size() == 0) {
         continue;
       }
-
 
 
       if (words.size() == 1) {
