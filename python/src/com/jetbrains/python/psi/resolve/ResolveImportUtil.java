@@ -227,7 +227,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveModuleInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
+  public static PsiElement resolveModuleInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
     if (foothold == null || !foothold.isValid()) return null;
     PsiFile foothold_file = foothold.getContainingFile();
     if (foothold_file == null || !foothold_file.isValid()) return null;

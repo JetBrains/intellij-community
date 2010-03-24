@@ -45,6 +45,9 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @Nullable
   PyClass findTopLevelClass(String name);
 
+  @Nullable
+  PyTargetExpression findTopLevelAttribute(String name);
+
   LanguageLevel getLanguageLevel();
 
   List<PyFromImportStatement> getFromImports();

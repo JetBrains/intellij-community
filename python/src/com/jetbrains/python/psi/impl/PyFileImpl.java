@@ -69,6 +69,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return findByName(name, getTopLevelClasses());
   }
 
+  public PyTargetExpression findTopLevelAttribute(String name) {
+    return findByName(name, getTopLevelAttributes());
+  }
+
   @Nullable
   private static <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
     for (T namedElement : namedElements) {
