@@ -17,6 +17,7 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -44,7 +45,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
     runManager.setActiveConfiguration(configuration);
 
-    final ProgramRunner runner = getRunner(myExecutor.getId(), configuration);
+    final ProgramRunner runner = getRunner(configuration.getConfiguration());
     if (runner != null) {
       try {
         runner.execute(myExecutor, new ExecutionEnvironment(runner, configuration, context.getDataContext()));
@@ -55,9 +56,14 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
   }
 
+  @Override
+  protected boolean isEnabledFor(RunConfiguration configuration) {
+    return getRunner(configuration) != null;
+  }
+
   @Nullable
-  private static ProgramRunner getRunner(final String executorId, final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
-    return RunnerRegistry.getInstance().getRunner(executorId, selectedConfiguration.getConfiguration());
+  private ProgramRunner getRunner(final RunConfiguration configuration) {
+    return RunnerRegistry.getInstance().getRunner(myExecutor.getId(), configuration);
   }
 
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
@@ -68,7 +74,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       configuration = context.getConfiguration();
     }
 
-    final boolean b = configuration != null && getRunner(myExecutor.getId(), configuration) != null;
+    final boolean b = configuration != null && getRunner(configuration.getConfiguration()) != null;
     presentation.setEnabled(b);
     presentation.setVisible(b);
   }
