@@ -72,6 +72,12 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{});
   }
 
+  public void testWords() {
+    String text = "first-last";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"first","last"});
+  }
+
   public void testCapitalizedWithShortAndLongWords() {
     String text = "IntelliJTestTest";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
