@@ -168,7 +168,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    */
   @NotNull
   private List<RatedResolveResult> resolveInner() {
-    //List<PsiElement> ret = new ArrayList<PsiElement>();
     ResultList ret = new ResultList();
 
     final String referencedName = myElement.getReferencedName();
