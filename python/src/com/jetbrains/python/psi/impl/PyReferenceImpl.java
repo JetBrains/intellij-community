@@ -173,6 +173,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
+    // Handle import reference
     if (PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class) != null) {
       PsiElement target = ResolveImportUtil.resolveImportReference(myElement);
 
@@ -187,49 +188,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     final PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
-      // regular attributes
-      PyType qualifierType = qualifier.getType();
-      if (qualifierType != null) {
-        if (qualifier instanceof PyQualifiedExpression) {
-          // enrich the type info with any fields assigned nearby
-          List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
-          if (qualifier_path != null) {
-            for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
-              if (referencedName.equals(ex.getName())) {
-                ret.poke(ex, RatedResolveResult.RATE_NORMAL);
-                return ret;
-              }
-            }
-          }
-        }
-        // resolve within the type proper
-        PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
-        if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
-      }
-      // special case of __doc__
-      if ("__doc__".equals(referencedName)) {
-        PsiElement docstring = null;
-        if (qualifierType instanceof PyClassType) {
-          PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
-          if (qual_class != null) docstring = qual_class.getDocStringExpression();
-        }
-        else if (qualifierType instanceof PyModuleType) {
-          PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
-          if (qual_module instanceof PyDocStringOwner) {
-            docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
-          }
-        }
-        else if (qualifier instanceof PyReferenceExpression) {
-          PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference().resolve();
-          if (qual_object instanceof PyDocStringOwner) {
-            docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
-          }
-        }
-        if (docstring != null) {
-          ret.poke(docstring, RatedResolveResult.RATE_HIGH);
-        }
-      }
-      return ret;
+      return resolveQualifiedReference(ret, referencedName, qualifier);
     }
 
     // here we have an unqualified expr. it may be defined:
@@ -268,6 +227,52 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     uexpr = PyUtil.turnDirIntoInit(uexpr); // treeCrawlUp might have found a dir
     if (uexpr != null) ret.poke(uexpr, getRate(uexpr));
+    return ret;
+  }
+
+  private List<RatedResolveResult> resolveQualifiedReference(final ResultList ret, final String referencedName, final PyExpression qualifier) {
+    // regular attributes
+    PyType qualifierType = qualifier.getType();
+    if (qualifierType != null) {
+      if (qualifier instanceof PyQualifiedExpression) {
+        // enrich the type info with any fields assigned nearby
+        List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
+        if (qualifier_path != null) {
+          for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
+            if (referencedName.equals(ex.getName())) {
+              ret.poke(ex, RatedResolveResult.RATE_NORMAL);
+              return ret;
+            }
+          }
+        }
+      }
+      // resolve within the type proper
+      PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
+      if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
+    }
+    // special case of __doc__
+    if ("__doc__".equals(referencedName)) {
+      PsiElement docstring = null;
+      if (qualifierType instanceof PyClassType) {
+        PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
+        if (qual_class != null) docstring = qual_class.getDocStringExpression();
+      }
+      else if (qualifierType instanceof PyModuleType) {
+        PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
+        if (qual_module instanceof PyDocStringOwner) {
+          docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
+        }
+      }
+      else if (qualifier instanceof PyReferenceExpression) {
+        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference().resolve();
+        if (qual_object instanceof PyDocStringOwner) {
+          docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
+        }
+      }
+      if (docstring != null) {
+        ret.poke(docstring, RatedResolveResult.RATE_HIGH);
+      }
+    }
     return ret;
   }
 
