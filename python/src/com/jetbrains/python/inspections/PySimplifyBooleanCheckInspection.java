@@ -39,6 +39,11 @@ public class PySimplifyBooleanCheckInspection extends LocalInspectionTool {
     return "PySimplifyBooleanCheckInspection";
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
