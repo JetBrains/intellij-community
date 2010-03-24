@@ -36,7 +36,7 @@ public class IdentifierSplitter extends BaseSplitter {
   private static final Pattern WORD_EXT = Pattern.compile("(\\p{L}*?)[-_$\\[\\]]");
 
   @NonNls
-  private static final Pattern WORD_BRACES = Pattern.compile("(['\"]+?)(.*?)(['\"]+?)");
+  private static final Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
   public IdentifierSplitter() {
 
@@ -49,12 +49,11 @@ public class IdentifierSplitter extends BaseSplitter {
       return null;
     }
 
-    List<TextRange> extracted = new ArrayList<TextRange>();
-    extracted.add(range);
+    List<TextRange> extracted = excludeByPattern(text, range, WORD_IN_QUOTES, 1);
 
-    /*if (extracted == null) {
+    if (extracted == null) {
       return null;
-    }*/
+    }
 
     List<CheckArea> results = new ArrayList<CheckArea>();
 
@@ -64,6 +63,7 @@ public class IdentifierSplitter extends BaseSplitter {
       if (words == null || words.size() == 0) {
         continue;
       }
+
 
 
       if (words.size() == 1) {

@@ -54,18 +54,25 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{"Token"});
   }
 
- /* public void testWordInBr1() {
+  public void testIdentifierInSingleQuotes() {
     String text = "'fill'";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"fill"});
   }
 
-  public void testWordInBr2() {
-    String text = "\"fill\"";
-    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{"fill"});
+
+   public void testWordsInSingleQuotesWithSep() {
+    String text = "'test-something'";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getStringLiteralSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"test","something"});
   }
-*/
+
+   public void testComplexWordsInQuotes() {
+    String text = "\"test-customer's'\"";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"test","customer's"});
+  }
+
   public void testCapitalizedWithShortWords() {
     String text = "IntelliJ";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
