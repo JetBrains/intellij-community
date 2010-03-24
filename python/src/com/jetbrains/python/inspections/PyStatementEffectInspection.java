@@ -54,6 +54,16 @@ public class PyStatementEffectInspection extends LocalInspectionTool {
       if (expression instanceof PyCallExpression || expression instanceof PyYieldExpression) {
         return;
       }
+
+      if (expression instanceof PyStringLiteralExpression) {
+        PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
+        if (docStringOwner != null) {
+          if (docStringOwner.getDocStringExpression() == expression) {
+            return;
+          }
+        }
+      }
+
       PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
       if (tryPart != null) {
         final PyStatementList statementList = tryPart.getStatementList();

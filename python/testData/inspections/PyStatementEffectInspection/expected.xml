@@ -15,4 +15,9 @@
     <line>5</line>
     <description>Statement seems to have no effect</description>
   </problem>
+  <problem>
+    <file>test.py</file>
+    <line>9</line>
+    <description>Statement seems to have no effect</description>
+  </problem>
 </problems>
