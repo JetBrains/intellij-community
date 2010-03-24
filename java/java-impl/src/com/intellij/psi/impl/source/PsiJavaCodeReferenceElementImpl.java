@@ -25,6 +25,7 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.parsing.Parsing;
@@ -100,7 +101,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       if (isQualified()) {
         return CLASS_OR_PACKAGE_NAME_KIND;
       }
-
       return CLASS_NAME_KIND;
     }
     if (i == JavaElementType.NEW_EXPRESSION) {
@@ -175,7 +175,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
-      message += " Parent: '" + parent+"'; ";
+      message += " Parent: '" + parent+"'; \n";
+    }
+    if (parent != null) {
+      message += DebugUtil.treeToString(parent, false);
     }
     LOG.error(message);
     return CLASS_NAME_KIND;
@@ -570,6 +573,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     switch (getKind()) {
       case CLASS_OR_PACKAGE_NAME_KIND:
         if (resolve() instanceof PsiPackage) return true;
+        //noinspection fallthrough
       case CLASS_NAME_KIND:
         break;
 
