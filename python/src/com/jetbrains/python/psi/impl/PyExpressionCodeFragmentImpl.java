@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * clone of JSExpressionCodeFragment
  */
 public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpressionCodeFragment {
+  public static Key<PsiElement> CONTEXT_KEY = new Key<PsiElement>("PyExpressionCodeFragmentContext");
 
   private PsiElement myContext;
   private boolean myPhysical;

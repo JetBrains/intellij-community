@@ -69,7 +69,7 @@ public class PyConsoleRunner {
   private final CommandLineArgumentsProvider myProvider;
   private final String myWorkingDir;
 
-  private LanguageConsoleViewImpl myConsoleView;
+  private PyLanguageConsoleView myConsoleView;
   private final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
   private AnAction myRunAction;
 
@@ -119,7 +119,8 @@ public class PyConsoleRunner {
     ProcessTerminatedListener.attach(myProcessHandler);
 
     // Init console view
-    myConsoleView = new LanguageConsoleViewImpl(myProject, myConsoleTitle, PythonLanguage.getInstance());
+    myConsoleView = new PyLanguageConsoleView(myProject, myConsoleTitle);
+
     // Set language level
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       final Sdk pythonSdk = PythonSdkType.findPythonSdk(module);
@@ -279,11 +280,9 @@ public class PyConsoleRunner {
     if (!StringUtil.isEmptyOrSpaces(line)){
       myHistory.addToHistory(line);          
     }
-    if (line.length() == 0){
-      sendInput("\n\n", myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
-    } else {
-      sendInput(line +"\n", myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
-    }
+    final String text2send = line.length() == 0 ? "\n\n" : line + "\n";
+    sendInput(text2send, myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
+    myConsoleView.inputSent(text2send);
   }
 
   protected String getProviderCommandLine() {

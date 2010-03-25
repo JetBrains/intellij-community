@@ -495,7 +495,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   // our very own caching resolver
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
-
     public static CachingResolver INSTANCE = new CachingResolver();
 
     @Nullable
