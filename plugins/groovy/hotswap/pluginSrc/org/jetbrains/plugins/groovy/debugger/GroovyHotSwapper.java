@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GroovyHotSwapper implements JavaProgramPatcher {
+public class GroovyHotSwapper extends JavaProgramPatcher {
 
   private static boolean endsWithAny(String s, List<String> endings) {
     for (String extension : endings) {
