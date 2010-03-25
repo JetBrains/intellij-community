@@ -742,16 +742,6 @@ public class ContainerUtil {
     return Arrays.asList(items);
   }
 
-  @NotNull
-  public static <T> Set<T> set(@Nullable T... items) {
-    @SuppressWarnings({"UnnecessaryFullyQualifiedName"})
-    final Set<T> set = new java.util.HashSet<T>();
-    if (items != null) {
-      set.addAll(Arrays.asList(items));
-    }
-    return set;
-  }
-
   // Generalized Quick Sort. Does neither array.clone() nor list.toArray()
   public static <T> void quickSort(List<T> list, Comparator<? super T> comparator) {
     quickSort(list, comparator, 0, list.size());
