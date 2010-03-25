@@ -200,14 +200,27 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     return text != null ? LocalFileSystem.getInstance().findFileByIoFile(new File(text)) : null;
   }
 
+  private static class ScriptFileChooserDescriptor extends FileChooserDescriptor {
+    public ScriptFileChooserDescriptor() {
+      super(true, false, false, false, false, false);
+      putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
+      putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
+    }
+
+    @Override
+    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+      if (!showHiddenFiles && FileElement.isFileHidden(file)) return false;
+      return file.getExtension() != null && file.getExtension().equalsIgnoreCase(UiScriptFileType.myExtension)
+             || super.isFileVisible(file, showHiddenFiles) && file.isDirectory();
+    }
+  }
+
   private class SetScriptFileAction extends AnAction {
     FileChooserDescriptor descriptor;
 
     private SetScriptFileAction() {
       super("Set Script File", "", IconLoader.getIcon("/nodes/packageOpen.png"));
-      descriptor = new FileChooserDescriptor(true, false, false, false, false, false);
-      descriptor.putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
-      descriptor.putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
+      descriptor = new ScriptFileChooserDescriptor();
     }
 
     @Override

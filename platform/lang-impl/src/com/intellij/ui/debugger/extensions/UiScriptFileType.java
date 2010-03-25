@@ -51,9 +51,11 @@ public class UiScriptFileType implements FileType {
     return "UI test scripts.";
   }
 
+  public static final String myExtension = "ijs";
+
   @NotNull
   public String getDefaultExtension() {
-    return "ijs";
+    return myExtension;
   }
 
   public Icon getIcon() {
