@@ -155,6 +155,7 @@ public class EclipseClasspathReader {
       }
       else {
         getContentEntry().addSourceFolder(VfsUtil.pathToUrl(myRootPath + "/" + path), testPattern != null && testPattern.length() > 0 && path.matches(testPattern));
+        rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class);
       }
     }
 
@@ -266,9 +267,7 @@ public class EclipseClasspathReader {
             unknownJdks.add(jdkName);
           }
         }
-        OrderEntry[] orderEntries = rootModel.getOrderEntries();
-        orderEntries = ArrayUtil.append(orderEntries, orderEntries[0]);
-        rootModel.rearrangeOrderEntries(ArrayUtil.remove(orderEntries, 0));
+        rearrangeOrderEntryOfType(rootModel, JdkOrderEntry.class);
       }
       else if (path.startsWith(EclipseXml.USER_LIBRARY)) {
         addNamedLibrary(rootModel, unknownLibraries, exported, getPresentableName(path), LibraryTablesRegistrar.PROJECT_LEVEL);
@@ -287,6 +286,19 @@ public class EclipseClasspathReader {
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
+  }
+
+  private static void rearrangeOrderEntryOfType(ModifiableRootModel rootModel, Class<? extends OrderEntry> orderEntryClass) {
+    OrderEntry[] orderEntries = rootModel.getOrderEntries();
+    int moduleSourcesIdx = 0;
+    for (OrderEntry orderEntry : orderEntries) {
+      if (orderEntryClass.isAssignableFrom(orderEntry.getClass())) {
+        break;
+      }
+      moduleSourcesIdx++;
+    }
+    orderEntries = ArrayUtil.append(orderEntries, orderEntries[moduleSourcesIdx]);
+    rootModel.rearrangeOrderEntries(ArrayUtil.remove(orderEntries, moduleSourcesIdx));
   }
 
   public static void setupOutput(ModifiableRootModel rootModel, final String path) {

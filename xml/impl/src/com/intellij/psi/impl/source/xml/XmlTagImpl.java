@@ -96,7 +96,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private final int myHC = ourHC++;
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return myHC;
   }
 

@@ -336,6 +336,10 @@ public class NanoXmlUtil {
   }
 
   public static class ParserStoppedException extends RuntimeException {
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
+    }
   }
 
   private static class RootTagInfoBuilder implements IXMLBuilder {

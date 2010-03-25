@@ -19,10 +19,11 @@
  */
 package com.intellij.openapi.wm.ex;
 
+import org.jetbrains.annotations.NotNull;
 
 
 public class ToolWindowManagerAdapter implements ToolWindowManagerListener{
-  public void toolWindowRegistered(final String id){}
+  public void toolWindowRegistered(@NotNull final String id){}
 
   public void stateChanged(){}
 }

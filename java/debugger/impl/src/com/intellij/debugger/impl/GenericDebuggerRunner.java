@@ -24,6 +24,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
+import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
@@ -64,6 +65,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                          ExecutionEnvironment env) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
+      runCustomPatchers(parameters, state.getRunnerSettings(), executor);
       RemoteConnection connection = DebuggerManagerImpl.createDebugParameters(parameters, true, DebuggerSettings.getInstance().DEBUGGER_TRANSPORT, "", false);
       return attachVirtualMachine(project, executor, state, contentToReuse, env, connection, true);
     }

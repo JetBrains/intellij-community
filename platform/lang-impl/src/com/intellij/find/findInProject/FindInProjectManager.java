@@ -27,6 +27,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -72,7 +73,7 @@ public class FindInProjectManager {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       String s = editor.getSelectionModel().getSelectedText();
-      if (s != null && !s.contains("\r") && !s.contains("\n")){
+      if (!StringUtil.isEmpty(s) && !s.contains("\r") && !s.contains("\n")){
         findModel.setStringToFind(s);
       }
     }

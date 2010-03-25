@@ -50,7 +50,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
   @NonNls
   @NotNull
   public String getShortName() {
-    return "Plugin.xmlValidity";
+    return "PluginXmlValidity";
   }
 
   @Nullable

@@ -61,8 +61,8 @@ public class HighlightMethodUtil {
                                      HighlightUtil.formatClass(method2.getContainingClass()));
   }
 
-  public static HighlightInfo checkMethodWeakerPrivileges(MethodSignatureBackedByPsiMethod methodSignature,
-                                                          List<HierarchicalMethodSignature> superMethodSignatures,
+  public static HighlightInfo checkMethodWeakerPrivileges(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                          @NotNull List<HierarchicalMethodSignature> superMethodSignatures,
                                                           boolean includeRealPositionInfo) {
     PsiMethod method = methodSignature.getMethod();
     PsiModifierList modifierList = method.getModifierList();

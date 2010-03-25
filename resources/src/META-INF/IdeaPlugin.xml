@@ -82,6 +82,9 @@
     <extensionPoint name="debugger.jvmDebugProvider"
                     interface="com.intellij.debugger.engine.JVMDebugProvider"/>
 
+    <extensionPoint name="java.programPatcher"
+                    beanClass="com.intellij.execution.runners.JavaProgramPatcher"/>
+
     <extensionPoint name="OrderRootTypeUI"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 
@@ -843,7 +846,6 @@
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.QualifiedClassNameMacro"/>
-    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentPackageMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.RightSideTypeMacro"/>
