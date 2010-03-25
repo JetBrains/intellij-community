@@ -24,7 +24,6 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -110,19 +109,9 @@ public class ProjectUtil {
         virtualFile.isDirectory() && virtualFile.findChild(DIRECTORY_BASED_PROJECT_DIR) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
-    ProjectOpenProcessor provider = getImportProvider(virtualFile);
+    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if (provider != null) {
       return provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
-    }
-    return null;
-  }
-
-  @Nullable
-  public static ProjectOpenProcessor getImportProvider(VirtualFile file) {
-    for (ProjectOpenProcessor provider : Extensions.getExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME)) {
-      if (provider.canOpenProject(file)) {
-        return provider;
-      }
     }
     return null;
   }

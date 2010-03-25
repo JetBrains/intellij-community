@@ -432,17 +432,17 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
   }
 
   private Set<String> deleteFiles(final List<String> paths, CompileContext context) {
-
     final Set<Artifact> artifactsToBuild = getAffectedArtifacts(context);
 
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     final THashSet<String> deletedJars = new THashSet<String>();
+    final THashSet<String> notDeletedJars = new THashSet<String>();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Deleting outdated files...");
     }
 
+    int notDeletedFilesCount = 0;
     final Artifact[] allArtifacts = ArtifactManager.getInstance(context.getProject()).getArtifacts();
-
     List<File> filesToRefresh = new ArrayList<File>();
     for (String fullPath : paths) {
       boolean isUnderOutput = false;
@@ -460,22 +460,43 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
       if (isUnderOutput && !isInArtifactsToBuild) continue;
 
       int end = fullPath.indexOf(JarFileSystem.JAR_SEPARATOR);
-      String filePath = end != -1 ? fullPath.substring(0, end) : fullPath;
-      if (end != -1) {
-        deletedJars.add(filePath);
+      boolean isJar = end != -1;
+      String filePath = isJar ? fullPath.substring(0, end) : fullPath;
+      boolean deleted = false;
+      if (isJar) {
+        if (notDeletedJars.contains(filePath)) {
+          continue;
+        }
+        deleted = deletedJars.contains(filePath);
       }
+
       File file = new File(FileUtil.toSystemDependentName(filePath));
-      filesToRefresh.add(file);
-      boolean deleted = FileUtil.delete(file);
-      if (!deleted && LOG.isDebugEnabled()) {
-        LOG.debug("Cannot delete file " + file);
+      if (!deleted) {
+        filesToRefresh.add(file);
+        deleted = FileUtil.delete(file);
       }
 
       if (deleted) {
+        if (isJar) {
+          deletedJars.add(filePath);
+        }
         if (testMode) {
           CompilerManagerImpl.addDeletedPath(file.getAbsolutePath());
         }
         getOutputItemsCache(context.getProject()).remove(fullPath);
+      }
+      else {
+        if (isJar) {
+          notDeletedJars.add(filePath);
+        }
+        if (notDeletedFilesCount++ > 50) {
+          context.addMessage(CompilerMessageCategory.WARNING, "Deletion of outdated files stopped because too many files cannot be deleted", null, -1, -1);
+          break;
+        }
+        context.addMessage(CompilerMessageCategory.WARNING, "Cannot delete file '" + filePath + "'", null, -1, -1);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Cannot delete file " + file);
+        }
       }
     }
 
