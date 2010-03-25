@@ -82,7 +82,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final EditorEx myConsoleEditor;
   private final EditorEx myHistoryViewer;
   private final Document myEditorDocument;
-  private PsiFile myFile;
+  protected PsiFile myFile;
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
 

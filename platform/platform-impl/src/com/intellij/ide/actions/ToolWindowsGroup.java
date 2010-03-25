@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -132,7 +133,7 @@ public final class ToolWindowsGroup extends ActionGroup {
   }
 
   private final class MyToolWindowManagerListener extends ToolWindowManagerAdapter{
-    public void toolWindowRegistered(String id){
+    public void toolWindowRegistered(@NotNull String id){
       addActionForToolWindow(id);
     }
   }

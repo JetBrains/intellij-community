@@ -133,7 +133,7 @@ public class JCiPUtil {
     }
   }
 
-  private static class ImmutableTagVisitor extends JavaRecursiveElementVisitor {
+  private static class ImmutableTagVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean found = false;
 
     public void visitDocTag(PsiDocTag tag) {

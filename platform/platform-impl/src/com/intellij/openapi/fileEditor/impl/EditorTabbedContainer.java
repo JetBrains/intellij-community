@@ -106,7 +106,7 @@ final class EditorTabbedContainer implements Disposable {
         updateTabBorder();
       }
 
-      public void toolWindowRegistered(final String id) {
+      public void toolWindowRegistered(@NotNull final String id) {
         updateTabBorder();
       }
     });

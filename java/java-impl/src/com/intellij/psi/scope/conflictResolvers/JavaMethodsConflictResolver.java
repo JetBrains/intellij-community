@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.scope.conflictResolvers;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -37,6 +38,8 @@ import java.util.Map;
  * To change this template use Options | File Templates.
  */
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver");
+
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
 
@@ -419,6 +422,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                     final PsiResolveHelper resolveHelper) {
     PsiSubstitutor substitutor = resolveHelper.inferTypeArguments(typeParameters, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
     for (PsiTypeParameter typeParameter : typeParameters) {
+      LOG.assertTrue(typeParameter != null);
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
         substitutor = substitutor.put(typeParameter, TypeConversionUtil.typeParameterErasure(typeParameter));
       }
