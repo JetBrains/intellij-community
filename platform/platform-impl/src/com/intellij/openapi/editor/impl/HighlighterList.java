@@ -30,6 +30,7 @@ public abstract class HighlighterList {
   private final SortedList<RangeHighlighterImpl> mySegmentHighlighters = new SortedList<RangeHighlighterImpl>(MY_RANGE_COMPARATOR) {
     @Override
     protected void sort(List<RangeHighlighterImpl> delegate) {
+      assertDispatchThread();
       Iterator<RangeHighlighterImpl> it = delegate.iterator();
       boolean needSort = false;
       RangeHighlighterImpl lastHighlighter = null;
@@ -69,8 +70,9 @@ public abstract class HighlighterList {
 
   private static final Comparator<RangeHighlighterImpl> MY_RANGE_COMPARATOR = new Comparator<RangeHighlighterImpl>() {
     public int compare(RangeHighlighterImpl r1, RangeHighlighterImpl r2) {
-      if (r1.getAffectedAreaStartOffset() != r2.getAffectedAreaStartOffset()) {
-        return r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+      int o = r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+      if (o != 0) {
+        return o;
       }
 
       if (r1.getLayer() != r2.getLayer()) {
