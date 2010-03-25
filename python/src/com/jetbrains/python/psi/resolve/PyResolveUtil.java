@@ -105,6 +105,7 @@ public class PyResolveUtil {
     if (elt == null) return null; // can't find anyway.
     PsiElement seeker = elt;
     PsiElement cap = getConcealingParent(elt);
+    final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
       if (!seeker.isValid()) return null; 
@@ -136,8 +137,8 @@ public class PyResolveUtil {
       }
       // are we still under the roof?
       if ((roof != null) && (seeker != null) && ! PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
-      // maybe we're capped by a class?
-      if (refersFromMethodToClass(cap, seeker)) continue;
+      // maybe we're capped by a class? param lists are not capped though syntactically inside the function.  
+      if (is_outside_param_list && refersFromMethodToClass(cap, seeker)) continue;
       // check what we got
       if (seeker != null) {
         if (!processor.execute(seeker, ResolveState.initial())) {

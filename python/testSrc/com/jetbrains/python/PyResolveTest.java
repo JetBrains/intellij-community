@@ -72,6 +72,13 @@ public class PyResolveTest extends PyResolveTestCase {
     assertTrue(targetElement instanceof PyTargetExpression);
   }
 
+  public void testDefaultInClass() throws Exception {
+    PsiElement targetElement = resolve();
+    assertNotNull(targetElement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertEquals(((PyTargetExpression)targetElement).getName(), "FOO");
+  }
+
   public void testQualifiedFunc() throws Exception {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyFunction);
