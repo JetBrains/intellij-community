@@ -34,4 +34,7 @@ public interface CustomLiveTemplate {
   void expand(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
 
   void wrap(String selection, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
+
+  @NotNull
+  String getTitle();
 }
