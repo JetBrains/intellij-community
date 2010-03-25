@@ -118,13 +118,13 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     final JPanel right = new JPanel(new BorderLayout());
     myCurrentScript.getDocument().addDocumentListener(docListener);
     right.add(myCurrentScript, BorderLayout.CENTER);
-
+    myCurrentScript.setEditable(false);
 
     final DefaultActionGroup loadGroup = new DefaultActionGroup();
-    loadGroup.add(new LoadFromFileAction());
-    loadGroup.addSeparator();
-    loadGroup.add(new SetScriptDirAction());
-    loadGroup.addSeparator();
+    //loadGroup.add(new LoadFromFileAction());
+    //loadGroup.addSeparator();
+    //loadGroup.add(new SetScriptDirAction());
+    //loadGroup.addSeparator();
     loadGroup.add(new SetScriptFileAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, loadGroup, true);
@@ -227,7 +227,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     public void actionPerformed(AnActionEvent e) {
       VirtualFile[] files = FileChooser.chooseFiles(myComponent, descriptor);
       if (files.length > 0) {
-        myCurrentScript.setText(files[0].getPresentableUrl());
+        VirtualFile selectedFile = files[0];
+        myCurrentScript.setText(selectedFile.getPresentableUrl());
+        loadFrom(selectedFile);
       }
     }
   }
