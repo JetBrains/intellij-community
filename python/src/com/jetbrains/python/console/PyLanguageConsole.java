@@ -25,7 +25,6 @@ import java.util.List;
  * @author oleg
  */
 public class PyLanguageConsole extends LanguageConsoleImpl {
-  private PsiFile myFakeFile;
   private LightVirtualFile myNewVFile;
   private StringBuilder myStringBuilder;
 
@@ -33,13 +32,12 @@ public class PyLanguageConsole extends LanguageConsoleImpl {
     super(project, title, PythonLanguage.getInstance());
     myStringBuilder = new StringBuilder();
     myNewVFile = new LightVirtualFile("fake_console.py", PythonLanguage.getInstance(), myStringBuilder.toString());
-    myFakeFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(project)).trySetupPsiForFile(myNewVFile, PythonLanguage.getInstance(), false, false);
   }
 
   public void inputSent(final String text) {
     myStringBuilder.append(text);
     myNewVFile.setContent(this, myStringBuilder.toString() + "PyCharmRulezzz", true);
-    myFakeFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(getProject())).trySetupPsiForFile(myNewVFile, PythonLanguage.getInstance(), false, false);
-    myFile.putCopyableUserData(PyExpressionCodeFragmentImpl.CONTEXT_KEY, myFakeFile.getLastChild());
+    final PsiFile fakeFile = ((PsiFileFactoryImpl)PsiFileFactory.getInstance(getProject())).trySetupPsiForFile(myNewVFile, PythonLanguage.getInstance(), false, false);
+    myFile.putCopyableUserData(PyExpressionCodeFragmentImpl.CONTEXT_KEY, fakeFile.getLastChild());
   }
 }
