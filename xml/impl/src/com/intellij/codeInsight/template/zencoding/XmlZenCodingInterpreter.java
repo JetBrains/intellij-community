@@ -49,16 +49,27 @@ import java.util.*;
 class XmlZenCodingInterpreter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.zencoding.XmlZenCodingInterpreter");
   private static final String ATTRS = "ATTRS";
+  private static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
 
   private final List<Token> myTokens;
+  private final int myFromIndex;
+
   private final CustomTemplateCallback myCallback;
   private final TemplateInvokationListener myListener;
-  private static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
+  private final String mySurroundedText;
+
   private State myState;
 
-  XmlZenCodingInterpreter(List<Token> tokens, CustomTemplateCallback callback, State initialState, TemplateInvokationListener listener) {
+  private XmlZenCodingInterpreter(List<Token> tokens,
+                                  int fromIndex,
+                                  CustomTemplateCallback callback,
+                                  State initialState,
+                                  String surroundedText,
+                                  TemplateInvokationListener listener) {
     myTokens = tokens;
+    myFromIndex = fromIndex;
     myCallback = callback;
+    mySurroundedText = surroundedText;
     myListener = listener;
     myState = initialState;
   }
@@ -114,7 +125,20 @@ class XmlZenCodingInterpreter {
     }*/
   }
 
-  public boolean invoke(int startIndex) {
+  // returns if expanding finished
+
+  public static boolean interpret(List<Token> tokens,
+                                  int startIndex,
+                                  CustomTemplateCallback callback,
+                                  State initialState,
+                                  String surroundedText,
+                                  TemplateInvokationListener listener) {
+    XmlZenCodingInterpreter interpreter =
+      new XmlZenCodingInterpreter(tokens, startIndex, callback, initialState, surroundedText, listener);
+    return interpreter.invoke(startIndex);
+  }
+
+  private boolean invoke(int startIndex) {
     final int n = myTokens.size();
     TemplateToken templateToken = null;
     int number = -1;
@@ -126,7 +150,7 @@ class XmlZenCodingInterpreter {
           if (templateToken != null) {
             if (token instanceof MarkerToken || token instanceof OperationToken) {
               final char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-              if (sign == XmlZenCodingTemplate.MARKER || sign == '+') {
+              if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
                 final Object key = new Object();
                 myCallback.fixStartOfTemplate(key);
                 TemplateInvokationListener listener = new TemplateInvokationListener() {
@@ -148,7 +172,7 @@ class XmlZenCodingInterpreter {
                 }
                 templateToken = null;
               }
-              else if (sign == '>') {
+              else if (sign == '>' || (mySurroundedText != null && sign == XmlZenCodingTemplate.MARKER)) {
                 if (!startTemplateAndGotoChild(templateToken, finalI)) {
                   return false;
                 }
@@ -184,14 +208,14 @@ class XmlZenCodingInterpreter {
         case AFTER_NUMBER:
           if (token instanceof MarkerToken || token instanceof OperationToken) {
             char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-            if (sign == XmlZenCodingTemplate.MARKER || sign == '+') {
+            if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
               if (!invokeTemplateSeveralTimes(templateToken, 0, number, finalI)) {
                 return false;
               }
               templateToken = null;
             }
             else if (number > 1) {
-              return invokeTemplateAndProcessTail(templateToken, 0, number, i + 1);
+              return invokeTemplateAndProcessTail(templateToken, 0, number, i + 1, startIndex != myFromIndex);
             }
             else {
               assert number == 1;
@@ -208,7 +232,10 @@ class XmlZenCodingInterpreter {
           break;
       }
     }
-    finish(startIndex == n);
+    if (mySurroundedText != null) {
+      insertText(myCallback, mySurroundedText);
+    }
+    finish(startIndex != myFromIndex);
     return true;
   }
 
@@ -262,10 +289,18 @@ class XmlZenCodingInterpreter {
     return true;
   }
 
+  private static void insertText(CustomTemplateCallback callback, String text) {
+    Editor editor = callback.getEditor();
+    int offset = editor.getCaretModel().getOffset();
+    editor.getDocument().insertString(offset, text);
+    PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
+  }
+
   private boolean invokeTemplateAndProcessTail(final TemplateToken templateToken,
                                                final int startIndex,
                                                final int count,
-                                               final int tailStart) {
+                                               final int tailStart,
+                                               boolean separateEvent) {
     final Object key = new Object();
     myCallback.fixStartOfTemplate(key);
     for (int i = startIndex; i < count; i++) {
@@ -274,21 +309,19 @@ class XmlZenCodingInterpreter {
       TemplateInvokationListener listener = new TemplateInvokationListener() {
         public void finished(boolean inSeparateEvent) {
           gotoChild(key);
-          XmlZenCodingInterpreter interpreter =
-            new XmlZenCodingInterpreter(myTokens, myCallback, State.WORD, new TemplateInvokationListener() {
-              public void finished(boolean inSeparateEvent) {
-                if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
-                  myCallback.fixEndOffset();
-                }
-                myCallback.gotoEndOfTemplate(key);
-                if (inSeparateEvent) {
-                  invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);
-                }
+          if (interpret(myTokens, tailStart, myCallback, State.WORD, mySurroundedText, new TemplateInvokationListener() {
+            public void finished(boolean inSeparateEvent) {
+              if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+                myCallback.fixEndOffset();
               }
-            });
-          if (interpreter.invoke(tailStart)) {
+              myCallback.gotoEndOfTemplate(key);
+              if (inSeparateEvent) {
+                invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart, true);
+              }
+            }
+          })) {
             if (inSeparateEvent) {
-              invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);
+              invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart, true);
             }
           }
           else {
@@ -300,7 +333,7 @@ class XmlZenCodingInterpreter {
         return false;
       }
     }
-    finish(count == 0);
+    finish(separateEvent);
     return true;
   }
 

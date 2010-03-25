@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
@@ -42,8 +43,9 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       if (!editor.getSelectionModel().hasSelection()) return;
     }
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    ArrayList<TemplateImpl> array = getApplicableTemplates(editor, file, true);
-    if (array.isEmpty()) {
+    List<CustomLiveTemplate> customTemplates = getApplicableCustomTemplates(editor, file);
+    ArrayList<TemplateImpl> templates = getApplicableTemplates(editor, file, true);
+    if (templates.isEmpty() && customTemplates.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return;
     }
@@ -52,16 +54,17 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
 
     Set<Character> usedMnemonicsSet = new HashSet<Character>();
     DefaultActionGroup group = new DefaultActionGroup();
-    for (TemplateImpl template : array) {
+    for (CustomLiveTemplate customTemplate : customTemplates) {
+      group.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
+    }
+    for (TemplateImpl template : templates) {
       group.add(new InvokeTemplateAction(template, editor, project, usedMnemonicsSet));
     }
 
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-      CodeInsightBundle.message("templates.select.template.chooser.title"),
-      group,
-      DataManager.getInstance().getDataContext(editor.getContentComponent()),
-      JBPopupFactory.ActionSelectionAid.MNEMONICS,
-      false);
+    final ListPopup popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(CodeInsightBundle.message("templates.select.template.chooser.title"), group,
+                              DataManager.getInstance().getDataContext(editor.getContentComponent()),
+                              JBPopupFactory.ActionSelectionAid.MNEMONICS, false);
 
     popup.showInBestPositionFor(editor);
   }
@@ -70,6 +73,16 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     return true;
   }
 
+  private static List<CustomLiveTemplate> getApplicableCustomTemplates(Editor editor, PsiFile file) {
+    List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
+    int offset = editor.getCaretModel().getOffset();
+    for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
+      if (template.isApplicable(file, offset, true)) {
+        result.add(template);
+      }
+    }
+    return result;
+  }
 
   public static ArrayList<TemplateImpl> getApplicableTemplates(Editor editor, PsiFile file, boolean selection) {
     int offset = editor.getCaretModel().getOffset();
