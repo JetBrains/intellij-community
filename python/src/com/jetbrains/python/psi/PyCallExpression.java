@@ -21,6 +21,12 @@ public interface PyCallExpression extends PyExpression {
   @Nullable
   PyArgumentList getArgumentList();
 
+  /**
+   * @return The array of call arguments, or an empty array if the call has no argument list.
+   */
+  @NotNull
+  PyExpression[] getArguments();
+
   void addArgument(PyExpression expression);
 
   /**

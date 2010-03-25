@@ -3,10 +3,12 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,21 +34,17 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @PsiCached
   public PyArgumentList getArgumentList() {
-    return PyCallExpressionHelper.getArgumentList(this);
+    return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
+  }
+
+  @NotNull
+  public PyExpression[] getArguments() {
+    final PyArgumentList argList = getArgumentList();
+    return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
   }
 
   public void addArgument(PyExpression expression) {
     PyCallExpressionHelper.addArgument(this, getLanguage(), expression);
-    /*
-    PyExpression[] arguments = getArgumentList().getArguments();
-    try {
-      getLanguage().getElementGenerator()
-        .insertItemIntoList(getProject(), this, arguments.length == 0 ? null : arguments[arguments.length - 1], expression);
-    }
-    catch (IncorrectOperationException e1) {
-      throw new IllegalArgumentException(e1);
-    }
-    */
   }
 
   public PyMarkedFunction resolveCallee() {

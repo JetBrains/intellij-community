@@ -25,11 +25,6 @@ public class PyCallExpressionHelper {
     // none
   }
 
-  public static PyArgumentList getArgumentList(PyElement us) {
-    PyArgumentList arglist = PsiTreeUtil.getChildOfType(us, PyArgumentList.class);
-    return arglist;
-  }
-
   public static void addArgument(PyCallExpression us, PythonLanguage language, PyExpression expression) {
     PyExpression[] arguments = us.getArgumentList().getArguments();
     try {

@@ -15,11 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: dcheryasov
- * Date: Sep 26, 2008
- * Time: 8:14:07 PM
- * To change this template use File | Settings | File Templates.
+ * @author dcheryasov
  */
 public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> implements PyDecorator {
 
@@ -85,6 +81,12 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   @Nullable
   public PyArgumentList getArgumentList() {
     return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
+  }
+
+  @NotNull
+  public PyExpression[] getArguments() {
+    final PyArgumentList argList = getArgumentList();
+    return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
   }
 
   public void addArgument(PyExpression expression) {
