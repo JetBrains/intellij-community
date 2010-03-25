@@ -73,7 +73,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  private static List<CustomLiveTemplate> getApplicableCustomTemplates(Editor editor, PsiFile file) {
+  public static List<CustomLiveTemplate> getApplicableCustomTemplates(Editor editor, PsiFile file) {
     List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
     int offset = editor.getCaretModel().getOffset();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
