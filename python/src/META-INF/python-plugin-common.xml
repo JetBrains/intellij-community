@@ -154,9 +154,6 @@
     <lang.syntaxHighlighterFactory key="DjangoTemplate"
                                    implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateHighlighterFactory"/>
 
-    <completion.contributor language="DjangoTemplate"
-                            implementationClass="com.jetbrains.django.completion.DjangoNameCompletionContributor"/>
-
     <psi.referenceContributor implementation="com.jetbrains.django.ref.DjangoReferenceContributor"/>
 
     <inspectionToolProvider implementation="com.jetbrains.django.inspection.DjangoInspectionToolProvider"/>
