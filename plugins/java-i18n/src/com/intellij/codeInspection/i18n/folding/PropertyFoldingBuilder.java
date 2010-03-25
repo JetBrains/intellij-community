@@ -22,7 +22,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.properties.parsing.PropertyStubElementType;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.impl.PropertyImpl;
+import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -41,6 +44,7 @@ import java.util.*;
 public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
   private static final Key<Property> CACHE = Key.create("i18n.property.cache");
+  public static final Property NULL = new PropertyImpl(new PropertyStubImpl(null, null), new PropertyStubElementType());
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
@@ -71,6 +75,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
   private static void checkLiteral(PsiLiteralExpression expression, List<FoldingDescriptor> result) {
+    expression.getUserData(CACHE);
     if (isI18nProperty(expression)) {
       final Property property = getI18nProperty(expression);
       final HashSet<Object> set = new HashSet<Object>();
@@ -158,6 +163,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   @Nullable
   private static Property getI18nProperty(PsiLiteralExpression literal) {
     final Property property = literal.getUserData(CACHE);
+    if (property == NULL) return null;
     if (property != null && property.isValid()) return property;
     if (isI18nProperty(literal)) {
       final PsiReference[] references = literal.getReferences();
@@ -197,10 +203,17 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   public static boolean isI18nProperty(PsiLiteralExpression expr) {
     if (! isStringLiteral(expr)) return false;
+    final Property property = expr.getUserData(CACHE);
+    if (property == NULL) return false;
+    if (property != null) return true;
 
     final Map<String, Object> annotationParams = new HashMap<String, Object>();
     annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
-    return JavaI18nUtil.mustBePropertyKey(expr, annotationParams);
+    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, annotationParams);
+    if (!isI18n) {
+      expr.putUserData(CACHE, NULL);
+    }
+    return isI18n;
   }
 
   private static boolean isStringLiteral(PsiLiteralExpression expr) {
