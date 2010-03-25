@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
- * For now, used only to patch the debugged run configuration. May be extended to other executors when needed.
+ * Patch Java command line before running/debugging
  *
  * @author peter
  */

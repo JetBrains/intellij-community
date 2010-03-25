@@ -116,13 +116,6 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
     return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
   }
 
-  private static void runCustomPatchers(JavaParameters javaParameters, RunnerSettings settings, Executor executor) {
-    final RunProfile profile = settings.getRunProfile();
-    for (JavaProgramPatcher patcher : JavaProgramPatcher.EP_NAME.getExtensions()) {
-      patcher.patchJavaParameters(executor, profile, javaParameters);
-    }
-  }
-
   public SettingsEditor<GenericDebuggerRunnerSettings> getSettingsEditor(final Executor executor, RunConfiguration configuration) {
     if (configuration instanceof RunConfigurationWithRunnerSettings) {
       if (((RunConfigurationWithRunnerSettings)configuration).isSettingsNeeded()) {
