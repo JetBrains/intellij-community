@@ -169,7 +169,8 @@
     <languageInjector implementation="com.jetbrains.django.codeInsight.DjangoRegexpInjector"/>
 
     <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
-    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.DjangoVariableMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoVariableMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoBlockMacro"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
