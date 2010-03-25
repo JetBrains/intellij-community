@@ -173,6 +173,7 @@
     <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
     <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoVariableMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoBlockMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoTemplateTagsMacro"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
