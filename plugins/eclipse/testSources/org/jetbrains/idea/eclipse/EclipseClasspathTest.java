@@ -206,4 +206,9 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testSourcesAfterAll() throws Exception {
+    doTest();
+  }
+
+
 }
