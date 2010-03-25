@@ -38,24 +38,23 @@ public class InvokeTemplateAction extends AnAction {
   private final Project myProject;
 
   public InvokeTemplateAction(final TemplateImpl template, final Editor editor, final Project project, final Set<Character> usedMnemonicsSet) {
-    super(extractMnemonic(template, usedMnemonicsSet) + ". " + template.getDescription());
+    super(extractMnemonic(template.getKey(), usedMnemonicsSet) + ". " + template.getDescription());
     myTemplate = template;
     myProject = project;
     myEditor = editor;
   }
 
-  private static String extractMnemonic(final TemplateImpl template, Set<Character> usedMnemonics) {
-    final String key = template.getKey();
-    if (StringUtil.isEmpty(key)) return "";
+  public static String extractMnemonic(String caption, Set<Character> usedMnemonics) {
+    if (StringUtil.isEmpty(caption)) return "";
 
-    for (int i = 0; i < key.length(); i++) {
-      char c = key.charAt(i);
+    for (int i = 0; i < caption.length(); i++) {
+      char c = caption.charAt(i);
       if (usedMnemonics.add(Character.toUpperCase(c))) {
-        return key.substring(0, i) + UIUtil.MNEMONIC + key.substring(i);
+        return caption.substring(0, i) + UIUtil.MNEMONIC + caption.substring(i);
       }
     }
 
-    return key + " ";
+    return caption + " ";
   }
 
 
