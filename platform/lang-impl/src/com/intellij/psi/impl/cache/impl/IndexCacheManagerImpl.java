@@ -181,7 +181,7 @@ public class IndexCacheManagerImpl implements CacheManager{
           count[0] += value.intValue();
           return true;
         }
-      }, GlobalSearchScope.allScope(myProject));
+      }, GlobalSearchScope.fileScope(myProject, file));
     return count[0];
   }
 
