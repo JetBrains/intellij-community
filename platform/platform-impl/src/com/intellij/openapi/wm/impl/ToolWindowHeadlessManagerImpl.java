@@ -56,7 +56,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody) {
   }
 
-  private static final ToolWindow HEADLESS_WINDOW = new ToolWindow(){
+  public static final ToolWindow HEADLESS_WINDOW = new ToolWindow(){
     public boolean isActive() {
       return false;
     }
@@ -308,11 +308,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
                               @Nullable final HyperlinkListener listener) {
   }
 
-  public void addToolWindowManagerListener(ToolWindowManagerListener l) {
+  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
 
   }
 
-  public void removeToolWindowManagerListener(ToolWindowManagerListener l) {
+  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
   }
 
   public String getLastActiveToolWindowId() {
@@ -334,16 +334,16 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return new DesktopLayout();
   }
 
-  public void setLayout(DesktopLayout layout) {
+  public void setLayout(@NotNull DesktopLayout layout) {
   }
 
   public void clearSideStack() {
   }
 
-  public void hideToolWindow(final String id, final boolean hideSide) {
+  public void hideToolWindow(@NotNull final String id, final boolean hideSide) {
   }
 
-  public List<String> getIdsOn(final ToolWindowAnchor anchor) {
+  public List<String> getIdsOn(@NotNull final ToolWindowAnchor anchor) {
     return new ArrayList<String>();
   }
 }
