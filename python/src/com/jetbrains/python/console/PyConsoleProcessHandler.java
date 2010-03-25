@@ -72,8 +72,8 @@ class PyConsoleProcessHandler extends OSProcessHandler {
         printToConsole(languageConsole, matcher.group(1), NUMBER_ATTRIBUTES);
       }
       // String group
-      else if (matcher.group(4) != null) {
-        printToConsole(languageConsole, matcher.group(4), STRING_ATTRIBUTES);
+      else if (matcher.group(6) != null) {
+        printToConsole(languageConsole, matcher.group(6), STRING_ATTRIBUTES);
       }
       else {
         printToConsole(languageConsole, matcher.group(), ConsoleViewContentType.NORMAL_OUTPUT);
