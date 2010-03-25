@@ -32,7 +32,6 @@ import java.util.List;
  */
 public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   public static final LanguageFolding INSTANCE = new LanguageFolding();
-  private FoldingBuilder myBuilder;
 
   private LanguageFolding() {
     super("com.intellij.lang.foldingBuilder");
@@ -56,8 +55,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
       }
     }
     else {
-      return (extensions.size() == 1) ? extensions.get(0) : myBuilder == null
-         ? myBuilder = new CompositeFoldingBuilder(extensions) : myBuilder;
+      return (extensions.size() == 1) ? extensions.get(0) : new CompositeFoldingBuilder(extensions);
     }
 
     l.putUserData(getLanguageCache(), result);

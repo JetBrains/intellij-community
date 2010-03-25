@@ -20,6 +20,7 @@
 package com.intellij.projectImport;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -39,4 +40,14 @@ public abstract class ProjectOpenProcessor {
 
   @Nullable
   public abstract Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame);
+
+  @Nullable
+  public static ProjectOpenProcessor getImportProvider(VirtualFile file) {
+    for (ProjectOpenProcessor provider : Extensions.getExtensions(EXTENSION_POINT_NAME)) {
+      if (provider.canOpenProject(file)) {
+        return provider;
+      }
+    }
+    return null;
+  }
 }

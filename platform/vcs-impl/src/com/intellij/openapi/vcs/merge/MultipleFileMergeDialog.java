@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.TableView;
@@ -320,7 +321,8 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private void checkMarkModifiedProject(final VirtualFile file) {
     if (file.getFileType() == StdFileTypes.IDEA_MODULE ||
         file.getFileType() == StdFileTypes.IDEA_PROJECT ||
-        file.getFileType() == StdFileTypes.IDEA_WORKSPACE) {
+        file.getFileType() == StdFileTypes.IDEA_WORKSPACE ||
+        ProjectOpenProcessor.getImportProvider(file) != null) {
       myProjectManager.saveChangedProjectFile(file, myProject);
     }
   }
