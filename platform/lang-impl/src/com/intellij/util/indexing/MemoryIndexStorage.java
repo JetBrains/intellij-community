@@ -101,8 +101,11 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   }
 
   public boolean processKeys(final Processor<Key> processor) throws StorageException {
-    final Set<Key> stopList = new HashSet<Key>();
+    return doProcessKeys(processor, myBackendStorage.getKeys());
+  }
 
+  private boolean doProcessKeys(final Processor<Key> processor, Collection<Key> backendKeys) {
+    final Set<Key> stopList = new HashSet<Key>();
     Processor<Key> decoratingProcessor = new Processor<Key>() {
       public boolean process(final Key key) {
         if (stopList.contains(key)) return true;
@@ -117,7 +120,18 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       if (!decoratingProcessor.process(key)) return false;
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(decoratingProcessor);
+    for (Key backendKey : backendKeys) {
+      if (!decoratingProcessor.process(backendKey))
+        return false;
+    }
+    return true;
+  }
+
+  public Collection<Key> getKeysWithValues() throws StorageException {
+    final Collection<Key> backendKeys = myBackendStorage.getKeysWithValues();
+    final Set<Key> keys = new HashSet<Key>();
+    doProcessKeys(new CommonProcessors.CollectProcessor<Key>(keys), backendKeys);
+    return keys;
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
