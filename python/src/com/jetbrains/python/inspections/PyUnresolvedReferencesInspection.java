@@ -105,7 +105,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           for (PyImportElement ielt : ((PyImportStatement)stmt).getImportElements()) {
             final PyReferenceExpression src = ielt.getImportReference();
             if (src != null) {
-              PsiElement dst = src.resolve();
+              PsiElement dst = src.getReference().resolve();
               if (dst instanceof PyFile) {
                 PyFile dst_file = (PyFile)dst;
                 String name = ielt.getImportReference().getReferencedName(); // ref is ok or matching would fail
@@ -134,7 +134,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           if (ielts != null && ielts.length > 0) {
             final PyReferenceExpression src = from_stmt.getImportSource();
             if (src != null) {
-              PsiElement dst = src.resolve();
+              PsiElement dst = src.getReference().resolve();
               if (dst instanceof PyFile) {
                 PyFile dst_file = (PyFile)dst;
                 String name = from_stmt.getImportSource().getReferencedName(); // source is ok, else it won't match and we'd not be adding it
@@ -259,8 +259,8 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       HintAction hint_action = null;
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
-      if (reference instanceof PyReferenceExpression) {
-        PyReferenceExpression refex = (PyReferenceExpression)reference;
+      if (reference.getElement() instanceof PyReferenceExpression) {
+        PyReferenceExpression refex = (PyReferenceExpression)reference.getElement();
         String refname = refex.getReferencedName();
         if (refex.getQualifier() != null) {
           final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
@@ -299,8 +299,8 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       }
       if (description_buf.length() == 0) {
         boolean marked_qualified = false;
-        if (reference instanceof PyQualifiedExpression) {
-          final PyExpression qexpr = ((PyQualifiedExpression)reference).getQualifier();
+        if (reference.getElement() instanceof PyQualifiedExpression) {
+          final PyExpression qexpr = ((PyQualifiedExpression)reference.getElement()).getQualifier();
           if (qexpr != null) {
             PyType qtype = qexpr.getType();
             if (qtype != null) {

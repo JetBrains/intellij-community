@@ -2,13 +2,13 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public interface PyReferenceExpression extends PsiReferenceEx, PyQualifiedExpression, PsiPolyVariantReference
-{
+public interface PyReferenceExpression extends PyQualifiedExpression {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
 
   @Nullable
@@ -26,4 +26,7 @@ public interface PyReferenceExpression extends PsiReferenceEx, PyQualifiedExpres
 
   @Nullable
   PyQualifiedName asQualifiedName();
+
+  @NotNull
+  PsiPolyVariantReference getReference();
 }

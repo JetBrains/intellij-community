@@ -227,23 +227,16 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveModuleInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
+  public static PsiElement resolveModuleInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
     if (foothold == null || !foothold.isValid()) return null;
     PsiFile foothold_file = foothold.getContainingFile();
     if (foothold_file == null || !foothold_file.isValid()) return null;
 
     if (moduleQualifiedName.getComponentCount() < 1) return null;
 
-    Iterator<String> qualifier_sequence = moduleQualifiedName.getComponents().iterator();
-    String top_module_name = qualifier_sequence.next(); // guaranteed to be unqualified
-
-    LookupRootVisitor visitor = new LookupRootVisitor(top_module_name, foothold.getManager());
+    ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, foothold.getManager(), foothold_file);
     visitRoots(foothold, visitor);
-    PsiElement module = visitor.getResult();
-    while (module != null && qualifier_sequence.hasNext()) {
-      module = resolveChild(module, qualifier_sequence.next(), foothold_file, false); // only files, we want a module
-    }
-    return module;
+    return visitor.getResult();
   }
 
   /**
@@ -295,7 +288,7 @@ public class ResolveImportUtil {
       Iterator<PyReferenceExpression> it = ref_path.iterator();
       if (ref_path.size() > 1) { // it was a qualified name
         if (it.hasNext()) {
-          last_resolved = it.next().resolve(); // our topmost qualifier, not ourselves for certain
+          last_resolved = it.next().getReference().resolve(); // our topmost qualifier, not ourselves for certain
         }
         else return null; // topmost qualifier not found
         while (it.hasNext()) {
@@ -310,7 +303,7 @@ public class ResolveImportUtil {
 
       // non-qualified name
       if (referencedName != null) {
-        return resolveChild(importRef.resolve(), referencedName, containing_file, false);
+        return resolveChild(importRef.getReference().resolve(), referencedName, containing_file, false);
         // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself
       }
       // unqualified import can be found:
@@ -510,6 +503,36 @@ public class ResolveImportUtil {
     }
   }
 
+  static class ResolveInRootVisitor implements SdkRootVisitor {
+    final PsiFile foothold_file;
+    final PyQualifiedName qualifiedName;
+    final PsiManager psimgr;
+    PsiElement result;
+
+    public ResolveInRootVisitor(PyQualifiedName qName, PsiManager psimgr, PsiFile foothold_file) {
+      this.qualifiedName = qName;
+      this.psimgr = psimgr;
+      this.foothold_file = foothold_file;
+      this.result = null;
+    }
+
+    public boolean visitRoot(final VirtualFile root) {
+      PsiElement module = root.isDirectory() ? psimgr.findDirectory(root) : psimgr.findFile(root);
+      for (String component : qualifiedName.getComponents()) {
+        module = resolveChild(module, component, foothold_file, false); // only files, we want a module
+        if (module == null) {
+          return true;
+        }
+      }
+      result = module;
+      return false;
+    }
+
+    public PsiElement getResult() {
+      return result;
+    }
+  }
+
   static class CollectingRootVisitor implements SdkRootVisitor {
     Set<String> result;
     PsiManager psimgr;
@@ -645,7 +668,7 @@ public class ResolveImportUtil {
     if (from_import != null && partial_ref.getParent() != from_import) { // in "from foo import _"
       PyReferenceExpression src = from_import.getImportSource();
       if (src != null) {
-        PsiElement mod_candidate = src.resolve();
+        PsiElement mod_candidate = src.getReference().resolve();
         if (mod_candidate instanceof PyExpression) {
           addImportedNames(from_import.getImportElements(), names_already); // don't propose already imported items
           // collect what's within module file

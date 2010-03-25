@@ -319,4 +319,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public boolean supportsPythonNamedGroups() {
     return true;
   }
+
+  public boolean supportsPythonConditionalRefs() {
+    return true;
+  }
 }

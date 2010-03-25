@@ -55,7 +55,7 @@ public class GlobalAnnotator extends PyAnnotator {
         if (paramNames.contains(expr_name)) {
           holder.createErrorAnnotation(expr.getTextRange(), PyBundle.message("ANN.$0.both.global.and.param", expr_name));
         }
-        PsiElement resolvedElement = expr.resolve();
+        PsiElement resolvedElement = expr.getReference().resolve();
         if (resolvedElement != null && PsiTreeUtil.isAncestor(function, resolvedElement, true)) {
           getHolder().createWarningAnnotation(expr.getTextRange(),PyBundle.message("ANN.$0.both.global.and.param", expr_name));
         }

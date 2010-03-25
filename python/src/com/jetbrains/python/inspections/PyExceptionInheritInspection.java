@@ -59,7 +59,7 @@ expr:
         if (expression instanceof PyCallExpression) {
           PyExpression callee = ((PyCallExpression)expression).getCallee();
           if (callee instanceof PyReferenceExpression) {
-            PsiElement psiElement = ((PyReferenceExpression)callee).resolve();
+            PsiElement psiElement = ((PyReferenceExpression)callee).getReference().resolve();
             if (psiElement instanceof PyClass) {
               for (PyClass pyClass : PyUtil.getAllSuperClasses((PyClass)psiElement)) {
                 if ("Exception".equals(pyClass.getName())) {

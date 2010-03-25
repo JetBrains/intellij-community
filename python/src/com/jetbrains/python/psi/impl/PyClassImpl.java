@@ -103,7 +103,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     for(PyExpression expr: superExpressions) {
       if (expr instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression) expr;
-        final PsiElement result = ref.resolve();
+        final PsiElement result = ref.getReference().resolve();
         if (result != null) {
           superClasses.add(result);
         }
@@ -206,7 +206,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       NameDefiner currentParent = (NameDefiner) parent;
       for (String component : qualifiedName.getComponents()) {
         PsiElement element = currentParent.getElementNamed(component);
-        element = PyReferenceExpressionImpl.turnDirIntoInit(element);
+        element = PyUtil.turnDirIntoInit(element);
         if (element instanceof PyImportElement) {
           element = ResolveImportUtil.resolveImportElement((PyImportElement) element);
         }

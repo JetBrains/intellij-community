@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -31,8 +31,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PyReferenceExpression &&  SyntaxMatchers.IN_IMPORT.search(element) == null) {
-        if (((PyReferenceExpression)element).resolve() == null) {
-          new AddImportAction((PsiReference)element).execute();
+        final PsiPolyVariantReference reference = ((PyReferenceExpression)element).getReference();
+        if (reference.resolve() == null) {
+          new AddImportAction(reference).execute();
           return true;
         }
       }

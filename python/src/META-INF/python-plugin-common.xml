@@ -109,6 +109,12 @@
       <descriptionDirectoryName>PyStringConcatenationToFormatIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.ConvertFormatOperatorToMethodIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>ConvertFormatOperatorToMethodIntention</descriptionDirectoryName>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
@@ -126,6 +132,8 @@
 
     <elementDescriptionProvider implementation="com.jetbrains.python.findUsages.PyElementDescriptionProvider"/>
     <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyFunctionGroupingRuleProvider" id="py-function"/>
+
+    <languageInjector implementation="com.jetbrains.python.codeInsight.PythonRegexpInjector"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
@@ -205,6 +213,7 @@
 
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
+    <typeProvider implementation="com.jetbrains.django.codeInsight.DjangoTypeProvider"/>
     <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoViewReferenceQuickFixProvider"/>
 
     <!-- App Engine -->

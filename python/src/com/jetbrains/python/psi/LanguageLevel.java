@@ -63,15 +63,23 @@ public enum LanguageLevel {
 
   @NotNull
   public static LanguageLevel forFile(@NotNull VirtualFile virtualFile) {
+    // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
       final LanguageLevel level = folder.getUserData(KEY);
       if (level != null) return level;
     }
-    else if (ApplicationManager.getApplication().isUnitTestMode()) {
-      final LanguageLevel languageLevel = PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL;
-      if (languageLevel != null) {
-        return languageLevel;
+    else {
+      // However this allows us to setup language level per file manually
+      // in case when it is LightVirtualFile
+      final LanguageLevel level = virtualFile.getUserData(KEY);
+      if (level != null) return level;      
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final LanguageLevel languageLevel = PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL;
+        if (languageLevel != null) {
+          return languageLevel;
+        }
       }
     }
 

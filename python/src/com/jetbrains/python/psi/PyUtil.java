@@ -567,7 +567,7 @@ public class PyUtil {
     if (ref != null) {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {
-        String attr_name = getIdentifier(ref.getElement());
+        String attr_name = getIdentifier(ref);
         if ("__class__".equals(attr_name)) {
           PyType qual_type = qualifier.getType();
           if (qual_type instanceof PyClassType) {
@@ -685,4 +685,26 @@ public class PyUtil {
     return null;
   }
 
+  /**
+   * If argument is a PsiDirectory, turn it into a PsiFile that points to __init__.py in that directory.
+   * If there's no __init__.py there, null is returned, there's no point to resolve to a dir which is not a package.
+   * Alas, resolve() and multiResolve() can't return anything but a PyFile or PsiFileImpl.isPsiUpToDate() would fail.
+   * This is because isPsiUpToDate() relies on identity of objects returned by FileViewProvider.getPsi().
+   * If we ever need to exactly tell a dir from __init__.py, that logic has to change.
+   * @param target a resolve candidate.
+   * @return a PsiFile if target was a PsiDirectory, or null, or target unchanged.
+   */
+  @Nullable
+  public static PsiElement turnDirIntoInit(PsiElement target) {
+    if (target instanceof PsiDirectory) {
+      final PsiDirectory dir = (PsiDirectory)target;
+      final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
+      if (file != null) {
+        file.putCopyableUserData(PyFile.KEY_IS_DIRECTORY, Boolean.TRUE);
+        return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
+      }
+      else return null; // dir without __init__.py does not resolve
+    }
+    else return target; // don't touch non-dirs
+  }
 }

@@ -2,12 +2,10 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -18,10 +16,11 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.patterns.Matcher;
-import com.jetbrains.python.codeInsight.PrecededByFilter;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * Python keyword completion contributor.
@@ -204,7 +203,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   private static final PsiElementPattern.Capture<PsiElement> IN_FROM_IMPORT_AFTER_REF =
     psiElement().afterLeaf(
       psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class).inside(PyFromImportStatement.class)
-    )
+    ).inside(PyFromImportStatement.class)
   ;
 
   private static final PsiElementPattern.Capture<PsiElement> IN_WITH_AFTER_REF =

@@ -69,6 +69,10 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return findByName(name, getTopLevelClasses());
   }
 
+  public PyTargetExpression findTopLevelAttribute(String name) {
+    return findByName(name, getTopLevelAttributes());
+  }
+
   @Nullable
   private static <T extends PsiNamedElement> T findByName(String name, List<T> namedElements) {
     for (T namedElement : namedElements) {
@@ -193,7 +197,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             final PyFromImportStatement statement = ((PyFromImportStatementStub)child).getPsi();
             PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
             if (starImportSource != null) {
-              starImportSource = PyReferenceExpressionImpl.turnDirIntoInit(starImportSource);
+              starImportSource = PyUtil.turnDirIntoInit(starImportSource);
               if (starImportSource instanceof PyFile) {
                 final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
                 if (result != null) {

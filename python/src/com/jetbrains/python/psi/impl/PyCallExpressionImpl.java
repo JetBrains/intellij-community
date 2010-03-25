@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -26,11 +10,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 29.05.2005
- * Time: 13:40:29
- * To change this template use File | Settings | File Templates.
+ * @author yole
  */
 public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpression {
 
@@ -89,7 +69,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         }
       }
       // normal cases
-      ResolveResult[] targets = ((PyReferenceExpression)callee).multiResolve(false);
+      ResolveResult[] targets = ((PyReferenceExpression)callee).getReference().multiResolve(false);
       if (targets.length > 0) {
         PsiElement target = targets[0].getElement();
         if (target instanceof PyClass) {
@@ -107,7 +87,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   private PyType getSuperCallType(PyExpression callee) {
-    PsiElement must_be_super_init = ((PyReferenceExpression)callee).resolve();
+    PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
     if (must_be_super_init instanceof PyFunction) {
       PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
       if (must_be_super == PyBuiltinCache.getInstance(this).getClass("super")) {
@@ -117,7 +97,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (args.length > 1) {
             PyExpression first_arg = args[0];
             if (first_arg instanceof PyReferenceExpression) {
-              PsiElement possible_class = ((PyReferenceExpression)first_arg).resolve();
+              PsiElement possible_class = ((PyReferenceExpression)first_arg).getReference().resolve();
               if (possible_class instanceof PyClass && ((PyClass)possible_class).isNewStyleClass()) {
                 final PyClass first_class = (PyClass)possible_class;
                 // check 2nd argument, too; it should be an instance

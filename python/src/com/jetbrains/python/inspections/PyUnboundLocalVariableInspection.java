@@ -84,7 +84,7 @@ public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
         if (variable == null) {
           boolean resolves2LocalVariable = false;
           boolean resolve2Scope = true;
-          for (ResolveResult result : node.multiResolve(true)) {
+          for (ResolveResult result : node.getReference().multiResolve(true)) {
             final PsiElement element = result.getElement();
             if (element == null){
               continue;

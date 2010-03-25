@@ -42,7 +42,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   public static final Key STRING_KEY = new Key("PYTHON_STRING");
   public static final Key NUMBER_KEY = new Key("PYTHON_NUMBER");
 
-  private static String NUMBERS = "(\\d+(_\\d+)*(\\.\\d+)?)";
+  private static String NUMBERS = "((0[xX][0-9a-fA-F]+)|(\\d+(_\\d+)*(\\.\\d+)?))";
   private static String STRINGS = "((\"[^\"\n]*\")|((?<!\\w)'[^'\n]*'))";
 
   private static Pattern CODE_ELEMENT_PATTERN = Pattern.compile(NUMBERS + "|" + STRINGS);
@@ -108,12 +108,6 @@ class PyConsoleProcessHandler extends OSProcessHandler {
         final String trimmedPrompt = prompt.trim();
         if (!currentPrompt.equals(trimmedPrompt)) {
           languageConsole.setPrompt(trimmedPrompt);
-          //LaterInvocator.invokeLater(new Runnable() {
-          //  public void run() {
-          //    PsiDocumentManager.getInstance(myPyConsoleRunner.getProject()).commitDocument(languageConsole.getEditorDocument());
-          //    languageConsole.getConsoleEditor().repaint(0, trimmedPrompt.length());
-          //  }
-          //});
         }
         break;
       }
@@ -122,9 +116,9 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   }
 
   private static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
+    final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
         console.addToHistory(string, attributes);
       }
     }, ModalityState.stateForComponent(console.getComponent()));

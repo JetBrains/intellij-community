@@ -1,8 +1,8 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.hint.QuestionAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -130,15 +130,12 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void doWriteAction(final ImportCandidateHolder item) {
     PsiElement src = item.getImportable();
-    CommandProcessor.getInstance().executeCommand(src.getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            doIt(item);
-          }
-        });
+    new WriteCommandAction(src.getProject(), PyBundle.message("ACT.CMD.use.import"), myTarget.getContainingFile()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        doIt(item);
       }
-    }, PyBundle.message("ACT.CMD.use.import"), null);
+    }.execute();
   }
 
   // Stolen from FQNameCellRenderer
