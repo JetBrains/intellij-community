@@ -72,7 +72,7 @@ import java.util.List;
 
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
-  private static final @NonNls String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
+  @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
 
   protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
 

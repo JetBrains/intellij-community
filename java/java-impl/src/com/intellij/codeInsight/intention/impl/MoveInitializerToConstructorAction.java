@@ -20,11 +20,14 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -77,6 +80,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     if (constructors.length == 0) {
       IntentionAction addDefaultConstructorFix = QuickFixFactory.getInstance().createAddDefaultConstructorFix(aClass);
       addDefaultConstructorFix.invoke(project, editor, file);
+      editor.getCaretModel().moveToOffset(offset); //restore caret
       constructorsToAddInitialization = Arrays.asList(aClass.getConstructors());
     }
     else {
@@ -90,24 +94,27 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
       }
     }
 
-    PsiElement toMove = null;
+    PsiExpressionStatement toMove = null;
     for (PsiMethod constructor : constructorsToAddInitialization) {
       PsiCodeBlock codeBlock = constructor.getBody();
       if (codeBlock == null) {
         CreateFromUsageUtils.setupMethodBody(constructor);
         codeBlock = constructor.getBody();
       }
-      PsiElement added = addAssignment(codeBlock, field);
+      PsiExpressionStatement added = addAssignment(codeBlock, field);
       if (toMove == null) toMove = added;
     }
     field.getInitializer().delete();
     if (toMove != null) {
-      editor.getCaretModel().moveToOffset(toMove.getTextOffset());
-      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)toMove.getExpression();
+      PsiExpression expression = assignment.getRExpression();
+      EditorColorsManager manager = EditorColorsManager.getInstance();
+      TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[] {expression}, attributes, false,null);
     }
   }
 
-  private static PsiElement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
+  private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(codeBlock.getProject()).getElementFactory();
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName()+" = y;", codeBlock);
     PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
@@ -133,7 +140,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     }
     PsiElement newStatement = codeBlock.addBefore(statement,anchor);
     replaceWithQualifiedReferences(newStatement, newStatement);
-    return newStatement;
+    return (PsiExpressionStatement)newStatement;
   }
 
   private static boolean containsReference(final PsiElement element, final PsiField field) {

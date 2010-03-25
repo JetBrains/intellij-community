@@ -20,6 +20,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -39,7 +40,11 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @Pattern("[a-zA-Z_0-9.]+")
   @NonNls
   @NotNull public String getID() {
-    return getShortName();
+    String id = getShortName();
+    if (!StringUtil.isJavaIdentifier(id)) {
+      LOG.error("Inspection ID must satisfy [a-zA-Z_0-9.]+ pattern. Inspection: "+getClass()+"; Id: '"+id+"'");
+    }
+    return id;
   }
 
   @NonNls
