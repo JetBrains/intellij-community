@@ -32,12 +32,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
-import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.File;
@@ -54,6 +51,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.idea.eclipse.conversion.ERelativePathUtil.*;
 
 public class EclipseClasspathReader {
   private final String myRootPath;
@@ -175,7 +174,7 @@ public class EclipseClasspathReader {
         modifiableModel.addRoot(getUrl(sourcePath, rootModel), OrderRootType.SOURCES);
       }
 
-      final List<String> docPaths = getJavadocAttribute(element);
+      final List<String> docPaths = EJavadocUtil.getJavadocAttribute(element, rootModel, myCurrentRoots);
       if (docPaths != null) {
         for (String docPath : docPaths) {
           modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
@@ -236,7 +235,7 @@ public class EclipseClasspathReader {
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
       }
 
-      final List<String> docPaths = getJavadocAttribute(element);
+      final List<String> docPaths = EJavadocUtil.getJavadocAttribute(element, rootModel, myCurrentRoots);
       if (docPaths != null) {
         for (String docPath : docPaths) {
           modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
@@ -410,104 +409,6 @@ public class EclipseClasspathReader {
       }
     }
     return url;
-  }
-
-  /**
-   * @param path path in format /module_root/relative_path
-   * @return module_root
-   */
-  @NotNull
-  private static String getRootPath(String path) {
-    int secondSlIdx = path.indexOf('/', 1);
-    return secondSlIdx > 1 ? path.substring(1, secondSlIdx) : path.substring(1);
-  }
-
-  /**
-   * @param path path in format /module_root/relative_path
-   * @return relative_path or null if /module_root
-   */
-  @Nullable
-  private static String getRelativeToRootPath(String path) {
-    final int secondSlIdx = path.indexOf('/', 1);
-    return secondSlIdx != -1 && secondSlIdx + 1 < path.length() ? path.substring(secondSlIdx + 1) : null;
-  }
-
-  @Nullable
-  private static String relativeToContentRoots(final @NotNull List<String> currentRoots,
-                                               final @NotNull String rootPath,
-                                               final @Nullable String relativeToRootPath) {
-    for (String currentRoot : currentRoots) {
-      if (currentRoot.endsWith(rootPath) || Comparing.strEqual(rootPath, EclipseProjectFinder.findProjectName(currentRoot))) { //rootPath = content_root <=> applicable root: abs_path/content_root
-        if (relativeToRootPath == null) {
-          return VfsUtil.pathToUrl(currentRoot);
-        }
-        final File relativeToOtherModuleFile = new File(currentRoot, relativeToRootPath);
-        if (relativeToOtherModuleFile.exists()) {
-          return VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String relativeToOtherModule(final @NotNull Module otherModule, final @Nullable String relativeToOtherModule) {
-    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(otherModule).getContentRoots();
-    for (VirtualFile contentRoot : contentRoots) {
-      if (relativeToOtherModule == null) {
-        return contentRoot.getUrl();
-      }
-      final File relativeToOtherModuleFile = new File(contentRoot.getPath(), relativeToOtherModule);
-      if (relativeToOtherModuleFile.exists()) {
-        return VfsUtil.pathToUrl(relativeToOtherModuleFile.getPath());
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private List<String> getJavadocAttribute(Element element) {
-    Element attributes = element.getChild("attributes");
-    if (attributes == null) {
-      return null;
-    }
-    List<String> result = new ArrayList<String>();
-    for (Object o : attributes.getChildren("attribute")) {
-      if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "javadoc_location")) {
-        Element attribute = (Element)o;
-        String javadocPath = attribute.getAttributeValue("value");
-        if (!SystemInfo.isWindows) {
-          javadocPath = javadocPath.replaceFirst(EclipseXml.FILE_PROTOCOL, EclipseXml.FILE_PROTOCOL + "/");
-        }
-        if (javadocPath.startsWith(EclipseXml.FILE_PROTOCOL) &&
-            new File(javadocPath.substring(EclipseXml.FILE_PROTOCOL.length())).exists()) {
-          result.add(VfsUtil.pathToUrl(javadocPath.substring(EclipseXml.FILE_PROTOCOL.length())));
-        }
-        else {
-
-          final String protocol = VirtualFileManager.extractProtocol(javadocPath);
-          if (Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
-            result.add(javadocPath);
-          }
-          else if (javadocPath.startsWith(EclipseXml.JAR_PREFIX)) {
-            final String jarJavadocPath = javadocPath.substring(EclipseXml.JAR_PREFIX.length());
-            if (jarJavadocPath.startsWith(EclipseXml.PLATFORM_PROTOCOL)) {
-              String relativeToPlatform = jarJavadocPath.substring(EclipseXml.PLATFORM_PROTOCOL.length() + "resources".length());
-              result
-                .add(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, new File(myRootPath).getParent() + "/" + relativeToPlatform));
-            }
-            else if (jarJavadocPath.startsWith(EclipseXml.FILE_PROTOCOL)) {
-              result
-                .add(VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, jarJavadocPath.substring(EclipseXml.FILE_PROTOCOL.length())));
-            }
-            else {
-              result.add(javadocPath);
-            }
-          }
-        }
-      }
-    }
-    return result;
   }
 
   static String getJunitClsUrl(final boolean version4) {

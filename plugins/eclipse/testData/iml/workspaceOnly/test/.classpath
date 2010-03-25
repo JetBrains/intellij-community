@@ -4,7 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="test.jar" sourcepath="testSrc.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:platform:/resources/test/testJavadoc.jar!/a"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/test/testJavadoc.jar!/a"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/testOut.jar" sourcepath="/testOutSrc.jar"/>
