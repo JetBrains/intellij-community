@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 public class TextSplitter extends BaseSplitter {
 
-  private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile("[&#]?\\p{L}+'?\\p{L}(_*\\p{L})*");
+  private static final Pattern EXTENDED_WORD_AND_SPECIAL = Pattern.compile("([&#]|0x[0-9]*)?\\p{L}+'?\\p{L}(_*\\p{L})*");
 
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {
     if (text == null || StringUtil.isEmpty(text)) {
