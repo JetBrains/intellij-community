@@ -17,11 +17,11 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenArtifact;
+import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
+import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
@@ -92,6 +92,32 @@ public class ArtifactsDownloadingTest extends MavenImportingTestCase {
     assertTrue(javadoc.exists());
     assertFalse(new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-sources.jar").exists());
     assertFalse(new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar").exists());
+  }
+
+  public void testReturningNotFoundArtifacts() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>lib</groupId>" +
+                  "    <artifactId>xxx</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit</artifactId>" +
+                  "    <version>4.0</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    MavenProject project = myProjectsTree.getRootProjects().get(0);
+    MavenArtifactDownloader.DownloadResult unresolvedArtifacts = downloadArtifacts(Arrays.asList(project), null);
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedSources, new MavenId("junit", "junit", "4.0"));
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedDocs, new MavenId("junit", "junit", "4.0"));
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedSources, new MavenId("lib", "xxx", "1"));
+    assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedDocs, new MavenId("lib", "xxx", "1"));
   }
 
   public void testJavadocsAndSourcesForTestDeps() throws Exception {

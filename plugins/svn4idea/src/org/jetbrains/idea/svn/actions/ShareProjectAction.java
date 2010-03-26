@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -114,7 +114,7 @@ public class ShareProjectAction extends BasicAction {
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
                 final File path = new File(file.getPath());
-                if (! SvnCheckoutProvider.promptForWCopyFormat(path, project)) {
+                if (! SvnCheckoutProvider.promptForWCFormatAndSelect(path, project)) {
                   // action cancelled
                   actionStarted.set(Boolean.FALSE);
                   return;

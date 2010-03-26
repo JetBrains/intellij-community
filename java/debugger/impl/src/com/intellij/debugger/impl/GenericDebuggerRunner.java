@@ -24,7 +24,6 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
-import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
@@ -109,6 +108,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
 
   public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
     doPatch(javaParameters, settings);
+    runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class));
   }
 
   private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
