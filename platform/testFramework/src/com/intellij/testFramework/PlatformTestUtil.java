@@ -343,18 +343,19 @@ public class PlatformTestUtil {
     // Allow 10% more in case of test machine is busy.
     // For faster machines (expectedOnMyMachine < expected) allow nonlinear performance rating:
     // just perform better than acceptable expected
+    int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
+    String failMessage = message + "." +
+                         " Operation took " + percentage + "% longer than expected." +
+                         " Expected on my machine: " + expectedOnMyMachine + "." +
+                         " Actual: " + actual + "." +
+                         " Expected on Etalon machine: " + expected + ";" +
+                         " Actual on Etalon: " + actual * ETALON_TIMING / Timings.MACHINE_TIMING;
     if (actual > expectedOnMyMachine * acceptableChangeFactor &&
         (expectedOnMyMachine > expected || actual > expected * acceptableChangeFactor)) {
-      int percentage = (int)(((float)100 * (actual - expectedOnMyMachine)) / expectedOnMyMachine);
-      Assert.fail(message + ". Operation took " + percentage + "% longer than expected. Expected on my machine: " + expectedOnMyMachine +
-                  ". Actual: " + actual + ". Expected on Etalon machine: " + expected + "; Actual on Etalon: " +
-                  (actual * ETALON_TIMING / Timings.MACHINE_TIMING));
+      Assert.fail(failMessage);
     }
     else {
-      int percentage = (int)(((float)100 * (actual - expectedOnMyMachine)) / expectedOnMyMachine);
-      System.out.println(message + ". Operation took " + percentage + "% longer than expected. Expected on my machine: " +
-                         expectedOnMyMachine + ". Actual: " + actual + ". Expected on Etalon machine: " + expected +
-                         "; Actual on Etalon: " + (actual * ETALON_TIMING / Timings.MACHINE_TIMING));
+      System.out.println(failMessage);
     }
   }
 
@@ -382,6 +383,7 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
+        System.out.println("Another epic fail: "+e.getMessage() +"; Attempts remained: "+attempts);
       }
     }
   }

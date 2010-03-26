@@ -45,14 +45,13 @@ class SelfElementInfo implements SmartPointerElementInfo {
     LOG.assertTrue(anchor.isPhysical());
     myFile = anchor.getContainingFile();
     TextRange range = anchor.getTextRange();
+    LOG.assertTrue(range != null, anchor);
 
     myProject = myFile.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     Document document = documentManager.getDocument(myFile);
 
-    // LOG.assertTrue(!documentManager.isUncommited(document));
-
-    assert document != null : myFile.getName();
+    LOG.assertTrue(document != null, myFile.getName());
     if (documentManager.isUncommited(document)) {
       mySyncMarkerIsValid = false;
       myMarker = document.createRangeMarker(0, 0, false);

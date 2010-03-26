@@ -20,6 +20,7 @@
  */
 package com.intellij.ide.util.newProjectWizard.modes;
 
+import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.ide.util.importProject.*;
 import com.intellij.ide.util.newProjectWizard.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;

@@ -202,4 +202,13 @@ public class EclipseClasspathTest extends IdeaTestCase {
     doTest();
   }
 
+  public void testUnknownCon() throws Exception {
+    doTest();
+  }
+
+  public void testSourcesAfterAll() throws Exception {
+    doTest();
+  }
+
+
 }

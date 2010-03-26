@@ -21,7 +21,7 @@
       </fileset>
     </copy>
 
-    <javac source="1.5" destdir="anttask.classes" fork="true">
+    <javac source="1.5" target="1.5" destdir="anttask.classes" fork="true">
       <src path="anttask.src"/>
       <classpath>
         <fileset dir="${build.lib.path}">

@@ -29,6 +29,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -50,6 +51,7 @@ public class CodeBlockUtil {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return;
 
+    IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
     final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
     if (guide != null) {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.endLine, guide.indentLevel));
@@ -73,6 +75,7 @@ public class CodeBlockUtil {
     int selectionStart = editor.getSelectionModel().getLeadSelectionOffset();
     if (file == null) return;
 
+    IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
     final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
     if (guide != null) {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.startLine, guide.indentLevel));

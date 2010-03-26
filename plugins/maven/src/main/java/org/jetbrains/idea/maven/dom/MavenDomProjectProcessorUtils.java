@@ -224,26 +224,38 @@ public class MavenDomProjectProcessorUtils {
                                     @NotNull final Function<MavenDomProfile, T> domProfileFunction,
                                     @NotNull final Function<MavenDomProjectModel, T> projectDomFunction) {
 
+    return process(projectDom, processor, project, domProfileFunction, projectDomFunction, new HashSet<MavenDomProjectModel>());
+  }
+
+  public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
+                                    @NotNull final Processor<T> processor,
+                                    @NotNull final Project project,
+                                    @NotNull final Function<MavenDomProfile, T> domProfileFunction,
+                                    @NotNull final Function<MavenDomProjectModel, T> projectDomFunction,
+                                    final Set<MavenDomProjectModel> processed) {
+    if (processed.contains(projectDom))  return true;
+    processed.add(projectDom);
+
     MavenProject mavenProjectOrNull = MavenDomUtil.findProject(projectDom);
 
     if (processSettingsXml(mavenProjectOrNull, processor, project, domProfileFunction)) return true;
     if (processProject(projectDom, mavenProjectOrNull, processor, project, domProfileFunction, projectDomFunction)) return true;
 
-    return processParentProjectFile(projectDom, processor, project, domProfileFunction, projectDomFunction);
+    return processParentProjectFile(projectDom, processor, project, domProfileFunction, projectDomFunction, processed);
   }
 
   private static <T> boolean processParentProjectFile(MavenDomProjectModel projectDom,
                                                       final Processor<T> processor,
                                                       final Project project,
                                                       final Function<MavenDomProfile, T> domProfileFunction,
-                                                      final Function<MavenDomProjectModel, T> projectDomFunction) {
+                                                      final Function<MavenDomProjectModel, T> projectDomFunction,
+                                                      final Set<MavenDomProjectModel> processed) {
     Boolean aBoolean = new MyMavenParentProjectFileProcessor<Boolean>(project) {
       protected Boolean doProcessParent(VirtualFile parentFile) {
         MavenDomProjectModel parentProjectDom = MavenDomUtil.getMavenDomProjectModel(project, parentFile);
         if (parentProjectDom == null) return false;
-        MavenProject parentMavenProject = MavenDomUtil.findProject(parentProjectDom);
 
-        return processProject(parentProjectDom, parentMavenProject, processor, project, domProfileFunction, projectDomFunction);
+        return MavenDomProjectProcessorUtils.process(parentProjectDom, processor, project, domProfileFunction, projectDomFunction, processed);
       }
     }.process(projectDom);
 

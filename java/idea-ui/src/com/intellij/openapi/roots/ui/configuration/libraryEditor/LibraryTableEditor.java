@@ -674,6 +674,11 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
     protected OrderRootType getRootType() {
       return AnnotationOrderRootType.getInstance();
     }
+
+    @Override
+    protected FileChooserDescriptor createDescriptor() {
+      return new FileChooserDescriptor(false, true, false, false, false, false);
+    }
   }
 
   private class AttachJavadocAction extends AttachItemAction {

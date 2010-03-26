@@ -41,7 +41,11 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
   private RunnerAndConfigurationSettingsImpl myConfiguration;
 
   public RuntimeConfigurationProducer(final ConfigurationType configurationType) {
-    myConfigurationFactory = configurationType.getConfigurationFactories()[0];
+    this(configurationType.getConfigurationFactories()[0]);
+  }
+
+  protected RuntimeConfigurationProducer(ConfigurationFactory configurationFactory) {
+    myConfigurationFactory = configurationFactory;
   }
 
   public RuntimeConfigurationProducer createProducer(final Location location, final ConfigurationContext context) {

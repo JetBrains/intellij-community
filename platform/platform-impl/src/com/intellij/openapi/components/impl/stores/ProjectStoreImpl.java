@@ -75,6 +75,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private static int originalVersion = -1;
 
   private StorageScheme myScheme = StorageScheme.DEFAULT;
+  private String myCachedLocation;
 
   ProjectStoreImpl(final ProjectEx project) {
     super(project);
@@ -198,6 +199,8 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       LocalFileSystem.getInstance().refreshAndFindFileByPath(workspacePath);
       stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
     }
+
+    myCachedLocation = null;
   }
 
   private static void useOldWsContent(final String filePath, final IFile ws) {
@@ -251,13 +254,17 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Nullable
   public String getLocation() {
-    if (myScheme == StorageScheme.DEFAULT) {
-      return getProjectFilePath();
+    if (myCachedLocation == null) {
+      if (myScheme == StorageScheme.DEFAULT) {
+        myCachedLocation = getProjectFilePath();
+      }
+      else {
+        final VirtualFile baseDir = getProjectBaseDir();
+        myCachedLocation = baseDir == null ? null : baseDir.getPath();
+      }
     }
-    else {
-      final VirtualFile baseDir = getProjectBaseDir();
-      return baseDir == null ? null : baseDir.getPath();
-    }
+
+    return myCachedLocation;
   }
 
   @NotNull

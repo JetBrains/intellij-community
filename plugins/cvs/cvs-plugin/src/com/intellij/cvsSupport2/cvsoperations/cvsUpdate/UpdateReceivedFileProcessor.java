@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.projectImport.ProjectOpenProcessor;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,6 +65,7 @@ public class UpdateReceivedFileProcessor implements ReceivedFileProcessor {
 
   private static boolean isProjectOrModuleFile(VirtualFile virtualFile) {
     if (virtualFile == null) return false;
+    if (ProjectOpenProcessor.getImportProvider(virtualFile) != null) return true;
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
     return
       fileType == StdFileTypes.IDEA_PROJECT

@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -61,9 +62,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
     final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
     if (existing == null) {
-      final List<RuntimeConfigurationProducer> producers =
-        PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
-      LOG.assertTrue(producers != null);
+      final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
       if (producers.size() > 1) {
         final AnAction[] children = new AnAction[producers.size()];
         int chldIdx = 0;
@@ -86,14 +85,32 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return EMPTY_ARRAY;
   }
 
+  @NotNull
+  private List<RuntimeConfigurationProducer> getEnabledProducers(ConfigurationContext context) {
+    final List<RuntimeConfigurationProducer> preferred = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
+    if (preferred == null) {
+      return Collections.emptyList();
+    }
+
+    final List<RuntimeConfigurationProducer> producers = new ArrayList<RuntimeConfigurationProducer>();
+    for (RuntimeConfigurationProducer producer : preferred) {
+      if (isEnabledFor(producer.getConfiguration().getConfiguration())) {
+        producers.add(producer);
+      }
+    }
+    return producers;
+  }
+
+  protected boolean isEnabledFor(RunConfiguration configuration) {
+    return true;
+  }
+
   @Override
   public boolean canBePerformed(DataContext dataContext) {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
     final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
     if (existing == null) {
-      final List<RuntimeConfigurationProducer> producers =
-        PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
-      LOG.assertTrue(producers != null);
+      final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
       return producers.size() <= 1;
     }
     return true;
@@ -167,8 +184,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       presentation.setEnabled(true);
       presentation.setVisible(true);
       final String name = suggestRunActionName((LocatableConfiguration)configuration.getConfiguration());
-      final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
-      LOG.assertTrue(producers != null);
+      final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
+      if (!producers.isEmpty()) {
+        //todo[nik,anna] it's dirty fix. Otherwise wrong configuration will be returned from context.getConfiguration()  
+        context.getConfiguration(producers.get(0));
+      }
       updatePresentation(presentation, context.findExisting() != null || producers.size() <= 1 ? " " + name : "", context);
     }
   }

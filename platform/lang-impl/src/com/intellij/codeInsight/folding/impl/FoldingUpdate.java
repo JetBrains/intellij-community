@@ -54,13 +54,12 @@ public class FoldingUpdate {
   }
 
   @Nullable
-  static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull final PsiFile file, final boolean applyDefaultState, final boolean quick) {
+  static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file, final boolean applyDefaultState, final boolean quick) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Project project = file.getProject();
     final Document document = editor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
-
 
     CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
     if (value != null && value.hasUpToDateValue() && !applyDefaultState) return null;
@@ -68,12 +67,11 @@ public class FoldingUpdate {
     
     return CachedValuesManager.getManager(project).getCachedValue(editor, CODE_FOLDING_KEY, new CachedValueProvider<Runnable>() {
       public Result<Runnable> compute() {
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        Document document = editor.getDocument();
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
         return getUpdateResult(file, document, quick, project, editor, applyDefaultState);
       }
     }, false);
-
-
   }
 
   private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,

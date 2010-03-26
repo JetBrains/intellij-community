@@ -240,10 +240,10 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     }
 
     List<PsiReference> result = new ArrayList<PsiReference>();
-    final Double maxPriority = firstProvider.getThird();
+    final double maxPriority = firstProvider.getThird();
     next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
-      if (!trinity.getThird().equals(maxPriority)) {
+      if (trinity.getThird().doubleValue() != maxPriority) {
         for (PsiReference ref : refs) {
           for (PsiReference reference : result) {
             if (ref != null && reference.getRangeInElement().contains(ref.getRangeInElement())) {
