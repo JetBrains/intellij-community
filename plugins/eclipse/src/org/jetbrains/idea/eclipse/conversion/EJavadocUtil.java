@@ -40,12 +40,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.jetbrains.idea.eclipse.EclipseXml.*;
-import static org.jetbrains.idea.eclipse.conversion.ERelativePathUtil.*;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
 
 /**
  * Eclipse javadoc format:
  * <ul>
- * <li>jar:platform:/resource/other_project_name/relative_path_to_zip|jar!/path_inside
+ * <li>jar:platform:/resource/project_name/relative_path_to_zip|jar!/path_inside - current or another
  * <li>jar:file:/absolute_path_to_zip|jar!/path_inside
  * <li>file:/absolute_path
  * <li>http://www.javadoc.url
@@ -96,16 +96,16 @@ public class EJavadocUtil {
             return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, currentModulePath);
           }
           else {
-            final String moduleName = getRootPath(relativeToPlatform);
-            final String relativeToModulePathWithJarSuffix = getRelativeToRootPath(relativeToPlatform);
+            final String moduleName = getRelativeModuleName(relativeToPlatform);
+            final String relativeToModulePathWithJarSuffix = getRelativeToModulePath(relativeToPlatform);
             final String relativeToModulePath = stripPathInsideJar(relativeToModulePathWithJarSuffix);
             final Module otherModule = ModuleManager.getInstance(model.getModule().getProject()).findModuleByName(moduleName);
             String url = null;
             if (otherModule != null && otherModule != model.getModule()) {
-              url = relativeToOtherModule(otherModule, relativeToModulePath);
+              url = expandEclipseRelative2OtherModule(otherModule, relativeToModulePath);
             }
             else if (currentRoots != null) {
-              url = relativeToContentRoots(currentRoots, moduleName, relativeToModulePath);
+              url = expandEclipseRelative2ContentRoots(currentRoots, moduleName, relativeToModulePath);
             }
 
             if (url != null) {
@@ -160,9 +160,11 @@ public class EJavadocUtil {
         final VirtualFile javadocFile =
           JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
         if (javadocFile != null) {
-          String relativeUrl = relativeToOtherModule(project, javadocFile);
-          if (relativeUrl == null && VfsUtil.isAncestor(baseDir, javadocFile, false)) {
+          final String relativeUrl;
+          if (contentRoot != null && VfsUtil.isAncestor(contentRoot, javadocFile, false)) {
             relativeUrl = "/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/');
+          } else {
+            relativeUrl = collapse2eclipseRelative2OtherModule(project, javadocFile);
           }
           if (relativeUrl != null) {
             if (javadocPath.indexOf(JarFileSystem.JAR_SEPARATOR) == -1) {

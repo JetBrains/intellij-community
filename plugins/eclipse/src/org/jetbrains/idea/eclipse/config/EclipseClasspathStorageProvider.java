@@ -92,7 +92,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   public String getContentRoot(ModifiableRootModel model) {
-    final VirtualFile contentRoot = ERelativePathUtil.getContentRoot(model);
+    final VirtualFile contentRoot = EPathUtil.getContentRoot(model);
     if (contentRoot != null) return contentRoot.getPath();
     return model.getContentRoots()[0].getPath();
   }

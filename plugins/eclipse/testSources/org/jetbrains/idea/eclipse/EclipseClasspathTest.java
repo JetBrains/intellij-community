@@ -46,9 +46,7 @@ import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 
 public class EclipseClasspathTest extends IdeaTestCase {
   @Override
@@ -115,18 +113,6 @@ public class EclipseClasspathTest extends IdeaTestCase {
                       JDOMUtil.areElementsEqual(classpathElement1, resultClasspathElement));
   }
 
-
-  public void testMultiModuleDependencies() throws Exception {
-    List<String> paths = Arrays.asList(getProject().getBaseDir().getPath() + "/multi/m1", getProject().getBaseDir().getPath() + "/multi/m2/m22");
-
-    for (final String path: paths) {
-      setUpModule(path, getProject());
-    }
-
-    for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-      checkModule(new File(module.getModuleFilePath()).getParent(), module);
-    }
-  }
 
 
   public void testAbsolutePaths() throws Exception {
