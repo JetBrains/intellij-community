@@ -2,6 +2,9 @@ package com.intellij.appengine.enhancement;
 
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
+import com.intellij.compiler.SymbolTable;
+import com.intellij.compiler.make.Cache;
+import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -22,9 +25,12 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -52,27 +58,20 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
         if (facet.getConfiguration().isRunEnhancerOnMake()) {
           final VirtualFile outputRoot = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
           if (outputRoot != null) {
-            collectItems(outputRoot, facet, context, items);
+            try {
+              final ClassFilesCollector classFilesCollector = new ClassFilesCollector((CompileContextEx)context, items, facet, outputRoot);
+              classFilesCollector.collectItems(outputRoot, "");
+            }
+            catch (CacheCorruptedException e) {
+              context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+              LOG.info(e);
+              break;
+            }
           }
         }
       }
     }
     return items.toArray(new ProcessingItem[items.size()]);
-  }
-
-  private static void collectItems(@NotNull VirtualFile file, AppEngineFacet facet, CompileContext context, List<ProcessingItem> items) {
-    if (file.isDirectory()) {
-      final VirtualFile[] files = file.getChildren();
-      for (VirtualFile child : files) {
-        collectItems(child, facet, context, items);
-      }
-    }
-    else if (StdFileTypes.CLASS.equals(file.getFileType())) {
-      final VirtualFile sourceFile = ((CompileContextEx)context).getSourceFileByOutputFile(file);
-      if (sourceFile != null && facet.shouldRunEnhancerFor(sourceFile)) {
-        items.add(new ClassFileItem(file, sourceFile, facet));
-      }
-    }
   }
 
   public ProcessingItem[] process(CompileContext context, ProcessingItem[] items) {
@@ -168,15 +167,65 @@ public class EnhancerCompiler implements ClassPostProcessingCompiler {
   }
 
   public ValidityState createValidityState(DataInput in) throws IOException {
-    return TimestampValidityState.load(in);
+    return ClassFileItemDependenciesState.load(in);
   }
 
   @NotNull
   public String getDescription() {
-    return "Google App Engine Enhancer";
+    return "Google App Engine Enhancer #2";
   }
 
   public boolean validateConfiguration(CompileScope scope) {
     return true;
+  }
+
+  private static class ClassFilesCollector {
+    private CompileContextEx myContext;
+    private List<ProcessingItem> myItems;
+    private AppEngineFacet myFacet;
+    private VirtualFile myOutputRoot;
+    private final SymbolTable mySymbolTable;
+    private final Cache myCache;
+    private final LocalFileSystem myLocalFileSystem;
+
+    public ClassFilesCollector(CompileContextEx context, List<ProcessingItem> items, AppEngineFacet facet, VirtualFile outputRoot) throws CacheCorruptedException {
+      myContext = context;
+      myItems = items;
+      myFacet = facet;
+      myOutputRoot = outputRoot;
+      mySymbolTable = myContext.getDependencyCache().getSymbolTable();
+      myCache = myContext.getDependencyCache().getCache();
+      myLocalFileSystem = LocalFileSystem.getInstance();
+    }
+
+    public void collectItems(@NotNull VirtualFile file, String fullName) throws CacheCorruptedException {
+      if (file.isDirectory()) {
+        final VirtualFile[] files = file.getChildren();
+        for (VirtualFile child : files) {
+          collectItems(child, StringUtil.getQualifiedName(fullName, child.getName()));
+        }
+        return;
+      }
+
+      if (StdFileTypes.CLASS.equals(file.getFileType())) {
+        final VirtualFile sourceFile = myContext.getSourceFileByOutputFile(file);
+        if (sourceFile != null && myFacet.shouldRunEnhancerFor(sourceFile)) {
+          String className = StringUtil.trimEnd(fullName, ".class");
+          int classId = mySymbolTable.getId(className);
+          List<VirtualFile> dependencies = new SmartList<VirtualFile>();
+          while (classId != Cache.UNKNOWN) {
+            final String path = myCache.getPath(classId);
+            if (!StringUtil.isEmpty(path)) {
+              final VirtualFile classFile = myLocalFileSystem.findFileByPath(FileUtil.toSystemIndependentName(path));
+              if (classFile != null) {
+                dependencies.add(classFile);
+              }
+            }
+            classId = myCache.getSuperQualifiedName(classId);
+          }
+          myItems.add(new ClassFileItem(file, sourceFile, myFacet, dependencies));
+        }
+      }
+    }
   }
 }
