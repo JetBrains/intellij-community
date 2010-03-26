@@ -38,10 +38,10 @@ import com.intellij.openapi.progress.ProgressFunComponentProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -73,6 +73,7 @@ public class CompilerTask extends Task.Backgroundable {
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
   private static final Key<Key<?>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private Key<Key<?>> myContentIdKey = CONTENT_ID_KEY;
   private final Key<Key<?>> myContentId = Key.create("compile_content");
   private CompilerProgressDialog myDialog;
   private NewErrorTreeViewPanel myErrorTreeView;
@@ -95,6 +96,10 @@ public class CompilerTask extends Task.Backgroundable {
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
     myHeadlessMode = headlessMode || IS_UNIT_TEST_MODE;
+  }
+
+  public void setContentIdKey(Key<Key<?>> contentIdKey) {
+    myContentIdKey = contentIdKey != null? contentIdKey : CONTENT_ID_KEY;
   }
 
   public String getProcessId() {
@@ -388,7 +393,7 @@ public class CompilerTask extends Task.Backgroundable {
     
     final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
     final Content content = PeerFactory.getInstance().getContentFactory().createContent(component, myContentName, true);
-    content.putUserData(CONTENT_ID_KEY, myContentId);
+    content.putUserData(myContentIdKey, myContentId);
     messageView.getContentManager().addContent(content);
     myCloseListener.setContent(content, messageView.getContentManager());
     removeAllContents(myProject, content);
@@ -402,7 +407,7 @@ public class CompilerTask extends Task.Backgroundable {
         final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
         Content[] contents = messageView.getContentManager().getContents();
         for (Content content : contents) {
-          if (content.getUserData(CONTENT_ID_KEY) != null) {
+          if (content.getUserData(myContentIdKey) != null) {
             messageView.getContentManager().setSelectedContent(content);
             return;
           }
@@ -411,13 +416,13 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  public static void removeAllContents(Project project, Content notRemove) {
+  private void removeAllContents(Project project, Content notRemove) {
     MessageView messageView = MessageView.SERVICE.getInstance(project);
     Content[] contents = messageView.getContentManager().getContents();
     for (Content content : contents) {
       if (content.isPinned()) continue;
       if (content == notRemove) continue;
-      if (content.getUserData(CONTENT_ID_KEY) != null) { // the content was added by me
+      if (content.getUserData(myContentIdKey) != null) { // the content was added by me
         messageView.getContentManager().removeContent(content, true);
       }
     }

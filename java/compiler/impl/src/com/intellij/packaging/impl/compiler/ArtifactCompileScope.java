@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import java.util.*;
 public class ArtifactCompileScope {
   private static final Key<Artifact[]> ARTIFACTS_KEY = Key.create("artifacts");
   private static final Key<Set<Artifact>> CACHED_ARTIFACTS_KEY = Key.create("cached_artifacts");
+  private static final Key<Key<?>> ARTIFACTS_CONTENT_ID_KEY = Key.create("build_artifacts_task");
 
   private ArtifactCompileScope() {
   }
@@ -67,6 +69,7 @@ public class ArtifactCompileScope {
 
   public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts) {
     baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
+    baseScope.putUserData(CompilerManager.CONTENT_ID_KEY, ARTIFACTS_CONTENT_ID_KEY);
     return baseScope;
   }
 
