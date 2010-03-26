@@ -150,17 +150,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return allKeys;
   }
 
-  public Collection<Key> getAllKeysMapped() throws StorageException {
-    final Lock lock = getReadLock();
-    try {
-      lock.lock();
-      return myStorage.getKeysWithValues();
-    }
-    finally {
-      lock.unlock();
-    }
-  }
-
   public boolean processAllKeys(Processor<Key> processor) throws StorageException {
     final Lock lock = getReadLock();
     try {

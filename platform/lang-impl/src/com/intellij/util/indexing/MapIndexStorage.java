@@ -147,30 +147,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  public Collection<Key> getKeysWithValues() throws StorageException {
-    l.lock();
-    try {
-      myCache.clear(); // this will ensure that all new keys are made into the map
-      return myMap.getAllKeysWithExistingMapping();
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof IOException) {
-        throw new StorageException(cause);
-      }
-      if (cause instanceof StorageException) {
-        throw (StorageException)cause;
-      }
-      throw e;
-    }
-    finally {
-      l.unlock();
-    }
-  }
-
   public void close() throws StorageException {
     try {
       flush();
