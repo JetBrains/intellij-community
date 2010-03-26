@@ -30,7 +30,10 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -111,10 +114,10 @@ public class SerializationManagerImpl extends SerializationManager implements Ap
   private void assignId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
     final int id = persistentId(serializer);
     final StubSerializer old = myIdToSerializer.put(id, serializer);
-    assert old == null : "ID: " + serializer.getExternalId() + " is not unique";
+    assert old == null : "ID: " + serializer.getExternalId() + " is not unique; Already registered serializer with this ID: " + old.getClass().getName();
 
     final Integer oldId = mySerializerToId.put(serializer, id);
-    assert oldId == null : "Serializer " + serializer + " is already registered";
+    assert oldId == null : "Serializer " + serializer + " is already registered; Old ID:" + oldId;
   }
 
   private int persistentId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
