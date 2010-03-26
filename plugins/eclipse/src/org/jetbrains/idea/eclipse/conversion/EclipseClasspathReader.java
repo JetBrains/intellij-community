@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
 import java.io.File;
@@ -70,13 +71,13 @@ public class EclipseClasspathReader {
     myContentEntry = model.addContentEntry(VfsUtil.pathToUrl(myRootPath));
   }
 
-  public static void collectVariables(Set<String> usedVariables, Element classpathElement) {
+  public static void collectVariables(Set<String> usedVariables, Element classpathElement, final String rootPath) {
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       final Element element = (Element)o;
+      String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
+      if (path == null) continue;
       final String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
       if (Comparing.strEqual(kind, EclipseXml.VAR_KIND)) {
-        String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
-        if (path == null) continue;
         int slash = path.indexOf("/");
         if (slash > 0) {
           usedVariables.add(path.substring(0, slash));
@@ -95,6 +96,10 @@ public class EclipseClasspathReader {
         }
         else {
           usedVariables.add(srcPath.substring(varStart));
+        }
+      } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND)) {
+        if (EclipseProjectFinder.isExternalResource(rootPath, path)) {
+          usedVariables.add(EclipseProjectFinder.extractPathVariableName(path));
         }
       }
     }
@@ -153,7 +158,21 @@ public class EclipseClasspathReader {
         rootModel.addInvalidModuleEntry(moduleName).setExported(exported);
       }
       else {
-        getContentEntry().addSourceFolder(VfsUtil.pathToUrl(myRootPath + "/" + path), testPattern != null && testPattern.length() > 0 && path.matches(testPattern));
+        String srcUrl = VfsUtil.pathToUrl(myRootPath + "/" + path);
+        final boolean isTestFolder = testPattern != null && testPattern.length() > 0 && path.matches(testPattern);
+        if (EclipseProjectFinder.isExternalResource(myRootPath, path)) {
+          final String varName = EclipseProjectFinder.extractPathVariableName(path);
+          usedVariables.add(varName);
+
+          final String toPathVariableFormat =
+            getVariableRelatedPath(varName, path.length() > varName.length() ? path.substring(varName.length()) : null);
+          srcUrl = VfsUtil.pathToUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(toPathVariableFormat));
+          EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseLinkedSrcVarPath(srcUrl, path);
+
+          rootModel.addContentEntry(srcUrl).addSourceFolder(srcUrl, isTestFolder);
+        } else {
+          getContentEntry().addSourceFolder(srcUrl, isTestFolder);
+        }
         rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class);
       }
     }

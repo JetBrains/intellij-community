@@ -65,17 +65,15 @@ public class EclipseClasspathWriter {
     }
 
     @NonNls String outputPath = "bin";
-    if (myModel.getContentEntries().length == 1) {
-      final VirtualFile contentRoot = myModel.getContentEntries()[0].getFile();
-      final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-      if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
-        outputPath = getRelativePath(output.getUrl());
-      }
-      else if (output == null) {
-        final String url = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
-        if (url != null) {
-          outputPath = getRelativePath(url);
-        }
+    final VirtualFile contentRoot = ERelativePathUtil.getContentRoot(myModel);
+    final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+    if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
+      outputPath = getRelativePath(output.getUrl());
+    }
+    else if (output == null) {
+      final String url = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
+      if (url != null) {
+        outputPath = getRelativePath(url);
       }
     }
     final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement);
@@ -84,11 +82,19 @@ public class EclipseClasspathWriter {
 
   private void createClasspathEntry(OrderEntry entry, Element classpathRoot) throws ConversionException {
     if (entry instanceof ModuleSourceOrderEntry) {
-      final ContentEntry[] entries = ((ModuleSourceOrderEntry)entry).getRootModel().getContentEntries();
-      if (entries.length > 0) {
-        final ContentEntry contentEntry = entries[0];
+      final ModuleRootModel rootModel = ((ModuleSourceOrderEntry)entry).getRootModel();
+      final ContentEntry[] entries = rootModel.getContentEntries();
+      for (final ContentEntry contentEntry : entries) {
+        final VirtualFile contentRoot = contentEntry.getFile();
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          addOrderEntry(EclipseXml.SRC_KIND, getRelativePath(sourceFolder.getUrl()), classpathRoot);
+          String relativePath = getRelativePath(sourceFolder.getUrl());
+          if (contentRoot != ERelativePathUtil.getContentRoot(rootModel)) {
+            final String linkedPath = EclipseModuleManager.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(sourceFolder.getUrl());
+            if (linkedPath != null) {
+              relativePath = linkedPath;
+            }
+          }
+          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot);
         }
       }
     }
@@ -183,7 +189,7 @@ public class EclipseClasspathWriter {
 
   private String getRelativePath(String url) {
     final Project project = myModel.getModule().getProject();
-    final VirtualFile contentRoot = getContentRoot();
+    final VirtualFile contentRoot = ERelativePathUtil.getContentRoot(myModel);
     final VirtualFile projectBaseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
     assert projectBaseDir != null;
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
@@ -223,11 +229,6 @@ public class EclipseClasspathWriter {
 
       return ProjectRootManagerImpl.extractLocalPath(url);
     }
-  }
-
-  @Nullable
-  private VirtualFile getContentRoot() {
-    return ERelativePathUtil.getContentRoot(myModel);
   }
 
   private void setupLibraryAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry) {

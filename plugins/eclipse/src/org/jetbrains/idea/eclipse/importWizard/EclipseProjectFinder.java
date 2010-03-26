@@ -22,8 +22,12 @@ package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
@@ -72,5 +76,34 @@ public class EclipseProjectFinder implements EclipseXml {
       }
     }
     return name;
+  }
+
+  public static boolean isExternalResource(@NotNull String projectPath, @NotNull String relativePath) {
+    String independentPath = extractPathVariableName(relativePath);
+    final File file = new File(projectPath, DOT_PROJECT_EXT);
+    if (file.isFile()) {
+      try {
+        for (Object o : JDOMUtil.loadDocument(file).getRootElement().getChildren(LINKED_RESOURCES)) {
+          for (Object l : ((Element)o).getChildren(LINK)) {
+            if (Comparing.strEqual(((Element)l).getChildText(NAME_TAG), independentPath)) {
+              return true;
+            }
+          }
+        }
+      }
+      catch (Exception e) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  public static String extractPathVariableName(String relativePath) {
+    String independentPath = FileUtil.toSystemIndependentName(relativePath);
+    final int idx = independentPath.indexOf('/');
+    if (idx != -1) {
+      independentPath = independentPath.substring(0, idx);
+    }
+    return independentPath;
   }
 }

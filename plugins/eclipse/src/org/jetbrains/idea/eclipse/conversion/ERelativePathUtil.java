@@ -23,7 +23,6 @@ package org.jetbrains.idea.eclipse.conversion;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.Comparing;
@@ -31,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
@@ -115,9 +115,11 @@ public class ERelativePathUtil {
 
   @Nullable
   public static VirtualFile getContentRoot(final ModuleRootModel model) {
-    final ContentEntry[] entries = model.getContentEntries();
-    if (entries.length > 0) {
-      return entries[0].getFile();
+   final VirtualFile[] contentRoots = model.getContentRoots();
+    for (VirtualFile virtualFile : contentRoots) {
+      if (virtualFile.findChild(EclipseXml.PROJECT_FILE) != null) {
+        return virtualFile;
+      }
     }
     return null;
   }

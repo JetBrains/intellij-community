@@ -80,8 +80,9 @@ public class EJavadocUtil {
       else if (javadocPath.startsWith(JAR_PREFIX)) {
         final String jarJavadocPath = javadocPath.substring(JAR_PREFIX.length());
         if (jarJavadocPath.startsWith(PLATFORM_PROTOCOL)) {
-          String relativeToPlatform = jarJavadocPath.substring(PLATFORM_PROTOCOL.length() + "resource".length());
-          final String currentModulePath = getCurrentRoot(model).getParent().getPath() + relativeToPlatform;
+          final String relativeToPlatform = jarJavadocPath.substring(PLATFORM_PROTOCOL.length() + "resource".length()); // starts with leading /
+          final VirtualFile currentRoot = getContentRoot(model);
+          final String currentModulePath = (currentRoot != null ? currentRoot.getParent().getPath() : model.getModule().getProject().getBaseDir().getPath()) + relativeToPlatform;
           if (isJarFileExist(currentModulePath)) {
             return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, currentModulePath);
           }
@@ -95,7 +96,7 @@ public class EJavadocUtil {
               url = relativeToOtherModule(otherModule, relativeToModulePath);
             }
             else if (currentRoots != null) {
-              url = relativeToContentRoots(currentRoots, getCurrentRoot(model).getPath(), relativeToModulePath);
+              url = relativeToContentRoots(currentRoots, moduleName, relativeToModulePath);
             }
 
             if (url != null) {
@@ -143,7 +144,7 @@ public class EJavadocUtil {
     final String protocol = VirtualFileManager.extractProtocol(javadocPath);
     if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
       final String path = VfsUtil.urlToPath(javadocPath);
-      final VirtualFile contentRoot = getCurrentRoot(model);
+      final VirtualFile contentRoot = getContentRoot(model);
       final Project project = model.getModule().getProject();
       final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
       if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())) {
@@ -179,9 +180,4 @@ public class EJavadocUtil {
     return javadocPath;
   }
 
-  private static VirtualFile getCurrentRoot(ModuleRootModel model) {
-    final VirtualFile contentRoot = getContentRoot(model);
-    assert contentRoot != null;
-    return contentRoot;
-  }
 }

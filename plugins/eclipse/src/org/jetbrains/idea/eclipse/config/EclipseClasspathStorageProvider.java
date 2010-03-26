@@ -73,13 +73,11 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
         }
       }
     }
-
-    if (model.getContentEntries().length != 1) {
-      throw new ConfigurationException(EclipseBundle.message("eclipse.export.too.many.content.roots", model.getModule().getName()));
+    if (model.getContentRoots().length == 0) {
+      throw new ConfigurationException("Module \'" + model.getModule().getName() + "\' has no content roots thus is not compatible with eclipse format");
     }
-
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
-    final String contentRoot = model.getContentEntries()[0].getUrl();
+    final String contentRoot = getContentRoot(model);
     if (output == null || !StringUtil.startsWith(output, contentRoot)) {
       throw new ConfigurationException("Output path is incompatible with eclipse format which supports output under content root only");
     }
@@ -91,6 +89,12 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
 
   public ClasspathConverter createConverter(Module module) {
     return new EclipseClasspathConverter(module);
+  }
+
+  public String getContentRoot(ModifiableRootModel model) {
+    final VirtualFile contentRoot = ERelativePathUtil.getContentRoot(model);
+    if (contentRoot != null) return contentRoot.getPath();
+    return model.getContentRoots()[0].getPath();
   }
 
   public static void registerFiles(final CachedXmlDocumentSet fileCache, final Module module, final String moduleRoot, final String storageRoot) {
