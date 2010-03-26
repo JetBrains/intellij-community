@@ -80,14 +80,18 @@ class ArtifactBuilder {
     if (output != null) return output
 
     project.stage("Building '${artifact.name}' artifact")
-    def outputDir = new File(getBaseArtifactsOutput(), suggestFileName(artifact.name))
-    artifactOutputs[artifact] = output = outputDir.absolutePath
+    output = getArtifactOutputFolder(artifact)
+    artifactOutputs[artifact] = output
     preBuildTasks*.perform(artifact, output)
     project.binding.layout.call([output, {
       artifact.rootElement.build(project)
     }])
     postBuildTasks*.perform(artifact, output)
     return output
+  }
+
+  String getArtifactOutputFolder(Artifact artifact) {
+    return new File(getBaseArtifactsOutput(), suggestFileName(artifact.name)).absolutePath
   }
 
   def preBuildTask(String artifactName, Closure task) {

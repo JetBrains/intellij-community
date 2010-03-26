@@ -103,7 +103,7 @@ class ProjectBuilder {
     if (currentOutput != null) return currentOutput
 
     project.stage("Making module ${chunk.name}")
-    def dst = folderForChunkOutput(chunk, classesDir(project), false)
+    def dst = folderForChunkOutput(chunk, false)
     outputs[chunk] = dst
     compile(chunk, dst, false)
 
@@ -119,7 +119,7 @@ class ProjectBuilder {
     if (currentOutput != null) return currentOutput
 
     project.stage("Making tests for ${chunk.name}")
-    def dst = folderForChunkOutput(chunk, testClassesDir(binding.project), true)
+    def dst = folderForChunkOutput(chunk, true)
     testOutputs[chunk] = dst
     compile(chunk, dst, true)
 
@@ -134,12 +134,16 @@ class ProjectBuilder {
     return new File(project.targetFolder, "test").absolutePath
   }
 
-  private String folderForChunkOutput(ModuleChunk chunk, String basePath, boolean tests) {
+  String getModuleOutputFolder(Module module, boolean tests) {
+    return folderForChunkOutput(chunkForModule(module), tests)
+  }
+
+  private String folderForChunkOutput(ModuleChunk chunk, boolean tests) {
     if (tests) {
       def customOut = chunk.customOutput
       if (customOut != null) return customOut
     }
-
+    def basePath = tests ? testClassesDir(project) : classesDir(project)
     return new File(basePath, chunk.name).absolutePath
   }
 
