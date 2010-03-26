@@ -61,3 +61,5 @@ def foo(a):
   else:
     return "c", "d"
 print "%s" % foo(1)  #Too many arguments for format string
+
+print("| [%(issue_id)s|http://youtrack.jetbrains.net/issue/%(issue_id)s] (%(issue_type)s)|%(summary)s|" % (issue_id, issue_type, summary)) #Format requires a mapping (PY-704)

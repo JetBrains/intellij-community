@@ -20,13 +20,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.jetbrains.python.toolbox.ArrayIterator;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.toolbox.ArrayIterator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
@@ -65,7 +65,7 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
   }
 
   public PyType getType() {
-    return null;
+    return PyBuiltinCache.getInstance(this).getTupleType();
   }
 
   public Iterator<PyExpression> iterator() {

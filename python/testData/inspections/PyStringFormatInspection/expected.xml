@@ -115,4 +115,9 @@
     <line>63</line>
     <description>Too many arguments for format string</description>
   </problem>
+  <problem>
+    <file>string-format.py</file>
+    <line>65</line>
+    <description>Format requires a mapping</description>
+  </problem>
 </problems>
