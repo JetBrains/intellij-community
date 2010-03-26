@@ -31,14 +31,9 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
-import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.ui.popup.util.BaseTreePopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFrame;
@@ -51,6 +46,7 @@ import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -103,6 +99,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       }
     };
 
+    myState = ServiceManager.getService(PlaybackDebuggerState.class);
 
     final DefaultActionGroup controlGroup = new DefaultActionGroup();
     controlGroup.add(new RunOnFameActivationAction());
@@ -117,7 +114,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     final JPanel right = new JPanel(new BorderLayout());
     right.add(myCurrentScript, BorderLayout.CENTER);
-    myState = ServiceManager.getService(PlaybackDebuggerState.class);
     myCurrentScript.setText(myState.currentScript);
     myCurrentScript.setEditable(false);
     myCurrentScript.getDocument().addDocumentListener(docListener);
@@ -140,6 +136,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         myChanged = true;
       }
     });
+    VirtualFile scriptFile = VirtualFileManager.getInstance().getFileSystem(LocalFileSystem.PROTOCOL).findFileByPath(myState.currentScript);
+    if (scriptFile != null) {
+      loadFrom(scriptFile);
+    }
 
     final String text = System.getProperty("idea.playback.script");
     if (text != null) {
@@ -283,7 +283,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
   }
 
-  private void loadFrom(VirtualFile file) {
+  private void loadFrom(@NotNull VirtualFile file) {
     try {
       final String text = CharsetToolkit.bytesToString(file.contentsToByteArray());
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
