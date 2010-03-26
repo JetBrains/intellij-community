@@ -15,13 +15,20 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collection;
-import java.util.List;
 
 public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProjectsProcessorTask {
   private final Collection<MavenProject> myProjects;
@@ -29,21 +36,38 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
   private final MavenProjectsTree myTree;
   private final boolean myDownloadSources;
   private final boolean myDownloadDocs;
+  private final AsyncResult<MavenArtifactDownloader.DownloadResult> myResult;
 
   public MavenProjectsProcessorArtifactsDownloadingTask(Collection<MavenProject> projects,
-                                                        Collection<MavenArtifact> artifacts, 
+                                                        Collection<MavenArtifact> artifacts,
                                                         MavenProjectsTree tree,
                                                         boolean downloadSources,
-                                                        boolean downloadDocs) {
+                                                        boolean downloadDocs,
+                                                        AsyncResult<MavenArtifactDownloader.DownloadResult> result) {
     myProjects = projects;
     myArtifacts = artifacts;
     myTree = tree;
     myDownloadSources = downloadSources;
     myDownloadDocs = downloadDocs;
+    myResult = result;
   }
 
-  public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
+  public void perform(final Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
-    myTree.downloadArtifacts(myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
+    MavenArtifactDownloader.DownloadResult result =
+      myTree.downloadArtifacts(myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
+    myResult.setDone(result);
+
+    // todo: hack to update all file pointers.
+    MavenUtil.invokeLater(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            ProjectRootManagerImpl.getInstanceImpl(project).beforeRootsChange(false);
+            ProjectRootManagerImpl.getInstanceImpl(project).rootsChanged(false);
+          }
+        });
+      }
+    });
   }
 }

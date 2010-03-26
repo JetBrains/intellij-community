@@ -582,6 +582,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private Editor doCreateEditor() {
     final EditorEx editor = createRealEditor();
+    editor.addEditorMouseListener(new EditorMouseAdapter() {
+      public void mouseReleased(final EditorMouseEvent e) {
+        final MouseEvent mouseEvent = e.getMouseEvent();
+        if (!mouseEvent.isPopupTrigger()) {
+          navigate(e);
+        }
+      }
+    });
+
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final MouseEvent mouseEvent = event.getMouseEvent();
@@ -641,15 +650,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
-
-    editor.addEditorMouseListener(new EditorMouseAdapter() {
-      public void mouseReleased(final EditorMouseEvent e) {
-        final MouseEvent mouseEvent = e.getMouseEvent();
-        if (!mouseEvent.isPopupTrigger()) {
-          navigate(e);
-        }
-      }
-    });
 
     final ConsoleViewImpl consoleView = this;
     editor.getContentComponent().addKeyListener(new KeyListener() {

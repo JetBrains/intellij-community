@@ -496,7 +496,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       final Library library = getSelectedLibrary();
       if (library != null) {
         myDescriptor.setTitle(getTitle());
-        myDescriptor.setTitle(getDescription());
+        myDescriptor.setDescription(getDescription());
         for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
           myDescriptor.putUserData(entry.getKey(), entry.getValue());
         }

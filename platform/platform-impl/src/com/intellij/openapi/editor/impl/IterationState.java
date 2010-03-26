@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.FoldRegion;
@@ -79,7 +79,7 @@ public final class IterationState {
   private final Color myReadOnlyColor;
 
   public IterationState(EditorEx editor, int start, boolean useCaretAndSelection) {
-    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread(editor.getComponent());
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = (DocumentEx)editor.getDocument();
     myStartOffset = start;
     myEnd = editor.getDocument().getTextLength();

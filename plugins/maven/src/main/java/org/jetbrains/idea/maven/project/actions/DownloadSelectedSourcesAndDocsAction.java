@@ -51,6 +51,6 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
   }
 
   protected void perform(MavenProjectsManager manager, List<MavenProject> mavenProjects, AnActionEvent e) {
-    manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs);
+    manager.scheduleArtifactsDownloading(mavenProjects, getDependencies(e), mySources, myDocs, null);
   }
 }

@@ -1,23 +1,16 @@
 package org.jetbrains.plugins.groovy.debugger;
 
-import com.intellij.debugger.impl.GenericDebuggerRunner;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.configurations.JavaCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -27,17 +20,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class GroovyHotSwapper extends GenericDebuggerRunner {
-  public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
-    if (!executorId.equals(DefaultDebugExecutor.EXECUTOR_ID)) {
-      return false;
-    }
-    if ("false".equals(System.getProperty("enable.groovy.hotswap", "true"))) {
-      return false;
-    }
-
-    return profile instanceof GroovyScriptRunConfiguration || profile instanceof ApplicationConfiguration;
-  }
+public class GroovyHotSwapper extends JavaProgramPatcher {
 
   private static boolean endsWithAny(String s, List<String> endings) {
     for (String extension : endings) {
@@ -61,23 +44,17 @@ public class GroovyHotSwapper extends GenericDebuggerRunner {
     return false;
   }
 
-  @NotNull
-  public String getRunnerId() {
-    return "GroovyHotSwapper";
-  }
-
-  @Override
-  protected RunContentDescriptor createContentDescriptor(Project project,
-                                                         Executor executor,
-                                                         RunProfileState state,
-                                                         RunContentDescriptor contentToReuse,
-                                                         ExecutionEnvironment env) throws ExecutionException {
-    if (state instanceof JavaCommandLine && containsGroovyClasses(project)) {
-      final JavaParameters params = ((JavaCommandLine)state).getJavaParameters();
-      params.getVMParametersList().add("-javaagent:" + getAgentJarPath());
+  public void patchJavaParameters(Executor executor, RunProfile configuration, JavaParameters javaParameters) {
+    if (!executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
+      return;
+    }
+    if ("false".equals(System.getProperty("enable.groovy.hotswap", "true"))) {
+      return;
     }
 
-    return super.createContentDescriptor(project, executor, state, contentToReuse, env);
+    if (configuration instanceof RunConfiguration && containsGroovyClasses(((RunConfiguration)configuration).getProject())) {
+      javaParameters.getVMParametersList().add("-javaagent:" + getAgentJarPath());
+    }
   }
 
   private static String getAgentJarPath() {

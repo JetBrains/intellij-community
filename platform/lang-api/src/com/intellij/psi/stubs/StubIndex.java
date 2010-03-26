@@ -20,7 +20,6 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -43,4 +42,5 @@ public abstract class StubIndex {
   );
 
   public abstract <Key> Collection<Key> getAllKeys(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
+  public abstract <Key> Collection<Key> getAllKeysWithValues(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 }

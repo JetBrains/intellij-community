@@ -56,6 +56,9 @@ public final class HighlightData {
 
     TextAttributes attr = scheme.getAttributes(myHighlightType);
     if (attr != null) {
+      // IDEA-53203: add ERASE_MARKER for manually defined attributes
+      view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                TextAttributes.ERASE_MARKER, HighlighterTargetArea.EXACT_RANGE);
       RangeHighlighter highlighter = view.getMarkupModel()
           .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attr, HighlighterTargetArea.EXACT_RANGE);
       final Color errorStripeColor = attr.getErrorStripeColor();

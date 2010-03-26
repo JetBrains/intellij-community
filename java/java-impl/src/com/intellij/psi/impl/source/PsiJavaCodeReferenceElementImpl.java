@@ -62,7 +62,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private final int myHC = ourHC++;
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return myHC;
   }
 

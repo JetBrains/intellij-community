@@ -41,8 +41,7 @@ public class GroovyReferenceAdjuster extends ReferenceAdjuster {
     }
   }
 
-  private int collectReferences(PsiElement element, int currOffset, int startInElement, int endInElement, List<GrCodeReferenceElement> result
-  ) {
+  private static int collectReferences(PsiElement element, int currOffset, int startInElement, int endInElement, List<GrCodeReferenceElement> result) {
     if (element instanceof GrCodeReferenceElement && startInElement <= currOffset && currOffset <= endInElement) {
       result.add((GrCodeReferenceElement) element);
     }
