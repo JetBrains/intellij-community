@@ -61,8 +61,10 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
       public void visitMethod(PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (modifierList.hasModifierProperty(PsiModifier.NATIVE)) {
-          problems.add(manager.createProblemDescriptor(modifierList, "Native methods aren't allowed in App Engine application", isOnTheFly,
-                                                       LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          if (!isNativeMethodAllowed(method)) {
+            problems.add(manager.createProblemDescriptor(modifierList, "Native methods aren't allowed in App Engine application", isOnTheFly,
+                                                         LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          }
         }
         super.visitMethod(method);
       }
@@ -131,6 +133,15 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
       }
     });
     return problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private static boolean isNativeMethodAllowed(PsiMethod method) {
+    for (AppEngineForbiddenCodeHandler handler : AppEngineForbiddenCodeHandler.EP_NAME.getExtensions()) {
+      if (handler.isNativeMethodAllowed(method)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

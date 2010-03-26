@@ -27,6 +27,10 @@
       ]]>
   </change-notes>
 
+  <extensionPoints>
+    <extensionPoint name="forbiddenCodeHandler" interface="com.intellij.appengine.inspections.AppEngineForbiddenCodeHandler"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <javaee.appServerIntegration implementation="com.intellij.appengine.server.integration.AppEngineServerIntegration"/>
     <configurationType implementation="com.intellij.appengine.server.run.AppEngineServerConfigurationType"/>
