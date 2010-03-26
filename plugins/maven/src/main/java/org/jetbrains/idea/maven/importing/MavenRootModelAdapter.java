@@ -322,6 +322,16 @@ public class MavenRootModelAdapter {
     return null;
   }
 
+  @Nullable
+  public static MavenArtifact findArtifact(MavenProject project, Library library) {
+    String name = library.getName();
+    for (MavenArtifact each : project.getDependencies()) {
+      if (makeLibraryName(each).equals(name)) return each;
+
+    }
+    return null;
+  }
+
   public void setLanguageLevel(LanguageLevel level) {
     try {
       myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(level);

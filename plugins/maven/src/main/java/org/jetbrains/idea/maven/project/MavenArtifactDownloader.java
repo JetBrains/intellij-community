@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -45,14 +46,14 @@ public class MavenArtifactDownloader {
   private final MavenProgressIndicator myProgress;
   private final MavenEmbedderWrapper myEmbedder;
 
-  public static void download(MavenProjectsTree projectsTree,
-                              Collection<MavenProject> mavenProjects,
-                              Collection<MavenArtifact> artifacts,
-                              boolean downloadSources,
-                              boolean downloadDocs,
-                              MavenEmbedderWrapper embedder,
-                              MavenProgressIndicator p) throws MavenProcessCanceledException {
-    new MavenArtifactDownloader(projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
+  public static DownloadResult download(MavenProjectsTree projectsTree,
+                                        Collection<MavenProject> mavenProjects,
+                                        @Nullable Collection<MavenArtifact> artifacts,
+                                        boolean downloadSources,
+                                        boolean downloadDocs,
+                                        MavenEmbedderWrapper embedder,
+                                        MavenProgressIndicator p) throws MavenProcessCanceledException {
+    return new MavenArtifactDownloader(projectsTree, mavenProjects, artifacts, embedder, p).download(downloadSources, downloadDocs);
   }
 
   private MavenArtifactDownloader(MavenProjectsTree projectsTree,
@@ -67,7 +68,7 @@ public class MavenArtifactDownloader {
     myProgress = p;
   }
 
-  private void download(boolean downloadSources, boolean downloadDocs) throws MavenProcessCanceledException {
+  private DownloadResult download(boolean downloadSources, boolean downloadDocs) throws MavenProcessCanceledException {
     List<File> downloadedFiles = new ArrayList<File>();
     try {
       List<MavenExtraArtifactType> types = new ArrayList<MavenExtraArtifactType>(2);
@@ -82,7 +83,7 @@ public class MavenArtifactDownloader {
       myProgress.setText(caption);
 
       Map<MavenId, DownloadData> artifacts = collectArtifactsToDownload(types);
-      download(artifacts, downloadedFiles);
+      return download(artifacts, downloadedFiles);
     }
     finally {
       scheduleFilesRefresh(downloadedFiles);
@@ -113,7 +114,7 @@ public class MavenArtifactDownloader {
 
       for (MavenArtifact eachDependency : eachProject.getDependencies()) {
         if (myArtifacts != null && !myArtifacts.contains(eachDependency)) continue;
-        
+
         if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
         if (!eachProject.isSupportedDependency(eachDependency)) continue;
@@ -126,15 +127,16 @@ public class MavenArtifactDownloader {
         }
         data.repositories.addAll(repositories);
         for (MavenExtraArtifactType eachType : types) {
-          data.classifiersWithExtensions.add(eachProject.getClassifierAndExtension(eachDependency, eachType));
+          data.classifiersWithExtensions.add(new DownloadElement(eachProject.getClassifierAndExtension(eachDependency, eachType),
+                                                                 eachType));
         }
       }
     }
     return result;
   }
 
-  private void download(final Map<MavenId, DownloadData> toDownload,
-                        final List<File> downloadedFiles) throws MavenProcessCanceledException {
+  private DownloadResult download(final Map<MavenId, DownloadData> toDownload,
+                                  final List<File> downloadedFiles) throws MavenProcessCanceledException {
     List<Future> futures = new ArrayList<Future>();
 
     final AtomicInteger downloaded = new AtomicInteger();
@@ -142,6 +144,11 @@ public class MavenArtifactDownloader {
     for (DownloadData each : toDownload.values()) {
       total += each.classifiersWithExtensions.size();
     }
+
+    final DownloadResult result = new DownloadResult();
+    result.unresolvedSources.addAll(toDownload.keySet());
+    result.unresolvedDocs.addAll(toDownload.keySet());
+
     try {
       for (final Map.Entry<MavenId, DownloadData> eachEntry : toDownload.entrySet()) {
         myProgress.checkCanceled();
@@ -149,7 +156,7 @@ public class MavenArtifactDownloader {
         final DownloadData data = eachEntry.getValue();
         final MavenId id = eachEntry.getKey();
 
-        for (final Pair<String, String> eachTypeWithClassifier : data.classifiersWithExtensions) {
+        for (final DownloadElement eachElement : data.classifiersWithExtensions) {
           final int finalTotal = total;
           futures.add(EXECUTOR.submit(new Runnable() {
             public void run() {
@@ -157,12 +164,23 @@ public class MavenArtifactDownloader {
                 myProgress.checkCanceled();
                 myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 
-                Artifact a = myEmbedder.resolve(id, eachTypeWithClassifier.second, eachTypeWithClassifier.first,
+                Artifact a = myEmbedder.resolve(id, eachElement.extension, eachElement.classifier,
                                                 new ArrayList<MavenRemoteRepository>(data.repositories));
                 File file = a.getFile();
                 if (file != null && file.exists()) {
                   synchronized (downloadedFiles) {
                     downloadedFiles.add(file);
+
+                    switch (eachElement.type) {
+                      case SOURCES:
+                        result.resolvedSources.add(id);
+                        result.unresolvedSources.remove(id);
+                        break;
+                      case DOCS:
+                        result.resolvedDocs.add(id);
+                        result.unresolvedDocs.remove(id);
+                        break;
+                    }
                   }
                 }
               }
@@ -183,10 +201,54 @@ public class MavenArtifactDownloader {
         }
       }
     }
+
+    return result;
   }
 
   private static class DownloadData {
     public final LinkedHashSet<MavenRemoteRepository> repositories = new LinkedHashSet<MavenRemoteRepository>();
-    public final LinkedHashSet<Pair<String, String>> classifiersWithExtensions = new LinkedHashSet<Pair<String, String>>();
+    public final LinkedHashSet<DownloadElement> classifiersWithExtensions = new LinkedHashSet<DownloadElement>();
+  }
+
+  private static class DownloadElement {
+    public final String classifier;
+    public final String extension;
+    public final MavenExtraArtifactType type;
+
+    public DownloadElement(Pair<String, String> classifierAndExtension, MavenExtraArtifactType type) {
+      this.classifier = classifierAndExtension.first;
+      this.extension = classifierAndExtension.second;
+      this.type = type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      DownloadElement that = (DownloadElement)o;
+
+      if (classifier != null ? !classifier.equals(that.classifier) : that.classifier != null) return false;
+      if (extension != null ? !extension.equals(that.extension) : that.extension != null) return false;
+      if (type != that.type) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = classifier != null ? classifier.hashCode() : 0;
+      result = 31 * result + (extension != null ? extension.hashCode() : 0);
+      result = 31 * result + (type != null ? type.hashCode() : 0);
+      return result;
+    }
+  }
+
+  public static class DownloadResult {
+    public final Set<MavenId> resolvedSources = new THashSet<MavenId>();
+    public final Set<MavenId> resolvedDocs = new THashSet<MavenId>();
+
+    public final Set<MavenId> unresolvedSources = new THashSet<MavenId>();
+    public final Set<MavenId> unresolvedDocs = new THashSet<MavenId>();
   }
 }

@@ -31,28 +31,21 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
@@ -346,7 +339,8 @@ public class MavenProjectsManager extends SimpleProjectComponent
           scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
                                        null,
                                        getImportingSettings().shouldDownloadSourcesAutomatically(),
-                                       getImportingSettings().shouldDownloadDocsAutomatically());
+                                       getImportingSettings().shouldDownloadDocsAutomatically(),
+                                       null);
           scheduleForNextImport(projectWithChanges);
         }
         processMessage(message);
@@ -705,12 +699,13 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, @Nullable final Collection<MavenArtifact> artifacts,
-                                           final boolean sources, final boolean docs) {
+                                           final boolean sources, final boolean docs,
+                                           @Nullable final AsyncResult<MavenArtifactDownloader.DownloadResult> result) {
     if (!sources && !docs) return;
     runWhenFullyOpen(new Runnable() {
       public void run() {
         myArtifactsDownloadingProcessor
-          .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myProjectsTree, sources, docs));
+          .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myProjectsTree, sources, docs, result));
       }
     });
   }
