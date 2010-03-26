@@ -211,44 +211,15 @@ public class EclipseClasspathReader {
       final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
       final Library.ModifiableModel modifiableModel = library.getModifiableModel();
 
-
-      final String clsVar;
-      final String clsPath;
-      if (slash > 0) {
-        clsVar = path.substring(0, slash);
-        clsPath = path.substring(slash + 1);
-      }
-      else {
-        clsVar = path;
-        clsPath = null;
-      }
-      usedVariables.add(clsVar);
-
-      final String url = expandEclipsePath2Url(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath)),
-                                rootModel, myCurrentRoots);
-      EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseVariablePath(url, path);
+      final String url = eclipseVariabledPath2Url(rootModel, usedVariables, path, 0);
       modifiableModel.addRoot(url, OrderRootType.CLASSES);
+      EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseVariablePath(url, path);
 
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (srcPathAttr != null) {
-        final String srcVar;
-        final String srcPath;
-        final int varStart = srcPathAttr.startsWith("/") ? 1 : 0;
-
-        int slash2 = srcPathAttr.indexOf("/", varStart);
-        if (slash2 > 0) {
-          srcVar = srcPathAttr.substring(varStart, slash2);
-          srcPath = srcPathAttr.substring(slash2 + 1);
-        }
-        else {
-          srcVar = srcPathAttr.substring(varStart);
-          srcPath = null;
-        }
-        usedVariables.add(srcVar);
-        final String srcUrl = expandEclipsePath2Url(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath)),
-                                     rootModel, myCurrentRoots);
-        EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
+        final String srcUrl = eclipseVariabledPath2Url(rootModel, usedVariables, srcPathAttr, 1/*srcPathAttr.startsWith("/") ? 1 : 0*/);
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
+        EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
       }
 
       final List<String> docPaths = EJavadocUtil.getJavadocAttribute(element, rootModel, myCurrentRoots);
@@ -301,6 +272,23 @@ public class EclipseClasspathReader {
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
+  }
+
+  private static String eclipseVariabledPath2Url(ModifiableRootModel rootModel, Set<String> usedVariables, String srcPathAttr, int varStart) {
+    final String var;
+    final String path;
+
+    int slash = srcPathAttr.indexOf("/", varStart);
+    if (slash > 0) {
+      var = srcPathAttr.substring(varStart, slash);
+      path = srcPathAttr.substring(slash + 1);
+    }
+    else {
+      var = srcPathAttr.substring(varStart);
+      path = null;
+    }
+    usedVariables.add(var);
+    return PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(var, path));
   }
 
   private static void rearrangeOrderEntryOfType(ModifiableRootModel rootModel, Class<? extends OrderEntry> orderEntryClass) {
