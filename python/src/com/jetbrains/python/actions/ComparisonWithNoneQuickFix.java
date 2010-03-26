@@ -1,0 +1,47 @@
+package com.jetbrains.python.actions;
+
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Created by IntelliJ IDEA.
+ * Author: Alexey.Ivanov
+ * Date:   24.03.2010
+ * Time:   22:00:49
+ */
+public class ComparisonWithNoneQuickFix implements LocalQuickFix {
+  @NotNull
+  public String getName() {
+    return PyBundle.message("QFIX.replace.equality");
+  }
+
+  @NotNull
+  public String getFamilyName() {
+    return PyBundle.message("INSP.GROUP.python");
+  }
+
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement problemElement = descriptor.getPsiElement();
+    if (problemElement instanceof PyBinaryExpression) {
+      PyBinaryExpression binaryExpression = (PyBinaryExpression)problemElement;
+      PyElementType operator = binaryExpression.getOperator();
+      PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+      String temp;
+      temp = (operator == PyTokenTypes.EQEQ) ? "is" : "is not";
+      PyExpression expression = elementGenerator.createBinaryExpression(project, temp,
+                                                                        binaryExpression.getLeftExpression(),
+                                                                        binaryExpression.getRightExpression());
+      binaryExpression.replace(expression);
+    }
+  }
+}

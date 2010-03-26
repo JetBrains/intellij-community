@@ -115,6 +115,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.move.from.future.import"), true, true);
   }
 
+  public void testComparisonWithNoneQuickFix() throws Exception {
+    doInspectionTest("ComparisonWithNone.py", PyComparisonWithNoneInspection.class,
+                     PyBundle.message("QFIX.replace.equality"), true, true);
+  }
+
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";

@@ -33,7 +33,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyUnboundLocalVariableInspection.class,
       PyStatementEffectInspection.class,
       PySimplifyBooleanCheckInspection.class,
-      PyFromFutureImportInspection.class
+      PyFromFutureImportInspection.class,
+      PyComparisonWithNoneInspection.class
     };
   }
 }
