@@ -21,8 +21,6 @@
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -43,16 +41,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.util.ErrorLog;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.idea.eclipse.conversion.ERelativePathUtil.*;
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.*;
 
 public class EclipseClasspathReader {
   private final String myRootPath;
@@ -70,13 +68,13 @@ public class EclipseClasspathReader {
     myContentEntry = model.addContentEntry(VfsUtil.pathToUrl(myRootPath));
   }
 
-  public static void collectVariables(Set<String> usedVariables, Element classpathElement) {
+  public static void collectVariables(Set<String> usedVariables, Element classpathElement, final String rootPath) {
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       final Element element = (Element)o;
+      String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
+      if (path == null) continue;
       final String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
       if (Comparing.strEqual(kind, EclipseXml.VAR_KIND)) {
-        String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
-        if (path == null) continue;
         int slash = path.indexOf("/");
         if (slash > 0) {
           usedVariables.add(path.substring(0, slash));
@@ -95,6 +93,10 @@ public class EclipseClasspathReader {
         }
         else {
           usedVariables.add(srcPath.substring(varStart));
+        }
+      } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND)) {
+        if (EclipseProjectFinder.isExternalResource(rootPath, path)) {
+          usedVariables.add(EclipseProjectFinder.extractPathVariableName(path));
         }
       }
     }
@@ -153,7 +155,21 @@ public class EclipseClasspathReader {
         rootModel.addInvalidModuleEntry(moduleName).setExported(exported);
       }
       else {
-        getContentEntry().addSourceFolder(VfsUtil.pathToUrl(myRootPath + "/" + path), testPattern != null && testPattern.length() > 0 && path.matches(testPattern));
+        String srcUrl = VfsUtil.pathToUrl(myRootPath + "/" + path);
+        final boolean isTestFolder = testPattern != null && testPattern.length() > 0 && path.matches(testPattern);
+        if (EclipseProjectFinder.isExternalResource(myRootPath, path)) {
+          final String varName = EclipseProjectFinder.extractPathVariableName(path);
+          usedVariables.add(varName);
+
+          final String toPathVariableFormat =
+            getVariableRelatedPath(varName, path.length() > varName.length() ? path.substring(varName.length()) : null);
+          srcUrl = VfsUtil.pathToUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(toPathVariableFormat));
+          EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseLinkedSrcVarPath(srcUrl, path);
+
+          rootModel.addContentEntry(srcUrl).addSourceFolder(srcUrl, isTestFolder);
+        } else {
+          getContentEntry().addSourceFolder(srcUrl, isTestFolder);
+        }
         rearrangeOrderEntryOfType(rootModel, ModuleSourceOrderEntry.class);
       }
     }
@@ -167,20 +183,14 @@ public class EclipseClasspathReader {
       final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
       final Library.ModifiableModel modifiableModel = library.getModifiableModel();
 
-      modifiableModel.addRoot(getUrl(path, rootModel), OrderRootType.CLASSES);
+      modifiableModel.addRoot(expandEclipsePath2Url(path, rootModel, myCurrentRoots), OrderRootType.CLASSES);
 
       final String sourcePath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (sourcePath != null) {
-        modifiableModel.addRoot(getUrl(sourcePath, rootModel), OrderRootType.SOURCES);
+        modifiableModel.addRoot(expandEclipsePath2Url(sourcePath, rootModel, myCurrentRoots), OrderRootType.SOURCES);
       }
 
-      final List<String> docPaths = EJavadocUtil.getJavadocAttribute(element, rootModel, myCurrentRoots);
-      if (docPaths != null) {
-        for (String docPath : docPaths) {
-          modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
-        }
-      }
-
+      EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
       modifiableModel.commit();
 
       setLibraryEntryExported(rootModel, exported, library);
@@ -195,52 +205,18 @@ public class EclipseClasspathReader {
       final Library library = rootModel.getModuleLibraryTable().getModifiableModel().createLibrary(libName);
       final Library.ModifiableModel modifiableModel = library.getModifiableModel();
 
-
-      final String clsVar;
-      final String clsPath;
-      if (slash > 0) {
-        clsVar = path.substring(0, slash);
-        clsPath = path.substring(slash + 1);
-      }
-      else {
-        clsVar = path;
-        clsPath = null;
-      }
-      usedVariables.add(clsVar);
-
-      final String url = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(clsVar, clsPath)),
-                                rootModel);
-      EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseVariablePath(url, path);
+      final String url = eclipseVariabledPath2Url(rootModel, usedVariables, path, 0);
       modifiableModel.addRoot(url, OrderRootType.CLASSES);
+      EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseVariablePath(url, path);
 
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (srcPathAttr != null) {
-        final String srcVar;
-        final String srcPath;
-        final int varStart = srcPathAttr.startsWith("/") ? 1 : 0;
-
-        int slash2 = srcPathAttr.indexOf("/", varStart);
-        if (slash2 > 0) {
-          srcVar = srcPathAttr.substring(varStart, slash2);
-          srcPath = srcPathAttr.substring(slash2 + 1);
-        }
-        else {
-          srcVar = srcPathAttr.substring(varStart);
-          srcPath = null;
-        }
-        usedVariables.add(srcVar);
-        final String srcUrl = getUrl(PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(srcVar, srcPath)),
-                                     rootModel);
-        EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
+        final String srcUrl = eclipseVariabledPath2Url(rootModel, usedVariables, srcPathAttr, 1/*srcPathAttr.startsWith("/") ? 1 : 0*/);
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
+        EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
       }
 
-      final List<String> docPaths = EJavadocUtil.getJavadocAttribute(element, rootModel, myCurrentRoots);
-      if (docPaths != null) {
-        for (String docPath : docPaths) {
-          modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
-        }
-      }
+      EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
 
       modifiableModel.commit();
 
@@ -285,6 +261,23 @@ public class EclipseClasspathReader {
     else {
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
+  }
+
+  private static String eclipseVariabledPath2Url(ModifiableRootModel rootModel, Set<String> usedVariables, String srcPathAttr, int varStart) {
+    final String var;
+    final String path;
+
+    int slash = srcPathAttr.indexOf("/", varStart);
+    if (slash > 0) {
+      var = srcPathAttr.substring(varStart, slash);
+      path = srcPathAttr.substring(slash + 1);
+    }
+    else {
+      var = srcPathAttr.substring(varStart);
+      path = null;
+    }
+    usedVariables.add(var);
+    return PathMacroManager.getInstance(rootModel.getModule()).expandPath(getVariableRelatedPath(var, path));
   }
 
   private static void rearrangeOrderEntryOfType(ModifiableRootModel rootModel, Class<? extends OrderEntry> orderEntryClass) {
@@ -367,48 +360,6 @@ public class EclipseClasspathReader {
 
   private static String getVariableRelatedPath(String var, String path) {
     return var == null ? null : ("$" + var + "$" + (path == null ? "" : ("/" + path)));
-  }
-
-  private String getUrl(final String path, ModifiableRootModel model) {
-    String url = null;
-    if (path.startsWith("/")) {
-      final String relativePath = new File(myRootPath).getParent() + "/" + path;
-      final File file = new File(relativePath);
-      if (file.exists()) {
-        url = VfsUtil.pathToUrl(relativePath);
-      } else if (new File(path).exists()) {
-        url = VfsUtil.pathToUrl(path);
-      }
-      else {
-        final String rootPath = getRootPath(path);
-        final String relativeToRootPath = getRelativeToRootPath(path);
-
-        final Module otherModule = ModuleManager.getInstance(myProject).findModuleByName(rootPath);
-        if (otherModule != null && otherModule != model.getModule()) {
-          url = relativeToOtherModule(otherModule, relativeToRootPath);
-        }
-        else if (myCurrentRoots != null) {
-          url = relativeToContentRoots(myCurrentRoots, rootPath, relativeToRootPath);
-        }
-      }
-    }
-    if (url == null) {
-      final String absPath = myRootPath + "/" + path;
-      if (new File(absPath).exists()) {
-        url = VfsUtil.pathToUrl(absPath);
-      }
-      else {
-        url = VfsUtil.pathToUrl(path);
-      }
-    }
-    final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
-    if (localFile != null) {
-      final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
-      if (jarFile != null) {
-        url = jarFile.getUrl();
-      }
-    }
-    return url;
   }
 
   static String getJunitClsUrl(final boolean version4) {

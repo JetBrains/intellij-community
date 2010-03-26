@@ -106,7 +106,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
       else {
         for (Module module : dialog.getSelectedModules()) {
           final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-          final VirtualFile[] contentRoots = model.getContentRoots();
+          final VirtualFile[] contentRoots = model.getContentRoots();         //todo
           final String storageRoot = contentRoots.length == 1 ? contentRoots[0].getPath() : ClasspathStorage.getStorageRootFromOptions(module);
           try {
             final Element classpathEleemnt = new Element(EclipseXml.CLASSPATH_TAG);

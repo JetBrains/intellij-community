@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,7 @@ import java.util.Set;
  * and invoke various types of compilations (make, compile, rebuild)
  */
 public abstract class CompilerManager {
+  public static final Key<Key> CONTENT_ID_KEY = Key.create("COMPILATION_CONTENT_ID_CUSTOM_KEY");
   /**
    * Returns the compiler manager instance for the specified project.
    *

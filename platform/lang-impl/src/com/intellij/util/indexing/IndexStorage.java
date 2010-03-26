@@ -42,8 +42,6 @@ public interface IndexStorage<Key, Value> extends Flushable {
 
   boolean processKeys(Processor<Key> processor) throws StorageException;
 
-  Collection<Key> getKeysWithValues() throws StorageException;
-
   Collection<Key> getKeys() throws StorageException;
 
   void close() throws StorageException;

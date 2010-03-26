@@ -152,7 +152,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
             final File classpathfile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
             if (classpathfile.exists()) {
               final Element classpathElement = JDOMUtil.loadDocument(classpathfile).getRootElement();
-              EclipseClasspathReader.collectVariables(variables, classpathElement);
+              EclipseClasspathReader.collectVariables(variables, classpathElement, path);
             }
           }
         }

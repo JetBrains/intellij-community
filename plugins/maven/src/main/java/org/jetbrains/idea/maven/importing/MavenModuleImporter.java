@@ -107,13 +107,14 @@ public class MavenModuleImporter {
 
   private void configDependencies() {
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
+      boolean isExportable = artifact.isExportable();
       DependencyScope scope = selectScope(artifact.getScope());
       MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
       if (depProject != null) {
-        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope);
+        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), isExportable, scope);
       }
       else if (myMavenProject.isSupportedDependency(artifact)) {
-        myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
+        myRootModelAdapter.addLibraryDependency(artifact, isExportable, scope, myModifiableModelsProvider, myMavenProject);
       }
     }
   }

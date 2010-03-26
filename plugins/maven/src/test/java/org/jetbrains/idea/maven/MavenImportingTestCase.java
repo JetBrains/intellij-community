@@ -199,7 +199,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertModuleDeps(moduleName, LibraryOrderEntry.class, expectedDeps);
   }
 
-  protected void assertExportedDeps(String moduleName, String... expectedDeps) {
+  protected void assertExportedModuleDeps(String moduleName, String... expectedDeps) {
     final List<String> actual = new ArrayList<String>();
 
     getRootManager(moduleName).processOrder(new RootPolicy<Object>() {
