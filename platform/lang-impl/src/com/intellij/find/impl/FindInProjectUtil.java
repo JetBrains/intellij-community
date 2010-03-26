@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vcs.FileStatus;
@@ -411,17 +412,19 @@ public class FindInProjectUtil {
     if (psiDirectory == null || findModel.isWithSubdirectories() && fileIndex.isInContent(psiDirectory.getVirtualFile())) {
       final Pattern fileMaskRegExp = createFileMaskRegExp(findModel);
       // optimization
-      final Collection<PsiFile> filesForFastWordSearch = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
-      if (filesForFastWordSearch != null && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
+      Pair<Boolean, Collection<PsiFile>> fastWords = getFilesForFastWordSearch(findModel, project, psiDirectory, fileMaskRegExp, module);
+      final Collection<PsiFile> filesForFastWordSearch = fastWords.getSecond();
+
+      if (fastWords.getFirst() && canOptimizeForFastWordSearch(findModel)) return filesForFastWordSearch;
 
       class EnumContentIterator implements ContentIterator {
-        final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch == null ? Collections.<PsiFile>emptyList() : filesForFastWordSearch);
+        final List<PsiFile> myFiles = new ArrayList<PsiFile>(filesForFastWordSearch);
         final PsiManager psiManager = PsiManager.getInstance(project);
 
         public boolean processFile(VirtualFile virtualFile) {
           if (!virtualFile.isDirectory() && (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) ) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
-            if (psiFile != null && (filesForFastWordSearch == null || !filesForFastWordSearch.contains(psiFile))) {
+            if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
               myFiles.add(psiFile);
             }
           }
@@ -489,12 +492,12 @@ public class FindInProjectUtil {
     return true;
   }
 
-  @Nullable
-  private static Collection<PsiFile> getFilesForFastWordSearch(final FindModel findModel, final Project project,
+  @NotNull
+  private static Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch(final FindModel findModel, final Project project,
                                                                final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
                                                                final Module module) {
     if (DumbService.getInstance(project).isDumb()) {
-      return null;
+      return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
     }
 
     PsiManager pm = PsiManager.getInstance(project);
@@ -510,6 +513,7 @@ public class FindInProjectUtil {
 
     Set<Integer> keys = new THashSet<Integer>(30);
     Set<PsiFile> resultFiles = new THashSet<PsiFile>();
+    boolean fast = false;
 
     if (TrigramIndex.ENABLED) {
       TIntHashSet trigrams = TrigramBuilder.buildTrigram(findModel.getStringToFind());
@@ -519,6 +523,7 @@ public class FindInProjectUtil {
       }
 
       if (!keys.isEmpty()) {
+        fast = true;
         List<VirtualFile> hits = new ArrayList<VirtualFile>();
         FileBasedIndex.getInstance()
           .getFilesWithKey(TrigramIndex.INDEX_ID, keys, new CommonProcessors.CollectProcessor<VirtualFile>(hits), scope);
@@ -528,7 +533,7 @@ public class FindInProjectUtil {
         }
 
         filterMaskedFiles(resultFiles, fileMaskRegExp);
-        if (resultFiles.isEmpty()) return resultFiles;
+        if (resultFiles.isEmpty()) return new Pair<Boolean, Collection<PsiFile>>(true, resultFiles);
       }
     }
 
@@ -536,50 +541,47 @@ public class FindInProjectUtil {
     // $ is used to separate words when indexing plain-text files but not when indexing
     // Java identifiers, so we can't consistently break a string containing $ characters into words
 
-    if (findModel.isWholeWordsOnly() && findModel.getStringToFind().indexOf('$') < 0) {
-      List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
+    fast |= findModel.isWholeWordsOnly() && findModel.getStringToFind().indexOf('$') < 0;
 
-      // hope long words are rare
-      Collections.sort(words, new Comparator<String>() {
-        public int compare(final String o1, final String o2) {
-          return o2.length() - o1.length();
-        }
-      });
+    List<String> words = StringUtil.getWordsIn(findModel.getStringToFind());
 
-      for (int i = 0; i < words.size(); i++) {
-        String word = words.get(i);
+    // hope long words are rare
+    Collections.sort(words, new Comparator<String>() {
+      public int compare(final String o1, final String o2) {
+        return o2.length() - o1.length();
+      }
+    });
 
-        PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-        if (files.length == 0) {
-          resultFiles.clear();
-          break;
-        }
-  
-        final List<PsiFile> psiFiles = Arrays.asList(files);
+    for (int i = 0; i < words.size(); i++) {
+      String word = words.get(i);
 
-        if (i == 0 && keys.isEmpty()) {
-          resultFiles.addAll(psiFiles);
-        }
-        else {
-          resultFiles.retainAll(psiFiles);
-        }
-
-        filterMaskedFiles(resultFiles, fileMaskRegExp);
-        if (resultFiles.isEmpty()) break;
+      PsiFile[] files = cacheManager.getFilesWithWord(word, UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+      if (files.length == 0) {
+        resultFiles.clear();
+        break;
       }
 
-      // in case our word splitting is incorrect
-      PsiFile[] allWordsFiles =
-        cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
-      resultFiles.addAll(Arrays.asList(allWordsFiles));
+      final List<PsiFile> psiFiles = Arrays.asList(files);
+
+      if (i == 0 && keys.isEmpty()) {
+        resultFiles.addAll(psiFiles);
+      }
+      else {
+        resultFiles.retainAll(psiFiles);
+      }
+
+      filterMaskedFiles(resultFiles, fileMaskRegExp);
+      if (resultFiles.isEmpty()) break;
     }
-    else if (!TrigramIndex.ENABLED) {
-      return null;
-    }
+
+    // in case our word splitting is incorrect
+    PsiFile[] allWordsFiles =
+      cacheManager.getFilesWithWord(findModel.getStringToFind(), UsageSearchContext.ANY, scope, findModel.isCaseSensitive());
+    resultFiles.addAll(Arrays.asList(allWordsFiles));
 
     filterMaskedFiles(resultFiles, fileMaskRegExp);
 
-    return resultFiles;
+    return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
   }
 
   private static GlobalSearchScope moduleContentScope(final Module module) {
