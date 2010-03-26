@@ -116,15 +116,13 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     north.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, controlGroup, true).getComponent(), BorderLayout.WEST);
 
     final JPanel right = new JPanel(new BorderLayout());
-    myCurrentScript.getDocument().addDocumentListener(docListener);
     right.add(myCurrentScript, BorderLayout.CENTER);
+    myState = ServiceManager.getService(PlaybackDebuggerState.class);
+    myCurrentScript.setText(myState.currentScript);
     myCurrentScript.setEditable(false);
+    myCurrentScript.getDocument().addDocumentListener(docListener);
 
     final DefaultActionGroup loadGroup = new DefaultActionGroup();
-    //loadGroup.add(new LoadFromFileAction());
-    //loadGroup.addSeparator();
-    //loadGroup.add(new SetScriptDirAction());
-    //loadGroup.addSeparator();
     loadGroup.add(new SetScriptFileAction());
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, loadGroup, true);
@@ -171,9 +169,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       }
     };
     LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
-
-    myState = ServiceManager.getService(PlaybackDebuggerState.class);
-    myScriptsPath.setText(myState.scriptsPath);
   }
 
   private class SaveAction extends AnAction {
@@ -183,7 +178,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myChanged);
+      //e.getPresentation().setEnabled(myChanged);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -230,77 +225,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         VirtualFile selectedFile = files[0];
         myCurrentScript.setText(selectedFile.getPresentableUrl());
         loadFrom(selectedFile);
-      }
-    }
-  }
-
-  private class SetScriptDirAction extends AnAction {
-    private SetScriptDirAction() {
-      super("Set Script Directory", "", IconLoader.getIcon("/nodes/packageOpen.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      final File file = getScriptsFile();
-      final String choose = file != null ? "Choose another..." : "Choose...";
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Script Directory", new String[] {
-        file != null ? file.getAbsolutePath() : "Undefined", choose
-      }) {
-        @Override
-        public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-          if (selectedValue != choose) return FINAL_CHOICE;
-
-          final VirtualFile[] files =
-            FileChooser.chooseFiles(myComponent, new FileChooserDescriptor(false, true, false, false, false, false));
-            if (files.length > 0) {
-              String presentableUrl = files[0].getPresentableUrl();
-              myScriptsPath.setText(presentableUrl);
-              myState.scriptsPath = presentableUrl;
-            }
-          return FINAL_CHOICE;
-        }
-      }).showUnderneathOf(e.getInputEvent().getComponent());
-    }
-  }
-
-  private class LoadFromFileAction extends AnAction {
-    private LoadFromFileAction() {
-      super("Load", "Load script from the script directory", IconLoader.getIcon("/general/autoscrollFromSource.png"));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      final Component c = e.getInputEvent().getComponent();
-      final File scriptsFile = getScriptsFile();
-
-      final FilenameFilter filter = new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-          return name.toLowerCase().endsWith(DOT_EXT) || new File(dir, name).isDirectory();
-        }
-      };
-
-      final File[] kids = scriptsFile != null ? scriptsFile.listFiles(filter) : null;
-
-      if (kids == null || kids.length == 0) {
-        JBPopupFactory.getInstance().createMessage("No scripts found in the given directory").showUnderneathOf(c);
-      } else {
-        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            final boolean fileVisible = super.isFileVisible(file, showHiddenFiles);
-            if (fileVisible && file.getParent() != null) {
-              return filter.accept(new File(file.getParent().getPresentableUrl()), file.getName());
-            } else {
-              return false;
-            }
-          }
-        };
-        descriptor.setRoot(LocalFileSystem.getInstance().findFileByIoFile(scriptsFile));
-        JBPopupFactory.getInstance().createTree(new BaseTreePopupStep<FileElement>(null, "Choose Script To Load", new FileTreeStructure(null, descriptor)) {
-          @Override
-          public PopupStep onChosen(FileElement selectedValue, boolean finalChoice) {
-            loadFrom(selectedValue.getFile());
-            return FINAL_CHOICE;
-          }
-        }).showUnderneathOf(c);
+        myState.currentScript = selectedFile.getPresentableUrl();
       }
     }
   }
@@ -555,19 +480,19 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
               file="$APP_CONFIG$/other.xml")}
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<Element> {
-    private static final String ATTR_SCRIPTS_PATH = "scriptsPath";
-    public String scriptsPath = "";
+    private static final String ATTR_CURRENT_SCRIPT = "currentScript";
+    public String currentScript = "";
 
     public Element getState() {
       final Element element = new Element("playback");
-      element.setAttribute(ATTR_SCRIPTS_PATH, scriptsPath);
+      element.setAttribute(ATTR_CURRENT_SCRIPT, currentScript);
       return element;
     }
 
     public void loadState(Element state) {
-      final String dir = state.getAttributeValue(ATTR_SCRIPTS_PATH);
-      if (dir != null) {
-        scriptsPath = dir;
+      final String path = state.getAttributeValue(ATTR_CURRENT_SCRIPT);
+      if (path != null) {
+        currentScript = path;
       }
     }
   }
