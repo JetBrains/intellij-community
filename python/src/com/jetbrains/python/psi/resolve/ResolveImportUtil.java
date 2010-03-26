@@ -103,7 +103,6 @@ public class ResolveImportUtil {
     PyQualifiedName moduleQName = null;
 
     if (importStatement instanceof PyFromImportStatement) {
-      PsiElement imported_from_module;
       PyFromImportStatement from_import_statement = (PyFromImportStatement)importStatement;
       moduleQName = from_import_statement.getImportSourceQName();
       final int relative_level = from_import_statement.getRelativeLevel();
@@ -113,18 +112,21 @@ public class ResolveImportUtil {
       }
 
       if (moduleQName != null) { // either "from bar import foo" or "from ...bar import foo"
-        imported_from_module = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
-        PsiElement result = resolveChild(imported_from_module, qName.getComponents().get(0), file, false);
-        if (result != null) return result;
+        final List<PsiElement> candidates = resolveModule(moduleQName, file, absolute_import_enabled, relative_level);
+        for (PsiElement candidate : candidates) {
+          PsiElement result = resolveChild(candidate, qName.getComponents().get(0), file, false);
+          if (result != null) return result;
+        }
       }
     }
     else if (importStatement instanceof PyImportStatement) { // "import foo"
-      PsiElement result = resolveModule(qName, file, absolute_import_enabled, 0);
-      if (result != null) return result;
+      List<PsiElement> result = resolveModule(qName, file, absolute_import_enabled, 0);
+      return result.isEmpty() ? null : result.get(0);
     }
     // in-python resolution failed
     if (moduleQName != null) {
-      return resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."), resolveModule(moduleQName, file, false, 0));
+      final List<PsiElement> importFrom = resolveModule(moduleQName, file, false, 0);
+      return resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."), importFrom.isEmpty() ? null : importFrom.get(0));
     }
     return null;
   }
@@ -165,7 +167,8 @@ public class ResolveImportUtil {
   private static PsiElement resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
-    return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+    final List<PsiElement> candidates = resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+    return candidates.isEmpty() ? null : candidates.get(0);
   }
 
   /**
@@ -176,11 +179,9 @@ public class ResolveImportUtil {
    * @param relative_level if > 0, step back from source_file and resolve from there (even if import_is_absolute is false!). 
    * @return
    */
-  @Nullable
-  private static PsiElement resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
-                                          boolean import_is_absolute, int relative_level) {
-    PsiElement imported_from_module;
-
+  @NotNull
+  private static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
+                                                boolean import_is_absolute, int relative_level) {
     if (qualifiedName == null) return null;
     String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relative_level);
     Set<String> being_imported = ourBeingImported.get();
@@ -189,16 +190,21 @@ public class ResolveImportUtil {
       being_imported.add(marker);
       if (relative_level > 0) {
         // "from ...module import"
-        imported_from_module = resolveModuleAt(stepBackFrom(source_file, relative_level), source_file, qualifiedName);
+        final PsiElement module = resolveModuleAt(stepBackFrom(source_file, relative_level), source_file, qualifiedName);
+        return module != null ? Collections.singletonList(module) : Collections.<PsiElement>emptyList();
       }
       else { // "from module import"
-        if (import_is_absolute) imported_from_module = resolveModuleInRoots(qualifiedName, source_file);
+        if (import_is_absolute) {
+          return resolveModulesInRoots(qualifiedName, source_file);
+        }
         else {
-          imported_from_module = resolveModuleAt(source_file.getContainingDirectory(), source_file, qualifiedName);
-          if (imported_from_module == null) imported_from_module = resolveModuleInRoots(qualifiedName, source_file);
+          PsiElement module = resolveModuleAt(source_file.getContainingDirectory(), source_file, qualifiedName);
+          if (module != null) {
+            return Collections.singletonList(module);
+          }
+          return resolveModulesInRoots(qualifiedName, source_file);
         }
       }
-      return imported_from_module;
     }
     finally {
       being_imported.remove(marker);
@@ -228,15 +234,28 @@ public class ResolveImportUtil {
 
   @Nullable
   public static PsiElement resolveModuleInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
-    if (foothold == null || !foothold.isValid()) return null;
-    PsiFile foothold_file = foothold.getContainingFile();
-    if (foothold_file == null || !foothold_file.isValid()) return null;
+    final List<PsiElement> candidates = resolveModulesInRoots(moduleQualifiedName, foothold);
+    return candidates.isEmpty() ? null : candidates.get(0);
+  }
 
-    if (moduleQualifiedName.getComponentCount() < 1) return null;
+  /**
+   * Returns the list of directories/files under different project roots which match the specified qualified name.
+   *
+   * @param moduleQualifiedName the qualified name to find
+   * @param foothold the PSI element in the context of which the search is performed
+   * @return the list of matching directories or files, or an empty list if nothing was found
+   */
+  @NotNull
+  public static List<PsiElement> resolveModulesInRoots(PyQualifiedName moduleQualifiedName, PsiElement foothold) {
+    if (foothold == null || !foothold.isValid()) return Collections.emptyList();
+    PsiFile foothold_file = foothold.getContainingFile();
+    if (foothold_file == null || !foothold_file.isValid()) return Collections.emptyList();
+
+    if (moduleQualifiedName.getComponentCount() < 1) return Collections.emptyList();
 
     ResolveInRootVisitor visitor = new ResolveInRootVisitor(moduleQualifiedName, foothold.getManager(), foothold_file);
     visitRoots(foothold, visitor);
-    return visitor.getResult();
+    return visitor.results;
   }
 
   /**
@@ -507,29 +526,23 @@ public class ResolveImportUtil {
     final PsiFile foothold_file;
     final PyQualifiedName qualifiedName;
     final PsiManager psimgr;
-    PsiElement result;
+    final List<PsiElement> results = new ArrayList<PsiElement>();
 
     public ResolveInRootVisitor(PyQualifiedName qName, PsiManager psimgr, PsiFile foothold_file) {
       this.qualifiedName = qName;
       this.psimgr = psimgr;
       this.foothold_file = foothold_file;
-      this.result = null;
     }
 
     public boolean visitRoot(final VirtualFile root) {
       PsiElement module = root.isDirectory() ? psimgr.findDirectory(root) : psimgr.findFile(root);
       for (String component : qualifiedName.getComponents()) {
         module = resolveChild(module, component, foothold_file, false); // only files, we want a module
-        if (module == null) {
-          return true;
-        }
       }
-      result = module;
-      return false;
-    }
-
-    public PsiElement getResult() {
-      return result;
+      if (module != null) {
+        results.add(module);
+      }
+      return true;
     }
   }
 
