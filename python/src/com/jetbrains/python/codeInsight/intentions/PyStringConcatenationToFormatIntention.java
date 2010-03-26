@@ -37,11 +37,12 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
       return false;
     }
     while (element.getParent() instanceof PyBinaryExpression) {
-      if (((PyBinaryExpression) element).getOperator() != PyTokenTypes.PLUS) {
-        return false;
-      }
       element = element.getParent();
     }
+    if (((PyBinaryExpression)element).getOperator() != PyTokenTypes.PLUS) {
+      return false;
+    }
+
     for (PyExpression expression: getSimpleExpressions((PyBinaryExpression) element)) {
       if (!(expression instanceof PyStringLiteralExpression
             || expression instanceof PyReferenceExpression
