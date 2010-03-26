@@ -190,13 +190,7 @@ public class EclipseClasspathReader {
         modifiableModel.addRoot(expandEclipsePath2Url(sourcePath, rootModel, myCurrentRoots), OrderRootType.SOURCES);
       }
 
-      final List<String> docPaths = EJavadocUtil.getJavadocAttribute(element, rootModel, myCurrentRoots);
-      if (docPaths != null) {
-        for (String docPath : docPaths) {
-          modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
-        }
-      }
-
+      EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
       modifiableModel.commit();
 
       setLibraryEntryExported(rootModel, exported, library);
@@ -222,12 +216,7 @@ public class EclipseClasspathReader {
         EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
       }
 
-      final List<String> docPaths = EJavadocUtil.getJavadocAttribute(element, rootModel, myCurrentRoots);
-      if (docPaths != null) {
-        for (String docPath : docPaths) {
-          modifiableModel.addRoot(docPath, JavadocOrderRootType.getInstance());
-        }
-      }
+      EJavadocUtil.appendJavadocRoots(element, rootModel, myCurrentRoots, modifiableModel);
 
       modifiableModel.commit();
 

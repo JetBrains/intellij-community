@@ -33,9 +33,7 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class EclipseClasspathWriter {
@@ -138,7 +136,7 @@ public class EclipseClasspathWriter {
             }
             setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
 
-            setupLibraryAttributes(orderEntry, libraryOrderEntry);
+            EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, myModel);
             setExported(orderEntry, libraryOrderEntry);
           }
         }
@@ -180,42 +178,6 @@ public class EclipseClasspathWriter {
     }
     else {
       throw new ConversionException("Unknown EclipseProjectModel.ClasspathEntry: " + entry.getClass());
-    }
-  }
-
-  private void setupLibraryAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry) {
-    final List<String> eclipseUrls = new ArrayList<String>();
-    final String[] docUrls = libraryOrderEntry.getUrls(JavadocOrderRootType.getInstance());
-    for (String docUrl : docUrls) {
-      eclipseUrls.add(EJavadocUtil.toEclipseJavadocPath(myModel, docUrl));
-    }
-
-    final List children = new ArrayList(orderEntry.getChildren(EclipseXml.ATTRIBUTES_TAG));
-    for (Object o : children) {
-      final Element attsElement = (Element)o;
-      final ArrayList attTags = new ArrayList(attsElement.getChildren(EclipseXml.ATTRIBUTE_TAG));
-      for (Object a : attTags) {
-        Element attElement = (Element)a;
-        if (Comparing.strEqual(attElement.getAttributeValue("name"), EclipseXml.JAVADOC_LOCATION)) {
-          final String javadocPath = attElement.getAttributeValue("value");
-          if (!eclipseUrls.remove(javadocPath)) {
-            attElement.detach();
-          }
-        }
-      }
-    }
-
-    for (final String docUrl : eclipseUrls) {
-      Element child = orderEntry.getChild(EclipseXml.ATTRIBUTES_TAG);
-      if (child == null) {
-        child = new Element(EclipseXml.ATTRIBUTES_TAG);
-        orderEntry.addContent(child);
-      }
-
-      final Element attrElement = new Element(EclipseXml.ATTRIBUTE_TAG);
-      child.addContent(attrElement);
-      attrElement.setAttribute("name", EclipseXml.JAVADOC_LOCATION);
-      attrElement.setAttribute("value", docUrl);
     }
   }
 

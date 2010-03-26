@@ -23,7 +23,10 @@ package org.jetbrains.idea.eclipse.conversion;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,27 +58,27 @@ public class EJavadocUtil {
   private EJavadocUtil() {
   }
 
-  @Nullable
-  static List<String> getJavadocAttribute(Element element, ModuleRootModel model, final List<String> currentRoots) {
-    Element attributes = element.getChild("attributes");
+  static void appendJavadocRoots(Element element,
+                                 ModuleRootModel model,
+                                 final List<String> currentRoots,
+                                 Library.ModifiableModel modifiableModel) {
+    final Element attributes = element.getChild("attributes");
     if (attributes == null) {
-      return null;
+      return;
     }
-    List<String> result = new ArrayList<String>();
     for (Object o : attributes.getChildren("attribute")) {
-      if (Comparing.strEqual(((Element)o).getAttributeValue("name"), "javadoc_location")) {
+      if (Comparing.strEqual(((Element)o).getAttributeValue("name"), JAVADOC_LOCATION)) {
         Element attribute = (Element)o;
         String javadocPath = attribute.getAttributeValue("value");
         if (!SystemInfo.isWindows) {
           javadocPath = javadocPath.replaceFirst(FILE_PROTOCOL, FILE_PROTOCOL + "/");
         }
-        result.add(toIdeaJavadocUrl(model, javadocPath, currentRoots));
+        modifiableModel.addRoot(toIdeaJavadocUrl(model, javadocPath, currentRoots), JavadocOrderRootType.getInstance());
       }
     }
-    return result;
   }
 
-  static String toIdeaJavadocUrl(ModuleRootModel model, String javadocPath, List<String> currentRoots) {
+  private static String toIdeaJavadocUrl(ModuleRootModel model, String javadocPath, List<String> currentRoots) {
     if (javadocPath.startsWith(FILE_PROTOCOL)) {
       if (new File(javadocPath.substring(FILE_PROTOCOL.length())).exists()) {
         return VfsUtil.pathToUrl(javadocPath.substring(FILE_PROTOCOL.length()));
@@ -149,7 +152,7 @@ public class EJavadocUtil {
     return new File(path).exists();
   }
 
-  static String toEclipseJavadocPath(ModuleRootModel model, String javadocPath) {
+  private static String toEclipseJavadocPath(ModuleRootModel model, String javadocPath) {
     final String protocol = VirtualFileManager.extractProtocol(javadocPath);
     if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
       final String path = VfsUtil.urlToPath(javadocPath);
@@ -191,4 +194,39 @@ public class EJavadocUtil {
     return javadocPath;
   }
 
+  static void setupJavadocAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry, final ModuleRootModel model) {
+    final List<String> eclipseUrls = new ArrayList<String>();
+    final String[] docUrls = libraryOrderEntry.getUrls(JavadocOrderRootType.getInstance());
+    for (String docUrl : docUrls) {
+      eclipseUrls.add(toEclipseJavadocPath(model, docUrl));
+    }
+
+    final List children = new ArrayList(orderEntry.getChildren(ATTRIBUTES_TAG));
+    for (Object o : children) {
+      final Element attsElement = (Element)o;
+      final ArrayList attTags = new ArrayList(attsElement.getChildren(ATTRIBUTE_TAG));
+      for (Object a : attTags) {
+        Element attElement = (Element)a;
+        if (Comparing.strEqual(attElement.getAttributeValue("name"), JAVADOC_LOCATION)) {
+          final String javadocPath = attElement.getAttributeValue("value");
+          if (!eclipseUrls.remove(javadocPath)) {
+            attElement.detach();
+          }
+        }
+      }
+    }
+
+    for (final String docUrl : eclipseUrls) {
+      Element child = orderEntry.getChild(ATTRIBUTES_TAG);
+      if (child == null) {
+        child = new Element(ATTRIBUTES_TAG);
+        orderEntry.addContent(child);
+      }
+
+      final Element attrElement = new Element(ATTRIBUTE_TAG);
+      child.addContent(attrElement);
+      attrElement.setAttribute("name", JAVADOC_LOCATION);
+      attrElement.setAttribute("value", docUrl);
+    }
+  }
 }
