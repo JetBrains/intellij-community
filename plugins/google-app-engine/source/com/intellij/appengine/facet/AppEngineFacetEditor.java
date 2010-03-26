@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -40,6 +41,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JList myFilesList;
   private JButton myRemoveButton;
   private JComboBox myPersistenceApiComboBox;
+  private JTextField myUserEmailField;
+  private JPasswordField myPasswordField;
   private AppEngineSdkEditor mySdkEditor;
   private DefaultListModel myFilesListModel;
 
@@ -118,7 +121,9 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     return myRunEnhancerOnMakeCheckBox.isSelected() != myFacetConfiguration.isRunEnhancerOnMake()
            || !mySdkEditor.getPath().equals(myFacetConfiguration.getSdkHomePath())
            || !getConfiguredFiles().equals(myFacetConfiguration.getFilesToEnhance())
-           || PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox) != myFacetConfiguration.getPersistenceApi();
+           || PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox) != myFacetConfiguration.getPersistenceApi()
+           || !myUserEmailField.getText().equals(myFacetConfiguration.getUserEmail())
+           || !myFacetConfiguration.getPassword().equals(new String(myPasswordField.getPassword()));
   }
 
   private List<String> getConfiguredFiles() {
@@ -134,6 +139,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myFacetConfiguration.setRunEnhancerOnMake(myRunEnhancerOnMakeCheckBox.isSelected());
     myFacetConfiguration.setFilesToEnhance(getConfiguredFiles());
     myFacetConfiguration.setPersistenceApi(PersistenceApiComboboxUtil.getSelectedApi(myPersistenceApiComboBox));
+    myFacetConfiguration.setUserEmail(myUserEmailField.getText());
+    myFacetConfiguration.setEncryptedPassword(PasswordUtil.encodePassword(String.valueOf(myPasswordField.getPassword())));
   }
 
   public void reset() {
@@ -145,6 +152,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     fillFilesList(myFacetConfiguration.getFilesToEnhance());
     myRunEnhancerOnMakeCheckBox.setSelected(myFacetConfiguration.isRunEnhancerOnMake());
     myPersistenceApiComboBox.setSelectedItem(myFacetConfiguration.getPersistenceApi().getName());
+    myUserEmailField.setText(myFacetConfiguration.getUserEmail());
+    myPasswordField.setText(myFacetConfiguration.getPassword());
   }
 
   private void fillFilesList(final List<String> paths) {

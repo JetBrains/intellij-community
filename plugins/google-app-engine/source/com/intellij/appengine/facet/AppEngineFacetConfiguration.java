@@ -6,6 +6,7 @@ import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -23,6 +24,8 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
   private boolean myRunEnhancerOnMake = false;
   private List<String> myFilesToEnhance = new ArrayList<String>();
   private PersistenceApi myPersistenceApi = PersistenceApi.JDO;
+  private String myUserEmail = "";
+  private String myEncryptedPassword = "";
 
   public FacetEditorTab[] createEditorTabs(FacetEditorContext editorContext, FacetValidatorsManager validatorsManager) {
     return new FacetEditorTab[] {
@@ -46,15 +49,13 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
     myRunEnhancerOnMake = state.isRunEnhancerOnMake();
     myFilesToEnhance = state.getFilesToEnhance();
     myPersistenceApi = state.getPersistenceApi();
+    myUserEmail = state.getUserEmail();
+    myEncryptedPassword = state.getEncryptedPassword();
   }
 
   @Tag("sdk-home-path")
   public String getSdkHomePath() {
     return mySdkHomePath;
-  }
-
-  public void setSdkHomePath(String sdkHomePath) {
-    mySdkHomePath = sdkHomePath;
   }
 
   @Tag("run-enhancer-on-make")
@@ -73,6 +74,28 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
     return myPersistenceApi;
   }
 
+  @Tag("email")
+  public String getUserEmail() {
+    return myUserEmail;
+  }
+
+  @Tag("password")
+  public String getEncryptedPassword() {
+    return myEncryptedPassword;
+  }
+
+  public void setUserEmail(String userEmail) {
+    myUserEmail = userEmail;
+  }
+
+  public void setEncryptedPassword(String encryptedPassword) {
+    myEncryptedPassword = encryptedPassword;
+  }
+
+  public void setSdkHomePath(String sdkHomePath) {
+    mySdkHomePath = sdkHomePath;
+  }
+
   public void setPersistenceApi(PersistenceApi persistenceApi) {
     myPersistenceApi = persistenceApi;
   }
@@ -85,4 +108,7 @@ public class AppEngineFacetConfiguration implements FacetConfiguration, Persiste
     myRunEnhancerOnMake = runEnhancerOnMake;
   }
 
+  public String getPassword() {
+    return PasswordUtil.decodePassword(myEncryptedPassword);
+  }
 }
