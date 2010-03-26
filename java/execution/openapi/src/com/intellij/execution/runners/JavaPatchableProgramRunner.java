@@ -16,7 +16,9 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.util.JDOMExternalizable;
 
@@ -27,5 +29,11 @@ public abstract class JavaPatchableProgramRunner<Settings extends JDOMExternaliz
 
   public abstract void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException;
 
-                                      
+
+  protected static void runCustomPatchers(JavaParameters javaParameters, RunnerSettings settings, Executor executor) {
+    final RunProfile profile = settings.getRunProfile();
+    for (JavaProgramPatcher patcher : JavaProgramPatcher.EP_NAME.getExtensions()) {
+      patcher.patchJavaParameters(executor, profile, javaParameters);
+    }
+  }
 }

@@ -29,6 +29,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 

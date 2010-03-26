@@ -305,6 +305,27 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return Collections.emptyList();
   }
 
+  @Override
+  public <K> Collection<K> getAllKeysWithValues(StubIndexKey<K, ?> indexKey, @NotNull Project project) {
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+
+    final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
+    try {
+      return index.getAllKeysMapped();
+    }
+    catch (StorageException e) {
+      forceRebuild(e);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException || cause instanceof StorageException) {
+        forceRebuild(e);
+      }
+      throw e;
+    }
+    return Collections.emptyList();
+  }
+
   @NotNull
   public String getComponentName() {
     return "Stub.IndexManager";
