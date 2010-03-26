@@ -307,8 +307,9 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   @Override
-  public <Key, Psi extends PsiElement> Collection<Key> getAllKeysWithValues(StubIndexKey<Key, Psi> indexKey, @NotNull Project project) {
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+  public <Key, Psi extends PsiElement> Collection<Key> getAllKeysWithValues(StubIndexKey<Key, Psi> indexKey,
+                                                                            @NotNull Project project,
+                                                                            final GlobalSearchScope scope) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final Set<Key> result = new THashSet<Key>();
