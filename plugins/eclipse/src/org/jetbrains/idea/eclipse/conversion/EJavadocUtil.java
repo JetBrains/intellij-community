@@ -42,6 +42,15 @@ import java.util.List;
 import static org.jetbrains.idea.eclipse.EclipseXml.*;
 import static org.jetbrains.idea.eclipse.conversion.ERelativePathUtil.*;
 
+/**
+ * Eclipse javadoc format:
+ * <ul>
+ * <li>jar:platform:/resource/other_project_name/relative_path_to_zip|jar!/path_inside
+ * <li>jar:file:/absolute_path_to_zip|jar!/path_inside
+ * <li>file:/absolute_path
+ * <li>http://www.javadoc.url
+ * </ul>
+ */
 public class EJavadocUtil {
   private EJavadocUtil() {
   }
