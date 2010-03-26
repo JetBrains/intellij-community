@@ -22,7 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.folding.FoldingBuilderEx;
 import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.properties.parsing.PropertyStubElementType;
+import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
@@ -44,7 +44,7 @@ import java.util.*;
 public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final int FOLD_MAX_LENGTH = 50;
   private static final Key<Property> CACHE = Key.create("i18n.property.cache");
-  public static final Property NULL = new PropertyImpl(new PropertyStubImpl(null, null), new PropertyStubElementType());
+  public static final Property NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
@@ -75,7 +75,6 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
   private static void checkLiteral(PsiLiteralExpression expression, List<FoldingDescriptor> result) {
-    expression.getUserData(CACHE);
     if (isI18nProperty(expression)) {
       final Property property = getI18nProperty(expression);
       final HashSet<Object> set = new HashSet<Object>();
