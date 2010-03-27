@@ -29,6 +29,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.*;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
@@ -58,6 +59,10 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
+
+  protected LightCodeInsightFixtureTestCase() {
+    IdeaTestCase.initPlatformPrefix();
+  }
 
   protected void setUp() throws Exception {
     super.setUp();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.plugins;
+package com.intellij.codeInsight;
 
-/**
- * @author max
- */
-public class HelpSetPath {
-  private final String file;
-  private final String path;
-  public static final HelpSetPath[] EMPTY = new HelpSetPath[0];
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.psi.PsiFile;
 
-  public HelpSetPath(String file, String path) {
-    this.file = file;
-    this.path = path;
-  }
+import java.util.Collection;
 
-  public String getFile() {
-    return file;
-  }
+public interface AttachSourcesProvider {
+  Collection<AttachSourcesAction> getActions(Library library, PsiFile psiFile);
 
-  public String getPath() {
-    return path;
+  interface AttachSourcesAction {
+    String getName();
+    String getBusyText();
+    ActionCallback perform();
   }
 }

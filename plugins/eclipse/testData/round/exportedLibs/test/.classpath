@@ -7,7 +7,5 @@
 			<attribute name="javadoc_location" value="jar:platform:/resource/test/testJavadoc.jar!/a"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry exported="true" kind="lib" path="/testOut.jar" sourcepath="/testOutSrc.jar"/>
-	<classpathentry exported="true" kind="lib" path="/test.jar" sourcepath="/testOutSrc.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

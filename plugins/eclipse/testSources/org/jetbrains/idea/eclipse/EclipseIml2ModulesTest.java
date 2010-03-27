@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.plugins;
 
-/**
- * @author max
+/*
+ * User: anna
+ * Date: 28-Nov-2008
  */
-public class HelpSetPath {
-  private final String file;
-  private final String path;
-  public static final HelpSetPath[] EMPTY = new HelpSetPath[0];
+package org.jetbrains.idea.eclipse;
 
-  public HelpSetPath(String file, String path) {
-    this.file = file;
-    this.path = path;
+public class EclipseIml2ModulesTest extends Eclipse2ModulesTest {
+
+  @Override
+  protected String getTestPath() {
+    return "iml";
   }
 
-  public String getFile() {
-    return file;
+  public void testAllProps() throws Exception {
+    doTest("eclipse-ws-3.4.1-a", "all-props");
   }
 
-  public String getPath() {
-    return path;
+  @Override
+  protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
+    super.doTest(workspaceRoot, projectRoot);
+    EclipseImlTest.doTest("/" + workspaceRoot + "/" + projectRoot, getProject());
   }
 }

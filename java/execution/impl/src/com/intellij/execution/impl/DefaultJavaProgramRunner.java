@@ -62,6 +62,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
+    runCustomPatchers(javaParameters, settings, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class));
   }
 
   public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
@@ -84,7 +85,6 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     if (state instanceof JavaCommandLine) {
       final JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       patch(parameters, state.getRunnerSettings(), true);
-      runCustomPatchers(parameters, state.getRunnerSettings(), executor);
       final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine)state);
       executionResult = state.execute(executor, this);
       if (proxy != null && executionResult != null) {

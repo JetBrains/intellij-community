@@ -42,5 +42,4 @@ public abstract class StubIndex {
   );
 
   public abstract <Key> Collection<Key> getAllKeys(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
-  public abstract <Key> Collection<Key> getAllKeysWithValues(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
 }

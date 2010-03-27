@@ -20,20 +20,12 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +33,7 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class EclipseClasspathWriter {
@@ -70,17 +59,15 @@ public class EclipseClasspathWriter {
     }
 
     @NonNls String outputPath = "bin";
-    if (myModel.getContentEntries().length == 1) {
-      final VirtualFile contentRoot = myModel.getContentEntries()[0].getFile();
-      final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-      if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
-        outputPath = getRelativePath(output.getUrl());
-      }
-      else if (output == null) {
-        final String url = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
-        if (url != null) {
-          outputPath = getRelativePath(url);
-        }
+    final VirtualFile contentRoot = EPathUtil.getContentRoot(myModel);
+    final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+    if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
+      outputPath = EPathUtil.collapse2EclipsePath(output.getUrl(), myModel);
+    }
+    else if (output == null) {
+      final String url = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
+      if (url != null) {
+        outputPath = EPathUtil.collapse2EclipsePath(url, myModel);
       }
     }
     final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement);
@@ -89,11 +76,19 @@ public class EclipseClasspathWriter {
 
   private void createClasspathEntry(OrderEntry entry, Element classpathRoot) throws ConversionException {
     if (entry instanceof ModuleSourceOrderEntry) {
-      final ContentEntry[] entries = ((ModuleSourceOrderEntry)entry).getRootModel().getContentEntries();
-      if (entries.length > 0) {
-        final ContentEntry contentEntry = entries[0];
+      final ModuleRootModel rootModel = ((ModuleSourceOrderEntry)entry).getRootModel();
+      final ContentEntry[] entries = rootModel.getContentEntries();
+      for (final ContentEntry contentEntry : entries) {
+        final VirtualFile contentRoot = contentEntry.getFile();
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          addOrderEntry(EclipseXml.SRC_KIND, getRelativePath(sourceFolder.getUrl()), classpathRoot);
+          String relativePath = EPathUtil.collapse2EclipsePath(sourceFolder.getUrl(), myModel);
+          if (contentRoot != EPathUtil.getContentRoot(rootModel)) {
+            final String linkedPath = EclipseModuleManager.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(sourceFolder.getUrl());
+            if (linkedPath != null) {
+              relativePath = linkedPath;
+            }
+          }
+          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot);
         }
       }
     }
@@ -123,7 +118,7 @@ public class EclipseClasspathWriter {
               orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot);
             }
             else {
-              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, getRelativePath(files[0]), classpathRoot);
+              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, EPathUtil.collapse2EclipsePath(files[0], myModel), classpathRoot);
             }
 
             final String srcRelativePath;
@@ -136,12 +131,12 @@ public class EclipseClasspathWriter {
             }
             else {
               final String lastSourceRoot = srcFiles[srcFiles.length - 1];
-              srcRelativePath = getRelativePath(lastSourceRoot);
+              srcRelativePath = EPathUtil.collapse2EclipsePath(lastSourceRoot, myModel);
               eclipseSrcVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseSrcVariablePath(lastSourceRoot);
             }
             setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
 
-            setupLibraryAttributes(orderEntry, libraryOrderEntry);
+            EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, myModel);
             setExported(orderEntry, libraryOrderEntry);
           }
         }
@@ -184,147 +179,6 @@ public class EclipseClasspathWriter {
     else {
       throw new ConversionException("Unknown EclipseProjectModel.ClasspathEntry: " + entry.getClass());
     }
-  }
-
-  private String getRelativePath(String url) {
-    final Project project = myModel.getModule().getProject();
-    final VirtualFile contentRoot = getContentRoot();
-    final VirtualFile projectBaseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
-    assert projectBaseDir != null;
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
-    if (file != null) {
-      if (file.getFileSystem() instanceof JarFileSystem) {
-        file = JarFileSystem.getInstance().getVirtualFileForJar(file);
-      }
-      assert file != null;
-      if (contentRoot != null) {
-        if (VfsUtil.isAncestor(contentRoot, file, false)) {
-          return VfsUtil.getRelativePath(file, contentRoot, '/');
-        } else {
-          final String path = relativeToOtherModulePath(project, file);
-          if (path != null) {
-            return path;
-          }
-        }
-      }
-      if (VfsUtil.isAncestor(projectBaseDir, file, false)) {
-        return "/" + VfsUtil.getRelativePath(file, projectBaseDir, '/');
-      }
-      else {
-        return ProjectRootManagerImpl.extractLocalPath(url);
-      }
-    }
-    else {
-      if (contentRoot != null) {
-        final String rootUrl = contentRoot.getUrl();
-        if (url.startsWith(rootUrl) && url.length() > rootUrl.length()) {
-          return url.substring(rootUrl.length() + 1); //without leading /
-        }
-      }
-      final String projectUrl = projectBaseDir.getUrl();
-      if (url.startsWith(projectUrl)) {
-        return url.substring(projectUrl.length()); //leading /
-      }
-
-      return ProjectRootManagerImpl.extractLocalPath(url);
-    }
-  }
-
-  @Nullable
-  private static String relativeToOtherModulePath(Project project, VirtualFile file) {
-    final Module module = ModuleUtil.findModuleForFile(file, project);
-    if (module != null) {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      for (VirtualFile otherRoot : contentRoots) {
-        if (VfsUtil.isAncestor(otherRoot, file, false)) {
-          return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, otherRoot, '/');
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private VirtualFile getContentRoot() {
-    final ContentEntry[] entries = myModel.getContentEntries();
-    if (entries.length > 0) {
-      return entries[0].getFile();
-    }
-    return null;
-  }
-
-  private void setupLibraryAttributes(Element orderEntry, LibraryOrderEntry libraryOrderEntry) {
-    final List<String> eclipseUrls = new ArrayList<String>();
-    final String[] docUrls = libraryOrderEntry.getUrls(JavadocOrderRootType.getInstance());
-    for (String docUrl : docUrls) {
-      eclipseUrls.add(getJavadocPath(docUrl));
-    }
-
-    final List children = new ArrayList(orderEntry.getChildren(EclipseXml.ATTRIBUTES_TAG));
-    for (Object o : children) {
-      final Element attsElement = (Element)o;
-      for (Object a : attsElement.getChildren(EclipseXml.ATTRIBUTE_TAG)) {
-        Element attElement = (Element)a;
-        if (Comparing.strEqual(attElement.getAttributeValue("name"), EclipseXml.JAVADOC_LOCATION)) {
-          final String javadocPath = attElement.getAttributeValue("value");
-          if (!eclipseUrls.remove(javadocPath)) {
-            attElement.detach();
-          }
-        }
-      }
-    }
-
-    for (final String docUrl : eclipseUrls) {
-      Element child = orderEntry.getChild(EclipseXml.ATTRIBUTES_TAG);
-      if (child == null) {
-        child = new Element(EclipseXml.ATTRIBUTES_TAG);
-        orderEntry.addContent(child);
-      }
-
-      final Element attrElement = new Element(EclipseXml.ATTRIBUTE_TAG);
-      child.addContent(attrElement);
-      attrElement.setAttribute("name", EclipseXml.JAVADOC_LOCATION);
-      attrElement.setAttribute("value", docUrl);
-    }
-  }
-
-  private String getJavadocPath(String javadocPath) {
-    final String protocol = VirtualFileManager.extractProtocol(javadocPath);
-    if (!Comparing.strEqual(protocol, HttpFileSystem.getInstance().getProtocol())) {
-      final String path = VfsUtil.urlToPath(javadocPath);
-      final VirtualFile contentRoot = getContentRoot();
-      final Project project = myModel.getModule().getProject();
-      final VirtualFile baseDir = contentRoot != null ? contentRoot.getParent() : project.getBaseDir();
-      if (Comparing.strEqual(protocol, JarFileSystem.getInstance().getProtocol())) {
-        final VirtualFile javadocFile =
-          JarFileSystem.getInstance().getVirtualFileForJar(VirtualFileManager.getInstance().findFileByUrl(javadocPath));
-        if (javadocFile != null) {
-          String relativeUrl = relativeToOtherModulePath(project, javadocFile);
-          if (relativeUrl == null && VfsUtil.isAncestor(baseDir, javadocFile, false)) {
-            relativeUrl = "/" + VfsUtil.getRelativePath(javadocFile, baseDir, '/');
-          }
-          if (relativeUrl != null) {
-            if (javadocPath.indexOf(JarFileSystem.JAR_SEPARATOR) == -1) {
-              javadocPath = StringUtil.trimEnd(javadocPath, "/") + JarFileSystem.JAR_SEPARATOR;
-            }
-            javadocPath = EclipseXml.JAR_PREFIX +
-                          EclipseXml.PLATFORM_PROTOCOL +
-                          "resource" +
-                          relativeUrl +
-                          javadocPath.substring(javadocFile.getUrl().length() - 1);
-          } else {
-            javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + StringUtil.trimStart(path, "/");
-          }
-        }
-        else {
-          javadocPath = EclipseXml.JAR_PREFIX + EclipseXml.FILE_PROTOCOL + StringUtil.trimStart(path, "/");
-        }
-      }
-      else if (new File(path).exists()) {
-        javadocPath = EclipseXml.FILE_PROTOCOL + StringUtil.trimStart(path, "/");
-      }
-    }
-    return javadocPath;
   }
 
   private Element addOrderEntry(String kind, String path, Element classpathRoot) {

@@ -307,9 +307,7 @@ public class ClasspathStorage implements StateStorage {
     }
     else {
       module.setOption(CLASSPATH_OPTION, storageID);
-      final VirtualFile[] contentRoots = model.getContentRoots();
-      assert contentRoots.length == 1;
-      module.setOption(CLASSPATH_DIR_OPTION, contentRoots[0].getPath());
+      module.setOption(CLASSPATH_DIR_OPTION, getProvider(storageID).getContentRoot(model));
     }
   }
 
@@ -340,6 +338,10 @@ public class ClasspathStorage implements StateStorage {
 
     public ClasspathConverter createConverter(Module module) {
       throw new UnsupportedOperationException(getDescription());
+    }
+
+    public String getContentRoot(ModifiableRootModel model) {
+      return null;
     }
   }
 
@@ -386,6 +388,10 @@ public class ClasspathStorage implements StateStorage {
           throw new WriteExternalException(getDescription());
         }
       };
+    }
+
+    public String getContentRoot(ModifiableRootModel model) {
+      return null;
     }
   }
 }

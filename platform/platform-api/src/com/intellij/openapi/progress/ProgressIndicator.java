@@ -28,10 +28,20 @@ public interface ProgressIndicator {
 
   boolean isCanceled();
 
+  /**
+   * Sets text above the progress bar
+   * @param text Text to set
+   * @see #setText2(String)
+   */
   void setText(String text);
 
   String getText();
 
+  /**
+   * Sets text under the progress bar
+   * @param text Text to set
+   * @see #setText(String)
+   */
   void setText2(String text);
 
   String getText2();
