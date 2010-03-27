@@ -88,12 +88,16 @@ public final class ActionMenu extends JMenu {
   }
 
   public void removeNotify() {
+    uninstallSynchronizer();
+    super.removeNotify();
+  }
+
+  private void uninstallSynchronizer() {
     if (myMenuItemSynchronizer != null) {
       myGroup.removePropertyChangeListener(myMenuItemSynchronizer);
       myPresentation.removePropertyChangeListener(myMenuItemSynchronizer);
       myMenuItemSynchronizer = null;
     }
-    super.removeNotify();
   }
 
   public void updateUI() {
@@ -201,6 +205,11 @@ public final class ActionMenu extends JMenu {
       for (Component menuComponent : getMenuComponents()) {
         if (menuComponent instanceof ActionMenu) {
           ((ActionMenu)menuComponent).clearItems();
+          if (SystemInfo.isMacSystemMenu) {
+            // hideNotify is not called on Macs
+            ((ActionMenu)menuComponent).uninstallSynchronizer();
+          }
+
         }
         else if (menuComponent instanceof ActionMenuItem) {
           ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));

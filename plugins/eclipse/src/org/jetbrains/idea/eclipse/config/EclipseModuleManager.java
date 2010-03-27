@@ -30,6 +30,7 @@ public class EclipseModuleManager {
   private Set<String> myUnknownCons = new HashSet<String>();
   private boolean myForceConfigureJDK = false;
   private static final String SRC_PREFIX = "src:";
+  private static final String SRC_LINK_PREFIX = "linksrc:";
 
   public EclipseModuleManager(Module module) {}
 
@@ -51,6 +52,14 @@ public class EclipseModuleManager {
 
   public void registerEclipseSrcVariablePath(String path, String var) {
     myEclipseVariablePaths.put(SRC_PREFIX + path, var);
+  }
+
+  public void registerEclipseLinkedSrcVarPath(String path, String var) {
+    myEclipseVariablePaths.put(SRC_LINK_PREFIX + path, var);
+  }
+
+  public String getEclipseLinkedSrcVariablePath(String path) {
+    return myEclipseVariablePaths.get(SRC_LINK_PREFIX + path);
   }
 
   public String getEclipseVariablePath(String path) {

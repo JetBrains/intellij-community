@@ -192,8 +192,7 @@ public class CompileDriver {
     scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
 
     final CompilerTask task = new CompilerTask(myProject, true, "", true);
-    final CompileContextImpl compileContext =
-      new CompileContextImpl(myProject, task, scope, createDependencyCache(), true, false);
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, createDependencyCache(), true, false);
 
     checkCachesVersion(compileContext);
     if (compileContext.isRebuildRequested()) {

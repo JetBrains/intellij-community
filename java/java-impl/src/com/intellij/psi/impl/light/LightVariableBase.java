@@ -34,7 +34,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   protected PsiElement myScope;
   protected PsiIdentifier myNameIdentifier;
   protected final PsiType myType;
-  protected PsiModifierList myModifierList;
+  protected final PsiModifierList myModifierList;
   protected boolean myWritable;
 
   public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {

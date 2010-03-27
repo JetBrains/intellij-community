@@ -84,7 +84,7 @@ public class IdeaSpecificSettings {
         readContentEntry((Element)o, model.addContentEntry(((Element)o).getAttributeValue(IdeaXml.URL_ATTR)));
       }
     } else {
-      final ContentEntry[] entries = model.getContentEntries();
+      final ContentEntry[] entries = model.getContentEntries();//todo
       if (entries.length > 0) {
         readContentEntry(root, entries[0]);
       }
@@ -302,11 +302,13 @@ public class IdeaSpecificSettings {
       final Module module = ModuleUtil.findModuleForFile(file, model.getModule().getProject());
       if (module != null && module != model.getModule()) {
         final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-        if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {
-          final Element clsElement = new Element(rootMame);
-          clsElement.setAttribute(PROJECT_RELATED, PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
-          element.addContent(clsElement);
-          return true;
+        for (VirtualFile contentRoot : contentRoots) {
+          if (VfsUtil.isAncestor(contentRoot, file, false)) {
+            final Element clsElement = new Element(rootMame);
+            clsElement.setAttribute(PROJECT_RELATED, PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
+            element.addContent(clsElement);
+            return true;
+          }
         }
       }
     }

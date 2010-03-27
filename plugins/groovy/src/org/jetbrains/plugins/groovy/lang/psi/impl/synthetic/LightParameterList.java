@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +28,12 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
  * @author ven
  */
 public class LightParameterList extends LightElement implements PsiParameterList {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.LightParameterList");
+
   private final Computable<LightParameter[]> myParametersComputation;
   private LightParameter[] myParameters = null;
 
-  protected LightParameterList(PsiManager manager,
-                               Computable<LightParameter[]> parametersComputation) {
+  protected LightParameterList(PsiManager manager, Computable<LightParameter[]> parametersComputation) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
     myParametersComputation = parametersComputation;
   }
@@ -52,19 +55,17 @@ public class LightParameterList extends LightElement implements PsiParameterList
 
   @NotNull
   public PsiParameter[] getParameters() {
-    if (myParameters == null) {
-      myParameters = myParametersComputation.compute();
+    synchronized (PsiLock.LOCK) {
+      if (myParameters == null) {
+        myParameters = myParametersComputation.compute();
+      }
+      return myParameters;
     }
-
-    return myParameters;
   }
 
   public int getParameterIndex(PsiParameter parameter) {
-    final PsiParameter[] parameters = getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      if (parameter.equals(parameters[i])) return i;
-    }
-    return -1;
+    LOG.assertTrue(parameter.getParent() == this);
+    return PsiImplUtil.getParameterIndex(parameter, this);
   }
 
   public int getParametersCount() {

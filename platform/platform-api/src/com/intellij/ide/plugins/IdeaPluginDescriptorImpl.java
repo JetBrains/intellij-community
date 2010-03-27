@@ -189,7 +189,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         hsPathes.add(hsPath);
       }
     }
-    myHelpSets = hsPathes.toArray(new HelpSetPath[hsPathes.size()]);
+    myHelpSets = hsPathes.size()>0 ? hsPathes.toArray(new HelpSetPath[hsPathes.size()]) : HelpSetPath.EMPTY;
 
     myAppComponents = pluginBean.applicationComponents;
     myProjectComponents = pluginBean.projectComponents;

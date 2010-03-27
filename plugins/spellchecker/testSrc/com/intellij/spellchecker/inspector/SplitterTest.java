@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker.inspector;
 
-import com.intellij.idea.Bombed;
 import com.intellij.spellchecker.inspections.CheckArea;
 import com.intellij.spellchecker.inspections.SplitterFactory;
 import junit.framework.Assert;
@@ -29,7 +28,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 
@@ -48,7 +46,7 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{"camel", "Case"});
   }
 
-   public void testArrays() {
+  public void testArrays() {
     String text = "Token[]";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"Token"});
@@ -61,16 +59,16 @@ public class SplitterTest extends TestCase {
   }
 
 
-   public void testWordsInSingleQuotesWithSep() {
+  public void testWordsInSingleQuotesWithSep() {
     String text = "'test-something'";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getStringLiteralSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{"test","something"});
+    correctListToCheck(checkAreas, text, new String[]{"test", "something"});
   }
 
-   public void testComplexWordsInQuotes() {
+  public void testComplexWordsInQuotes() {
     String text = "\"test-customer's'\"";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{"test","customer's"});
+    correctListToCheck(checkAreas, text, new String[]{"test", "customer's"});
   }
 
   public void testCapitalizedWithShortWords() {
@@ -82,7 +80,7 @@ public class SplitterTest extends TestCase {
   public void testWords() {
     String text = "first-last";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{"first","last"});
+    correctListToCheck(checkAreas, text, new String[]{"first", "last"});
   }
 
   public void testCapitalizedWithShortAndLongWords() {
@@ -97,11 +95,30 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{"don't", "check"});
   }
 
+  public void testHexInPlainText() {
+    String text = "some text 0xacvfgt";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"some", "text"});
+  }
+
+  public void testHexInStringLiteral() {
+    String text = "qwerty 0x12acfgt test";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getStringLiteralSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"qwerty", "test"});
+  }
+
+
+  public void testHex() {
+    String text = "0xacvfgt";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getWordSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{});
+  }
+
   public void testCheckXmlIgnored() {
-     String text = "abcdef" + new String(new char[]{0xDC00}) + "test";
-     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
-     correctListToCheck(checkAreas, text, new String[]{});
-   }
+    String text = "abcdef" + new String(new char[]{0xDC00}) + "test";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{});
+  }
 
 
   public void testWordWithApostrophe2() {
@@ -133,21 +150,21 @@ public class SplitterTest extends TestCase {
     String text = "TEST_CONSTANT";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"TEST", "CONSTANT"});
-    
+
   }
 
   public void testLongConstantName() {
     String text = "TEST_VERY_VERY_LONG_AND_COMPLEX_CONSTANT";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"TEST", "VERY", "VERY", "LONG", "COMPLEX", "CONSTANT"});
-   
+
   }
 
   public void testJavaComments() {
     String text = "/*special symbols*/";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getCommentSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"special", "symbols"});
-    
+
   }
 
 
@@ -155,42 +172,42 @@ public class SplitterTest extends TestCase {
     String text = "<!--special symbols-->";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getCommentSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"special", "symbols"});
-    
+
   }
 
   public void testCamelCaseInXmlComments() {
     String text = "<!--specialCase symbols-->";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getCommentSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"special", "Case", "symbols"});
-    
+
   }
 
   public void testWordsWithNumbers() {
     String text = "testCamelCase123";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"test", "Camel", "Case"});
-    
+
   }
 
   public void testCommentsWithWordsWithNumbers() {
     String text = "<!--specialCase456 symbols-->";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getCommentSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"special", "Case", "symbols"});
-    
+
   }
 
   public void testCommentsWithAbr() {
     String text = "<!--JSPTestClass-->";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getCommentSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"Test", "Class"});
-    
+
   }
 
   public void testStringLiterals() {
     String text = "test\ntest\n";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getStringLiteralSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"test", "test"});
-    
+
   }
 
 
@@ -198,52 +215,59 @@ public class SplitterTest extends TestCase {
     String text = "<!--<li>something go here</li> <li>next content</li> foooo barrrr <p> text -->";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getCommentSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"something", "here", "next", "content", "foooo", "barrrr", "text"});
-    
+
   }
 
   public void testCommentWithHtmlTagsAndAtr() {
     String text = "<!-- <li style='color:red;'>something go here</li> foooo <li style='color:red;'>barrrr</li> <p> text text -->";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getCommentSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"something", "here", "foooo", "barrrr", "text", "text"});
-    
+
   }
 
   public void testSpecial() {
     String text = "test &nbsp; test";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"test", "test"});
-    
+
   }
 
   public void testColorUC() {
     String text = "#AABBFF";
-    List<CheckArea> checkAreas = SplitterFactory.getInstance().getAttributeValueSplitter().split(text);
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getWordSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{});
-    
+
   }
 
-   public void testColorUCSurrounded() {
-    String text = "\"#AABBFF\"";
-    List<CheckArea> checkAreas = SplitterFactory.getInstance().getAttributeValueSplitter().split(text);
+  public void testColorUCSC() {
+    String text = "#AABBFF;";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getWordSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{});
-    
+
+  }
+
+  public void testColorUCSurrounded() {
+    String text = "\"#AABBFF\"";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getWordSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{});
+
   }
 
   public void testColorLC() {
     String text = "#fff";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getAttributeValueSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{});
-    
+
   }
 
   public void testTooShort() {
     String text = "bgColor carLight";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getStringLiteralSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"Color", "Light"});
-    
+
   }
 
-   public void testPhpVariableCorrectSimple() {
+  public void testPhpVariableCorrectSimple() {
     String text = "$this";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"this"});
@@ -253,78 +277,78 @@ public class SplitterTest extends TestCase {
   public void testPhpVariableCorrect() {
     String text = "$this_this$this";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{"this","this","this"});
+    correctListToCheck(checkAreas, text, new String[]{"this", "this", "this"});
 
   }
 
   public void testEmail() {
     String text = "some text with email (shkate.test@gmail.com) inside";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getStringLiteralSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{"some","text","with","email","inside"});
-    
+    correctListToCheck(checkAreas, text, new String[]{"some", "text", "with", "email", "inside"});
+
   }
 
   public void testEmailOnly() {
     String text = "shkate123-\u00DC.test@gmail.com";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{});
-    
+
   }
 
   public void testUrl() {
     String text = "http://www.jetbrains.com/idea";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{});
- 
+
   }
 
   public void testWordBeforeDelimiter() {
     String text = "badd,";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"badd"});
- 
+
   }
 
   public void testWordAfterDelimiter() {
     String text = ",badd";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"badd"});
-     
+
   }
 
   public void testWordInCapsBeforeDelimiter() {
     String text = "BADD,";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"BADD"});
-     
+
   }
 
   public void testWordInCapsAfterDelimiter() {
     String text = ",BADD";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"BADD"});
-     
+
   }
 
   public void testWordInCapsAfterDelimiter2() {
     String text = "BADD;";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"BADD"});
-     
+
   }
 
   public void testWordInCapsAfterDelimiter3() {
     String text = ";BADD;";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"BADD"});
-     
+
   }
 
   public void testWordWithUmlauts() {
     String text = "rechtsb\u00FCndig";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{text});
-     
+
   }
 
 
@@ -332,48 +356,45 @@ public class SplitterTest extends TestCase {
     String text = "RECHTSB\u00DCNDIG";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{text});
-     
+
   }
 
   public void testCommaSeparatedList() {
     String text = "properties,test,properties";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"properties", "test", "properties"});
-     
+
   }
 
   public void testSemicolonSeparatedList() {
     String text = "properties;test;properties";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"properties", "test", "properties"});
-     
+
   }
 
   public void testProperties1() {
     String text = "properties.test.properties";
     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPropertiesSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{"properties", "test", "properties"});
-     
+
   }
 
 
   public void testPropertiesWithCamelCase() {
     String text = "upgrade.testCommit.propertiesSomeNews";
-     List<CheckArea> checkAreas = SplitterFactory.getInstance().getPropertiesSplitter().split(text);
-    correctListToCheck(checkAreas, text, new String[]{"upgrade", "test", "Commit", "properties","Some","News"});
-     
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getPropertiesSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"upgrade", "test", "Commit", "properties", "Some", "News"});
+
   }
 
   public void testWordUpperCasedWithUmlautsInTheBeginning() {
     String text = "\u00DCNDIG";
-      List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getPlainTextSplitter().split(text);
     correctListToCheck(checkAreas, text, new String[]{text});
-     
+
   }
 
-  
-
- 
 
   public void testTCData() {
     final InputStream stream = SplitterTest.class.getResourceAsStream("contents.txt");
@@ -382,8 +403,6 @@ public class SplitterTest extends TestCase {
     List<String> words = wordsToCheck(checkAreas, text);
     assertNull(words);
   }
-
- 
 
 
   @Nullable
@@ -424,7 +443,6 @@ public class SplitterTest extends TestCase {
     }
   }
 
- 
 
   private String convertStreamToString(InputStream is) {
     if (is != null) {

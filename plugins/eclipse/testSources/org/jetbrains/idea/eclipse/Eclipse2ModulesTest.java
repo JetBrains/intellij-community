@@ -16,7 +16,7 @@
 
 /*
  * User: anna
- * Date: 28-Nov-2008
+ * Date: 26-Mar-2010
  */
 package org.jetbrains.idea.eclipse;
 
@@ -31,34 +31,54 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
-public class EclipseMultimoduleTest extends IdeaTestCase {
+public abstract class Eclipse2ModulesTest extends IdeaTestCase {
+  @NonNls
+  protected static final String DEPEND_MODULE_NAME = "ws-internals";
+
+  protected abstract String getTestPath();
+
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    final File testRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", "round");
+    final File testRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", getTestPath());
     assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 
     final File currentTestRoot = new File(testRoot, getTestName(true));
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
     try {
-      FileUtil.copyDir(currentTestRoot, new File(getProject().getBaseDir().getPath()));
+      final VirtualFile baseDir = getProject().getBaseDir();
+      assert baseDir != null;
+      FileUtil.copyDir(currentTestRoot, new File(baseDir.getPath()));
     }
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  protected Module createMainModule() throws IOException {
+    return createModule(DEPEND_MODULE_NAME);
+  }
+
+  protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
     final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
     final VirtualFile file =
       ApplicationManager.getApplication().runWriteAction(
-          new Computable<VirtualFile>() {
-            public VirtualFile compute() {
-              return LocalFileSystem.getInstance().refreshAndFindFileByPath(getProject().getBaseDir().getPath() + "/eclipse-ws-3.4.1-a/ws-internals");
-            }
+        new Computable<VirtualFile>() {
+          @Nullable
+          public VirtualFile compute() {
+            final VirtualFile baseDir = getProject().getBaseDir();
+            assert baseDir != null;
+            return LocalFileSystem.getInstance().refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/ws-internals");
           }
+        }
       );
     if (file != null) {
       model.addContentEntry(file);
@@ -67,20 +87,9 @@ public class EclipseMultimoduleTest extends IdeaTestCase {
       Assert.assertTrue("File not found", false);
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run(){
-            model.commit();
-        }
+      public void run(){
+        model.commit();
+      }
     });
   }
-
-  @Override
-  protected Module createMainModule() throws IOException {
-    return createModule("ws-internals");
-  }
-
-  public void testAllProps() throws Exception {
-    EclipseClasspathTest.doTest("/eclipse-ws-3.4.1-a/all-props", getProject());
-  }
-
-
 }

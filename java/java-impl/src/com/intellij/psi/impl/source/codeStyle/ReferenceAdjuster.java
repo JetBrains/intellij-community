@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -33,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-public class ReferenceAdjuster implements Constants {
+public class ReferenceAdjuster {
   private final boolean myUseFqClassnamesInJavadoc;
   private final boolean myUseFqClassNames;
 
@@ -52,8 +51,9 @@ public class ReferenceAdjuster implements Constants {
 
   public TreeElement process(TreeElement element, boolean addImports, boolean uncompleteCode) {
     IElementType elementType = element.getElementType();
-    if (elementType == JAVA_CODE_REFERENCE || elementType == REFERENCE_EXPRESSION) {
-      if (elementType == JAVA_CODE_REFERENCE || element.getTreeParent().getElementType() == REFERENCE_EXPRESSION || uncompleteCode) {
+    if (elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) {
+      if (elementType == JavaElementType.JAVA_CODE_REFERENCE || element.getTreeParent().getElementType() ==
+                                                                JavaElementType.REFERENCE_EXPRESSION || uncompleteCode) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
         final PsiReferenceParameterList parameterList = ref.getParameterList();
         if (parameterList != null) {
@@ -64,7 +64,7 @@ public class ReferenceAdjuster implements Constants {
         }
 
         boolean rightKind = true;
-        if (elementType == JAVA_CODE_REFERENCE) {
+        if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
           int kind = ((PsiJavaCodeReferenceElementImpl)element).getKind();
           rightKind = kind == PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND ||
             kind == PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND;
@@ -144,13 +144,13 @@ public class ReferenceAdjuster implements Constants {
   }
 
   private static void addReferencesInRange(ArrayList<ASTNode> array, TreeElement parent, int startOffset, int endOffset) {
-    if (parent.getElementType() == ElementType.JAVA_CODE_REFERENCE || parent.getElementType() == ElementType.REFERENCE_EXPRESSION) {
+    if (parent.getElementType() == JavaElementType.JAVA_CODE_REFERENCE || parent.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
       array.add(parent);
       return;
     }
 
     if (parent.getPsi() instanceof PsiFile && JspPsiUtil.isInJspFile(parent.getPsi())) {
-      final JspFile jspFile = (JspPsiUtil.getJspFile(parent.getPsi()));
+      final JspFile jspFile = JspPsiUtil.getJspFile(parent.getPsi());
       JspClass jspClass = (JspClass) jspFile.getJavaClass();
       addReferencesInRange(array, (TreeElement)jspClass.getNode(), startOffset, endOffset);
       return;
@@ -170,7 +170,7 @@ public class ReferenceAdjuster implements Constants {
       if (startOffset <= offset + length && offset <= endOffset) {
         final IElementType type = child.getElementType();
 
-        if (type == ElementType.JAVA_CODE_REFERENCE || type == ElementType.REFERENCE_EXPRESSION) {
+        if (type == JavaElementType.JAVA_CODE_REFERENCE || type == JavaElementType.REFERENCE_EXPRESSION) {
           array.add(child);
         } else {
           addReferencesInRangeForComposite(array, child, startOffset - offset, endOffset - offset);

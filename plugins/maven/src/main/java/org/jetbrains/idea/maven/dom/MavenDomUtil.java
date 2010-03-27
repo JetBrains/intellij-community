@@ -18,7 +18,10 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,7 +47,6 @@ import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 
-import java.io.File;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,6 +81,23 @@ public class MavenDomUtil {
 
   public static boolean isMavenFile(PsiElement element) {
     return isMavenFile(element.getContainingFile());
+  }
+
+  @Nullable
+  public static Module findContainingMavenizedModule(@NotNull PsiFile psiFile) {
+    VirtualFile file = psiFile.getVirtualFile();
+    if (file == null) return null;
+
+    Project project = psiFile.getProject();
+
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+    if (!manager.isMavenizedProject()) return null;
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+
+    Module module = index.getModuleForFile(file);
+    if (module == null || !manager.isMavenizedModule(module)) return null;
+    return module;
   }
 
   public static boolean isMavenProperty(PsiElement target) {
