@@ -50,40 +50,48 @@ public class PyNegateComparisonIntention extends BaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
-    if (element == null) {
-      return false;
-    }
 
-    PyElementType operator = ((PyBinaryExpression)element).getOperator();
-    if (!comparisonStrings.containsKey(operator)) {
-      return false;
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
+    while (binaryExpression != null) {
+      PyElementType operator = binaryExpression.getOperator();
+      if (comparisonStrings.containsKey(operator)) {
+        setText(PyBundle.message("INTN.negate.$0.to.$1", comparisonStrings.get(operator),
+                                 comparisonStrings.get(invertedComparasions.get(operator))));
+        return true;
+      }
+      binaryExpression = PsiTreeUtil.getParentOfType(binaryExpression, PyBinaryExpression.class);
     }
-    setText(PyBundle.message("INTN.negate.$0.to.$1",
-                             comparisonStrings.get(operator),
-                             comparisonStrings.get(invertedComparasions.get(operator))));
-    return true;
+    return false;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
 
-    PsiElement parent = element.getParent();
-    while (parent instanceof PyParenthesizedExpression) {
-      parent = parent.getParent();
-    }
-    PyBinaryExpression binaryExpression = (PyBinaryExpression)element;
-    final PyElementType invertedOperator = invertedComparasions.get(binaryExpression.getOperator());
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-    final PyBinaryExpression newElement = elementGenerator.createBinaryExpression(project,
-                                                                                  comparisonStrings.get(invertedOperator),
-                                                                                  binaryExpression.getLeftExpression(),
-                                                                                  binaryExpression.getRightExpression());
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
+    while (binaryExpression != null) {
+      PyElementType operator = binaryExpression.getOperator();
+      if (comparisonStrings.containsKey(operator)) {
+        PsiElement parent = binaryExpression.getParent();
+        while (parent instanceof PyParenthesizedExpression) {
+          parent = parent.getParent();
+        }
 
-    if (parent instanceof PyPrefixExpression && ((PyPrefixExpression)parent).getOperationSign() == PyTokenTypes.NOT_KEYWORD) {
-      parent.replace(newElement);
-    } else {
-      element.replace(elementGenerator.createExpressionFromText(project, "not " + newElement.getText()));
+        final PyElementType invertedOperator = invertedComparasions.get(binaryExpression.getOperator());
+        PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+        final PyBinaryExpression newElement = elementGenerator
+          .createBinaryExpression(project, comparisonStrings.get(invertedOperator), binaryExpression.getLeftExpression(),
+                                  binaryExpression.getRightExpression());
+
+        if (parent instanceof PyPrefixExpression && ((PyPrefixExpression)parent).getOperationSign() == PyTokenTypes.NOT_KEYWORD) {
+          parent.replace(newElement);
+        }
+        else {
+          binaryExpression.replace(elementGenerator.createExpressionFromText(project, "not " + newElement.getText()));
+        }
+        return;
+      }
+      binaryExpression = PsiTreeUtil.getParentOfType(binaryExpression, PyBinaryExpression.class);
     }
   }
 }
