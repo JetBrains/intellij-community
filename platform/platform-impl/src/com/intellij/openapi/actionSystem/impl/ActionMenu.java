@@ -213,8 +213,17 @@ public final class ActionMenu extends JMenu {
   }
 
   private void fillMenu() {
-    DataContext context = myContext != null ? myContext : DataManager.getInstance().getDataContext();
-    Utils.fillMenu(myGroup, this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true);
+    boolean mayContextBeInvalid;
+    DataContext context;
+
+    if (myContext != null) {
+      context = myContext;
+      mayContextBeInvalid = false;
+    } else {
+      context = DataManager.getInstance().getDataContext();
+      mayContextBeInvalid = true;
+    }
+    Utils.fillMenu(myGroup, this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);
   }
 
   private class MenuItemSynchronizer implements PropertyChangeListener {
