@@ -115,6 +115,12 @@
       <descriptionDirectoryName>ConvertFormatOperatorToMethodIntention</descriptionDirectoryName>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyFlipComparisonIntention</className>
+      <category>Python</category>
+      <descriptionDirectoryName>PyFlipComparisonIntention</descriptionDirectoryName>
+    </intentionAction>
+
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
     <inspectionToolProvider implementation="com.jetbrains.python.inspections.PythonInspectionToolProvider"/>
 
