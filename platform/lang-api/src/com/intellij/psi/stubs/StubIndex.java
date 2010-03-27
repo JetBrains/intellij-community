@@ -42,7 +42,4 @@ public abstract class StubIndex {
   );
 
   public abstract <Key> Collection<Key> getAllKeys(StubIndexKey<Key, ?> indexKey, @NotNull Project project);
-  public abstract <Key, Psi extends PsiElement> Collection<Key> getAllKeysWithValues(StubIndexKey<Key, Psi> indexKey,
-                                                                                     @NotNull Project project,
-                                                                                     GlobalSearchScope searchScope);
 }
