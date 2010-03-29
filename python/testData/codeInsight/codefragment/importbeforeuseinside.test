@@ -6,5 +6,4 @@ print(foo)
 foo.bar
 <result>
 In:
-foo
 Out:

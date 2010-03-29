@@ -81,11 +81,6 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
              CodeFragmentUtil.getPosition(declaration, startOffset, endOffset) != Position.INSIDE)){
           continue;
         }
-        // Handle resolve via import statement
-        if (declaration instanceof PyFile){
-          inElements.add(name);
-          break;
-        }
         // Ignore outer elements or import statements
         if (declaration == null || !PsiTreeUtil.isAncestor(myOwner, declaration, false) ||
             declaration instanceof PyImportElement){
