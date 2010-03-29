@@ -8,6 +8,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyCallExpressionNavigator {
+  private PyCallExpressionNavigator() {
+  }
+
   @Nullable
   public static PyCallExpression getPyCallExpressionByCallee(final PsiElement element){
      final PsiElement parent = element.getParent();

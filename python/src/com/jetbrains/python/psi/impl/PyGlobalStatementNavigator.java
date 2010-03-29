@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyGlobalStatementNavigator {
+  private PyGlobalStatementNavigator() {
+  }
+
   @Nullable
   public static PyGlobalStatement getPyGlobalStatementByArgument(final PsiElement element){
     final PsiElement parent = element.getParent();

@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyForStatementNavigator {
+  private PyForStatementNavigator() {
+  }
+
   @Nullable
   public static PyForStatement getPyForStatementByIterable(final PsiElement element){
     final PyForStatement forStatement = PsiTreeUtil.getParentOfType(element, PyForStatement.class, false);

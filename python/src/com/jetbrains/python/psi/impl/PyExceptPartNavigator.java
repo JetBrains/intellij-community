@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyExceptPartNavigator {
+  private PyExceptPartNavigator() {
+  }
+
   @Nullable
   public static PyExceptPart getPyExceptPartByTarget(final PsiElement element){
     final PyExceptPart pyExceptPart = PsiTreeUtil.getParentOfType(element, PyExceptPart.class, false);

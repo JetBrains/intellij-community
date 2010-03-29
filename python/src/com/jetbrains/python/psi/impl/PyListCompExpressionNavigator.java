@@ -11,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyListCompExpressionNavigator {
+  private PyListCompExpressionNavigator() {
+  }
+
   @Nullable
   public static PyListCompExpression getPyListCompExpressionByVariable(final PsiElement element){
     final PyListCompExpression listCompExpression = PsiTreeUtil.getParentOfType(element, PyListCompExpression.class, false);

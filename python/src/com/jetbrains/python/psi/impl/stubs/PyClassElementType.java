@@ -1,6 +1,3 @@
-/*
- * @author max
- */
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -24,6 +21,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author max
+ */
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
   public PyClassElementType() {
     super("CLASS_DECLARATION");

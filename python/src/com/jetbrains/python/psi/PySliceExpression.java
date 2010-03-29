@@ -10,9 +10,4 @@ public interface PySliceExpression extends PyExpression {
 
   @Nullable
   PySliceItem getSliceItem();
-
-  //@Nullable
-  //PyExpression getUpperBound();
-  //
-  //PyExpression getStride();
 }

@@ -9,9 +9,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * User: dcheryasov
- * Date: Sep 28, 2008
+ * @author dcheryasov
  */
 public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> implements PyDecoratorList{
   

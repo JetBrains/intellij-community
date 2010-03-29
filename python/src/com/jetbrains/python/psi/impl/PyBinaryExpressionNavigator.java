@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyBinaryExpressionNavigator {
+  private PyBinaryExpressionNavigator() {
+  }
+
   @Nullable
   public static PyBinaryExpression getBinaryExpressionByOperand(final PsiElement element) {
     final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);

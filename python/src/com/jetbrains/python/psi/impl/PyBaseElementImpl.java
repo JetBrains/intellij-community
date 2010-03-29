@@ -1,6 +1,3 @@
-/*
- * @author max
- */
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -20,6 +17,9 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements PyElement {
   public PyBaseElementImpl(final T stub, IStubElementType nodeType) {
     super(stub, nodeType);

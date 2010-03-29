@@ -10,6 +10,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyImportStatementNavigator {
+  private PyImportStatementNavigator() {
+  }
+
   @Nullable
   public static PyImportStatement getImportStatementByElement(final PsiElement element){
     final PyImportStatement statement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class, false);

@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
  * @author oleg
  */
 public class PyAugAssignmentStatementNavigator {
+  private PyAugAssignmentStatementNavigator() {
+  }
+
   @Nullable
   public static PyAugAssignmentStatement getStatementByTarget(final PsiElement element){
     final PyAugAssignmentStatement statement = PsiTreeUtil.getParentOfType(element, PyAugAssignmentStatement.class);

@@ -1,6 +1,3 @@
-/*
- * @author max
- */
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
@@ -11,6 +8,9 @@ import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @author max
+ */
 public abstract class PyStubElementType<StubT extends StubElement, PsiT extends PyElement> extends IStubElementType<StubT, PsiT> {
   public PyStubElementType(@NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
