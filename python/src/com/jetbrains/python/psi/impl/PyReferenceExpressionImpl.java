@@ -39,6 +39,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return new PyImportReferenceImpl(this);
     }
 
+    if (getQualifier() != null) {
+      return new PyQualifiedReferenceImpl(this);
+    }
+
     return new PyReferenceImpl(this);
   }
 

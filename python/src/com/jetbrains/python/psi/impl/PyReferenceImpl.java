@@ -9,16 +9,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.resolve.CollectProcessor;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveProcessor;
+import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -173,15 +173,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ret;
 
-    // Handle import reference
-    if (PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class) != null) {
-    }
-
-    final PyExpression qualifier = myElement.getQualifier();
-    if (qualifier != null) {
-      return resolveQualifiedReference(ret, referencedName, qualifier);
-    }
-
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     ResolveProcessor processor = new ResolveProcessor(referencedName);
@@ -224,52 +215,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret;
   }
 
-  private List<RatedResolveResult> resolveQualifiedReference(final ResultList ret, final String referencedName, final PyExpression qualifier) {
-    // regular attributes
-    PyType qualifierType = qualifier.getType();
-    if (qualifierType != null) {
-      if (qualifier instanceof PyQualifiedExpression) {
-        // enrich the type info with any fields assigned nearby
-        List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
-        if (qualifier_path != null) {
-          for (PyExpression ex : collectAssignedAttributes((PyQualifiedExpression)qualifier)) {
-            if (referencedName.equals(ex.getName())) {
-              ret.poke(ex, RatedResolveResult.RATE_NORMAL);
-              return ret;
-            }
-          }
-        }
-      }
-      // resolve within the type proper
-      PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
-      if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
-    }
-    // special case of __doc__
-    if ("__doc__".equals(referencedName)) {
-      PsiElement docstring = null;
-      if (qualifierType instanceof PyClassType) {
-        PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
-        if (qual_class != null) docstring = qual_class.getDocStringExpression();
-      }
-      else if (qualifierType instanceof PyModuleType) {
-        PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
-        if (qual_module instanceof PyDocStringOwner) {
-          docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
-        }
-      }
-      else if (qualifier instanceof PyReferenceExpression) {
-        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference().resolve();
-        if (qual_object instanceof PyDocStringOwner) {
-          docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
-        }
-      }
-      if (docstring != null) {
-        ret.poke(docstring, RatedResolveResult.RATE_HIGH);
-      }
-    }
-    return ret;
-  }
-
   private boolean isSuperClassExpression(PyClass cls) {
     if (myElement.getContainingFile() != cls.getContainingFile()) {  // quick check to avoid unnecessary tree loading
       return false;
@@ -295,18 +240,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       rate = RatedResolveResult.RATE_NORMAL;
     }
     return rate;
-  }
-
-  private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers(qualifier);
-    if (qualifier_path != null) {
-      AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifier_path);
-      PyResolveUtil.treeCrawlUp(proc, qualifier);
-      return proc.getResult();
-    }
-    else {
-      return Collections.emptyList();
-    }
   }
 
   public String getCanonicalText() {
@@ -335,17 +268,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-
-  private static final Object[] NO_VARIANTS = ArrayUtil.EMPTY_OBJECT_ARRAY;
-
   @NotNull
   public Object[] getVariants() {
-    // qualifier limits the namespace
-    final PyExpression qualifier = myElement.getQualifier();
-    if (qualifier != null) {
-      return getQualifiedReferenceVariants(qualifier);
-    }
-
     final List<Object> ret = new ArrayList<Object>();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
@@ -403,36 +327,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     ret.addAll(processor.getResultList());
     return ret.toArray();
-  }
-
-  private Object[] getQualifiedReferenceVariants(PyExpression qualifier) {
-    PyType qualifierType = qualifier.getType();
-    ProcessingContext ctx = new ProcessingContext();
-    final Set<String> names_already = new HashSet<String>();
-    ctx.put(PyType.CTX_NAMES, names_already);
-    if (qualifierType != null) {
-      Collection<Object> variants = new ArrayList<Object>();
-      if (qualifier instanceof PyQualifiedExpression) {
-        Collection<PyExpression> attrs = collectAssignedAttributes((PyQualifiedExpression)qualifier);
-        variants.addAll(attrs);
-        for (PyExpression ex : attrs) {
-          if (ex instanceof PyReferenceExpression) {
-            PyReferenceExpression refex = (PyReferenceExpression)ex;
-            names_already.add(refex.getReferencedName());
-          }
-          else if (ex instanceof PyTargetExpression) {
-            PyTargetExpression targetExpr = (PyTargetExpression) ex;
-            names_already.add(targetExpr.getName());
-          }
-        }
-        Collections.addAll(variants, qualifierType.getCompletionVariants(myElement, ctx));
-        return variants.toArray();
-      }
-      else {
-        return qualifierType.getCompletionVariants(myElement, ctx);
-      }
-    }
-    return NO_VARIANTS;
   }
 
   private static void addKeywordArgumentVariants(PyFunction def, final List<Object> ret) {
