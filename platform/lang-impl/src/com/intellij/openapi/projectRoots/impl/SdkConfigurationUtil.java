@@ -36,6 +36,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -100,7 +101,7 @@ public class SdkConfigurationUtil {
     });
   }
 
-
+  @NotNull
   public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType) {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Sdk>() {
         public Sdk compute(){
