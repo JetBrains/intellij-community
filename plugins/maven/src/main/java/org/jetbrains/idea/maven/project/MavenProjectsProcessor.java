@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.concurrency.Semaphore;
@@ -45,7 +46,7 @@ public class MavenProjectsProcessor {
 
   public void scheduleTask(MavenProjectsProcessorTask task) {
     synchronized (myQueue) {
-      if (!isProcessing && !MavenUtil.isNoBackgroundMode()) {
+      if (!isProcessing && !ApplicationManager.getApplication().isUnitTestMode()) {
         isProcessing = true;
         startProcessing(task);
         return;
@@ -64,7 +65,7 @@ public class MavenProjectsProcessor {
   public void waitForCompletion() {
     if (isStopped) return;
 
-    if (MavenUtil.isNoBackgroundMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       synchronized (myQueue) {
         while (!myQueue.isEmpty()) {
           startProcessing(myQueue.poll());
