@@ -43,8 +43,8 @@ public class ReplaceMethodIntention implements IntentionAction {
     PyCallExpression problemElement =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyCallExpression.class);
     if (problemElement != null) {
-      PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-      problemElement.getCallee().replace(elementGenerator.createCallExpression(project, myNewName).getCallee());
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      problemElement.getCallee().replace(elementGenerator.createCallExpression(myNewName).getCallee());
     }
   }
 

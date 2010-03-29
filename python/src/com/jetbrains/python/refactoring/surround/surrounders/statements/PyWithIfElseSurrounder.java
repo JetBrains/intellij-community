@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ public class PyWithIfElseSurrounder extends PyStatementSurrounder {
   protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
     throws IncorrectOperationException {
     PyIfStatement ifStatement =
-      PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyIfStatement.class, "if True:\n    pass\nelse:    pass\n");
+      PyElementGenerator.getInstance(project).createFromText(PyIfStatement.class, "if True:\n    pass\nelse:    pass\n");
     final PsiElement parent = elements[0].getParent();
     final PyStatementList statementList = ifStatement.getIfPart().getStatementList();
     assert statementList != null;

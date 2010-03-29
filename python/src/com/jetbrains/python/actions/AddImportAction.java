@@ -208,7 +208,7 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
       protected void run(Result result) throws Throwable {
         String name = getRefName();
         if (ResolveImportUtil.resolveInRoots(file, name) != null) { // TODO: think about multiple possible resole results
-          AddImportHelper.addImportStatement(file, name, null, file.getProject());
+          AddImportHelper.addImportStatement(file, name, null);
         }
       }
     }.execute();

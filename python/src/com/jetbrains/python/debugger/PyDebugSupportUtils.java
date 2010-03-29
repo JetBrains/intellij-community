@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,7 @@ public class PyDebugSupportUtils {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
 
-        final PsiFile file = PythonLanguage.getInstance().createDummyFile(project, expression);
+        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(expression);
         return file.getFirstChild() instanceof PyExpressionStatement && file.getFirstChild() == file.getLastChild();
 
       }
@@ -67,7 +66,7 @@ public class PyDebugSupportUtils {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
 
-        final PsiFile file = PythonLanguage.getInstance().createDummyFile(project, expression);
+        final PsiFile file = PyElementGenerator.getInstance(project).createDummyFile(expression);
         final PsiElement root = file.getFirstChild();
         return root instanceof PyExpressionStatement &&
                root.getFirstChild() instanceof PyReferenceExpression &&

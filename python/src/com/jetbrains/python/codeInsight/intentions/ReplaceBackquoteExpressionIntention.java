@@ -40,8 +40,8 @@ public class ReplaceBackquoteExpressionIntention implements IntentionAction {
       return;
     }
     if (problemElement.getExpression() != null) {
-      PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-      problemElement.replace(elementGenerator.createExpressionFromText(project, "repr(" + problemElement.getExpression().getText() + ")"));
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      problemElement.replace(elementGenerator.createExpressionFromText("repr(" + problemElement.getExpression().getText() + ")"));
     }
   }
 

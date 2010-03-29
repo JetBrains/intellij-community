@@ -1,13 +1,8 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.tree.IFileElementType;
-import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFileElementType;
-import com.jetbrains.python.psi.impl.PyElementGeneratorImpl;
 import com.jetbrains.python.validation.*;
 
 import java.util.Set;
@@ -17,7 +12,6 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @author yole
  */
 public class PythonLanguage extends Language {
-  private final PyElementGenerator elementGenerator = new PyElementGeneratorImpl(this);
   private final IFileElementType ELTYPE_FILE;
   private final Set<Class<? extends PyAnnotator>> _annotators = new CopyOnWriteArraySet<Class<? extends PyAnnotator>>();
 
@@ -46,14 +40,6 @@ public class PythonLanguage extends Language {
 
   public IFileElementType getFileElementType() {
     return ELTYPE_FILE;
-  }
-
-  public PyElementGenerator getElementGenerator() {
-    return elementGenerator;
-  }
-
-  public PsiFile createDummyFile(Project project, String contents) {
-    return PsiFileFactory.getInstance(project).createFileFromText("dummy." + PythonFileType.INSTANCE.getDefaultExtension(), contents);
   }
 
   public Set<Class<? extends PyAnnotator>> getAnnotators() {

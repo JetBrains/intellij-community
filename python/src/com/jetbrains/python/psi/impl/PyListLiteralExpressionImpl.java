@@ -1,19 +1,3 @@
-/*
- *  Copyright 2005 Pythonid Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS"; BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -47,7 +31,7 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     PyExpression element = (PyExpression)psiElement;
     PyExpression[] els = getElements();
     PyExpression lastArg = els.length == 0 ? null : els[els.length - 1];
-    return getLanguage().getElementGenerator().insertItemIntoList(getProject(), this, lastArg, element);
+    return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, lastArg, element);
   }
 
   private static void checkPyExpression(PsiElement psiElement) throws IncorrectOperationException {
@@ -60,13 +44,13 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     PyUtil.ensureWritable(this);
     checkPyExpression(psiElement);
     checkPyExpression(afterThis);
-    return getLanguage().getElementGenerator().insertItemIntoList(getProject(), this, (PyExpression)afterThis, (PyExpression)psiElement);
+    return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, (PyExpression)afterThis, (PyExpression)psiElement);
   }
 
   public PsiElement addBefore(@NotNull PsiElement psiElement, PsiElement beforeThis) throws IncorrectOperationException {
     PyUtil.ensureWritable(this);
     checkPyExpression(psiElement);
-    return getLanguage().getElementGenerator().insertItemIntoList(getProject(), this, null, (PyExpression)psiElement);
+    return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, null, (PyExpression)psiElement);
   }
 
   @Override

@@ -48,8 +48,8 @@ public class PyFunctionBuilder {
 
   public PyFunction buildFunction(Project project) {
     String text = buildText(project);
-    PyElementGenerator generator = PythonLanguage.getInstance().getElementGenerator();
-    return generator.createFromText(project, PyFunction.class, text);
+    PyElementGenerator generator = PyElementGenerator.getInstance(project);
+    return generator.createFromText(PyFunction.class, text);
   }
 
   private String buildText(Project project) {

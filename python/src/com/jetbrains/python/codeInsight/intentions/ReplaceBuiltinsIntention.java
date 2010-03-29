@@ -36,7 +36,7 @@ public class ReplaceBuiltinsIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PyImportStatement importStatement = PsiTreeUtil.getParentOfType(element, PyImportStatement.class);
     for (PyImportElement importElement : importStatement.getImportElements()) {
@@ -44,11 +44,11 @@ public class ReplaceBuiltinsIntention implements IntentionAction {
       if (importReference != null) {
         if (LanguageLevel.forFile(file.getVirtualFile()).isPy3K()) {
           if ("__builtin__".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(project, PyReferenceExpression.class, "builtins"));
+            importReference.replace(elementGenerator.createFromText(PyReferenceExpression.class, "builtins"));
           }
         } else {
           if ("builtins".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(project, PyReferenceExpression.class, "__builtin__"));
+            importReference.replace(elementGenerator.createFromText(PyReferenceExpression.class, "__builtin__"));
           }
         }
       }

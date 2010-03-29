@@ -68,8 +68,8 @@ public class PyFlipComparisonIntention extends BaseIntentionAction {
     PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class, false);
     while (binaryExpression != null) {
       if (FLIPPED_OPERATORS.containsKey(binaryExpression.getOperator())) {
-        PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-        binaryExpression.replace(elementGenerator.createBinaryExpression(project, FLIPPED_OPERATORS.get(binaryExpression.getOperator()),
+        PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+        binaryExpression.replace(elementGenerator.createBinaryExpression(FLIPPED_OPERATORS.get(binaryExpression.getOperator()),
                                                                          binaryExpression.getRightExpression(),
                                                                          binaryExpression.getLeftExpression()));
         return;

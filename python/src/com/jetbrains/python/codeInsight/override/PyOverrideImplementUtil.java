@@ -17,8 +17,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -28,10 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 13, 2009
- * Time: 3:50:07 PM
+ * @author Alexey.Ivanov
  */
 public class PyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil");
@@ -115,7 +112,7 @@ public class PyOverrideImplementUtil {
                             @NotNull final Editor editor) {
     PyFunction element = null;
     for (String newMember : newMembers) {
-      element = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyFunction.class, newMember + "\n    pass");
+      element = PyElementGenerator.getInstance(project).createFromText(PyFunction.class, newMember + "\n    pass");
       try {
         element = (PyFunction)pyClass.getStatementList().add(element);
         element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);

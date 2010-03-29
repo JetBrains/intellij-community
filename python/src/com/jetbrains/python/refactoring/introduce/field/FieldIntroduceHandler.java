@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
@@ -51,7 +51,7 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     if (initInConstructor) {
       final Project project = anchor.getProject();
       final PyClass clazz = (PyClass)anchor;
-      AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(project, declaration));
+      AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
       final PyFunction init = clazz.findMethodByName(PyNames.INIT, false);
       final PyStatementList statements = init != null ? init.getStatementList() : null;
       return statements != null ? statements.getLastChild() :  null; 
@@ -63,12 +63,12 @@ public class FieldIntroduceHandler extends IntroduceHandler {
   protected PyExpressionStatement createExpression(Project project, String name, PyAssignmentStatement declaration) {
     final String text = declaration.getText();
     final String self_name = text.substring(0, text.indexOf('.'));
-    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyExpressionStatement.class, self_name + "." + name);
+    return PyElementGenerator.getInstance(project).createFromText(PyExpressionStatement.class, self_name + "." + name);
   }
 
   @Override
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText) {
-    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, PyNames.CANONICAL_SELF + "." + assignmentText);
+    return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, PyNames.CANONICAL_SELF + "." + assignmentText);
   }
 
   @Override
@@ -76,12 +76,10 @@ public class FieldIntroduceHandler extends IntroduceHandler {
     return "refactoring.introduceField";
   }
 
-  private static class AddFieldDeclaration extends AddFieldQuickFix.FieldCallback {
-    private final Project myProject;
+  private static class AddFieldDeclaration implements Function<String, PyStatement> {
     private final PsiElement myDeclaration;
 
-    private AddFieldDeclaration(Project project, PsiElement declaration) {
-      myProject = project;
+    private AddFieldDeclaration(PsiElement declaration) {
       myDeclaration = declaration;
     }
 
@@ -90,7 +88,9 @@ public class FieldIntroduceHandler extends IntroduceHandler {
         return (PyStatement)myDeclaration;
       }
       final String text = myDeclaration.getText();
-      return myGenerator.createFromText(myProject, PyStatement.class, text.replaceFirst(PyNames.CANONICAL_SELF + "\\.", self_name + "."));
+      final Project project = myDeclaration.getProject();
+      return PyElementGenerator.getInstance(project).createFromText(PyStatement.class,
+                                                                    text.replaceFirst(PyNames.CANONICAL_SELF + "\\.", self_name + "."));
     }
   }
 }

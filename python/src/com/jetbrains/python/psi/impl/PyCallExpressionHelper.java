@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -23,15 +22,11 @@ public class PyCallExpressionHelper {
     // none
   }
 
-  public static void addArgument(PyCallExpression us, PythonLanguage language, PyExpression expression) {
+  public static void addArgument(PyCallExpression us, PyExpression expression) {
     PyExpression[] arguments = us.getArgumentList().getArguments();
-    try {
-      language.getElementGenerator()
-        .insertItemIntoList(us.getProject(), us, arguments.length == 0 ? null : arguments[arguments.length - 1], expression);
-    }
-    catch (IncorrectOperationException e1) {
-      throw new IllegalArgumentException(e1);
-    }
+    PyElementGenerator.getInstance(us.getProject()).insertItemIntoList(us,
+                                                                       arguments.length == 0 ? null : arguments[arguments.length - 1],
+                                                                       expression);
   }
 
   /**

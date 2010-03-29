@@ -48,14 +48,14 @@ public class ConvertSetLiteralIntention implements IntentionAction {
       assert setLiteral != null;
       PyExpression[] expressions = setLiteral.getElements();
       if (expressions != null) {
-        PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+        PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
         assert expressions.length != 0;
         StringBuilder stringBuilder = new StringBuilder(expressions[0].getText());
         for (int i = 1; i < expressions.length; ++i) {
           stringBuilder.append(", ");
           stringBuilder.append(expressions[i].getText());
         }
-        PyStatement newElement = elementGenerator.createFromText(project, PyExpressionStatement.class, "set([" + stringBuilder.toString() + "])");
+        PyStatement newElement = elementGenerator.createFromText(PyExpressionStatement.class, "set([" + stringBuilder.toString() + "])");
         setLiteral.replace(newElement);
       }
     }

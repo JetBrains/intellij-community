@@ -115,7 +115,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       ASTNode before = PyUtil.getNextNonWhitespace(pars[0]);
       ASTNode anchorBefore;
       if (before != null && elementPrecedesElementsOfType(before, PyElementTypes.EXPRESSIONS)) {
-        ASTNode comma = getLanguage().getElementGenerator().createComma(getProject());
+        ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
         node.addChild(comma, before);
         anchorBefore = comma;
       }
@@ -162,7 +162,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
   private void addArgumentNode(PyExpression arg, ASTNode beforeThis, boolean commaFirst) {
     PyUtil.ensureWritable(this);
-    ASTNode comma = getLanguage().getElementGenerator().createComma(getProject());
+    ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
     ASTNode node = getNode();
     ASTNode argNode = arg.getNode();
     if (commaFirst) {

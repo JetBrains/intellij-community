@@ -144,7 +144,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
           public void run() {
             PsiElement[] exprs = new PsiElement[refsToInline.length];
             final PyExpression value = prepareValue(def, localName, project);
-            final PyExpression withParent = PythonLanguage.getInstance().getElementGenerator().createExpressionFromText(project, "(" + value.getText() + ")");
+            final PyExpression withParent = PyElementGenerator.getInstance(project).createExpressionFromText("(" + value.getText() + ")");
             for (int i = 0, refsToInlineLength = refsToInline.length; i < refsToInlineLength; i++) {
               PsiElement element = refsToInline[i];
               if (PyReplaceExpressionUtil.isNeedParenthesis((PyExpression)element, value)) {
@@ -232,7 +232,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     if (def instanceof PyAugAssignmentStatementImpl) {
       final PyAugAssignmentStatementImpl expression = (PyAugAssignmentStatementImpl)def;
       String op = expression.getOperation().getText().replace('=', ' ');
-      return PythonLanguage.getInstance().getElementGenerator().createExpressionFromText(project, localName + " " + op + value.getText() + ")");
+      return PyElementGenerator.getInstance(project).createExpressionFromText(localName + " " + op + value.getText() + ")");
     }
     return value;
   }

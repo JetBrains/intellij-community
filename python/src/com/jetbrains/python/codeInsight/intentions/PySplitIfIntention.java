@@ -52,7 +52,7 @@ public class PySplitIfIntention extends BaseIntentionAction {
       element = (PyBinaryExpression)element.getParent();
     }
     PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     StringBuilder builder = new StringBuilder();
   
     builder.append("if ").append(element.getLeftExpression().getText()).append(":\n");
@@ -68,7 +68,7 @@ public class PySplitIfIntention extends BaseIntentionAction {
       builder.append("\n    else:");
       appendStatements(elsePart.getStatementList(), builder);
     }
-    ifStatement.getIfPart().replace(elementGenerator.createFromText(project, PyIfStatement.class, builder.toString()));
+    ifStatement.getIfPart().replace(elementGenerator.createFromText(PyIfStatement.class, builder.toString()));
   }
 
   private static void appendStatements(PyStatementList statementList, StringBuilder builder) {

@@ -42,7 +42,7 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element instanceof PyBinaryExpression) {
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       PyBinaryExpression binaryExpression = (PyBinaryExpression)element;
       PyExpression resultExpression;
       final PyExpression leftExpression = binaryExpression.getLeftExpression();
@@ -55,7 +55,7 @@ public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
         resultExpression = leftExpression;
       }
       String text = ((positiveCondition) ? "" : "not ") + resultExpression.getText();
-      binaryExpression.replace(elementGenerator.createFromText(project, PyExpressionStatement.class, text).getExpression());
+      binaryExpression.replace(elementGenerator.createExpressionFromText(text));
     }
   }
 }

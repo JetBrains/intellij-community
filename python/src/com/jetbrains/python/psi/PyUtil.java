@@ -35,7 +35,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -161,15 +160,14 @@ public class PyUtil {
       }
     }
     if (forceAdd) {
-      PyListLiteralExpression listLiteral = PythonLanguage.getInstance().getElementGenerator().createListLiteral(project);
+      PyListLiteralExpression listLiteral = PyElementGenerator.getInstance(project).createListLiteral();
       try {
         listLiteral.add(add);
       }
       catch (IncorrectOperationException e) {
         throw new IllegalStateException(e);
       }
-      PyBinaryExpression binExpr =
-        PythonLanguage.getInstance().getElementGenerator().createBinaryExpression(project, "+", expr, listLiteral);
+      PyBinaryExpression binExpr = PyElementGenerator.getInstance(project).createBinaryExpression("+", expr, listLiteral);
       ASTNode exprNode = expr.getNode();
       assert exprNode != null;
       ASTNode parent = exprNode.getTreeParent();
@@ -454,10 +452,10 @@ public class PyUtil {
     ASTNode itemNode = newItem.getNode();
     assert itemNode != null;
     Project project = parent.getProject();
-    PyElementGenerator gen = PythonLanguage.getInstance().getElementGenerator();
-    if (!isFirst) node.addChild(gen.createComma(project), beforeThis);
+    PyElementGenerator gen = PyElementGenerator.getInstance(project);
+    if (!isFirst) node.addChild(gen.createComma(), beforeThis);
     node.addChild(itemNode, beforeThis);
-    if (!isLast) node.addChild(gen.createComma(project), beforeThis);
+    if (!isLast) node.addChild(gen.createComma(), beforeThis);
   }
 
   /**

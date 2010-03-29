@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyWhileStatement;
@@ -26,7 +27,7 @@ public class PyWithWhileSurrounder extends PyStatementSurrounder{
   protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
     throws IncorrectOperationException {
     PyWhileStatement whileStatement =
-      PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyWhileStatement.class, "while True:\n    ");
+      PyElementGenerator.getInstance(project).createFromText(PyWhileStatement.class, "while True:\n    ");
     final PsiElement parent = elements[0].getParent();
     final PyStatementList statementList = whileStatement.getWhilePart().getStatementList();
     assert statementList != null;

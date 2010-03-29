@@ -87,7 +87,7 @@ public class PyExtractMethodUtil {
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
-              PsiElement callElement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyCallExpression.class, builder.toString());
+              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(PyCallExpression.class, builder.toString());
 
               //# replace statements with call
               callElement = replaceElements(elementsRange, callElement);
@@ -113,7 +113,7 @@ public class PyExtractMethodUtil {
               }
               final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
               final PsiElement returnStatement =
-                PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, "return " + builder.toString());
+                PyElementGenerator.getInstance(project).createFromText(PyElement.class, "return " + builder.toString());
               newMethodElements.add(returnStatement);
 
               // Generate method
@@ -132,7 +132,7 @@ public class PyExtractMethodUtil {
               }
               builder.append(methodName).append("(");
               builder.append(createCallArgsString(variableData)).append(")");
-              PsiElement callElement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, builder.toString());
+              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(PyElement.class, builder.toString());
 
               // replace statements with call
               callElement = replaceElements(elementsRange, callElement);
@@ -194,7 +194,7 @@ public class PyExtractMethodUtil {
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
-              PsiElement callElement = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyElement.class, builder.toString());
+              PsiElement callElement = PyElementGenerator.getInstance(project).createFromText(PyElement.class, builder.toString());
 
               // replace statements with call
               callElement = PyPsiUtils.replaceExpression(project, expression, callElement);

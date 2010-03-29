@@ -39,9 +39,9 @@ public class RemoveTrailingLIntention implements IntentionAction {
     if (numericLiteralExpression == null) {
       return;
     }
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     String text = numericLiteralExpression.getText();
-    numericLiteralExpression.replace(elementGenerator.createExpressionFromText(project, text.substring(0, text.length() - 1)));
+    numericLiteralExpression.replace(elementGenerator.createExpressionFromText(text.substring(0, text.length() - 1)));
   }
 
   public boolean startInWriteAction() {

@@ -129,10 +129,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         }
 
         // alter the import element
-        Language language = myImportElement.getLanguage();
-        assert language instanceof PythonLanguage;
-        PythonLanguage pythonLanguage = (PythonLanguage)language;
-        PyElementGenerator generator = pythonLanguage.getElementGenerator();
+        PyElementGenerator generator = PyElementGenerator.getInstance(project);
         if (myAlias != null) {
           // remove alias
           ASTNode node = sure(myImportElement.getNode());
@@ -144,7 +141,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         else {
           // add alias
           ASTNode my_ielt_node = sure(myImportElement.getNode());
-          PyImportElement fountain = generator.createFromText(project, PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
+          PyImportElement fountain = generator.createFromText(PyImportElement.class, "import foo as "+target_name, new int[]{0,2});
           ASTNode graft_node = sure(fountain.getNode()); // at import elt
           graft_node = sure(graft_node.getFirstChildNode()); // at ref
           graft_node = sure(graft_node.getTreeNext()); // space
@@ -160,7 +157,7 @@ public class ImportToggleAliasIntention implements IntentionAction {
         for (PsiReference ref : references) {
           ASTNode ref_name_node = sure(sure(ref.getElement()).getNode());
           ASTNode parent = sure(ref_name_node.getTreeParent());
-          ASTNode new_name_node = generator.createExpressionFromText(project, target_name).getNode();
+          ASTNode new_name_node = generator.createExpressionFromText(target_name).getNode();
           assert new_name_node != null;
           parent.replaceChild(ref_name_node, new_name_node);
         }

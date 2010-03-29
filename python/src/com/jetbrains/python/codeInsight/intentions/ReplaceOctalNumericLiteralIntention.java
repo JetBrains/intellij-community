@@ -39,9 +39,9 @@ public class ReplaceOctalNumericLiteralIntention implements IntentionAction {
     if (numericLiteralExpression == null) {
       return;
     }
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     String text = numericLiteralExpression.getText();
-    numericLiteralExpression.replace(elementGenerator.createExpressionFromText(project, "0o" + text.substring(1)));
+    numericLiteralExpression.replace(elementGenerator.createExpressionFromText("0o" + text.substring(1)));
   }
 
   public boolean startInWriteAction() {

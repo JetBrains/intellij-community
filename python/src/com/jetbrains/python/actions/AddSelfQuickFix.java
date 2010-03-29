@@ -3,11 +3,9 @@ package com.jetbrains.python.actions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
@@ -44,14 +42,8 @@ public class AddSelfQuickFix implements LocalQuickFix {
       if (!CodeInsightUtilBase.preparePsiElementForWrite(problem_elt)) {
         return;
       }
-      Language language = problem_elt.getLanguage();
-      if (language instanceof PythonLanguage) {
-        final PythonLanguage pythonLanguage = (PythonLanguage)language;
-        PyElementGenerator generator = pythonLanguage.getElementGenerator();
-        // TODO: generalize, move to generator
-        PyNamedParameter new_param = generator.createFromText(project, PyNamedParameter.class, "def f(" + myParamName + "): pass", new int[]{0, 3, 1});
-        param_list.addParameter(new_param);
-      }
+      PyNamedParameter new_param = PyElementGenerator.getInstance(project).createParameter(myParamName);
+      param_list.addParameter(new_param);
     }
   }
 }

@@ -19,10 +19,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
@@ -59,7 +56,7 @@ public class PyExtractSuperclassHelper {
           public void run() {
             final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
             final String text = PyClassRefactoringUtil.prepareClassText(clazz, elements, true, true, superBaseName) + "\n";
-            final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
+            final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(PyClass.class, text);
             newClassRef.set(newClass);
             PyClassRefactoringUtil.moveSuperclasses(clazz, superClasses, newClass);
             PyClassRefactoringUtil.addSuperclasses(project, clazz, Collections.singleton(superBaseName));
@@ -132,7 +129,7 @@ public class PyExtractSuperclassHelper {
     }
     text.append("import ").append(name).append("\n");
 
-    final PyStatement imp = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyStatement.class, text.toString());
+    final PyStatement imp = PyElementGenerator.getInstance(project).createFromText(PyStatement.class, text.toString());
     PyPsiUtils.addBeforeInParent(clazz, imp, imp.getNextSibling());
   }
 

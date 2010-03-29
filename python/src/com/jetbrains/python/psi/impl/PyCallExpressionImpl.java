@@ -44,7 +44,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   public void addArgument(PyExpression expression) {
-    PyCallExpressionHelper.addArgument(this, getLanguage(), expression);
+    PyCallExpressionHelper.addArgument(this, expression);
   }
 
   public PyMarkedFunction resolveCallee() {

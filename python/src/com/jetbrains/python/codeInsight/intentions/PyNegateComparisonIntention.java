@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,16 +77,16 @@ public class PyNegateComparisonIntention extends BaseIntentionAction {
         }
 
         final PyElementType invertedOperator = invertedComparasions.get(binaryExpression.getOperator());
-        PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+        PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
         final PyBinaryExpression newElement = elementGenerator
-          .createBinaryExpression(project, comparisonStrings.get(invertedOperator), binaryExpression.getLeftExpression(),
+          .createBinaryExpression(comparisonStrings.get(invertedOperator), binaryExpression.getLeftExpression(),
                                   binaryExpression.getRightExpression());
 
         if (parent instanceof PyPrefixExpression && ((PyPrefixExpression)parent).getOperationSign() == PyTokenTypes.NOT_KEYWORD) {
           parent.replace(newElement);
         }
         else {
-          binaryExpression.replace(elementGenerator.createExpressionFromText(project, "not " + newElement.getText()));
+          binaryExpression.replace(elementGenerator.createExpressionFromText("not " + newElement.getText()));
         }
         return;
       }

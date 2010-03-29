@@ -90,7 +90,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   }
 
   public void addArgument(PyExpression expression) {
-    PyCallExpressionHelper.addArgument(this, getLanguage(), expression);
+    PyCallExpressionHelper.addArgument(this, expression);
   }
 
   public PyMarkedFunction resolveCallee() {
@@ -111,7 +111,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     final ASTNode node = getNode();
     final ASTNode name_node = node.findChildByType(PyTokenTypes.IDENTIFIER);
     if (name_node != null) {
-      final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
+      final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
       node.replaceChild(name_node, nameElement);
       return this;
     }

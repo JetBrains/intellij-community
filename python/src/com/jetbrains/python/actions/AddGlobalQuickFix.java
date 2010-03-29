@@ -65,7 +65,7 @@ public class AddGlobalQuickFix implements LocalQuickFix {
         return;
       }
       final PyGlobalStatement globalStatement =
-        PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyGlobalStatement.class, "global " + name);
+        PyElementGenerator.getInstance(project).createFromText(PyGlobalStatement.class, "global " + name);
       if (owner instanceof PyClass){
         final PyStatementList statementList = ((PyClass)owner).getStatementList();
         statementList.addBefore(globalStatement, statementList.getStatements()[0]);

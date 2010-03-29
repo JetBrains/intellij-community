@@ -1,14 +1,12 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonDocStringFinder;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,13 +58,12 @@ class AddImportHelper {
    * @param asName optional name for 'as' clause
    * @param project to which the file presumably belongs
    */
-  public static void addImportStatement(PsiFile file, String name, @Nullable String asName, Project project) {
+  public static void addImportStatement(PsiFile file, String name, @Nullable String asName) {
     String as_clause;
     if (asName == null) as_clause = "";
     else as_clause = " as " + asName;
-    final PyImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createImportStatementFromText(
-        project, "import " + name + as_clause + "\n\n"
-    );
+    final PyImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createImportStatementFromText(
+        "import " + name + as_clause + "\n\n");
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file));
     }
@@ -83,13 +80,12 @@ class AddImportHelper {
    * @param asName optional name for 'as' clause
    * @param project where the file belongs
    */
-  public static  void addImportFromStatement(PsiFile file, String from, String name, @Nullable String asName, Project project) {
+  public static  void addImportFromStatement(PsiFile file, String from, String name, @Nullable String asName) {
     String as_clause;
     if (asName == null) as_clause = "";
     else as_clause = " as " + asName;
-    final PyFromImportStatement importNodeToInsert = PythonLanguage.getInstance().getElementGenerator().createFromText(
-        project, PyFromImportStatement.class, "from " + from + " import " + name + as_clause + "\n\n"
-    );
+    final PyFromImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createFromText(
+        PyFromImportStatement.class, "from " + from + " import " + name + as_clause + "\n\n");
     try {
       file.addBefore(importNodeToInsert, getInsertPosition(file));
     }

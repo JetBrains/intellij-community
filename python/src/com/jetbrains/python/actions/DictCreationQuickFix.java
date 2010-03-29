@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,7 @@ public class DictCreationQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     StringBuilder stringBuilder = new StringBuilder();
     for (PyExpression expression: ((PyDictLiteralExpression) myStatement.getAssignedValue()).getElements()) {
       stringBuilder.append(expression.getText()).append(", ");
@@ -55,7 +54,6 @@ public class DictCreationQuickFix implements LocalQuickFix {
       }
       statement.delete();
     }
-    myStatement.getAssignedValue().replace(elementGenerator.createFromText(project, PyExpressionStatement.class,
-                                                                                   "{" + stringBuilder.substring(0, stringBuilder.length() - 2) + "}").getExpression());
+    myStatement.getAssignedValue().replace(elementGenerator.createExpressionFromText("{" + stringBuilder.substring(0, stringBuilder.length() - 2) + "}"));
   }
 }

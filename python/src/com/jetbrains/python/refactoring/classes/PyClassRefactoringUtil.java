@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +97,7 @@ public class PyClassRefactoringUtil {
   public static void insertPassIfNeeded(PyClass clazz) {
     final PyStatementList statements = clazz.getStatementList();
     if (statements.getStatements().length == 0) {
-      statements.add(PythonLanguage.getInstance().getElementGenerator().createFromText(clazz.getProject(), PyPassStatement.class, "pass"));
+      statements.add(PyElementGenerator.getInstance(clazz.getProject()).createFromText(PyPassStatement.class, "pass"));
     }
   }
 
@@ -109,7 +108,7 @@ public class PyClassRefactoringUtil {
 
     if (text == null) return;
 
-    final PyClass newClass = PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyClass.class, text);
+    final PyClass newClass = PyElementGenerator.getInstance(project).createFromText(PyClass.class, text);
     final PyStatementList statements = superClass.getStatementList();
     if (statements.getStatements().length != 0) {
       for (PyElement newStatement : newClass.getStatementList().getStatements()) {

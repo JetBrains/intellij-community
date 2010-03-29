@@ -2,7 +2,6 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -15,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -119,12 +117,12 @@ public class ImportFromToImportIntention implements IntentionAction {
   /**
    * Adds myModuleName as a qualifier to target.
    * @param target_node what to qualify
-   * @param generator 
    * @param project
    */
-  private void qualifyTarget(ASTNode target_node, PyElementGenerator generator, Project project) {
-    target_node.addChild(generator.createDot(project), target_node.getFirstChildNode());
-    target_node.addChild(sure(generator.createFromText(project, PyReferenceExpression.class, myQualifier, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
+  private void qualifyTarget(ASTNode target_node, Project project) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+    target_node.addChild(generator.createDot(), target_node.getFirstChildNode());
+    target_node.addChild(sure(generator.createFromText(PyReferenceExpression.class, myQualifier, new int[]{0,0}).getNode()), target_node.getFirstChildNode());
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -189,10 +187,7 @@ public class ImportFromToImportIntention implements IntentionAction {
       }
 
       // add qualifiers
-      Language language = myFromImportStatement.getLanguage();
-      assert language instanceof PythonLanguage;
-      PythonLanguage pythonLanguage = (PythonLanguage)language;
-      PyElementGenerator generator = pythonLanguage.getElementGenerator();
+      PyElementGenerator generator = PyElementGenerator.getInstance(project);
       for (Map.Entry<PsiReference, PyImportElement> entry : references.entrySet()) {
         PsiElement referring_elt = entry.getKey().getElement();
         assert referring_elt.isValid(); // else we won't add it
@@ -204,29 +199,29 @@ public class ImportFromToImportIntention implements IntentionAction {
           PyReferenceExpression refex = ielt.getImportReference();
           assert refex != null; // else we won't resolve to this ielt
           String real_name = refex.getReferencedName();
-          ASTNode new_qualifier = generator.createExpressionFromText(project, real_name).getNode();
+          ASTNode new_qualifier = generator.createExpressionFromText(real_name).getNode();
           assert new_qualifier != null;
           //ASTNode first_under_target = target_node.getFirstChildNode();
           //if (first_under_target != null) new_qualifier.addChildren(first_under_target, null, null); // save the children if any
           target_node.getTreeParent().replaceChild(target_node, new_qualifier);
           target_node = new_qualifier;
         }
-        qualifyTarget(target_node, generator, project);
+        qualifyTarget(target_node, project);
       }
       for (PsiReference reference : star_references) {
         PsiElement referring_elt = reference.getElement();
         assert referring_elt.isValid(); // else we won't add it
         ASTNode target_node = referring_elt.getNode();
         assert target_node != null; // else it won't be valid
-        qualifyTarget(target_node, generator, project);
+        qualifyTarget(target_node, project);
       }
       // transform the import statement
       PyStatement new_import;
       if (myRelativeLevel == 0) {
-        new_import = sure(generator.createFromText(project, PyImportStatement.class, "import " + myModuleName));
+        new_import = sure(generator.createFromText(PyImportStatement.class, "import " + myModuleName));
       }
       else {
-        new_import = sure(generator.createFromText(project, PyFromImportStatement.class, "from " + relative_names[0] +  " import " + relative_names[1]));
+        new_import = sure(generator.createFromText(PyFromImportStatement.class, "from " + relative_names[0] +  " import " + relative_names[1]));
       }
       ASTNode parent = sure(myFromImportStatement.getParent().getNode());
       ASTNode old_node = sure(myFromImportStatement.getNode());

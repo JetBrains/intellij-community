@@ -1,7 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -14,9 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.psi.PyUtil.sure;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
+
+import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * Converts {@code import foo} to {@code from foo import names} or {@code from ... import module} to {@code from ...module import names}.
@@ -166,13 +165,10 @@ public class ImportToImportFromIntention implements IntentionAction {
         import_elements = ((PyFromImportStatement)import_statement).getImportElements();
       }
       else throw new IncorrectOperationException("Not an import at all");
-      Language language = myImportElement.getLanguage();
-      assert language instanceof PythonLanguage;
-      PythonLanguage pythonLanguage = (PythonLanguage)language;
-      PyElementGenerator generator = pythonLanguage.getElementGenerator();
+      PyElementGenerator generator = PyElementGenerator.getInstance(project);
       StringBuilder builder = new StringBuilder("from ").append(getDots()).append(myModuleName).append(" import ");
       PyUtil.joinArray(used_names.toArray(EMPTY_STRINGS), ", ", builder);
-      PyFromImportStatement from_import_stmt = generator.createFromText(project, PyFromImportStatement.class,  builder.toString());
+      PyFromImportStatement from_import_stmt = generator.createFromText(PyFromImportStatement.class,  builder.toString());
       PsiElement parent = import_statement.getParent();
       sure(parent);  sure(parent.isValid());
       if (import_elements.length == 1) {

@@ -84,11 +84,11 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
         parameters.append(expression.getText()).append(", ");
       }
     }
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyStringLiteralExpression stringLiteralExpression =
-      elementGenerator.createStringLiteralAlreadyEscaped(project, "\"" + stringLiteral.toString() + "\"");
+      elementGenerator.createStringLiteralAlreadyEscaped("\"" + stringLiteral.toString() + "\"");
     PyParenthesizedExpression expression = (PyParenthesizedExpression)elementGenerator
-      .createFromText(project, PyExpressionStatement.class, parameters.substring(0, parameters.length() - 2) + ")").getExpression();
-    element.replace(elementGenerator.createBinaryExpression(project, "%", stringLiteralExpression, expression));
+      .createFromText(PyExpressionStatement.class, parameters.substring(0, parameters.length() - 2) + ")").getExpression();
+    element.replace(elementGenerator.createBinaryExpression("%", stringLiteralExpression, expression));
   }
 }

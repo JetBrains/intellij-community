@@ -43,7 +43,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    final ASTNode nameElement = getLanguage().getElementGenerator().createNameIdentifier(getProject(), name);
+    final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
     getNode().replaceChild(getNode().getFirstChildNode(), nameElement);
     return this;
   }

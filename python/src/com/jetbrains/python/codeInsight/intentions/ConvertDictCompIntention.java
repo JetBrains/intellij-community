@@ -60,9 +60,9 @@ public class ConvertDictCompIntention implements IntentionAction {
     List<ComprhForComponent> forComponents = expression.getForComponents();
     if (expression.getResultExpression() instanceof PyKeyValueExpression) {
       PyKeyValueExpression keyValueExpression = (PyKeyValueExpression)expression.getResultExpression();
-      PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       assert keyValueExpression.getValue() != null;
-      expression.replace(elementGenerator.createFromText(project, PyExpressionStatement.class,
+      expression.replace(elementGenerator.createFromText(PyExpressionStatement.class,
                                                          "dict([(" + keyValueExpression.getKey().getText() + ", " +
                                                          keyValueExpression.getValue().getText() + ") for " +
                                                          forComponents.get(0).getIteratorVariable().getText() + " in " +

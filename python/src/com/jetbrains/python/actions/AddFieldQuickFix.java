@@ -9,7 +9,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -87,14 +86,11 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
   }
 
-  public static PsiElement addFieldToInit(Project project, PyClass cls, String item_name, FieldCallback callback) {
+  public static PsiElement addFieldToInit(Project project, PyClass cls, String item_name, Function<String, PyStatement> callback) {
     if (cls != null && item_name != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
       Language language = cls.getLanguage();
       if (language instanceof PythonLanguage) {
-        PythonLanguage pythonLanguage = (PythonLanguage)language;
-        PyElementGenerator generator = pythonLanguage.getElementGenerator();
-        callback.setGenerator(generator);
         if (init != null) {
           return appendToInit(init, callback);
         }
@@ -103,10 +99,9 @@ public class AddFieldQuickFix implements LocalQuickFix {
             init = ancestor.findMethodByName(PyNames.INIT, false);
             if (init != null) break;
           }
-          PyFunction new_init = createInitMethod(project, cls, init, generator);
+          PyFunction new_init = createInitMethod(project, cls, init);
 
           appendToInit(new_init, callback);
-          new_init.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last line
 
           PsiElement add_anchor = null;
           PyFunction[] meths = cls.getMethods();
@@ -123,7 +118,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return null;
   }
 
-  private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit, PyElementGenerator generator) {
+  private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit) {
     // found it; copy its param list and make a call to it.
     PyUtil.ensureWritable(cls);
     String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
@@ -150,24 +145,15 @@ public class AddFieldQuickFix implements LocalQuickFix {
       functionText += "    pass";
     }
 
-    return generator.createFromText(
-      project, PyFunction.class, functionText,
+    return PyElementGenerator.getInstance(project).createFromText(
+      PyFunction.class, functionText,
       new int[]{0}
     );
   }
 
-  public abstract static class FieldCallback implements Function<String, PyStatement> {
-    protected PyElementGenerator myGenerator;
-
-    public void setGenerator(PyElementGenerator generator) {
-      myGenerator = generator;
-    }
-  }
-
-  private static class CreateFieldCallback extends FieldCallback {
+  private static class CreateFieldCallback implements Function<String, PyStatement> {
     private Project myProject;
     private String myItemName;
-
 
     private CreateFieldCallback(Project project, String itemName) {
       myProject = project;
@@ -175,7 +161,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
 
     public PyStatement fun(String self_name) {
-      return myGenerator.createFromText(myProject, PyStatement.class, self_name + "." + myItemName + " = None");
+      return PyElementGenerator.getInstance(myProject).createFromText(PyStatement.class, self_name + "." + myItemName + " = None");
     }
   }
 }

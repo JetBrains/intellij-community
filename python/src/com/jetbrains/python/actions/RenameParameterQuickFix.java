@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class RenameParameterQuickFix implements LocalQuickFix {
     if (elt != null && elt instanceof PyNamedParameter && elt.isWritable()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          final PyNamedParameter the_self = PythonLanguage.getInstance().getElementGenerator().createParameter(project, myNewName);
+          final PyNamedParameter the_self = PyElementGenerator.getInstance(project).createParameter(myNewName);
           try {
             elt.replace(the_self);
           }

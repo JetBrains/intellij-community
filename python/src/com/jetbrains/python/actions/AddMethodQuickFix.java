@@ -5,14 +5,11 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -57,10 +54,6 @@ public class AddMethodQuickFix implements LocalQuickFix {
       sure(cls); sure(item_name);
       PyStatementList cls_stmt_list = cls.getStatementList();
       sure(CodeInsightUtilBase.preparePsiElementForWrite(cls_stmt_list));
-      Language language = cls.getLanguage();
-      sure(language instanceof PythonLanguage);
-      PythonLanguage pythonLanguage = (PythonLanguage)language;
-      PyElementGenerator generator = pythonLanguage.getElementGenerator();
       // try to at least match parameter count
       // TODO: get parameter style from code style
       StringBuffer param_buf = new StringBuffer("(");
@@ -108,9 +101,10 @@ public class AddMethodQuickFix implements LocalQuickFix {
         cnt += 1;
       }
       param_buf.append("):\n");
-      PyFunction meth = generator.createFromText(project, PyFunction.class, "def " + item_name + param_buf + "    pass");
+      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      PyFunction meth = generator.createFromText(PyFunction.class, "def " + item_name + param_buf + "    pass");
       if (deco_name != null) {
-        PyDecoratorList deco_list = generator.createFromText(project, PyDecoratorList.class, "@" + deco_name + "\ndef foo(): pass", new int[]{0, 0});
+        PyDecoratorList deco_list = generator.createFromText(PyDecoratorList.class, "@" + deco_name + "\ndef foo(): pass", new int[]{0, 0});
         meth.addBefore(deco_list, meth.getFirstChild()); // in the very beginning
       }
       
@@ -121,7 +115,6 @@ public class AddMethodQuickFix implements LocalQuickFix {
       }
       else {
         // add ourselves to the bottom
-        cls_stmt_list.add(generator.createFromText(project, PsiWhiteSpace.class, "\n\n")); // after the last method, before ours
         meth = (PyFunction) cls_stmt_list.add(meth);
       }
       showTemplateBuilder(meth);

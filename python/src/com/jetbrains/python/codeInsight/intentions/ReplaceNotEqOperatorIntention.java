@@ -42,8 +42,8 @@ public class ReplaceNotEqOperatorIntention implements IntentionAction {
     }
     PsiElement operator = binaryExpression.getPsiOperator();
     if (operator != null) {
-      PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-      operator.replace(elementGenerator.createFromText(project, LeafPsiElement.class, "!="));
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      operator.replace(elementGenerator.createFromText(LeafPsiElement.class, "!="));
     }
   }
 

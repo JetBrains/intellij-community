@@ -16,7 +16,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,8 +72,8 @@ public class PyPsiUtils {
       final String parentText = parent.getText();
       final String prefix = parentText.substring(0, textRange.getStartOffset());
       final String suffix = parentText.substring(textRange.getEndOffset(), parent.getTextLength());
-      final PsiElement expression = PythonLanguage.getInstance().getElementGenerator()
-        .createFromText(project, parent.getClass(), prefix + newExpression.getText() + suffix);
+      final PsiElement expression = PyElementGenerator.getInstance(project).createFromText(parent.getClass(),
+                                                                                           prefix + newExpression.getText() + suffix);
       return parent.replace(expression);
     }
     else {
@@ -197,8 +196,8 @@ public class PyPsiUtils {
         }
       }
     }
-    final PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-    final PyElement result = elementGenerator.createFromText(element.getProject(), PyElement.class, builder.toString());
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
+    final PyElement result = elementGenerator.createFromText(PyElement.class, builder.toString());
     if (result == null) {
       throw new RuntimeException("Failed to create element from text " + builder.toString());
     }

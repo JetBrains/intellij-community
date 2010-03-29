@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.PyTryExceptStatement;
@@ -47,7 +46,7 @@ public class ReplaceExceptPartIntention implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyExceptPart.class);
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     assert exceptPart != null;
     PsiElement element = exceptPart.getExceptClass().getNextSibling();
     while (element instanceof PsiWhiteSpace) {
@@ -55,7 +54,7 @@ public class ReplaceExceptPartIntention implements IntentionAction {
     }
     assert element != null;
     PyTryExceptStatement newElement =
-      elementGenerator.createFromText(project, PyTryExceptStatement.class, "try:  pass except a as b:  pass");
+      elementGenerator.createFromText(PyTryExceptStatement.class, "try:  pass except a as b:  pass");
     ASTNode node = newElement.getExceptParts()[0].getNode().findChildByType(PyTokenTypes.AS_KEYWORD);
     assert node != null;
     element.replace(node.getPsi());

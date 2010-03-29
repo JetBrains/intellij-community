@@ -18,7 +18,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
@@ -32,10 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 25, 2009
- * Time: 6:21:15 PM
+ * @author Alexey.Ivanov
  */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
   private final IntroduceValidator myValidator;
@@ -146,7 +142,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   protected abstract String getHelpId();  
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText) {
-    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyAssignmentStatement.class, assignmentText);
+    return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, assignmentText);
   }
 
   protected boolean checkEnabled(Project project, Editor editor, PsiElement element1, String dialogTitle) {
@@ -196,7 +192,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected PyExpressionStatement createExpression(Project project, String name, PyAssignmentStatement declaration) {
-    return PythonLanguage.getInstance().getElementGenerator().createFromText(project, PyExpressionStatement.class, name);
+    return PyElementGenerator.getInstance(project).createFromText(PyExpressionStatement.class, name);
   }
 
   @Nullable

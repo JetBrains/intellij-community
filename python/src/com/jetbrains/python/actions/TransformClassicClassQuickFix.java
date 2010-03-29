@@ -34,10 +34,9 @@ public class TransformClassicClassQuickFix implements LocalQuickFix {
     if (psiElement instanceof PyClass) {
       PyClass pyClass = (PyClass) psiElement;
       PyExpression[] superClassExpressions = pyClass.getSuperClassExpressions();
-      final PythonLanguage pythonLanguage = (PythonLanguage)pyClass.getLanguage();
-      PyElementGenerator generator = pythonLanguage.getElementGenerator();
+      PyElementGenerator generator = PyElementGenerator.getInstance(project);
       if (superClassExpressions.length == 0) {
-        pyClass.replace(generator.createFromText(project, PyClass.class,
+        pyClass.replace(generator.createFromText(PyClass.class,
                                                  "class " + pyClass.getName() + "(" +
                                                  PyNames.OBJECT + "):\n    " + pyClass.getStatementList().getText()));
       } else {
@@ -48,7 +47,7 @@ public class TransformClassicClassQuickFix implements LocalQuickFix {
         }
         stringBuilder.append(PyNames.OBJECT).append(":\n    ");
         stringBuilder.append(pyClass.getStatementList().getText());
-        pyClass.replace(generator.createFromText(project, PyClass.class, stringBuilder.toString()));
+        pyClass.replace(generator.createFromText(PyClass.class, stringBuilder.toString()));
       }
     }
   }

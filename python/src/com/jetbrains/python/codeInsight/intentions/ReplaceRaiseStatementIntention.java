@@ -42,12 +42,12 @@ public class ReplaceRaiseStatementIntention implements IntentionAction {
     }
     PyExpression[] expressions = raiseStatement.getExpressions();
     assert expressions != null;
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     String newExpressionText = expressions[0].getText() + "(" + expressions[1].getText() + ")";
     if (expressions.length == 2) {
-      raiseStatement.replace(elementGenerator.createFromText(project, PyRaiseStatement.class, "raise " + newExpressionText));
+      raiseStatement.replace(elementGenerator.createFromText(PyRaiseStatement.class, "raise " + newExpressionText));
     } else if (expressions.length == 3) {
-      raiseStatement.replace(elementGenerator.createFromText(project, PyRaiseStatement.class,
+      raiseStatement.replace(elementGenerator.createFromText(PyRaiseStatement.class,
                                                              "raise " + newExpressionText + ".with_traceback(" + expressions[2].getText() + ")"));
     }
   }

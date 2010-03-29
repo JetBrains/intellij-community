@@ -40,8 +40,8 @@ public class ReplaceListComprehensionsIntention implements IntentionAction {
     if (expression == null) {
       return;
     }
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-    PyExpressionStatement statement = elementGenerator.createFromText(project, PyExpressionStatement.class,
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    PyExpressionStatement statement = elementGenerator.createFromText(PyExpressionStatement.class,
                                                                       "(" + expression.getText() + ")");
     expression.replace(statement.getExpression());
   }

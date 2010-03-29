@@ -35,10 +35,10 @@ public class ComparisonWithNoneQuickFix implements LocalQuickFix {
     if (problemElement instanceof PyBinaryExpression) {
       PyBinaryExpression binaryExpression = (PyBinaryExpression)problemElement;
       PyElementType operator = binaryExpression.getOperator();
-      PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       String temp;
       temp = (operator == PyTokenTypes.EQEQ) ? "is" : "is not";
-      PyExpression expression = elementGenerator.createBinaryExpression(project, temp,
+      PyExpression expression = elementGenerator.createBinaryExpression(temp,
                                                                         binaryExpression.getLeftExpression(),
                                                                         binaryExpression.getRightExpression());
       binaryExpression.replace(expression);

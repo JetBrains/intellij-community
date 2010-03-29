@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,32 +97,31 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void doIt(final ImportCandidateHolder item) {
     PyImportElement src = item.getImportElement();
-    final PyElementGenerator gen = PythonLanguage.getInstance().getElementGenerator();
+    final Project project = myTarget.getProject();
+    final PyElementGenerator gen = PyElementGenerator.getInstance(project);
     if (src != null) { // use existing import
       // did user choose 'import' or 'from import'?
       PsiElement parent = src.getParent();
       if (parent instanceof PyFromImportStatement) {
         // add another import element right after the one we got
-        final Project project = myTarget.getProject();
-        PsiElement new_elt = gen.createFromText(project, PyImportElement.class, "from foo import " + myName, new int[]{0, 6});
+        PsiElement new_elt = gen.createFromText(PyImportElement.class, "from foo import " + myName, new int[]{0, 6});
         PyUtil.addListNode(parent, new_elt, null, false, true);
       }
       else { // just 'import'
         // all we need is to qualify our target
-        myTarget.replace(gen.createExpressionFromText(myTarget.getProject(), src.getVisibleName() + "." + myName));
+        myTarget.replace(gen.createExpressionFromText(src.getVisibleName() + "." + myName));
       }
     }
     else { // no existing import, add it then use it
-      Project project = myTarget.getProject();
       if (myUseQualifiedImport) {
-        AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null, project);
+        AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null);
         String qual_name;
         if (item.getAsName() != null) qual_name = item.getAsName();
         else qual_name = item.getPath();
-        myTarget.replace(gen.createExpressionFromText(project, qual_name + "." + myName));
+        myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
       }
       else {
-        AddImportHelper.addImportFromStatement(myTarget.getContainingFile(), item.getPath(), myName, null, project);
+        AddImportHelper.addImportFromStatement(myTarget.getContainingFile(), item.getPath(), myName, null);
       }
     }
   }

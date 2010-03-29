@@ -39,8 +39,8 @@ public class RemoveLeadingUIntention implements IntentionAction {
     if (stringLiteralExpression == null) {
       return;
     }
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
-    stringLiteralExpression.replace(elementGenerator.createExpressionFromText(project, stringLiteralExpression.getText().substring(1)));
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    stringLiteralExpression.replace(elementGenerator.createExpressionFromText(stringLiteralExpression.getText().substring(1)));
   }
 
   public boolean startInWriteAction() {

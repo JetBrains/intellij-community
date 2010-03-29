@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
@@ -31,8 +31,8 @@ public class PyWithParenthesesSurrounder extends PyExpressionSurrounder {
   @Override
   public TextRange surroundExpression(@NotNull Project project, @NotNull Editor editor, @NotNull PyExpression element)
     throws IncorrectOperationException {
-    PyParenthesizedExpression parenthesesExpression = (PyParenthesizedExpression)PythonLanguage.getInstance().getElementGenerator()
-      .createFromText(project, PyExpressionStatement.class, "(a)").getExpression();
+    PyParenthesizedExpression parenthesesExpression = (PyParenthesizedExpression)PyElementGenerator.getInstance(project)
+      .createFromText(PyExpressionStatement.class, "(a)").getExpression();
     PyExpression expression = parenthesesExpression.getContainedExpression();
     assert expression != null;
     expression.replace(element);

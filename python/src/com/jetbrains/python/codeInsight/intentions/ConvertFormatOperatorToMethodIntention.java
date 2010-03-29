@@ -155,7 +155,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyBinaryExpression element =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
-    PyElementGenerator elementGenerator = PythonLanguage.getInstance().getElementGenerator();
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final PyExpression rightExpression = element.getRightExpression();
     if (rightExpression == null) {
       return;
@@ -170,7 +170,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     else {
       text = rightExpression.getText();
     }
-    element.replace(elementGenerator.createFromText(project, PyExpressionStatement.class,
+    element.replace(elementGenerator.createFromText(PyExpressionStatement.class,
                                                     convertFormat((PyStringLiteralExpression)element.getLeftExpression()) +
                                                     ".format(" +
                                                     text +
