@@ -81,7 +81,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private Document myDocument;
   private Editor myEditor;
+
   private PlaybackDebuggerState myState;
+  private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
 
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
@@ -105,10 +107,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     final DefaultActionGroup controlGroup = new DefaultActionGroup();
     controlGroup.add(new RunOnFameActivationAction());
     controlGroup.add(new ActivateFrameAndRun());
-    controlGroup.addSeparator();
     controlGroup.add(new StopAction());
-    controlGroup.addSeparator();
-    controlGroup.add(new SaveAction());
 
     JPanel north = new JPanel(new BorderLayout());
     north.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, controlGroup, true).getComponent(), BorderLayout.WEST);
@@ -119,10 +118,12 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myCurrentScript.setEditable(false);
     myCurrentScript.getDocument().addDocumentListener(docListener);
 
-    final DefaultActionGroup loadGroup = new DefaultActionGroup();
-    loadGroup.add(new SetScriptFileAction());
+    final DefaultActionGroup fsGroup = new DefaultActionGroup();
+    fsGroup.add(new SaveAction());
+    fsGroup.add(new SetScriptFileAction());
+    fsGroup.add(new NewScriptAction());
 
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, loadGroup, true);
+    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fsGroup, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     right.add(tb.getComponent(), BorderLayout.EAST);
     north.add(right, BorderLayout.CENTER);
@@ -162,7 +163,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myVfsListener = new VirtualFileAdapter() {
       @Override
       public void contentsChanged(VirtualFileEvent event) {
-        final VirtualFile file = getCurrentScriptFile();
+        final VirtualFile file = pathToFile();
         if (file != null && file.equals(event.getFile())) {
           loadFrom(event.getFile());
         }
@@ -190,11 +191,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
   }
 
-  private VirtualFile getCurrentScriptFile() {
-    final String text = myCurrentScript.getText();
-    return text != null ? LocalFileSystem.getInstance().findFileByIoFile(new File(text)) : null;
-  }
-
   private static class ScriptFileChooserDescriptor extends FileChooserDescriptor {
     public ScriptFileChooserDescriptor() {
       super(true, false, false, false, false, false);
@@ -211,16 +207,14 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class SetScriptFileAction extends AnAction {
-    FileChooserDescriptor descriptor;
 
     private SetScriptFileAction() {
       super("Set Script File", "", IconLoader.getIcon("/nodes/packageOpen.png"));
-      descriptor = new ScriptFileChooserDescriptor();
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      VirtualFile[] files = FileChooser.chooseFiles(myComponent, descriptor, pathToFile());
+      VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR, pathToFile());
       if (files.length > 0) {
         VirtualFile selectedFile = files[0];
         myState.currentScript = selectedFile.getPresentableUrl();
@@ -230,46 +224,50 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
   }
 
+  private class NewScriptAction extends AnAction {
+    private NewScriptAction() {
+      super("New Script", "", IconLoader.getIcon("/actions/new.png"));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myState.currentScript = "";
+      myCurrentScript.setText(myState.currentScript);
+      fillDocument("");
+    }
+  }
+
+  private void fillDocument(final String text) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myDocument.setText(text == null ? "" : text);
+      }
+    });
+  }
+
   @Nullable
   private VirtualFile pathToFile() {
+    if (myState.currentScript.length() == 0) {
+      return null;
+    }
     return LocalFileSystem.getInstance().findFileByPath(myState.currentScript);
   }
 
-  private boolean maybeCreateFile()  {
-    if (getCurrentScriptFile() != null) return true;
-
-    try {
-      final String text = myState.currentScript;
-      if (text == null) {
-        throw new Exception("Cannot create file with name:" + text);
-      }
-
-      final File file = new File(text);
-      final File parentFile = file.getParentFile();
-
-      try {
-        final VirtualFile parent = VfsUtil.createDirectories(parentFile.getAbsolutePath());
-
-        parent.createChildData(this, file.getName());
-      }
-      catch (IOException e) {
-        throw new Exception(e.getMessage());
-      }
-
-      return true;
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(e.getMessage(), "Cannot Save File");
-      return false;
-    }
-  }
-
   private void save() {
+    if (pathToFile() == null) {
+      VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR);
+      if (files.length > 0) {
+        VirtualFile selectedFile = files[0];
+        myState.currentScript = selectedFile.getPresentableUrl();
+        myCurrentScript.setText(myState.currentScript);
+      } else {
+        Messages.showErrorDialog("File to save is not selected.", "Cannot save script");
+        return;
+      }
+    }
     BufferedWriter writer = null;
     try {
-      if (!maybeCreateFile()) return;
-
-      final OutputStream os = getCurrentScriptFile().getOutputStream(this);
+      final OutputStream os = pathToFile().getOutputStream(this);
       writer = new BufferedWriter(new OutputStreamWriter(os));
       final String toWrite = myDocument.getText();
       writer.write(toWrite != null ? toWrite : "");
@@ -291,11 +289,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void loadFrom(@NotNull VirtualFile file) {
     try {
       final String text = CharsetToolkit.bytesToString(file.contentsToByteArray());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          myDocument.setText(text);
-        }
-      });
+      fillDocument(text);
       myChanged = false;
     }
     catch (IOException e) {
