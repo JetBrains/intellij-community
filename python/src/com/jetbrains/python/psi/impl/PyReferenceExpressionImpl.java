@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
@@ -28,16 +27,19 @@ import java.util.List;
  */
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.psi.impl.PyReferenceExpressionImpl");
-  private final PyReferenceImpl myReference;
 
   public PyReferenceExpressionImpl(ASTNode astNode) {
     super(astNode);
-    myReference = new PyReferenceImpl(this);
   }
 
   @NotNull
   public PsiPolyVariantReference getReference() {
-    return myReference;
+    // Handle import reference
+    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
+      return new PyImportReferenceImpl(this);
+    }
+
+    return new PyReferenceImpl(this);
   }
 
   @Override
@@ -75,7 +77,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     PyElement ret = null;
     SEARCH:
     while (ret == null) {
-      ResolveResult[] targets = ((PsiPolyVariantReference) seeker.getReference()).multiResolve(false);
+      ResolveResult[] targets = seeker.getReference().multiResolve(false);
       for (ResolveResult target : targets) {
         PsiElement elt = target.getElement();
         if (elt instanceof PyTargetExpression) {
@@ -151,7 +153,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return pyType;
     }
 
-    ResolveResult[] targets = myReference.multiResolve(false);
+    ResolveResult[] targets = getReference().multiResolve(false);
     if (targets.length == 0) return null;
     PsiElement target = targets[0].getElement();
     if (target == this) {

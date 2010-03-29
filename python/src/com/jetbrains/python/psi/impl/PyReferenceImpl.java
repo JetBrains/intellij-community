@@ -30,7 +30,7 @@ import java.util.*;
  * @author yole
  */
 public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference {
-  private final PyReferenceExpressionImpl myElement;
+  protected final PyReferenceExpressionImpl myElement;
 
   public PyReferenceImpl(PyReferenceExpressionImpl element) {
     myElement = element;
@@ -142,7 +142,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return ret.toArray(new ResolveResult[ret.size()]);
   }
 
-  private static class ResultList extends ArrayList<RatedResolveResult> {
+  protected static class ResultList extends ArrayList<RatedResolveResult> {
     // Allows to add non-null elements and discard nulls in a hassle-free way.
     public boolean poke(final PsiElement what, final int rate) {
       if (what == null) return false;
@@ -167,7 +167,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * @see #resolve()
    */
   @NotNull
-  private List<RatedResolveResult> resolveInner() {
+  protected List<RatedResolveResult> resolveInner() {
     ResultList ret = new ResultList();
 
     final String referencedName = myElement.getReferencedName();
@@ -175,15 +175,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // Handle import reference
     if (PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class) != null) {
-      PsiElement target = ResolveImportUtil.resolveImportReference(myElement);
-
-      target = PyUtil.turnDirIntoInit(target);
-      if (target == null) {
-        ret.clear();
-        return ret; // it was a dir without __init__.py, worthless
-      }
-      ret.poke(target, RatedResolveResult.RATE_HIGH);
-      return ret;
     }
 
     final PyExpression qualifier = myElement.getQualifier();
@@ -349,12 +340,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @NotNull
   public Object[] getVariants() {
-    // imports are another special case
-    if (PsiTreeUtil.getParentOfType(myElement, PyImportElement.class, PyFromImportStatement.class) != null) {
-      // complete to possible modules
-      return ResolveImportUtil.suggestImportVariants(myElement);
-    }
-
     // qualifier limits the namespace
     final PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
