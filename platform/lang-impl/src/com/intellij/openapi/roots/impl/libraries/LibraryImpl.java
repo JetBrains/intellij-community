@@ -530,7 +530,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   private class MyRootProviderImpl extends RootProviderBaseImpl {
     @NotNull
     public String[] getUrls(@NotNull OrderRootType rootType) {
-      Set<String> originalUrls = new HashSet<String>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
+      Set<String> originalUrls = new LinkedHashSet<String>(Arrays.asList(LibraryImpl.this.getUrls(rootType)));
       for (VirtualFile file : getFiles(rootType)) { // Add those expanded with jar directories.
         originalUrls.add(file.getUrl());
       }

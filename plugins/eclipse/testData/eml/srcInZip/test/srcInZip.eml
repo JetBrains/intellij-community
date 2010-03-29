@@ -3,9 +3,8 @@
 	<exclude-output/>
 	<contentEntry url="file://$MODULE_DIR$">
 		<excludeFolder url="file://$MODULE_DIR$/bin"/>
-		<excludeFolder url="file://$MODULE_DIR$/bin"/>
 	</contentEntry>
 	<lib name="jar-all-5.zip" scope="COMPILE">
-		<srcroot url="jar://$ROOT$/lib/jar-all-5.zip!/doc/api"/>
+		<srcroot url="jar://$MODULE_DIR$/lib/jar-all-5.zip!/doc/api"/>
 	</lib>
 </component>
