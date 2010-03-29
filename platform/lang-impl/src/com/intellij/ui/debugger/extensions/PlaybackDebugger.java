@@ -183,6 +183,17 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     public void actionPerformed(AnActionEvent e) {
+      if (pathToFile() == null) {
+        VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR);
+        if (files.length > 0) {
+          VirtualFile selectedFile = files[0];
+          myState.currentScript = selectedFile.getPresentableUrl();
+          myCurrentScript.setText(myState.currentScript);
+        } else {
+          Messages.showErrorDialog("File to save is not selected.", "Cannot save script");
+          return;
+        }
+      }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           save();
@@ -254,17 +265,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private void save() {
-    if (pathToFile() == null) {
-      VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR);
-      if (files.length > 0) {
-        VirtualFile selectedFile = files[0];
-        myState.currentScript = selectedFile.getPresentableUrl();
-        myCurrentScript.setText(myState.currentScript);
-      } else {
-        Messages.showErrorDialog("File to save is not selected.", "Cannot save script");
-        return;
-      }
-    }
     BufferedWriter writer = null;
     try {
       final OutputStream os = pathToFile().getOutputStream(this);
