@@ -685,7 +685,7 @@ public class ResolveImportUtil {
         if (mod_candidate instanceof PyExpression) {
           addImportedNames(from_import.getImportElements(), names_already); // don't propose already imported items
           // collect what's within module file
-          final VariantsProcessor processor = new VariantsProcessor(new PyResolveUtil.FilterNameNotIn(names_already));
+          final VariantsProcessor processor = new VariantsProcessor(partial_ref, new PyResolveUtil.FilterNameNotIn(names_already));
           PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
           variants.addAll(processor.getResultList());
           // try to collect submodules

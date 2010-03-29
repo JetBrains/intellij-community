@@ -276,7 +276,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
 
     // include our own names
-    final VariantsProcessor processor = new VariantsProcessor();
+    final VariantsProcessor processor = new VariantsProcessor(myElement);
     PyResolveUtil.treeCrawlUp(processor, realContext); // names from here
     PyResolveUtil.scanOuterContext(processor, realContext); // possible names from around us at call time
 

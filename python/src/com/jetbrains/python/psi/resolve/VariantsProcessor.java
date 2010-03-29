@@ -8,6 +8,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Icons;
+import com.jetbrains.python.codeInsight.PyFunctionInsertHandler;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,14 +18,17 @@ import java.util.*;
 public class VariantsProcessor implements PsiScopeProcessor {
   private final Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
 
+  protected final PsiElement myContext;
   protected String myNotice;
   protected PyResolveUtil.Filter myFilter;
 
-  public VariantsProcessor() {
+  public VariantsProcessor(PsiElement context) {
     // empty
+    myContext = context;
   }
 
-  public VariantsProcessor(final PyResolveUtil.Filter filter) {
+  public VariantsProcessor(PsiElement context, final PyResolveUtil.Filter filter) {
+    myContext = context;
     myFilter = filter;
   }
 
@@ -33,6 +37,9 @@ public class VariantsProcessor implements PsiScopeProcessor {
   }
 
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
+    if (item.getObject() instanceof PyFunction) {
+      item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
+    }
     if (myNotice != null) {
       return setItemNotice(item, myNotice);
     }

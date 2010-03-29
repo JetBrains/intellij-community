@@ -3,19 +3,17 @@ package com.jetbrains.python.psi.types;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import static com.jetbrains.python.psi.resolve.ResolveImportUtil.ROLE_IN_IMPORT.*;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.resolve.ResolveImportUtil.ROLE_IN_IMPORT.NONE;
 // .impl looks impure
 
 /**
@@ -79,7 +77,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     List<Object> result = new ArrayList<Object>();
     ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(referenceExpression.getReference());
     if (role == NONE) { // when not inside import, add regular attributes
-      final VariantsProcessor processor = new VariantsProcessor();
+      final VariantsProcessor processor = new VariantsProcessor(referenceExpression);
       myModule.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {

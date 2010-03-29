@@ -3,13 +3,11 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,55 +95,71 @@ public class PyCallExpressionHelper {
       }
       if (resolved instanceof PyFunction) {
         EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
-        int implicit_offset = 0;
-        boolean is_by_instance = isByInstance(us);
-        if (is_by_instance) implicit_offset += 1;
-        // wrapped flags?
-        if (wrapped_flag != null) {
-          flags.add(wrapped_flag);
-          flags.add(PyFunction.Flag.WRAPPED);
-          if (wrapped_flag == PyFunction.Flag.STATICMETHOD && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
-          if (wrapped_flag == PyFunction.Flag.CLASSMETHOD && ! is_by_instance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
-        }
-        // decorators?
-        PyFunction method = (PyFunction)resolved; // constructor call?
-        if (PyNames.INIT.equals(method.getName())) {
-          String refName = us.getCallee() instanceof PyReferenceExpression
-            ? ((PyReferenceExpression) us.getCallee()).getReferencedName()
-            : null;
-          if (!PyNames.INIT.equals(refName)) {   // PY-312
-            implicit_offset += 1;
-          }
-        }
-        // look for closest decorator
-        PyDecoratorList decolist = method.getDecoratorList();
-        if (decolist != null) {
-          PyDecorator[] decos = decolist.getDecorators();
-          // TODO: look for all decorators
-          if (decos.length == 1) {
-            PyDecorator deco = decos[0];
-            String deconame = deco.getName();
-            if (deco.isBuiltin()) {
-              if (PyNames.STATICMETHOD.equals(deconame)) {
-                flags.add(PyFunction.Flag.STATICMETHOD);
-                if (implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
-              }
-              else if (PyNames.CLASSMETHOD.equals(deconame)) {
-                flags.add(PyFunction.Flag.CLASSMETHOD);
-                if (! is_by_instance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
-              }
-              // else could be custom decorator processing
-            }
-          }
-        }
+        int implicit_offset = getImplicitArgumentCount(us.getCallee(), (PyFunction) resolved, wrapped_flag, flags);
         return new PyCallExpression.PyMarkedFunction((PyFunction)resolved, flags, implicit_offset);
       }
     }
     return null;
   }
 
-  protected static boolean isByInstance(PyCallExpression us) {
-    PyExpression callee = us.getCallee();
+  public static int getImplicitArgumentCount(final PyExpression callReference, PyFunction functionBeingCalled) {
+    return getImplicitArgumentCount(callReference, functionBeingCalled, null, null);
+  }
+
+  private static int getImplicitArgumentCount(final PyExpression callReference,
+                                              PyFunction method,
+                                              @Nullable PyFunction.Flag wrapped_flag,
+                                              @Nullable EnumSet<PyFunction.Flag> flags) {
+    int implicit_offset = 0;
+    boolean is_by_instance = isByInstance(callReference);
+    if (is_by_instance) implicit_offset += 1;
+    // wrapped flags?
+    if (wrapped_flag != null) {
+      if (flags != null) {
+        flags.add(wrapped_flag);
+        flags.add(PyFunction.Flag.WRAPPED);
+      }
+      if (wrapped_flag == PyFunction.Flag.STATICMETHOD && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
+      if (wrapped_flag == PyFunction.Flag.CLASSMETHOD && ! is_by_instance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
+    }
+    // decorators?
+    if (PyNames.INIT.equals(method.getName())) {
+      String refName = callReference instanceof PyReferenceExpression
+        ? ((PyReferenceExpression)callReference).getReferencedName()
+        : null;
+      if (!PyNames.INIT.equals(refName)) {   // PY-312
+        implicit_offset += 1;
+      }
+    }
+    // look for closest decorator
+    PyDecoratorList decolist = method.getDecoratorList();
+    if (decolist != null) {
+      PyDecorator[] decos = decolist.getDecorators();
+      // TODO: look for all decorators
+      if (decos.length == 1) {
+        PyDecorator deco = decos[0];
+        String deconame = deco.getName();
+        if (deco.isBuiltin()) {
+          if (PyNames.STATICMETHOD.equals(deconame)) {
+            if (flags != null) {
+              flags.add(PyFunction.Flag.STATICMETHOD);
+            }
+            if (implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
+          }
+          else if (PyNames.CLASSMETHOD.equals(deconame)) {
+            if (flags != null) {
+              flags.add(PyFunction.Flag.CLASSMETHOD);
+            }
+            if (! is_by_instance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
+          }
+          // else could be custom decorator processing
+        }
+      }
+    }
+    return implicit_offset;
+  }
+
+  protected static boolean isByInstance(final PyExpression callee) {
     if (callee instanceof PyReferenceExpression) {
       PyExpression qualifier = ((PyReferenceExpression)callee).getQualifier();
       if (qualifier != null) {

@@ -116,7 +116,7 @@ public class PyClassType implements PyType {
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
     Set<String> names_already = context.get(PyType.CTX_NAMES);
-    final VariantsProcessor processor = new VariantsProcessor(new PyResolveUtil.FilterNotInstance(myClass));
+    final VariantsProcessor processor = new VariantsProcessor(referenceExpression, new PyResolveUtil.FilterNotInstance(myClass));
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     List<Object> ret = new ArrayList<Object>();
     for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {

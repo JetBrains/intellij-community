@@ -27,7 +27,7 @@ public class PyJavaClassType implements PyType {
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
-    final VariantsProcessor processor = new VariantsProcessor();
+    final VariantsProcessor processor = new VariantsProcessor(referenceExpression);
     myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     return processor.getResult();
   }
