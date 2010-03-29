@@ -27,6 +27,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -78,7 +79,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
     final String contentRoot = getContentRoot(model);
-    if (output == null || !StringUtil.startsWith(output, contentRoot)) {
+    if (output == null || !StringUtil.startsWith(VfsUtil.urlToPath(output), contentRoot)) {
       throw new ConfigurationException("Output path is incompatible with eclipse format which supports output under content root only");
     }
   }
