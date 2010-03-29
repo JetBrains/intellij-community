@@ -5,7 +5,7 @@ import org.jetbrains.jps.Jps
 includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "94.SNAPSHOT"))
+requireProperty("buildNumber", requireProperty("build.number", "96.SNAPSHOT"))
 
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
