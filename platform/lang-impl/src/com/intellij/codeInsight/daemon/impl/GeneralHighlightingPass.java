@@ -208,7 +208,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             for (PsiLanguageInjectionHost.Shred place : places) {
               TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
               if (textRange.isEmpty()) continue;
-              String desc = injectedPsi.getText();
+              String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
               HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
               addHighlightInfo(textRange, info);
             }
