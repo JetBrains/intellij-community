@@ -152,22 +152,22 @@ public class InjectedLanguageUtil {
   }
 
   @NotNull
-  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor editor, final PsiFile injectedFile) {
-    if (injectedFile == null || editor instanceof EditorWindow) return editor;
-    Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
-    if (!(document instanceof DocumentWindowImpl)) return editor;
+  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, final PsiFile injectedFile) {
+    if (injectedFile == null || hostEditor instanceof EditorWindow) return hostEditor;
+    Document document = PsiDocumentManager.getInstance(hostEditor.getProject()).getDocument(injectedFile);
+    if (!(document instanceof DocumentWindowImpl)) return hostEditor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    SelectionModel selectionModel = editor.getSelectionModel();
+    SelectionModel selectionModel = hostEditor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       int selstart = selectionModel.getSelectionStart();
       int selend = selectionModel.getSelectionEnd();
       if (!documentWindow.containsRange(selstart, selend)) {
         // selection spreads out the injected editor range
-        return editor;
+        return hostEditor;
       }
     }
-    if (!documentWindow.isValid()) return editor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
-    return EditorWindow.create(documentWindow, (EditorImpl)editor, injectedFile);
+    if (!documentWindow.isValid()) return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
+    return EditorWindow.create(documentWindow, (EditorImpl)hostEditor, injectedFile);
   }
 
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {

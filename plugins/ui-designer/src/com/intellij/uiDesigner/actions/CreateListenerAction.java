@@ -17,6 +17,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -30,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -140,16 +140,14 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     }
 
     private void createListener() {
-      RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(mySelection.get(0));
+      RadRootContainer root = (RadRootContainer)FormEditingUtil.getRoot(mySelection.get(0));
       final PsiField[] boundFields = new PsiField[mySelection.size()];
-      for(int i=0; i<mySelection.size(); i++) {
-        boundFields [i] = BindingProperty.findBoundField(root, mySelection.get(i).getBinding());
+      for (int i = 0; i < mySelection.size(); i++) {
+        boundFields[i] = BindingProperty.findBoundField(root, mySelection.get(i).getBinding());
       }
-      final PsiClass myClass = boundFields [0].getContainingClass();
+      final PsiClass myClass = boundFields[0].getContainingClass();
 
-      final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(myClass.getProject())
-        .ensureFilesWritable(myClass.getContainingFile().getVirtualFile());
-      if (status.hasReadonlyFiles()) return;
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(myClass)) return;
 
       try {
         PsiMethod constructor = findConstructorToInsert(myClass);
@@ -157,8 +155,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         PsiClass listenerClass = null;
         final String listenerClassName = myDescriptor.getListenerType().getName();
         if (listenerClassName.endsWith(LISTENER_SUFFIX)) {
-          String adapterClassName = listenerClassName.substring(0, listenerClassName.length() - LISTENER_SUFFIX.length()) +
-                                    ADAPTER_SUFFIX;
+          String adapterClassName = listenerClassName.substring(0, listenerClassName.length() - LISTENER_SUFFIX.length()) + ADAPTER_SUFFIX;
           listenerClass = JavaPsiFacade.getInstance(myClass.getProject())
             .findClass(adapterClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
         }
@@ -178,7 +175,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         @NonNls StringBuilder builder = new StringBuilder();
         @NonNls String variableName = null;
         if (boundFields.length == 1) {
-          builder.append(boundFields [0].getName());
+          builder.append(boundFields[0].getName());
           builder.append(".");
           builder.append(myDescriptor.getAddListenerMethod().getName());
           builder.append("(");
@@ -205,14 +202,15 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         }
 
         PsiStatement stmt = factory.createStatementFromText(builder.toString(), constructor);
-        stmt = (PsiStatement) body.addAfter(stmt, body.getLastBodyElement());
+        stmt = (PsiStatement)body.addAfter(stmt, body.getLastBodyElement());
         JavaCodeStyleManager.getInstance(body.getProject()).shortenClassReferences(stmt);
 
         if (boundFields.length > 1) {
           PsiElement anchor = stmt;
-          for(PsiField field: boundFields) {
-            PsiElement addStmt = factory.createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() +
-              "(" + variableName + ");", constructor);
+          for (PsiField field : boundFields) {
+            PsiElement addStmt = factory
+              .createStatementFromText(field.getName() + "." + myDescriptor.getAddListenerMethod().getName() + "(" + variableName + ");",
+                                       constructor);
             addStmt = body.addAfter(addStmt, anchor);
             anchor = addStmt;
           }
@@ -220,7 +218,8 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
 
         final Ref<PsiClass> newClassRef = new Ref<PsiClass>();
         stmt.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override public void visitClass(PsiClass aClass) {
+          @Override
+          public void visitClass(PsiClass aClass) {
             newClassRef.set(aClass);
           }
         });
@@ -229,21 +228,19 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         newClass.navigate(true);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            final PsiClass newClass = (PsiClass) ptr.getElement();
+            final PsiClass newClass = (PsiClass)ptr.getElement();
             final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
             if (editor != null && newClass != null) {
-              CommandProcessor.getInstance().executeCommand(
-                myClass.getProject(),
-                new Runnable() {
-                  public void run() {
-                    if (!OverrideImplementUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
-                      OverrideImplementUtil.chooseAndImplementMethods(newClass.getProject(), editor, newClass);
-                    }
-                    else {
-                      OverrideImplementUtil.chooseAndOverrideMethods(newClass.getProject(), editor, newClass);
-                    }
+              CommandProcessor.getInstance().executeCommand(myClass.getProject(), new Runnable() {
+                public void run() {
+                  if (!OverrideImplementUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
+                    OverrideImplementUtil.chooseAndImplementMethods(newClass.getProject(), editor, newClass);
                   }
-                }, "", null);
+                  else {
+                    OverrideImplementUtil.chooseAndOverrideMethods(newClass.getProject(), editor, newClass);
+                  }
+                }
+              }, "", null);
             }
           }
         });

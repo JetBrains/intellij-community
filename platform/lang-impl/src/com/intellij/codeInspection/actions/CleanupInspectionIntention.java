@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -23,7 +24,6 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -58,9 +58,7 @@ public class CleanupInspectionIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(file.getVirtualFile());
-    if (status.hasReadonlyFiles()) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
     final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(myTool);

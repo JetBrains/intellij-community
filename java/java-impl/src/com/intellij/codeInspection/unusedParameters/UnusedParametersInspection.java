@@ -25,12 +25,11 @@
 package com.intellij.codeInspection.unusedParameters;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.search.PsiReferenceProcessorAdapter;
@@ -39,7 +38,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +62,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
       if (refMethod.isExternalOverride()) return null;
 
-      if (!(refMethod.isStatic() || refMethod.isConstructor()) && refMethod.getSuperMethods().size() > 0) return null;
+      if (!(refMethod.isStatic() || refMethod.isConstructor()) && !refMethod.getSuperMethods().isEmpty()) return null;
 
       if ((refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) && refMethod.getDerivedMethods().isEmpty()) return null;
 
@@ -72,7 +70,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
       final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
 
-      if (unusedParameters.size() == 0) return null;
+      if (unusedParameters.isEmpty()) return null;
 
       final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
       for (RefParameter refParameter : unusedParameters) {
@@ -118,7 +116,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
                 }
                 else {
                   int idx = refParameter.getIndex();
-                  final boolean[] found = new boolean[]{false};
+                  final boolean[] found = {false};
                   for (int i = 0; i < derived.length && !found[0]; i++) {
                     if (!scope.contains(derived[i])) {
                       PsiParameter psiParameter = derived[i].getParameterList().getParameters()[idx];
@@ -236,26 +234,14 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (ReadonlyStatusHandler.getInstance(project)
-        .ensureFilesWritable(PsiUtilBase.getVirtualFile(descriptor.getPsiElement())).hasReadonlyFiles()) return;
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (psiMethod != null) {
         final RefElement refMethod = myManager.getReference(psiMethod);
         if (refMethod != null) {
           final ArrayList<PsiElement> psiParameters = new ArrayList<PsiElement>();
-          if (myManager != null) {
-            for (final RefParameter refParameter : getUnusedParameters((RefMethod)refMethod)) {
-              psiParameters.add(refParameter.getElement());
-            }
-          }
-          else {
-            final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-            for (PsiParameter parameter : parameters) {
-              if (Comparing.strEqual(parameter.getName(), myHint)) {
-                psiParameters.add(parameter);
-                break;
-              }
-            }
+          for (final RefParameter refParameter : getUnusedParameters((RefMethod)refMethod)) {
+            psiParameters.add(refParameter.getElement());
           }
 
           final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
@@ -263,7 +249,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
           removeUnusedParameterViaChangeSignature(psiMethod, psiParameters);
 
-          if (myManager != null && startModificationCount != tracker.getModificationCount()) {
+          if (startModificationCount != tracker.getModificationCount()) {
             myProcessor.ignoreElement(refMethod);
           }
         }

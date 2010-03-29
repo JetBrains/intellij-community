@@ -16,16 +16,16 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParserFacade;
@@ -35,8 +35,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Roman.Chernyatchik
@@ -102,9 +102,7 @@ public abstract class AbstractAddNoInspectionCommentFix extends SuppressIntentio
     PsiElement container = getContainer(element);
     if (container == null) return;
 
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-      .ensureFilesWritable(container.getContainingFile().getVirtualFile());
-    if (status.hasReadonlyFiles()) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
 
     final List<? extends PsiElement> comments = getCommentsFor(container);
     if (comments != null) {
