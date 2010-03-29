@@ -23,33 +23,31 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
-import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
+import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.ui.popup.util.BaseTreePopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -83,7 +81,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private Document myDocument;
   private Editor myEditor;
+
   private PlaybackDebuggerState myState;
+  private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
 
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
@@ -102,29 +102,28 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       }
     };
 
+    myState = ServiceManager.getService(PlaybackDebuggerState.class);
 
     final DefaultActionGroup controlGroup = new DefaultActionGroup();
     controlGroup.add(new RunOnFameActivationAction());
     controlGroup.add(new ActivateFrameAndRun());
-    controlGroup.addSeparator();
     controlGroup.add(new StopAction());
-    controlGroup.addSeparator();
-    controlGroup.add(new SaveAction());
 
     JPanel north = new JPanel(new BorderLayout());
     north.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, controlGroup, true).getComponent(), BorderLayout.WEST);
 
     final JPanel right = new JPanel(new BorderLayout());
-    myCurrentScript.getDocument().addDocumentListener(docListener);
     right.add(myCurrentScript, BorderLayout.CENTER);
+    myCurrentScript.setText(myState.currentScript);
+    myCurrentScript.setEditable(false);
+    myCurrentScript.getDocument().addDocumentListener(docListener);
 
+    final DefaultActionGroup fsGroup = new DefaultActionGroup();
+    fsGroup.add(new SaveAction());
+    fsGroup.add(new SetScriptFileAction());
+    fsGroup.add(new NewScriptAction());
 
-    final DefaultActionGroup loadGroup = new DefaultActionGroup();
-    loadGroup.add(new LoadFromFileAction());
-    loadGroup.addSeparator();
-    loadGroup.add(new SetScriptDirAction());
-
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, loadGroup, true);
+    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fsGroup, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     right.add(tb.getComponent(), BorderLayout.EAST);
     north.add(right, BorderLayout.CENTER);
@@ -139,15 +138,18 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         myChanged = true;
       }
     });
-
-    final String text = System.getProperty("idea.playback.script");
-    if (text != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          myDocument.setText(text);
-        }
-      });
+    if (pathToFile() != null) {
+      loadFrom(pathToFile());
     }
+
+    //final String text = System.getProperty("idea.playback.script");
+    //if (text != null) {
+    //  ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    //    public void run() {
+    //      myDocument.setText(text);
+    //    }
+    //  });
+    //}
 
     final Splitter script2Log = new Splitter(true);
     script2Log.setFirstComponent(new JScrollPane(myEditor.getComponent()));
@@ -161,16 +163,13 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     myVfsListener = new VirtualFileAdapter() {
       @Override
       public void contentsChanged(VirtualFileEvent event) {
-        final VirtualFile file = getCurrentScriptFile();
+        final VirtualFile file = pathToFile();
         if (file != null && file.equals(event.getFile())) {
           loadFrom(event.getFile());
         }
       }
     };
     LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
-
-    myState = ServiceManager.getService(PlaybackDebuggerState.class);
-    myScriptsPath.setText(myState.scriptsPath);
   }
 
   private class SaveAction extends AnAction {
@@ -180,10 +179,21 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(myChanged);
+      //e.getPresentation().setEnabled(myChanged);
     }
 
     public void actionPerformed(AnActionEvent e) {
+      if (pathToFile() == null) {
+        VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR);
+        if (files.length > 0) {
+          VirtualFile selectedFile = files[0];
+          myState.currentScript = selectedFile.getPresentableUrl();
+          myCurrentScript.setText(myState.currentScript);
+        } else {
+          Messages.showErrorDialog("File to save is not selected.", "Cannot save script");
+          return;
+        }
+      }
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           save();
@@ -192,117 +202,72 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
   }
 
-  private VirtualFile getCurrentScriptFile() {
-    final String text = myCurrentScript.getText();
-    return text != null ? LocalFileSystem.getInstance().findFileByIoFile(new File(text)) : null;
-  }
-
-  private class SetScriptDirAction extends AnAction {
-    private SetScriptDirAction() {
-      super("Set Script Directory", "", IconLoader.getIcon("/nodes/packageOpen.png"));
+  private static class ScriptFileChooserDescriptor extends FileChooserDescriptor {
+    public ScriptFileChooserDescriptor() {
+      super(true, false, false, false, false, false);
+      putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
+      putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
     }
 
+    @Override
+    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+      if (!showHiddenFiles && FileElement.isFileHidden(file)) return false;
+      return file.getExtension() != null && file.getExtension().equalsIgnoreCase(UiScriptFileType.myExtension)
+             || super.isFileVisible(file, showHiddenFiles) && file.isDirectory();
+    }
+  }
+
+  private class SetScriptFileAction extends AnAction {
+
+    private SetScriptFileAction() {
+      super("Set Script File", "", IconLoader.getIcon("/nodes/packageOpen.png"));
+    }
+
+    @Override
     public void actionPerformed(AnActionEvent e) {
-      final File file = getScriptsFile();
-      final String choose = file != null ? "Choose another..." : "Choose...";
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Script Directory", new String[] {
-        file != null ? file.getAbsolutePath() : "Undefined", choose
-      }) {
-        @Override
-        public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-          if (selectedValue != choose) return FINAL_CHOICE;
-
-          final VirtualFile[] files =
-            FileChooser.chooseFiles(myComponent, new FileChooserDescriptor(false, true, false, false, false, false));
-            if (files.length > 0) {
-              String presentableUrl = files[0].getPresentableUrl();
-              myScriptsPath.setText(presentableUrl);
-              myState.scriptsPath = presentableUrl;
-            }
-          return FINAL_CHOICE;
-        }
-      }).showUnderneathOf(e.getInputEvent().getComponent());
+      VirtualFile[] files = FileChooser.chooseFiles(myComponent, FILE_DESCRIPTOR, pathToFile());
+      if (files.length > 0) {
+        VirtualFile selectedFile = files[0];
+        myState.currentScript = selectedFile.getPresentableUrl();
+        loadFrom(selectedFile);
+        myCurrentScript.setText(myState.currentScript);
+      }
     }
   }
 
-  private class LoadFromFileAction extends AnAction {
-    private LoadFromFileAction() {
-      super("Load", "Load script from the script directory", IconLoader.getIcon("/general/autoscrollFromSource.png"));
+  private class NewScriptAction extends AnAction {
+    private NewScriptAction() {
+      super("New Script", "", IconLoader.getIcon("/actions/new.png"));
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
-      final Component c = e.getInputEvent().getComponent();
-      final File scriptsFile = getScriptsFile();
-
-      final FilenameFilter filter = new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-          return name.toLowerCase().endsWith(DOT_EXT) || new File(dir, name).isDirectory();
-        }
-      };
-
-      final File[] kids = scriptsFile != null ? scriptsFile.listFiles(filter) : null;
-
-      if (kids == null || kids.length == 0) {
-        JBPopupFactory.getInstance().createMessage("No scripts found in the given directory").showUnderneathOf(c);
-      } else {
-        final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            final boolean fileVisible = super.isFileVisible(file, showHiddenFiles);
-            if (fileVisible && file.getParent() != null) {
-              return filter.accept(new File(file.getParent().getPresentableUrl()), file.getName());
-            } else {
-              return false;
-            }
-          }
-        };
-        descriptor.setRoot(LocalFileSystem.getInstance().findFileByIoFile(scriptsFile));
-        JBPopupFactory.getInstance().createTree(new BaseTreePopupStep<FileElement>(null, "Choose Script To Load", new FileTreeStructure(null, descriptor)) {
-          @Override
-          public PopupStep onChosen(FileElement selectedValue, boolean finalChoice) {
-            loadFrom(selectedValue.getFile());
-            return FINAL_CHOICE;
-          }
-        }).showUnderneathOf(c);
-      }
+      myState.currentScript = "";
+      myCurrentScript.setText(myState.currentScript);
+      fillDocument("");
     }
   }
 
-  private boolean maybeCreateFile()  {
-    if (getCurrentScriptFile() != null) return true;
-
-    try {
-      final String text = myCurrentScript.getText();
-      if (text == null) {
-        throw new Exception("Cannot create file with name:" + text);
+  private void fillDocument(final String text) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        myDocument.setText(text == null ? "" : text);
       }
+    });
+  }
 
-      final File file = new File(text);
-      final File parentFile = file.getParentFile();
-
-      try {
-        final VirtualFile parent = VfsUtil.createDirectories(parentFile.getAbsolutePath());
-
-        parent.createChildData(this, file.getName());
-      }
-      catch (IOException e) {
-        throw new Exception(e.getMessage());
-      }
-
-      return true;
+  @Nullable
+  private VirtualFile pathToFile() {
+    if (myState.currentScript.length() == 0) {
+      return null;
     }
-    catch (Exception e) {
-      Messages.showErrorDialog(e.getMessage(), "Cannot Save File");
-      return false;
-    }
+    return LocalFileSystem.getInstance().findFileByPath(myState.currentScript);
   }
 
   private void save() {
     BufferedWriter writer = null;
     try {
-      if (!maybeCreateFile()) return;
-
-      final OutputStream os = getCurrentScriptFile().getOutputStream(this);
+      final OutputStream os = pathToFile().getOutputStream(this);
       writer = new BufferedWriter(new OutputStreamWriter(os));
       final String toWrite = myDocument.getText();
       writer.write(toWrite != null ? toWrite : "");
@@ -321,15 +286,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
   }
 
-  private void loadFrom(VirtualFile file) {
+  private void loadFrom(@NotNull VirtualFile file) {
     try {
       final String text = CharsetToolkit.bytesToString(file.contentsToByteArray());
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          myDocument.setText(text);
-        }
-      });
-      myCurrentScript.setText(file.getPresentableUrl());
+      fillDocument(text);
       myChanged = false;
     }
     catch (IOException e) {
@@ -518,19 +478,19 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
               file="$APP_CONFIG$/other.xml")}
   )
   public static class PlaybackDebuggerState implements PersistentStateComponent<Element> {
-    private static final String ATTR_SCRIPTS_PATH = "scriptsPath";
-    public String scriptsPath = "";
+    private static final String ATTR_CURRENT_SCRIPT = "currentScript";
+    public String currentScript = "";
 
     public Element getState() {
       final Element element = new Element("playback");
-      element.setAttribute(ATTR_SCRIPTS_PATH, scriptsPath);
+      element.setAttribute(ATTR_CURRENT_SCRIPT, currentScript);
       return element;
     }
 
     public void loadState(Element state) {
-      final String dir = state.getAttributeValue(ATTR_SCRIPTS_PATH);
-      if (dir != null) {
-        scriptsPath = dir;
+      final String path = state.getAttributeValue(ATTR_CURRENT_SCRIPT);
+      if (path != null) {
+        currentScript = path;
       }
     }
   }
@@ -538,7 +498,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   public void disposeUiResources() {
     myComponent = null;
     LocalFileSystem.getInstance().removeVirtualFileListener(myVfsListener);
-    System.setProperty("idea.playback.script", myDocument.getText());
+    //System.setProperty("idea.playback.script", myDocument.getText());
     myCurrentScript.setText("");
     myMessage.clear();
     EditorFactory.getInstance().releaseEditor(myEditor);

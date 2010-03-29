@@ -16,11 +16,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
@@ -36,27 +32,27 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
   private final MavenProjectsTree myTree;
   private final boolean myDownloadSources;
   private final boolean myDownloadDocs;
-  private final AsyncResult<MavenArtifactDownloader.DownloadResult> myResult;
+  private final AsyncResult<MavenArtifactDownloader.DownloadResult> myCallbackResult;
 
   public MavenProjectsProcessorArtifactsDownloadingTask(Collection<MavenProject> projects,
                                                         Collection<MavenArtifact> artifacts,
                                                         MavenProjectsTree tree,
                                                         boolean downloadSources,
                                                         boolean downloadDocs,
-                                                        AsyncResult<MavenArtifactDownloader.DownloadResult> result) {
+                                                        AsyncResult<MavenArtifactDownloader.DownloadResult> callbackResult) {
     myProjects = projects;
     myArtifacts = artifacts;
     myTree = tree;
     myDownloadSources = downloadSources;
     myDownloadDocs = downloadDocs;
-    myResult = result;
+    myCallbackResult = callbackResult;
   }
 
   public void perform(final Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     MavenArtifactDownloader.DownloadResult result =
       myTree.downloadArtifacts(myProjects, myArtifacts, myDownloadSources, myDownloadDocs, embeddersManager, console, indicator);
-    myResult.setDone(result);
+    if (myCallbackResult != null) myCallbackResult.setDone(result);
 
     // todo: hack to update all file pointers.
     MavenUtil.invokeLater(project, new Runnable() {

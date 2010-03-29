@@ -42,7 +42,6 @@ import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -304,55 +303,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       throw e;
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public <Key, Psi extends PsiElement> Collection<Key> getAllKeysWithValues(StubIndexKey<Key, Psi> indexKey,
-                                                                            @NotNull Project project,
-                                                                            final GlobalSearchScope scope) {
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
-
-    final Set<Key> result = new THashSet<Key>();
-    final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-    final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
-    final Collection<Key> allKeys = getAllKeys(indexKey, project);
-
-    for (final Key key : allKeys) {
-      try {
-        try {
-          // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
-          FileBasedIndex.disableUpToDateCheckForCurrentThread();
-          index.getReadLock().lock();
-          final ValueContainer<TIntArrayList> container = index.getData(key);
-
-          container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
-            public void perform(final int id, final TIntArrayList value) {
-              final VirtualFile file = IndexInfrastructure.findFileById(fs, id);
-              if (file != null && (scope == null || scope.contains(file))) {
-                result.add(key);
-              }
-            }
-          });
-        }
-        finally {
-          index.getReadLock().unlock();
-          FileBasedIndex.enableUpToDateCheckForCurrentThread();
-        }
-      }
-      catch (StorageException e) {
-        forceRebuild(e);
-      }
-      catch (RuntimeException e) {
-        final Throwable cause = e.getCause();
-        if (cause instanceof IOException || cause instanceof StorageException) {
-          forceRebuild(e);
-        }
-        else {
-          throw e;
-        }
-      }
-    }
-    return result;
   }
 
   @NotNull

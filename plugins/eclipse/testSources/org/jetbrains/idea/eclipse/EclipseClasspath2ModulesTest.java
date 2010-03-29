@@ -20,8 +20,6 @@
  */
 package org.jetbrains.idea.eclipse;
 
-import com.intellij.testFramework.IdeaTestCase;
-
 public class EclipseClasspath2ModulesTest extends Eclipse2ModulesTest {
   @Override
   protected String getTestPath() {
@@ -34,6 +32,10 @@ public class EclipseClasspath2ModulesTest extends Eclipse2ModulesTest {
 
   public void testMultiModuleDependencies() throws Exception {
     doTest("multi", "m1");
+  }
+
+  public void testRelativePaths() throws Exception {
+    doTest("relPaths", "scnd");
   }
 
   protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {

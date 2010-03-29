@@ -17,6 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.TypeInfo;
@@ -131,7 +132,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
       if (!myInitializerInitialized) {
         myInitializerInitialized = true;
         String initializerText = getStub().getInitializerText();
-        if (initializerText != null) {
+        if (initializerText != null && !Comparing.equal(PsiFieldStub.INITIALIZER_TOO_LONG, initializerText)) {
           myInitializer = ClsParsingUtil.createExpressionFromText(initializerText, getManager(), this);
         }
       }

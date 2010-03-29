@@ -349,9 +349,13 @@ public class MavenEmbedderWrapper {
             getComponent(PluginManager.class).verifyPlugin(mavenPlugin, nativeMavenProject, mySettings, myLocalRepository);
           if (!transitive) return true;
 
+          // todo try to use parallel downloading
+
+          List repos = nativeMavenProject.getRemoteArtifactRepositories();
+          for (Artifact each : (Iterable<Artifact>)result.getIntroducedDependencyArtifacts()) {
+            doResolve(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()), each.getType(), null, repos);
+          }
           for (ComponentDependency each : (List<ComponentDependency>)result.getDependencies()) {
-            List repos = nativeMavenProject.getRemoteArtifactRepositories();
-            // todo try to use parallel downloading
             doResolve(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()), each.getType(), null, repos);
           }
         }

@@ -203,7 +203,13 @@ public class Utils{
 
 
   public static void fillMenu(@NotNull final ActionGroup group,
-                              final JComponent component, boolean enableMnemonics, final PresentationFactory presentationFactory, DataContext context, final String place, boolean isWindowMenu){
+                              final JComponent component,
+                              boolean enableMnemonics,
+                              final PresentationFactory presentationFactory,
+                              DataContext context,
+                              final String place,
+                              boolean isWindowMenu,
+                              final boolean mayDataContextBeInvalid){
     final ActionCallback menuBuilt = new ActionCallback();
 
     ArrayList<AnAction> list = new ArrayList<AnAction>();
@@ -259,6 +265,8 @@ public class Utils{
 
     menuBuilt.doWhenDone(new Runnable() {
       public void run() {
+        if (!mayDataContextBeInvalid) return;
+
         if (IdeFocusManager.getInstance(null).isFocusBeingTransferred()) {
           IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
             public void run() {

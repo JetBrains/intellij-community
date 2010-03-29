@@ -15,11 +15,16 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.openapi.paths.PathReferenceManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFile> {
+public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFile> implements CustomReferenceConverter {
   @Override
   public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
@@ -45,5 +50,15 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
   @NotNull
   public Collection<PsiFile> getVariants(ConvertContext context) {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
+    return createReferences(element, true);
+  }
+
+  @NotNull
+  public static PsiReference[] createReferences(@NotNull final PsiElement psiElement, final boolean soft) {
+    return PathReferenceManager.getInstance().createReferences(psiElement, soft);
   }
 }

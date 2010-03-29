@@ -491,7 +491,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           return ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
         }
       }
-      return null;
+      return selectedNodeElements[0] instanceof PsiDirectory ? new PsiDirectory[] {(PsiDirectory)selectedNodeElements[0]} : null;
     }
 
     public PsiDirectory[] getDirectories() {

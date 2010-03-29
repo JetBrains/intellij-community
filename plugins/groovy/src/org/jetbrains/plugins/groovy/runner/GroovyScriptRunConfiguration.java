@@ -86,7 +86,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   private String getAbsoluteWorkDir() {
-    if (!new File(workDir).isAbsolute()) {
+    if (!FileUtil.isAbsolute(workDir)) {
       return new File(getProject().getLocation(), workDir).getAbsolutePath();
     }
     return workDir;

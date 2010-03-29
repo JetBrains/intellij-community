@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 public class WordSplitter extends BaseSplitter {
 
   @NonNls
-  private static final Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{4};?|#\\p{Alnum}{3,6}");
+  private static final Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{4};?|#\\p{Alnum}{3,6}|0x\\p{Alnum}?");
 
 
   public List<CheckArea> split(@Nullable String text, @NotNull TextRange range) {

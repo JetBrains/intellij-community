@@ -31,6 +31,10 @@ public class EclipseIml2ModulesTest extends Eclipse2ModulesTest {
     doTest("eclipse-ws-3.4.1-a", "all-props");
   }
 
+  public void testRelativePaths() throws Exception {
+    doTest("relPaths", "scnd");
+  }
+
   @Override
   protected void doTest(final String workspaceRoot, final String projectRoot) throws Exception {
     super.doTest(workspaceRoot, projectRoot);

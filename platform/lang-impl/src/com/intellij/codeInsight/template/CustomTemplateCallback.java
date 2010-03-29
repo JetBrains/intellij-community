@@ -53,6 +53,10 @@ public class CustomTemplateCallback {
     myFile = file;
     myProject = file.getProject();
     myTemplateManager = TemplateManagerImpl.getInstance(myProject);
+    fixInitialState();
+  }
+
+  public void fixInitialState() {
     myStartOffset = myEditor.getCaretModel().getOffset();
     myGlobalMarker = myEditor.getDocument().createRangeMarker(myStartOffset, myStartOffset);
     myGlobalMarker.setGreedyToLeft(true);

@@ -73,7 +73,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
       int y2 = Math.min(Math.max(0, y), component.getHeight() - 1); // fit y into [0, height-1]
 
       myContext = DataManager.getInstance().getDataContext(component, x2, y2);
-      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false);
+      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false);
       if (getComponentCount() == 0) {
         return;
       }
@@ -148,7 +148,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
 
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         MyMenu.this.removeAll();
-        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().DISABLE_MNEMONICS, myPresentationFactory, myContext, myPlace, false);
+        Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().DISABLE_MNEMONICS, myPresentationFactory, myContext, myPlace, false,
+                       false);
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }

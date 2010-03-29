@@ -75,8 +75,6 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
         for (PsiAnnotation annotation : myAnnotations) {
           targetMember.getModifierList().addAfter(annotation, null);
         }
-
-        JavaCodeStyleManager.getInstance(targetMember.getProject()).shortenClassReferences(targetMember.getModifierList());
       }
       return Arrays.asList(new PsiGenerationInfo<PsiField>(psiField), getter, setter);
     }

@@ -49,7 +49,7 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
         final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tagAtCaret.getNode());
         final ASTNode endTagEnd = XmlChildRole.START_TAG_END_FINDER.findChild(tagAtCaret.getNode());
         if (emptyTagEnd != null || endTagEnd != null) {
-          return XmlZenCodingTemplate.startZenCoding(editor, psiFile);
+          return XmlZenCodingTemplate.startZenCoding(editor, psiFile, null);
         }
 
         int insertionOffset = tagAtCaret.getTextRange().getEndOffset();

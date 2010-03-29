@@ -562,7 +562,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final boolean myDeclareStatic;
     private final boolean myDeclareFinal;
     private final InitializationPlace myInitializerPlace;
-    @Modifier private final String myVisibility;
+    private final String myVisibility;
     private final boolean myDeleteLocalVariable;
     private final TargetDestination myTargetClass;
     private final boolean myAnnotateAsNonNls;
@@ -594,7 +594,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myInitializerPlace;
     }
 
-    @Modifier
     public String getFieldVisibility() {
       return myVisibility;
     }
@@ -622,7 +621,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public Settings(String fieldName, boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
-                    InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
                     TargetDestination targetDestination,
                     final boolean annotateAsNonNls,

@@ -141,6 +141,7 @@ public abstract class GitBaseRebaseProcess {
           try {
             boolean stashCreated = false;
             if (rootsToStash.contains(root)) {
+              progressIndicator.setText(GitHandlerUtil.formatOperationName("Stashing changes from", root));
               stashCreated = GitStashUtils.saveStash(myProject, root, stashMessage);
             }
             try {
@@ -150,7 +151,7 @@ public abstract class GitBaseRebaseProcess {
                 RebaseConflictDetector rebaseConflictDetector = new RebaseConflictDetector();
                 h.addLineListener(rebaseConflictDetector);
                 try {
-                  GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator);
+                  GitHandlerUtil.doSynchronouslyWithExceptions(h, progressIndicator, GitHandlerUtil.formatOperationName("Pulling changes into", root));
                 }
                 finally {
                   if (!rebaseConflictDetector.isRebaseConflict()) {
@@ -212,6 +213,7 @@ public abstract class GitBaseRebaseProcess {
             }
             finally {
               if (stashCreated) {
+                progressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
                 unstash(listsCopy, changeManager, root);
               }
             }
@@ -421,7 +423,7 @@ public abstract class GitBaseRebaseProcess {
       configureRebaseEditor(root, rh);
     }
     try {
-      GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator);
+      GitHandlerUtil.doSynchronouslyWithExceptions(rh, progressIndicator, GitHandlerUtil.formatOperationName("Rebasing ", root));
     }
     finally {
       cleanupHandler(root, rh);
