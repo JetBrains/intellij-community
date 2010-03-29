@@ -141,14 +141,14 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       loadFrom(scriptFile);
     }
 
-    final String text = System.getProperty("idea.playback.script");
-    if (text != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          myDocument.setText(text);
-        }
-      });
-    }
+    //final String text = System.getProperty("idea.playback.script");
+    //if (text != null) {
+    //  ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    //    public void run() {
+    //      myDocument.setText(text);
+    //    }
+    //  });
+    //}
 
     final Splitter script2Log = new Splitter(true);
     script2Log.setFirstComponent(new JScrollPane(myEditor.getComponent()));
@@ -500,7 +500,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   public void disposeUiResources() {
     myComponent = null;
     LocalFileSystem.getInstance().removeVirtualFileListener(myVfsListener);
-    System.setProperty("idea.playback.script", myDocument.getText());
+    //System.setProperty("idea.playback.script", myDocument.getText());
     myCurrentScript.setText("");
     myMessage.clear();
     EditorFactory.getInstance().releaseEditor(myEditor);
