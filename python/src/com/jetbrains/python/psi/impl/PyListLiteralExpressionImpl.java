@@ -19,7 +19,6 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
     pyVisitor.visitPyListLiteralExpression(this);
   }
 
-  @PsiCached
   @NotNull
   public PyExpression[] getElements() {
     return childrenToPsi(PyElementTypes.EXPRESSIONS, PyExpression.EMPTY_ARRAY);

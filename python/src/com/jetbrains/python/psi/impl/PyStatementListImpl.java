@@ -8,7 +8,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PsiCached;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
@@ -28,7 +27,6 @@ public class PyStatementListImpl extends PyElementImpl implements PyStatementLis
     pyVisitor.visitPyStatementList(this);
   }
 
-  @PsiCached
   public PyStatement[] getStatements() {
     return childrenToPsi(PyElementTypes.STATEMENTS, PyStatement.EMPTY_ARRAY);
   }

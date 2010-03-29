@@ -25,14 +25,12 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     pyVisitor.visitPyCallExpression(this);
   }
 
-  @PsiCached
   @Nullable
   public PyExpression getCallee() {
     //return PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class); what we call can be whatever expr, not always a ref
     return (PyExpression)getFirstChild();
   }
 
-  @PsiCached
   public PyArgumentList getArgumentList() {
     return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
   }
