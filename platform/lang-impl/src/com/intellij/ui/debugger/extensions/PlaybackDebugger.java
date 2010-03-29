@@ -47,6 +47,7 @@ import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -136,9 +137,8 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
         myChanged = true;
       }
     });
-    VirtualFile scriptFile = VirtualFileManager.getInstance().getFileSystem(LocalFileSystem.PROTOCOL).findFileByPath(myState.currentScript);
-    if (scriptFile != null) {
-      loadFrom(scriptFile);
+    if (pathToFile() != null) {
+      loadFrom(pathToFile());
     }
 
     //final String text = System.getProperty("idea.playback.script");
@@ -220,21 +220,26 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      VirtualFile[] files = FileChooser.chooseFiles(myComponent, descriptor);
+      VirtualFile[] files = FileChooser.chooseFiles(myComponent, descriptor, pathToFile());
       if (files.length > 0) {
         VirtualFile selectedFile = files[0];
-        myCurrentScript.setText(selectedFile.getPresentableUrl());
-        loadFrom(selectedFile);
         myState.currentScript = selectedFile.getPresentableUrl();
+        loadFrom(selectedFile);
+        myCurrentScript.setText(myState.currentScript);
       }
     }
+  }
+
+  @Nullable
+  private VirtualFile pathToFile() {
+    return LocalFileSystem.getInstance().findFileByPath(myState.currentScript);
   }
 
   private boolean maybeCreateFile()  {
     if (getCurrentScriptFile() != null) return true;
 
     try {
-      final String text = myCurrentScript.getText();
+      final String text = myState.currentScript;
       if (text == null) {
         throw new Exception("Cannot create file with name:" + text);
       }
@@ -291,7 +296,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
           myDocument.setText(text);
         }
       });
-      myCurrentScript.setText(file.getPresentableUrl());
       myChanged = false;
     }
     catch (IOException e) {
