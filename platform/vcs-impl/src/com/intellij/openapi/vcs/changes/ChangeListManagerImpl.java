@@ -131,6 +131,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           invokeAfterUpdate(new Runnable() {
             public void run() {
+              if (getChangeList(((LocalChangeList)oldDefaultList).getId()) == null) {
+                return; // removed already  
+              }
               switch (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS) {
 
                 case SHOW_CONFIRMATION:
