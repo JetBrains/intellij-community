@@ -162,6 +162,8 @@ target('default': "Build artifacts") {
     }
   }
 
+  usedJars.add("$normalizedHome/community/lib/looks-2.2.2.jar")
+
   build_searchable_options()
   wire_build_date(buildName)
   layoutFull(paths.distAll, usedJars)
