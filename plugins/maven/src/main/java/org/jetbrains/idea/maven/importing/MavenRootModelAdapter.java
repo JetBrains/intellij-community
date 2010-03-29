@@ -188,7 +188,7 @@ public class MavenRootModelAdapter {
   }
 
   private Path toPath(String path) {
-    if (!new File(path).isAbsolute()) {
+    if (!FileUtil.isAbsolute(path)) {
       path = new File(myMavenProject.getDirectory(), path).getPath();
     }
     return new Path(path);

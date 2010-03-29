@@ -158,7 +158,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
       tailBuff.append(e);
     }
     String tail = tailBuff.toString();
-    String result = new File(tail).isAbsolute() ? tail : new File(p.getDirectory(), tail).getPath();
+    String result = FileUtil.isAbsolute(tail) ? tail : new File(p.getDirectory(), tail).getPath();
 
     return FileUtil.toSystemIndependentName(PathUtil.getCanonicalPath(result));
   }

@@ -51,10 +51,6 @@ public class PathUtil {
     return path;
   }
 
-  public static boolean isAbsolute(String path) {
-    return new File(path).isAbsolute();
-  }
-
   public static String getRelative(String baseRoot, String path) {
     baseRoot = normalize(baseRoot);
     path = normalize(path);
@@ -74,7 +70,7 @@ public class PathUtil {
         return ".";
       }
     }
-    else if (isAbsolute(path)) {
+    else if (FileUtil.isAbsolute(path)) {
       return path;
     }
     else {

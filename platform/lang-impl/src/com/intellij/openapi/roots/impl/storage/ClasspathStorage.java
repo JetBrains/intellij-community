@@ -284,7 +284,7 @@ public class ClasspathStorage implements StateStorage {
     if (storageRef == null) {
       return moduleRoot;
     }
-    else if (new File(storageRef).isAbsolute()) {
+    else if (FileUtil.isAbsolute(storageRef)) {
       return storageRef;
     }
     else {
