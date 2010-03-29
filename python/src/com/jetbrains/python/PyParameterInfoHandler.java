@@ -152,7 +152,8 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
 
     // highlight current param(s)
-    for (PyExpression arg : PyUtil.flattenedParens(arglist.getArguments())) {
+    final List<PyExpression> args = PyUtil.flattenedParens(arglist.getArguments());
+    for (PyExpression arg : args) {
       if (arg.getTextRange().contains(current_param_offset)) {
         PyNamedParameter param = result.getPlainMappedParams().get(arg);
         if (param != null) {
@@ -193,6 +194,11 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         }
       }
       // else: stay unhilited
+    }
+
+    // highlight the parameter to be filled
+    if (current_param_offset < 0 && args.size() < n_param_list.size() - marked.getImplicitOffset()) {
+      hint_flags.get(param_indexes.get(n_param_list.get(args.size() + marked.getImplicitOffset()))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
     }
 
     final String NO_PARAMS_MSG = "<No parameters>";
