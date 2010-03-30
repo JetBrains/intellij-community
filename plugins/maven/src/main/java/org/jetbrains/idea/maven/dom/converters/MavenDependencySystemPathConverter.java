@@ -15,13 +15,13 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
-import com.intellij.openapi.paths.PathReferenceManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.CustomReferenceConverter;
 import com.intellij.util.xml.GenericDomValue;
@@ -54,11 +54,59 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
+    XmlElement xmlElement = genericDomValue.getXmlElement();
+
+    if (xmlElement != null && xmlElement.getText().contains("${")) return PsiReference.EMPTY_ARRAY;
+
     return createReferences(element, true);
   }
 
   @NotNull
   public static PsiReference[] createReferences(@NotNull final PsiElement psiElement, final boolean soft) {
-    return PathReferenceManager.getInstance().createReferences(psiElement, soft);
+    FileReferenceSet set = new MyFileReferenceSet(psiElement, soft);
+
+    return set.getAllReferences();
+  }
+
+  private static class MyFileReferenceSet extends FileReferenceSet {
+    private final boolean mySoft;
+
+    public MyFileReferenceSet(PsiElement psiElement, boolean soft) {
+      super(psiElement);
+      mySoft = soft;
+    }
+
+    @Override
+    public boolean isAbsolutePathReference() {
+      return true;
+    }
+
+    @Override
+    protected boolean isSoft() {
+      return mySoft;
+    }
+
+    @NotNull
+    @Override
+    public Collection<PsiFileSystemItem> getDefaultContexts() {
+      Collection<PsiFileSystemItem> systemItemCollection = super.getDefaultContexts();
+      if (isAbsolutePathReference()) {
+        VirtualFile vFile;
+        if (SystemInfo.isWindows) {
+          vFile = ManagingFS.getInstance().findRoot("", LocalFileSystem.getInstance());
+        }
+        else {
+          vFile = LocalFileSystem.getInstance().findFileByPath("/");
+        }
+
+        if (vFile != null) {
+          final PsiDirectory directory = getElement().getManager().findDirectory(vFile);
+          if (directory != null) {
+            systemItemCollection.add(directory);
+          }
+        }
+      }
+      return systemItemCollection;
+    }
   }
 }
