@@ -47,6 +47,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return node != null ? node.getText() : null;
   }
 
+  @Override
+  public int getTextOffset() {
+    final ASTNode nameElement = getNameElement();
+    return nameElement != null ? nameElement.getStartOffset() : getTextRange().getStartOffset();
+  }
+
   private ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
