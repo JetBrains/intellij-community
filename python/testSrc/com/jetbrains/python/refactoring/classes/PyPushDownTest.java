@@ -29,7 +29,7 @@ public class PyPushDownTest extends PyClassRefactoringTest {
   }
 
   public void testExistingmethod() throws Exception {
-    doProcessorTest("Foo", "function <b><code>foo</code></b> is already overridden in class <b><code>Boo</code></b>. Method will not be pushed down to that class.", ".foo");
+    doProcessorTest("Foo", "method <b><code>foo</code></b> is already overridden in class <b><code>Boo</code></b>. Method will not be pushed down to that class.", ".foo");
   }
 
   private void doProcessorTest(final String className, final String expectedError, final String... membersName) throws Exception {
