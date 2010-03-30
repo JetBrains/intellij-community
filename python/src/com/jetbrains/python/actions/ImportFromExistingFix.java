@@ -55,15 +55,6 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
   }
 
   /**
-   * @return a fix that uses all the same data, but with 'qualify' parameter inverted.
-   */
-  public ImportFromExistingFix createDual() {
-    ImportFromExistingFix piggybacked = new ImportFromExistingFix(myNode, myName, ! myUseQualifiedImport);
-    piggybacked.myImports = myImports;
-    return piggybacked;
-  }
-
-  /**
    * Adds another import source.
    * @param importable an element that could be imported either from import element or from file.
    * @param file the file which is the source of the importable
@@ -114,6 +105,11 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
       ImportCandidateHolder.getQualifiedName(myName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
     final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, editor, myUseQualifiedImport);
+    action.onDone(new Runnable() {
+      public void run() {
+        myExpended = true;
+      }
+    });
     HintManager.getInstance().showQuestionHint(
       editor, message,
       myNode.getTextOffset(),

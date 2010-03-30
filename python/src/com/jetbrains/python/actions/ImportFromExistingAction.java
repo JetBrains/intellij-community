@@ -31,6 +31,7 @@ public class ImportFromExistingAction implements QuestionAction {
   Editor myEditor;
   String myName;
   boolean myUseQualifiedImport;
+  private Runnable myOnDoneCallback;
 
   /**
    * @param target element to become qualified as imported.
@@ -47,7 +48,10 @@ public class ImportFromExistingAction implements QuestionAction {
     myUseQualifiedImport = useQualified;
   }
 
-
+  public void onDone(Runnable callback) {
+    assert myOnDoneCallback == null;
+    myOnDoneCallback = callback;
+  }
 
 
   /**
@@ -134,6 +138,9 @@ public class ImportFromExistingAction implements QuestionAction {
         doIt(item);
       }
     }.execute();
+    if (myOnDoneCallback != null) {
+      myOnDoneCallback.run();
+    }
   }
 
   // Stolen from FQNameCellRenderer
