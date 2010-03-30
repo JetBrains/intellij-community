@@ -337,7 +337,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
           // add import hint unless we're an import ourselves; the rest of action will fend for itself.
           if (ref_element != null && !ref_in_import && hint_action == null) {
-            hint_action = new AddImportAction(reference);
+            actions.add(new AddImportAction(reference));
           }
         }
       }
@@ -354,7 +354,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
 
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
-      registerProblem(point, description, hl_type, hint_action, actions.toArray(new LocalQuickFix[actions.size()]));
+      registerProblem(point, description, hl_type, null, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
     private static boolean overridesGetAttr(PyClass cls) {
