@@ -50,8 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.*;
 
@@ -88,20 +86,6 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private void initUi() {
     myComponent = new JPanel(new BorderLayout());
 
-    final DocumentListener docListener = new DocumentListener() {
-      public void insertUpdate(DocumentEvent e) {
-        myChanged = true;
-      }
-
-      public void removeUpdate(DocumentEvent e) {
-        myChanged = true;
-      }
-
-      public void changedUpdate(DocumentEvent e) {
-        myChanged = true;
-      }
-    };
-
     myState = ServiceManager.getService(PlaybackDebuggerState.class);
 
     final DefaultActionGroup controlGroup = new DefaultActionGroup();
@@ -116,12 +100,17 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     right.add(myCurrentScript, BorderLayout.CENTER);
     myCurrentScript.setText(myState.currentScript);
     myCurrentScript.setEditable(false);
-    myCurrentScript.getDocument().addDocumentListener(docListener);
 
     final DefaultActionGroup fsGroup = new DefaultActionGroup();
-    fsGroup.add(new SaveAction());
-    fsGroup.add(new SetScriptFileAction());
-    fsGroup.add(new NewScriptAction());
+    SaveAction saveAction = new SaveAction();
+    saveAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("control S")), myComponent);
+    fsGroup.add(saveAction);
+    SetScriptFileAction setScriptFileAction = new SetScriptFileAction();
+    setScriptFileAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("control O")), myComponent);
+    fsGroup.add(setScriptFileAction);
+    AnAction newScriptAction = new NewScriptAction();
+    newScriptAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("control N")), myComponent);
+    fsGroup.add(newScriptAction);
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fsGroup, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -179,7 +168,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     @Override
     public void update(AnActionEvent e) {
-      //e.getPresentation().setEnabled(myChanged);
+      e.getPresentation().setEnabled(myChanged);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -271,6 +260,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
       writer = new BufferedWriter(new OutputStreamWriter(os));
       final String toWrite = myDocument.getText();
       writer.write(toWrite != null ? toWrite : "");
+      myChanged = false;
     }
     catch (IOException e) {
       Messages.showErrorDialog(e.getMessage(), "Cannot save script");
