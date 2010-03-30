@@ -13,4 +13,9 @@ public class PyFindUsagesTest extends PyLightFixtureTestCase {
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/InitUsages.py");
     assertEquals(1, usages.size());
   }
+
+  public void testClassUsages() {   // PY-774
+    final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ClassUsages.py");
+    assertEquals(1, usages.size());
+  }
 }
