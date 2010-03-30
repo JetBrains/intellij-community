@@ -15,17 +15,15 @@
  */
 package org.intellij.plugins.xpathView;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.IconLoader;
-
 import org.intellij.plugins.xpathView.ui.ConfigUI;
-
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class XPathConfigurable implements Configurable {
+public class XPathConfigurable implements SearchableConfigurable {
     private ConfigUI configUI;
 
     public String getDisplayName() {
@@ -41,7 +39,15 @@ public class XPathConfigurable implements Configurable {
         return "xpath.settings";
     }
 
-    public JComponent createComponent() {
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
+  public JComponent createComponent() {
         configUI = new ConfigUI(XPathAppComponent.getInstance().getConfig());
 
         return configUI;

@@ -15,8 +15,8 @@
  */
 package com.intellij.spellchecker.settings;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class SpellCheckerSettingsManager implements Configurable {
+public class SpellCheckerSettingsManager implements SearchableConfigurable {
   private SpellCheckerSettingsPane settingsPane;
   private SpellCheckerSettings settings;
   private Project project;
@@ -55,6 +55,14 @@ public class SpellCheckerSettingsManager implements Configurable {
    public String getHelpTopic() {
      return "reference.settings.ide.settings.spelling";
    }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
+  }
 
 
   public JComponent createComponent() {

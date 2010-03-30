@@ -19,7 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.ui.RegistryCheckBox;
@@ -36,7 +36,7 @@ import java.awt.event.ItemListener;
 /**
  * @author Eugene Belyaev
  */
-public class DebuggerDataViewsConfigurable implements Configurable {
+public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbAutoscroll;
   private JCheckBox myCbShowSyntheticFields;
   private JCheckBox myCbSort;
@@ -287,5 +287,13 @@ public class DebuggerDataViewsConfigurable implements Configurable {
 
   public String getHelpTopic() {
     return "reference.idesettings.debugger.dataviews";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

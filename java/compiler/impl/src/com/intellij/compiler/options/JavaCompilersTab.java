@@ -21,6 +21,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 
@@ -36,7 +37,7 @@ import java.util.Vector;
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2004
  */
-public class JavaCompilersTab implements Configurable{
+public class JavaCompilersTab implements SearchableConfigurable {
   private JPanel myPanel;
   private JPanel myContentPanel;
   private JComboBox myCompiler;
@@ -89,6 +90,14 @@ public class JavaCompilersTab implements Configurable{
 
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.javacompiler";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {

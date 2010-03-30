@@ -173,7 +173,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
   private Configurable createVcsConfigurableWrapper(final AbstractVcs vcs) {
     final Configurable delegate = vcs.getConfigurable();
-    return new Configurable(){
+    return new SearchableConfigurable(){
       @Nls
       public String getDisplayName() {
         return vcs.getDisplayName();
@@ -205,6 +205,14 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
       public void disposeUIResources() {
         delegate.disposeUIResources();
+      }
+
+      public String getId() {
+        return getHelpTopic();
+      }
+
+      public Runnable enableSearch(String option) {
+        return null;
       }
     };
   }
