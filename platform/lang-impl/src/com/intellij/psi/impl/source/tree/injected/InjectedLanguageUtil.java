@@ -246,24 +246,24 @@ public class InjectedLanguageUtil {
     return element == null ? null : findInside(element, file, offset, documentManager);
   }
 
-  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile file, final int offset) {
-    PsiElement inj = findInjectedElementNoCommitWithOffset(file, offset);
+  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
+    PsiElement inj = findInjectedElementNoCommitWithOffset(hostFile, offset);
     if (inj != null) return inj;
     if (offset != 0) {
-      inj = findInjectedElementNoCommitWithOffset(file, offset - 1);
+      inj = findInjectedElementNoCommitWithOffset(hostFile, offset - 1);
     }
     return inj;
   }
 
-  private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile file, final int offset, @NotNull final PsiDocumentManager documentManager) {
+  private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile hostFile, final int hostOffset, @NotNull final PsiDocumentManager documentManager) {
     final Ref<PsiElement> out = new Ref<PsiElement>();
-    enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    enumerate(element, hostFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
           TextRange hostRange = place.host.getTextRange();
-          if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(offset)) {
+          if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(hostOffset)) {
             DocumentWindowImpl document = (DocumentWindowImpl)documentManager.getCachedDocument(injectedPsi);
-            int injectedOffset = document.hostToInjected(offset);
+            int injectedOffset = document.hostToInjected(hostOffset);
             PsiElement injElement = injectedPsi.findElementAt(injectedOffset);
             out.set(injElement == null ? injectedPsi : injElement);
           }

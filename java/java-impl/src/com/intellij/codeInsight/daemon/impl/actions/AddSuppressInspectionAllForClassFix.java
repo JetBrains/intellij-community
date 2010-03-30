@@ -28,7 +28,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,11 +36,10 @@ import org.jetbrains.annotations.Nullable;
  * Date: May 13, 2005
  */
 public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFix {
-  @NonNls private static final String ID = "ALL";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
 
   public AddSuppressInspectionAllForClassFix() {
-    super(ID);
+    super(SuppressionUtil.ALL);
   }
 
 
@@ -76,8 +74,8 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         if (annotation != null) {
-          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
-            "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" + ID + "\"})", container));
+          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" +
+                                                                                                             SuppressionUtil.ALL + "\"})", container));
           return;
         }
       }
@@ -87,7 +85,7 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
       if (docComment != null) {
         PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (noInspectionTag != null) {
-          String tagText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
+          String tagText = "@" + SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME + " " + SuppressionUtil.ALL;
           noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
           DaemonCodeAnalyzer.getInstance(project).restart();
           return;

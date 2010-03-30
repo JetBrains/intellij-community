@@ -18,10 +18,12 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -40,20 +42,25 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
 
   @Override
   public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+    element = findJavaCodeUpThere(element);
+    PsiFile file = element.getContainingFile();
+    editor = InjectedLanguageUtil.openEditorFor(file, project);
     int endOffset = element.getTextRange().getEndOffset();
     int line = editor.getDocument().getLineNumber(endOffset);
     int lineEndOffset = editor.getDocument().getLineEndOffset(line);
-    PsiFile file = element.getContainingFile();
+
     PsiComment comment = PsiTreeUtil.findElementOfClassAtOffset(file, lineEndOffset-1, PsiComment.class, false);
     String prefix = "";
+    boolean prefixFound = false;
     if (comment != null) {
       IElementType tokenType = comment.getTokenType();
       if (tokenType == JavaTokenType.END_OF_LINE_COMMENT) {
         prefix = StringUtil.trimStart(comment.getText(),"//") + " ";
+        prefixFound = true;
       }
     }
     String commentText = "//" + prefix + nonNlsCommentPattern;
-    if (prefix != "") {
+    if (prefixFound) {
       PsiComment newcom = JavaPsiFacade.getElementFactory(project).createCommentFromText(commentText, element);
       comment.replace(newcom);
     }
@@ -65,7 +72,19 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    return element != null && element.isValid();
+    if (element == null || !element.isValid()) {
+      return false;
+    }
+    // find java code up there, going through injecttions if necessary
+    return findJavaCodeUpThere(element) != null;
+  }
+
+  private static PsiElement findJavaCodeUpThere(PsiElement element) {
+    while (element != null) {
+      if (element.getLanguage() == StdLanguages.JAVA) return element;
+      element = element.getContext();
+    }
+    return null;
   }
 
   @NotNull

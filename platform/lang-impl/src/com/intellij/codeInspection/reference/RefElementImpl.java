@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -250,7 +251,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public boolean isSuppressed(final String toolId) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {
-        if (suppression.equals(toolId) || suppression.equals("ALL")){
+        if (suppression.equals(toolId) || suppression.equals(SuppressionUtil.ALL)){
           return true;
         }
       }

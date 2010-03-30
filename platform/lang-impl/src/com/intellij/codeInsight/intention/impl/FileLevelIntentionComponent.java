@@ -75,7 +75,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
         IntentionListStep step = new IntentionListStep(null, info, editor, psiFile, project);
         if (intentions != null && !intentions.isEmpty()) {
           HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
-          IntentionActionWithTextCaching actionWithTextCaching = step.wrapAction(psiFile, descriptor);
+          IntentionActionWithTextCaching actionWithTextCaching = step.wrapAction(descriptor, psiFile, psiFile, editor);
           step = step.getSubStep(actionWithTextCaching, null);
         }
         JBPopupFactory.getInstance().createListPopup(step).showUnderneathOf(myLabel);
