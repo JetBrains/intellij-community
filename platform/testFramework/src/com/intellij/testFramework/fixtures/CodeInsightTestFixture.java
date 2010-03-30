@@ -272,7 +272,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testRename(String fileAfter, String newName) throws Exception;
 
-  Collection<UsageInfo> testFindUsages(@NonNls String... fileNames) throws Exception;
+  Collection<UsageInfo> testFindUsages(@TestDataFile @NonNls String... fileNames);
 
   Collection<UsageInfo> findUsages(final PsiElement to) throws Exception;
 
