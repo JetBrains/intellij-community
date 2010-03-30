@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressByCommentFix;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -26,8 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author peter
  */
-public class AddNoInspectionGroovyCommentFix extends AddNoInspectionCommentFix {
-  public AddNoInspectionGroovyCommentFix(HighlightDisplayKey key) {
+public class SuppressByGroovyCommentFix extends SuppressByCommentFix {
+  public SuppressByGroovyCommentFix(HighlightDisplayKey key) {
     super(key, GrStatement.class);
   }
 

@@ -29,13 +29,12 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: May 13, 2005
  */
-public class AddSuppressInspectionForClassFix extends AddSuppressInspectionFix {
-
-  public AddSuppressInspectionForClassFix(final HighlightDisplayKey key) {
+public class SuppressForClassFix extends SuppressFix {
+  public SuppressForClassFix(final HighlightDisplayKey key) {
     super(key);
   }
 
-  public AddSuppressInspectionForClassFix(final String id) {
+  public SuppressForClassFix(final String id) {
    super(id);
   }
 

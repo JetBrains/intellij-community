@@ -41,17 +41,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class AddSuppressInspectionFix extends SuppressIntentionAction {
+public class SuppressFix extends SuppressIntentionAction {
   private String myID;
   private String myAlternativeID;
   private String myText;
 
-  public AddSuppressInspectionFix(HighlightDisplayKey key) {
+  public SuppressFix(HighlightDisplayKey key) {
     this(key.getID());
     myAlternativeID = HighlightDisplayKey.getAlternativeID(key);
   }
 
-  public AddSuppressInspectionFix(String ID) {
+  public SuppressFix(String ID) {
     myID = ID;
   }
 

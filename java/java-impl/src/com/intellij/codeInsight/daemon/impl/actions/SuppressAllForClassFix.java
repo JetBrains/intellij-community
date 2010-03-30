@@ -35,14 +35,12 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: May 13, 2005
  */
-public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFix {
+public class SuppressAllForClassFix extends SuppressFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
 
-  public AddSuppressInspectionAllForClassFix() {
+  public SuppressAllForClassFix() {
     super(SuppressionUtil.ALL);
   }
-
-
 
   @Nullable
   protected PsiDocCommentOwner getContainer(final PsiElement element) {

@@ -42,7 +42,7 @@ import java.util.List;
  * @author Roman.Chernyatchik
  * @date Aug 13, 2009
  */
-public abstract class AbstractAddNoInspectionCommentFix extends SuppressIntentionAction {
+public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressIntentionAction {
   protected final String myID;
   private final boolean myReplaceOtherSuppressionIds;
 
@@ -54,7 +54,7 @@ public abstract class AbstractAddNoInspectionCommentFix extends SuppressIntentio
    * @param replaceOtherSuppressionIds Merge suppression policy. If false new tool id will be append to the end
    * otherwize replace other ids
    */
-  public AbstractAddNoInspectionCommentFix(final String ID, final boolean replaceOtherSuppressionIds) {
+  public AbstractSuppressByNoInspectionCommentFix(final String ID, final boolean replaceOtherSuppressionIds) {
     myID = ID;
     myReplaceOtherSuppressionIds = replaceOtherSuppressionIds;
   }

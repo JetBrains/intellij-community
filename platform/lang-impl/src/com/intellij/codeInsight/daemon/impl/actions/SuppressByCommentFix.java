@@ -26,15 +26,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class AddNoInspectionCommentFix extends AbstractAddNoInspectionCommentFix {
+public class SuppressByCommentFix extends AbstractSuppressByNoInspectionCommentFix {
   protected Class<? extends PsiElement> mySuppressionHolderClass;
 
-  public AddNoInspectionCommentFix(HighlightDisplayKey key, Class<? extends PsiElement> suppressionHolderClass) {
+  public SuppressByCommentFix(HighlightDisplayKey key, Class<? extends PsiElement> suppressionHolderClass) {
     this(key.getID());
     mySuppressionHolderClass = suppressionHolderClass;
   }
 
-  private AddNoInspectionCommentFix(final String ID) {
+  private SuppressByCommentFix(final String ID) {
     super(ID, false);
   }
 

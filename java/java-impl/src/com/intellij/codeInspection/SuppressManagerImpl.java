@@ -22,10 +22,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionJavaCommentFix;
-import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionAllForClassFix;
-import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionFix;
-import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressByJavaCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressAllForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -53,10 +53,10 @@ public class SuppressManagerImpl extends SuppressManager {
 
   public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
     return new SuppressIntentionAction[]{
-        new AddNoInspectionJavaCommentFix(displayKey),
-        new AddSuppressInspectionFix(displayKey),
-        new AddSuppressInspectionForClassFix(displayKey),
-        new AddSuppressInspectionAllForClassFix()
+        new SuppressByJavaCommentFix(displayKey),
+        new SuppressFix(displayKey),
+        new SuppressForClassFix(displayKey),
+        new SuppressAllForClassFix()
       };
   }
 
