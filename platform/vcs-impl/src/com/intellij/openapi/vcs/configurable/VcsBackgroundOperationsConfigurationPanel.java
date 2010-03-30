@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
@@ -30,7 +30,7 @@ import java.awt.event.ActionListener;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
+public class VcsBackgroundOperationsConfigurationPanel implements SearchableConfigurable {
 
   private JPanel myPanel;
 
@@ -170,6 +170,14 @@ public class VcsBackgroundOperationsConfigurationPanel implements Configurable {
 
   public String getHelpTopic() {
     return "project.propVCSSupport.Background";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {

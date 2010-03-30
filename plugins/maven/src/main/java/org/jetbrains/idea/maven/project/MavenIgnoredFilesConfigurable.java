@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.ElementsChooser;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +30,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Comparator;
 
-public class MavenIgnoredFilesConfigurable implements Configurable {
+public class MavenIgnoredFilesConfigurable implements SearchableConfigurable {
   private static final char SEPARATOR = ',';
 
   private final MavenProjectsManager myManager;
@@ -96,5 +96,13 @@ public class MavenIgnoredFilesConfigurable implements Configurable {
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.project.maven.ignored.files";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

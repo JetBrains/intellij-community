@@ -16,13 +16,13 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public class DebuggerHotswapConfigurable implements Configurable{
+public class DebuggerHotswapConfigurable implements SearchableConfigurable {
   private JCheckBox myHotswapInBackground;
   private JCheckBox myCbCompileBeforeHotswap;
   private JRadioButton myRbAlways;
@@ -81,6 +81,14 @@ public class DebuggerHotswapConfigurable implements Configurable{
 
   public String getHelpTopic() {
     return "reference.idesettings.debugger.hotswap";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {

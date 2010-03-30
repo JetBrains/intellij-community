@@ -28,7 +28,6 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameInputValidator;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
@@ -45,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, ApplicationComponent {
 
@@ -159,6 +160,14 @@ class XsltConfigImpl extends XsltConfig implements JDOMExternalizable, Applicati
 
         public void reset() {
             myShowLinkedFiles.setSelected(myConfig.SHOW_LINKED_FILES);
+        }
+
+        public String getId() {
+          return getHelpTopic();
+        }
+
+        public Runnable enableSearch(String option) {
+          return null;
         }
     }
 }

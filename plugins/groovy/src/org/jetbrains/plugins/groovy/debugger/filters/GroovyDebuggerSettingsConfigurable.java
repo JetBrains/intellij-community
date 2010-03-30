@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.debugger.filters;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -28,7 +28,7 @@ import java.awt.event.ActionListener;
 /**
  * @author ilyas
  */
-public class GroovyDebuggerSettingsConfigurable implements Configurable {
+public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurable {
   private JCheckBox myIgnoreGroovyMethods;
   private JPanel myPanel;
   private boolean isModified = false;
@@ -57,6 +57,14 @@ public class GroovyDebuggerSettingsConfigurable implements Configurable {
 
   public String getHelpTopic() {
     return "reference.idesettings.debugger.groovy";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {
