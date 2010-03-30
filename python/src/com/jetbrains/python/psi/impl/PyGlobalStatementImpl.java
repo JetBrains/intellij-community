@@ -56,7 +56,6 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
   public void addGlobal(final String name) {
     final PyElementGenerator pyElementGenerator = PyElementGenerator.getInstance(getProject());
     add(pyElementGenerator.createComma().getPsi());
-    add(pyElementGenerator.createWhiteSpace(1));
     add(pyElementGenerator.createFromText(PyGlobalStatement.class, "global " + name).getGlobals()[0]);
   }
 }
