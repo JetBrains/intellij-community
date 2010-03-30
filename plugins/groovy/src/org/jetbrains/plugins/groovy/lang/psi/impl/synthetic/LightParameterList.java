@@ -32,6 +32,7 @@ public class LightParameterList extends LightElement implements PsiParameterList
 
   private final Computable<LightParameter[]> myParametersComputation;
   private LightParameter[] myParameters = null;
+  private final Object myParametersLock = new String("LightParametersListLock");
 
   protected LightParameterList(PsiManager manager, Computable<LightParameter[]> parametersComputation) {
     super(manager, GroovyFileType.GROOVY_LANGUAGE);
@@ -55,7 +56,7 @@ public class LightParameterList extends LightElement implements PsiParameterList
 
   @NotNull
   public PsiParameter[] getParameters() {
-    synchronized (PsiLock.LOCK) {
+    synchronized (myParametersLock) {
       if (myParameters == null) {
         myParameters = myParametersComputation.compute();
       }
