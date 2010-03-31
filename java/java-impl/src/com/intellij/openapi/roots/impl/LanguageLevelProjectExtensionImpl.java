@@ -33,6 +33,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
   @Deprecated
@@ -87,11 +88,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     element.setAttribute(JDK_15_ATTR, Boolean.toString(is15));
   }
 
+  @NotNull
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
   }
 
-  public void setLanguageLevel(LanguageLevel languageLevel) {
+  public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     if (myLanguageLevel != languageLevel) {
       reloadProjectOnLanguageLevelChange(languageLevel, false);
     }
@@ -102,7 +104,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
     }
   }
 
-  public void reloadProjectOnLanguageLevelChange(final LanguageLevel languageLevel, final boolean forceReload) {
+  public void reloadProjectOnLanguageLevelChange(@NotNull final LanguageLevel languageLevel, final boolean forceReload) {
     if (willReload()) {
       myReloadProjectRequest = new Runnable() {
         public void run() {
