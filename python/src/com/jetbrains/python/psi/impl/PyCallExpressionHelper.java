@@ -45,7 +45,7 @@ public class PyCallExpressionHelper {
         PsiElement redefining_func = refex.getReference().resolve();
         if (redefining_func != null) {
           PsiNamedElement true_func = PyBuiltinCache.getInstance(us).getByName(refname, PsiNamedElement.class);
-          if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findMethodByName(PyNames.INIT, true);
+          if (true_func instanceof PyClass) true_func = ((PyClass)true_func).findInitOrNew(true);
           if (true_func == redefining_func) {
             // yes, really a case of "foo = classmethod(foo)"
             PyArgumentList arglist = redefining_call.getArgumentList();
@@ -73,10 +73,14 @@ public class PyCallExpressionHelper {
   public static PyCallExpression.PyMarkedFunction resolveCallee(PyCallExpression us) {
     PyExpression callee = us.getCallee();
     PyFunction.Flag wrapped_flag = null;
+    boolean is_constructor_call = false;
     if (callee instanceof PyReferenceExpression) {
       PyReferenceExpression ref = (PyReferenceExpression)callee;
       PsiElement resolved = ref.followAssignmentsChain();
-      if (resolved instanceof PyClass) resolved = ((PyClass)resolved).findMethodByName(PyNames.INIT, true); // class to constructor call
+      if (resolved instanceof PyClass) {
+        resolved = ((PyClass)resolved).findInitOrNew(true); // class to constructor call
+        is_constructor_call = true;
+      }
       else if (resolved instanceof PyCallExpression) {
         // is it a case of "foo = classmethod(foo)"?
         PyCallExpression redefining_call = (PyCallExpression)resolved;
@@ -91,6 +95,9 @@ public class PyCallExpressionHelper {
       if (resolved instanceof PyFunction) {
         EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
         int implicit_offset = getImplicitArgumentCount(us.getCallee(), (PyFunction) resolved, wrapped_flag, flags);
+        if (! is_constructor_call && PyNames.NEW.equals(((PyFunction)resolved).getName())) {
+          implicit_offset = Math.min(implicit_offset-1, 0); // case of Class.__new__  
+        }
         return new PyCallExpression.PyMarkedFunction((PyFunction)resolved, flags, implicit_offset);
       }
     }
@@ -117,6 +124,7 @@ public class PyCallExpressionHelper {
       if (wrapped_flag == PyFunction.Flag.STATICMETHOD && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
       if (wrapped_flag == PyFunction.Flag.CLASSMETHOD && ! is_by_instance) implicit_offset += 1; // Both Foo.method() and foo.method() have implicit the first arg
     }
+    if (! is_by_instance && PyNames.NEW.equals(method.getName())) implicit_offset += 1; // constructor call
     // decorators?
     if (PyNames.INIT.equals(method.getName())) {
       String refName = callReference instanceof PyReferenceExpression
@@ -139,7 +147,7 @@ public class PyCallExpressionHelper {
             if (flags != null) {
               flags.add(PyFunction.Flag.STATICMETHOD);
             }
-            if (implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
+            if (is_by_instance && implicit_offset > 0) implicit_offset -= 1; // might have marked it as implicit 'self'
           }
           else if (PyNames.CLASSMETHOD.equals(deconame)) {
             if (flags != null) {

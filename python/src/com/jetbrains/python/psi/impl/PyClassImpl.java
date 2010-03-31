@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -261,21 +262,58 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result.toArray(new PyFunction[result.size()]);
   }
 
+  private static class NameFindingProcessor implements Processor<PyFunction> {
+    private PyFunction myResult;
+    private String[] myNames;
+
+    public NameFindingProcessor(String... names) {
+      myNames = names;
+      myResult = null;
+    }
+
+    public PyFunction getResult() {
+      return myResult;
+    }
+
+    public boolean process(PyFunction pyFunction) {
+      String fname = pyFunction.getName();
+      for (String name: myNames) {
+        if (name.equals(fname)) {
+          myResult = pyFunction;
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
   public PyFunction findMethodByName(@NotNull final String name, boolean inherited) {
+    NameFindingProcessor proc = new NameFindingProcessor(name);
+    scanMethods(proc, inherited);
+    return proc.getResult();
+  }
+
+  @Nullable
+  public PyFunction findInitOrNew(boolean inherited) {
+    NameFindingProcessor proc;
+    if (isNewStyleClass()) proc = new NameFindingProcessor(PyNames.INIT, PyNames.NEW);
+    else proc = new NameFindingProcessor(PyNames.INIT); 
+    scanMethods(proc, inherited);
+    return proc.getResult();
+  }
+
+  public void scanMethods(Processor<PyFunction> processor, boolean inherited) {
     PyFunction[] methods = getMethods();
     for(PyFunction method: methods) {
-      if (name.equals(method.getName())) {
-        return method;
-      }
+      if (! processor.process(method)) return;
     }
     if (inherited) {
       for (PyClass ancestor : iterateAncestors()) {
-        PyFunction candidate = ancestor.findMethodByName(name, false); // not recursively, we want MRI in MI cases 
-        if (candidate != null) return candidate;
+        ancestor.scanMethods(processor, false);
       }
     }
-    return null;
   }
+
 
   public PyTargetExpression[] getClassAttributes() {
     PyClassStub stub = getStub();

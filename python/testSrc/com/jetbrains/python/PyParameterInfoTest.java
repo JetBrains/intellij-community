@@ -247,6 +247,30 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a,b", new String[]{"b"}, new String[]{"self,"});
   }
 
+  public void testRedefinedNewConstructorCall() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls,a,b", new String[]{"a,"}, new String[]{"cls,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls,a,b", new String[]{"b"}, new String[]{"cls,"});
+  }
+
+  public void testRedefinedNewDirectCall() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 3);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls,a,b", new String[]{"cls,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls,a,b", new String[]{"a,"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("cls,a,b", new String[]{"b"});
+  }
+
+  public void testIgnoreNewInOldStyleClass() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self,one", new String[]{"one"}, new String[]{"self,"});
+  }
+
   // TODO: add method tests with decorators when a mock SDK is available
 
   /**

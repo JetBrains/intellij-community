@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +37,24 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
    */
   @Nullable
   PyFunction findMethodByName(@NotNull @NonNls final String name, boolean inherited);
+
+  /**
+   * Finds either __init__ or __new__, whichever is defined for given class.
+   * If __init__ is defined, it is found first. This mimics the way initialization methods
+   * are searched for and called by Python when a constructor call is made.
+   * Since __new__ only makes sense for new-style classes, an old-style class never finds it with this method.
+   * @param inherited true: search in superclasses, too.
+   * @return a method that would be called first when an instance of this class is instantiated.
+   */
+  @Nullable
+  PyFunction findInitOrNew(boolean inherited);
+
+  /**
+   * Apply a processor to every method, looking at superclasses in method resolution order as needed.
+   * @param processor what to apply
+   * @param inherited true: search in superclasses, too.
+   */
+  void scanMethods(Processor<PyFunction> processor, boolean inherited);
 
   PyTargetExpression[] getClassAttributes();
 
