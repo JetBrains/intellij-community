@@ -54,7 +54,7 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
    * @param processor what to apply
    * @param inherited true: search in superclasses, too.
    */
-  void scanMethods(Processor<PyFunction> processor, boolean inherited);
+  boolean scanMethods(Processor<PyFunction> processor, boolean inherited);
 
   PyTargetExpression[] getClassAttributes();
 
