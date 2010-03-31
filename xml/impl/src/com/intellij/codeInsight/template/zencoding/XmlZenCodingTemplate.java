@@ -35,9 +35,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlBundle;
@@ -356,7 +355,16 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     }
     if (file.getLanguage() instanceof XMLLanguage) {
       PsiElement element = file.findElementAt(offset > 0 ? offset - 1 : offset);
-      if (element == null || element.getLanguage() instanceof XMLLanguage) {
+      if (element == null) {
+        return true;
+      }
+      if (element.getLanguage() instanceof XMLLanguage) {
+        if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) {
+          return false;
+        }
+        if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
+          return false;
+        }
         return true;
       }
     }
