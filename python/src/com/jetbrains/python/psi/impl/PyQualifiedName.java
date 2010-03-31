@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +83,8 @@ public class PyQualifiedName {
     else {
       qName = new PyQualifiedName(size);
       for (int i = 0; i < size; i++) {
-        qName.myComponents.add(dataStream.readName().getString());
+        final StringRef name = dataStream.readName();
+        qName.myComponents.add(name == null ? null : name.getString());
       }
     }
     return qName;

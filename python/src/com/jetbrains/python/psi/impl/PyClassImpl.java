@@ -302,16 +302,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return proc.getResult();
   }
 
-  public void scanMethods(Processor<PyFunction> processor, boolean inherited) {
+  public boolean scanMethods(Processor<PyFunction> processor, boolean inherited) {
     PyFunction[] methods = getMethods();
     for(PyFunction method: methods) {
-      if (! processor.process(method)) return;
+      if (! processor.process(method)) return false;
     }
     if (inherited) {
       for (PyClass ancestor : iterateAncestors()) {
-        ancestor.scanMethods(processor, false);
+        if (!ancestor.scanMethods(processor, false)) {
+          return false;
+        }
       }
     }
+    return true;
   }
 
 
