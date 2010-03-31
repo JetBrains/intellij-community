@@ -352,6 +352,8 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
+    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactValidationUtil"
+                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactValidationUtilImpl"/>
 
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.impl.ConversionServiceImpl"/>

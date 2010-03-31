@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -41,7 +42,8 @@ public class PackagingTreeNodeFactory {
                                @NotNull CompositePackagingElement parentElement, @NotNull ArtifactEditorContext context,
                                @NotNull ComplexElementSubstitutionParameters substitutionParameters, @NotNull Collection<PackagingNodeSource> nodeSources,
                                @NotNull List<PackagingElementNode<?>> nodes,
-                               ArtifactType artifactType) {
+                               ArtifactType artifactType,
+                               Set<PackagingElement<?>> processed) {
     for (PackagingElement<?> element : elements) {
       final PackagingElementNode<?> prev = findEqual(nodes, element);
       if (prev != null) {
@@ -58,12 +60,12 @@ public class PackagingTreeNodeFactory {
       }
       else if (element instanceof ComplexPackagingElement) {
         final ComplexPackagingElement<?> complexElement = (ComplexPackagingElement<?>)element;
-        if (substitutionParameters.shouldSubstitute(complexElement)) {
+        if (processed.add(element) && substitutionParameters.shouldSubstitute(complexElement)) {
           final List<? extends PackagingElement<?>> substitution = complexElement.getSubstitution(context, artifactType);
           if (substitution != null) {
             final PackagingNodeSource source = new PackagingNodeSource(complexElement, parentNode, parentElement, nodeSources);
             addNodes(substitution, parentNode, parentElement, context, substitutionParameters, Collections.singletonList(source), nodes,
-                     artifactType);
+                     artifactType, processed);
             continue;
           }
         }
