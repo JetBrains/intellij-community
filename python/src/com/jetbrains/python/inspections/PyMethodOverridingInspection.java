@@ -6,10 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -51,23 +48,6 @@ public class PyMethodOverridingInspection extends LocalInspectionTool {
   }
 
   public static class Visitor extends PyInspectionVisitor {
-    private static boolean isHavePositionalContainer(@NotNull PyParameter[] parameters) {
-      for (PyParameter parameter: parameters) {
-        if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isPositionalContainer()) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    private static boolean isHaveKeywordContainer(@NotNull PyParameter[] parameters) {
-      for (PyParameter parameter: parameters) {
-        if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isKeywordContainer()) {
-          return true;
-        }
-      }
-      return false;
-    }
 
     public Visitor(final ProblemsHolder holder) {
       super(holder);
@@ -79,28 +59,13 @@ public class PyMethodOverridingInspection extends LocalInspectionTool {
       PyClass cls = function.getContainingClass();
       if (cls == null) return; // not a method, ignore
       String name = function.getName();
-      if (PyNames.INIT.equals(name)) return; // inits are expected to change signature
-      if (PyNames.NEW.equals(name)) return;  // __new__ is also expected to change signature
+      if (PyNames.INIT.equals(name) || PyNames.NEW.equals(name)) return;  // these are expected to change signature
       // real work
-      final PyParameter[] parameters = function.getParameterList().getParameters();
-      boolean havePositionalContainer = isHavePositionalContainer(parameters);
-      boolean haveKeywordContainer = isHaveKeywordContainer(parameters);
       for (PsiElement psiElement : PySuperMethodsSearch.search(function)) {
         if (psiElement instanceof PyFunction) {
-          final PyParameter[] superFunctionParameters = ((PyFunction)psiElement).getParameterList().getParameters();
-          boolean superHavePositionalContainer = isHavePositionalContainer(superFunctionParameters);
-          boolean superHaveKeywordContainer = isHaveKeywordContainer(superFunctionParameters);
-          if (parameters.length == superFunctionParameters.length) {
-            if (havePositionalContainer == superHavePositionalContainer && haveKeywordContainer == superHaveKeywordContainer) {
-              return;
-            }
+          if (! function.getParameterList().isCompatibleTo(((PyFunction)psiElement).getParameterList())) {
+            registerProblem(function.getParameterList(), PyBundle.message("INSP.signature.mismatch"));
           }
-          if (havePositionalContainer && parameters.length - 1 <= superFunctionParameters.length) {
-            if (haveKeywordContainer == superHaveKeywordContainer) {
-              return;
-            }
-          }
-          registerProblem(function.getParameterList(), "Method signature does not match signature of base method");
         }
       }
     }

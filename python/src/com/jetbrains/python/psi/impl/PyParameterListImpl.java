@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import com.jetbrains.python.toolbox.ArrayIterable;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,44 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       PyParameter[] params = getParameters();
       PyUtil.addListNode(this, param, beforeWhat, true, params.length == 0);
     }
+  }
+
+  public boolean hasPositionalContainer() {
+    for (PyParameter parameter: getParameters()) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isPositionalContainer()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean hasKeywordContainer() {
+    for (PyParameter parameter: getParameters()) {
+      if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isKeywordContainer()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isCompatibleTo(@NotNull PyParameterList another) {
+    PyParameter[] parameters = getParameters();
+    boolean we_have_starred = hasPositionalContainer();
+    boolean we_have_double_starred = hasKeywordContainer();
+    final PyParameter[] another_parameters = another.getParameters();
+    boolean another_has_starred = another.hasPositionalContainer();
+    boolean another_has_double_starred = another.hasKeywordContainer();
+    if (parameters.length == another_parameters.length) {
+      if (we_have_starred == another_has_starred && we_have_double_starred == another_has_double_starred) {
+        return true;
+      }
+    }
+    if (we_have_starred && parameters.length - 1 <= another_parameters.length) {
+      if (we_have_double_starred == another_has_double_starred) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
