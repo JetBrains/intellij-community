@@ -45,6 +45,9 @@ public class ReplaceUnderscoresWithSpacesMacro implements Macro {
       return null;
     }
     Result param_result = params[0].calculateResult(context);
+    if (param_result == null) {
+      return null;
+    }
     return execute(param_result);
   }
 

@@ -107,7 +107,7 @@ public class MavenImportingSettings implements Cloneable {
     this.updateFoldersOnImportPhase = updateFoldersOnImportPhase;
   }
 
-  public boolean shouldDownloadSourcesAutomatically() {
+  public boolean isDownloadSourcesAutomatically() {
     return downloadSourcesAutomatically;
   }
 
@@ -115,7 +115,7 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadSourcesAutomatically = Value;
   }
 
-  public boolean shouldDownloadDocsAutomatically() {
+  public boolean isDownloadDocsAutomatically() {
     return downloadDocsAutomatically;
   }
 
