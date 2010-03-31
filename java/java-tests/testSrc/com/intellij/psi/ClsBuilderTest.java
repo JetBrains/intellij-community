@@ -52,9 +52,17 @@ public class ClsBuilderTest extends LightIdeaTestCase {
   }
 
   public void testTestSuite() throws Exception {
-    final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/TestSuite.class";
+    doTestFromTestData();
+  }
+
+  public void testDoubleTest() throws Exception {  // IDEA-53195
+    doTestFromTestData();
+  }
+
+  private void doTestFromTestData() throws ClsFormatException, IOException {
+    final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + getTestName(false) + ".class";
     VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
-    doTest(clsFile, "TestSuite.txt");
+    doTest(clsFile, getTestName(false) + ".txt");
   }
 
   private void doTest(final String classname) throws IOException, ClsFormatException {

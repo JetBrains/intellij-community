@@ -33,6 +33,9 @@ import org.jetbrains.annotations.NonNls;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 @NonNls public class LightIdeaTestCase extends LightPlatformTestCase {
+  public LightIdeaTestCase() {
+    IdeaTestCase.initPlatformPrefix();
+  }
 
   public static JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(ourProject);
