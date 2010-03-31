@@ -95,7 +95,23 @@ public abstract class ValidatingTableEditor<Item> {
   protected abstract Item cloneOf(Item item);
 
   @Nullable
-  protected abstract Pair<String, Fix> validate(List<Item> current, List<String> warnings);
+  protected Pair<String, Fix> validate(List<Item> current, List<String> warnings) {
+    String error = null;
+    for (int i = 0; i < current.size(); i++) {
+      Item item = current.get(i);
+      String s = validate(item);
+      warnings.set(i, s);
+      if (error == null) {
+        error = s;
+      }
+    }
+    return error != null ? Pair.create(error, (Fix)null) : null;
+  }
+
+  @Nullable
+  protected String validate(Item item) {
+    return null;
+  }
 
   protected abstract Item createItem();
 
