@@ -164,6 +164,7 @@ public class PyNames {
     _BuiltinMethods.put("__str__", _only_self_descr);
     _BuiltinMethods.put("__sub__", _self_other_descr);
     _BuiltinMethods.put("__truediv__", _self_other_descr);
+    _BuiltinMethods.put("__unicode__", _only_self_descr);
     //_BuiltinMethods.put("__version__", _only_self_descr);
     _BuiltinMethods.put("__xor__", _self_other_descr);
   }
