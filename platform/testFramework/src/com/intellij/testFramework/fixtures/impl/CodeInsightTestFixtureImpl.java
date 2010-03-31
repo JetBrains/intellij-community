@@ -583,7 +583,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
-  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Exception {
+  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
     final PsiElement targetElement = TargetElementUtilBase

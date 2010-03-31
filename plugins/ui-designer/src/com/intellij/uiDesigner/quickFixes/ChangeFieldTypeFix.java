@@ -16,16 +16,14 @@
 package com.intellij.uiDesigner.quickFixes;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.IncorrectOperationException;
-
-import java.text.MessageFormat;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,18 +34,20 @@ public class ChangeFieldTypeFix extends QuickFix {
   private final PsiType myNewType;
 
   public ChangeFieldTypeFix(GuiEditor uiEditor, PsiField field, PsiType uiComponentType) {
-    super(uiEditor, MessageFormat.format(UIDesignerBundle.message("action.change.field.type"),
-                                         field.getName(), field.getType().getCanonicalText(), uiComponentType.getCanonicalText()), null);
+    super(uiEditor, gettext(field, uiComponentType), null);
     myField = field;
     myNewType = uiComponentType;
   }
 
+  private static String gettext(PsiField field, PsiType uiComponentType) {
+    return UIDesignerBundle.message("action.change.field.type",
+                                         field.getName(), field.getType().getCanonicalText(), uiComponentType.getCanonicalText());
+  }
+
   public void run() {
-    final ReadonlyStatusHandler roHandler = ReadonlyStatusHandler.getInstance(myField.getProject());
     final PsiFile psiFile = myField.getContainingFile();
     if (psiFile == null) return;
-    final ReadonlyStatusHandler.OperationStatus status = roHandler.ensureFilesWritable(psiFile.getVirtualFile());
-    if (status.hasReadonlyFiles()) return;    
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(psiFile)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         CommandProcessor.getInstance().executeCommand(myField.getProject(), new Runnable() {
@@ -57,7 +57,7 @@ public class ChangeFieldTypeFix extends QuickFix {
               myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myNewType));
             }
             catch (final IncorrectOperationException e) {
-              ApplicationManager.getApplication().invokeLater(new Runnable(){
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
                 public void run() {
                   Messages.showErrorDialog(myEditor, UIDesignerBundle.message("error.cannot.change.field.type", myField.getName(), e.getMessage()),
                                            CommonBundle.getErrorTitle());

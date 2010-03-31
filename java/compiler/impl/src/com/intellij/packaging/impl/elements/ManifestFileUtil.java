@@ -81,7 +81,7 @@ public class ManifestFileUtil {
 
     final Ref<VirtualFile> sourceDir = Ref.create(null);
     final Ref<VirtualFile> sourceFile = Ref.create(null);
-    ArtifactUtil.processElements(root.getChildren(), context, artifactType, PackagingElementPath.EMPTY, new PackagingElementProcessor<PackagingElement<?>>() {
+    ArtifactUtil.processElementsWithSubstitutions(root.getChildren(), context, artifactType, PackagingElementPath.EMPTY, new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
         if (element instanceof FileCopyPackagingElement) {

@@ -123,6 +123,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return Pair.create(text, actionShouldBeAvailable);
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName,
                               QuickFixTestCase quickFixTestCase)
     throws Exception {

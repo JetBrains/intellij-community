@@ -55,7 +55,8 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (method.isConstructor() && !InlineMethodHandler.isChainingConstructor(method)) {
-        return true;
+        final PsiClass containingClass = method.getContainingClass();
+        return containingClass != null && ClassInheritorsSearch.search(containingClass).findAll().size() == 0;
       }
     }
     if (!(element instanceof PsiClass)) return false;

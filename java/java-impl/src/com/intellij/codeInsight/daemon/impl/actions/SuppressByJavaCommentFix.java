@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class AddNoInspectionJavaCommentFix extends AddNoInspectionCommentFix {
-  public AddNoInspectionJavaCommentFix(HighlightDisplayKey key) {
+public class SuppressByJavaCommentFix extends SuppressByCommentFix {
+  public SuppressByJavaCommentFix(HighlightDisplayKey key) {
     super(key, PsiStatement.class);
   }
 
@@ -52,7 +52,7 @@ public class AddNoInspectionJavaCommentFix extends AddNoInspectionCommentFix {
         if (declaredElement instanceof PsiLocalVariable) {
           final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
           if (modifierList != null) {
-            AddSuppressInspectionFix.addSuppressAnnotation(project, editor, container, modifierList, myID);
+            SuppressFix.addSuppressAnnotation(project, editor, container, modifierList, myID);
             added = true;
             break;
           }

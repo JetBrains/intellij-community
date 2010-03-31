@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,7 +32,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class VcsGeneralConfigurationPanel implements Configurable {
+public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
 
   private JCheckBox myForceNonEmptyComment;
   private JCheckBox myShowReadOnlyStatusDialog;
@@ -276,4 +276,11 @@ public class VcsGeneralConfigurationPanel implements Configurable {
   public void disposeUIResources() {
   }
 
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
+  }
 }

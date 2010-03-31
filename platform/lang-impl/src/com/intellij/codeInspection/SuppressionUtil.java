@@ -39,12 +39,12 @@ public class SuppressionUtil {
    * Common part of regexp for suppressing in line comments for different languages.
    * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby
    */
-  public static final String COMMON_SUPPRESS_REGEXP = "\\s*"
-                                                       + SUPPRESS_INSPECTIONS_TAG_NAME
-                                                       + "\\s+(\\w+(\\s*,\\w+)*\\s*\\w*)";
+  @NonNls
+  public static final String COMMON_SUPPRESS_REGEXP = "\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(\\s*,\\w+)*\\s*\\w*)";
 
-  @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
-    Pattern.compile("//" + COMMON_SUPPRESS_REGEXP);  // for Java, C, JS line comments
+  @NonNls
+  public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN = Pattern.compile("//" + COMMON_SUPPRESS_REGEXP);  // for Java, C, JS line comments
+  @NonNls public static final String ALL = "ALL";
 
   private SuppressionUtil() {
   }
@@ -53,7 +53,8 @@ public class SuppressionUtil {
     Iterable<String> ids = StringUtil.tokenize(inspectionsList, "[, ]");
 
     for (@NonNls String id : ids) {
-      if (id.trim().equals(inspectionToolID) || id.trim().equals("ALL")) return true;
+      @NonNls String trim = id.trim();
+      if (trim.equals(inspectionToolID) || trim.equals(ALL)) return true;
     }
     return false;
   }

@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.Function;
@@ -60,10 +60,10 @@ public class CreateMethodQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     try {
-      if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(myTargetClass.getContainingFile().getVirtualFile()).hasReadonlyFiles()) return;
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
       PsiMethod method = createMethod(project);
-      List<Pair<PsiExpression,PsiType>> arguments =
+      List<Pair<PsiExpression, PsiType>> arguments =
         ContainerUtil.map2List(method.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
           public Pair<PsiExpression, PsiType> fun(PsiParameter psiParameter) {
             return Pair.create(null, psiParameter.getType());

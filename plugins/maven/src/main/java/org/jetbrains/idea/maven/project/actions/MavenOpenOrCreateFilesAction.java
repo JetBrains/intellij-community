@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = MavenActionUtil.getProject(e);
+    final Project project = MavenActionUtil.getProject(e.getDataContext());
     final List<File> files = getFiles(e);
     final List<VirtualFile> virtualFiles = collectVirtualFiles(files);
 

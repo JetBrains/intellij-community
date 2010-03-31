@@ -16,6 +16,7 @@
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -24,7 +25,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -136,13 +136,11 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   }
 
   public static void generateCreateComponentsMethod(final PsiClass aClass) {
-    final ReadonlyStatusHandler roHandler = ReadonlyStatusHandler.getInstance(aClass.getProject());
     final PsiFile psiFile = aClass.getContainingFile();
     if (psiFile == null) return;
     final VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return;
-    final ReadonlyStatusHandler.OperationStatus status = roHandler.ensureFilesWritable(vFile);
-    if (status.hasReadonlyFiles()) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) return;
 
     final Ref<SmartPsiElementPointer> refMethod = new Ref<SmartPsiElementPointer>();
     CommandProcessor.getInstance().executeCommand(
@@ -152,12 +150,10 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-              PsiMethod method;
               try {
-                method = factory.createMethodFromText("private void " +
-                                                      AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME +
-                                                      "() { \n // TODO: place custom component creation code here \n }",
-                                                      aClass);
+                PsiMethod method = factory.createMethodFromText("private void " +
+                                                                AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME +
+                                                                "() { \n // TODO: place custom component creation code here \n }", aClass);
                 final PsiMethod psiMethod = (PsiMethod)aClass.add(method);
                 refMethod.set(SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(psiMethod));
                 CodeStyleManager.getInstance(aClass.getProject()).reformat(psiMethod);

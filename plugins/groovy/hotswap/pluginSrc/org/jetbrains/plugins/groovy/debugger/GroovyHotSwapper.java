@@ -8,6 +8,8 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.PathUtil;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
@@ -52,7 +54,20 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       return;
     }
 
-    if (configuration instanceof RunConfiguration && containsGroovyClasses(((RunConfiguration)configuration).getProject())) {
+    if (!(configuration instanceof RunConfiguration)) {
+      return;
+    }
+
+    final Project project = ((RunConfiguration)configuration).getProject();
+    if (project == null) {
+      return;
+    }
+
+    if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
+      return;
+    }
+
+    if (containsGroovyClasses(project)) {
       javaParameters.getVMParametersList().add("-javaagent:" + getAgentJarPath());
     }
   }

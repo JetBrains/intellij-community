@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +31,7 @@ import java.awt.*;
 /**
  * @author peter
  */
-public abstract class SdkHomeConfigurable implements Configurable {
+public abstract class SdkHomeConfigurable implements SearchableConfigurable {
   private JPanel myPanel;
   private TextFieldWithBrowseButton myPathField;
   protected final Project myProject;
@@ -97,4 +97,11 @@ public abstract class SdkHomeConfigurable implements Configurable {
     public String SDK_HOME;
   }
 
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
 }

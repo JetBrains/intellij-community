@@ -61,9 +61,9 @@ public class JavaDocExternalFilter {
   protected static @NonNls final Pattern ourParentFolderprefix = Pattern.compile("^[.][.]/");
   protected static @NonNls final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
   protected static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
-  private static @NonNls final Pattern ourHREFselector = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"");
+  private static @NonNls final Pattern ourHREFselector = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
   private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
-  private static @NonNls final Pattern ourIMGselector = Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*)\"");
+  private static @NonNls final Pattern ourIMGselector = Pattern.compile("<IMG[ \\t\\n\\r\\f]+SRC=\"([^>]*)\"", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
   private static @NonNls final Pattern ourMethodHeading = Pattern.compile("<H3>(.+?)</H3>", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
   protected static @NonNls final String DOC_ELEMENT_PROTOCOL = "doc_element://";
   protected static @NonNls final String PSI_ELEMENT_PROTOCOL = "psi_element://";

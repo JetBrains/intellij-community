@@ -623,7 +623,6 @@ public class FindInProjectUtil {
 
     int count = 0;
     CharSequence text = document.getCharsSequence();
-    if (text == null) return 0;
     int textLength = document.getTextLength();
     int offset = 0;
 

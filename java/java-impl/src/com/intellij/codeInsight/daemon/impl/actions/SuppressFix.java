@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
@@ -26,7 +27,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -41,28 +41,31 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class AddSuppressInspectionFix extends SuppressIntentionAction {
+public class SuppressFix extends SuppressIntentionAction {
   private String myID;
   private String myAlternativeID;
-  private String myKey;
+  private String myText;
 
-  public AddSuppressInspectionFix(HighlightDisplayKey key) {
+  public SuppressFix(HighlightDisplayKey key) {
     this(key.getID());
     myAlternativeID = HighlightDisplayKey.getAlternativeID(key);
   }
 
-  public AddSuppressInspectionFix(String ID) {
+  public SuppressFix(String ID) {
     myID = ID;
   }
 
   @NotNull
   public String getText() {
-    return myKey != null ? InspectionsBundle.message(myKey) : "Suppress for member";
+    return myText == null ? "Suppress for member" : myText;
   }
 
   @Nullable
   protected PsiDocCommentOwner getContainer(final PsiElement context) {
-    if (context == null || !(context.getContainingFile().getLanguage() instanceof JavaLanguage) || context instanceof PsiFile) {
+    if (context == null ||
+        !context.getManager().isInProject(context) ||
+        !(context.getContainingFile().getLanguage() instanceof JavaLanguage) ||
+        context instanceof PsiFile) {
       return null;
     }
     PsiElement container = context;
@@ -78,23 +81,22 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
-  @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
-    final PsiDocCommentOwner container = getContainer(context);
-    myKey = container instanceof PsiClass
-            ? "suppress.inspection.class"
-            : container instanceof PsiMethod ? "suppress.inspection.method" : "suppress.inspection.field";
-    final boolean isValid = container != null && !(container instanceof JspHolderMethod);
-    if (!isValid) return false;
-    return context != null && context.getManager().isInProject(context);
+    PsiDocCommentOwner container = getContainer(context);
+    boolean isValid = container != null && !(container instanceof JspHolderMethod);
+    if (!isValid) {
+      return false;
+    }
+    myText = container instanceof PsiClass
+            ? InspectionsBundle.message("suppress.inspection.class")
+            : container instanceof PsiMethod ? InspectionsBundle.message("suppress.inspection.method") : InspectionsBundle.message("suppress.inspection.field");
+    return true;
   }
 
   public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer(element);
     assert container != null;
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-        .ensureFilesWritable(container.getContainingFile().getVirtualFile());
-    if (status.hasReadonlyFiles()) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {
@@ -114,8 +116,11 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
         PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (noInspectionTag != null) {
           final PsiDocTagValue valueElement = noInspectionTag.getValueElement();
-          String tagText = "@" + SuppressionUtil
-              .SUPPRESS_INSPECTIONS_TAG_NAME + " " + (valueElement != null ? valueElement.getText() + "," : "") + getID(container);
+          String tagText = "@" +
+                           SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME +
+                           " " +
+                           (valueElement != null ? valueElement.getText() + "," : "") +
+                           getID(container);
           noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
         }
         else {
@@ -173,7 +178,7 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
     return true;
   }
 
-  public String getID(PsiElement place) {
+  private String getID(PsiElement place) {
     if (myAlternativeID != null) {
       final Module module = ModuleUtil.findModuleForPsiElement(place);
       if (module != null) {

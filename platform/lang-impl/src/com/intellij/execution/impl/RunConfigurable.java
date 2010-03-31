@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -705,7 +702,7 @@ class RunConfigurable extends BaseConfigurable {
         }
       });
       final ListPopup popup =
-          popupFactory.createWizardStep(new BaseListPopupStep<ConfigurationType>(
+          popupFactory.createListPopup(new BaseListPopupStep<ConfigurationType>(
               ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
 
             @NotNull
@@ -713,6 +710,15 @@ class RunConfigurable extends BaseConfigurable {
               return type.getDisplayName();
             }
 
+            @Override
+            public boolean isSpeedSearchEnabled() {
+              return true;
+            }
+
+            @Override
+            public boolean canBeHidden(ConfigurationType value) {
+              return true;
+            }
 
             public Icon getIconFor(final ConfigurationType type) {
               return type.getIcon();
@@ -726,7 +732,7 @@ class RunConfigurable extends BaseConfigurable {
               if (factories.length > 0) {
                 createNewConfiguration(factories[0]);
               }
-              return PopupStep.FINAL_CHOICE;
+              return FINAL_CHOICE;
             }
 
             public int getDefaultOptionIndex() {
@@ -768,7 +774,7 @@ class RunConfigurable extends BaseConfigurable {
 
                 public PopupStep onChosen(final ConfigurationFactory factory, final boolean finalChoice) {
                   createNewConfiguration(factory);
-                  return PopupStep.FINAL_CHOICE;
+                  return FINAL_CHOICE;
                 }
 
               };
@@ -778,7 +784,8 @@ class RunConfigurable extends BaseConfigurable {
               return type.getConfigurationFactories().length > 1;
             }
 
-          });
+          });      
+      //new TreeSpeedSearch(myTree);
       popup.showUnderneathOf(myToolbarComponent);
     }
   }

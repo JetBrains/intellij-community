@@ -49,6 +49,7 @@ import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.ArtifactValidationUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -121,9 +122,22 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     return new ReadAction<ProcessingItem[]>() {
       protected void run(final Result<ProcessingItem[]> result) {
+        final Project project = context.getProject();
+        final Set<Artifact> selfIncludingArtifacts = ArtifactValidationUtil.getInstance(project).getSelfIncludingArtifacts();
+        if (!selfIncludingArtifacts.isEmpty()) {
+          LOG.info("Self including artifacts: " + selfIncludingArtifacts);
+          if (!ArtifactCompileScope.getArtifactsToBuild(project, context.getCompileScope()).isEmpty()) {
+            for (Artifact artifact : selfIncludingArtifacts) {
+              context.addMessage(CompilerMessageCategory.ERROR, "Artifact '" + artifact.getName() + "' includes itself in the output layout", null, -1, -1);
+            }
+          }
+          result.setResult(ProcessingItem.EMPTY_ARRAY);
+          return;
+        }
+
         ArtifactsProcessingItemsBuilderContext builderContext = new ArtifactsProcessingItemsBuilderContext(context);
         context.putUserData(BUILDER_CONTEXT_KEY, builderContext);
-        ArtifactPackagingProcessingItem[] allProcessingItems = collectItems(builderContext, context.getProject());
+        ArtifactPackagingProcessingItem[] allProcessingItems = collectItems(builderContext, project);
 
         if (LOG.isDebugEnabled()) {
           int num = Math.min(5000, allProcessingItems.length);
@@ -135,7 +149,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
 
         try {
           final FileProcessingCompilerStateCache cache =
-              CompilerCacheManager.getInstance(context.getProject()).getFileProcessingCompilerCache(IncrementalArtifactsCompiler.this);
+              CompilerCacheManager.getInstance(project).getFileProcessingCompilerCache(IncrementalArtifactsCompiler.this);
           for (ArtifactPackagingProcessingItem item : allProcessingItems) {
             item.init(cache);
           }

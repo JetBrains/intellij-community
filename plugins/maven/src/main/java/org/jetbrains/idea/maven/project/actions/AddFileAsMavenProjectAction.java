@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -27,16 +29,18 @@ import java.util.Collections;
 public class AddFileAsMavenProjectAction extends MavenAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e);
-    manager.addManagedFiles(Collections.singletonList(getSelectedFile(e)));
+    final DataContext context = e.getDataContext();
+    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
+    manager.addManagedFiles(Collections.singletonList(getSelectedFile(context)));
   }
 
   @Override
   protected boolean isAvailable(AnActionEvent e) {
-    VirtualFile file = getSelectedFile(e);
+    final DataContext context = e.getDataContext();
+    VirtualFile file = getSelectedFile(context);
     return super.isAvailable(e)
            && MavenActionUtil.isMavenProjectFile(file)
-           && !isExistingProjectFile(e, file);
+           && !isExistingProjectFile(context, file);
   }
 
   @Override
@@ -44,12 +48,13 @@ public class AddFileAsMavenProjectAction extends MavenAction {
     return super.isVisible(e) && isAvailable(e);
   }
 
-  private boolean isExistingProjectFile(AnActionEvent e, VirtualFile file) {
-    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e);
+  private static boolean isExistingProjectFile(DataContext context, VirtualFile file) {
+    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
     return manager.findProject(file) != null;
   }
 
-  private VirtualFile getSelectedFile(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.VIRTUAL_FILE);
+  @Nullable
+  private static VirtualFile getSelectedFile(DataContext context) {
+    return PlatformDataKeys.VIRTUAL_FILE.getData(context);
   }
 }
