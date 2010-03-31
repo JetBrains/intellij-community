@@ -23,6 +23,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -151,7 +152,11 @@ public class SingleConfigurableEditor extends DialogWrapper {
       final Runnable updateRequest = new Runnable() {
         public void run() {
           if (!SingleConfigurableEditor.this.isShowing()) return;
-          ApplyAction.this.setEnabled(myConfigurable != null && myConfigurable.isModified());
+          try {
+            ApplyAction.this.setEnabled(myConfigurable != null && myConfigurable.isModified());
+          }
+          catch (IndexNotReadyException ignored) {
+          }
           addUpdateRequest(this);
         }
       };
