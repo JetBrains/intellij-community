@@ -62,7 +62,5 @@ public abstract class PyElementGenerator {
 
   public abstract PyNamedParameter createParameter(@NotNull String name);
 
-  public abstract PsiWhiteSpace createWhiteSpace(int length);
-
   public abstract PsiFile createDummyFile(String contents);
 }

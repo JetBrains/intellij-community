@@ -13,7 +13,6 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -261,7 +260,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   public boolean isReferenceTo(PsiElement element) {
     if (element instanceof PsiNamedElement) {
-      if (Comparing.equal(myElement.getReferencedName(), ((PsiNamedElement)element).getName())) {
+      final String elementName = ((PsiNamedElement)element).getName();
+      if (Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) {
         return resolve() == element; // TODO: handle multi-resolve
       }
     }

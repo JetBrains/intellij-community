@@ -10,20 +10,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Turns an unqualified unresolved identifier into qualified and resolvable.
- * User: dcheryasov
- * Date: Apr 15, 2009 6:24:48 PM
+ *
+ * @author dcheryasov
  */
 public class ImportFromExistingAction implements QuestionAction {
   PyElement myTarget;
@@ -31,6 +34,7 @@ public class ImportFromExistingAction implements QuestionAction {
   Editor myEditor;
   String myName;
   boolean myUseQualifiedImport;
+  private Runnable myOnDoneCallback;
 
   /**
    * @param target element to become qualified as imported.
@@ -47,7 +51,16 @@ public class ImportFromExistingAction implements QuestionAction {
     myUseQualifiedImport = useQualified;
   }
 
+  public ImportFromExistingAction(@NotNull PyElement target, PsiNamedElement source, Editor editor, boolean useQualified) {
+    this(target, Collections.singletonList(new ImportCandidateHolder(source, source.getContainingFile(), null,
+                                                                     ResolveImportUtil.findShortestImportableName(target, source.getContainingFile().getVirtualFile()), null)),
+         source.getName(), editor, useQualified);
+  }
 
+  public void onDone(Runnable callback) {
+    assert myOnDoneCallback == null;
+    myOnDoneCallback = callback;
+  }
 
 
   /**
@@ -134,6 +147,9 @@ public class ImportFromExistingAction implements QuestionAction {
         doIt(item);
       }
     }.execute();
+    if (myOnDoneCallback != null) {
+      myOnDoneCallback.run();
+    }
   }
 
   // Stolen from FQNameCellRenderer

@@ -216,8 +216,4 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     }
     return (T)ret;
   }
-
-  public PsiWhiteSpace createWhiteSpace(final int length) {
-    return createFromText(PsiWhiteSpace.class, StringUtil.repeatSymbol(' ', length));
-  }
 }

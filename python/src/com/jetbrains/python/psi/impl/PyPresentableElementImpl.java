@@ -49,7 +49,7 @@ public abstract class PyPresentableElementImpl<T extends StubElement> extends Py
     return "(" + getPackageForFile(getContainingFile()) + ")";
   }
 
-  protected static String getPackageForFile(final PsiFile containingFile) {
+  public static String getPackageForFile(final PsiFile containingFile) {
     final VirtualFile vFile = containingFile.getVirtualFile();
 
     if (vFile != null) {

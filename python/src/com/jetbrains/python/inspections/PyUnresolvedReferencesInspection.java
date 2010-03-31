@@ -19,6 +19,7 @@ import com.jetbrains.python.actions.AddFieldQuickFix;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.AddMethodQuickFix;
 import com.jetbrains.python.actions.ImportFromExistingFix;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
@@ -160,7 +161,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, ref_text, project, scope));
       // NOTE: possible CPU hog 
       if (symbols.size() > 0) {
-        if (fix == null) fix = new ImportFromExistingFix(node, ref_text, false); // it might have been created in the previous scan, or not.
+        if (fix == null) { // it might have been created in the previous scan, or not.
+          fix = new ImportFromExistingFix(node, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+        }
         for (PsiElement symbol : symbols) {
           if (symbol.getParent() instanceof PsiFile) { // we only want top-level symbols
             PsiFile srcfile = symbol.getContainingFile();
@@ -178,8 +181,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           }
         }
         fix.sortCandidates();
-        fixes.add(fix);
-        fixes.add(fix.createDual());
+        if (!fixes.contains(fix)) {
+          fixes.add(fix);
+        }
       }
       return fixes;
     }
@@ -332,7 +336,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         if (! marked_qualified) {
           description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
           // add import hint unless we're an import ourselves; the rest of action will fend for itself.
-          if (ref_element != null && ! ref_in_import) hint_action = new AddImportAction(reference);
+          if (ref_element != null && !ref_in_import && hint_action == null) {
+            actions.add(new AddImportAction(reference));
+          }
         }
       }
       String description = description_buf.toString();
@@ -348,7 +354,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
 
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
-      registerProblem(point, description, hl_type, hint_action, actions.toArray(new LocalQuickFix[actions.size()]));
+      registerProblem(point, description, hl_type, null, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
     private static boolean overridesGetAttr(PyClass cls) {

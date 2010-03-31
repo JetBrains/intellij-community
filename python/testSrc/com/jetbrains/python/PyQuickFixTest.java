@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +29,15 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
   }
 
   public void testQualifyByImport() throws Exception {
-    doInspectionTest(new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"}, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.qualify.with.module"), true, true);
+    final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
+    boolean oldValue = settings.PREFER_FROM_IMPORT;
+    settings.PREFER_FROM_IMPORT = false;
+    try {
+      doInspectionTest(new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"}, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.qualify.with.module"), true, true);
+    }
+    finally {
+      settings.PREFER_FROM_IMPORT = oldValue;
+    }
   }
 
   public void testAddToImportFromList() throws Exception {

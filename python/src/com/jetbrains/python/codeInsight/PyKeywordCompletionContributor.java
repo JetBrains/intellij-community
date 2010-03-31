@@ -79,9 +79,9 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         // we must be a stmt ourselves, not a part of another stmt
         // try to climb to the stmt level with the same offset
         while (true) {
+          if (p == null) return false;
           if (p.getTextOffset() != first_offset) return false;
           if (p instanceof PyStatement) break;
-          else if (p == null) return false;
           p = p.getParent();
         }
         // so, a stmt begins with us
