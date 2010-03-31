@@ -37,7 +37,10 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
       Annotation ann = getHolder().createInfoAnnotation(name_node, null);
       final String name = node.getName();
       if (PyNames.UnderscoredAttributes.contains(name) || PyNames.BuiltinMethods.containsKey(name)) {
-        ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+        boolean new_style_class = false;
+        PyClass cls = node.getContainingClass();
+        if (cls != null) new_style_class = cls.isNewStyleClass();
+        if (!PyNames.NEW.equals(name) || new_style_class) ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
       }
       else ann.setTextAttributes(PyHighlighter.PY_FUNC_DEFINITION);
     }
