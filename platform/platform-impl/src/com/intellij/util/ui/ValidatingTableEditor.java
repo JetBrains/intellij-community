@@ -334,4 +334,9 @@ public abstract class ValidatingTableEditor<Item> {
     }
   }
 
+  public Component getContentPane() {
+    return myContentPane;
+  }
+
+
 }
