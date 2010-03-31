@@ -63,7 +63,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       return;
     }
 
-    if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) <= 0) {
+    if (LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) {
       return;
     }
 
