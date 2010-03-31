@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.maven.tasks;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.KeymapGroupFactory;
@@ -182,11 +179,12 @@ public class MavenKeymapExtension implements KeymapExtension {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      final DataContext context = e.getDataContext();
       MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                myMavenProject.getDirectory(),
                                                                Arrays.asList(myGoal),
-                                                               MavenActionUtil.getProjectsManager(e).getExplicitProfiles());
-      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(e), params, e.getDataContext(), null);
+                                                               MavenActionUtil.getProjectsManager(context).getExplicitProfiles());
+      MavenRunConfigurationType.runConfiguration(MavenActionUtil.getProject(context), params, context, null);
     }
 
     public MavenProject getMavenProject() {

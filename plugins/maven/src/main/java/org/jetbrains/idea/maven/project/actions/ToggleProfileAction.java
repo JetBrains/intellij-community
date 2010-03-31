@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class ToggleProfileAction extends MavenAction {
     super.update(e);
     if (!isAvailable(e)) return;
 
-    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e);
+    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e.getDataContext());
     List<String> profiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
 
     e.getPresentation().setText(isActive(projectsManager, profiles)
@@ -45,7 +45,7 @@ public class ToggleProfileAction extends MavenAction {
     List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
     if (selectedProfiles == null || selectedProfiles.isEmpty()) return false;
 
-    Collection<String> activeProfiles = MavenActionUtil.getProjectsManager(e).getExplicitProfiles();
+    Collection<String> activeProfiles = MavenActionUtil.getProjectsManager(e.getDataContext()).getExplicitProfiles();
     int activeCount = 0;
     for (String profile : selectedProfiles) {
       if (activeProfiles.contains(profile)) {
@@ -61,7 +61,7 @@ public class ToggleProfileAction extends MavenAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e);
+    MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
     List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
 
     Collection<String> activeProfiles = manager.getExplicitProfiles();

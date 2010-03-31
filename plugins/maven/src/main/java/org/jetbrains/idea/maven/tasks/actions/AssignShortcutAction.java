@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.tasks.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -29,35 +30,37 @@ import java.util.List;
 public class AssignShortcutAction extends MavenAction {
   @Override
   protected boolean isAvailable(AnActionEvent e) {
-    return super.isAvailable(e) && !isIgnoredProject(e) && getGoalActionId(e) != null;
+    final DataContext context = e.getDataContext();
+    return super.isAvailable(e) && !isIgnoredProject(context) && getGoalActionId(context) != null;
   }
 
-  private boolean isIgnoredProject(AnActionEvent e) {
-    MavenProject project = MavenActionUtil.getMavenProject(e);
+  private static boolean isIgnoredProject(DataContext context) {
+    final MavenProject project = MavenActionUtil.getMavenProject(context);
     if (project == null) return false;
-    return MavenActionUtil.getProjectsManager(e).isIgnored(project);
+    return MavenActionUtil.getProjectsManager(context).isIgnored(project);
   }
 
   public void actionPerformed(AnActionEvent e) {
-    String actionId = getGoalActionId(e);
+    final DataContext context = e.getDataContext();
+    String actionId = getGoalActionId(context);
     if (actionId != null) {
-      new EditKeymapsDialog(MavenActionUtil.getProject(e), actionId).show();
+      new EditKeymapsDialog(MavenActionUtil.getProject(context), actionId).show();
     }
   }
 
   @Nullable
-  private String getGoalActionId(AnActionEvent e) {
-    MavenProject project = MavenActionUtil.getMavenProject(e);
+  private static String getGoalActionId(DataContext context) {
+    MavenProject project = MavenActionUtil.getMavenProject(context);
     if (project == null) return null;
 
-    List<String> goals = e.getData(MavenDataKeys.MAVEN_GOALS);
+    final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
     String goal = (goals == null || goals.size() != 1) ? null : goals.get(0);
 
-    return getShortcutsManager(e).getActionId(project.getPath(), goal);
+    return getShortcutsManager(context).getActionId(project.getPath(), goal);
   }
 
-  protected MavenShortcutsManager getShortcutsManager(AnActionEvent e) {
-    return MavenShortcutsManager.getInstance(MavenActionUtil.getProject(e));
+  protected static MavenShortcutsManager getShortcutsManager(DataContext context) {
+    return MavenShortcutsManager.getInstance(MavenActionUtil.getProject(context));
   }
 }
 

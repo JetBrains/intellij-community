@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.List;
 
 public class OpenOrCreateSettingsXmlAction extends MavenOpenOrCreateFilesAction {
   protected List<File> getFiles(AnActionEvent e) {
-    File file = MavenActionUtil.getProjectsManager(e).getGeneralSettings().getEffectiveUserSettingsIoFile();
+    File file = MavenActionUtil.getProjectsManager(e.getDataContext()).getGeneralSettings().getEffectiveUserSettingsIoFile();
     return file != null ? Collections.singletonList(file) : Collections.EMPTY_LIST;
   }
 

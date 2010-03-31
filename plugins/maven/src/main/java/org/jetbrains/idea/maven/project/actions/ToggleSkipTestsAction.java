@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 public class ToggleSkipTestsAction extends MavenToggleAction {
   @Override
   protected boolean doIsSelected(AnActionEvent e) {
-    return MavenRunner.getInstance(MavenActionUtil.getProject(e)).getState().isSkipTests();
+    return MavenRunner.getInstance(MavenActionUtil.getProject(e.getDataContext())).getState().isSkipTests();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state){
-    MavenRunner.getInstance(MavenActionUtil.getProject(e)).getState().setSkipTests(state);
+    MavenRunner.getInstance(MavenActionUtil.getProject(e.getDataContext())).getState().setSkipTests(state);
   }
 }
