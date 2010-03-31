@@ -32,8 +32,10 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
+import git4idea.update.UpdatePolicyUtils;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -70,13 +72,13 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    */
   private JButton myRebaseButton;
   /**
-   * If selected, the changes are auto-stashed before rebase
-   */
-  private JCheckBox myAutoStashCheckBox;
-  /**
    * The commit tree (sorted by vcs roots)
    */
   private CheckboxTree myCommitTree;
+  /**
+   * Auto save files policy
+   */
+  private JComboBox myAutoSaveFilesOnComboBox;
   /**
    * The root node
    */
@@ -103,6 +105,15 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     myVcsRoots = vcsRoots;
     updateTree(roots, null);
     TreeUtil.expandAll(myCommitTree);
+    final GitVcsSettings settings = GitVcsSettings.getInstance(project);
+    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_SHELVE);
+    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_STASH);
+    UpdatePolicyUtils.updatePolicyItem(settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY, myAutoSaveFilesOnComboBox);
+    myAutoSaveFilesOnComboBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox);
+      }
+    });
     myCommitTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         TreePath path = myCommitTree.getSelectionModel().getSelectionPath();
@@ -266,12 +277,13 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       }
     }
     final List<VcsException> exceptions = new ArrayList<VcsException>();
-    final boolean autoStash = myAutoStashCheckBox.isSelected();
+    final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox);
+    assert p == GitVcsSettings.UpdateChangesPolicy.STASH || p == GitVcsSettings.UpdateChangesPolicy.SHELVE;
     final ProgressManager progressManager = ProgressManager.getInstance();
     final GitVcs vcs = GitVcs.getInstance(myProject);
     progressManager.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        GitPushRebaseProcess process = new GitPushRebaseProcess(vcs, myProject, exceptions, autoStash, reorderedCommits, rootsWithMerges);
+        GitPushRebaseProcess process = new GitPushRebaseProcess(vcs, myProject, exceptions, p, reorderedCommits, rootsWithMerges);
         process.doUpdate(progressManager.getProgressIndicator(), roots);
       }
     }, GitBundle.getString("push.active.rebasing"), false, myProject);

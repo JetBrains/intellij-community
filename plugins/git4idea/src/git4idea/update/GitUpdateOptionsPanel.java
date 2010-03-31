@@ -34,21 +34,21 @@ public class GitUpdateOptionsPanel {
    */
   private static final String REBASE = GitBundle.getString("update.options.type.rebase");
   /**
-   * The rebase policy
+   * The default branch policy
    */
-  private static final String DEFAULT = GitBundle.getString("update.options.type.default");
+  public static final String DEFAULT = GitBundle.getString("update.options.type.default");
   /**
    * The type combobox
    */
   private JComboBox myTypeComboBox;
   /**
-   * The stash changes checkbox
-   */
-  private JCheckBox myStashChangesCheckBox;
-  /**
    * The root panel
    */
   private JPanel myPanel;
+  /**
+   * The combobox that specifies save on update policy
+   */
+  private JComboBox myAutoSaveFilesOnComboBox;
 
   /**
    * A constructor
@@ -57,6 +57,9 @@ public class GitUpdateOptionsPanel {
     myTypeComboBox.addItem(DEFAULT);
     myTypeComboBox.addItem(REBASE);
     myTypeComboBox.addItem(MERGE);
+    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_STASH);
+    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_SHELVE);
+    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_KEEP);
   }
 
   /**
@@ -68,12 +71,13 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Check if the panel is modified relatively to settings
+   *
    * @param settings the settings to compare to
    * @return true if the UI modified the settings
    */
   public boolean isModified(GitVcsSettings settings) {
     UpdateType type = getUpdateType();
-    return type != settings.UPDATE_TYPE || myStashChangesCheckBox.isSelected() != settings.UPDATE_STASH;
+    return type != settings.UPDATE_TYPE || UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox) != settings.updateChangesPolicy();
   }
 
   /**
@@ -87,7 +91,8 @@ public class GitUpdateOptionsPanel {
     }
     else if (MERGE.equals(typeVal)) {
       type = UpdateType.MERGE;
-    } else if(DEFAULT.equals(typeVal)) {
+    }
+    else if (DEFAULT.equals(typeVal)) {
       type = UpdateType.BRANCH_DEFAULT;
     }
     assert type != null;
@@ -96,21 +101,22 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Save configuration to settings object
+   *
    * @param settings the settings to save to
    */
   public void applyTo(GitVcsSettings settings) {
     settings.UPDATE_TYPE = getUpdateType();
-    settings.UPDATE_STASH = myStashChangesCheckBox.isSelected();
+    settings.UPDATE_CHANGES_POLICY = UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox);
   }
 
   /**
    * Update panel according to settings
+   *
    * @param settings the settings to use
    */
   public void updateFrom(GitVcsSettings settings) {
-    myStashChangesCheckBox.setSelected(settings.UPDATE_STASH);
     String value = null;
-    switch(settings.UPDATE_TYPE) {
+    switch (settings.UPDATE_TYPE) {
       case REBASE:
         value = REBASE;
         break;
@@ -121,8 +127,10 @@ public class GitUpdateOptionsPanel {
         value = DEFAULT;
         break;
       default:
-        assert false : "Unknown value of update type: "+settings.UPDATE_TYPE;
+        assert false : "Unknown value of update type: " + settings.UPDATE_TYPE;
     }
     myTypeComboBox.setSelectedItem(value);
+    UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myAutoSaveFilesOnComboBox);
   }
+
 }

@@ -118,16 +118,16 @@ public class GitUpdateProcess extends GitBaseRebaseProcess {
    * {@inheritDoc}
    */
   @Override
-  protected boolean isAutoStash() {
-    return mySettings.UPDATE_STASH;
+  protected String makeStashMessage() {
+    return "Uncommitted changes before update operation at " +
+           DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US).format(new Date());
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  protected String makeStashMessage() {
-    return "Uncommitted changes before update operation at " +
-           DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, Locale.US).format(new Date());
+  protected GitVcsSettings.UpdateChangesPolicy getUpdatePolicy() {
+    return mySettings.updateChangesPolicy();
   }
 }
