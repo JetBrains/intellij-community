@@ -619,6 +619,9 @@ public class PyUtil {
     String deconame = getTheOnlyBuiltinDecorator(function);
     if (PyNames.CLASSMETHOD.equals(deconame)) flags.add(CLASSMETHOD);
     else if (PyNames.STATICMETHOD.equals(deconame)) flags.add(STATICMETHOD);
+    // implicit classmethod __new__
+    PyClass cls = function.getContainingClass();
+    if (cls != null && cls.isNewStyleClass() && PyNames.NEW.equals(function.getName())) flags.add(CLASSMETHOD);
     //
     if (! flags.contains(CLASSMETHOD) && ! flags.contains(STATICMETHOD)) { // not set by decos, look for reassignment
       String func_name = function.getName();
