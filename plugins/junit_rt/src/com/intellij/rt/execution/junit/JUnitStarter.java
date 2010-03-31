@@ -100,13 +100,12 @@ public class JUnitStarter {
             final Socket socket = new Socket(InetAddress.getLocalHost(), port);  //start collecting tests
             final ServerSocket serverSocket = new ServerSocket(0);
             try {
-              final BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+              final DataOutputStream os = new DataOutputStream(socket.getOutputStream());
               try {
-                bufferedWriter.write(String.valueOf(serverSocket.getLocalPort())); //write port to sync
+                os.writeInt(serverSocket.getLocalPort()); //write port to sync
               }
               finally {
-                bufferedWriter.close();
-                socket.close();
+                os.close();
               }
               serverSocket.accept();
             }
