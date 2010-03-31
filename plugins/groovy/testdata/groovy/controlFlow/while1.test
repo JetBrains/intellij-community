@@ -8,7 +8,8 @@ while (true) {
 1(2) WRITE i
 2(3) element: WHILE statement
 3(4,5) element: IF statement
-4(7) READ i
+4(8) READ i
 5(6) READ i
-6(2) WRITE i
-7() element: null
+6(7) WRITE i
+7(2) READ i
+8() element: null

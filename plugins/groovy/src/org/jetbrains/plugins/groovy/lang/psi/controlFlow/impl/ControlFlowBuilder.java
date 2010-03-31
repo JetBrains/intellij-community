@@ -325,9 +325,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitUnaryExpression(GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (operand != null) {
-      myNegate = !myNegate;
+      final boolean negation = expression.getOperationTokenType() == GroovyElementTypes.mLNOT;
+      if (negation) {
+        myNegate = !myNegate;
+      }
       operand.accept(this);
-      myNegate = !myNegate;
+      if (negation) {
+        myNegate = !myNegate;
+      }
     }
   }
 
@@ -344,6 +349,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         final ReadWriteVariableInstructionImpl i = new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false);
         addNode(i);
         addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, true));
+        if (referenceExpression.getParent() instanceof GrUnaryExpression) {
+          addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false));
+        }
         checkPending(i);
       }
       else {
