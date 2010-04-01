@@ -70,6 +70,7 @@ import java.util.*;
  */
 public class IncrementalArtifactsCompiler implements PackagingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.compiler.IncrementalArtifactsCompiler");
+  private static final Key<Set<String>> WRITTEN_PATHS_KEY = Key.create("artifacts_written_paths");
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create("artifacts_files_to_delete");
   private static final Key<Set<Artifact>> AFFECTED_ARTIFACTS = Key.create("affected_artifacts");
   private static final Key<ArtifactsProcessingItemsBuilderContext> BUILDER_CONTEXT_KEY = Key.create("artifacts_builder_context");
@@ -212,6 +213,7 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     }.execute();
     removeInvalidItems(processedItems);
     updateOutputCache(context.getProject(), processedItems);
+    context.putUserData(WRITTEN_PATHS_KEY, writtenPaths);
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
@@ -325,6 +327,11 @@ public class IncrementalArtifactsCompiler implements PackagingCompiler {
     return compileContext.getUserData(AFFECTED_ARTIFACTS);
   }
 
+  @Nullable
+  public static Set<String> getWrittenPaths(@NotNull CompileContext context) {
+    return context.getUserData(WRITTEN_PATHS_KEY);
+  }
+  
   @NotNull
   public String getDescription() {
     return "Artifacts Packaging Compiler";
