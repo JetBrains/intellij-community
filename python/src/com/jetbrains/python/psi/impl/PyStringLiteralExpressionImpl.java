@@ -152,6 +152,14 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   private boolean iterateCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean raw, boolean unicode) {
+    if (raw && !unicode) {
+      for (int i = 0; i < undecoded.length(); i++) {
+        if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
+          return false;
+        }
+      }
+      return true;
+    }
     Matcher escMatcher = PATTERN_ESCAPE.matcher(undecoded);
     int index = 0;
     while (escMatcher.find(index)) {
