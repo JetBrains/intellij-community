@@ -17,9 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
@@ -76,37 +75,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     final GrCodeReferenceElement ref = getBaseClassReferenceGroovy();
-    return new LightClassReference(getManager(), ref.getText(), ref.getReferenceName(), getResolveScope()) {
-      @Override
-      public PsiElement getElement() {
-        return ref;
-      }
-
-      @Override
-      public TextRange getRangeInElement() {
-        return ref.getRangeInElement();
-      }
-
-      @Override
-      public int getStartOffsetInParent() {
-        return ref.getStartOffsetInParent();
-      }
-
-      @Override
-      public TextRange getTextRange() {
-        return ref.getTextRange();
-      }
-
-      @Override
-      public int getTextOffset() {
-        return ref.getTextOffset();
-      }
-
-      @Override
-      public PsiElement resolve() {
-        return ref.resolve();
-      }
-    };
+    return JavaPsiFacade.getElementFactory(getProject()).createReferenceElementByType(new GrClassReferenceType(ref));
   }
 
   @NotNull
