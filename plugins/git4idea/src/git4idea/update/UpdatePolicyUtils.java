@@ -16,7 +16,8 @@
 package git4idea.update;
 
 import git4idea.config.GitVcsSettings;
-import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,69 +26,62 @@ import javax.swing.*;
  */
 public class UpdatePolicyUtils {
   /**
-   * The auto-save policy
-   */
-  public static final String SAVE_KEEP = GitBundle.getString("update.options.save.keep");
-  /**
-   * The auto-save policy
-   */
-  public static final String SAVE_SHELVE = GitBundle.getString("update.options.save.shelve");
-  /**
-   * The auto-save policy
-   */
-  public static final String SAVE_STASH = GitBundle.getString("update.options.save.stash");
-
-  /**
    * The private constructor
    */
   private UpdatePolicyUtils() {
   }
 
   /**
-   * Get currently selected update policy
+   * Set policy value to radio buttons
    *
-   * @param autoSaveFilesOnComboBox the combo box to check
-   * @return the currently selected update policy
+   * @param updateChangesPolicy the policy value to set
+   * @param stashRadioButton    the stash radio button
+   * @param shelveRadioButton   the shelve radio button
+   * @param keepRadioButton     the keep radio button
    */
-  public static GitVcsSettings.UpdateChangesPolicy getUpdatePolicy(final JComboBox autoSaveFilesOnComboBox) {
-    GitVcsSettings.UpdateChangesPolicy p;
-    Object i = autoSaveFilesOnComboBox.getSelectedItem();
-    if (SAVE_KEEP.equals(i)) {
-      p = GitVcsSettings.UpdateChangesPolicy.KEEP;
+  public static void updatePolicyItem(GitVcsSettings.UpdateChangesPolicy updateChangesPolicy,
+                                      JRadioButton stashRadioButton,
+                                      JRadioButton shelveRadioButton,
+                                      JRadioButton keepRadioButton) {
+    switch (updateChangesPolicy == null ? GitVcsSettings.UpdateChangesPolicy.STASH : updateChangesPolicy) {
+      case STASH:
+        stashRadioButton.setSelected(true);
+        return;
+      case SHELVE:
+        shelveRadioButton.setSelected(true);
+        return;
+      case KEEP:
+        assert keepRadioButton != null : "If keep policy is specified, keep radio button should be available";
+        keepRadioButton.setSelected(true);
+        return;
+      default:
+        assert false : "Unknown policy value: " + updateChangesPolicy;
     }
-    else if (SAVE_STASH.equals(i)) {
-      p = GitVcsSettings.UpdateChangesPolicy.STASH;
+  }
+
+  /**
+   * Get policy value from radio buttons
+   *
+   * @param stashRadioButton  the stash radio button
+   * @param shelveRadioButton the shelve radio button
+   * @param keepRadioButton   the keep radio button
+   * @return the policy value
+   */
+  public static GitVcsSettings.UpdateChangesPolicy getUpdatePolicy(@NotNull JRadioButton stashRadioButton,
+                                                                   @NotNull JRadioButton shelveRadioButton,
+                                                                   @Nullable JRadioButton keepRadioButton) {
+
+    if (keepRadioButton != null && keepRadioButton.isSelected()) {
+      return GitVcsSettings.UpdateChangesPolicy.KEEP;
     }
-    else if (SAVE_SHELVE.equals(i)) {
-      p = GitVcsSettings.UpdateChangesPolicy.SHELVE;
+    else if (stashRadioButton.isSelected()) {
+      return GitVcsSettings.UpdateChangesPolicy.STASH;
+    }
+    else if (shelveRadioButton.isSelected()) {
+      return GitVcsSettings.UpdateChangesPolicy.SHELVE;
     }
     else {
       throw new IllegalStateException("Unknown auto-save policy");
     }
-    return p;
-  }
-
-  /**
-   * Select a correct item in update changes policy combobox
-   *
-   * @param updateChangesPolicy the policy value
-   * @param policyComboBox      the combobox to update
-   */
-  public static void updatePolicyItem(GitVcsSettings.UpdateChangesPolicy updateChangesPolicy, final JComboBox policyComboBox) {
-    String value = null;
-    switch (updateChangesPolicy) {
-      case KEEP:
-        value = SAVE_KEEP;
-        break;
-      case SHELVE:
-        value = SAVE_SHELVE;
-        break;
-      case STASH:
-        value = SAVE_STASH;
-        break;
-      default:
-        assert false : "Unknown value of update type: " + updateChangesPolicy;
-    }
-    policyComboBox.setSelectedItem(value);
   }
 }

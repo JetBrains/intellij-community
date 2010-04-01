@@ -17,7 +17,6 @@ package git4idea.update;
 
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVcsSettings.UpdateType;
-import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
 
@@ -26,41 +25,33 @@ import javax.swing.*;
  */
 public class GitUpdateOptionsPanel {
   /**
-   * The merge policy
-   */
-  private static final String MERGE = GitBundle.getString("update.options.type.merge");
-  /**
-   * The rebase policy
-   */
-  private static final String REBASE = GitBundle.getString("update.options.type.rebase");
-  /**
-   * The default branch policy
-   */
-  public static final String DEFAULT = GitBundle.getString("update.options.type.default");
-  /**
-   * The type combobox
-   */
-  private JComboBox myTypeComboBox;
-  /**
    * The root panel
    */
   private JPanel myPanel;
   /**
-   * The combobox that specifies save on update policy
+   * Update strategy option
    */
-  private JComboBox myAutoSaveFilesOnComboBox;
-
+  private JRadioButton myBranchDefaultRadioButton;
   /**
-   * A constructor
+   * Update strategy option
    */
-  public GitUpdateOptionsPanel() {
-    myTypeComboBox.addItem(DEFAULT);
-    myTypeComboBox.addItem(REBASE);
-    myTypeComboBox.addItem(MERGE);
-    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_STASH);
-    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_SHELVE);
-    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_KEEP);
-  }
+  private JRadioButton myForceRebaseRadioButton;
+  /**
+   * Update strategy option
+   */
+  private JRadioButton myForceMergeRadioButton;
+  /**
+   * Save files option option
+   */
+  private JRadioButton myStashRadioButton;
+  /**
+   * Save files option option
+   */
+  private JRadioButton myShelveRadioButton;
+  /**
+   * Save files option option
+   */
+  private JRadioButton myKeepRadioButton;
 
   /**
    * @return the panel component
@@ -77,7 +68,14 @@ public class GitUpdateOptionsPanel {
    */
   public boolean isModified(GitVcsSettings settings) {
     UpdateType type = getUpdateType();
-    return type != settings.UPDATE_TYPE || UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox) != settings.updateChangesPolicy();
+    return type != settings.UPDATE_TYPE || updateSaveFilesPolicy() != settings.updateChangesPolicy();
+  }
+
+  /**
+   * @return get policy value from selected radio buttons
+   */
+  private GitVcsSettings.UpdateChangesPolicy updateSaveFilesPolicy() {
+    return UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, myKeepRadioButton);
   }
 
   /**
@@ -85,14 +83,13 @@ public class GitUpdateOptionsPanel {
    */
   private UpdateType getUpdateType() {
     UpdateType type = null;
-    String typeVal = (String)myTypeComboBox.getSelectedItem();
-    if (REBASE.equals(typeVal)) {
+    if (myForceRebaseRadioButton.isSelected()) {
       type = UpdateType.REBASE;
     }
-    else if (MERGE.equals(typeVal)) {
+    else if (myForceMergeRadioButton.isSelected()) {
       type = UpdateType.MERGE;
     }
-    else if (DEFAULT.equals(typeVal)) {
+    else if (myBranchDefaultRadioButton.isSelected()) {
       type = UpdateType.BRANCH_DEFAULT;
     }
     assert type != null;
@@ -106,7 +103,7 @@ public class GitUpdateOptionsPanel {
    */
   public void applyTo(GitVcsSettings settings) {
     settings.UPDATE_TYPE = getUpdateType();
-    settings.UPDATE_CHANGES_POLICY = UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox);
+    settings.UPDATE_CHANGES_POLICY = updateSaveFilesPolicy();
   }
 
   /**
@@ -115,22 +112,20 @@ public class GitUpdateOptionsPanel {
    * @param settings the settings to use
    */
   public void updateFrom(GitVcsSettings settings) {
-    String value = null;
     switch (settings.UPDATE_TYPE) {
       case REBASE:
-        value = REBASE;
+        myForceRebaseRadioButton.setSelected(true);
         break;
       case MERGE:
-        value = MERGE;
+        myForceMergeRadioButton.setSelected(true);
         break;
       case BRANCH_DEFAULT:
-        value = DEFAULT;
+        myBranchDefaultRadioButton.setSelected(true);
         break;
       default:
         assert false : "Unknown value of update type: " + settings.UPDATE_TYPE;
     }
-    myTypeComboBox.setSelectedItem(value);
-    UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myAutoSaveFilesOnComboBox);
+    UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myStashRadioButton, myShelveRadioButton, myKeepRadioButton);
   }
 
 }

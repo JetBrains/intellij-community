@@ -38,6 +38,8 @@ import git4idea.ui.GitUIUtil;
 import git4idea.update.UpdatePolicyUtils;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -76,9 +78,13 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    */
   private CheckboxTree myCommitTree;
   /**
-   * Auto save files policy
+   * Save files policy option
    */
-  private JComboBox myAutoSaveFilesOnComboBox;
+  private JRadioButton myStashRadioButton;
+  /**
+   * Save files policy option
+   */
+  private JRadioButton myShelveRadioButton;
   /**
    * The root node
    */
@@ -106,12 +112,10 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     updateTree(roots, null);
     TreeUtil.expandAll(myCommitTree);
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_SHELVE);
-    myAutoSaveFilesOnComboBox.addItem(UpdatePolicyUtils.SAVE_STASH);
-    UpdatePolicyUtils.updatePolicyItem(settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY, myAutoSaveFilesOnComboBox);
-    myAutoSaveFilesOnComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox);
+    UpdatePolicyUtils.updatePolicyItem(settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY, myStashRadioButton, myShelveRadioButton, null);
+    myStashRadioButton.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null);
       }
     });
     myCommitTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -277,7 +281,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       }
     }
     final List<VcsException> exceptions = new ArrayList<VcsException>();
-    final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myAutoSaveFilesOnComboBox);
+    final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null);
     assert p == GitVcsSettings.UpdateChangesPolicy.STASH || p == GitVcsSettings.UpdateChangesPolicy.SHELVE;
     final ProgressManager progressManager = ProgressManager.getInstance();
     final GitVcs vcs = GitVcs.getInstance(myProject);
