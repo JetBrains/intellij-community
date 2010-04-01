@@ -95,6 +95,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return null;
   }
 
+  @NotNull
   public PsiReference getReference() {
     PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrReferenceExpression.class);
     PsiReference[] thisReference = {this};
@@ -156,6 +157,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     final String text = qName + typeArgs;
     GrReferenceExpression qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createReferenceExpressionFromText(text);
     getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+    PsiUtil.shortenReference(qualifiedRef);
     return qualifiedRef;
   }
 
@@ -195,6 +197,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   public PsiType getNominalType() {
     return GroovyPsiManager.getInstance(getProject()).getTypeInferenceHelper().doWithInferenceDisabled(new Computable<PsiType>() {
+      @Nullable
       public PsiType compute() {
         return getNominalTypeImpl();
       }
@@ -341,6 +344,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
+    @Nullable
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
       final PsiType nominal = refExpr.getNominalTypeImpl();
