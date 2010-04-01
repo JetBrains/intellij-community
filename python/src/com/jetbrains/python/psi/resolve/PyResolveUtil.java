@@ -40,23 +40,6 @@ public class PyResolveUtil {
   }
 
   /**
-   * @param elt from which to start
-   * @return the rightmost and innermost (grand)child of elt.
-   */
-  @Nullable
-  protected static PsiElement getInnermostChildOf(PsiElement elt) {
-    PsiElement feeler = elt;
-    PsiElement seeker;
-    seeker = feeler;
-    // find innermost last child of the subtree we're in
-    while (feeler != null && feeler.isValid()) {
-      seeker = feeler;
-      feeler = feeler.getLastChild();
-    }
-    return seeker;
-  }
-
-  /**
    * Returns closest previous node of given class, as input file would have it.
    * @param elt node from which to look for a previous atatement.
    * @param classes which class of the previous nodes to find.
@@ -68,7 +51,7 @@ public class PyResolveUtil {
     while (seeker != null) {
       PsiElement feeler = seeker.getPrevSibling();
       if (feeler != null) {
-        seeker = getInnermostChildOf(feeler);
+        seeker = PsiTreeUtil.getDeepestLast(feeler);
       }
       else { // we were the first subnode
         // find something above the parent node we've not exhausted yet
@@ -116,7 +99,7 @@ public class PyResolveUtil {
       if (!seeker.isValid()) return null; 
       if (fromunder) {
         fromunder = false; // only honour fromunder once per call
-        seeker = getPrevNodeOf(getInnermostChildOf(seeker), processor);
+        seeker = getPrevNodeOf(PsiTreeUtil.getDeepestLast(seeker), processor);
       }
       else { // main case
         seeker = getPrevNodeOf(seeker, processor);
