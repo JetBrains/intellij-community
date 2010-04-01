@@ -29,6 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExternalClasspathClassLoader extends URLClassLoader {
+  public ExternalClasspathClassLoader(ClassLoader parent) {
+    super(parseUrls(), parent);
+  }
+
   public ExternalClasspathClassLoader() {
     super(parseUrls());
   }
