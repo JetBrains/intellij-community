@@ -380,7 +380,13 @@ def layoutFull(String target, Set usedJars) {
     layouts.layoutPlugins()
 
     dir("bin") {
-      fileset(dir: "$home/community/bin") { include(name: "*.*") }
+      fileset(dir: "$home/community/bin") {
+        include(name: "*.*")
+        exclude(name: "idea.properties")
+      }
+      fileset(dir: "$home/python/build") {
+        include(name: "idea.properties")
+      }
     }
   }
 }
