@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost {
   private static final Pattern PATTERN_ESCAPE = Pattern
       .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-8]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]){4}|U([0-9a-fA-F]{8}))");
-  private final Map<String, String> escapeMap = initializeEscapeMap();
+  private static final Map<String, String> escapeMap = initializeEscapeMap();
   private String stringValue;
   private List<TextRange> valueTextRanges;
 
@@ -151,14 +151,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return stringValue;
   }
 
-  private boolean iterateCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean raw, boolean unicode) {
-    if (raw && !unicode) {
-      for (int i = 0; i < undecoded.length(); i++) {
-        if (!consumer.process(off + i, off + i + 1, Character.toString(undecoded.charAt(i)))) {
-          return false;
-        }
-      }
-      return true;
+  private static boolean iterateCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean raw, boolean unicode) {
+    if (raw) {
+      return iterateRawCharacterRanges(consumer, undecoded, off, unicode);
     }
     Matcher escMatcher = PATTERN_ESCAPE.matcher(undecoded);
     int index = 0;
@@ -220,6 +215,39 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         return false;
       }
     }
+    return true;
+  }
+
+  private static boolean iterateRawCharacterRanges(TextRangeConsumer consumer, String undecoded, int off, boolean unicode) {
+    for (int i = 0; i < undecoded.length(); i++) {
+      char c = undecoded.charAt(i);
+      if (unicode && c == '\\' && i < undecoded.length()-1) {
+        char c2 = undecoded.charAt(i+1);
+        if (c2 == 'u' && i < undecoded.length()-5) {
+          char u = (char) Integer.parseInt(undecoded.substring(i+2, i+6), 16);
+          if (!consumer.process(off, off + 6, Character.toString(u))) {
+            return false;
+          }
+          //noinspection AssignmentToForLoopParameter
+          i += 5;
+          continue;
+        }
+        if (c2 == 'U' && i < undecoded.length()-9) {
+          // note: Java has 16-bit chars, so this code will truncate characters which don't fit in 16 bits
+          char u = (char) Long.parseLong(undecoded.substring(i+2, i+10), 16);
+          if (!consumer.process(off, off + 10, Character.toString(u))) {
+            return false;
+          }
+          //noinspection AssignmentToForLoopParameter
+          i += 9;
+          continue;
+        }
+      }
+      if (!consumer.process(off + i, off + i + 1, Character.toString(c))) {
+        return false;
+      }
+    }
+
     return true;
   }
 
