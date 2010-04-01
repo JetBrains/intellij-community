@@ -40,7 +40,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -189,19 +189,12 @@ public class TestPackage extends TestObject {
     final boolean[] isJunit4 = new boolean[1];
     final Task.Backgroundable task =
       new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
-        int myPort = -1;
+        private Socket mySocket;
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            final Socket socket = serverSocket.accept();
-            final DataInputStream is = new DataInputStream(socket.getInputStream());
-            try {
-              myPort = is.readInt();
-            }
-            finally {
-              is.close();
-            }
+            mySocket = serverSocket.accept();
           }
           catch (IOException e) {
             LOG.info(e);
@@ -226,16 +219,17 @@ public class TestPackage extends TestObject {
         }
 
         private void connect() {
-          Socket socket = null;
+          DataOutputStream os = null;
           try {
-            socket = new Socket(InetAddress.getLocalHost(), myPort);
+            os = new DataOutputStream(mySocket.getOutputStream());
+            os.writeBoolean(true);
           }
           catch (Throwable e) {
             LOG.info(e);
           }
           finally {
             try {
-              if (socket != null) socket.close();
+              if (os != null) os.close();
             }
             catch (Throwable e) {
               LOG.info(e);

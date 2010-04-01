@@ -98,19 +98,12 @@ public class JUnitStarter {
           final int port = Integer.parseInt(arg.substring(SOCKET.length()));
           try {
             final Socket socket = new Socket(InetAddress.getLocalHost(), port);  //start collecting tests
-            final ServerSocket serverSocket = new ServerSocket(0);
+            final DataInputStream os = new DataInputStream(socket.getInputStream());
             try {
-              final DataOutputStream os = new DataOutputStream(socket.getOutputStream());
-              try {
-                os.writeInt(serverSocket.getLocalPort()); //write port to sync
-              }
-              finally {
-                os.close();
-              }
-              serverSocket.accept();
+              os.readBoolean();//wait for ready flag
             }
             finally {
-              serverSocket.close();
+              os.close();
             }
           }
           catch (IOException e) {
