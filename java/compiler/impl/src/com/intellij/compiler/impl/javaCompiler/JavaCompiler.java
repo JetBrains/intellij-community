@@ -28,8 +28,6 @@ import com.intellij.compiler.make.CacheCorruptedException;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +39,6 @@ import java.util.Arrays;
 public class JavaCompiler implements TranslatingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
   private final Project myProject;
-  private static final FileTypeManager FILE_TYPE_MANAGER = FileTypeManager.getInstance();
 
   public JavaCompiler(Project project) {
     myProject = project;
@@ -53,7 +50,7 @@ public class JavaCompiler implements TranslatingCompiler {
   }
 
   public boolean isCompilableFile(VirtualFile file, CompileContext context) {
-    return FILE_TYPE_MANAGER.getFileTypeByFile(file).equals(StdFileTypes.JAVA);
+    return getBackEndCompiler().getCompilableFileTypes().contains(file.getFileType());
   }
 
   public void compile(CompileContext context, Chunk<Module> moduleChunk, VirtualFile[] files, OutputSink sink) {
