@@ -418,8 +418,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
             break;
           }
       }
-      checkNotNull(curItem, curVFile, dstVFile);
-      assert curItem != null;
+      if (curItem == null) {
+        throw new IncorrectOperationException("Cannot find path between files; " +
+                                              "src = " + curVFile.getPresentableUrl() + "; " +
+                                              "dst = " + dstVFile.getPresentableUrl() + "; " +
+        "Contexts: " + contexts);
+      }
       if (curItem.equals(dstItem)) {
         if (getCanonicalText().equals(dstItem.getName())) {
           return getElement();
@@ -451,12 +455,6 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
     }
     return manipulator.handleContentChange(getElement(), range, newName);
-  }
-
-  private static void checkNotNull(final Object o, final VirtualFile curVFile, final VirtualFile dstVFile) throws IncorrectOperationException {
-    if (o == null) {
-      throw new IncorrectOperationException("Cannot find path between files; src = " + curVFile.getPresentableUrl() + "; dst = " + dstVFile.getPresentableUrl());
-    }
   }
 
   public void registerQuickfix(HighlightInfo info, FileReference reference) {
