@@ -37,7 +37,8 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyFromFutureImportInspection.class,
       PyComparisonWithNoneInspection.class,
       PyStringExceptionInspection.class,
-      PySuperArgumentsInspection.class
+      PySuperArgumentsInspection.class,
+      PyByteLiteralInspection.class
     };
   }
 }
