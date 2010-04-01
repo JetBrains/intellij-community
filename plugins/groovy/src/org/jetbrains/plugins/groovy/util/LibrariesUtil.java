@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -50,14 +52,18 @@ public class LibrariesUtil {
     final ArrayList<Library> libraries = new ArrayList<Library>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        populateOrderEntries(module, condition, libraries, false);
+        populateOrderEntries(module, condition, libraries, false, new THashSet<Module>());
       }
     });
 
     return libraries.toArray(new Library[libraries.size()]);
   }
 
-  private static void populateOrderEntries(Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly) {
+  private static void populateOrderEntries(Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly, Set<Module> visited) {
+    if (!visited.add(module)) {
+      return;
+    }
+
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
         LibraryOrderEntry libEntry = (LibraryOrderEntry)entry;
@@ -69,10 +75,11 @@ public class LibrariesUtil {
         if (condition.value(library)) {
           libraries.add(library);
         }
-      } else if (entry instanceof ModuleOrderEntry) {
+      }
+      else if (entry instanceof ModuleOrderEntry) {
         final Module dep = ((ModuleOrderEntry)entry).getModule();
         if (module != null) {
-          populateOrderEntries(dep, condition, libraries, true);
+          populateOrderEntries(dep, condition, libraries, true, visited);
         }
       }
     }
