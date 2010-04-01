@@ -118,8 +118,8 @@ public class MavenImportingSettingsForm {
 
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
 
-    myDownloadSourcesCheckBox.setSelected(data.shouldDownloadSourcesAutomatically());
-    myDownloadDocsCheckBox.setSelected(data.shouldDownloadDocsAutomatically());
+    myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
+    myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
 
     updateControls();
   }

@@ -50,20 +50,32 @@ public class LibrariesUtil {
     final ArrayList<Library> libraries = new ArrayList<Library>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        for (OrderEntry entry : manager.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry) {
-            LibraryOrderEntry libEntry = (LibraryOrderEntry)entry;
-            Library library = libEntry.getLibrary();
-            if (condition.value(library)) {
-              libraries.add(library);
-            }
-          }
-        }
+        populateOrderEntries(module, condition, libraries, false);
       }
     });
 
     return libraries.toArray(new Library[libraries.size()]);
+  }
+
+  private static void populateOrderEntries(Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly) {
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry) {
+        LibraryOrderEntry libEntry = (LibraryOrderEntry)entry;
+        if (exportedOnly && !libEntry.isExported()) {
+          continue;
+        }
+
+        Library library = libEntry.getLibrary();
+        if (condition.value(library)) {
+          libraries.add(library);
+        }
+      } else if (entry instanceof ModuleOrderEntry) {
+        final Module dep = ((ModuleOrderEntry)entry).getModule();
+        if (module != null) {
+          populateOrderEntries(dep, condition, libraries, true);
+        }
+      }
+    }
   }
 
   public static Library[] getGlobalLibraries(Condition<Library> condition) {
