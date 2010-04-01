@@ -31,9 +31,11 @@ public abstract class JavaPatchableProgramRunner<Settings extends JDOMExternaliz
 
 
   protected static void runCustomPatchers(JavaParameters javaParameters, RunnerSettings settings, Executor executor) {
-    final RunProfile profile = settings.getRunProfile();
-    for (JavaProgramPatcher patcher : JavaProgramPatcher.EP_NAME.getExtensions()) {
-      patcher.patchJavaParameters(executor, profile, javaParameters);
+    if (settings != null) {
+      final RunProfile profile = settings.getRunProfile();
+      for (JavaProgramPatcher patcher : JavaProgramPatcher.EP_NAME.getExtensions()) {
+        patcher.patchJavaParameters(executor, profile, javaParameters);
+      }
     }
   }
 }
