@@ -14,6 +14,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -106,8 +107,8 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     }
 
     @NotNull
-    public Class[] getPossibleTargets() {
-      return NAME_DEFINER_ONLY;
+    public Condition<PsiElement> getTargetCondition() {
+      return PyResolveUtil.IS_NAME_DEFINER;
     }
   }
 

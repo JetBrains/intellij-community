@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -70,6 +71,18 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     return HighlightDisplayLevel.WARNING;
   }
 
+  private static Condition<PsiElement> IS_IMPORT_STATEMENT = new Condition<PsiElement>() {
+    public boolean value(PsiElement psiElement) {
+      return psiElement instanceof PyImportStatement;
+    }
+  };
+
+  private static Condition<PsiElement> IS_FROM_IMPORT_STATEMENT = new Condition<PsiElement>() {
+    public boolean value(PsiElement psiElement) {
+      return psiElement instanceof PyFromImportStatement;
+    }
+  };
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -97,7 +110,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       Set<String> seen_file_names = new HashSet<String>(); // true import names
       // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
       // walk up collecting all such statements and analyzing
-      CollectProcessor import_prc = new CollectProcessor(PyImportStatement.class);
+      CollectProcessor import_prc = new CollectProcessor(IS_IMPORT_STATEMENT);
       PyResolveUtil.treeCrawlUp(import_prc, node);
       List<PsiElement> result = import_prc.getResult();
       if (result.size() > 0) {
@@ -124,7 +137,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       }
       // maybe the name is importable via some existing 'from foo import ...' statement, and only needs another name to be imported.
       // walk up collecting all such statements and analyzing
-      CollectProcessor from_import_prc = new CollectProcessor(PyFromImportStatement.class);
+      CollectProcessor from_import_prc = new CollectProcessor(IS_FROM_IMPORT_STATEMENT);
       PyResolveUtil.treeCrawlUp(from_import_prc, node);
       result = from_import_prc.getResult();
       if (result.size() > 0) {

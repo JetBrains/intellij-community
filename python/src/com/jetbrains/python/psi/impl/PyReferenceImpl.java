@@ -4,6 +4,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -268,6 +269,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
+  private static final Condition<PsiElement> IS_STAR_IMPORT = new Condition<PsiElement>() {
+    public boolean value(PsiElement psiElement) {
+      return psiElement instanceof PyStarImportElement;
+    }
+  };
+
   @NotNull
   public Object[] getVariants() {
     final List<Object> ret = new ArrayList<Object>();
@@ -299,8 +306,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     // scan all "import *" and include names provided by them
-    CollectProcessor collect_proc;
-    collect_proc = new CollectProcessor(PyStarImportElement.class);
+    CollectProcessor collect_proc = new CollectProcessor(IS_STAR_IMPORT);
     PyResolveUtil.treeCrawlUp(collect_proc, realContext);
     List<PsiElement> stars = collect_proc.getResult();
     for (PsiElement star_elt : stars) {

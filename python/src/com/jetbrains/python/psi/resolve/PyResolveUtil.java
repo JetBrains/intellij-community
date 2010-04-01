@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -62,7 +63,7 @@ public class PyResolveUtil {
    * @return previous statement, or null.
    */
   @Nullable
-  public static PsiElement getPrevNodeOf(PsiElement elt, Class... classes) {
+  public static PsiElement getPrevNodeOf(PsiElement elt, Condition<PsiElement> condition) {
     PsiElement seeker = elt;
     while (seeker != null) {
       PsiElement feeler = seeker.getPrevSibling();
@@ -75,9 +76,7 @@ public class PyResolveUtil {
         if (seeker instanceof PsiFile) return null; // all file nodes have been looked up, in vain
       }
       // ??? if (seeker instanceof NameDefiner) return seeker;
-      for (Class cls : classes) {
-        if (cls.isInstance(seeker)) return seeker;
-      }
+      if (condition.value(seeker)) return seeker;
     }
     // here elt is null or a PsiFile is not up in the parent chain.
     return null;
@@ -87,10 +86,16 @@ public class PyResolveUtil {
   public static PsiElement getPrevNodeOf(PsiElement elt, PsiScopeProcessor proc) {
     if (elt instanceof PsiFile) return null;  // no sense to get the previous node of a file
     if (proc instanceof PyClassScopeProcessor) {
-      return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getPossibleTargets());
+      return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getTargetCondition());
     }
-    else return getPrevNodeOf(elt, PyClassScopeProcessor.NAME_DEFINER_ONLY);
+    else return getPrevNodeOf(elt, IS_NAME_DEFINER);
   }
+
+  public static final Condition<PsiElement> IS_NAME_DEFINER = new Condition<PsiElement>() {
+    public boolean value(PsiElement psiElement) {
+      return psiElement instanceof NameDefiner;
+    }
+  };
 
   /**
    * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.

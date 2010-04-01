@@ -1,7 +1,8 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.jetbrains.python.psi.NameDefiner;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,13 +12,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PyClassScopeProcessor extends PsiScopeProcessor {
   /**
-   * @return classes of nodes that might be interesting for the processor.
+   * @return condition on nodes that might be interesting for the processor.
+   * 
    * ??? Instances of NameDefiner are always considered interesting.
-   * ??? An empty list makes processor see only NameDefiners.
-   * @see com.jetbrains.python.psi.NameDefiner 
+   * @see com.jetbrains.python.psi.NameDefiner
    */
   @NotNull
-  Class[] getPossibleTargets();
-
-  Class[] NAME_DEFINER_ONLY = {NameDefiner.class};
+  Condition<PsiElement> getTargetCondition();
 }

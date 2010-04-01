@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
@@ -9,20 +10,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CollectProcessor implements PyClassScopeProcessor {
+  private final Condition<PsiElement> myCondition;
+  private final List<PsiElement> myResult;
 
-  Class<? extends PsiElement>[] my_collectables;
-  List<PsiElement> my_result;
-
-  public CollectProcessor(Class<? extends PsiElement>... collectables) {
-    my_collectables = collectables;
-    my_result = new ArrayList<PsiElement>();
+  public CollectProcessor(Condition<PsiElement> condition) {
+    myCondition = condition;
+    myResult = new ArrayList<PsiElement>();
   }
 
   public boolean execute(final PsiElement element, final ResolveState state) {
-    for (Class cls : my_collectables) {
-      if (cls.isInstance(element)) {
-        my_result.add(element);
-      }
+    if (myCondition.value(element)) {
+      myResult.add(element);
     }
     return true; // collect till we drop
   }
@@ -35,11 +33,11 @@ public class CollectProcessor implements PyClassScopeProcessor {
   }
 
   public List<PsiElement> getResult() {
-    return my_result;
+    return myResult;
   }
 
   @NotNull
-  public Class[] getPossibleTargets() {
-    return my_collectables;
+  public Condition<PsiElement> getTargetCondition() {
+    return myCondition;
   }
 }
