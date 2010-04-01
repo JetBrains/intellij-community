@@ -55,6 +55,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
@@ -599,9 +600,9 @@ public class FileBasedIndex implements ApplicationComponent {
    * @param project it is guaranteeed to return data which is up-to-date withing the project
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @NotNull Project project) {
+  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
     try {
-      ensureUpToDate(indexId, project, GlobalSearchScope.allScope(project));
+      ensureUpToDate(indexId, project, project != null? GlobalSearchScope.allScope(project) : new EverythingGlobalScope());
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (index == null) return true;
       return index.processAllKeys(processor);
@@ -658,7 +659,7 @@ public class FileBasedIndex implements ApplicationComponent {
    * DO NOT CALL DIRECTLY IN CLIENT CODE
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
-  public <K> void ensureUpToDate(final ID<K, ?> indexId, @NotNull Project project, @Nullable GlobalSearchScope filter) {
+  public <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
     if (isDumb(project)) {
       handleDumbMode(indexId, project);
     }
@@ -696,28 +697,38 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void handleDumbMode(final ID<?, ?> indexId, Project project) {
+  private void handleDumbMode(final ID<?, ?> indexId, @Nullable Project project) {
     if (myNotRequiringContentIndices.contains(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }
 
     ProgressManager.checkCanceled(); // DumbModeAction.CANCEL
 
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator instanceof BackgroundableProcessIndicator) {
-      final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
-      if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
-        assert !ApplicationManager.getApplication().isDispatchThread();
-        DumbService.getInstance(project).waitForSmartMode();
-        return;
+    if (project != null) {
+      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (progressIndicator instanceof BackgroundableProcessIndicator) {
+        final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
+        if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
+          assert !ApplicationManager.getApplication().isDispatchThread();
+          DumbService.getInstance(project).waitForSmartMode();
+          return;
+        }
       }
     }
 
     throw new IndexNotReadyException();
   }
 
-  private static boolean isDumb(Project project) {
-    return DumbServiceImpl.getInstance(project).isDumb();
+  private static boolean isDumb(@Nullable Project project) {
+    if (project != null) {
+      return DumbServiceImpl.getInstance(project).isDumb();
+    }
+    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
+      if (DumbServiceImpl.getInstance(proj).isDumb()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -769,7 +780,7 @@ public class FileBasedIndex implements ApplicationComponent {
                                         final GlobalSearchScope filter) {
     try {
       final Project project = filter.getProject();
-      assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
@@ -842,7 +853,7 @@ public class FileBasedIndex implements ApplicationComponent {
                                          GlobalSearchScope filter) {
     try {
       final Project project = filter.getProject();
-      assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
@@ -1004,7 +1015,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return docs;
   }
 
-  private void indexUnsavedDocuments(ID<?, ?> indexId, Project project, GlobalSearchScope filter) throws StorageException {
+  private void indexUnsavedDocuments(ID<?, ?> indexId, @Nullable Project project, GlobalSearchScope filter) throws StorageException {
 
     if (myUpToDateIndices.contains(indexId)) {
       return; // no need to index unsaved docs
@@ -1151,12 +1162,12 @@ public class FileBasedIndex implements ApplicationComponent {
   public static final Key<VirtualFile> VIRTUAL_FILE = new Key<VirtualFile>("Context virtual file");
 
   @Nullable
-  private PsiFile findDominantPsiForDocument(final Document document, Project project) {
+  private PsiFile findDominantPsiForDocument(final Document document, @Nullable Project project) {
     if (myTransactionMap.containsKey(document)) {
       return myTransactionMap.get(document);
     }
 
-    return findLatestKnownPsiForUncomittedDocument(document, project);
+    return project == null? null : findLatestKnownPsiForUncomittedDocument(document, project);
   }
 
   private final StorageGuard myStorageLock = new StorageGuard();
