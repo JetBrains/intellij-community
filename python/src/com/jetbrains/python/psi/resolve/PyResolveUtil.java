@@ -36,7 +36,20 @@ public class PyResolveUtil {
    */
   @Nullable
   public static PsiElement getConcealingParent(PsiElement elt) {
-    return PsiTreeUtil.getParentOfType(elt, PyClass.class, PyFunction.class);
+    if (elt == null) {
+      return null;
+    }
+    PsiElement parent = elt.getParent();
+    while(parent != null) {
+      if (parent instanceof PyClass || parent instanceof PyFunction) {
+        return parent;
+      }
+      if (parent instanceof PsiFile) {
+        break;
+      }
+      parent = parent.getParent();
+    }
+    return null;
   }
 
   /**
