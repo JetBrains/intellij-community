@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author yole
@@ -381,10 +382,24 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   // our very own caching resolver
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
     public static CachingResolver INSTANCE = new CachingResolver();
+    private ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
+      @Override
+      protected AtomicInteger initialValue() {
+        return new AtomicInteger();
+      }
+    };
 
     @Nullable
     public ResolveResult[] resolve(final PyReferenceImpl ref, final boolean incompleteCode) {
-      return ref.multiResolveInner(incompleteCode);
+      if (myNesting.get().getAndIncrement() >= 30) {
+        System.out.println("Stack overflow pending");
+      }
+      try {
+        return ref.multiResolveInner(incompleteCode);
+      }
+      finally {
+        myNesting.get().getAndDecrement();
+      }
     }
   }
 
