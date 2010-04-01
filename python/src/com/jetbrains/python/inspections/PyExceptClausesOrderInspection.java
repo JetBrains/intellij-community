@@ -55,7 +55,6 @@ public class PyExceptClausesOrderInspection extends LocalInspectionTool{
       super(holder);
     }
 
-    // TODO: write tests
     @Override
     public void visitPyTryExceptStatement(PyTryExceptStatement node) {
       PyExceptPart[] exceptParts = node.getExceptParts();
