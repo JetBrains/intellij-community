@@ -17,7 +17,9 @@
 /*
  * @author max
  */
-package com.intellij.rt.execution;
+package com.intellij.util.lang;
+
+import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -38,32 +40,27 @@ public class ExternalClasspathClassLoader extends URLClassLoader {
   }
 
   private static URL[] parseUrls() {
-    final List urls = new ArrayList();
+    final List<URL> urls = new ArrayList<URL>();
     final File file = new File(System.getProperty("classpath.file"));
     try {
       final BufferedReader reader = new BufferedReader(new FileReader(file));
       try {
         while(reader.ready()) {
           final String fileName = reader.readLine();
-          try {
-            urls.add(new File(fileName).toURI().toURL());
-          }
-          catch (NoSuchMethodError e) {
-            urls.add(new File(fileName).toURL());
-          }
+          urls.add(new File(fileName).toURI().toURL());
         }
       }
       finally {
         reader.close();
       }
 
-      return (URL[])urls.toArray(new URL[urls.size()]);
+      return urls.toArray(new URL[urls.size()]);
     }
     catch (IOException e) {
-      throw new RuntimeException("Cannot read classpath entries from file: " + e);
+      throw new RuntimeException(e);
     }
     finally {
-      file.delete();
+      FileUtil.delete(file);
     }
   }
 }
