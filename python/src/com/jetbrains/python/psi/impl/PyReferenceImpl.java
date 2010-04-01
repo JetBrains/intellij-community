@@ -387,4 +387,21 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       return ref.multiResolveInner(incompleteCode);
     }
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PyReferenceImpl that = (PyReferenceImpl)o;
+
+    if (!myElement.equals(that.myElement)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myElement.hashCode();
+  }
 }
