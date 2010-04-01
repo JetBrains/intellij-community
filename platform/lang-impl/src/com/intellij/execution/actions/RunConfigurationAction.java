@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -62,7 +63,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
     }
 
     try {
-      if (project == null || project.isDisposed()) {
+      if (project == null || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
         //if (ProjectManager.getInstance().getOpenProjects().length > 0) {
         //  // do nothing if frame is not active
         //  return;
