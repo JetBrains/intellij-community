@@ -178,7 +178,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           fix = new ImportFromExistingFix(node, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
         }
         for (PsiElement symbol : symbols) {
-          if (symbol.getParent() instanceof PsiFile) { // we only want top-level symbols
+          if (isTopLevel(symbol)) { // we only want top-level symbols
             PsiFile srcfile = symbol.getContainingFile();
             if (srcfile != null && srcfile != exisitng_import_file) {
               VirtualFile vfile = srcfile.getVirtualFile();
@@ -199,6 +199,16 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         }
       }
       return fixes;
+    }
+
+    private static boolean isTopLevel(PsiElement symbol) {
+      if (symbol instanceof PyClass) {
+        return ((PyClass) symbol).isTopLevel();
+      }
+      if (symbol instanceof PyFunction) {
+        return ((PyFunction) symbol).isTopLevel();
+      }
+      return false;
     }
 
 

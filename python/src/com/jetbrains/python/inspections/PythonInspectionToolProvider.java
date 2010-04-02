@@ -36,7 +36,10 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PySimplifyBooleanCheckInspection.class,
       PyFromFutureImportInspection.class,
       PyComparisonWithNoneInspection.class,
-      PyStringExceptionInspection.class
+      PyStringExceptionInspection.class,
+      PySuperArgumentsInspection.class,
+      PyByteLiteralInspection.class,
+      PyTupleItemAssignmentInspection.class
     };
   }
 }

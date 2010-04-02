@@ -5,7 +5,6 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,23 +33,8 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitPyFile(final PyFile node) {
-    node.accept(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        ProgressManager.checkCanceled();
-        super.visitElement(element);
-      }
-
-      // We check only functions content due to language semantics here
-      // However nested scopes are OK.
-      @Override
-      public void visitPyFunction(final PyFunction node) {
-        processScope(node);
-        super.visitPyFunction(node);
-      }
-    });
-    registerProblems();
+  public void visitPyFunction(PyFunction node) {
+    processScope(node);
   }
 
   class DontPerformException extends RuntimeException {}
@@ -150,7 +134,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     }
   }
 
-  private void registerProblems() {
+  void registerProblems() {
     // Register problems
     for (PsiElement element : myUnusedElements) {
       final String name = element.getText();

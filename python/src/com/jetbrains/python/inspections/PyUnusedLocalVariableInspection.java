@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @author oleg
  */
 public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
+  private final ThreadLocal<PyUnusedLocalVariableInspectionVisitor> myLastVisitor = new ThreadLocal<PyUnusedLocalVariableInspectionVisitor>();
 
   @Nls
   @NotNull
@@ -39,7 +41,17 @@ public class PyUnusedLocalVariableInspection extends LocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new PyUnusedLocalVariableInspectionVisitor(holder);
+    final PyUnusedLocalVariableInspectionVisitor visitor = new PyUnusedLocalVariableInspectionVisitor(holder);
+    myLastVisitor.set(visitor);
+    return visitor;
+  }
+
+  @Override
+  public void inspectionFinished(LocalInspectionToolSession session) {
+    final PyUnusedLocalVariableInspectionVisitor visitor = myLastVisitor.get();
+    assert visitor != null;
+    visitor.registerProblems();
+    myLastVisitor.remove();
   }
 
   @NotNull

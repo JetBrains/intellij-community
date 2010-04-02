@@ -39,6 +39,13 @@ public interface PyFunction extends PsiNamedElement, PyStatement, NameDefiner, P
   PyDecoratorList getDecoratorList();
 
   /**
+   * Returns true if the function is a top-level class (its parent is its containing file).
+   *
+   * @return true if the function is top-level, false otherwise.
+   */
+  boolean isTopLevel();
+
+  /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
    */
   enum Flag {

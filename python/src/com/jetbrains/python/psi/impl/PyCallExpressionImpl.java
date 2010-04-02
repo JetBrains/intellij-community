@@ -55,31 +55,43 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   public PyType getType() {
-    PyExpression callee = getCallee();
-    if (callee instanceof PyReferenceExpression) {
-      // hardwired special cases
-      if ("super".equals(callee.getText())) {
-        final PyType superCallType = getSuperCallType(callee);
-        if (superCallType != null) {
-          return superCallType;
+    if (!TypeEvalStack.mayEvaluate(this)) {
+      return null;
+    }
+    try {
+      PyExpression callee = getCallee();
+      if (callee instanceof PyReferenceExpression) {
+        // hardwired special cases
+        if ("super".equals(callee.getText())) {
+          final PyType superCallType = getSuperCallType(callee);
+          if (superCallType != null) {
+            return superCallType;
+          }
+        }
+        // normal cases
+        ResolveResult[] targets = ((PyReferenceExpression)callee).getReference().multiResolve(false);
+        if (targets.length > 0) {
+          PsiElement target = targets[0].getElement();
+          if (target instanceof PyClass) {
+            return new PyClassType((PyClass)target, false); // we call a class name, that is, the constructor, we get an instance.
+          }
+          else if (target instanceof PyFunction && PyNames.INIT.equals(((PyFunction)target).getName())) {
+            return new PyClassType(((PyFunction)target).getContainingClass(), false); // resolved to __init__, back to class
+          }
+          // TODO: look at well-known functions and their return types
+          return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
         }
       }
-      // normal cases
-      ResolveResult[] targets = ((PyReferenceExpression)callee).getReference().multiResolve(false);
-      if (targets.length > 0) {
-        PsiElement target = targets[0].getElement();
-        if (target instanceof PyClass) {
-          return new PyClassType((PyClass) target, false); // we call a class name, that is, the constructor, we get an instance.
-        }
-        else if (target instanceof PyFunction && PyNames.INIT.equals(((PyFunction)target).getName())) {
-          return new PyClassType(((PyFunction)target).getContainingClass(), false); // resolved to __init__, back to class
-        }
-        // TODO: look at well-known functions and their return types
-        return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
+      if (callee == null) {
+        return null;
+      }
+      else {
+        return callee.getType();
       }
     }
-    if (callee == null) return null;
-    else return callee.getType();
+    finally {
+      TypeEvalStack.evaluated(this);
+    }
   }
 
   private PyType getSuperCallType(PyExpression callee) {

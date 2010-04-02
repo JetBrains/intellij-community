@@ -153,6 +153,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return name;
   }
 
+  public boolean isTopLevel() {
+    return getParentByStub() instanceof PsiFile;
+  }
+
   protected List<PyClass> getSuperClassesList() {
     if (PyNames.FAKE_OLD_BASE.equals(getName())) {
       return Collections.emptyList();

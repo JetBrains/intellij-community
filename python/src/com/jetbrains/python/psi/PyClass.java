@@ -81,4 +81,11 @@ public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDo
   PyDecoratorList getDecoratorList();
 
   String getQualifiedName();
+
+  /**
+   * Returns true if the class is a top-level class (its parent is its containing file).
+   *
+   * @return true if the class is top-level, false otherwise.
+   */
+  boolean isTopLevel();
 }

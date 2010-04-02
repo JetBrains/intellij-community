@@ -234,4 +234,9 @@ public class PyResolveTest extends PyResolveTestCase {
     assertTrue(targetElement instanceof PyFunction);
     assertEquals("A", ((PyFunction) targetElement).getContainingClass().getName());
   }
+
+  public void testStackOverflow() throws Exception {
+    PsiElement targetElement = resolve();
+    assertNull(targetElement);
+  }
 }

@@ -4,8 +4,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyRaiseStatement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +11,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   26.03.2010
- * Time:   19:49:54
+ * Date:   01.04.2010
+ * Time:   17:36:42
  */
-public class PyStringExceptionInspection extends LocalInspectionTool {
+public class PyByteLiteralInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   @Override
@@ -28,13 +26,13 @@ public class PyStringExceptionInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.raising.string.exception");
+    return PyBundle.message("INSP.NAME.byte.literal");
   }
 
   @NotNull
   @Override
   public String getShortName() {
-    return "PyStringExceptionInspection";
+    return "PyByteLiteralInspection";
   }
 
   @Override
@@ -55,12 +53,14 @@ public class PyStringExceptionInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitPyRaiseStatement(PyRaiseStatement node) {
-      PyExpression[] expressions = node.getExpressions();
-      if (expressions != null) {
-        for (PyExpression expression : expressions) {
-          if (expression instanceof PyStringLiteralExpression) {
-            registerProblem(expression, "Raising a string exception");
+    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+      if (Character.toLowerCase(node.getText().charAt(0)) == 'b') {
+        String value = node.getStringValue();
+        int length = value.length();
+        for (int i = 0; i < length; ++i) {
+          char c = value.charAt(i);
+          if (((int) c) > 127) {
+            registerProblem(node, "Byte literal contains characters > 127");
           }
         }
       }

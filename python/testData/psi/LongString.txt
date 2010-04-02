@@ -33,7 +33,7 @@ PyFile:LongString.py
         PsiElement(Py:IDENTIFIER)('sub')
       PyArgumentList
         PsiElement(Py:LPAR)('(')
-        PyStringLiteralExpression: 
+        PyStringLiteralExpression: \\\\
           PsiElement(Py:STRING_LITERAL)('r"""\\\\"""')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace(' ')

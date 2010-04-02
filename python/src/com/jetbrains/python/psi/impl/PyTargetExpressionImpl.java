@@ -91,24 +91,32 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   public PyType getType() {
-    if (getParent() instanceof PyAssignmentStatement) {
-      final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
-      final PyExpression assignedValue = assignmentStatement.getAssignedValue();
-      if (assignedValue != null) {
-        if (assignedValue instanceof PyReferenceExpression) {
-          final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
-          PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
-          if (maybe_type != null) return maybe_type;
-          final PsiElement resolveResult = refex.getReference().resolve();
-          if (resolveResult == this) {
-            return null;  // fix SOE on "a = a"
-          }
-          return PyReferenceExpressionImpl.getTypeFromTarget(resolveResult);          
-        }
-        return assignedValue.getType();
-      }
+    if (!TypeEvalStack.mayEvaluate(this)) {
+      return null;
     }
-    return null;
+    try {
+      if (getParent() instanceof PyAssignmentStatement) {
+        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
+        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        if (assignedValue != null) {
+          if (assignedValue instanceof PyReferenceExpression) {
+            final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
+            PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
+            if (maybe_type != null) return maybe_type;
+            final PsiElement resolveResult = refex.getReference().resolve();
+            if (resolveResult == this) {
+              return null;  // fix SOE on "a = a"
+            }
+            return PyReferenceExpressionImpl.getTypeFromTarget(resolveResult);
+          }
+          return assignedValue.getType();
+        }
+      }
+      return null;
+    }
+    finally {
+      TypeEvalStack.evaluated(this);
+    }
   }
 
   public PyExpression getQualifier() {

@@ -36,7 +36,20 @@ public class PyResolveUtil {
    */
   @Nullable
   public static PsiElement getConcealingParent(PsiElement elt) {
-    return PsiTreeUtil.getParentOfType(elt, PyClass.class, PyFunction.class);
+    if (elt == null) {
+      return null;
+    }
+    PsiElement parent = elt.getParent();
+    while(parent != null) {
+      if (parent instanceof PyClass || parent instanceof PyFunction) {
+        return parent;
+      }
+      if (parent instanceof PsiFile) {
+        break;
+      }
+      parent = parent.getParent();
+    }
+    return null;
   }
 
   /**
@@ -50,6 +63,9 @@ public class PyResolveUtil {
     PsiElement seeker = elt;
     while (seeker != null) {
       PsiElement feeler = seeker.getPrevSibling();
+      if ((feeler instanceof PyFunction || feeler instanceof PyClass) && condition.value(feeler)) {
+        return feeler;
+      }
       if (feeler != null) {
         seeker = PsiTreeUtil.getDeepestLast(feeler);
       }

@@ -23,6 +23,8 @@ import java.util.List;
  * @author yole
  */
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
+  private PyExpression[] myTargets;
+
   public PyAssignmentStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -33,14 +35,21 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   }
 
   public PyExpression[] getTargets() {
+    if (myTargets == null) {
+      myTargets = calcTargets();
+    }
+    return myTargets;
+  }
+
+  private PyExpression[] calcTargets() {
     final ASTNode[] eqSigns = getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
     if (eqSigns.length == 0) {
       return PyExpression.EMPTY_ARRAY;
     }
-    final ASTNode lastEq = eqSigns[eqSigns.length-1];
+    final ASTNode lastEq = eqSigns[eqSigns.length - 1];
     List<PyExpression> candidates = new ArrayList<PyExpression>();
     ASTNode node = getNode().getFirstChildNode();
-    while(node != null && node != lastEq) {
+    while (node != null && node != lastEq) {
       final PsiElement psi = node.getPsi();
       if (psi instanceof PyExpression) {
         addCandidate(candidates, (PyExpression)psi);
@@ -49,9 +58,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     }
     List<PyExpression> targets = new ArrayList<PyExpression>();
     for (PyExpression expr : candidates) { // only filter out targets
-      if (expr instanceof PyTargetExpression ||
-          expr instanceof PyReferenceExpression ||
-          expr instanceof PySubscriptionExpression) {
+      if (expr instanceof PyTargetExpression || expr instanceof PyReferenceExpression || expr instanceof PySubscriptionExpression) {
         targets.add(expr);
       }
     }
@@ -177,5 +184,11 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   public boolean mustResolveOutside() {
     return true; // a = a+1 resolves 'a' outside itself.
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myTargets = null;
   }
 }
