@@ -40,8 +40,9 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
   class DontPerformException extends RuntimeException {}
 
   private void processScope(final ScopeOwner owner) {
-    // TODO[oleg] Do not show warning in python code expression mode (evaluate in debug or watches)
-
+    if (owner.getContainingFile() instanceof PyExpressionCodeFragment){
+      return;
+    }
     // Do not perform inspection if locals() call is found
     try {
       owner.accept(new PyRecursiveElementVisitor(){
