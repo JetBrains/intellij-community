@@ -63,7 +63,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
     }
 
     try {
-      if (project == null || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
+      if (project == null || project.isDisposed()) {
         //if (ProjectManager.getInstance().getOpenProjects().length > 0) {
         //  // do nothing if frame is not active
         //  return;
@@ -73,10 +73,15 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
         presentation.setEnabled(false);
       }
       else {
-        final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-        RunnerAndConfigurationSettings selected = runManager.getSelectedConfiguration();
-        updateButton(selected, project, presentation);
-        presentation.setEnabled(true);
+        if (DumbService.getInstance(project).isDumb()) {
+          presentation.setEnabled(false);
+        }
+        else {
+          final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
+          RunnerAndConfigurationSettings selected = runManager.getSelectedConfiguration();
+          updateButton(selected, project, presentation);
+          presentation.setEnabled(true);
+        }
       }
     }
     catch (IndexNotReadyException e1) {
