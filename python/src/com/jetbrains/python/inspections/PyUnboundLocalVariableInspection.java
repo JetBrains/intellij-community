@@ -44,7 +44,7 @@ public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
   }
 
   public boolean isEnabledByDefault() {
-    return false;
+    return true;
   }
 
   @NotNull
