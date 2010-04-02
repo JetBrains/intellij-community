@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 public class SingleIterator<T> implements Iterator<T> {
 
   boolean expired;
-  private T content;
+  private final T content;
 
   public SingleIterator(T content) {
     this.content = content;

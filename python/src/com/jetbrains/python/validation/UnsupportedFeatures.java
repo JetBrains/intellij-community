@@ -19,7 +19,7 @@ import java.util.Set;
  * Time: 16:16:45
  */
 public class UnsupportedFeatures extends PyAnnotator {
-  private static Set<String> REMOVED_METHODS = new HashSet<String>();
+  private static final Set<String> REMOVED_METHODS = new HashSet<String>();
 
   static {
     REMOVED_METHODS.add("cmp");

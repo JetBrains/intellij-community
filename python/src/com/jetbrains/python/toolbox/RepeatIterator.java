@@ -13,7 +13,7 @@ import java.util.NoSuchElementException;
  * Date: Nov 8, 2009 5:55:57 AM
  */
 public class RepeatIterator<T> implements Iterator<T> {
-  private List<T> master;
+  private final List<T> master;
   private Iterator<T> source;
 
   /**

@@ -12,7 +12,7 @@ import java.util.List;
  * Date: Nov 8, 2009 6:32:08 AM
  */
 public class RepeatIterable<T> implements Iterable<T> {
-  private List<T> master;
+  private final List<T> master;
 
   /**
    * Create an iterator that repeats the contents of given list.

@@ -12,8 +12,8 @@ public class ReadWriteInstruction extends InstructionImpl {
     WRITE(false, true),
     READWRITE(true, true);
 
-    private boolean isWrite;
-    private boolean isRead;
+    private final boolean isWrite;
+    private final boolean isRead;
 
     ACCESS(boolean read, boolean write) {
       isWrite = write;

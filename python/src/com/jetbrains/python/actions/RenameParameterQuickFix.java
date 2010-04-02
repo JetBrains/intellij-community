@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class RenameParameterQuickFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#" + RenameParameterQuickFix.class.getName());
-  private String myNewName;
+  private final String myNewName;
 
   public RenameParameterQuickFix(String newName) {
     myNewName = newName;
