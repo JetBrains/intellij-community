@@ -592,8 +592,11 @@ public class PythonSdkType extends SdkType {
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
       String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
+      // in order to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
+      // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
       String[] add_environment = getVirtualEnvAdditionalEnv(bin_path);
-      return SdkUtil.getProcessOutput(sdk_path, new String[]{bin_path, scriptFile}, add_environment, RUN_TIMEOUT).getStdoutLines();
+      return SdkUtil.getProcessOutput(new File(scriptFile).getParent(),
+                                      new String[]{bin_path, scriptFile}, add_environment, RUN_TIMEOUT).getStdoutLines();
     }
     else { // mock sdk
       List<String> ret = new ArrayList<String>(1);
