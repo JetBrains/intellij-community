@@ -173,19 +173,20 @@ public class ResolveImportUtil {
 
   /**
    * Resolves a module reference in a general case.
-   * @param module_reference possibly qualified module reference.
+   * 
+   * @param qualifiedName qualified name of the module reference to resolve
    * @param source_file where that reference resides; serves as PSI foothold to determine module, project, etc.
    * @param import_is_absolute if false, try old python 2.x's "relative first, absolute next" approach.
    * @param relative_level if > 0, step back from source_file and resolve from there (even if import_is_absolute is false!). 
-   * @return
+   * @return list of possible candidates
    */
   @NotNull
   private static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
                                                 boolean import_is_absolute, int relative_level) {
-    if (qualifiedName == null) return null;
+    if (qualifiedName == null) return Collections.emptyList();
     String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relative_level);
     Set<String> being_imported = ourBeingImported.get();
-    if (being_imported.contains(marker)) return null; // break endless loop in import
+    if (being_imported.contains(marker)) return Collections.emptyList(); // break endless loop in import
     try {
       being_imported.add(marker);
       if (relative_level > 0) {
