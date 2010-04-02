@@ -55,6 +55,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   private TextWithImports  myLogMessage; // an expression to be evaluated and printed
   private static final @NonNls String LOG_MESSAGE_OPTION_NAME = "LOG_MESSAGE";
   public static final Breakpoint[] EMPTY_ARRAY = new Breakpoint[0];
+  protected boolean myCachedVerifiedState = false;
 
   protected Breakpoint(Project project) {
     super(project);
@@ -80,6 +81,10 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public @Nullable String getClassName() {
     return null;
+  }
+
+  public void markVerified(boolean isVerified) {
+    myCachedVerifiedState = isVerified;
   }
 
   public @Nullable String getShortClassName() {
