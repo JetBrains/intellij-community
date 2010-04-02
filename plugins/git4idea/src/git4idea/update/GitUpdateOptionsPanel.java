@@ -19,9 +19,11 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVcsSettings.UpdateType;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
- * Update options
+ * Update options panel
  */
 public class GitUpdateOptionsPanel {
   /**
@@ -52,6 +54,21 @@ public class GitUpdateOptionsPanel {
    * Save files option option
    */
   private JRadioButton myKeepRadioButton;
+
+  /**
+   * The constructor
+   */
+  public GitUpdateOptionsPanel() {
+    myForceRebaseRadioButton.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        boolean keepPossible = !myForceRebaseRadioButton.isSelected();
+        if (!keepPossible && myKeepRadioButton.isSelected()) {
+          myStashRadioButton.setSelected(true);
+        }
+        myKeepRadioButton.setEnabled(keepPossible);
+      }
+    });
+  }
 
   /**
    * @return the panel component
