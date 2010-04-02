@@ -439,8 +439,13 @@ public class PythonSdkType extends SdkType {
         final Task.Modal setup_task = new Task.Modal(project, "Setting up library files", false) {
 
           public void run(@NotNull final ProgressIndicator indicator) {
-            generateBuiltinStubs(currentSdk.getHomePath(), path);
-            generateBinaryStubs(currentSdk.getHomePath(), path, indicator);
+            try {
+              generateBuiltinStubs(currentSdk.getHomePath(), path);
+              generateBinaryStubs(currentSdk.getHomePath(), path, indicator);
+            }
+            catch (Exception e) {
+              LOG.error(e);
+            }
           }
 
         };
@@ -499,20 +504,36 @@ public class PythonSdkType extends SdkType {
 
   public void setupSdkPaths(final Sdk sdk) {
     final Ref<SdkModificator> sdkModificatorRef = new Ref<SdkModificator>();
+    final Ref<Boolean> success = new Ref<Boolean>();
+    success.set(true);
     final ProgressManager progman = ProgressManager.getInstance();
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     final Task.Modal setup_task = new Task.Modal(project, "Setting up library files for " + sdk.getName(), false) {
 
       public void run(@NotNull final ProgressIndicator indicator) {
-        final SdkModificator sdkModificator = sdk.getSdkModificator();
-        setupSdkPaths(sdkModificator, indicator);
-        //sdkModificator.commitChanges() must happen outside, in dispatch thread.
-        sdkModificatorRef.set(sdkModificator);
+        try {
+          final SdkModificator sdkModificator = sdk.getSdkModificator();
+          setupSdkPaths(sdkModificator, indicator);
+          //sdkModificator.commitChanges() must happen outside, in dispatch thread.
+          sdkModificatorRef.set(sdkModificator);
+        }
+        catch (InvalidSdkException e) {
+          success.set(false);
+        }
       }
 
     };
     progman.run(setup_task);
-    if (sdkModificatorRef.get() != null) sdkModificatorRef.get().commitChanges(); 
+    if (success.get()) {
+      if (sdkModificatorRef.get() != null) sdkModificatorRef.get().commitChanges();
+    }
+    else {
+      Messages.showErrorDialog(
+        project,
+        PyBundle.message("MSG.cant.setup.sdk.$0", FileUtil.toSystemDependentName(sdk.getSdkModificator().getHomePath())),
+        PyBundle.message("MSG.title.bad.sdk")
+      );
+    }
   }
 
 
@@ -676,7 +697,8 @@ public class PythonSdkType extends SdkType {
    * @param stubsRoot where to put results (expected to exist).
    * @param indicator ProgressIndicator to update, or null.
    */
-  public static void generateBinaryStubs(final String binaryPath, final String stubsRoot, ProgressIndicator indicator) {
+  public static void generateBinaryStubs(final String binaryPath, final String stubsRoot, ProgressIndicator indicator)
+  {
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs");
     }
@@ -688,10 +710,12 @@ public class PythonSdkType extends SdkType {
       RUN_TIMEOUT
     );
 
-    if (run_result.getExitCode() == 0) {
+   try {
+     if (run_result.getExitCode() != 0) throw new InvalidSdkException("Exit code");
       for (String line : run_result.getStdoutLines()) {
         // line = "mod_name path"
         int cutpos = line.indexOf(' ');
+        if (cutpos < 0) throw new InvalidSdkException("Bad output");
         String modname = line.substring(0, cutpos);
         String mod_fname = modname.replace(".", File.separator); // "a.b.c" -> "a/b/c", no ext
         String fname = line.substring(cutpos + 1);
@@ -721,10 +745,13 @@ public class PythonSdkType extends SdkType {
         }
       }
     }
-    else {
-      StringBuffer sb = new StringBuffer();
+    catch (InvalidSdkException e) {
+      StringBuffer sb = new StringBuffer("failed to run ").append(FIND_BINARIES)
+        .append(", exit code ").append(run_result.getExitCode())
+        .append(", stderr '")
+      ;
       for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
-      throw new RuntimeException("failed to run " + FIND_BINARIES + ", exit code " + run_result.getExitCode() + ", stderr '" + sb.toString() + "'");
+      throw new InvalidSdkException(sb.toString());
     }
   }
 
@@ -759,5 +786,11 @@ public class PythonSdkType extends SdkType {
       }
     }
     return LanguageLevel.getDefault();
+  }
+}
+
+class InvalidSdkException extends RuntimeException {
+  InvalidSdkException(String s) {
+    super(s);
   }
 }
