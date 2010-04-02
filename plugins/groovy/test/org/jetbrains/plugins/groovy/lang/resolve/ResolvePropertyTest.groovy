@@ -349,4 +349,11 @@ print ba<caret>r
     assertNotNull resolved
     assertEquals resolved.getName(), "isFoo"
   }
+
+  public void testStaticFieldAndNonStaticGetter() {
+    myFixture.configureByText("Abc.groovy", "print Float.N<caret>aN")
+    def ref=findReference()
+    def resolved=ref.resolve()
+    assertInstanceOf resolved, PsiField.class
+  }
 }
