@@ -44,6 +44,11 @@ public class PyDictCreationInspection extends LocalInspectionTool {
     return new Visitor(holder);
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   private static class Visitor extends PyInspectionVisitor {
 
     public Visitor(final ProblemsHolder holder) {

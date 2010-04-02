@@ -36,6 +36,11 @@ public class PyStatementEffectInspection extends LocalInspectionTool {
     return "PyStatementEffectInspection";
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
