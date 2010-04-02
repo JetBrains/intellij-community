@@ -176,14 +176,6 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     return XML11Char.isXML11ValidNCName(str);
   }
 
-  @NotNull
-  private static TemplateImpl cacheTemplate(TemplateToken token, CustomTemplateCallback callback) {
-    TemplateImpl template = callback.findApplicableTemplate(token.myKey);
-    assert template != null;
-    token.myTemplate = template;
-    return template;
-  }
-
   public static boolean isTrueXml(CustomTemplateCallback callback) {
     FileType type = callback.getFileType();
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX;
@@ -208,17 +200,17 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
             return null;
           }
           String prefix = getPrefix(key);
-          boolean applicable = callback.isLiveTemplateApplicable(prefix);
-          if (!applicable && !isXML11ValidQName(prefix)) {
+          TemplateImpl template = callback.findApplicableTemplate(prefix);
+          if (template == null && !isXML11ValidQName(prefix)) {
             return null;
           }
           TemplateToken token = parseSelectors(key);
           if (token == null) {
             return null;
           }
-          if (applicable && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
+          if (template != null && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
             assert prefix.equals(token.myKey);
-            TemplateImpl template = cacheTemplate(token, callback);
+            token.myTemplate = template;
             if (token.myAttribute2Value.size() > 0) {
               XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, false);
               if (tag == null) {
