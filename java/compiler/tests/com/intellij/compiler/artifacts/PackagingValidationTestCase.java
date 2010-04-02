@@ -31,8 +31,8 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
 
 
   protected class MockArtifactProblemsHolder extends ArtifactProblemsHolderBase {
-    private List<String> myProblems = new ArrayList<String>();
-    private Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix[]>();
+    private final List<String> myProblems = new ArrayList<String>();
+    private final Map<String, ArtifactProblemQuickFix[]> myQuickFixes = new THashMap<String, ArtifactProblemQuickFix[]>();
 
     public MockArtifactProblemsHolder() {
       super(new MockPackagingEditorContext(new MockArtifactsStructureConfigurableContext(), null));

@@ -155,7 +155,7 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected class PackagingElementBuilder {
-    private CompositePackagingElement<?> myElement;
+    private final CompositePackagingElement<?> myElement;
     private final PackagingElementBuilder myParent;
 
     private PackagingElementBuilder(CompositePackagingElement<?> element, PackagingElementBuilder parent) {
