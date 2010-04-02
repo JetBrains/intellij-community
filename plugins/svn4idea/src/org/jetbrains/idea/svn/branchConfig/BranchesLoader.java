@@ -32,7 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class BranchesLoader {
-  private static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.BranchesLoader");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.BranchesLoader");
 
   private BranchesLoader() {
   }

@@ -283,7 +283,7 @@ public class ChooseRunConfigurationAction extends AnAction {
   }
 
   private abstract static class ItemWrapper<T> {
-    private T myValue;
+    private final T myValue;
     private boolean myDynamic = false;
     private int myMnemonic = -1;
 
@@ -409,8 +409,8 @@ public class ChooseRunConfigurationAction extends AnAction {
   }
 
   private static final class ConfigurationListPopupStep extends BaseListPopupStep<ItemWrapper> {
-    private Project myProject;
-    private ChooseRunConfigurationAction myAction;
+    private final Project myProject;
+    private final ChooseRunConfigurationAction myAction;
     private int myDefaultConfiguration = -1;
 
     private ConfigurationListPopupStep(@NotNull final ChooseRunConfigurationAction action,
@@ -761,8 +761,8 @@ public class ChooseRunConfigurationAction extends AnAction {
   }
 
   private abstract static class ActionWrapper {
-    private String myName;
-    private Icon myIcon;
+    private final String myName;
+    private final Icon myIcon;
 
     private ActionWrapper(String name, Icon icon) {
       myName = name;
@@ -782,7 +782,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
   private static class RunListElementRenderer extends PopupListElementRenderer {
     private JLabel myLabel;
-    private ListPopupImpl myPopup1;
+    private final ListPopupImpl myPopup1;
 
     private RunListElementRenderer(ListPopupImpl popup) {
       super(popup);
@@ -829,7 +829,7 @@ public class ChooseRunConfigurationAction extends AnAction {
   }
 
   private static abstract class RunListPopup extends ListPopupImpl {
-    private Project myProject_;
+    private final Project myProject_;
 
     public RunListPopup(final Project project, ListPopupStep step) {
       super(step);

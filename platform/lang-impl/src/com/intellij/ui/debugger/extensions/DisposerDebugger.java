@@ -99,7 +99,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   }
 
   private class ClearAction extends AnAction {
-    private DisposerTree myTree;
+    private final DisposerTree myTree;
 
     private ClearAction(DisposerTree tree) {
       super("Clear");
@@ -118,10 +118,10 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
   private static class AllocationPanel extends JPanel implements TreeSelectionListener {
 
-    private JEditorPane myAllocation;
-    private DefaultActionGroup myActions;
+    private final JEditorPane myAllocation;
+    private final DefaultActionGroup myActions;
 
-    private JBTabs myTreeTabs;
+    private final JBTabs myTreeTabs;
 
     private AllocationPanel(JBTabs treeTabs) {
       myTreeTabs = treeTabs;
@@ -216,8 +216,8 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
   private static class DisposerTree extends JPanel implements Disposable, ObjectTreeListener, ElementFilter<DisposerNode> {
 
-    private FilteringTreeBuilder myTreeBuilder;
-    private Tree myTree;
+    private final FilteringTreeBuilder myTreeBuilder;
+    private final Tree myTree;
     private long myModificationToFilter;
 
     private DisposerTree(Disposable parent) {
@@ -302,7 +302,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
 
 
   private static class DisposerStructure extends AbstractTreeStructureBase {
-    private DisposerNode myRoot;
+    private final DisposerNode myRoot;
 
     private DisposerStructure(DisposerTree tree) {
       super(null);
@@ -326,7 +326,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
   }
 
   private static class DisposerNode extends AbstractTreeNode<ObjectNode> {
-    private DisposerTree myTree;
+    private final DisposerTree myTree;
 
     private DisposerNode(DisposerTree tree, ObjectNode value) {
       super(null, value);

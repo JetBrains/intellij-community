@@ -27,8 +27,8 @@ import java.util.*;
  * @author nik
  */
 public class ComplexElementSubstitutionParameters {
-  private Set<ComplexPackagingElementType<?>> myTypesToSubstitute = new HashSet<ComplexPackagingElementType<?>>();
-  private Set<ComplexPackagingElement<?>> mySubstituted = new HashSet<ComplexPackagingElement<?>>();
+  private final Set<ComplexPackagingElementType<?>> myTypesToSubstitute = new HashSet<ComplexPackagingElementType<?>>();
+  private final Set<ComplexPackagingElement<?>> mySubstituted = new HashSet<ComplexPackagingElement<?>>();
 
   public void setSubstituteAll() {
     myTypesToSubstitute.addAll(Arrays.asList(PackagingElementFactory.getInstance().getComplexElementTypes()));

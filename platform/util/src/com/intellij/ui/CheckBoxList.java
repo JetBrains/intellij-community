@@ -65,8 +65,8 @@ public class CheckBoxList extends JList {
   }
 
   private class CellRenderer implements ListCellRenderer {
-    private Border mySelectedBorder;
-    private Border myBorder;
+    private final Border mySelectedBorder;
+    private final Border myBorder;
 
     private CellRenderer() {
       mySelectedBorder = UIManager.getBorder("List.focusCellHighlightBorder");

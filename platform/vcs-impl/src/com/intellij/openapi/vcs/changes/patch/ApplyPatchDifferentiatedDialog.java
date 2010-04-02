@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final ZipperUpdater myLoadQueue;
-  private TextFieldWithBrowseButton myPatchFile;
+  private final TextFieldWithBrowseButton myPatchFile;
 
   private final List<FilePatchInProgress> myPatches;
   private final MyChangeTreeList myChangesTreeList;
@@ -74,12 +74,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private JComponent mySouthPanel;
   private final Project myProject;
 
-  private AtomicReference<FilePresentation> myRecentPathFileChange;
-  private ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;
-  private Runnable myReset;
-  private ChangeListChooserPanel myChangeListChooser;
-  private ChangesLegendCalculator myInfoCalculator;
-  private CommitLegendPanel myCommitLegendPanel;
+  private final AtomicReference<FilePresentation> myRecentPathFileChange;
+  private final ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;
+  private final Runnable myReset;
+  private final ChangeListChooserPanel myChangeListChooser;
+  private final ChangesLegendCalculator myInfoCalculator;
+  private final CommitLegendPanel myCommitLegendPanel;
   private final Consumer<ApplyPatchDifferentiatedDialog> myCallback;
 
   private boolean myContainBasedChanges;

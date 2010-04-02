@@ -49,8 +49,8 @@ public class ConvertProjectDialog extends DialogWrapper {
   private boolean myConverted;
   private final ConversionContextImpl myContext;
   private final List<ConversionRunner> myConversionRunners;
-  private File myBackupDir;
-  private Set<File> myAffectedFiles;
+  private final File myBackupDir;
+  private final Set<File> myAffectedFiles;
   private boolean myNonExistingFilesMessageShown;
 
   public ConvertProjectDialog(ConversionContextImpl context, final List<ConversionRunner> conversionRunners) {

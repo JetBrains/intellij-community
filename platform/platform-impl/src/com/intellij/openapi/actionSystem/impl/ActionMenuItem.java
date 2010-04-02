@@ -50,7 +50,7 @@ public class ActionMenuItem extends JMenuItem {
   private DataContext myContext;
   private AnActionEvent myEvent;
   private MenuItemSynchronizer myMenuItemSynchronizer;
-  private boolean myEnableMnemonics;
+  private final boolean myEnableMnemonics;
 
   public ActionMenuItem(AnAction action, Presentation presentation, String place, DataContext context, final boolean enableMnemonics, boolean prepareNow) {
     myAction = action;

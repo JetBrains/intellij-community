@@ -124,12 +124,12 @@ public class CompileDriver {
     }
   };
   private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
-  private static CompilerFilter SOURCE_PROCESSING_ONLY = new CompilerFilter() {
+  private static final CompilerFilter SOURCE_PROCESSING_ONLY = new CompilerFilter() {
     public boolean acceptCompiler(Compiler compiler) {
       return compiler instanceof SourceProcessingCompiler;
     }
   };
-  private static CompilerFilter ALL_EXCEPT_SOURCE_PROCESSING = new CompilerFilter() {
+  private static final CompilerFilter ALL_EXCEPT_SOURCE_PROCESSING = new CompilerFilter() {
     public boolean acceptCompiler(Compiler compiler) {
       return !SOURCE_PROCESSING_ONLY.acceptCompiler(compiler);
     }

@@ -197,7 +197,7 @@ public class ExpectedTypesProvider {
     private PsiExpression myExpr;
     private final boolean myForCompletion;
     private final ExpectedClassProvider myClassProvider;
-    private boolean myVoidable;
+    private final boolean myVoidable;
     private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY_ARRAY;
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";
 

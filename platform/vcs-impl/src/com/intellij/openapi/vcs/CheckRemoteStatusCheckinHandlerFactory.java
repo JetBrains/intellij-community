@@ -32,7 +32,7 @@ public class CheckRemoteStatusCheckinHandlerFactory extends CheckinHandlerFactor
 
   private static class MyCheckinHandler extends CheckinHandler {
     private final CheckinProjectPanel myPanel;
-    private VcsConfiguration myVcsConfiguration;
+    private final VcsConfiguration myVcsConfiguration;
 
     private MyCheckinHandler(final CheckinProjectPanel panel) {
       myPanel = panel;

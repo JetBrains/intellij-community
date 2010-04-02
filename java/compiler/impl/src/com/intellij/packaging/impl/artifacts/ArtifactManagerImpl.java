@@ -63,7 +63,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       return myModificationCount;
     }
   };
-  private Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
+  private final Map<String, LocalFileSystem.WatchRequest> myWatchedOutputs = new HashMap<String, LocalFileSystem.WatchRequest>();
 
   public ArtifactManagerImpl(Project project) {
     myProject = project;

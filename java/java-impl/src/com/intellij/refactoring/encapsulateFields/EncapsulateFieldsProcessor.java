@@ -55,7 +55,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private PsiClass myClass;
   @NotNull
   private final EncapsulateFieldsDescriptor myDescriptor;
-  private PsiField[] myFields;
+  private final PsiField[] myFields;
 
   private HashMap<String,PsiMethod> myNameToGetter;
   private HashMap<String,PsiMethod> myNameToSetter;

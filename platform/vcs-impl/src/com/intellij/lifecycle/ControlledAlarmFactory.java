@@ -111,7 +111,7 @@ public class ControlledAlarmFactory {
   }
 
   private static class MyApplicationPooledThreadExecutorWrapper implements MyExecutorWrapper {
-    private Application myApplication;
+    private final Application myApplication;
 
     private MyApplicationPooledThreadExecutorWrapper() {
       myApplication = ApplicationManager.getApplication();

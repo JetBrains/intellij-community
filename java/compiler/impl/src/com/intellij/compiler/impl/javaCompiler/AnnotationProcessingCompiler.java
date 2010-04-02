@@ -47,7 +47,7 @@ import java.util.Set;
 public class AnnotationProcessingCompiler implements TranslatingCompiler{
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.JavaCompiler");
   private final Project myProject;
-  private CompilerConfiguration myConfig;
+  private final CompilerConfiguration myConfig;
 
   public AnnotationProcessingCompiler(Project project) {
     myProject = project;

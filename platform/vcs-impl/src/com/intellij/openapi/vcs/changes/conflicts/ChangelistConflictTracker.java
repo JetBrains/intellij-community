@@ -46,7 +46,7 @@ public class ChangelistConflictTracker {
 
   private final Map<String, Conflict> myConflicts = new HashMap<String, Conflict>();
 
-  private Options myOptions = new Options();
+  private final Options myOptions = new Options();
   private final Project myProject;
 
   private final ChangeListManager myChangeListManager;

@@ -188,10 +188,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final CompositeFilter myPredefinedMessageFilter;
   private final CompositeFilter myCustomFilter;
 
-  private ArrayList<String> myHistory = new ArrayList<String>();
+  private final ArrayList<String> myHistory = new ArrayList<String>();
   private int myHistorySize = 20;
 
-  private ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
+  private final ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
 
   public void addConsoleUserInputLestener(ConsoleInputListener consoleInputListener) {
     myConsoleInputListeners.add(consoleInputListener);

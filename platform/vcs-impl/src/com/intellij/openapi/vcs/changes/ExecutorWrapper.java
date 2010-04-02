@@ -33,9 +33,9 @@ public class ExecutorWrapper {
   private volatile boolean myDisposeStarted;
   private final Object myLock;
   private boolean myInProgress;
-  private Runnable myStopper;
+  private final Runnable myStopper;
   private Thread myCurrentWorker;
-  private AtomicSectionsAware myAtomicSectionsAware;
+  private final AtomicSectionsAware myAtomicSectionsAware;
 
   protected ExecutorWrapper(final Project project, final String name) {
     myProject = project;

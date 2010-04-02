@@ -233,7 +233,7 @@ final class EditorTabbedContainer implements Disposable {
 
   private class MyQueryable implements Queryable {
 
-    private TabInfo myTab;
+    private final TabInfo myTab;
 
     public MyQueryable(TabInfo tab) {
       myTab = tab;

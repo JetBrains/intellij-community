@@ -28,7 +28,7 @@ class ContentTabLabel extends BaseLabel {
 
   Content myContent;
   private final BaseButtonBehavior myBehavior;
-  private TabContentLayout myLayout;
+  private final TabContentLayout myLayout;
 
   public ContentTabLabel(final Content content, TabContentLayout layout) {
     super(layout.myUi, true);
