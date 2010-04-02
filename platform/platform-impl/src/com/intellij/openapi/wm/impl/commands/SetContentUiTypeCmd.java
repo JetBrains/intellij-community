@@ -21,8 +21,8 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 
 public class SetContentUiTypeCmd extends FinalizableCommand {
 
-  private ToolWindow myWindow;
-  private ToolWindowContentUiType myType;
+  private final ToolWindow myWindow;
+  private final ToolWindowContentUiType myType;
 
   public SetContentUiTypeCmd(ToolWindow wnd, ToolWindowContentUiType type, Runnable finishCallBack) {
     super(finishCallBack);

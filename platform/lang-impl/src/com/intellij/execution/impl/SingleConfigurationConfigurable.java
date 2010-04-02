@@ -47,7 +47,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final String myDisplayName;
   private final String myHelpTopic;
   private final Icon myIcon;
-  private boolean myBrokenConfiguration;
+  private final boolean myBrokenConfiguration;
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettingsImpl settings) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);

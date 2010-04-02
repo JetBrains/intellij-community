@@ -31,7 +31,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
  * @author Konstantin Bulenkov
  */
 public final class UnscrambleAction extends AnAction implements DumbAware {
-  private static UnscrambleListener LISTENER = new UnscrambleListener();
+  private static final UnscrambleListener LISTENER = new UnscrambleListener();
 
   static {
     final String key = "analyze.exceptions.on.the.fly";

@@ -33,8 +33,8 @@ import java.awt.*;
  * @author spleaner
  */
 public class RegExHelpPopup extends JPanel {
-  private JEditorPane myEditorPane;
-  private JScrollPane myScrollPane;
+  private final JEditorPane myEditorPane;
+  private final JScrollPane myScrollPane;
 
   public RegExHelpPopup() throws BadLocationException {
     setLayout(new BorderLayout());

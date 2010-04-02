@@ -52,7 +52,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   private final XDebuggerTreePanel myTreePanel;
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
-  private WatchesRootNode myRootNode;
+  private final WatchesRootNode myRootNode;
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);

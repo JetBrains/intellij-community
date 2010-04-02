@@ -34,7 +34,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
   private final MultiMap<VcsRoot, String> myQueries;
   private final Map<VcsRoot, Long> myTs;
   private final Object myLock;
-  private ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManager myVcsManager;
   private final VcsConfiguration myVcsConfiguration;
 
   RemoteRevisionsStateCache(final Project project) {

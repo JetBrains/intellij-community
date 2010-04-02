@@ -241,8 +241,8 @@ public class TestRunnerUtil {
   }
 
   public static class SuiteMethodWrapper implements Test {
-    private Test mySuite;
-    private String myClassName;
+    private final Test mySuite;
+    private final String myClassName;
 
     public SuiteMethodWrapper(Test suite, String className) {
       mySuite = suite;

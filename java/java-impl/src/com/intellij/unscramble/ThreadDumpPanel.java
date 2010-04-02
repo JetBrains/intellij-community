@@ -57,7 +57,7 @@ public class ThreadDumpPanel extends JPanel {
   private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EDT_BUSY_ICON, DAEMON);
   private static final Icon IO_ICON = IconLoader.getIcon("/debugger/threadStates/io.png");
   private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO_ICON, DAEMON);
-  private JList myThreadList;
+  private final JList myThreadList;
 
   public ThreadDumpPanel(Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
@@ -181,7 +181,7 @@ public class ThreadDumpPanel extends JPanel {
   }
 
   private class SortThreadsAction extends AnAction {
-    private Comparator<ThreadState> BY_TYPE = new Comparator<ThreadState>() {
+    private final Comparator<ThreadState> BY_TYPE = new Comparator<ThreadState>() {
       public int compare(ThreadState o1, ThreadState o2) {
         final int s1 = getThreadStateCode(o1).ordinal();
         final int s2 = getThreadStateCode(o2).ordinal();
@@ -193,14 +193,14 @@ public class ThreadDumpPanel extends JPanel {
       }
     };
 
-    private Comparator<ThreadState> BY_NAME = new Comparator<ThreadState>() {
+    private final Comparator<ThreadState> BY_NAME = new Comparator<ThreadState>() {
       public int compare(ThreadState o1, ThreadState o2) {
         return o1.getName().compareTo(o2.getName());
       }
     };
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
-    private Icon typeIcon = IconLoader.getIcon("/objectBrowser/sortByType.png");
-    private Icon nameIcon = IconLoader.getIcon("/icons/inspector/sortByName.png");
+    private final Icon typeIcon = IconLoader.getIcon("/objectBrowser/sortByType.png");
+    private final Icon nameIcon = IconLoader.getIcon("/icons/inspector/sortByName.png");
     private static final String TYPE_LABEL = "Sort threads by type";
     private static final String NAME_LABEL = "Sort threads by name";
     public SortThreadsAction() {

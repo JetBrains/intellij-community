@@ -29,7 +29,7 @@ public class SshConnectionPool implements ConnectionPoolI {
   private final static int CONTROL_INTERVAL = 610000;
   private final Map<MyKey, SshSharedConnection> myPool;
   private final Object myLock;
-  private Alarm myAlarm;
+  private final Alarm myAlarm;
 
   public static SshConnectionPool getInstance() {
     return ServiceManager.getService(SshConnectionPool.class);

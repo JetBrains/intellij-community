@@ -65,7 +65,7 @@ public class ToolkitBugsProcessor {
 
   abstract static class Handler {
 
-    private String myDetails;
+    private final String myDetails;
 
     protected Handler() {
       myDetails = StringUtil.getShortName(getClass().getName());

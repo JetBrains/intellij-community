@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.impl.http.RemoteFileState;
  * @author nik
  */
 public class RefreshRemoteFileAction extends AnAction {
-  private HttpVirtualFile myFile;
+  private final HttpVirtualFile myFile;
 
   public RefreshRemoteFileAction(HttpVirtualFile file) {
     super("Reload File", "", IconLoader.findIcon("/actions/sync.png"));

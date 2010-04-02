@@ -37,9 +37,9 @@ import java.awt.event.ActionEvent;
 
 public class UiDebugger extends JPanel implements Disposable {
 
-  private DialogWrapper myDialog;
-  private JBTabs myTabs;
-  private UiDebuggerExtension[] myExtensions;
+  private final DialogWrapper myDialog;
+  private final JBTabs myTabs;
+  private final UiDebuggerExtension[] myExtensions;
 
   public UiDebugger() {
     Disposer.register(Disposer.get("ui"), this);

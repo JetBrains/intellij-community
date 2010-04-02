@@ -23,7 +23,7 @@ public class SimpleTimerTask {
   private boolean myCancelled;
 
   private final Object LOCK = new Object();
-  private SimpleTimer myTimer;
+  private final SimpleTimer myTimer;
 
   public SimpleTimerTask(long targetTime, Runnable runnable, SimpleTimer timer) {
     myTargetTime = targetTime;

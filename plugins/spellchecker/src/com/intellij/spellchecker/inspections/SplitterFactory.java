@@ -19,12 +19,12 @@ public class SplitterFactory {
 
   private static final SplitterFactory ourInstance = new SplitterFactory();
 
-  private IdentifierSplitter identifierSplitter = new IdentifierSplitter();
-  private PlainTextSplitter plainTextSpl = new PlainTextSplitter();
-  private PropertiesSplitter prSpl = new PropertiesSplitter();
-  private WordSplitter wordSplitter = new WordSplitter();
-  private CommentSplitter comment = new CommentSplitter();
-  private TextSplitter textSpl = new TextSplitter();
+  private final IdentifierSplitter identifierSplitter = new IdentifierSplitter();
+  private final PlainTextSplitter plainTextSpl = new PlainTextSplitter();
+  private final PropertiesSplitter prSpl = new PropertiesSplitter();
+  private final WordSplitter wordSplitter = new WordSplitter();
+  private final CommentSplitter comment = new CommentSplitter();
+  private final TextSplitter textSpl = new TextSplitter();
 
 
   private SplitterFactory() {
