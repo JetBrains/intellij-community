@@ -33,7 +33,7 @@ import java.lang.reflect.InvocationTargetException;
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider");
   private final Project myProject;
-  private static ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
+  private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<MyCallState>();
   private final SvnVcs myVcs;
 
   public SvnInteractiveAuthenticationProvider(final SvnVcs vcs) {
@@ -182,7 +182,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
   }
 
   public static class MyCallState {
-    private boolean myWasCalled;
+    private final boolean myWasCalled;
     private boolean myWasCancelled;
 
     public MyCallState(boolean wasCalled, boolean wasCancelled) {
