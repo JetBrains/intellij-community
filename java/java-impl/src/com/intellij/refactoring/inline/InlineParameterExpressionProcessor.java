@@ -51,7 +51,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private PsiExpression myInitializer;
   private final boolean mySameClass;
   private final PsiMethod myCallingMethod;
-  private boolean myCreateLocal;
+  private final boolean myCreateLocal;
 
   public InlineParameterExpressionProcessor(final PsiCallExpression methodCall,
                                             final PsiMethod method,

@@ -46,7 +46,7 @@ import java.util.Set;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
-  private Application myApp;
+  private final Application myApp;
 
   private FocusCommand myRequestFocusCmd;
   private final ArrayList<FocusCommand> myFocusRequests = new ArrayList<FocusCommand>();
@@ -81,10 +81,10 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     }
   };
 
-  private WindowManager myWindowManager;
+  private final WindowManager myWindowManager;
 
-  private Map<IdeFrame, Component> myLastFocused = new WeakHashMap<IdeFrame, Component>();
-  private Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakHashMap<IdeFrame, Component>();
+  private final Map<IdeFrame, Component> myLastFocused = new WeakHashMap<IdeFrame, Component>();
+  private final Map<IdeFrame, Component> myLastFocusedAtDeactivation = new WeakHashMap<IdeFrame, Component>();
 
   public FocusManagerImpl(WindowManager wm) {
     myApp = ApplicationManager.getApplication();

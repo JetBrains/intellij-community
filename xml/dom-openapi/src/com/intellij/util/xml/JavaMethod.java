@@ -42,7 +42,7 @@ public final class JavaMethod implements AnnotatedElement{
   private final JavaMethodSignature mySignature;
   private final Class myDeclaringClass;
   private final Method myMethod;
-  private FactoryMap<Class, Annotation> myAnnotationsMap = new ConcurrentFactoryMap<Class, Annotation>() {
+  private final FactoryMap<Class, Annotation> myAnnotationsMap = new ConcurrentFactoryMap<Class, Annotation>() {
 
     protected Annotation create(Class key) {
       return mySignature.findAnnotation(key, myDeclaringClass);

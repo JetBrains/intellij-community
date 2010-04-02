@@ -30,8 +30,8 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class InstanceofInstruction extends BinopInstruction {
-  @NotNull private PsiExpression myLeft;
-  @NotNull private PsiType myCastType;
+  @NotNull private final PsiExpression myLeft;
+  @NotNull private final PsiType myCastType;
 
   public InstanceofInstruction(PsiElement psiAnchor, @NotNull Project project, PsiExpression left, PsiType castType) {
     super(PsiKeyword.INSTANCEOF, psiAnchor, project);

@@ -41,7 +41,7 @@ import java.util.Collections;
  * @author nik
  */
 public class JumpFromRemoteFileToLocalAction extends AnAction {
-  private HttpVirtualFile myFile;
+  private final HttpVirtualFile myFile;
   private final Project myProject;
 
   public JumpFromRemoteFileToLocalAction(HttpVirtualFile file, Project project) {

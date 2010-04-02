@@ -89,10 +89,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private final KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
   private final KeyProcessorContext myContext = new KeyProcessorContext();
-  private IdeEventQueue myQueue;
+  private final IdeEventQueue myQueue;
 
-  private Alarm mySecondStrokeTimeout = new Alarm();
-  private Runnable mySecondStrokeTimeoutRunnable = new Runnable() {
+  private final Alarm mySecondStrokeTimeout = new Alarm();
+  private final Runnable mySecondStrokeTimeoutRunnable = new Runnable() {
     public void run() {
       if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
         resetState();

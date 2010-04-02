@@ -50,11 +50,11 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   /**
    * The handler that specified this editor
    */
-  private GitHandler myHandler;
+  private final GitHandler myHandler;
   /**
    * The handler number
    */
-  private int myHandlerNo;
+  private final int myHandlerNo;
   /**
    * If true, the handler has been closed
    */

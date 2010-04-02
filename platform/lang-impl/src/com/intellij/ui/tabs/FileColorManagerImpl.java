@@ -47,14 +47,14 @@ import java.util.List;
 public class FileColorManagerImpl extends FileColorManager implements PersistentStateComponent<Element> {
   private boolean myEnabled = true;
 
-  private FileColorsModel myModel;
+  private final FileColorsModel myModel;
 
   private FileColorSharedConfigurationManager mySharedConfigurationManager;
 
-  private Project myProject;
+  private final Project myProject;
   private boolean myEnabledForTabs = true;
 
-  private static Map<String, Color> ourDefaultColors;
+  private static final Map<String, Color> ourDefaultColors;
 
   static {
     ourDefaultColors = new LinkedHashMap<String, Color>();

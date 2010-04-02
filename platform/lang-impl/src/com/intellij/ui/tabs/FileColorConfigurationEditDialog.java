@@ -42,7 +42,7 @@ import java.util.List;
 public class FileColorConfigurationEditDialog extends DialogWrapper {
   private FileColorConfiguration myConfiguration;
   private JComboBox myScopeComboBox;
-  private FileColorManagerImpl myManager;
+  private final FileColorManagerImpl myManager;
   private HashMap<String,AbstractButton> myColorToButtonMap;
 
   public FileColorConfigurationEditDialog(@NotNull final FileColorManagerImpl manager, @Nullable final FileColorConfiguration configuration) {
@@ -200,7 +200,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
   }
 
   private class ColorButton extends StickyButton {
-    private Color myColor;
+    private final Color myColor;
 
     private ColorButton(final String text, final Color color) {
       super(text);

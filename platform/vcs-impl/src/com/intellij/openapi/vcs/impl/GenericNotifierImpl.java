@@ -157,7 +157,7 @@ public abstract class GenericNotifierImpl<T, Key> {
   }
 
   protected static class MyNotification<T> extends Notification {
-    private T myObj;
+    private final T myObj;
     private final String myStringPresentation;
 
     protected MyNotification(@NotNull String groupId, @NotNull String title, @NotNull String content, @NotNull NotificationType type, @Nullable NotificationListener listener,

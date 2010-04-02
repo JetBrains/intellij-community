@@ -56,7 +56,7 @@ public class GitIgnoreTracker {
   /**
    * The context project
    */
-  private Project myProject;
+  private final Project myProject;
   /**
    * The vcs instance
    */
@@ -88,7 +88,7 @@ public class GitIgnoreTracker {
   /**
    * The git configuration listener
    */
-  private GitConfigListener myConfigListener;
+  private final GitConfigListener myConfigListener;
   /**
    * The map from roots to paths of exclude files from config
    */

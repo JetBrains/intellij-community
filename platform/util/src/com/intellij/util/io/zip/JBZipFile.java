@@ -72,12 +72,12 @@ public class JBZipFile {
    * Maps ZipEntrys to Longs, recording the offsets of the local
    * file headers.
    */
-  private List<JBZipEntry> entries = new ArrayList<JBZipEntry>(HASH_SIZE);
+  private final List<JBZipEntry> entries = new ArrayList<JBZipEntry>(HASH_SIZE);
 
   /**
    * Maps String to ZipEntrys, name -> actual entry.
    */
-  private Map<String, JBZipEntry> nameMap = new HashMap<String, JBZipEntry>(HASH_SIZE);
+  private final Map<String, JBZipEntry> nameMap = new HashMap<String, JBZipEntry>(HASH_SIZE);
 
   /**
    * The encoding to use for filenames and the file comment.
