@@ -447,13 +447,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         final boolean isLValue = PsiUtil.isLValue(refExpr);
         String[] names;
         names = isLValue ? GroovyPropertyUtils.suggestSettersName(name) : GroovyPropertyUtils.suggestGettersName(name);
+        List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
         for (String getterName : names) {
           AccessorResolverProcessor accessorResolver = new AccessorResolverProcessor(getterName, refExpr, !isLValue);
           resolveImpl(refExpr, accessorResolver);
-          final GroovyResolveResult[] candidates = accessorResolver.getCandidates();
-          if (candidates.length > 0) return candidates;
+          final GroovyResolveResult[] candidates = accessorResolver.getCandidates(); //can be only one candidate
+          if (candidates.length == 1 && candidates[0].isStaticsOK()) {
+            return candidates;
+          }
+          else {
+            accessorResults.addAll(Arrays.asList(candidates));
+          }
         }
         if (fieldCandidates.length > 0) return fieldCandidates;
+        if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
 
         EnumSet<ClassHint.ResolveKind> kinds = refExpr.getParent() instanceof GrReferenceExpression
                                                ? EnumSet.of(ClassHint.ResolveKind.CLASS, ClassHint.ResolveKind.PACKAGE)
@@ -465,6 +472,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
       return GroovyResolveResult.EMPTY_ARRAY;
     }
+
 
     private static void resolveImpl(GrReferenceExpressionImpl refExpr, ResolverProcessor processor) {
       GrExpression qualifier = refExpr.getQualifierExpression();
