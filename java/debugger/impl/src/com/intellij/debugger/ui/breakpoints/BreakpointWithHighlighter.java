@@ -153,7 +153,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     final RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
 
-    final boolean isVerified = requestsManager.isVerified(this);
+    final boolean isVerified = myCachedVerifiedState || requestsManager.isVerified(this);
 
     final String warning = requestsManager.getWarning(this);
     if(warning != null){

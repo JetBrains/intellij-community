@@ -53,13 +53,11 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
@@ -191,7 +189,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       if (breakpointFile != null && fileIndex.isInSourceContent(breakpointFile)) {
         // apply filtering to breakpoints from content sources only, not for sources attached to libraries
-        for (VirtualFile classFile : findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex)) {
+        final Collection<VirtualFile> candidates = findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex);
+        if (candidates == null) {
+          return true;
+        }
+        for (VirtualFile classFile : candidates) {
           if (breakpointFile.equals(classFile)) {
             return true;
           }
@@ -202,15 +204,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return true;
   }
 
-  @NotNull
+  @Nullable
   private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+      @Nullable
       public Collection<VirtualFile> compute() {
         final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
         if (classes.length == 0) {
-          return Collections.emptyList();
+          return null;
         }
         final List<VirtualFile> list = new ArrayList<VirtualFile>(classes.length);
         for (PsiClass aClass : classes) {
