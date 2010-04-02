@@ -22,7 +22,7 @@ public class TestFileSystemItem {
   private boolean myArchive;
   private String myName;
   private String myContent;
-  private Map<String, TestFileSystemItem> myChildren = new HashMap<String, TestFileSystemItem>();
+  private final Map<String, TestFileSystemItem> myChildren = new HashMap<String, TestFileSystemItem>();
 
   public TestFileSystemItem(String name, boolean archive, boolean directory, String content) {
     myDirectory = directory;

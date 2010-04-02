@@ -4,8 +4,8 @@ package com.intellij.compiler.artifacts;
  * @author nik
  */
 public class TestFileSystemBuilder {
-  private TestFileSystemItem myItem;
-  private TestFileSystemBuilder myParent;
+  private final TestFileSystemItem myItem;
+  private final TestFileSystemBuilder myParent;
 
   public TestFileSystemBuilder(TestFileSystemItem item, TestFileSystemBuilder parent) {
     myItem = item;
