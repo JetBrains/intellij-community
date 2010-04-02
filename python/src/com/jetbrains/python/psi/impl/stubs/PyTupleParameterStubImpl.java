@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
  * Date: Jul 6, 2009 1:33:08 AM
  */
 public class PyTupleParameterStubImpl extends StubBase<PyTupleParameter>  implements PyTupleParameterStub {
-  private boolean myHasDefaultValue;
+  private final boolean myHasDefaultValue;
 
   protected PyTupleParameterStubImpl(boolean hasDefaultValue, StubElement parent) {
     super(parent, PyElementTypes.TUPLE_PARAMETER);

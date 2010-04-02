@@ -21,7 +21,7 @@ public class PythonModuleBuilder extends ModuleBuilder implements SourcePathsBui
   private List<Pair<String, String>> mySourcePaths;
   private String myContentRootPath;
   private Sdk mySdk;
-  private List<Runnable> mySdkChangedListeners = new ArrayList<Runnable>();
+  private final List<Runnable> mySdkChangedListeners = new ArrayList<Runnable>();
 
   public void setupRootModel(final ModifiableRootModel rootModel) throws ConfigurationException {
     if (mySdk != null) {

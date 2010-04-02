@@ -268,7 +268,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   private static class NameFindingProcessor implements Processor<PyFunction> {
     private PyFunction myResult;
-    private String[] myNames;
+    private final String[] myNames;
 
     public NameFindingProcessor(String... names) {
       myNames = names;
@@ -517,7 +517,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private static class AncestorsIterable implements Iterable<PyClass> {
-    private PyClassImpl myClass;
+    private final PyClassImpl myClass;
 
     public AncestorsIterable(final PyClassImpl pyClass) {
       myClass = pyClass;
@@ -533,7 +533,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     Set<PyClass> seen = new HashSet<PyClass>();
     Iterator<PyClass> percolator;
     PyClass prefetch = null;
-    private PyClassImpl myAClass;
+    private final PyClassImpl myAClass;
 
     public AncestorsIterator(PyClassImpl aClass) {
       myAClass = aClass;

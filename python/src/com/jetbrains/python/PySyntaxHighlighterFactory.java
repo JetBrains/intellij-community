@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private FactoryMap<LanguageLevel, PyHighlighter> myMap = new FactoryMap<LanguageLevel, PyHighlighter>() {
+  private final FactoryMap<LanguageLevel, PyHighlighter> myMap = new FactoryMap<LanguageLevel, PyHighlighter>() {
     @Override
     protected PyHighlighter create(LanguageLevel key) {
       return new PyHighlighter(key);

@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyImportStatement;
  * @author yole
  */
 public class PyUsageTypeProvider implements UsageTypeProvider {
-  private static UsageType IN_IMPORT = new UsageType("Usage in import statement");
+  private static final UsageType IN_IMPORT = new UsageType("Usage in import statement");
 
   public UsageType getUsageType(PsiElement element) {
     if (element instanceof PyElement) {

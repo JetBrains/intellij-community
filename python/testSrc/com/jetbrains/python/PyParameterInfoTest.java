@@ -296,12 +296,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
    */
   private static class Collector implements ParameterInfoUIContextEx, CreateParameterInfoContext, UpdateParameterInfoContext {
 
-    private PsiFile myFile;
-    private int myOffset;
+    private final PsiFile myFile;
+    private final int myOffset;
     private int myIndex;
     private Object[] myItems;
-    private Project myProject;
-    private Editor myEditor;
+    private final Project myProject;
+    private final Editor myEditor;
     private PyArgumentList myParamOwner;
     private String[] myTexts;
     private EnumSet<Flag>[] myFlags;

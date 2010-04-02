@@ -27,7 +27,7 @@ import java.io.File;
  * @author yole
  */
 public class PyTestRunConfigurationType implements LocatableConfigurationType {
-  private ConfigurationFactory myPyTestConfigurationFactory = new PyTestRunConfigurationFactory(this);
+  private final ConfigurationFactory myPyTestConfigurationFactory = new PyTestRunConfigurationFactory(this);
 
   public String getDisplayName() {
     return "py.test";

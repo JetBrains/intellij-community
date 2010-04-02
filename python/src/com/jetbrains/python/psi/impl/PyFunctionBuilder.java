@@ -18,9 +18,9 @@ import java.util.List;
  * @author yole
  */
 public class PyFunctionBuilder {
-  private String myName;
-  private List<String> myParameters = new ArrayList<String>();
-  private List<String> myStatements = new ArrayList<String>();
+  private final String myName;
+  private final List<String> myParameters = new ArrayList<String>();
+  private final List<String> myStatements = new ArrayList<String>();
 
   public PyFunctionBuilder(String name) {
     myName = name;

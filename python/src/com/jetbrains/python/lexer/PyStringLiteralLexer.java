@@ -33,13 +33,13 @@ public class PyStringLiteralLexer extends LexerBase {
   private char myQuoteChar;
   /** 'u', 'b' or 0, if string is explicitly marked as unicode, byte, or not marked. */
   private char myUnicodeMark;
-  private boolean myUnicodeIsDefault;
+  private final boolean myUnicodeIsDefault;
   private boolean myIsRaw;
   private boolean myIsTriple;
-  private IElementType myOriginalLiteralToken;
+  private final IElementType myOriginalLiteralToken;
   private boolean mySeenEscapedSpacesOnly;
 
-  private boolean myFlagsNeedToBeSet = true;
+  private final boolean myFlagsNeedToBeSet = true;
 
   /**
    * @param originalLiteralToken the AST node we're layering over.

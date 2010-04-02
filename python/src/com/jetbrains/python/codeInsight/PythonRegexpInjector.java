@@ -19,8 +19,8 @@ import java.util.List;
  */
 public class PythonRegexpInjector implements LanguageInjector {
   private static class RegexpMethodDescriptor {
-    private String methodName;
-    private int argIndex;
+    private final String methodName;
+    private final int argIndex;
 
     private RegexpMethodDescriptor(String methodName, int argIndex) {
       this.methodName = methodName;
@@ -28,7 +28,7 @@ public class PythonRegexpInjector implements LanguageInjector {
     }
   }
 
-  private List<RegexpMethodDescriptor> myDescriptors = new ArrayList<RegexpMethodDescriptor>();
+  private final List<RegexpMethodDescriptor> myDescriptors = new ArrayList<RegexpMethodDescriptor>();
 
   public PythonRegexpInjector() {
     addMethod("compile");

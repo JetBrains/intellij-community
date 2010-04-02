@@ -34,7 +34,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
   private static final Icon OVERRIDDEN_ICON = IconLoader.getIcon("/gutter/overridenMethod.png");
 
   private static class TooltipProvider implements Function<PsiElement, String> {
-    private String myText;
+    private final String myText;
 
     private TooltipProvider(String text) {
       myText = text;
@@ -45,7 +45,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
     }
   }
 
-  private static Function<PyClass, String> ourSubclassTooltipProvider = new Function<PyClass, String>() {
+  private static final Function<PyClass, String> ourSubclassTooltipProvider = new Function<PyClass, String>() {
     public String fun(PyClass pyClass) {
       final StringBuilder builder = new StringBuilder("<html>Is subclassed by:");
       final AtomicInteger count = new AtomicInteger();
@@ -64,7 +64,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
     }
   };
 
-  private static Function<PyFunction, String> ourOverridingMethodTooltipProvider = new Function<PyFunction, String>() {
+  private static final Function<PyFunction, String> ourOverridingMethodTooltipProvider = new Function<PyFunction, String>() {
     public String fun(final PyFunction pyFunction) {
       final StringBuilder builder = new StringBuilder("<html>Is overridden in:");
       final AtomicInteger count = new AtomicInteger();

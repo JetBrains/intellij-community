@@ -21,9 +21,9 @@ public enum LanguageLevel {
     return PYTHON26;
   }
 
-  private boolean myHasWithStatement;
-  private boolean myHasPrintStatement;
-  private boolean myIsPy3K;
+  private final boolean myHasWithStatement;
+  private final boolean myHasPrintStatement;
+  private final boolean myIsPy3K;
 
   LanguageLevel(boolean hasWithStatement, boolean hasPrintStatement, boolean isPy3K) {
     myHasWithStatement = hasWithStatement;

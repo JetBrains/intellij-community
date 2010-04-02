@@ -9,7 +9,7 @@ import com.jetbrains.python.testing.PythonTestCommandLineStateBase;
  * @author yole
  */
 public class PyTestCommandLineState extends PythonTestCommandLineStateBase {
-  private PyTestRunConfiguration myConfiguration;
+  private final PyTestRunConfiguration myConfiguration;
 
   public PyTestCommandLineState(PyTestRunConfiguration configuration, ExecutionEnvironment env) {
     super(configuration, env);

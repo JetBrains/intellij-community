@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyDumbAwareAnnotator implements Annotator, DumbAware {
   public static ExtensionPointName<PyAnnotator> EP_NAME = ExtensionPointName.create("Pythonid.dumbAnnotator");
-  private PyAnnotator[] myAnnotators;
+  private final PyAnnotator[] myAnnotators;
 
   public PyDumbAwareAnnotator() {
     myAnnotators = Extensions.getExtensions(EP_NAME);

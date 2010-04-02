@@ -293,7 +293,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
   /**
    * Tail type that adds a space and a colon and puts cursor before colon. Used in things like "if".
    */
-  private static TailType PRE_COLON = new TailType() {
+  private static final TailType PRE_COLON = new TailType() {
     public int processTail(Editor editor, int tailOffset) {
       tailOffset = insertChar(editor, insertChar(editor, tailOffset, ' '), ':');
       return moveCaret(editor, tailOffset, -1); // stand before ":"

@@ -541,9 +541,9 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   private static class MyParamVisitor extends PyElementVisitor {
-    private Iterator<PyExpression> myArgIterator;
-    private AnalysisResultImpl myResult;
-    private List<PyExpression> myUnmatchedSubargs;
+    private final Iterator<PyExpression> myArgIterator;
+    private final AnalysisResultImpl myResult;
+    private final List<PyExpression> myUnmatchedSubargs;
 
     private MyParamVisitor(Iterator<PyExpression> arg_iterator, AnalysisResultImpl ret) {
       myArgIterator = arg_iterator;
@@ -608,14 +608,14 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
 
   private class AnalysisResultImpl implements PyArgumentList.AnalysisResult {
 
-    private Map<PyExpression, PyNamedParameter> my_plain_mapped_params; // one param per arg
-    private Map<PyExpression, List<PyNamedParameter>> my_nested_mapped_params; // one arg sweeps a nested tuple of params
+    private final Map<PyExpression, PyNamedParameter> my_plain_mapped_params; // one param per arg
+    private final Map<PyExpression, List<PyNamedParameter>> my_nested_mapped_params; // one arg sweeps a nested tuple of params
     private PyStarArgument my_tuple_arg; // the *arg
     private PyStarArgument my_kwd_arg;   // the **arg
-    private List<PyNamedParameter> my_tuple_mapped_params; // params mapped to *arg
-    private List<PyNamedParameter> my_kwd_mapped_params;   // params mapped to **arg
-    private List<PyNamedParameter> my_unmapped_params;
-    private Map<PyExpression, EnumSet<PyArgumentList.ArgFlag>> my_arg_flags; // flags of every arg
+    private final List<PyNamedParameter> my_tuple_mapped_params; // params mapped to *arg
+    private final List<PyNamedParameter> my_kwd_mapped_params;   // params mapped to **arg
+    private final List<PyNamedParameter> my_unmapped_params;
+    private final Map<PyExpression, EnumSet<PyArgumentList.ArgFlag>> my_arg_flags; // flags of every arg
     private PyCallExpression.PyMarkedFunction my_marked_func;
 
     public AnalysisResultImpl() {

@@ -23,7 +23,7 @@ public class PyPushDownConflicts {
 
   private final PyClass myClass;
   private final Collection<PyMemberInfo> myMembers;
-  private MultiMap<PsiElement, String> myConflicts;
+  private final MultiMap<PsiElement, String> myConflicts;
 
   public PyPushDownConflicts(final PyClass clazz, final Collection<PyMemberInfo> members) {
     myClass = clazz;
@@ -77,8 +77,8 @@ public class PyPushDownConflicts {
   }
 
   private static class UsedMembersCollector extends PyRecursiveElementVisitor {
-    private List<PyElement> myCollection = new ArrayList<PyElement>();
-    private Collection<PyElement> myMovedMembers;
+    private final List<PyElement> myCollection = new ArrayList<PyElement>();
+    private final Collection<PyElement> myMovedMembers;
 
     private UsedMembersCollector(Collection<PyElement> movedMembers) {
       myMovedMembers = movedMembers;

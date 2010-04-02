@@ -12,7 +12,7 @@ import java.util.List;
  * @author Leonid Shalupov
  */
 public class PythonUnitTestCommandLineState extends PythonTestCommandLineStateBase {
-  private PythonUnitTestRunConfiguration myConfig;
+  private final PythonUnitTestRunConfiguration myConfig;
   private static final String UTRUNNER_PY = "pycharm/utrunner.py";
 
   public PythonUnitTestCommandLineState(PythonUnitTestRunConfiguration runConfiguration, ExecutionEnvironment env) {

@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * @author oleg
  */
 class PyConsoleProcessHandler extends OSProcessHandler {
-  private PyConsoleRunner myPyConsoleRunner;
+  private final PyConsoleRunner myPyConsoleRunner;
   private final Charset myCharset;
 
   public PyConsoleProcessHandler(final PyConsoleRunner pyConsoleRunner,
@@ -42,10 +42,10 @@ class PyConsoleProcessHandler extends OSProcessHandler {
   public static final Key STRING_KEY = new Key("PYTHON_STRING");
   public static final Key NUMBER_KEY = new Key("PYTHON_NUMBER");
 
-  private static String NUMBERS = "((0[xX][0-9a-fA-F]+)|(\\d+(_\\d+)*(\\.\\d+)?))";
-  private static String STRINGS = "((\"[^\"\n]*\")|((?<!\\w)'[^'\n]*'))";
+  private static final String NUMBERS = "((0[xX][0-9a-fA-F]+)|(\\d+(_\\d+)*(\\.\\d+)?))";
+  private static final String STRINGS = "((\"[^\"\n]*\")|((?<!\\w)'[^'\n]*'))";
 
-  private static Pattern CODE_ELEMENT_PATTERN = Pattern.compile(NUMBERS + "|" + STRINGS);
+  private static final Pattern CODE_ELEMENT_PATTERN = Pattern.compile(NUMBERS + "|" + STRINGS);
 
   @Override
   public Charset getCharset() {

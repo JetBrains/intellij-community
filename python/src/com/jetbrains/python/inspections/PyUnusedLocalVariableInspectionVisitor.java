@@ -25,7 +25,7 @@ import java.util.HashSet;
  * @author oleg
  */
 class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
-  private HashSet<PsiElement> myUnusedElements;
+  private final HashSet<PsiElement> myUnusedElements;
 
   public PyUnusedLocalVariableInspectionVisitor(final ProblemsHolder holder) {
     super(holder);

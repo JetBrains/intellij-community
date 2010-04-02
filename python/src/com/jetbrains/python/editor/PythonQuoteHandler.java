@@ -12,7 +12,7 @@ import java.util.Arrays;
  */
 public class PythonQuoteHandler extends SimpleTokenSetQuoteHandler {
 
-  private static char[] ourAutoClosingChars; // we add auto-close quotes before these
+  private static final char[] ourAutoClosingChars; // we add auto-close quotes before these
   static {
     ourAutoClosingChars = new char[]{'}', ']', ')', ',', ':', ';', ' ', '\t', '\n'};
     Arrays.sort(ourAutoClosingChars);

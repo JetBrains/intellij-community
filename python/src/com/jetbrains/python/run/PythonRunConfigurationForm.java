@@ -21,7 +21,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams 
   private TextFieldWithBrowseButton myScriptTextField;
   private RawCommandLineEditor myScriptParametersTextField;
   private JPanel myCommonOptionsPlaceholder;
-  private PyCommonOptionsForm myCommonOptionsForm;
+  private final PyCommonOptionsForm myCommonOptionsForm;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = new PyCommonOptionsForm(configuration);

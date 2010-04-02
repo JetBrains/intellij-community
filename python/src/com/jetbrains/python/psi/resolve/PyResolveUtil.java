@@ -321,7 +321,7 @@ public class PyResolveUtil {
    * Accepts only names not contained in a given collection.
    */
   public static class FilterNameNotIn implements Filter {
-    private Collection<String> myNames;
+    private final Collection<String> myNames;
 
     public FilterNameNotIn(Collection<String> names) {
       myNames = names;

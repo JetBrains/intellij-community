@@ -141,7 +141,7 @@ public class PyBuiltinCache {
   /**
    * Stores the most often used types, returned by getNNNType().
    */
-  private Map<String,PyClassType> myTypeCache = new HashMap<String, PyClassType>();
+  private final Map<String,PyClassType> myTypeCache = new HashMap<String, PyClassType>();
   
   /**
   @return 

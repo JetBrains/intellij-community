@@ -38,7 +38,7 @@ public class PythonUnitTestRunConfigurationForm implements PythonUnitTestRunConf
   private JTextField myTestClassTextField;
 
   private final Project myProject;
-  private PyCommonOptionsForm myCommonOptionsForm;
+  private final PyCommonOptionsForm myCommonOptionsForm;
 
   public PythonUnitTestRunConfigurationForm(final Project project, final PythonUnitTestRunConfiguration configuration) {
     myProject = project;

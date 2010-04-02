@@ -17,8 +17,8 @@ import javax.swing.*;
  * @author yole
  */
 public class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigurable {
-  private JComponent myMainPanel;
-  private PythonSdkComboBox mySdkComboBox;
+  private final JComponent myMainPanel;
+  private final PythonSdkComboBox mySdkComboBox;
 
   public PythonFrameworkSupportConfigurable(FrameworkSupportModel model) {
     mySdkComboBox = new PythonSdkComboBox();

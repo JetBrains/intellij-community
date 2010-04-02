@@ -29,7 +29,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(PyPushDownProcessor.class.getName());
 
   private PyClass myClass;
-  private Collection<PyMemberInfo> mySelectedMemberInfos;
+  private final Collection<PyMemberInfo> mySelectedMemberInfos;
 
   public PyPushDownProcessor(Project project, PyClass clazz, Collection<PyMemberInfo> selectedMemberInfos) {
     super(project);

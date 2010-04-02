@@ -24,7 +24,7 @@ import java.util.List;
  * @author Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
-  private AbstractPythonRunConfiguration myConfig;
+  private final AbstractPythonRunConfiguration myConfig;
   private final List<Filter> myFilters;
 
   public AbstractPythonRunConfiguration getConfig() {

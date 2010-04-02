@@ -25,8 +25,8 @@ import java.util.List;
  * @author oleg
  */
 public class PyLanguageConsole extends LanguageConsoleImpl {
-  private LightVirtualFile myNewVFile;
-  private StringBuilder myStringBuilder;
+  private final LightVirtualFile myNewVFile;
+  private final StringBuilder myStringBuilder;
 
   public PyLanguageConsole(final Project project, String title) {
     super(project, title, PythonLanguage.getInstance());

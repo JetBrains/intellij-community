@@ -297,13 +297,13 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
   }
 
-  private static FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
+  private static final FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
     public String apply(String argname) {
       return combUp(argname);
     }
   };
 
-  private static FP.Lambda1<String, String> LSame1 = new FP.Lambda1<String, String>() {
+  private static final FP.Lambda1<String, String> LSame1 = new FP.Lambda1<String, String>() {
     public String apply(String name) {
       return name;
     }
@@ -321,7 +321,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
   // make a first-order curried objects out of wrapInTag()
   private static class TagWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
-    private String myTag;
+    private final String myTag;
 
     TagWrapper(String tag) {
       myTag = tag;
@@ -333,12 +333,12 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
   }
 
-  private static TagWrapper TagBold = new TagWrapper("b");
-  private static TagWrapper TagItalic = new TagWrapper("i");
-  private static TagWrapper TagSmall = new TagWrapper("small");
-  private static TagWrapper TagCode = new TagWrapper("code");
+  private static final TagWrapper TagBold = new TagWrapper("b");
+  private static final TagWrapper TagItalic = new TagWrapper("i");
+  private static final TagWrapper TagSmall = new TagWrapper("small");
+  private static final TagWrapper TagCode = new TagWrapper("code");
 
-  private static FP.Lambda1<Iterable<String>, Iterable<String>> LSame2 = new FP.Lambda1<Iterable<String>, Iterable<String>>() {
+  private static final FP.Lambda1<Iterable<String>, Iterable<String>> LSame2 = new FP.Lambda1<Iterable<String>, Iterable<String>>() {
     public Iterable<String> apply(Iterable<String> what) {
       return what;
     }

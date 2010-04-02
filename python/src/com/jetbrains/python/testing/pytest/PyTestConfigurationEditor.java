@@ -16,7 +16,7 @@ public class PyTestConfigurationEditor extends SettingsEditor<PyTestRunConfigura
   private JPanel myCommonOptionsPlaceholder;
   private JTextField myTestToRunField;
   private JTextField myKeywordsTextField;
-  private PyCommonOptionsForm myCommonOptionsForm;
+  private final PyCommonOptionsForm myCommonOptionsForm;
 
   public PyTestConfigurationEditor(PyTestRunConfiguration configuration) {
     myCommonOptionsForm = new PyCommonOptionsForm(configuration);

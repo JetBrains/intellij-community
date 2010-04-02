@@ -31,7 +31,7 @@ public class PyClassGroupingRuleProvider implements FileStructureGroupRuleProvid
   }
 
   private static class PyClassGroupingRule implements UsageGroupingRule {
-    private boolean myGroupFiles;
+    private final boolean myGroupFiles;
 
     public PyClassGroupingRule(boolean groupFiles) {
       myGroupFiles = groupFiles;

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * Time: 7:09:36 PM
  */
 public class PyStatementSurroundDescriptor implements SurroundDescriptor {
-  private static Surrounder[] SURROUNDERS = {
+  private static final Surrounder[] SURROUNDERS = {
     new PyWithIfSurrounder(),
     // new PyWithIfElseSurrounder(),
     new PyWithWhileSurrounder(),

@@ -28,7 +28,7 @@ public class PythonPyInspectionToolProvider implements InspectionToolsFactory {
 
   private final InspectionToolRegistrar myRegistrar;
 
-  private Set<String> myShortNames = new HashSet<String>();
+  private final Set<String> myShortNames = new HashSet<String>();
 
   public PythonPyInspectionToolProvider(final InspectionToolRegistrar registrar, final JythonManager jythonManager) {
     myRegistrar = registrar;

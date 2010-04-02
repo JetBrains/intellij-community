@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
  * @author yole
  */
 public class PyFromImportStatementStubImpl extends StubBase<PyFromImportStatement> implements PyFromImportStatementStub {
-  private PyQualifiedName myImportSourceQName;
+  private final PyQualifiedName myImportSourceQName;
   private final boolean myStarImport;
   private final int myRelativeLevel;
 
