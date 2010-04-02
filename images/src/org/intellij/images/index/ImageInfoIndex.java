@@ -83,7 +83,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   }
 
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   public static class ImageInfo {
