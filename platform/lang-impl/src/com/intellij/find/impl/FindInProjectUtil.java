@@ -191,12 +191,12 @@ public class FindInProjectUtil {
     String pattern;
     final String[] strings = filter.split(",");
     if (strings.length == 1) {
-      pattern = PatternUtil.convertToRegex(filter);
+      pattern = PatternUtil.convertToRegex(filter.trim());
     }
     else {
       pattern = StringUtil.join(strings, new Function<String, String>() {
         public String fun(String s) {
-          return "(" + PatternUtil.convertToRegex(s) + ")";
+          return "(" + PatternUtil.convertToRegex(s.trim()) + ")";
         }
       }, "|");
     }
