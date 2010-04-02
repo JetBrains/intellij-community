@@ -144,16 +144,29 @@ public class PatchApplier<BinaryType extends FilePatch> {
               return;
             }
 
-            final ApplyPatchStatus status = actualApply(myVerifier);
+            try {
+              markInternalOperation(textPatches, true);
 
-            if (status != null) {
-              refStatus.set(status);
+              final ApplyPatchStatus status = actualApply(myVerifier);
+
+              if (status != null) {
+                refStatus.set(status);
+              }
+            }
+            finally {
+              markInternalOperation(textPatches, false);
             }
           } // end of Command run
         }, VcsBundle.message("patch.apply.command"), null);
         return refStatus.get();
       }
     });
+  }
+
+  private static void markInternalOperation(List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches, boolean set) {
+    for (Pair<VirtualFile, ApplyTextFilePatch> patch : textPatches) {
+      ChangesUtil.markInternalOperation(patch.getFirst(), set);
+    }
   }
 
   protected void refreshFiles() {
