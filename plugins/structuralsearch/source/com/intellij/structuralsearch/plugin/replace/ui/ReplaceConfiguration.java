@@ -11,7 +11,7 @@ import com.intellij.structuralsearch.MatchOptions;
  * Time: 4:41:37 PM
  */
 public class ReplaceConfiguration extends Configuration {
-  private ReplaceOptions options = new ReplaceOptions();
+  private final ReplaceOptions options = new ReplaceOptions();
   public static final String REPLACEMENT_VARIABLE_SUFFIX = "$replacement";
 
   public ReplaceOptions getOptions() {

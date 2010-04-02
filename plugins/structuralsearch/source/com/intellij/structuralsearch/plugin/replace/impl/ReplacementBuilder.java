@@ -25,7 +25,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
   private String replacement;
   private List<ParameterInfo> parameterizations;
   private HashMap<String,MatchResult> matchMap;
-  private Map<String, ScriptSupport> replacementVarsMap;
+  private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
   //private Map<TextRange,ParameterInfo> scopedParameterizations;
 
