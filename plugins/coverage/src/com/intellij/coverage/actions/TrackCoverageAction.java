@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TrackCoverageAction extends ToggleModelAction {
-  private TestConsoleProperties myProperties;
+  private final TestConsoleProperties myProperties;
   private TestFrameworkRunningModel myModel;
   private TreeSelectionListener myTreeSelectionListener;
 
