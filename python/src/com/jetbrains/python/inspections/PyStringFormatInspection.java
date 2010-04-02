@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
@@ -80,18 +81,19 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       private int myExpectedArguments = 0;
       private boolean myProblemRegister = false;
       private final Visitor myVisitor;
+      private final PyBinaryExpression myExpression;
 
       private final Map<String, String> myFormatSpec = new HashMap<String, String>();
 
-      public Inspection(Visitor visitor) {
+      public Inspection(Visitor visitor, PyBinaryExpression expression) {
         myVisitor = visitor;
+        myExpression = expression;
       }
 
       // return number of arguments or -1 if it can not be computed
       private int inspectArguments(@Nullable final PyExpression rightExpression) {
         final Class[] SIMPLE_RHS_EXPRESSIONS =
-          {PyLiteralExpression.class, PyReferenceExpression.class, PySubscriptionExpression.class,
-          PyBinaryExpression.class,  PyConditionalExpression.class};
+          {PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class};
 
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
@@ -100,27 +102,36 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           }
           return 1;
         }
+        else if (rightExpression instanceof PyReferenceExpression) {
+          PyElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain();
+          if (pyElement == null) {
+            return -1;
+          }
+          PsiElement element = pyElement.copy();
+          if (!(element instanceof PyExpression)) {
+            return -1;
+          }
+          return inspectArguments((PyExpression)element);
+        }
         else if (rightExpression instanceof PyCallExpression) {
           PyCallExpression.PyMarkedFunction markedFunction = ((PyCallExpression)rightExpression).resolveCallee();
           if (markedFunction != null) {
             PyStatementList statementList = markedFunction.getFunction().getStatementList();
             PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
-            if (returnStatements != null) {
-              int expressionsSize = -1;
-              for (PyReturnStatement returnStatement : returnStatements) {
-                if (returnStatement.getExpression() instanceof PyCallExpression) {
-                  return -1;
-                }
-                List<PyExpression> expressionList = PyUtil.flattenedParens(returnStatement.getExpression());
-                if (expressionsSize < 0) {
-                  expressionsSize = expressionList.size();
-                }
-                if (expressionsSize != expressionList.size()) {
-                  return -1;
-                }
+            int expressionsSize = -1;
+            for (PyReturnStatement returnStatement : returnStatements) {
+              if (returnStatement.getExpression() instanceof PyCallExpression) {
+                return -1;
               }
-              return expressionsSize;
+              List<PyExpression> expressionList = PyUtil.flattenedParens(returnStatement.getExpression());
+              if (expressionsSize < 0) {
+                expressionsSize = expressionList.size();
+              }
+              if (expressionsSize != expressionList.size()) {
+                return -1;
+              }
             }
+            return expressionsSize;
           }
           return -1;
         }
@@ -179,7 +190,8 @@ public class PyStringFormatInspection extends LocalInspectionTool {
             simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
             return 1;
           }
-        } else if (rightExpression instanceof PyListCompExpression) {
+        }
+        else if (rightExpression instanceof PyListCompExpression) {
           if (myFormatSpec.get("1") != null) {
             simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
             return 1;
@@ -188,9 +200,12 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         return -1;
       }
 
-      private void registerProblem(@NotNull final PyExpression rightExpression, @NotNull final String message) {
+      private void registerProblem(@NotNull PyExpression expression, @NotNull final String message) {
         myProblemRegister = true;
-        myVisitor.registerProblem(rightExpression, message);
+        if (!expression.isPhysical()) {
+          expression = myExpression.getRightExpression();
+        }
+        myVisitor.registerProblem(expression, message);
       }
 
       private void checkType(@NotNull final PyExpression expression, @NotNull final String expextedTypeName) {
@@ -338,7 +353,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
     @Override
     public void visitPyBinaryExpression(final PyBinaryExpression node) {
       if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
-        final Inspection inspection = new Inspection(this);
+        final Inspection inspection = new Inspection(this, node);
         final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
         inspection.inspectFormat(literalExpression);
         if (inspection.isProblem()) {
