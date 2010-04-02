@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -32,6 +33,10 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   public void check(ProjectStructureProblemsHolder problemsHolder) {
     final ModifiableModuleModel moduleModel = myContext.getModulesConfigurator().getModuleModel();
     final Module[] all = moduleModel.getModules();
+    if (!ArrayUtil.contains(myModule, all)) {
+      return;//module has been deleted
+    }
+
     for (Module each : all) {
       if (each != myModule && myContext.getRealName(each).equals(myContext.getRealName(myModule))) {
         problemsHolder.registerError(ProjectBundle.message("project.roots.module.duplicate.name.message"));
