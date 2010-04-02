@@ -59,7 +59,7 @@ public class LibrariesUtil {
     return libraries.toArray(new Library[libraries.size()]);
   }
 
-  private static void populateOrderEntries(Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly, Set<Module> visited) {
+  private static void populateOrderEntries(@NotNull Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly, Set<Module> visited) {
     if (!visited.add(module)) {
       return;
     }
@@ -78,7 +78,7 @@ public class LibrariesUtil {
       }
       else if (entry instanceof ModuleOrderEntry) {
         final Module dep = ((ModuleOrderEntry)entry).getModule();
-        if (module != null) {
+        if (dep != null) {
           populateOrderEntries(dep, condition, libraries, true, visited);
         }
       }
