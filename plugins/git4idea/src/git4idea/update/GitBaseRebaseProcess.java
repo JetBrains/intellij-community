@@ -255,7 +255,7 @@ public abstract class GitBaseRebaseProcess {
             try {
               myShelveManager
                 .unshelveChangeList(myShelvedChangeList, myShelvedChangeList.getChanges(), myShelvedChangeList.getBinaryFiles(),
-                                    myChangeManager.getDefaultChangeList());
+                                    myChangeManager.getDefaultChangeList(), false);
             }
             finally {
               l.setEventsSuppressed(false);

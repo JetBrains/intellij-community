@@ -81,6 +81,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   public ApplyPatchStatus execute() {
+    return execute(true);
+  }
+
+  public ApplyPatchStatus execute(boolean showSuccessNotification) {
     myRemainingPatches.addAll(myPatches);
 
     final ApplyPatchStatus status = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
@@ -94,7 +98,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return refStatus.get();
       }
     });
-    showApplyStatus(myProject, status);
+    if(showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
+      showApplyStatus(myProject, status);
+    }
     refreshFiles();
     return status;
   }
@@ -214,7 +220,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
         final List<FilePatch> appliedPatches = myCustomForBinaries.getAppliedPatches();
         moveForCustomBinaries(binaryPatches, appliedPatches);
-        
+
         status = ApplyPatchStatus.and(status, patchStatus);
         myRemainingPatches.removeAll(appliedPatches);
       }
