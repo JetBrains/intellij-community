@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 public class MavenProjectsProcessorPluginsResolvingTask extends MavenProjectsProcessorBasicTask {
-  private org.apache.maven.project.MavenProject myNativeMavenProject;
+  private final org.apache.maven.project.MavenProject myNativeMavenProject;
 
   public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
                                                     org.apache.maven.project.MavenProject nativeMavenProject,

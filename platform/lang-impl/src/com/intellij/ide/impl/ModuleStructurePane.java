@@ -29,7 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
 public class ModuleStructurePane extends ProjectViewPane {
-  private Module myModule;
+  private final Module myModule;
 
   public ModuleStructurePane(Module module) {
     super(module.getProject());

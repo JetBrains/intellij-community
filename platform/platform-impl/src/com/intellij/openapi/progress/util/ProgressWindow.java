@@ -581,7 +581,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     private class MyDialogWrapper extends DialogWrapper {
-      private boolean myIsCancellable;
+      private final boolean myIsCancellable;
 
       public MyDialogWrapper(Project project, final boolean cancellable) {
         super(project, false);

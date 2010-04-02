@@ -102,7 +102,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   private boolean myFilterFocumentWasChanged;
   //[back/forward] private ActionToolbar myToolbar;
   private Window myWindow;
-  private PropertiesComponent myProperties;
+  private final PropertiesComponent myProperties;
 
   public OptionsEditor(Project project, ConfigurableGroup[] groups, Configurable preselectedConfigurable) {
     myProject = project;

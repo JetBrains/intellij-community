@@ -25,7 +25,7 @@ import java.util.*;
 
 class OneBaseStrategy extends AutoMatchStrategy {
   private boolean mySucceeded;
-  private MultiMap<VirtualFile, FilePatchInProgress> myVariants;
+  private final MultiMap<VirtualFile, FilePatchInProgress> myVariants;
   private boolean myCheckExistingVariants;
 
   OneBaseStrategy(VirtualFile baseDir) {

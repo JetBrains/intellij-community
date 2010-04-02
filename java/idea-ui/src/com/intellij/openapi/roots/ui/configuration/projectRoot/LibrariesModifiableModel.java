@@ -39,7 +39,7 @@ public class LibrariesModifiableModel implements LibraryTable.ModifiableModel {
 
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
   private final Project myProject;
-  private LibraryTable myTable;
+  private final LibraryTable myTable;
   private final LibraryEditorListener myLibraryEditorListener;
 
   public LibrariesModifiableModel(final LibraryTable table, final Project project, LibraryEditorListener libraryEditorListener) {

@@ -81,7 +81,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private final ViewerTreeBuilder myTreeBuilder;
 
   private final JList myRefs;
-  private static String REFS_CACHE = "References Resolve Cache";
+  private static final String REFS_CACHE = "References Resolve Cache";
 
   private EditorEx myEditor;
   private String myLastParsedText = null;
@@ -96,8 +96,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private JPanel myButtonPanel;
   private JSplitPane myTextSplit;
   private JSplitPane myTreeSplit;
-  private Presentation myPresentation = new Presentation();
-  private Map<String, Object> handlers = new HashMap<String, Object>();
+  private final Presentation myPresentation = new Presentation();
+  private final Map<String, Object> handlers = new HashMap<String, Object>();
   private DefaultActionGroup myGroup;
   private Language[] myLanguageDialects;
   private final Color SELECTION_BG_COLOR = Registry.getColor("psi.viewer.selection.color", new Color(255, 204, 204));
@@ -109,7 +109,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       return o1.getID().compareTo(o2.getID());
     }
   };
-  private EditorListener myEditorListener = new EditorListener();
+  private final EditorListener myEditorListener = new EditorListener();
   private int myLastParsedTextHashCode = 17;
   private int myNewDocumentHashCode = 11;
 

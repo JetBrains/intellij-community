@@ -48,12 +48,12 @@ import java.util.*;
 
 public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor {
   private final PsiDirectory[] myDirectories;
-  private PsiDirectory myTargetDirectory;
-  private boolean mySearchInComments;
-  private boolean mySearchInNonJavaFiles;
-  private Map<PsiFile, TargetDirectoryWrapper> myFilesToMove;
+  private final PsiDirectory myTargetDirectory;
+  private final boolean mySearchInComments;
+  private final boolean mySearchInNonJavaFiles;
+  private final Map<PsiFile, TargetDirectoryWrapper> myFilesToMove;
   private NonCodeUsageInfo[] myNonCodeUsages;
-  private MoveCallback myMoveCallback;
+  private final MoveCallback myMoveCallback;
 
   public MoveDirectoryWithClassesProcessor(Project project,
                                            PsiDirectory[] directories,

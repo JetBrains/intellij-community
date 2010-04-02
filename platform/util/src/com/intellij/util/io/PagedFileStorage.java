@@ -69,8 +69,8 @@ public class PagedFileStorage implements Forceable {
   }
 
   private static class PageKey {
-    private PagedFileStorage owner;
-    private int page;
+    private final PagedFileStorage owner;
+    private final int page;
 
     public PageKey(PagedFileStorage owner, int page) {
       this.owner = owner;

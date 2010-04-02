@@ -31,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenFoldersImporter {
-  private MavenProject myMavenProject;
-  private MavenImportingSettings myImportingSettings;
-  private MavenRootModelAdapter myModel;
+  private final MavenProject myMavenProject;
+  private final MavenImportingSettings myImportingSettings;
+  private final MavenRootModelAdapter myModel;
 
   public static void updateProjectFolders(final Project project, final boolean updateTargetFoldersOnly) {
     final MavenProjectsManager manager = MavenProjectsManager.getInstance(project);

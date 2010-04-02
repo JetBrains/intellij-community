@@ -50,7 +50,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   @NonNls public static final String COMPONENT_NAME = "ProjectFacetManager";
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetManagerImpl");
   private ProjectFacetManagerState myState = new ProjectFacetManagerState();
-  private Project myProject;
+  private final Project myProject;
 
   public ProjectFacetManagerImpl(Project project) {
     myProject = project;

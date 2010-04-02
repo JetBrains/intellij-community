@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public class PsiCachedValueImpl<T> extends PsiCachedValue<T> implements CachedValue<T>  {
-  private CachedValueProvider<T> myProvider;
+  private final CachedValueProvider<T> myProvider;
 
   public PsiCachedValueImpl(PsiManager manager, CachedValueProvider<T> provider) {
     super(manager);

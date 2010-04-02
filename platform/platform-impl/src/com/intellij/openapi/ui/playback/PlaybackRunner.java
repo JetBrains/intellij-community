@@ -34,13 +34,13 @@ public class PlaybackRunner {
 
   private Robot myRobot;
 
-  private String myScript;
-  private StatusCallback myCallback;
+  private final String myScript;
+  private final StatusCallback myCallback;
 
-  private ArrayList<PlaybackCommand> myCommands = new ArrayList<PlaybackCommand>();
+  private final ArrayList<PlaybackCommand> myCommands = new ArrayList<PlaybackCommand>();
   private ActionCallback myActionCallback;
   private boolean myStopRequested;
-  private boolean myUseDirectActionCall;
+  private final boolean myUseDirectActionCall;
 
   public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall) {
     myScript = script;

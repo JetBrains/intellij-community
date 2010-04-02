@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 * @author nik
 */
 public class LayoutTreeFindUsagesAction extends ArtifactEditorFindUsagesActionBase {
-  private LayoutTreeComponent myLayoutTreeComponent;
+  private final LayoutTreeComponent myLayoutTreeComponent;
 
   public LayoutTreeFindUsagesAction(LayoutTreeComponent layoutTreeComponent, Project project, ArtifactsStructureConfigurableContext artifactContext) {
     super(layoutTreeComponent.getLayoutTree(), project, artifactContext);

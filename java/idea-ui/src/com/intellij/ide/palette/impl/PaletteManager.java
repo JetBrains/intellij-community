@@ -146,7 +146,7 @@ public class PaletteManager implements ProjectComponent {
     mySelectionListeners.remove(l);
   }
 
-  private MergingUpdateQueue myQueue = new MergingUpdateQueue("palette", 200, true, null);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("palette", 200, true, null);
 
   private void processFileEditorChange(@Nullable final VirtualFile selectedFile) {
 

@@ -49,8 +49,8 @@ public class ObserverLord<E>
    ////////////////////////////////////////////////////////////////////////////
    //////////////////////////// member variables //////////////////////////////
    ////////////////////////////////////////////////////////////////////////////
-   private List<E> regularObservers = new ArrayList<E>();
-   private List<E> eventQueueObservers = new ArrayList<E>();
+   private final List<E> regularObservers = new ArrayList<E>();
+   private final List<E> eventQueueObservers = new ArrayList<E>();
 
 
    //

@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class MarkTreeConflictResolvedAction extends AnAction implements DumbAware {
-  private final static String myText = SvnBundle.message("action.mark.tree.conflict.resolved.text");
+  private static final String myText = SvnBundle.message("action.mark.tree.conflict.resolved.text");
 
   public MarkTreeConflictResolvedAction() {
     super(myText);
@@ -63,8 +63,8 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
   }
 
   private static class MyChecker {
-    private boolean myEnabled;
-    private ConflictedSvnChange myChange;
+    private final boolean myEnabled;
+    private final ConflictedSvnChange myChange;
     private final Project myProject;
 
     public MyChecker(final AnActionEvent e) {
@@ -72,12 +72,19 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
       myProject = PlatformDataKeys.PROJECT.getData(dc);
       final Change[] changes = VcsDataKeys.CHANGE_LEAD_SELECTION.getData(dc);
 
-      if ((myProject == null) || (changes == null) || (changes.length != 1)) return;
+      if (myProject == null || changes == null || changes.length != 1) {
+        myEnabled = false;
+        myChange = null;
+        return;
+      }
 
       final Change change = changes[0];
-      myEnabled = (change instanceof ConflictedSvnChange) && ((ConflictedSvnChange) change).getConflictState().isTree();
+      myEnabled = change instanceof ConflictedSvnChange && ((ConflictedSvnChange) change).getConflictState().isTree();
       if (myEnabled) {
         myChange = (ConflictedSvnChange) change;
+      }
+      else {
+        myChange = null;
       }
     }
 
@@ -130,8 +137,7 @@ public class MarkTreeConflictResolvedAction extends AnAction implements DumbAwar
       result.add(change.getBeforeRevision().getFile());
     }
     if (change.getAfterRevision() != null) {
-      if ((change.getBeforeRevision() == null) ||
-          ((change.getBeforeRevision() != null) && (change.isMoved() || change.isRenamed()))) {
+      if (change.getBeforeRevision() == null || change.getBeforeRevision() != null && (change.isMoved() || change.isRenamed())) {
         result.add(change.getAfterRevision().getFile());
       }
     }
