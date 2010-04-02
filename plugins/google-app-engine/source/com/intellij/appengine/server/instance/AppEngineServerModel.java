@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.javaee.deployment.DeploymentProvider;
 import com.intellij.javaee.run.configuration.CommonModel;
+import com.intellij.javaee.run.configuration.DeploysArtifactsOnStartupOnly;
 import com.intellij.javaee.run.configuration.ServerModel;
 import com.intellij.javaee.run.execution.DefaultOutputProcessor;
 import com.intellij.javaee.run.execution.OutputProcessor;
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -32,7 +34,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class AppEngineServerModel implements ServerModel {
+public class AppEngineServerModel implements ServerModel, DeploysArtifactsOnStartupOnly {
   private ArtifactPointer myArtifactPointer;
   private int myPort = 8080;
   private String myServerParameters = "";
@@ -60,6 +62,14 @@ public class AppEngineServerModel implements ServerModel {
 
   public List<Pair<String, Integer>> getAddressesToCheck() {
     return Collections.singletonList(Pair.create(myCommonModel.getHost(), myPort));
+  }
+
+  public boolean isResourcesReloadingSupported() {
+    return myCommonModel.isLocal();
+  }
+
+  public List<Artifact> getArtifactsToDeploy() {
+    return ContainerUtil.createMaybeSingletonList(getArtifact());
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
