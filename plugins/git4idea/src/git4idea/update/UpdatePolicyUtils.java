@@ -81,7 +81,8 @@ public class UpdatePolicyUtils {
       return GitVcsSettings.UpdateChangesPolicy.SHELVE;
     }
     else {
-      throw new IllegalStateException("Unknown auto-save policy");
+      // the stash is a default policy, in case if the policy could not be determined
+      return GitVcsSettings.UpdateChangesPolicy.STASH;
     }
   }
 }

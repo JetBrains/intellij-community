@@ -31,6 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.testFramework.*;
+import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
 import junit.framework.*;
 
@@ -336,7 +337,8 @@ public class TestAll implements Test {
   }
 
   private static String [] getClassRoots() {
-    return System.getProperty("java.class.path").split(File.pathSeparator);
+    final String[] roots = ExternalClasspathClassLoader.getRoots();
+    return roots != null ? roots : System.getProperty("java.class.path").split(File.pathSeparator);
   }
 
   public TestAll(String packageRoot) throws Throwable {
