@@ -23,18 +23,19 @@ import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.util.BeforeAfter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,60 +49,87 @@ public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
 
-  private TextPatchBuilder() {
+  private final String myBasePath;
+  private final boolean myIsReversePath;
+  private final boolean myIsCaseSensitive;
+  @Nullable
+  private final Runnable myCancelChecker;
+
+  private TextPatchBuilder(final String basePath, final boolean isReversePath, final boolean isCaseSensitive,
+                           @Nullable final Runnable cancelChecker) {
+    myBasePath = basePath;
+    myIsReversePath = isReversePath;
+    myIsCaseSensitive = isCaseSensitive;
+    myCancelChecker = cancelChecker;
   }
 
-  private static void checkCanceled(final ProgressIndicator ind) {
-    if (ind != null && ind.isCanceled()) {
-      throw new ProcessCanceledException();
+  private void checkCanceled() {
+    if (myCancelChecker != null) {
+      myCancelChecker.run();
     }
   }
 
   public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
-    final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
-    
-    List<FilePatch> result = new ArrayList<FilePatch>();
-    for(Change c: changes) {
-      checkCanceled(ind);
+    final Collection<BeforeAfter<AirContentRevision>> revisions = new ArrayList<BeforeAfter<AirContentRevision>>(changes.size());
+    for (Change change : changes) {
+      revisions.add(new BeforeAfter<AirContentRevision>(convertRevision(change.getBeforeRevision()), convertRevision(change.getAfterRevision())));
+    }
+    return buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, new Runnable() {
+      public void run() {
+        ProgressManager.checkCanceled();
+      }
+    });
+  }
 
-      final ContentRevision beforeRevision;
-      final ContentRevision afterRevision;
-      if (reversePatch) {
-        beforeRevision = c.getAfterRevision();
-        afterRevision = c.getBeforeRevision();
+  public static List<FilePatch> buildPatch(final Collection<BeforeAfter<AirContentRevision>> changes, final String basePath,
+                   final boolean reversePatch, final boolean isCaseSensitive, @Nullable final Runnable cancelChecker) throws VcsException {
+    final TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, isCaseSensitive, cancelChecker);
+    return builder.build(changes);
+  }
+
+  private List<FilePatch> build(final Collection<BeforeAfter<AirContentRevision>> changes) throws VcsException {
+    List<FilePatch> result = new ArrayList<FilePatch>();
+    for(BeforeAfter<AirContentRevision> c: changes) {
+      checkCanceled();
+
+      final AirContentRevision beforeRevision;
+      final AirContentRevision afterRevision;
+      if (myIsReversePath) {
+        beforeRevision = c.getAfter();
+        afterRevision = c.getBefore();
       }
       else {
-        beforeRevision = c.getBeforeRevision();
-        afterRevision = c.getAfterRevision();
+        beforeRevision = c.getBefore();
+        afterRevision = c.getAfter();
       }
-      if (beforeRevision != null && beforeRevision.getFile().isDirectory()) {
+      if (beforeRevision != null && beforeRevision.getPath().isDirectory()) {
         continue;
       }
-      if (afterRevision != null && afterRevision.getFile().isDirectory()) {
+      if (afterRevision != null && afterRevision.getPath().isDirectory()) {
         continue;
       }
 
-      if (beforeRevision instanceof BinaryContentRevision || afterRevision instanceof BinaryContentRevision) {
-        result.add(buildBinaryPatch(basePath, (BinaryContentRevision) beforeRevision, (BinaryContentRevision) afterRevision));
+      if ((beforeRevision != null) && beforeRevision.isBinary() || (afterRevision != null) && afterRevision.isBinary()) {
+        result.add(buildBinaryPatch(myBasePath, beforeRevision, afterRevision));
         continue;
       }
 
       if (beforeRevision == null) {
-        result.add(buildAddedFile(basePath, afterRevision, ind));
+        result.add(buildAddedFile(myBasePath, afterRevision));
         continue;
       }
       if (afterRevision == null) {
-        result.add(buildDeletedFile(basePath, beforeRevision, ind));
+        result.add(buildDeletedFile(myBasePath, beforeRevision));
         continue;
       }
 
-      final String beforeContent = beforeRevision.getContent();
+      final String beforeContent = beforeRevision.getContentAsString();
       if (beforeContent == null) {
-        throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getFile().getPath());
+        throw new VcsException("Failed to fetch old content for changed file " + beforeRevision.getPath());
       }
-      final String afterContent = afterRevision.getContent();
+      final String afterContent = afterRevision.getContentAsString();
       if (afterContent == null) {
-        throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getFile().getPath());
+        throw new VcsException("Failed to fetch new content for changed file " + afterRevision.getPath());
       }
       String[] beforeLines = new LineTokenizer(beforeContent).execute();
       String[] afterLines = new LineTokenizer(afterContent).execute();
@@ -111,14 +139,14 @@ public class TextPatchBuilder {
       ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
 
       if (fragments.size() > 1 || (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffTypeEnum.NONE)) {
-        TextFilePatch patch = buildPatchHeading(basePath, beforeRevision, afterRevision);
+        TextFilePatch patch = buildPatchHeading(myBasePath, beforeRevision, afterRevision);
         result.add(patch);
 
         int lastLine1 = 0;
         int lastLine2 = 0;
 
         while(fragments.size() > 0) {
-          checkCanceled(ind);
+          checkCanceled();
 
           List<LineFragment> adjacentFragments = getAdjacentFragments(fragments);
           if (adjacentFragments.size() > 0) {
@@ -138,7 +166,7 @@ public class TextPatchBuilder {
             patch.addHunk(hunk);
 
             for(LineFragment fragment: adjacentFragments) {
-              checkCanceled(ind);
+              checkCanceled();
               
               for(int i=contextStart1; i<fragment.getStartingLine1(); i++) {
                 addLineToHunk(hunk, beforeLines [i], PatchLine.Type.CONTEXT);
@@ -156,22 +184,69 @@ public class TextPatchBuilder {
             }
           }
         }
-      } else if (! beforeRevision.getFile().equals(afterRevision.getFile())) {
-        result.add(buildMovedFile(basePath, beforeRevision, afterRevision, beforeLines));
+      } else if (! beforeRevision.getPath().equals(afterRevision.getPath())) {
+        result.add(buildMovedFile(myBasePath, beforeRevision, afterRevision, beforeLines));
       }
     }
     return result;
   }
 
+  @Nullable
+  private static AirContentRevision convertRevision(final ContentRevision cr) {
+    if (cr == null) return null;
+    final StaticPathDescription description = fromFilePath(cr.getFile());
+    if (cr instanceof BinaryContentRevision) {
+      return new AirContentRevision() {
+        public boolean isBinary() {
+          return true;
+        }
+        public String getContentAsString() {
+          throw new IllegalStateException();
+        }
+        public byte[] getContentAsBytes() throws VcsException {
+          return ((BinaryContentRevision) cr).getBinaryContent();
+        }
+        public String getRevisionNumber() {
+          return cr.getRevisionNumber().asString();
+        }
+        @NotNull
+        public PathDescription getPath() {
+          return description;
+        }
+      };
+    } else {
+      return new AirContentRevision() {
+        public boolean isBinary() {
+          return false;
+        }
+        public String getContentAsString() throws VcsException {
+          return cr.getContent();
+        }
+        public byte[] getContentAsBytes() throws VcsException {
+          throw new IllegalStateException();
+        }
+        public String getRevisionNumber() {
+          return cr.getRevisionNumber().asString();
+        }
+        @NotNull
+        public PathDescription getPath() {
+          return description;
+        }
+      };
+    }
+  }
 
+  private static StaticPathDescription fromFilePath(@NotNull final FilePath fp) {
+    return new StaticPathDescription(fp.isDirectory(), fp.getIOFile().lastModified(), fp.getPath());
+  }
 
-  private static FilePatch buildBinaryPatch(final String basePath,
-                                            final BinaryContentRevision beforeRevision,
-                                            final BinaryContentRevision afterRevision) throws VcsException {
-    ContentRevision headingBeforeRevision = beforeRevision != null ? beforeRevision : afterRevision;
-    ContentRevision headingAfterRevision = afterRevision != null ? afterRevision : beforeRevision;
-    byte[] beforeContent = beforeRevision != null ? beforeRevision.getBinaryContent() : null;
-    byte[] afterContent = afterRevision != null ? afterRevision.getBinaryContent() : null;
+  private FilePatch buildBinaryPatch(final String basePath,
+                                            final AirContentRevision beforeRevision,
+                                            final AirContentRevision afterRevision) throws VcsException {
+    AirContentRevision headingBeforeRevision = beforeRevision != null ? beforeRevision : afterRevision;
+    AirContentRevision headingAfterRevision = afterRevision != null ? afterRevision : beforeRevision;
+    byte[] beforeContent = beforeRevision != null ? beforeRevision.getContentAsBytes() : null;
+    byte[] afterContent = afterRevision != null ? afterRevision.getContentAsBytes() : null;
     BinaryFilePatch patch = new BinaryFilePatch(beforeContent, afterContent);
     setPatchHeading(patch, basePath, headingBeforeRevision, headingAfterRevision);
     return patch;
@@ -189,40 +264,40 @@ public class TextPatchBuilder {
     hunk.addLine(patchLine);
   }
 
-  private static TextFilePatch buildMovedFile(final String basePath, final ContentRevision beforeRevision,
-                                              final ContentRevision afterRevision, final String[] lines) throws VcsException {
+  private TextFilePatch buildMovedFile(final String basePath, final AirContentRevision beforeRevision,
+                                              final AirContentRevision afterRevision, final String[] lines) throws VcsException {
     final TextFilePatch result = buildPatchHeading(basePath, beforeRevision, afterRevision);
     final PatchHunk hunk = new PatchHunk(0, 0, 0, 0);
     result.addHunk(hunk);
     return result;
   }
 
-  private static TextFilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision, final ProgressIndicator ind) throws VcsException {
-    final String content = afterRevision.getContent();
+  private TextFilePatch buildAddedFile(final String basePath, final AirContentRevision afterRevision) throws VcsException {
+    final String content = afterRevision.getContentAsString();
     if (content == null) {
-      throw new VcsException("Failed to fetch content for added file " + afterRevision.getFile().getPath());
+      throw new VcsException("Failed to fetch content for added file " + afterRevision.getPath());
     }
     String[] lines = new LineTokenizer(content).execute();
     TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
-      checkCanceled(ind);
+      checkCanceled();
       addLineToHunk(hunk, line, PatchLine.Type.ADD);
     }
     result.addHunk(hunk);
     return result;
   }
 
-  private static TextFilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision, final ProgressIndicator ind) throws VcsException {
-    final String content = beforeRevision.getContent();
+  private TextFilePatch buildDeletedFile(String basePath, AirContentRevision beforeRevision) throws VcsException {
+    final String content = beforeRevision.getContentAsString();
     if (content == null) {
-      throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getFile().getPath());
+      throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getPath());
     }
     String[] lines = new LineTokenizer(content).execute();
     TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {
-      checkCanceled(ind);
+      checkCanceled();
       addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
     }
     result.addHunk(hunk);
@@ -251,35 +326,36 @@ public class TextPatchBuilder {
     return result;
   }
 
-  private static String getRelativePath(final String basePath, final File ioFile) {
-    String relPath = FileUtil.getRelativePath(new File(basePath), ioFile);
-    if (relPath == null) relPath = ioFile.getPath();
-    return relPath.replace(File.separatorChar, '/');
+  private String getRelativePath(final String basePath, final String secondPath) {
+    final String baseModified = FileUtil.toSystemIndependentName(basePath);
+    final String secondModified = FileUtil.toSystemIndependentName(secondPath);
+    
+    final String relPath = FileUtil.getRelativePath(baseModified, secondModified, '/', myIsCaseSensitive);
+    if (relPath == null) return secondModified;
+    return relPath;
   }
 
-  private static String getRevisionName(final ContentRevision revision, final File ioFile) {
-    String revisionName = revision.getRevisionNumber().asString();
-    if (revisionName.length() > 0) {
+  private static String getRevisionName(final AirContentRevision revision) {
+    final String revisionName = revision.getRevisionNumber();
+    if (revisionName != null) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
-    return new Date(ioFile.lastModified()).toString();
+    return new Date(revision.getPath().lastModified()).toString();
   }
 
-  private static TextFilePatch buildPatchHeading(final String basePath, final ContentRevision beforeRevision, final ContentRevision afterRevision) {
+  private TextFilePatch buildPatchHeading(final String basePath, final AirContentRevision beforeRevision, final AirContentRevision afterRevision) {
     TextFilePatch result = new TextFilePatch();
     setPatchHeading(result, basePath, beforeRevision, afterRevision);
     return result;
   }
 
-  private static void setPatchHeading(final FilePatch result, final String basePath,
-                                      @NotNull final ContentRevision beforeRevision,
-                                      @NotNull final ContentRevision afterRevision) {
-    File beforeFile = beforeRevision.getFile().getIOFile();
-    result.setBeforeName(getRelativePath(basePath, beforeFile));
-    result.setBeforeVersionId(getRevisionName(beforeRevision, beforeFile));
+  private void setPatchHeading(final FilePatch result, final String basePath,
+                                      @NotNull final AirContentRevision beforeRevision,
+                                      @NotNull final AirContentRevision afterRevision) {
+    result.setBeforeName(getRelativePath(basePath, beforeRevision.getPath().getPath()));
+    result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    File afterFile = afterRevision.getFile().getIOFile();
-    result.setAfterName(getRelativePath(basePath, afterFile));
-    result.setAfterVersionId(getRevisionName(afterRevision, afterFile));
+    result.setAfterName(getRelativePath(basePath, afterRevision.getPath().getPath()));
+    result.setAfterVersionId(getRevisionName(afterRevision));
   }
 }

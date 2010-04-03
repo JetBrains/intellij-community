@@ -170,10 +170,6 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     };
   }
 
-  public void setStorageFormat(final StorageFormat storageFormat) {
-    throw new UnsupportedOperationException("Method setStorageFormat not implemented in " + getClass());
-  }
-
   public String getLocation() {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }

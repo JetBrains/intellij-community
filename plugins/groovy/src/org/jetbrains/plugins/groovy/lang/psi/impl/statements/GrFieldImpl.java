@@ -23,9 +23,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +31,9 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.PropertyEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
@@ -91,31 +88,18 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   public boolean isDeprecated() {
     final GrFieldStub stub = getStub();
-    if (stub != null) {
-      return stub.isDeprecated();
+    boolean byDocTag = stub == null ? PsiImplUtil.isDeprecatedByDocTag(this) : stub.isDeprecatedByDocTag();
+    if (byDocTag) {
+      return true;
     }
-    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
+
+    return PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   @Override
   public PsiType getTypeGroovy() {
-    if (isProperty() && getDeclaredType() == null && getInitializer() == null) {
-      CachedValue<PsiType> enhancedType = myEnhancedType;
-      if (enhancedType == null) {
-        myEnhancedType = enhancedType = CachedValuesManager.getManager(getManager().getProject()).createCachedValue(new CachedValueProvider<PsiType>() {
-          public Result<PsiType> compute() {
-            for (PropertyEnhancer enhancer : PropertyEnhancer.EP_NAME.getExtensions()) {
-              final PsiType type = enhancer.getPropertyType(GrFieldImpl.this);
-              if (type != null) {
-                return Result.create(type, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-              }
-            }
-
-            return Result.create(null, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-          }
-        }, false);
-      }
-      final PsiType type = enhancedType.getValue();
+    if (getDeclaredType() == null && getInitializer() == null) {
+      final PsiType type = GrVariableEnhancer.getEnhancedType(this);
       if (type != null) {
         return type;
       }

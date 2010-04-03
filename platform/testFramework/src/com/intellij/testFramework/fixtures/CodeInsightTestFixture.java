@@ -208,9 +208,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void launchAction(@NotNull IntentionAction action) throws Exception;
 
-  void configureByFile(@TestDataFile @NonNls String file) throws Exception;
+  void configureByFile(@TestDataFile @NonNls String file);
 
-  void configureByFiles(@NonNls String... files) throws Exception;
+  void configureByFiles(@NonNls String... files);
 
   PsiFile configureByText(FileType fileType, @NonNls String text) throws IOException;
 
@@ -272,7 +272,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testRename(String fileAfter, String newName) throws Exception;
 
-  Collection<UsageInfo> testFindUsages(@NonNls String... fileNames) throws Exception;
+  Collection<UsageInfo> testFindUsages(@TestDataFile @NonNls String... fileNames);
 
   Collection<UsageInfo> findUsages(final PsiElement to) throws Exception;
 
@@ -295,9 +295,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @Nullable LookupElement[] complete(CompletionType type);
 
-  void checkResult(final String text) throws IOException;
+  void checkResult(final String text);
 
-  void checkResult(final String text, boolean stripTrailingSpaces) throws IOException;
+  void checkResult(final String text, boolean stripTrailingSpaces);
 
   Document getDocument(PsiFile file);
 

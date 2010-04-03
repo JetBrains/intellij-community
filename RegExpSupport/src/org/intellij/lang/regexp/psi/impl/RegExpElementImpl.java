@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -80,15 +80,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
             // do not attempt to decode text if PsiElement is part of prefix/suffix
             return getText();
         }
-        if (isInsideStringLiteral()) {
-            return StringUtil.unescapeStringCharacters(getNode().getText());
-        } else {
-            return getNode().getText();
-        }
-    }
-
-    protected final boolean isInsideStringLiteral() {
-        return isLiteralExpression(getContainingFile().getContext());
+        return InjectedLanguageManager.getInstance(getProject()).getUnescapedText(this);
     }
 
   public static boolean isLiteralExpression(@Nullable PsiElement context) {

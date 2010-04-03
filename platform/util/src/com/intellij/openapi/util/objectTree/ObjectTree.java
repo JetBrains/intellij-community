@@ -76,16 +76,13 @@ public final class ObjectTree<T> {
       final ObjectNode<T> parentNode = getOrCreateNodeFor(parent);
 
       ObjectNode<T> childParent = childNode.getParent();
-      if (childParent != parentNode && childParent != null) {
+      if (childParent != null) {
         childParent.removeChild(childNode);
         parentNode.addChild(childNode);
       }
-      else if (myRootObjects.contains(child)) {
+      else {
         parentNode.addChild(childNode);
         myRootObjects.remove(child);
-      }
-      else {
-        parentNode.addChild(child);
       }
 
       fireRegistered(childNode.getObject());

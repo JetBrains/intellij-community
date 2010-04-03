@@ -188,7 +188,7 @@ public class MavenRootModelAdapter {
   }
 
   private Path toPath(String path) {
-    if (!new File(path).isAbsolute()) {
+    if (!FileUtil.isAbsolute(path)) {
       path = new File(myMavenProject.getDirectory(), path).getPath();
     }
     return new Path(path);
@@ -321,6 +321,16 @@ public class MavenRootModelAdapter {
       if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
         return each;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static MavenArtifact findArtifact(MavenProject project, Library library) {
+    String name = library.getName();
+    for (MavenArtifact each : project.getDependencies()) {
+      if (makeLibraryName(each).equals(name)) return each;
+
     }
     return null;
   }

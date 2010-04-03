@@ -17,15 +17,16 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -35,14 +36,18 @@ import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = IconLoader.getIcon("/addmodulewizard.png");
@@ -79,9 +84,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
+  private JScrollPane myArchetypesScrollPane;
+  private JPanel myArchetypesPanel;
   private Tree myArchetypesTree;
   private JScrollPane myArchetypeDescriptionScrollPane;
   private JTextArea myArchetypeDescriptionField;
+
+  private AtomicBoolean myLoadingCancelled = new AtomicBoolean();
+  private AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
 
   public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
     myProjectOrNull = project;
@@ -92,6 +102,16 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   }
 
   private void initComponents() {
+    myArchetypesTree = new Tree();
+    myArchetypesTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    myArchetypesScrollPane = new JScrollPane(myArchetypesTree);
+
+    myLoadingIcon.setVisible(false);
+
+    myArchetypesPanel.setLayout(new MyLayout());
+    myArchetypesPanel.add(myArchetypesScrollPane);
+    myArchetypesPanel.add(myLoadingIcon);
+
     mySelectAggregator.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myAggregator = doSelectProject(myAggregator);
@@ -181,7 +201,14 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   @Override
   public void onStepLeaving() {
+    myLoadingCancelled.set(true);
     saveSettings();
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myLoadingIcon.dispose();
+    super.disposeUIResources();
   }
 
   private void loadSettings() {
@@ -252,24 +279,49 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     }
     if (selectedArch != null) myUseArchetypeCheckBox.setSelected(true);
 
-    updateArchetypesList(selectedArch);
+    if (myArchetypesTree.getRowCount() == 0) updateArchetypesList(selectedArch);
     updateComponents();
   }
 
-  private void updateArchetypesList(ArchetypeInfo selected) {
-    TreeNode root = groupAndSortArchetypes(MavenIndicesManager.getInstance().getArchetypes());
-    TreeModel model = new DefaultTreeModel(root);
-    myArchetypesTree.setModel(model);
+  private void updateArchetypesList(final ArchetypeInfo selected) {
+    myLoadingCancelled.set(true);
+    myLoadingCancelled = new AtomicBoolean();
+    final AtomicBoolean currentStatus = myLoadingCancelled;
+    myLoadingIcon.setVisible(true);
+    myLoadingIcon.setBackground(myArchetypesTree.getBackground());
 
-    if (selected != null) {
-      TreePath path = findNodePath(selected, model, model.getRoot());
-      if (path != null) {
-        myArchetypesTree.expandPath(path.getParentPath());
-        TreeUtil.selectPath(myArchetypesTree, path, true);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        try {
+          Thread.sleep(3000);
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        final Set<ArchetypeInfo> archetypes = MavenIndicesManager.getInstance().getArchetypes();
+
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            if (currentStatus.get()) return;
+            myLoadingIcon.setVisible(false);
+
+            TreeNode root = groupAndSortArchetypes(archetypes);
+            TreeModel model = new DefaultTreeModel(root);
+            myArchetypesTree.setModel(model);
+
+            if (selected != null) {
+              TreePath path = findNodePath(selected, model, model.getRoot());
+              if (path != null) {
+                myArchetypesTree.expandPath(path.getParentPath());
+                TreeUtil.selectPath(myArchetypesTree, path, true);
+              }
+            }
+
+            updateArchetypeDescription();                     
+          }
+        });
       }
-    }
-
-    updateArchetypeDescription();
+    });
   }
 
   private void updateArchetypeDescription() {
@@ -444,6 +496,20 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   @Override
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch.maven";
+  }
+
+  private class MyLayout extends AbstractLayoutManager {
+    public Dimension preferredLayoutSize(Container parent) {
+      return myArchetypesScrollPane.getPreferredSize();
+    }
+
+    public void layoutContainer(Container parent) {
+      int w = parent.getWidth();
+      int h = parent.getHeight();
+      myArchetypesScrollPane.setBounds(new Rectangle(0, 0, w, h));
+      Dimension is = myLoadingIcon.getPreferredSize();
+      myLoadingIcon.setBounds(new Rectangle((w - is.width) / 2, (h - is.height) / 2, is.width, is.height));
+    }
   }
 }
 

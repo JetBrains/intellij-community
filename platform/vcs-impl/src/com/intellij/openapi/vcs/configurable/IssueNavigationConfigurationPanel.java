@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nls;
@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class IssueNavigationConfigurationPanel extends JPanel implements Configurable {
+public class IssueNavigationConfigurationPanel extends JPanel implements SearchableConfigurable {
   private JPanel myPanel;
   private JTable myLinkTable;
   private JButton myAddButton;
@@ -186,6 +186,14 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Configu
 
   public String getHelpTopic() {
     return "project.propVCSSupport.Issue.Navigation";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {

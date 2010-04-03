@@ -67,15 +67,15 @@ public abstract class ActionGroup extends AnAction implements DumbAware {
   }
 
   /**
-   * This method can be called in popup menus if {@link #canBePerformed()} is true
+   * This method can be called in popup menus if {@link #canBePerformed(DataContext)} is true
    */
   public void actionPerformed(AnActionEvent e){
   }
 
   /**
-   * @return true if {@link #actionPerformed(AnActionEvent)} should be called   
+   * @return true if {@link #actionPerformed(AnActionEvent)} should be called
    */
-  public boolean canBePerformed() {
+  public boolean canBePerformed(DataContext context) {
     return false;
   }
 

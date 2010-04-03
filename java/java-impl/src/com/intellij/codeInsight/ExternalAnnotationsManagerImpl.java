@@ -204,10 +204,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
             appendChosenAnnotationsRoot(entry, files[0]);
             final List<XmlFile> xmlFiles = findExternalAnnotationsFile(listOwner);
             if (xmlFiles != null) { //file already exists under appeared content root
-              if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFiles.get(0).getVirtualFile())
-                .hasReadonlyFiles()) {
-                return;
-              }
+              if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFiles.get(0))) return;
               annotateExternally(listOwner, annotationFQName, xmlFiles.get(0), fromFile);
             }
             else {
@@ -265,7 +262,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         assert vXmlFile != null;
         if (VfsUtil.isAncestor(file, vXmlFile, false)) {
           annotationsXml[0] = xmlFile;
-          if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(xmlFile.getVirtualFile()).hasReadonlyFiles()) return;
+          if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFile)) return;
         }
       }
     } else {

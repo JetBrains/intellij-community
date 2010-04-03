@@ -15,17 +15,20 @@
  */
 package com.intellij.psi.scope.conflictResolvers;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.util.*;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,17 +38,14 @@ import java.util.*;
  * To change this template use Options | File Templates.
  */
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver");
+
   private final PsiElement myArgumentsList;
   private final PsiType[] myActualParameterTypes;
-  private static final Function<PsiExpression,PsiType> EXPRESSION_TO_TYPE = new Function<PsiExpression, PsiType>() {
-    public PsiType fun(final PsiExpression expression) {
-      return expression.getType();
-    }
-  };
 
   public JavaMethodsConflictResolver(PsiExpressionList list) {
     myArgumentsList = list;
-    myActualParameterTypes = ContainerUtil.map2Array(list.getExpressions(), PsiType.class, EXPRESSION_TO_TYPE);
+    myActualParameterTypes = list.getExpressionTypes();
   }
 
   public JavaMethodsConflictResolver(final PsiElement argumentsList, final PsiType[] actualParameterTypes) {
@@ -53,11 +53,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     myActualParameterTypes = actualParameterTypes;
   }
 
-  public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
-    if (conflicts.isEmpty()) return null;
+  public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){    if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkParametersNumber(conflicts, myActualParameterTypes.length, true);
+    boolean atLeastOneMatch = checkParametersNumber(conflicts, myActualParameterTypes.length, true);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkSameSignatures(conflicts);
@@ -71,6 +70,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     final int applicabilityLevel = checkApplicability(conflicts);
     if (conflicts.size() == 1) return conflicts.get(0);
+
+    // makes no sense to do further checks, because if no one candidate matches by parameters count
+    // then noone can be more specific
+    if (!atLeastOneMatch) return null;
 
     checkSpecifics(conflicts, applicabilityLevel);
     if (conflicts.size() == 1) return conflicts.get(0);
@@ -199,32 +202,40 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return ((MethodCandidateInfo)info).isApplicable();
   }
 
-  private static void checkParametersNumber(final List<CandidateInfo> conflicts,
+  private static boolean checkParametersNumber(final List<CandidateInfo> conflicts,
                                             final int argumentsCount,
-                                            boolean checkForStaticAccessProblem) {
-    boolean parametersNumberMatch = false;
-    for (CandidateInfo info : conflicts) {
-      if (checkForStaticAccessProblem && !info.isStaticsScopeCorrect()) return;
-      if (info instanceof MethodCandidateInfo) {
-        final PsiMethod method = ((MethodCandidateInfo)info).getElement();
-        if (method.isVarArgs()) return;
-        if (method.getParameterList().getParametersCount() == argumentsCount) {
-          parametersNumberMatch = true;
+                                            boolean ignoreIfStaticsProblem) {
+    boolean atLeastOneMatch = false;
+    TIntArrayList unmatchedIndices = null;
+    for (int i = 0; i < conflicts.size(); i++) {
+      CandidateInfo info = conflicts.get(i);
+      if (ignoreIfStaticsProblem && !info.isStaticsScopeCorrect()) return true;
+      if (!(info instanceof MethodCandidateInfo)) continue;
+      PsiMethod method = ((MethodCandidateInfo)info).getElement();
+      if (method.isVarArgs()) return true;
+      if (method.getParameterList().getParametersCount() == argumentsCount) {
+        // remove all unmatched before
+        if (unmatchedIndices != null) {
+          for (int u=unmatchedIndices.size()-1; u>=0; u--) {
+            int index = unmatchedIndices.get(u);
+            conflicts.remove(index);
+            i--;
+          }
+          unmatchedIndices = null;
         }
+        atLeastOneMatch = true;
+      }
+      else if (atLeastOneMatch) {
+        conflicts.remove(i);
+        i--;
+      }
+      else {
+        if (unmatchedIndices == null) unmatchedIndices = new TIntArrayList(conflicts.size()-i);
+        unmatchedIndices.add(i);
       }
     }
 
-    if (parametersNumberMatch) {
-      for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
-        CandidateInfo info = iterator.next();
-        if (info instanceof MethodCandidateInfo) {
-          final PsiMethod method = ((MethodCandidateInfo)info).getElement();
-          if (method.getParameterList().getParametersCount() != argumentsCount) {
-            iterator.remove();
-          }
-        }
-      }
-    }
+    return atLeastOneMatch;
   }
 
   private static int checkApplicability(List<CandidateInfo> conflicts) {
@@ -411,6 +422,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                     final PsiResolveHelper resolveHelper) {
     PsiSubstitutor substitutor = resolveHelper.inferTypeArguments(typeParameters, types1, types2, PsiUtil.getLanguageLevel(myArgumentsList));
     for (PsiTypeParameter typeParameter : typeParameters) {
+      LOG.assertTrue(typeParameter != null);
       if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
         substitutor = substitutor.put(typeParameter, TypeConversionUtil.typeParameterErasure(typeParameter));
       }

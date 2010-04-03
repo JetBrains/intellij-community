@@ -55,9 +55,6 @@ public final class ObjectNode<T> {
       return myChildren.toArray(new ObjectNode[myChildren.size()]);
     }
   }
-  public void addChild(T childObject) {
-    addChild(new ObjectNode<T>(myTree, this, childObject, myTree.getNextModification()));
-  }
 
   public void addChild(ObjectNode<T> child) {
     synchronized (myTree.treeLock) {

@@ -27,11 +27,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +43,7 @@ import java.util.*;
 public class FoldingUpdate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.FoldingUpdate");
 
-  private static final Key<CachedValue<Runnable>> CODE_FOLDING_KEY = Key.create("code folding");
+  private static final Key<ParameterizedCachedValue<Runnable, Pair<Boolean,Boolean>>> CODE_FOLDING_KEY = Key.create("code folding");
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET = new Comparator<PsiElement>() {
     public int compare(PsiElement element, PsiElement element1) {
@@ -54,26 +56,25 @@ public class FoldingUpdate {
   }
 
   @Nullable
-  static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull final PsiFile file, final boolean applyDefaultState, final boolean quick) {
+  static Runnable updateFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file, final boolean applyDefaultState, final boolean quick) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Project project = file.getProject();
     final Document document = editor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
 
-
-    CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
+    ParameterizedCachedValue<Runnable, Pair<Boolean,Boolean>> value = editor.getUserData(CODE_FOLDING_KEY);
     if (value != null && value.hasUpToDateValue() && !applyDefaultState) return null;
     if (quick) return getUpdateResult(file, document, quick, project, editor, applyDefaultState).getValue();
     
-    return CachedValuesManager.getManager(project).getCachedValue(editor, CODE_FOLDING_KEY, new CachedValueProvider<Runnable>() {
-      public Result<Runnable> compute() {
-        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        return getUpdateResult(file, document, quick, project, editor, applyDefaultState);
+    return CachedValuesManager.getManager(project).getParameterizedCachedValue(editor, CODE_FOLDING_KEY,
+                                                                               new ParameterizedCachedValueProvider<Runnable, Pair<Boolean,Boolean>>() {
+      public CachedValueProvider.Result<Runnable> compute(Pair<Boolean,Boolean> param) {
+        Document document = editor.getDocument();
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+        return getUpdateResult(file, document, param.first, project, editor, param.second);
       }
-    }, false);
-
-
+    }, false, Pair.create(quick, applyDefaultState));
   }
 
   private static CachedValueProvider.Result<Runnable> getUpdateResult(PsiFile file,
@@ -82,13 +83,14 @@ public class FoldingUpdate {
                                                                       final Project project,
                                                                       final Editor editor,
                                                                       final boolean applyDefaultState) {
+
     final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
     getFoldingsFor(file instanceof PsiCompiledElement ? (PsiFile)((PsiCompiledElement)file).getMirror() : file, document, elementsToFoldMap, quick);
 
+    final UpdateFoldRegionsOperation operation =
+      new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
     Runnable runnable = new Runnable() {
       public void run() {
-        UpdateFoldRegionsOperation operation =
-          new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
       }
     };

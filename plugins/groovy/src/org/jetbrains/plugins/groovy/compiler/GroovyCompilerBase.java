@@ -32,7 +32,6 @@ import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -65,6 +64,7 @@ import org.jetbrains.groovy.compiler.rt.GroovycRunner;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -327,7 +327,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       final List<VirtualFile> toCompileTests = new ArrayList<VirtualFile>();
       final CompilerConfiguration configuration = CompilerConfiguration.getInstance(myProject);
 
-      if (module.getModuleType() instanceof JavaModuleType) {
+      if (GroovyUtils.isAcceptableModuleType(module.getModuleType())) {
         for (final VirtualFile file : moduleFiles) {
           final boolean shouldCompile = !configuration.isResourceFile(file) &&
                                         (file.getFileType() == GroovyFileType.GROOVY_FILE_TYPE ||

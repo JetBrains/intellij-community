@@ -194,10 +194,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     return obj == this;
   }
 
-  public final int hashCode() {
-    return super.hashCode();
-  }
-
   public abstract int hc(); // Used in tree diffing
 
   public abstract void acceptTree(TreeElementVisitor visitor);

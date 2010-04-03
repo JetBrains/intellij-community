@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,7 +150,7 @@ public class FrameworkSupportNode extends CheckedTreeNode {
   }
 
   private static String getTitleWithoutMnemonic(final FrameworkSupportProvider provider) {
-    return StringUtil.replace(provider.getTitle(), String.valueOf(UIUtil.MNEMONIC), "");
+    return GuiUtils.getTextWithoutMnemonicEscaping(provider.getTitle());
   }
 
   private void sortChildren() {

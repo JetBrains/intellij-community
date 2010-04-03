@@ -583,7 +583,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
-  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Exception {
+  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
     final PsiElement targetElement = TargetElementUtilBase
@@ -767,11 +767,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  public void checkResult(final String text) throws IOException {
+  public void checkResult(final String text) {
     checkResult(text, false);
   }
 
-  public void checkResult(String text, boolean stripTrailingSpaces) throws IOException {
+  public void checkResult(String text, boolean stripTrailingSpaces) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());
@@ -914,7 +914,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return configureByFileInner(filePaths[0]);
   }
 
-  public void configureByFile(final String file) throws IOException {
+  public void configureByFile(final String file) {
     assertInitialized();
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Exception {
@@ -923,7 +923,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute();
   }
 
-  public void configureByFiles(@NonNls final String... files) throws Exception {
+  public void configureByFiles(@NonNls final String... files) {
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Exception {
         configureByFilesInner(files);

@@ -17,21 +17,21 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.DesktopLayout;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
-public abstract class ToolWindowManagerEx extends ToolWindowManager{
+public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public static ToolWindowManagerEx getInstanceEx(final Project project){
     return (ToolWindowManagerEx)getInstance(project);
   }
 
-  public abstract void addToolWindowManagerListener(ToolWindowManagerListener l);
-
-  public abstract void removeToolWindowManagerListener(ToolWindowManagerListener l);
+  public abstract void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l);
+  public abstract void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener l);
 
   /**
    * @return <code>ID</code> of tool window that was activated last time.
@@ -55,11 +55,11 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager{
   /**
    * Copied <code>layout</code> into internal layout and rearranges tool windows.
    */
-  public abstract void setLayout(DesktopLayout layout);
+  public abstract void setLayout(@NotNull DesktopLayout layout);
 
   public abstract void clearSideStack();
 
-  public abstract void hideToolWindow(String id, boolean hideSide);
+  public abstract void hideToolWindow(@NotNull String id, boolean hideSide);
 
-  public abstract List<String> getIdsOn(final ToolWindowAnchor anchor);
+  public abstract List<String> getIdsOn(@NotNull ToolWindowAnchor anchor);
 }

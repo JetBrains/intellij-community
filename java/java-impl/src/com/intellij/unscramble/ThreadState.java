@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class ThreadState {
   private String myJavaThreadState;
   private String myThreadStateDetail;
   private String myExtraState;
+  private boolean isDaemon = false;
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<ThreadState>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<ThreadState>();
 
@@ -149,5 +150,13 @@ public class ThreadState {
 
   public static boolean isEDT(String name) {
     return name.startsWith("AWT-EventQueue");
+  }
+
+  public boolean isDaemon() {
+    return isDaemon;
+  }
+
+  public void setDaemon(boolean daemon) {
+    isDaemon = daemon;
   }
 }

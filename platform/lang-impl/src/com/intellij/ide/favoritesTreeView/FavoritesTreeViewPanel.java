@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -448,14 +449,25 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private final class MyIdeView implements IdeView {
     public void selectElement(final PsiElement element) {
       if (element != null) {
+        selectPsiElement(element, false);
+        boolean requestFocus = true;
         final boolean isDirectory = element instanceof PsiDirectory;
         if (!isDirectory) {
           Editor editor = EditorHelper.openInEditor(element);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            requestFocus = false;
           }
         }
+        if (requestFocus) {
+          selectPsiElement(element, true);
+        }
       }
+    }
+
+    private void selectPsiElement(PsiElement element, boolean requestFocus) {
+      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+      FavoritesTreeViewPanel.this.selectElement(element, virtualFile, requestFocus);
     }
 
     @Nullable
@@ -479,7 +491,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
           return ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
         }
       }
-      return null;
+      return selectedNodeElements[0] instanceof PsiDirectory ? new PsiDirectory[] {(PsiDirectory)selectedNodeElements[0]} : null;
     }
 
     public PsiDirectory[] getDirectories() {

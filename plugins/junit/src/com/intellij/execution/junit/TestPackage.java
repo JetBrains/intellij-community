@@ -26,8 +26,9 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -39,8 +40,12 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Collection;
 
 public class TestPackage extends TestObject {
@@ -90,25 +95,32 @@ public class TestPackage extends TestObject {
       LOG.error(e);
     }
 
-    findTestsWithProgress(new FindCallback() {
-      public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
-        addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
-          @Nullable
-          public String fun(PsiElement element) {
-            if (element instanceof PsiClass) {
-              return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+    try {
+      final ServerSocket serverSocket = new ServerSocket(0);
+      myJavaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
+      findTestsWithProgress(new FindCallback() {
+        public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
+          addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+            @Nullable
+            public String fun(PsiElement element) {
+              if (element instanceof PsiClass) {
+                return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+              }
+              else if (element instanceof PsiMethod) {
+                PsiMethod method = (PsiMethod)element;
+                return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+              }
+              else {
+                return null;
+              }
             }
-            else if (element instanceof PsiMethod) {
-              PsiMethod method = (PsiMethod)element;
-              return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
-            }
-            else {
-              return null;
-            }
-          }
-        }, packageName, false, isJunit4);
-      }
-    }, filter);
+          }, packageName, false, isJunit4);
+        }
+      }, filter, serverSocket);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
   private TestClassFilter getClassFilter(final PsiPackage aPackage) throws JUnitUtil.NoJUnitException {
@@ -165,7 +177,7 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter) {
+  private static void findTestsWithProgress(final FindCallback callback, final TestClassFilter classFilter, final ServerSocket serverSocket) {
     if (isSyncSearch()) {
       THashSet<PsiClass> classes = new THashSet<PsiClass>();
       boolean isJUnit4 = ConfigurationUtil.findAllTestClasses(classFilter, classes);
@@ -175,20 +187,75 @@ public class TestPackage extends TestObject {
 
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
     final boolean[] isJunit4 = new boolean[1];
-    ProgressManager.getInstance().run(new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-         isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      }
+    final Task.Backgroundable task =
+      new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
+        private Socket mySocket;
 
-      @Override
-      public void onSuccess() {
-         callback.found(classes, isJunit4[0]);
-      }
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            mySocket = serverSocket.accept();
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+          isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
+        }
 
+        @Override
+        public void onSuccess() {
+          callback.found(classes, isJunit4[0]);
+          connect();
+        }
+
+        @Override
+        public void onCancel() {
+          connect();
+        }
+
+        @Override
+        public DumbModeAction getDumbModeAction() {
+          return DumbModeAction.WAIT;
+        }
+
+        private void connect() {
+          DataOutputStream os = null;
+          try {
+            os = new DataOutputStream(mySocket.getOutputStream());
+            os.writeBoolean(true);
+          }
+          catch (Throwable e) {
+            LOG.info(e);
+          }
+          finally {
+            try {
+              if (os != null) os.close();
+            }
+            catch (Throwable e) {
+              LOG.info(e);
+            }
+
+            try {
+              serverSocket.close();
+            }
+            catch (Throwable e) {
+              LOG.info(e);
+            }
+          }
+        }
+      };
+    ProgressManagerImpl.runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task) {
       @Override
-      public DumbModeAction getDumbModeAction() {
-        return DumbModeAction.WAIT;
+      public void cancel() {
+        try {//ensure that serverSocket.accept was interrupted
+          if (!serverSocket.isClosed()) {
+            new Socket(InetAddress.getLocalHost(), serverSocket.getLocalPort());
+          }
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+        super.cancel();
       }
     });
   }
@@ -197,7 +264,7 @@ public class TestPackage extends TestObject {
     return ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  public static interface FindCallback {
+  public interface FindCallback {
     /**
      * Invoked in dispatch thread
      */

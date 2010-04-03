@@ -69,6 +69,10 @@ public class PushDownTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTypeParameterErasure() throws Exception {
+    doTest();
+  }
+
   public void testFieldTypeParameter() throws Exception {
     doTest();
   }

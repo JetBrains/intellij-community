@@ -16,10 +16,13 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -96,6 +99,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
     final List<PsiAssignmentExpression> totalUsages = new ArrayList<PsiAssignmentExpression>();
     PsiClass containingClass = field.getContainingClass();
+    assert containingClass != null;
     containingClass.accept(new JavaRecursiveElementVisitor(){
       private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
 
@@ -178,7 +182,9 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
         statement.delete();
       }
     }
-    editor.getCaretModel().moveToOffset(field.getTextOffset());
-    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[] {field.getInitializer()}, attributes, false,null);
   }
 }

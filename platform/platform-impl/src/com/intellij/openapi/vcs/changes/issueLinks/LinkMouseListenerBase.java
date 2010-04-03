@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.issueLinks;
 
-import com.intellij.util.ui.TreeWithEmptyText;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,7 +45,6 @@ public abstract class LinkMouseListenerBase extends MouseAdapter implements Mous
 
   public void mouseMoved(MouseEvent e) {
     Component tree = (Component)e.getSource();
-    if (tree instanceof TreeWithEmptyText && ((TreeWithEmptyText) tree).isModelEmpty()) return;
     Object tag = getTagAt(e);
     if (tag != null) {
       tree.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

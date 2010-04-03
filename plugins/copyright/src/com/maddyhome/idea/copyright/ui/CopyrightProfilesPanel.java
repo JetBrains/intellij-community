@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -51,7 +52,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CopyrightProfilesPanel extends MasterDetailsComponent {
+public class CopyrightProfilesPanel extends MasterDetailsComponent implements SearchableConfigurable{
     private static final Icon COPY_ICON = IconLoader.getIcon("/actions/copy.png");
 
     private final Project myProject;
@@ -283,5 +284,13 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent {
         SwingUtilities.invokeLater(runnable);
       }
     });
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

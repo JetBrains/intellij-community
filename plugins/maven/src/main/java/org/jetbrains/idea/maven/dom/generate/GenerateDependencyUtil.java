@@ -120,7 +120,8 @@ public class GenerateDependencyUtil {
       if (dependency != null) {
         MavenDomProjectModel model = dependency.getParentOfType(MavenDomProjectModel.class, false);
         if (model != null) {
-          return model.getName().getStringValue();
+          String name = model.getName().getStringValue();
+          return StringUtil.isEmptyOrSpaces(name) ? model.getArtifactId().getStringValue() : name;
         }
       }
       return null;

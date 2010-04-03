@@ -61,14 +61,8 @@ public class Win32Kernel {
     return ArrayUtil.toStringArray(names);
   }
 
-  public boolean exists(String path) {
-    try {
+  public void exists(String path) throws FileNotFoundException {
       getInfo(path);
-      return true;
-    }
-    catch (FileNotFoundException e) {
-      return false;
-    }
   }
 
   public boolean isDirectory(String path) throws FileNotFoundException {

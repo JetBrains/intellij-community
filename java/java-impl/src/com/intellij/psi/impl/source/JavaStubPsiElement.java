@@ -31,14 +31,14 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public abstract class JavaStubPsiElement<T extends StubElement> extends StubBasedPsiElementBase<T> implements StubBasedPsiElement<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.JavaStubPsiElement");
@@ -194,12 +194,20 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     PsiElement psiChild = getFirstChild();
     if (psiChild == null) return EMPTY_ARRAY;
 
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    int count = 0;
     while (psiChild != null) {
-      result.add(psiChild);
+      count++;
       psiChild = psiChild.getNextSibling();
     }
 
-    return result.toArray(new PsiElement[result.size()]);
+    PsiElement[] answer = new PsiElement[count];
+    count = 0;
+    psiChild = getFirstChild();
+    while (psiChild != null) {
+      answer[count++] = psiChild;
+      psiChild = psiChild.getNextSibling();
+    }
+
+    return answer;
   }  
 }

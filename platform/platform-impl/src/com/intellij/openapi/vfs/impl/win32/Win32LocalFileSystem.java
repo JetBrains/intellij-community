@@ -56,13 +56,14 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   };
 
   public static Win32LocalFileSystem getWin32Instance() {
+    if (!isAvailable()) throw new RuntimeException("dll is not loaded");
     Win32LocalFileSystem fileSystem = THREAD_LOCAL.get();
     fileSystem.myKernel.clearCache();
     return fileSystem;
   }
 
   private final Win32Kernel myKernel = new Win32Kernel();
-  private boolean checkMe = false;
+  public static boolean checkMe = false;
 
   private Win32LocalFileSystem() {
   }
@@ -87,11 +88,16 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @Override
   public boolean exists(VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) return true;
-    boolean b = myKernel.exists(fileOrDirectory.getPath());
-    if (checkMe && b != super.exists(fileOrDirectory)) {
-      LOG.error(fileOrDirectory.getPath());
+    try {
+      myKernel.exists(fileOrDirectory.getPath());
+      if (checkMe && !super.exists(fileOrDirectory)) {
+        LOG.error(fileOrDirectory.getPath());
+      }
+      return true;
     }
-    return b;
+    catch (FileNotFoundException e) {
+      return super.exists(fileOrDirectory);
+    }
   }
 
   @Override

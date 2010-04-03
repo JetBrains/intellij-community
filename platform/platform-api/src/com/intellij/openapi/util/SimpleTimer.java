@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -29,7 +30,7 @@ public class SimpleTimer {
   private final Timer ourTimer;
 
   private static final SimpleTimer ourInstance = new SimpleTimer();
-  private static final String THREAD_NAME = "SimpleTimer";
+  @NonNls private static final String THREAD_NAME = "SimpleTimer";
 
   private long myNextScheduledTime = Long.MAX_VALUE;
   private TimerTask myNextProcessingTask;

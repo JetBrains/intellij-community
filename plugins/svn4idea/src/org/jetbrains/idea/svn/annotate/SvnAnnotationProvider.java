@@ -33,6 +33,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 public class SvnAnnotationProvider implements AnnotationProvider {
   private final SvnVcs myVcs;
@@ -98,7 +100,7 @@ public class SvnAnnotationProvider implements AnnotationProvider {
               if (progress != null) {
                 progress.checkCanceled();
               }
-              result.appendLineInfo(date, revision, author);
+              result.appendLineInfo(date, revision, author, null, -1, null);
             }
 
             public void handleLine(final Date date,
@@ -113,12 +115,12 @@ public class SvnAnnotationProvider implements AnnotationProvider {
               if (progress != null) {
                 progress.checkCanceled();
               }
+              if (revision == -1) return;
               if ((mergedDate != null) && (revision > mergedRevision)) {
                 // !!! merged date = date of merge, i.e. date -> date of original change etc.
-                result.appendLineInfo(date, revision, author, mergedDate, mergedRevision, mergedAuthor);
-              }
-              else {
-                result.appendLineInfo(date, revision, author);
+                result.setLineInfo(lineNumber, date, revision, author, mergedDate, mergedRevision, mergedAuthor);
+              } else {
+                result.setLineInfo(lineNumber, date, revision, author, null, -1, null);
               }
             }
 
@@ -127,29 +129,24 @@ public class SvnAnnotationProvider implements AnnotationProvider {
               if (progress != null) {
                 progress.checkCanceled();
               }
-              // todo check that false is ok
               return false;
             }
 
             public void handleEOF() {
-
             }
           };
 
           final boolean supportsMergeinfo = SvnUtil.checkRepositoryVersion15(myVcs, url);
           final SVNRevision svnRevision = ((SvnRevisionNumber)revision.getRevisionNumber()).getRevision();
-          client.doAnnotate(ioFile, svnRevision, SVNRevision.create(0), endRevision, true, supportsMergeinfo, annotateHandler, null);
 
-          client.doLog(new File[]{ioFile}, endRevision, SVNRevision.create(1), SVNRevision.UNDEFINED, false, false, supportsMergeinfo, 0, null,
-                       new ISVNLogEntryHandler() {
-                         public void handleLogEntry(SVNLogEntry logEntry) {
-                           if (progress != null) {
-                             progress.checkCanceled();
-                             progress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
-                           }
-                           result.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url, ""));
-                         }
-                       });
+          final MySteppedLogGetter logGetter = new MySteppedLogGetter(myVcs, ioFile, progress, client, endRevision, result, url);
+          logGetter.go();
+          final LinkedList<SVNRevision> rp = logGetter.getRevisionPoints();
+
+          for (int i = 0; i < rp.size() - 1; i++) {
+            //final SVNRevision rEnd = (i + 1) == rp.size() ? SVNRevision.create(0) : rp.get(i + 1);
+            client.doAnnotate(ioFile, svnRevision, rp.get(i + 1), rp.get(i), true, supportsMergeinfo, annotateHandler, null);
+          }
 
           annotation[0] = result;
         }
@@ -172,6 +169,93 @@ public class SvnAnnotationProvider implements AnnotationProvider {
       throw new VcsException(exception[0]);
     }
     return annotation[0];
+  }
+
+  private static class MySteppedLogGetter {
+    private final LinkedList<SVNRevision> myRevisionPoints;
+    private final SvnVcs myVcs;
+    private final File myIoFile;
+    private final ProgressIndicator myProgress;
+    private final SVNLogClient myClient;
+    private final SVNRevision myEndRevision;
+    private final boolean mySupportsMergeinfo;
+    private final SvnFileAnnotation myResult;
+    private final String myUrl;
+
+    private MySteppedLogGetter(final SvnVcs vcs, final File ioFile, final ProgressIndicator progress, final SVNLogClient client,
+                               final SVNRevision endRevision, final SvnFileAnnotation result, final String url) {
+      myVcs = vcs;
+      myIoFile = ioFile;
+      myProgress = progress;
+      myClient = client;
+      myEndRevision = endRevision;
+      mySupportsMergeinfo = SvnUtil.checkRepositoryVersion15(myVcs, url);
+      myResult = result;
+      myUrl = url;
+      myRevisionPoints = new LinkedList<SVNRevision>();
+    }
+
+    public void go() throws SVNException {
+      final int maxAnnotateRevisions = SvnConfiguration.getInstance(myVcs.getProject()).getMaxAnnotateRevisions();
+      boolean longHistory = true;
+      if (maxAnnotateRevisions == -1) {
+        longHistory = false;
+      } else {
+        if (myEndRevision.getNumber() < maxAnnotateRevisions) {
+          longHistory = false;
+        }
+      }
+
+      if (! longHistory) {
+        doLog(mySupportsMergeinfo, null, 0);
+        putDefaultBounds();
+      } else {
+        doLog(false, null, 0);
+        final List<VcsFileRevision> fileRevisionList = myResult.getRevisions();
+        if (fileRevisionList.size() < maxAnnotateRevisions) {
+          putDefaultBounds();
+          if (mySupportsMergeinfo) {
+            doLog(true, null, 0);
+          }
+          return;
+        }
+
+        myRevisionPoints.add(((SvnRevisionNumber) fileRevisionList.get(0).getRevisionNumber()).getRevision());
+        final SVNRevision truncateTo =
+          ((SvnRevisionNumber)fileRevisionList.get(maxAnnotateRevisions - 1).getRevisionNumber()).getRevision();
+        myRevisionPoints.add(truncateTo);
+
+        myResult.clearRevisions();
+        if (mySupportsMergeinfo) {
+          doLog(true, truncateTo, maxAnnotateRevisions);
+        }
+      }
+    }
+
+    private void putDefaultBounds() {
+      myRevisionPoints.add(myEndRevision);
+      myRevisionPoints.add(SVNRevision.create(0));
+    }
+    
+    private void doLog(final boolean includeMerged, final SVNRevision truncateTo, final int max) throws SVNException {
+      myClient.doLog(new File[]{myIoFile}, myEndRevision, truncateTo == null ? SVNRevision.create(1L) : truncateTo,
+                     SVNRevision.UNDEFINED, false, false, includeMerged, max, null,
+                     new ISVNLogEntryHandler() {
+                       public void handleLogEntry(SVNLogEntry logEntry) {
+                         if (SVNRevision.UNDEFINED.getNumber() == logEntry.getRevision()) return;
+
+                         if (myProgress != null) {
+                           myProgress.checkCanceled();
+                           myProgress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+                         }
+                         myResult.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, ""));
+                       }
+                     });
+    }
+
+    public LinkedList<SVNRevision> getRevisionPoints() {
+      return myRevisionPoints;
+    }
   }
 
   public boolean isAnnotationValid( VcsFileRevision rev ){

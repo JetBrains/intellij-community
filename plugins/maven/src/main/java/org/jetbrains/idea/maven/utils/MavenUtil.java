@@ -66,6 +66,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class MavenUtil {
+  public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
+
   public static void invokeLater(Project p, Runnable r) {
     invokeLater(p, ModalityState.defaultModalityState(), r);
   }
@@ -157,7 +159,7 @@ public class MavenUtil {
 
   public static void showError(Project project, String title, Throwable e) {
     MavenLog.LOG.warn(title, e);
-    Notifications.Bus.notify(new Notification("Maven", title, e.getMessage(), NotificationType.ERROR), project);
+    Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
   }
 
   public static Properties getSystemProperties() {

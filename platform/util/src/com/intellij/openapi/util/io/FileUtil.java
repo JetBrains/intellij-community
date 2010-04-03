@@ -100,6 +100,10 @@ public class FileUtil {
     return relativePath.toString();
   }
 
+  public static boolean isAbsolute(String path) {
+    return new File(path).isAbsolute();
+  }
+
   /**
    * Check if the {@code ancestor} is an ancestor of {@code file}.
    *

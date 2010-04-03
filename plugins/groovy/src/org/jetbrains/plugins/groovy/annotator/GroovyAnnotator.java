@@ -1386,17 +1386,31 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
-    boolean borderPassed;
+    private boolean myBorderPassed;
+    private final boolean myHasVisibilityModifier;
 
     public DuplicateVariablesProcessor(GrVariable variable) {
       super(variable.getName(), variable);
-      borderPassed = false;
+      myBorderPassed = false;
+      myHasVisibilityModifier = hasExplicitVisibilityModifiers(variable);
+    }
+
+    private static boolean hasExplicitVisibilityModifiers(GrVariable variable) {
+      final PsiModifierList modifierList = variable.getModifierList();
+      if (modifierList instanceof GrModifierList) return ((GrModifierList)modifierList).hasExplicitVisibilityModifiers();
+      if (modifierList == null) return false;
+      return modifierList.hasExplicitModifier(GrModifier.PUBLIC) ||
+             modifierList.hasExplicitModifier(GrModifier.PROTECTED) ||
+             modifierList.hasExplicitModifier(GrModifier.PRIVATE);
     }
 
     @Override
     public boolean execute(PsiElement element, ResolveState state) {
-      if (borderPassed) {
+      if (myBorderPassed) {
         return false;
+      }
+      if (element instanceof GrVariable && hasExplicitVisibilityModifiers((GrVariable)element) != myHasVisibilityModifier) {
+        return true;
       }
       return super.execute(element, state);
     }
@@ -1404,7 +1418,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     @Override
     public void handleEvent(Event event, Object associated) {
       if (event == ResolveUtil.DECLARATION_SCOPE_PASSED) {
-        borderPassed = true;
+        myBorderPassed = true;
       }
       super.handleEvent(event, associated);
     }

@@ -32,6 +32,9 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -104,7 +107,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
   public void computeUsages(List<PsiLiteralExpression> targets) {
     final Project project = myTarget.getProject();
     final PsiElement parent = myTarget.getParent().getParent();
-    LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(), parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
+    final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(), parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (PsiLiteralExpression target : targets) {
@@ -117,13 +120,22 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
           final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
           tool.initialize(context);
           ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-          pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool), false);
-          for (HighlightInfo info : pass.getInfos()) {
-            final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
-            if (element != null) {
-              addOccurrence(element);
+          ProgressManager.getInstance().run(new Task.Modal(project, "Collecting information...", true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool), false);
             }
-          }
+
+            @Override
+            public void onSuccess() {
+              for (HighlightInfo info : pass.getInfos()) {
+                final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
+                if (element != null) {
+                  addOccurrence(element);
+                }
+              }
+            }
+          });
         }
       }
     }

@@ -199,7 +199,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static Properties loadPropertiesAndFilters(CompileContext context, MavenProject mavenProject) {
     Properties properties = new Properties();
     properties.putAll(mavenProject.getProperties());
-    
+
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);
@@ -242,7 +242,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       List<Pattern> includes = collectPatterns(each.getIncludes(), "**/*");
       List<Pattern> excludes = collectPatterns(each.getExcludes(), null);
       String targetPath = each.getTargetPath();
-      String resourceOutputDir = StringUtil.isEmptyOrSpaces(targetPath) ? outputDir : (outputDir + "/" + targetPath);
+      String resourceOutputDir = StringUtil.isEmptyOrSpaces(targetPath)
+                                 ? outputDir
+                                 : (FileUtil.isAbsolute(targetPath) ? targetPath : outputDir + "/" + targetPath);
 
       collectProcessingItems(module,
                              dir,

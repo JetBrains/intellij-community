@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import org.jetbrains.idea.maven.project.MavenIgnoredFilesConfigurable;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -32,8 +33,9 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
     super.update(e);
     if (!isAvailable(e)) return;
 
-    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e);
-    List<MavenProject> projects = MavenActionUtil.getMavenProjects(e);
+    final DataContext context = e.getDataContext();
+    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
       e.getPresentation().setText(ProjectBundle.message("maven.ignore.edit"));
@@ -50,8 +52,9 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
   protected boolean isAvailable(AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
-    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e);
-    List<MavenProject> projects = MavenActionUtil.getMavenProjects(e);
+    final DataContext context = e.getDataContext();
+    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (projects == null || projects.isEmpty()) return false;
 
@@ -81,11 +84,12 @@ public class ToggleIgnoredProjectsAction extends MavenAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(e);
-    List<MavenProject> projects = MavenActionUtil.getMavenProjects(e);
+    final DataContext context = e.getDataContext();
+    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+    List<MavenProject> projects = MavenActionUtil.getMavenProjects(context);
 
     if (isIgnoredInSettings(projectsManager, projects)) {
-      ShowSettingsUtil.getInstance().editConfigurable(MavenActionUtil.getProject(e), new MavenIgnoredFilesConfigurable(projectsManager));
+      ShowSettingsUtil.getInstance().editConfigurable(MavenActionUtil.getProject(context), new MavenIgnoredFilesConfigurable(projectsManager));
     }
     else {
       projectsManager.setIgnoredState(projects, !isIgnored(projectsManager, projects));

@@ -22,6 +22,7 @@ import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -52,7 +53,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return new PsiFilePattern.Capture<GroovyFile>(new InitialPatternCondition<GroovyFile>(GroovyFile.class) {
       @Override
       public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        return o instanceof GroovyFile && ((GroovyFile)o).isScript();
+        return o instanceof GroovyFileBase && ((GroovyFileBase)o).isScript();
       }
     });
   }

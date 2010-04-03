@@ -294,6 +294,10 @@ public class NameSuggestionsField extends JPanel {
     }
 
     public void documentChanged(DocumentEvent event) {
+      if (myComponent instanceof JComboBox) {
+        ((JComboBox)myComponent).hidePopup();
+      }
+
       fireDataChanged();
     }
   }

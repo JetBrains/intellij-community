@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -45,11 +46,17 @@ public class CustomTemplateCallback {
   private RangeMarker myEndOffsetMarker;
   private final Map<Object, RangeMarker> myCheckpoints = new HashMap<Object, RangeMarker>();
 
+  private FileType myFileType;
+
   public CustomTemplateCallback(Editor editor, PsiFile file) {
     myEditor = editor;
     myFile = file;
     myProject = file.getProject();
     myTemplateManager = TemplateManagerImpl.getInstance(myProject);
+    fixInitialState();
+  }
+
+  public void fixInitialState() {
     myStartOffset = myEditor.getCaretModel().getOffset();
     myGlobalMarker = myEditor.getDocument().createRangeMarker(myStartOffset, myStartOffset);
     myGlobalMarker.setGreedyToLeft(true);
@@ -220,6 +227,14 @@ public class CustomTemplateCallback {
   @NotNull
   public Editor getEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public FileType getFileType() {
+    if (myFileType == null) {
+      myFileType = myFile.getFileType();
+    }
+    return myFileType;
   }
 
   public int getOffset() {

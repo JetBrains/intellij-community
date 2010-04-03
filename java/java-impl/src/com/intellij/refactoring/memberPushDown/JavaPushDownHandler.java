@@ -86,7 +86,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(aClass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
-        return true;
+        return !(element instanceof PsiEnumConstant);
       }
     });
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(aClass);

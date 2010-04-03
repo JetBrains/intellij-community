@@ -17,7 +17,6 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,8 +32,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -130,19 +127,8 @@ public class ImplementationViewComponent extends JPanel {
     doc.setReadOnly(true);
     myEditor = factory.createEditor(doc, project);
     PsiFile psiFile = getContainingFile(myElements[myIndex]);
-    String fileName = psiFile.getName();
-    final Language language = myElements[myIndex].getLanguage();
 
-    if (psiFile.getFileType() instanceof LanguageFileType &&
-        ((LanguageFileType)psiFile.getFileType()).getLanguage() != language
-       ) {
-      final FileType associatedFileType = language.getAssociatedFileType();
-      if (associatedFileType != null) {
-        fileName += "." + associatedFileType.getDefaultExtension();
-      }
-    }
-
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, fileName);
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, psiFile.getVirtualFile());
     ((EditorEx)myEditor).setHighlighter(highlighter);
     ((EditorEx)myEditor).setBackgroundColor(EditorFragmentComponent.getBackgroundColor(myEditor));
 

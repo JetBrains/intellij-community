@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -560,7 +561,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       if (basedir == null) {
         basedir = ".";
       }
-      if (file != null && !new File(basedir).isAbsolute()) {
+      if (file != null && !FileUtil.isAbsolute(basedir)) {
         final VirtualFile dir = file.getParent();
         if (dir != null) {
           try {

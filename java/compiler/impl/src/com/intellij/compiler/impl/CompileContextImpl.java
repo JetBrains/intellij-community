@@ -24,10 +24,7 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerMessage;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -45,7 +42,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.io.zip.JBZipFile;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -74,14 +70,13 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final ProjectFileIndex myProjectFileIndex; // cached for performance reasons
   private final ProjectCompileScope myProjectCompileScope;
   private final long myStartCompilationStamp;
-  private final Map<String, JBZipFile> myOpenZipFiles = new java.util.HashMap<String, JBZipFile>();
 
   public CompileContextImpl(Project project,
-                            CompilerTask indicator,
+                            CompilerTask compilerSession,
                             CompileScope compileScope,
                             DependencyCache dependencyCache, boolean isMake, boolean isRebuild) {
     myProject = project;
-    myTask = indicator;
+    myTask = compilerSession;
     myCompileScope = compileScope;
     myDependencyCache = dependencyCache;
     myMake = isMake;
@@ -90,6 +85,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myProjectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     myProjectCompileScope = new ProjectCompileScope(myProject);
 
+    if (compilerSession != null) {
+      compilerSession.setContentIdKey(compileScope.getUserData(CompilerManager.CONTENT_ID_KEY));
+    }
     recalculateOutputDirs();
   }
 

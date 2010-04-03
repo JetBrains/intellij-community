@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyCodeInsightBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -50,18 +51,10 @@ public class GrGenerateEqualsHelper {
   private final GroovyPsiElementFactory myFactory;
   private String myParameterName;
 
-  private static
-  @NonNls
-  final String BASE_OBJECT_PARAMETER_NAME = "object";
-  private static
-  @NonNls
-  final String BASE_OBJECT_LOCAL_NAME = "that";
-  private static
-  @NonNls
-  final String RESULT_VARIABLE = "result";
-  private static
-  @NonNls
-  final String TEMP_VARIABLE = "temp";
+  @NonNls private static final String BASE_OBJECT_PARAMETER_NAME = "object";
+  @NonNls private static final String BASE_OBJECT_LOCAL_NAME = "that";
+  @NonNls private static final String RESULT_VARIABLE = "result";
+  @NonNls private static final String TEMP_VARIABLE = "temp";
 
   private String myClassInstanceName;
 
@@ -72,9 +65,6 @@ public class GrGenerateEqualsHelper {
 
   private final Project myProject;
   private final boolean myCheckParameterWithInstanceof;
-
-  public static class NoObjectClassException extends Exception {
-  }
 
   public GrGenerateEqualsHelper(Project project,
                                 PsiClass aClass,
@@ -89,9 +79,7 @@ public class GrGenerateEqualsHelper {
     myCheckParameterWithInstanceof = useInstanceofToCheckParameterType;
 
     myNonNullSet = new HashSet<PsiField>();
-    for (PsiField field : nonNullFields) {
-      myNonNullSet.add(field);
-    }
+    myNonNullSet.addAll(Arrays.asList(nonNullFields));
 
     myFactory = GroovyPsiElementFactory.getInstance(project);
 
@@ -169,10 +157,7 @@ public class GrGenerateEqualsHelper {
   }
 
   @NonNls private static final MessageFormat ARRAY_COMPARER_MF = new MessageFormat("if (!java.util.Arrays.equals({1}, {0}.{1})) return false;\n");
-  @NonNls private static final MessageFormat FIELD_COMPARER_MF = new MessageFormat("if ({1} ? !{1}.equals({0}.{1}) : {0}.{1} != null) return false;\n");
-  @NonNls private static final MessageFormat BOOLEAN_FIELD_COMPARER_MF = new MessageFormat("if ({1} != null ? !{1}.equals({0}.{1}) : {0}.{1} != null) return false;\n");
-  @NonNls private static final MessageFormat NON_NULL_FIELD_COMPARER_MF = new MessageFormat("if (!{1}.equals({0}.{1})) return false;\n");
-  @NonNls private static final MessageFormat PRIMITIVE_FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false;\n");
+  @NonNls private static final MessageFormat FIELD_COMPARER_MF = new MessageFormat("if ({1} != {0}.{1}) return false;\n");
   @NonNls private static final MessageFormat DOUBLE_FIELD_COMPARER_MF = new MessageFormat("if ({0}.compare({1}.{2}, {2}) != 0) return false;\n");
 
   private void addArrayEquals(StringBuffer buffer, PsiField field) {
@@ -197,32 +182,17 @@ public class GrGenerateEqualsHelper {
   }
 
   private void addFieldComparison(StringBuffer buffer, PsiField field) {
-    boolean canBeNull = !myNonNullSet.contains(field);
-    if (canBeNull) {
-      if (PsiType.BOOLEAN.equals(TypesUtil.unboxPrimitiveTypeWrapper(field.getType()))) {
-        BOOLEAN_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-      }
-      else {
-        FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-      }
-    } else {
-      NON_NULL_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
-    }
-  }
-
-
-  private void addPrimitiveFieldComparison(StringBuffer buffer, PsiField field) {
-    PRIMITIVE_FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
+    FIELD_COMPARER_MF.format(getComparerFormatParameters(field), buffer, null);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
   private void addInstanceOfToText(@NonNls StringBuffer buffer, String returnValue) {
     if (myCheckParameterWithInstanceof) {
-      buffer.append("if (!(").append(myParameterName).append(" instanceof ").append(myClass.getName())
-          .append(")) " + "return ").append(returnValue).append(";\n");
+      buffer.append("if (!(").append(myParameterName).append(" instanceof ").append(myClass.getName()).append(")) " + "return ")
+        .append(returnValue).append(";\n");
     } else {
-      buffer.append("if (!").append(myParameterName).append(" || getClass() != ").append(myParameterName)
-          .append(".class) " + "return ").append(returnValue).append(";\n");
+      buffer.append("if (").append("getClass() != ").append(myParameterName).append(".class) " + "return ").append(returnValue)
+        .append(";\n");
     }
   }
 
@@ -283,9 +253,7 @@ public class GrGenerateEqualsHelper {
       addClassInstance(buffer);
 
       ArrayList<PsiField> equalsFields = new ArrayList<PsiField>();
-      for (PsiField equalsField : myEqualsFields) {
-        equalsFields.add(equalsField);
-      }
+      equalsFields.addAll(Arrays.asList(myEqualsFields));
       Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);
 
       for (PsiField field : equalsFields) {
@@ -297,13 +265,13 @@ public class GrGenerateEqualsHelper {
             if (PsiType.DOUBLE.equals(type) || PsiType.FLOAT.equals(type)) {
               addDoubleFieldComparison(buffer, field);
             } else {
-              addPrimitiveFieldComparison(buffer, field);
+              addFieldComparison(buffer, field);
             }
           } else {
             if (type instanceof PsiClassType) {
               final PsiClass aClass = ((PsiClassType) type).resolve();
               if (aClass != null && aClass.isEnum()) {
-                addPrimitiveFieldComparison(buffer, field);
+                addFieldComparison(buffer, field);
                 continue;
               }
             }
@@ -412,6 +380,7 @@ public class GrGenerateEqualsHelper {
     buffer.append(") : 0L;\n");
   }
 
+  @Nullable
   @SuppressWarnings("HardCodedStringLiteral")
   private String addTempDeclaration(StringBuilder buffer) {
     for (PsiField hashCodeField : myHashCodeFields) {
@@ -424,6 +393,7 @@ public class GrGenerateEqualsHelper {
     return null;
   }
 
+  @Nullable
   @SuppressWarnings("HardCodedStringLiteral")
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
     if (PsiType.DOUBLE.equals(field.getType())) {
@@ -454,7 +424,7 @@ public class GrGenerateEqualsHelper {
     } else {
       buffer.append("(");
       buffer.append(name);
-      buffer.append(" ? ");
+      buffer.append(" != null ? ");
       adjustHashCodeToArrays(buffer, field, name);
       buffer.append(" : 0)");
     }
@@ -527,7 +497,6 @@ public class GrGenerateEqualsHelper {
   public static boolean isArrayOfObjects(PsiType aType) {
     if (!(aType instanceof PsiArrayType)) return false;
     final PsiType componentType = ((PsiArrayType) aType).getComponentType();
-    if (componentType == null) return false;
     final PsiClass psiClass = PsiUtil.resolveClassInType(componentType);
     if (psiClass == null) return false;
     final String qName = psiClass.getQualifiedName();

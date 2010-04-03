@@ -24,6 +24,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.concurrent.Semaphore;
 
 /**
  * Simple Git handler that accumulates stdout and stderr and has nothing on stdin.
@@ -190,30 +191,49 @@ public class GitSimpleHandler extends GitHandler {
     }
     final VcsException[] ex = new VcsException[1];
     final String[] result = new String[1];
+    final Semaphore sem = new Semaphore(0);
     addListener(new GitHandlerListener() {
       public void processTerminated(final int exitCode) {
-        if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
-          result[0] = getStdout();
+        try {
+          if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
+            result[0] = getStdout();
+          }
+          else {
+            String msg = getStderr();
+            if (msg.length() == 0) {
+              msg = getStdout();
+            }
+            if (msg.length() == 0) {
+              msg = GitBundle.message("git.error.exit", exitCode);
+            }
+            ex[0] = new VcsException(msg);
+          }
         }
-        else {
-          String msg = getStderr();
-          if (msg.length() == 0) {
-            msg = getStdout();
-          }
-          if (msg.length() == 0) {
-            msg = GitBundle.message("git.error.exit", exitCode);
-          }
-          ex[0] = new VcsException(msg);
+        catch (Throwable t) {
+          ex[0] = new VcsException(t.toString(), t);
+        }
+        finally {
+          sem.release();
         }
       }
 
       public void startFailed(final Throwable exception) {
-        ex[0] = new VcsException("Process failed to start: " + exception.toString(), exception);
+        ex[0] = new VcsException("Process failed to start (" + printableCommandLine() + "): " + exception.toString(), exception);
+        sem.release();
       }
     });
     GitHandlerUtil.runInCurrentThread(this, null);
+    try {
+      sem.acquire();
+    }
+    catch (InterruptedException e) {
+      throw new VcsException("The git process is interrupted: " + printableCommandLine(), e);
+    }
     if (ex[0] != null) {
       throw ex[0];
+    }
+    if (result[0] == null) {
+      throw new VcsException("The git command returned null: " + printableCommandLine());
     }
     return result[0];
   }

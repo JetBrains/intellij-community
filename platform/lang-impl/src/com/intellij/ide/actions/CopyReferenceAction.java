@@ -121,16 +121,22 @@ public class CopyReferenceAction extends AnAction {
     return true;
   }
 
-  static final DataFlavor OUR_DATA_FLAVOR;
-  static {
+  private static DataFlavor ourFlavor;
+
+  @Nullable
+  static DataFlavor getFlavor() {
+    if (ourFlavor != null) {
+      return ourFlavor;
+    }
     try {
-      //noinspection HardCodedStringLiteral
-      OUR_DATA_FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyTransferable.class.getName());
+      ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + MyTransferable.class.getName());
     }
     catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
+      return null;
     }
+    return ourFlavor;
   }
+
 
   private static class MyTransferable implements Transferable {
     private final String fqn;
@@ -140,11 +146,15 @@ public class CopyReferenceAction extends AnAction {
     }
 
     public DataFlavor[] getTransferDataFlavors() {
-      return new DataFlavor[]{OUR_DATA_FLAVOR, DataFlavor.stringFlavor};
+      final DataFlavor flavor = getFlavor();
+      if (flavor != null) {
+        return new DataFlavor[]{flavor, DataFlavor.stringFlavor};
+      }
+      return new DataFlavor[] { DataFlavor.stringFlavor };
     }
 
     public boolean isDataFlavorSupported(DataFlavor flavor) {
-      return OUR_DATA_FLAVOR.equals(flavor) || DataFlavor.stringFlavor.equals(flavor);
+      return flavor.equals(getFlavor()) || DataFlavor.stringFlavor.equals(flavor);
     }
 
     @Nullable
@@ -152,6 +162,7 @@ public class CopyReferenceAction extends AnAction {
       if (!isDataFlavorSupported(flavor)) return null;
       return fqn;
     }
+
   }
 
   @Nullable
@@ -178,7 +189,9 @@ public class CopyReferenceAction extends AnAction {
     final Project project = file.getProject();
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
     if (logicalRoot != null) {
-      return "/"+FileUtil.getRelativePath(VfsUtil.virtualToIoFile(logicalRoot.getVirtualFile()), VfsUtil.virtualToIoFile(virtualFile));
+      String logical = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(logicalRoot.getVirtualFile()).getPath());
+      String path = FileUtil.toSystemIndependentName(VfsUtil.virtualToIoFile(virtualFile).getPath());
+      return "/" + FileUtil.getRelativePath(logical, path, '/');
     }
 
     final VirtualFile contentRoot = ProjectRootManager.getInstance(project).getFileIndex().getContentRootForFile(virtualFile);

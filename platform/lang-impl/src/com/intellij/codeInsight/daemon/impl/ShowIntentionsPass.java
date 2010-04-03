@@ -52,7 +52,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -96,6 +98,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       return intentionsToShow.isEmpty() && errorFixesToShow.isEmpty() && inspectionFixesToShow.isEmpty() && guttersToShow.isEmpty();
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "Intentions: " + intentionsToShow + "; Errors: " + errorFixesToShow + "; Inspection fixes: " + inspectionFixesToShow + "; Gutters: " + guttersToShow;
@@ -185,15 +188,21 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  public static void getActionsToShow(@NotNull final Editor editor, @NotNull final PsiFile psiFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
-    final PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+  public static void getActionsToShow(@NotNull final Editor hostEditor, @NotNull final PsiFile hostFile, @NotNull IntentionsInfo intentions, int passIdToShowIntentionsFor) {
+    final PsiElement psiElement = hostFile.findElementAt(hostEditor.getCaretModel().getOffset());
     LOG.assertTrue(psiElement == null || psiElement.isValid(), psiElement);
 
-    int offset = editor.getCaretModel().getOffset();
-    Project project = psiFile.getProject();
+    int offset = hostEditor.getCaretModel().getOffset();
+    Project project = hostFile.getProject();
     
-    for (IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
-      Pair<PsiFile,Editor> place = ShowIntentionActionsHandler.availableFor(psiFile, editor, action, psiElement);
+    for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
+      Pair<PsiFile, Editor> place =
+        ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
+          public boolean process(PsiFile psiFile, Editor editor) {
+            return ShowIntentionActionsHandler.availableFor(psiFile, editor, action);
+          }
+        });
+
       if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
@@ -201,9 +210,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
 
-    List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(editor, psiFile, passIdToShowIntentionsFor);
+    List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    final Document document = editor.getDocument();
+    final Document document = hostEditor.getDocument();
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, true);
     if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
       intentions.errorFixesToShow.addAll(actions);

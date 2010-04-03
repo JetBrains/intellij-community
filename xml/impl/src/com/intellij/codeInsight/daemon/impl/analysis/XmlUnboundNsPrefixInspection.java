@@ -100,7 +100,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
   }
 
   private static void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix, final XmlToken token,
-                                                  final ProblemsHolder holder, boolean withFixes) {
+                                                  final ProblemsHolder holder, boolean isOnTheFly) {
 
     if (namespacePrefix.length() == 0 && (!(element instanceof XmlTag) || !(element.getParent() instanceof XmlDocument))
       || XML.equals(namespacePrefix)) {
@@ -120,13 +120,13 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       return;
     }
 
-    final String localizedMessage = XmlErrorMessages.message("unbound.namespace", namespacePrefix);
+    final String localizedMessage = isOnTheFly ? XmlErrorMessages.message("unbound.namespace", namespacePrefix) : XmlErrorMessages.message("unbound.namespace.no.param");
 
     if (namespacePrefix.length() == 0) {
       final XmlTag tag = (XmlTag)element;
       if (!XmlUtil.JSP_URI.equals(tag.getNamespace())) {
         reportTagProblem(tag, localizedMessage, null, ProblemHighlightType.INFORMATION, 
-                         withFixes ? new CreateNSDeclarationIntentionFix(context, namespacePrefix, token):null,
+                         isOnTheFly ? new CreateNSDeclarationIntentionFix(context, namespacePrefix, token):null,
                          holder);
       }
       return;
@@ -137,7 +137,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
     final HighlightInfoType infoType = extension.getHighlightInfoType(containingFile);
     final ProblemHighlightType highlightType = infoType == HighlightInfoType.ERROR ? ProblemHighlightType.ERROR : ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
     if (element instanceof XmlTag) {
-      final CreateNSDeclarationIntentionFix fix = withFixes ? new CreateNSDeclarationIntentionFix(context, namespacePrefix, token):null;
+      final CreateNSDeclarationIntentionFix fix = isOnTheFly ? new CreateNSDeclarationIntentionFix(context, namespacePrefix, token):null;
       reportTagProblem(element, localizedMessage, range, highlightType, fix, holder);
     } else {
       holder.registerProblem(element, localizedMessage, highlightType, range);

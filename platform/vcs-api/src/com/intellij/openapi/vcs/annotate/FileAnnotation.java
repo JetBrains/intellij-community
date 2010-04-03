@@ -96,6 +96,8 @@ public interface FileAnnotation {
   @Nullable
   List<VcsFileRevision> getRevisions();
 
+  boolean revisionsNotEmpty();
+
   @Nullable
   AnnotationSourceSwitcher getAnnotationSourceSwitcher();
 }

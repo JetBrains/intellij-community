@@ -16,9 +16,11 @@
 
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
 import com.intellij.codeInsight.template.impl.SurroundWithTemplateHandler;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.WrapWithCustomTemplateAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
@@ -71,17 +73,22 @@ public class PopupActionChooser {
       }
     }
 
-    List<TemplateImpl> array = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, true);
+    List<CustomLiveTemplate> customTemplates = SurroundWithTemplateHandler.getApplicableCustomTemplates(editor, file);
+    List<TemplateImpl> templates = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, true);
 
-    if (!array.isEmpty()) {
+    if (!templates.isEmpty() || !customTemplates.isEmpty()) {
       applicable.addSeparator("Live templates");
     }
 
-    for (TemplateImpl template : array) {
+    for (CustomLiveTemplate customTemplate : customTemplates) {
+      applicable.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
+      hasEnabledSurrounders = true;
+    }
+    for (TemplateImpl template : templates) {
       applicable.add(new InvokeTemplateAction(template, editor, project, usedMnemonicsSet));
       hasEnabledSurrounders = true;
     }
-    if (!array.isEmpty()) {
+    if (!templates.isEmpty()) {
       applicable.addSeparator();
       applicable.add(new ConfigureTemplatesAction());
     }

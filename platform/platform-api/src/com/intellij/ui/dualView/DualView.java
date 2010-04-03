@@ -38,6 +38,7 @@ import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -329,6 +330,11 @@ public class DualView extends JPanel {
 
   public TableView getFlatView() {
     return myFlatView;
+  }
+
+  public void setViewBorder(Border border) {
+    if (myTreeView != null) ((JComponent)myTreeView.getParent().getParent()).setBorder(border);
+    if (myFlatView != null) ((JComponent)myFlatView.getParent().getParent()).setBorder(border);
   }
 
   public void setRootVisible(boolean aBoolean) {

@@ -216,7 +216,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       }
     }
 
-    if (file != null) {
+    if (file != null && file.isValid()) {
       if (file.isDirectory()) {
         if (ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
           Module module = ModuleUtil.findModuleForFile(file, myProject);

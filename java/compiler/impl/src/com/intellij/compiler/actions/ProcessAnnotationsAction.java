@@ -157,7 +157,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
   private static String createPresentationText(final String elementDescription) {
     int length = elementDescription.length();
     String target = length > 23 ? (StringUtil.startsWithChar(elementDescription, '\'') ? "'..." : "...") + elementDescription.substring(length - 20, length) : elementDescription;
-    return MessageFormat.format(ActionsBundle.actionText("RunAPT"), target);
+    return MessageFormat.format(ActionsBundle.actionText(StringUtil.isEmpty(target)? "RunAPT" : "RunAPT.1"), target);
   }
 
   @Nullable

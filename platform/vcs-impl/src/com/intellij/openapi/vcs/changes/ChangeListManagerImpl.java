@@ -131,6 +131,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           invokeAfterUpdate(new Runnable() {
             public void run() {
+              if (getChangeList(((LocalChangeList)oldDefaultList).getId()) == null) {
+                return; // removed already  
+              }
               switch (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS) {
 
                 case SHOW_CONFIRMATION:
@@ -142,7 +145,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                     public void setValue(Value value) {
                       config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
                     }
-                  }, "<html>The empty changelist '" + StringUtil.last(oldDefaultList.getName(), 30, true) + "' is no longer active.<br>" +
+                  }, "<html>The empty changelist '" + StringUtil.first(oldDefaultList.getName(), 30, true) + "' is no longer active.<br>" +
                      "Do you want to remove it?</html>", "&Remember my choice");
                   dialog.show();
                   if (!dialog.isOK()) {
@@ -812,7 +815,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           myChangesViewManager.scheduleRefresh();
         }
-      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"), null);
+      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, VcsBundle.message("change.lists.manager.add.unversioned"), null);
     } else {
       myChangesViewManager.scheduleRefresh();
     }
@@ -1031,11 +1034,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+      final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
+      if (correctedPair == null) return;
       myService.submit(new Runnable() {
         public void run() {
           myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
             public void consume(AtomicSectionsAware atomicSectionsAware) {
-              myRevisionsCache.plus(getCorrectedPair(stringAbstractVcsPair));
+              myRevisionsCache.plus(correctedPair);
             }
           });
         }
@@ -1043,23 +1048,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+      final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
+      if (correctedPair == null) return;
       myService.submit(new Runnable() {
         public void run() {
           myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
             public void consume(AtomicSectionsAware atomicSectionsAware) {
-              myRevisionsCache.minus(getCorrectedPair(stringAbstractVcsPair));
+              myRevisionsCache.minus(correctedPair);
             }
           });
-          myRevisionsCache.minus(getCorrectedPair(stringAbstractVcsPair));
+          myRevisionsCache.minus(correctedPair);
         }
       });
     }
 
+    @Nullable
     private Pair<String, AbstractVcs> getCorrectedPair(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
       Pair<String, AbstractVcs> correctedPair = stringAbstractVcsPair;
       if (stringAbstractVcsPair.getSecond() == null) {
         final String path = stringAbstractVcsPair.getFirst();
-        correctedPair = new Pair<String, AbstractVcs>(path, myVcsManager.findVcsByName(findVcs(path).getName()));
+        final VcsKey vcsKey = findVcs(path);
+        if (vcsKey == null) return null;
+        correctedPair = new Pair<String, AbstractVcs>(path, myVcsManager.findVcsByName(vcsKey.getName()));
       }
       return correctedPair;
     }

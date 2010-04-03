@@ -43,7 +43,7 @@ import java.util.Arrays;
 public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterImpl");
 
-  private PsiTypeElement myType;        //guarded by PsiLock
+  private volatile PsiTypeElement myType;        //guarded by PsiLock
   private String myMirrorName = null;   //guarded by PsiLock
   private String myName = null;         //no point guarding
   public static final ClsParameterImpl[] EMPTY_ARRAY = new ClsParameterImpl[0];
@@ -83,12 +83,15 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
 
   @NotNull
   public PsiTypeElement getTypeElement() {
-    synchronized (LAZY_BUILT_LOCK) {
-      if (myType == null) {
-        myType = new ClsTypeElementImpl(this, TypeInfo.createTypeText(getStub().getType(false)), ClsTypeElementImpl.VARIANCE_NONE);
+    if (myType == null) {
+      synchronized (LAZY_BUILT_LOCK) {
+        if (myType == null) {
+          myType = new ClsTypeElementImpl(this, TypeInfo.createTypeText(getStub().getType(false)), ClsTypeElementImpl.VARIANCE_NONE);
+        }
       }
-      return myType;
     }
+
+    return myType;
   }
 
   @NotNull

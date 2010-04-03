@@ -29,7 +29,10 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class ContainerUtil {
+  private static final int INSERTION_SORT_THRESHOLD = 10;
+
   public static List<Object> mergeSortedLists(List<Object> list1, List<Object> list2, Comparator<Object> comparator, boolean mergeEqualItems){
     ArrayList<Object> result = new ArrayList<Object>();
 
@@ -465,6 +468,147 @@ public class ContainerUtil {
     }
     else {
       return collection.toArray(array);
+    }
+  }
+
+  /**
+   * This is a replacement for {@link Collection#toArray(Object[])}. For small collections it is faster to stay at java level and refrain
+   * from calling JNI {@link System#arraycopy(Object, int, Object, int, int)}
+   */
+  public static <T> T[] toArray(Collection<T> c, T[] sample) {
+    final int size = c.size();
+    if (size == sample.length && size < 20) {
+      int i = 0;
+      for (T t : c) {
+        sample[i++] = t;
+      }
+      return sample;
+    }
+
+    return c.toArray(sample);
+  }
+
+  public static <T extends Comparable<T>> void sort(List<T> list) {
+    int size = list.size();
+
+    if (size < 2) return;
+    if (size == 2) {
+      T t0 = list.get(0);
+      T t1 = list.get(1);
+
+      if (t0.compareTo(t1) > 0) {
+        list.set(0, t1);
+        list.set(1, t0);
+      }
+    }
+    else if (size < INSERTION_SORT_THRESHOLD) {
+      for (int i = 0; i < size; i++) {
+        for (int j = 0; j < i; j++) {
+          T ti = list.get(i);
+          T tj = list.get(j);
+
+          if (ti.compareTo(tj) < 0) {
+            list.set(i, tj);
+            list.set(j, ti);
+          }
+        }
+      }
+    }
+    else {
+      Collections.sort(list);
+    }
+  }
+
+  public static <T> void sort(List<T> list, Comparator<T> comparator) {
+    int size = list.size();
+
+    if (size < 2) return;
+    if (size == 2) {
+      T t0 = list.get(0);
+      T t1 = list.get(1);
+
+      if (comparator.compare(t0, t1) > 0) {
+        list.set(0, t1);
+        list.set(1, t0);
+      }
+    }
+    else if (size < INSERTION_SORT_THRESHOLD) {
+      for (int i = 0; i < size; i++) {
+        for (int j = 0; j < i; j++) {
+          T ti = list.get(i);
+          T tj = list.get(j);
+
+          if (comparator.compare(ti, tj) < 0) {
+            list.set(i, tj);
+            list.set(j, ti);
+          }
+        }
+      }
+    }
+    else {
+      Collections.sort(list, comparator);
+    }
+  }
+
+  public static <T extends Comparable<T>> void sort(T[] a) {
+    int size = a.length;
+
+    if (size < 2) return;
+    if (size == 2) {
+      T t0 = a[0];
+      T t1 = a[1];
+
+      if (t0.compareTo(t1) > 0) {
+        a[0] = t1;
+        a[1] = t0;
+      }
+    }
+    else if (size < INSERTION_SORT_THRESHOLD) {
+      for (int i = 0; i < size; i++) {
+        for (int j = 0; j < i; j++) {
+          T ti = a[i];
+          T tj = a[j];
+
+          if (ti.compareTo(tj) < 0) {
+            a[i] = tj;
+            a[j] = ti;
+          }
+        }
+      }
+    }
+    else {
+      Arrays.sort(a);
+    }
+  }
+
+  public static <T> void sort(T[] a, Comparator<T> comparator) {
+    int size = a.length;
+
+    if (size < 2) return;
+    if (size == 2) {
+      T t0 = a[0];
+      T t1 = a[1];
+
+      if (comparator.compare(t0, t1) > 0) {
+        a[0] = t1;
+        a[1] = t0;
+      }
+    }
+    else if (size < INSERTION_SORT_THRESHOLD) {
+      for (int i = 0; i < size; i++) {
+        for (int j = 0; j < i; j++) {
+          T ti = a[i];
+          T tj = a[j];
+
+          if (comparator.compare(ti, tj) < 0) {
+            a[i] = tj;
+            a[j] = ti;
+          }
+        }
+      }
+    }
+    else {
+      Arrays.sort(a, comparator);
     }
   }
 

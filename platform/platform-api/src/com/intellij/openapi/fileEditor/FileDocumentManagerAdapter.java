@@ -36,4 +36,7 @@ public abstract class FileDocumentManagerAdapter implements FileDocumentManagerL
 
   public void fileContentLoaded(VirtualFile file, Document document) {
   }
+
+  public void unsavedDocumentsDropped() {
+  }
 }

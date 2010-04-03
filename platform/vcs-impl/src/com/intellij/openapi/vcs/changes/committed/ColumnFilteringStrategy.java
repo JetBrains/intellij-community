@@ -40,7 +40,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author yole
  */
-public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteringStrategy {
+public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
+  private final JScrollPane myScrollPane;
   private final JList myValueList;
   private final CopyOnWriteArrayList<ChangeListener> myListeners = ContainerUtil.createEmptyCOWList();
   private final ChangeListColumn myColumn;
@@ -52,10 +53,10 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
 
   public ColumnFilteringStrategy(final ChangeListColumn column,
                                  final Class<? extends CommittedChangesProvider> providerClass) {
-    setLayout(new BorderLayout());
     myModel = new MyListModel();
     myValueList = new JList();
-    add(new JScrollPane(myValueList));
+    myScrollPane = new JScrollPane(myValueList);
+    myScrollPane.setPreferredSize(new Dimension(100, 100));
     myValueList.setModel(myModel);
     myValueList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -85,14 +86,9 @@ public class ColumnFilteringStrategy extends JPanel implements ChangeListFilteri
     return myColumn.getTitle();
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    return new Dimension(100, 100);
-  }
-
   @Nullable
   public JComponent getFilterUI() {
-    return this;
+    return myScrollPane;
   }
 
   public void setFilterBase(List<CommittedChangeList> changeLists) {

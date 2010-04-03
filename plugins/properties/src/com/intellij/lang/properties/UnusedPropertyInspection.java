@@ -70,7 +70,8 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
 
         String name = property.getName();
         if (name == null) return true;
-        PsiSearchHelper.SearchCostResult cheapEnough = file.getManager().getSearchHelper().isCheapEnoughToSearch(name, searchScope, file);
+        PsiSearchHelper.SearchCostResult cheapEnough = file.getManager().getSearchHelper().isCheapEnoughToSearch(name, searchScope, file,
+                                                                                                                 original);
         if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
 
         final PsiReference usage = cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES ? null :

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     for (final XmlTagChild element : myElements) {
       if (element instanceof XmlText) textElementsList.add((XmlText)element);
     }
-    return myTextElements = textElementsList.toArray(new XmlText[textElementsList.size()]);
+    return myTextElements = ContainerUtil.toArray(textElementsList, new XmlText[textElementsList.size()]);
   }
 
   @NotNull

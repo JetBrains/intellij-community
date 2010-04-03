@@ -8,6 +8,7 @@ import com.intellij.patterns.PlatformPatterns;
 import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.*;
 import com.intellij.psi.PsiReferenceContributor;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
@@ -27,7 +28,8 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     final IdReferenceProvider idReferenceProvider = new IdReferenceProvider();
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, idReferenceProvider.getIdForAttributeNames(),
-                                                       idReferenceProvider.getIdForFilter(), true, idReferenceProvider);
+                                                       idReferenceProvider.getIdForFilter(), true, idReferenceProvider,
+                                                       PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     //registerReferenceProvider(null, XmlEntityDecl.class,dtdReferencesProvider);

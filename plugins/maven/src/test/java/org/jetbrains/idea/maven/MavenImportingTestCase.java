@@ -31,24 +31,19 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.execution.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
@@ -321,7 +316,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void importProject(String xml) throws IOException{
+  protected void importProject(String xml) throws IOException {
     createProjectPom(xml);
     importProject();
   }
@@ -334,7 +329,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doImportProjects(Collections.singletonList(myProjectPom), profiles);
   }
 
-  protected void importProject(VirtualFile file)  {
+  protected void importProject(VirtualFile file) {
     importProjects(file);
   }
 
@@ -410,8 +405,24 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void downloadArtifacts() {
-    myProjectsManager.scheduleArtifactsDownloadingForAllProjects();
+    downloadArtifacts(myProjectsManager.getProjects(), null);
+  }
+
+  protected MavenArtifactDownloader.DownloadResult downloadArtifacts(Collection<MavenProject> projects,
+                                                                          List<MavenArtifact> artifacts) {
+    final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
+
+    AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
+    result.doWhenDone(new AsyncResult.Handler<MavenArtifactDownloader.DownloadResult>() {
+      public void run(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
+        unresolved[0] = unresolvedArtifacts;
+      }
+    });
+
+    myProjectsManager.scheduleArtifactsDownloading(projects, artifacts, true, true, result);
     myProjectsManager.waitForArtifactsDownloadingCompletion();
+
+    return unresolved[0];
   }
 
   protected void performPostImportTasks() {

@@ -48,19 +48,19 @@ public abstract class FileReferenceHelper {
   }
 
   @Nullable
-  public PsiFileSystemItem getPsiFileSystemItem(final Project project, final @NotNull VirtualFile file) {
+  public PsiFileSystemItem getPsiFileSystemItem(final Project project, @NotNull final VirtualFile file) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
   }
 
   @Nullable
-  public abstract PsiFileSystemItem findRoot(final Project project, final @NotNull VirtualFile file);
+  public abstract PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file);
 
   @NotNull
   public abstract Collection<PsiFileSystemItem> getRoots(@NotNull Module module);
 
   @NotNull
-  public abstract Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file);
+  public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
 
-  public abstract boolean isMine(final Project project, final @NotNull VirtualFile file);
+  public abstract boolean isMine(final Project project, @NotNull final VirtualFile file);
 }

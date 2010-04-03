@@ -160,7 +160,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         final PsiElement resolved = readBeforeWrite.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
-          if (!(field.getType() instanceof PsiPrimitiveType) || getWrittenVariables(controlFlow, writtenVariables).contains(field)){
+          if (!(field.getType() instanceof PsiPrimitiveType) || !PsiUtil.isConstantExpression(field.getInitializer()) || getWrittenVariables(controlFlow, writtenVariables).contains(field)){
             PsiElement parent = body.getParent();
             if (!(parent instanceof PsiMethod) ||
                 !((PsiMethod)parent).isConstructor() ||

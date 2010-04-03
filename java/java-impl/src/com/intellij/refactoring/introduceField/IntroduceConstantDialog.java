@@ -142,7 +142,6 @@ class IntroduceConstantDialog extends DialogWrapper {
     return myIntroduceEnumConstantCb.isEnabled() && myIntroduceEnumConstantCb.isSelected();
   }
 
-  @Modifier
   public String getFieldVisibility() {
     return myVPanel.getVisibility();
   }

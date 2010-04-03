@@ -48,17 +48,17 @@ public class DebugUtil {
     return false;
   }
 
-  public static String psiTreeToString(PsiElement element, boolean skipWhitespaces) {
+  public static String psiTreeToString(@NotNull PsiElement element, boolean skipWhitespaces) {
     return treeToString(SourceTreeToPsiMap.psiElementToTree(element), skipWhitespaces);
   }
 
-  public static String treeToString(ASTNode root, boolean skipWhitespaces) {
+  public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces) {
     StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, false, false);
     return buffer.toString();
   }
 
-  public static String treeToString(ASTNode root, boolean skipWhitespaces, boolean showRanges) {
+  public static String treeToString(@NotNull ASTNode root, boolean skipWhitespaces, boolean showRanges) {
     StringBuilder buffer = new StringBuilder();
     treeToBuffer(buffer, root, 0, skipWhitespaces, showRanges, false);
     return buffer.toString();
@@ -77,8 +77,8 @@ public class DebugUtil {
     return buffer.toString();
   }
 
-  public static void treeToBuffer(StringBuilder buffer,
-                                  ASTNode root,
+  public static void treeToBuffer(@NotNull StringBuilder buffer,
+                                  @NotNull ASTNode root,
                                   int indent,
                                   boolean skipWhiteSpaces,
                                   boolean showRanges,
@@ -192,31 +192,28 @@ public class DebugUtil {
 
   }
 
-  public static void checkTreeStructure(ASTNode anyElement) {
+  public static void checkTreeStructure(@NotNull ASTNode anyElement) {
     ASTNode root = anyElement;
     while (root.getTreeParent() != null) {
       root = root.getTreeParent();
     }
     if (root instanceof CompositeElement) {
       synchronized (PsiLock.LOCK) {
-        checkSubtree(root);
+        checkSubtree((CompositeElement)root);
       }
     }
   }
 
-  private static void checkSubtree(ASTNode root) {
-    if (!(root instanceof CompositeElement)) return;
-    CompositeElement node = (CompositeElement)root;
-
-    if (node.rawFirstChild() == null) {
-      if (node.rawLastChild() != null) {
-        throw new IncorrectTreeStructureException(node, "firstChild == null, but lastChild != null");
+  private static void checkSubtree(CompositeElement root) {
+    if (root.rawFirstChild() == null) {
+      if (root.rawLastChild() != null) {
+        throw new IncorrectTreeStructureException(root, "firstChild == null, but lastChild != null");
       }
     }
     else {
       for (ASTNode child = root.getFirstChildNode(); child != null; child = child.getTreeNext()) {
         if (child instanceof CompositeElement) {
-          checkSubtree(child);
+          checkSubtree((CompositeElement)child);
         }
         if (child.getTreeParent() != root) {
           throw new IncorrectTreeStructureException(child, "child has wrong parent value");
@@ -243,7 +240,7 @@ public class DebugUtil {
     }
   }
 
-  public static void checkParentChildConsistent(ASTNode element) {
+  public static void checkParentChildConsistent(@NotNull ASTNode element) {
     ASTNode treeParent = element.getTreeParent();
     if (treeParent == null) return;
     ASTNode[] elements = treeParent.getChildren(null);
@@ -253,13 +250,13 @@ public class DebugUtil {
     //LOG.debug("checked consistence: "+System.identityHashCode(element));
   }
 
-  public static void checkSameCharTabs(ASTNode element1, ASTNode element2) {
+  public static void checkSameCharTabs(@NotNull ASTNode element1, @NotNull ASTNode element2) {
     final CharTable fromCharTab = SharedImplUtil.findCharTableByTree(element1);
     final CharTable toCharTab = SharedImplUtil.findCharTableByTree(element2);
     LOG.assertTrue(fromCharTab == toCharTab);
   }
 
-  public static String psiToString(final PsiElement element, final boolean skipWhitespaces) {
+  public static String psiToString(@NotNull PsiElement element, final boolean skipWhitespaces) {
     return psiToString(element, skipWhitespaces, false);
   }
 
@@ -276,8 +273,8 @@ public class DebugUtil {
     return result.toString();
   }
   
-  public static void psiToBuffer(StringBuilder buffer,
-                                 PsiElement root,
+  public static void psiToBuffer(@NotNull StringBuilder buffer,
+                                 @NotNull PsiElement root,
                                  int indent,
                                  boolean skipWhiteSpaces,
                                  boolean showRanges,

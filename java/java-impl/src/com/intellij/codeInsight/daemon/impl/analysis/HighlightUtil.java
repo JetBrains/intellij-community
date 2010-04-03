@@ -37,7 +37,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -935,10 +934,14 @@ public class HighlightUtil {
                                                expr.getTextRange().getEndOffset() + 1,
                                                JavaErrorMessages.message("dot.expected.after.super.or.this"));
     }
-    PsiClass aClass = qualifier == null ? PsiTreeUtil.getParentOfType(expr, PsiClass.class) : (PsiClass)qualifier.resolve();
+    PsiElement resolved = null;
+    PsiClass aClass = qualifier == null ? PsiTreeUtil.getParentOfType(expr, PsiClass.class) : (resolved = qualifier.resolve()) instanceof PsiClass ? (PsiClass)resolved : null;
+    if (resolved != null && !(resolved instanceof PsiClass)) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, JavaErrorMessages.message("class.expected"));
+    }
     if (aClass == null) return null;
     if (qualifier != null && aClass.isInterface()) {
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.CLASS_EXPECTED);
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, qualifier, HighlightClassUtil.NO_INTERFACE_EXPECTED);
     }
     if (!HighlightClassUtil.hasEnclosingInstanceInScope(aClass, expr, false)) {
       return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);

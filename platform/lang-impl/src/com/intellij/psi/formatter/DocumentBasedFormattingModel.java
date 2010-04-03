@@ -92,10 +92,21 @@ public class DocumentBasedFormattingModel implements FormattingModel {
       ) {
       String newWs = null;
 
-      if (removesStartMarker) {
+      if (removesStartMarker) {    // TODO once we reformat comments we will need to handle their markers as well
         int at = CharArrayUtil.indexOf(myDocument.getCharsSequence(), marker, textRange.getStartOffset(), textRange.getEndOffset() + 1);
         String ws = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset()).toString();
         newWs = mergeWsWithCdataMarker(whiteSpace, ws, at - textRange.getStartOffset());
+        
+        if (removesPattern(textRange, whiteSpace, marker = "]]>")) {
+          int i = newWs.lastIndexOf('\n');
+          
+          if (i > 0) {
+            int cdataStart = newWs.indexOf("<![CDATA[");
+            int i2 = newWs.lastIndexOf('\n', cdataStart);
+            String cdataIndent = i2 != -1 ? newWs.substring(i2 + 1, cdataStart):"";
+            newWs = newWs.substring(0, i) + cdataIndent + marker + newWs.substring(i);
+          }
+        }
       }
 
       if (newWs == null) return textRange;

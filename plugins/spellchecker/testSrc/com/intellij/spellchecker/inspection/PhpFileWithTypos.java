@@ -15,6 +15,8 @@
  */
 package com.intellij.spellchecker.inspection;
 
+import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
+
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
@@ -22,11 +24,12 @@ package com.intellij.spellchecker.inspection;
 public class PhpFileWithTypos extends SpellcheckerInspectionTestCase {
 
   protected String getBasePath() {
-    return "/plugins/spellchecker/tests/testData/inspection/php";
-  }
+     return getSpellcheckerTestDataPath() + "/inspection/php";
+   }
+
 
   public void testPhp() throws Throwable {
-    //doTest("test.php",SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("test.php", SpellCheckerInspectionToolProvider.getInspectionTools());
   }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 public abstract class MavenProjectsManagerAction extends MavenAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    perform(MavenActionUtil.getProjectsManager(e));
+    perform(MavenActionUtil.getProjectsManager(e.getDataContext()));
   }
 
   protected abstract void perform(MavenProjectsManager manager);

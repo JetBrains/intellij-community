@@ -28,7 +28,7 @@ public class MavenProgressIndicator {
   private List<Condition<MavenProgressIndicator>> myCancelConditions = new ArrayList<Condition<MavenProgressIndicator>>();
 
   public MavenProgressIndicator() {
-    this(new EmptyProgressIndicator());
+    this(new MyEmptyProgressIndicator());
   }
 
   public MavenProgressIndicator(ProgressIndicator i) {
@@ -85,5 +85,42 @@ public class MavenProgressIndicator {
 
   public void checkCanceledNative() {
     if (isCanceled()) throw new ProcessCanceledException();
+  }
+
+
+  private static class MyEmptyProgressIndicator extends EmptyProgressIndicator {
+    private String myText;
+    private String myText2;
+    private double myFraction;
+
+    @Override
+    public void setText(String text) {
+      myText = text;
+    }
+
+    @Override
+    public String getText() {
+      return myText;
+    }
+
+    @Override
+    public void setText2(String text) {
+      myText2 = text;
+    }
+
+    @Override
+    public String getText2() {
+      return myText2;
+    }
+
+    @Override
+    public void setFraction(double fraction) {
+      myFraction = fraction;
+    }
+
+    @Override
+    public double getFraction() {
+      return myFraction;
+    }
   }
 }

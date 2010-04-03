@@ -50,4 +50,12 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
     public boolean isPythonNamedGroup() {
         return getNode().findChildByType(RegExpTT.PYTHON_NAMED_GROUP) != null;
     }
+
+    public String getGroupName() {
+      if (!isPythonNamedGroup()) {
+        return null;
+      }
+      final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
+      return nameNode != null ? nameNode.getText() : null;
+    }
 }

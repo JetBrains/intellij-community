@@ -21,6 +21,7 @@ package com.intellij.ide.plugins;
 public class HelpSetPath {
   private final String file;
   private final String path;
+  public static final HelpSetPath[] EMPTY = new HelpSetPath[0];
 
   public HelpSetPath(String file, String path) {
     this.file = file;

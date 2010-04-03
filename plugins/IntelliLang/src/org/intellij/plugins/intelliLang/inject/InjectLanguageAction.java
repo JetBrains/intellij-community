@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -76,8 +77,10 @@ public class InjectLanguageAction implements IntentionAction {
     if (host == null) return null;
     final ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
     if (manipulator == null) return null;
-    final TextRange textRange = manipulator.getRangeInElement(host);
-    if (textRange.getStartOffset() == 0) return null;
+    if (file.getFileType() != StdFileTypes.XML) { // allow injection in XmlText
+      final TextRange textRange = manipulator.getRangeInElement(host);
+      if (textRange.getStartOffset() == 0) return null;
+    }
     return host;
   }
 

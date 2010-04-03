@@ -342,6 +342,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   public void setMenuActions(final ActionGroup menuGroup) {
     myMenuGroup = menuGroup;
     updateMenu();
+    editSourceRegistration();
+  }
+
+  protected void editSourceRegistration() {
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
   }

@@ -458,14 +458,17 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
-  private static void installCutCopyPasteShortcuts(InputMap inputMap){
+  private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys){
+    String copyActionKey = useSimpleActionKeys ? "copy" : DefaultEditorKit.copyAction;
+    String pasteActionKey = useSimpleActionKeys ? "paste" : DefaultEditorKit.pasteAction;
+    String cutActionKey = useSimpleActionKeys ? "cut" : DefaultEditorKit.cutAction;
     // Ctrl+Ins, Shift+Ins, Shift+Del
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),DefaultEditorKit.copyAction);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,KeyEvent.SHIFT_MASK|KeyEvent.SHIFT_DOWN_MASK),DefaultEditorKit.pasteAction);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,KeyEvent.SHIFT_MASK|KeyEvent.SHIFT_DOWN_MASK),DefaultEditorKit.cutAction);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,KeyEvent.SHIFT_MASK|KeyEvent.SHIFT_DOWN_MASK),pasteActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,KeyEvent.SHIFT_MASK|KeyEvent.SHIFT_DOWN_MASK),cutActionKey);
     // Ctrl+C, Ctrl+V, Ctrl+X
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),DefaultEditorKit.copyAction);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),DefaultEditorKit.pasteAction);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),pasteActionKey);
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X,KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK),DefaultEditorKit.cutAction);
   }
 
@@ -479,17 +482,22 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     // Cut/Copy/Paste in JTextAreas
     InputMap textAreaInputMap=(InputMap)defaults.get("TextArea.focusInputMap");
     if(textAreaInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(textAreaInputMap);
+      installCutCopyPasteShortcuts(textAreaInputMap, false);
     }
     // Cut/Copy/Paste in JTextFields
     InputMap textFieldInputMap=(InputMap)defaults.get("TextField.focusInputMap");
     if(textFieldInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(textFieldInputMap);
+      installCutCopyPasteShortcuts(textFieldInputMap, false);
     }
     // Cut/Copy/Paste in JPAsswordField
     InputMap passwordFieldInputMap=(InputMap)defaults.get("PasswordField.focusInputMap");
     if(passwordFieldInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(passwordFieldInputMap);
+      installCutCopyPasteShortcuts(passwordFieldInputMap, false);
+    }
+    // Cut/Copy/Paste in JTables
+    InputMap tableInputMap=(InputMap)defaults.get("Table.ancestorInputMap");
+    if(tableInputMap!=null){ // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
+      installCutCopyPasteShortcuts(tableInputMap, true);
     }
   }
 
@@ -598,6 +606,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       defaults.put("Tree.expandedIcon", com.sun.java.swing.plaf.windows.WindowsTreeUI.ExpandedIcon.createExpandedIcon());
       defaults.put("Tree.collapsedIcon", com.sun.java.swing.plaf.windows.WindowsTreeUI.CollapsedIcon.createCollapsedIcon());
       defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
+                         "ctrl C", "copy",
+                         "ctrl V", "paste",
+                         "ctrl X", "cut",
+                           "COPY", "copy",
+                          "PASTE", "paste",
+                            "CUT", "cut",
+                 "control INSERT", "copy",
+                   "shift INSERT", "paste",
+                   "shift DELETE", "cut",
                           "RIGHT", "selectNextColumn",
                        "KP_RIGHT", "selectNextColumn",
                            "LEFT", "selectPreviousColumn",

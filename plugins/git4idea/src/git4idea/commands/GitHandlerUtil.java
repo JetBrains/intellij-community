@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -113,7 +114,7 @@ public class GitHandlerUtil {
    * @return An exit code
    */
   public static int doSynchronously(final GitLineHandler handler,
-                                    String operationTitle,
+                                    final String operationTitle,
                                     @NonNls final String operationName,
                                     final boolean showErrors,
                                     final boolean setIndeterminateFlag) {
@@ -121,7 +122,7 @@ public class GitHandlerUtil {
     manager.run(new Task.Modal(handler.project(), operationTitle, false) {
       public void run(@NotNull final ProgressIndicator indicator) {
         handler.addLineListener(new GitLineHandlerListenerProgress(indicator, handler, operationName, showErrors));
-        runInCurrentThread(handler, indicator, setIndeterminateFlag);
+        runInCurrentThread(handler, indicator, setIndeterminateFlag, operationTitle);
       }
     });
     if (!handler.isStarted()) {
@@ -145,7 +146,8 @@ public class GitHandlerUtil {
                                               final boolean setIndeterminateFlag) {
     manager.runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
-        runInCurrentThread(handler, manager.getProgressIndicator(), setIndeterminateFlag);
+        runInCurrentThread(handler, manager.getProgressIndicator(), setIndeterminateFlag,
+                           operationTitle);
       }
     }, operationTitle, false, handler.project());
   }
@@ -156,12 +158,17 @@ public class GitHandlerUtil {
    * @param handler              a handler to run
    * @param indicator            a progress manager
    * @param setIndeterminateFlag if true handler is configured as indeterminate
+   * @param operationName
    */
-  private static void runInCurrentThread(final GitHandler handler, final ProgressIndicator indicator, final boolean setIndeterminateFlag) {
+  private static void runInCurrentThread(final GitHandler handler,
+                                         final ProgressIndicator indicator,
+                                         final boolean setIndeterminateFlag,
+                                         @Nullable final String operationName) {
     runInCurrentThread(handler, new Runnable() {
       public void run() {
         if (indicator != null) {
-          indicator.setText(GitBundle.message("git.running", handler.printableCommandLine()));
+          indicator.setText(operationName == null ? GitBundle.message("git.running", handler.printableCommandLine()) : operationName);
+          indicator.setText2("");
           if (setIndeterminateFlag) {
             indicator.setIndeterminate(true);
           }
@@ -295,7 +302,7 @@ public class GitHandlerUtil {
    */
   public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    return doSynchronouslyWithExceptions(handler, progressIndicator);
+    return doSynchronouslyWithExceptions(handler, progressIndicator, null);
   }
 
   /**
@@ -303,13 +310,19 @@ public class GitHandlerUtil {
    *
    * @param handler           a handler to use
    * @param progressIndicator a progress indicator
+   * @param operationName
    * @return the collection of exception collected during operation
    */
   public static Collection<VcsException> doSynchronouslyWithExceptions(final GitLineHandler handler,
-                                                                       final ProgressIndicator progressIndicator) {
-    handler.addLineListener(new GitLineHandlerListenerProgress(progressIndicator, handler, "", false));
-    runInCurrentThread(handler, progressIndicator, false);
+                                                                       final ProgressIndicator progressIndicator,
+                                                                       @Nullable String operationName) {
+    handler.addLineListener(new GitLineHandlerListenerProgress(progressIndicator, handler, operationName, false));
+    runInCurrentThread(handler, progressIndicator, false, operationName);
     return handler.errors();
+  }
+
+  public static String formatOperationName(String operation, @NotNull VirtualFile root) {
+    return operation + " '" + root.getName() + "'...";
   }
 
   /**

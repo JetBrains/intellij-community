@@ -991,6 +991,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
           public void run(@NotNull final ProgressIndicator indicator) {
             try {
+              if (project.isDisposed()) {
+                return;
+              }
               final IntermediateOutputCompiler[] compilers =
                   CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
 
@@ -999,6 +1002,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 final Module[] modules = ModuleManager.getInstance(project).getModules();
                 for (IntermediateOutputCompiler compiler : compilers) {
                   for (Module module : modules) {
+                    if (module.isDisposed()) {
+                      continue;
+                    }
                     final VirtualFile outputRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(CompilerPaths.getGenerationOutputPath(compiler, module, false));
                     if (outputRoot != null) {
                       intermediateRoots.add(outputRoot);

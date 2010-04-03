@@ -31,28 +31,21 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependencies;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
@@ -344,8 +337,10 @@ public class MavenProjectsManager extends SimpleProjectComponent
             schedulePluginsResolving(projectWithChanges.first, nativeMavenProject);
           }
           scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
-                                       getImportingSettings().shouldDownloadSourcesAutomatically(),
-                                       getImportingSettings().shouldDownloadDocsAutomatically());
+                                       null,
+                                       getImportingSettings().isDownloadSourcesAutomatically(),
+                                       getImportingSettings().isDownloadDocsAutomatically(),
+                                       null);
           scheduleForNextImport(projectWithChanges);
         }
         processMessage(message);
@@ -703,25 +698,16 @@ public class MavenProjectsManager extends SimpleProjectComponent
     });
   }
 
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, final boolean sources, final boolean docs) {
+  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects, @Nullable final Collection<MavenArtifact> artifacts,
+                                           final boolean sources, final boolean docs,
+                                           @Nullable final AsyncResult<MavenArtifactDownloader.DownloadResult> result) {
     if (!sources && !docs) return;
-
     runWhenFullyOpen(new Runnable() {
       public void run() {
-        for (MavenProject each : projects) {
-          myArtifactsDownloadingProcessor
-            .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(each, myProjectsTree, sources, docs));
-        }
+        myArtifactsDownloadingProcessor
+          .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myProjectsTree, sources, docs, result));
       }
     });
-  }
-
-  public void scheduleArtifactsDownloading(final Collection<MavenProject> projects) {
-    scheduleArtifactsDownloading(projects, true, true);
-  }
-
-  public void scheduleArtifactsDownloadingForAllProjects() {
-    scheduleArtifactsDownloading(getProjects());
   }
 
   private void scheduleImport(List<Pair<MavenProject, MavenProjectChanges>> projectsWithChanges, boolean forceImport) {
@@ -862,7 +848,6 @@ public class MavenProjectsManager extends SimpleProjectComponent
       myResolvingProcessor.removeTask(dummyTask);
       myPluginsResolvingProcessor.removeTask(dummyTask);
       myFoldersResolvingProcessor.removeTask(dummyTask);
-      myArtifactsDownloadingProcessor.removeTask(dummyTask);
       myPostProcessor.removeTask(dummyTask);
     }
   }
@@ -873,7 +858,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   public void waitForReadingCompletion() {
-    waitForTasksCompletion(Collections.<MavenProjectsProcessor>emptyList());
+    waitForTasksCompletion(null);
   }
 
   public void waitForResolvingCompletion() {
@@ -889,7 +874,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   public void waitForArtifactsDownloadingCompletion() {
-    waitForTasksCompletion(Arrays.asList(myResolvingProcessor, myArtifactsDownloadingProcessor));
+    waitForTasksCompletion(myArtifactsDownloadingProcessor);
   }
 
   public void waitForPostImportTasksCompletion() {
@@ -897,16 +882,10 @@ public class MavenProjectsManager extends SimpleProjectComponent
   }
 
   private void waitForTasksCompletion(MavenProjectsProcessor processor) {
-    waitForTasksCompletion(Collections.singletonList(processor));
-  }
-
-  private void waitForTasksCompletion(List<MavenProjectsProcessor> processors) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     myReadingProcessor.waitForCompletion();
-    for (MavenProjectsProcessor each : processors) {
-      each.waitForCompletion();
-    }
+    if (processor != null) processor.waitForCompletion();
   }
 
   public void updateProjectTargetFolders() {

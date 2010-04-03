@@ -243,6 +243,14 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
   public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
                                            @Nullable final List<ShelvedBinaryFile> binaryFiles, final LocalChangeList targetChangeList) {
+    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, true);
+  }
+
+  public void unshelveChangeList(final ShelvedChangeList changeList,
+                                 @Nullable final List<ShelvedChange> changes,
+                                 @Nullable final List<ShelvedBinaryFile> binaryFiles,
+                                 final LocalChangeList targetChangeList,
+                                 boolean showSuccessNotification) {
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
 
     final List<TextFilePatch> textFilePatches;
@@ -271,7 +279,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
     final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
     final PatchApplier<ShelvedBinaryFilePatch> patchApplier = new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(), patches, targetChangeList, binaryPatchApplier);
-    patchApplier.execute();
+    patchApplier.execute(showSuccessNotification);
     remainingPatches.addAll(patchApplier.getRemainingPatches());
 
     if ((remainingPatches.size() == 0) && remainingBinaries.isEmpty()) {
@@ -541,7 +549,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     @Override
     public String getAfterFileName() {
       String[] pathNameComponents = myShelvedBinaryFile.AFTER_PATH.replace(File.separatorChar, '/').split("/");
-      return pathNameComponents [pathNameComponents.length-1];    
+      return pathNameComponents [pathNameComponents.length-1];
     }
 
     public boolean isNewFile() {

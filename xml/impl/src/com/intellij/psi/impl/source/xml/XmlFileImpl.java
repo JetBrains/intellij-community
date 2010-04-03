@@ -42,7 +42,13 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
   }
 
   public XmlDocument getDocument() {
-    return findChildByClass(XmlDocument.class);
+    PsiElement child = getFirstChild();
+    while (child != null) {
+      if (child instanceof XmlDocument) return (XmlDocument)child;
+      child = child.getNextSibling();
+    }
+
+    return null;
   }
 
   public boolean processElements(PsiElementProcessor processor, PsiElement place){

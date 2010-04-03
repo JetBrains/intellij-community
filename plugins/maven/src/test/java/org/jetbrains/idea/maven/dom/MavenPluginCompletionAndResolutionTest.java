@@ -71,7 +71,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin");
+    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-surefire-plugin", "maven-eclipse-plugin");
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
@@ -87,7 +87,11 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "build-helper-maven-plugin",
+    assertCompletionVariants(myProjectPom,
+                             "maven-compiler-plugin", 
+                             "maven-war-plugin",
+                             "build-helper-maven-plugin",
+                             "maven-surefire-plugin",
                              "maven-eclipse-plugin");
   }
 
@@ -685,7 +689,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertDocumentation("The -source argument for the Java compiler.");
+    assertDocumentation("Type: <b>java.lang.String</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
   }
 
   public void testDoNotCompleteNorHighlightNonPluginConfiguration() throws Throwable {
@@ -708,7 +712,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testDoNotHighlighInnerParameters() throws Throwable {
+  public void testDoNotHighlightInnerParameters() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -729,7 +733,27 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testDoNotHighlighInnerParameterAttributes() throws Throwable {
+  public void testDoNotHighlightRequiredParametersWithDefaultValues() throws Throwable {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-surefire-plugin</artifactId>" +
+                     "      <version>2.4.3</version>" +
+                     "      <configuration>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    checkHighlighting(); // surefire plugin has several required parameters with default values.
+  }
+
+  public void testDoNotHighlightInnerParameterAttributes() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -753,7 +777,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testDoNotCompleteHighlighParameterAttributes() throws Throwable {
+  public void testDoNotCompleteParameterAttributes() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

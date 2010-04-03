@@ -48,7 +48,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     final HighlightDisplayKey displayKey = HighlightDisplayKey.find(getShortName());
     return new SuppressIntentionAction[]{
-      new AddNoInspectionGroovyCommentFix(displayKey),
+      new SuppressByGroovyCommentFix(displayKey),
       new SuppressForMemberFix(displayKey, false),
       new SuppressForMemberFix(displayKey, true),
     };

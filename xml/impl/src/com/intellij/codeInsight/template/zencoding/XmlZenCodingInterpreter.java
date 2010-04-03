@@ -18,40 +18,58 @@ package com.intellij.codeInsight.template.zencoding;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
- */ 
+ */
 class XmlZenCodingInterpreter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.zencoding.XmlZenCodingInterpreter");
   private static final String ATTRS = "ATTRS";
+  private static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
 
   private final List<Token> myTokens;
+  private final int myFromIndex;
+
   private final CustomTemplateCallback myCallback;
   private final TemplateInvokationListener myListener;
-  private static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
+  private final String mySurroundedText;
+
   private State myState;
 
-  XmlZenCodingInterpreter(List<Token> tokens,
-                          CustomTemplateCallback callback,
-                          State initialState,
-                          TemplateInvokationListener listener) {
+  private XmlZenCodingInterpreter(List<Token> tokens,
+                                  int fromIndex,
+                                  CustomTemplateCallback callback,
+                                  State initialState,
+                                  String surroundedText,
+                                  TemplateInvokationListener listener) {
     myTokens = tokens;
+    myFromIndex = fromIndex;
     myCallback = callback;
+    mySurroundedText = surroundedText;
     myListener = listener;
     myState = initialState;
   }
@@ -107,7 +125,20 @@ class XmlZenCodingInterpreter {
     }*/
   }
 
-  public boolean invoke(int startIndex) {
+  // returns if expanding finished
+
+  public static boolean interpret(List<Token> tokens,
+                                  int startIndex,
+                                  CustomTemplateCallback callback,
+                                  State initialState,
+                                  String surroundedText,
+                                  TemplateInvokationListener listener) {
+    XmlZenCodingInterpreter interpreter =
+      new XmlZenCodingInterpreter(tokens, startIndex, callback, initialState, surroundedText, listener);
+    return interpreter.invoke(startIndex);
+  }
+
+  private boolean invoke(int startIndex) {
     final int n = myTokens.size();
     TemplateToken templateToken = null;
     int number = -1;
@@ -119,7 +150,7 @@ class XmlZenCodingInterpreter {
           if (templateToken != null) {
             if (token instanceof MarkerToken || token instanceof OperationToken) {
               final char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-              if (sign == XmlZenCodingTemplate.MARKER || sign == '+') {
+              if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
                 final Object key = new Object();
                 myCallback.fixStartOfTemplate(key);
                 TemplateInvokationListener listener = new TemplateInvokationListener() {
@@ -141,7 +172,7 @@ class XmlZenCodingInterpreter {
                 }
                 templateToken = null;
               }
-              else if (sign == '>') {
+              else if (sign == '>' || (mySurroundedText != null && sign == XmlZenCodingTemplate.MARKER)) {
                 if (!startTemplateAndGotoChild(templateToken, finalI)) {
                   return false;
                 }
@@ -177,14 +208,14 @@ class XmlZenCodingInterpreter {
         case AFTER_NUMBER:
           if (token instanceof MarkerToken || token instanceof OperationToken) {
             char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-            if (sign == XmlZenCodingTemplate.MARKER || sign == '+') {
+            if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
               if (!invokeTemplateSeveralTimes(templateToken, 0, number, finalI)) {
                 return false;
               }
               templateToken = null;
             }
             else if (number > 1) {
-              return invokeTemplateAndProcessTail(templateToken, 0, number, i + 1);
+              return invokeTemplateAndProcessTail(templateToken, 0, number, i + 1, startIndex != myFromIndex);
             }
             else {
               assert number == 1;
@@ -201,7 +232,10 @@ class XmlZenCodingInterpreter {
           break;
       }
     }
-    finish(startIndex == n);
+    if (mySurroundedText != null) {
+      insertText(myCallback, mySurroundedText);
+    }
+    finish(startIndex != myFromIndex);
     return true;
   }
 
@@ -255,10 +289,18 @@ class XmlZenCodingInterpreter {
     return true;
   }
 
+  private static void insertText(CustomTemplateCallback callback, String text) {
+    Editor editor = callback.getEditor();
+    int offset = editor.getCaretModel().getOffset();
+    editor.getDocument().insertString(offset, text);
+    PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
+  }
+
   private boolean invokeTemplateAndProcessTail(final TemplateToken templateToken,
                                                final int startIndex,
                                                final int count,
-                                               final int tailStart) {
+                                               final int tailStart,
+                                               boolean separateEvent) {
     final Object key = new Object();
     myCallback.fixStartOfTemplate(key);
     for (int i = startIndex; i < count; i++) {
@@ -267,21 +309,19 @@ class XmlZenCodingInterpreter {
       TemplateInvokationListener listener = new TemplateInvokationListener() {
         public void finished(boolean inSeparateEvent) {
           gotoChild(key);
-          XmlZenCodingInterpreter interpreter =
-            new XmlZenCodingInterpreter(myTokens, myCallback, State.WORD, new TemplateInvokationListener() {
-              public void finished(boolean inSeparateEvent) {
-                if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
-                  myCallback.fixEndOffset();
-                }
-                myCallback.gotoEndOfTemplate(key);
-                if (inSeparateEvent) {
-                  invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);
-                }
+          if (interpret(myTokens, tailStart, myCallback, State.WORD, mySurroundedText, new TemplateInvokationListener() {
+            public void finished(boolean inSeparateEvent) {
+              if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
+                myCallback.fixEndOffset();
               }
-            });
-          if (interpreter.invoke(tailStart)) {
+              myCallback.gotoEndOfTemplate(key);
+              if (inSeparateEvent) {
+                invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart, true);
+              }
+            }
+          })) {
             if (inSeparateEvent) {
-              invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart);
+              invokeTemplateAndProcessTail(templateToken, finalI + 1, count, tailStart, true);
             }
           }
           else {
@@ -293,7 +333,7 @@ class XmlZenCodingInterpreter {
         return false;
       }
     }
-    finish(count == 0);
+    finish(separateEvent);
     return true;
   }
 
@@ -379,43 +419,7 @@ class XmlZenCodingInterpreter {
                                         int numberInIteration) {
     List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
     if (callback.isLiveTemplateApplicable(token.myKey)) {
-      if (token.myTemplate != null) {
-        TemplateImpl modifiedTemplate = token.myTemplate.copy();
-        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback.getProject());
-        assert tag != null;
-        for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-          Pair<String, String> pair = iterator.next();
-          if (tag.getAttribute(pair.first) != null) {
-            tag.setAttribute(pair.first, getValue(pair, numberInIteration));
-            iterator.remove();
-          }
-        }
-        String text = null;
-        if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
-          String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
-          if (textWithAttrs != null) {
-            text = textWithAttrs;
-          }
-          else {
-            for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-              Pair<String, String> pair = iterator.next();
-              tag.setAttribute(pair.first, getValue(pair, numberInIteration));
-              iterator.remove();
-            }
-          }
-        }
-        if (text == null) {
-          text = tag.getContainingFile().getText();
-        }
-        modifiedTemplate.setString(text);
-        removeVariablesWhichHasNoSegment(modifiedTemplate);
-        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-        return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
-      }
-      else {
-        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-        return callback.startTemplate(token.myKey, predefinedValues, listener);
-      }
+      return invokeExistingLiveTemplate(token, callback, listener, numberInIteration, attr2value);
     }
     else {
       TemplateImpl template = new TemplateImpl("", "");
@@ -425,12 +429,107 @@ class XmlZenCodingInterpreter {
         template.addVariableSegment(ATTRS);
       }
       template.addTextSegment(">");
-      template.addVariableSegment(TemplateImpl.END);
-      template.addTextSegment("</" + token.myKey + ">");
+      if (XmlZenCodingTemplate.isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(token.myKey)) {
+        template.addVariableSegment(TemplateImpl.END);
+        template.addTextSegment("</" + token.myKey + ">");
+      }
       template.setToReformat(true);
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
       return callback.startTemplate(template, predefinedValues, listener);
     }
+  }
+
+  private static boolean invokeExistingLiveTemplate(TemplateToken token,
+                                                    CustomTemplateCallback callback,
+                                                    TemplateInvokationListener listener,
+                                                    int numberInIteration,
+                                                    List<Pair<String, String>> attr2value) {
+    if (token.myTemplate != null) {
+      if (attr2value.size() > 0 || XmlZenCodingTemplate.isTrueXml(callback)) {
+        TemplateImpl modifiedTemplate = token.myTemplate.copy();
+        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback, true);
+        if (tag != null) {
+          for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+            Pair<String, String> pair = iterator.next();
+            if (tag.getAttribute(pair.first) != null) {
+              tag.setAttribute(pair.first, getValue(pair, numberInIteration));
+              iterator.remove();
+            }
+          }
+          if (XmlZenCodingTemplate.isTrueXml(callback)) {
+            closeUnclosingTags(tag);
+          }
+          String text = null;
+          if (!containsAttrsVar(modifiedTemplate) && attr2value.size() > 0) {
+            String textWithAttrs = addAttrsVar(modifiedTemplate, tag);
+            if (textWithAttrs != null) {
+              text = textWithAttrs;
+            }
+            else {
+              for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+                Pair<String, String> pair = iterator.next();
+                tag.setAttribute(pair.first, getValue(pair, numberInIteration));
+                iterator.remove();
+              }
+            }
+          }
+          if (text == null) {
+            text = tag.getContainingFile().getText();
+          }
+          modifiedTemplate.setString(text);
+          removeVariablesWhichHasNoSegment(modifiedTemplate);
+          Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+          return callback.startTemplate(modifiedTemplate, predefinedValues, listener);
+        }
+      }
+      return callback.startTemplate(token.myTemplate, null, listener);
+    }
+    else {
+      Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
+      return callback.startTemplate(token.myKey, predefinedValues, listener);
+    }
+  }
+
+  private static boolean isTagClosed(@NotNull XmlTag tag) {
+    ASTNode node = tag.getNode();
+    assert node != null;
+    final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(node);
+    final ASTNode endTagEnd = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(node);
+    return emptyTagEnd != null || endTagEnd != null;
+  }
+
+  @SuppressWarnings({"ConstantConditions"})
+  private static void closeUnclosingTags(@NotNull XmlTag root) {
+    final List<SmartPsiElementPointer<XmlTag>> tagToClose = new ArrayList<SmartPsiElementPointer<XmlTag>>();
+    Project project = root.getProject();
+    final SmartPointerManager manager = SmartPointerManager.getInstance(project);
+    root.accept(new XmlRecursiveElementVisitor() {
+      @Override
+      public void visitXmlTag(final XmlTag tag) {
+        if (!isTagClosed(tag)) {
+          tagToClose.add(manager.createLazyPointer(tag));
+        }
+      }
+    });
+    for (final SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
+      final XmlTag tag = pointer.getElement();
+      if (tag != null) {
+        final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
+        if (child != null) {
+          final int offset = child.getTextRange().getStartOffset();
+          VirtualFile file = tag.getContainingFile().getVirtualFile();
+          if (file != null) {
+            final Document document = FileDocumentManager.getInstance().getDocument(file);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              public void run() {
+                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+              }
+            });
+          }
+        }
+      }
+    }
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
   }
 
   private static void fail() {

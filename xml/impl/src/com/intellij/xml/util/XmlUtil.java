@@ -972,7 +972,7 @@ public class XmlUtil {
     }
     else {
       final XmlAttribute[] attributes = tag.getAttributes();
-      Collections.sort(list);
+      ContainerUtil.sort(list);
       Arrays.sort(attributes, new Comparator<XmlAttribute>() {
         public int compare(XmlAttribute attr1, XmlAttribute attr2) {
           return attr1.getName().compareTo(attr2.getName());

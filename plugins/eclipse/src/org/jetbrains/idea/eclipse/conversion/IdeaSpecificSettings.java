@@ -23,6 +23,7 @@ package org.jetbrains.idea.eclipse.conversion;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -53,7 +54,9 @@ import java.util.List;
 public class IdeaSpecificSettings {
   @NonNls private static final String RELATIVE_MODULE_SRC = "relative-module-src";
   @NonNls private static final String RELATIVE_MODULE_CLS = "relative-module-cls";
+  @NonNls private static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
   @NonNls private static final String PROJECT_RELATED = "project-related";
+
   @NonNls private static final String SRCROOT_ATTR = "srcroot";
   private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
 
@@ -84,7 +87,7 @@ public class IdeaSpecificSettings {
         readContentEntry((Element)o, model.addContentEntry(((Element)o).getAttributeValue(IdeaXml.URL_ATTR)));
       }
     } else {
-      final ContentEntry[] entries = model.getContentEntries();
+      final ContentEntry[] entries = model.getContentEntries();//todo
       if (entries.length > 0) {
         readContentEntry(root, entries[0]);
       }
@@ -100,8 +103,10 @@ public class IdeaSpecificSettings {
         replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
+        replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
         modifiableModel.commit();
-      } else { //try to replace everywhere
+      }
+      else {
         libraryByName = EclipseClasspathReader.findLibraryByName(model.getProject(), libName);
         if (libraryByName != null) {
           appendLibraryScope(model, libElement, libraryByName);
@@ -109,8 +114,10 @@ public class IdeaSpecificSettings {
         final Library[] libraries = model.getModuleLibraryTable().getLibraries();
         for (Library library : libraries) {
           final Library.ModifiableModel modifiableModel = library.getModifiableModel();
+          replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
           replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
           replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
+          replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
           modifiableModel.commit();
         }
       }
@@ -142,23 +149,6 @@ public class IdeaSpecificSettings {
     }
   }
 
-  public static void replaceModuleRelatedRoots(final Project project,
-                                               final Library.ModifiableModel modifiableModel, final Element libElement,
-                                               final OrderRootType orderRootType, final String relativeModuleName) {
-    final List<String> urls = new ArrayList<String>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
-    for (Object r : libElement.getChildren(relativeModuleName)) {
-      final String root = PathMacroManager.getInstance(project).expandPath(((Element)r).getAttributeValue(PROJECT_RELATED));
-      for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {
-        String url = iterator.next();
-        if (root.contains(VfsUtil.urlToPath(url))) {
-          iterator.remove();
-          modifiableModel.removeRoot(url, orderRootType);
-          modifiableModel.addRoot(root, orderRootType);
-          break;
-        }
-      }
-    }
-  }
 
   public static void readContentEntry(Element root, ContentEntry entry) {
     for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
@@ -253,9 +243,9 @@ public class IdeaSpecificSettings {
         if (((LibraryOrderEntry)entry).isModuleLevel()) {
           final String[] urls = entry.getUrls(OrderRootType.SOURCES);
           if (urls.length > 1) {
-            for (int i = 0; i < urls.length - 1; i++) {
+            for (String url : urls) {
               Element srcElement = new Element(SRCROOT_ATTR);
-              srcElement.setAttribute("url", urls[i]);
+              srcElement.setAttribute("url", url);
               element.addContent(srcElement);
             }
           }
@@ -271,9 +261,15 @@ public class IdeaSpecificSettings {
           for (String srcUrl : entry.getUrls(OrderRootType.SOURCES)) {
             appendModuleRelatedRoot(element, srcUrl, RELATIVE_MODULE_SRC, model);
           }
+
           for (String classesUrl : entry.getUrls(OrderRootType.CLASSES)) {
             appendModuleRelatedRoot(element, classesUrl, RELATIVE_MODULE_CLS, model);
           }
+
+          for (String javadocUrl : entry.getUrls(JavadocOrderRootType.getInstance())) {
+            appendModuleRelatedRoot(element, javadocUrl, RELATIVE_MODULE_JAVADOC, model);
+          }
+
           if (!element.getChildren().isEmpty()) {
             root.addContent(element);
             isModified = true;
@@ -292,22 +288,52 @@ public class IdeaSpecificSettings {
     return isModified;
   }
 
-  public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootMame, ModuleRootModel model) {
+  public static void replaceModuleRelatedRoots(final Project project,
+                                               final Library.ModifiableModel modifiableModel, final Element libElement,
+                                               final OrderRootType orderRootType, final String relativeModuleName) {
+    final List<String> urls = new ArrayList<String>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
+    for (Object r : libElement.getChildren(relativeModuleName)) {
+      final String root = PathMacroManager.getInstance(project).expandPath(((Element)r).getAttributeValue(PROJECT_RELATED));
+      for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {
+        String url = iterator.next();
+        if (root.contains(VfsUtil.urlToPath(url))) {
+          iterator.remove();
+          modifiableModel.removeRoot(url, orderRootType);
+          modifiableModel.addRoot(root, orderRootType);
+          break;
+        }
+      }
+    }
+  }
+
+  public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootName, ModuleRootModel model) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
     if (file != null) {
       if (file.getFileSystem() instanceof JarFileSystem) {
         file = JarFileSystem.getInstance().getVirtualFileForJar(file);
         assert file != null;
       }
-      final Module module = ModuleUtil.findModuleForFile(file, model.getModule().getProject());
-      if (module != null && module != model.getModule()) {
-        final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-        if (contentRoots.length > 0 && VfsUtil.isAncestor(contentRoots[0], file, false)) {
-          final Element clsElement = new Element(rootMame);
-          clsElement.setAttribute(PROJECT_RELATED, PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
-          element.addContent(clsElement);
-          return true;
+      final Project project = model.getModule().getProject();
+      final Module module = ModuleUtil.findModuleForFile(file, project);
+      if (module != null) {
+        return appendRelatedToModule(element, classesUrl, rootName, file, module);
+      } else if (ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) {
+        for (Module aModule : ModuleManager.getInstance(project).getModules()) {
+          if (appendRelatedToModule(element, classesUrl, rootName, file, aModule)) return true;
         }
+      }
+    }
+    return false;
+  }
+
+  private static boolean appendRelatedToModule(Element element, String classesUrl, String rootName, VirtualFile file, Module module) {
+    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    for (VirtualFile contentRoot : contentRoots) {
+      if (VfsUtil.isAncestor(contentRoot, file, false)) {
+        final Element clsElement = new Element(rootName);
+        clsElement.setAttribute(PROJECT_RELATED, PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));
+        element.addContent(clsElement);
+        return true;
       }
     }
     return false;

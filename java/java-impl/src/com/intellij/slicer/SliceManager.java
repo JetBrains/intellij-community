@@ -123,7 +123,8 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     final SliceToolwindowSettings sliceToolwindowSettings = SliceToolwindowSettings.getInstance(myProject);
     final ContentManager contentManager = dataFlowToThis ? myBackContentManager : myForthContentManager;
     final Content[] myContent = new Content[1];
-    final SlicePanel slicePanel = new SlicePanel(myProject, dataFlowToThis, rootNode, splitByLeafExpressions) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID);
+    final SlicePanel slicePanel = new SlicePanel(myProject, dataFlowToThis, rootNode, splitByLeafExpressions, toolWindow) {
       protected void close() {
         contentManager.removeContent(myContent[0], true);
       }
@@ -149,7 +150,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     contentManager.addContent(myContent[0]);
     contentManager.setSelectedContent(myContent[0]);
 
-    ToolWindowManager.getInstance(myProject).getToolWindow(dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID).activate(null);
+    toolWindow.activate(null);
   }
 
   public static String getElementDescription(String prefix, PsiElement element, String suffix) {

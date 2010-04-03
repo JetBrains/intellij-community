@@ -78,7 +78,7 @@ public class GroovyEnterHandler implements EnterHandlerDelegate {
       }
 
       iterator = highlighter.createIterator(editor.getCaretModel().getOffset());
-      while (mWS == iterator.getTokenType() && !iterator.atEnd()) {
+      while (!iterator.atEnd() && mWS == iterator.getTokenType()) {
         iterator.advance();
       }
       if (!iterator.atEnd() && mRCURLY == iterator.getTokenType()) {

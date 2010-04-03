@@ -93,6 +93,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
   @NonNls private static final String XML_NS_PREFIX = "xml";
 
+  private final int myHC = ourHC++;
+
+  @Override
+  public final int hashCode() {
+    return myHC;
+  }
+
   public XmlTagImpl() {
     this(XmlElementType.XML_TAG);
   }
@@ -122,26 +129,30 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
-    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlTag.class);
-    List<PsiReference> myRefs = new ArrayList<PsiReference>();
+    List<PsiReference> refs = new ArrayList<PsiReference>();
     final String prefix = getNamespacePrefix();
     if (endTagName != null) {
       if (prefix.length() > 0) {
-        myRefs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
-        myRefs.add(new SchemaPrefixReference(this, TextRange.from(endTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
+        refs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
+        refs.add(new SchemaPrefixReference(this, TextRange.from(endTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
       }
-      myRefs.add(TagNameReference.create(this, startTagName, true));
-      myRefs.add(TagNameReference.create(this, endTagName, false));
+      refs.add(TagNameReference.create(this, startTagName, true));
+      refs.add(TagNameReference.create(this, endTagName, false));
     }
     else {
       if (prefix.length() > 0) {
-        myRefs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
+        refs.add(new SchemaPrefixReference(this, TextRange.from(startTagName.getStartOffset() - this.getStartOffset(), prefix.length()), prefix));
       }
-      myRefs.add(TagNameReference.create(this, startTagName, true));
+      refs.add(TagNameReference.create(this, startTagName, true));
     }
-    final PsiReference[] result = myRefs.toArray(new PsiReference[myRefs.size() + referencesFromProviders.length]);
-    System.arraycopy(referencesFromProviders, 0, result, myRefs.size(), referencesFromProviders.length);
-    return result;
+
+    // ArrayList.addAll() makes a clone of the collection
+    //noinspection ManualArrayToCollectionCopy
+    for (PsiReference ref : ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlTag.class)) {
+      refs.add(ref);
+    }
+
+    return ContainerUtil.toArray(refs, new PsiReference[refs.size()]);
   }
 
   public XmlNSDescriptor getNSDescriptor(final String namespace, boolean strict) {
@@ -579,7 +590,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
       fillSubTags(result);
 
-      myTags = tags = result.toArray(new XmlTag[result.size()]);
+      final int s = result.size();
+      myTags = tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
     }
     return tags;
   }
@@ -610,7 +622,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         result.add(subTag);
       }
     }
-    return result.toArray(new XmlTag[result.size()]);
+    return ContainerUtil.toArray(result, new XmlTag[result.size()]);
   }
 
   public XmlTag findFirstSubTag(String name) {
@@ -863,7 +875,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     XmlTagValue tagValue = myValue;
     if (tagValue == null) {
       final PsiElement[] elements = getElements();
-      final List<PsiElement> bodyElements = new ArrayList<PsiElement>(elements.length);
+      final List<XmlTagChild> bodyElements = new ArrayList<XmlTagChild>(elements.length);
 
       boolean insideBody = false;
       for (final PsiElement element : elements) {
@@ -871,12 +883,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         if (insideBody) {
           if (treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
           if (!(element instanceof XmlTagChild)) continue;
-          bodyElements.add(element);
+          bodyElements.add((XmlTagChild)element);
         }
         else if (treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
       }
 
-      XmlTagChild[] tagChildren = bodyElements.toArray(new XmlTagChild[bodyElements.size()]);
+      XmlTagChild[] tagChildren = ContainerUtil.toArray(bodyElements, new XmlTagChild[bodyElements.size()]);
       myValue = tagValue = new XmlTagValueImpl(tagChildren, this);
     }
     return tagValue;
@@ -890,7 +902,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         return true;
       }
     }, this);
-    return elements.toArray(new PsiElement[elements.size()]);
+    return ContainerUtil.toArray(elements, new PsiElement[elements.size()]);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

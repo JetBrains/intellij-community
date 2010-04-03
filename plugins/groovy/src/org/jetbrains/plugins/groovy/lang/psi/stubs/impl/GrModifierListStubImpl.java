@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.impl;
 
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import gnu.trove.TObjectIntIterator;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 
 /**
@@ -40,41 +40,12 @@ public class GrModifierListStubImpl extends StubBase<GrModifierList> implements 
 
   public static int buildFlags(GrModifierList modifierList) {
     int flags = 0;
-    if (modifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      flags |= ModifierFlags.ABSTRACT_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.FINAL)) {
-      flags |= ModifierFlags.FINAL_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.NATIVE)) {
-      flags |= ModifierFlags.NATIVE_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-      flags |= ModifierFlags.STATIC_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-      flags |= ModifierFlags.SYNCHRONIZED_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.TRANSIENT)) {
-      flags |= ModifierFlags.TRANSIENT_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.VOLATILE)) {
-      flags |= ModifierFlags.VOLATILE_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-      flags |= ModifierFlags.PRIVATE_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.PROTECTED)) {
-      flags |= ModifierFlags.PROTECTED_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-      flags |= ModifierFlags.PUBLIC_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      flags |= ModifierFlags.PACKAGE_LOCAL_MASK;
-    }
-    if (modifierList.hasModifierProperty(PsiModifier.STRICTFP)) {
-      flags |= ModifierFlags.STRICTFP_MASK;
+    final TObjectIntIterator<String> iterator = GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.iterator();
+    while (iterator.hasNext()) {
+      iterator.advance();
+      if (modifierList.hasExplicitModifier(iterator.key())) {
+        flags |= iterator.value();
+      }
     }
     return flags;
   }

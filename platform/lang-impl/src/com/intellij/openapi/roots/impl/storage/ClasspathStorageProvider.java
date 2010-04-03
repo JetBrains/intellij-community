@@ -51,6 +51,8 @@ public interface ClasspathStorageProvider {
 
   ClasspathConverter createConverter(Module module);
 
+  String getContentRoot(ModifiableRootModel model);
+
   interface ClasspathConverter {
 
     FileSet getFileSet();

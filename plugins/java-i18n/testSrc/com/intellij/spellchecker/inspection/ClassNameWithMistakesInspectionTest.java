@@ -30,5 +30,6 @@ public class ClassNameWithMistakesInspectionTest extends JavaSpellcheckerInspect
     doTest("TestUpgade.java",SpellCheckerInspectionToolProvider.getInspectionTools());
   }
 
+  
 
 }

@@ -48,9 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
@@ -289,9 +286,13 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
       return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ProjectFileType.DOT_DEFAULT_EXTENSION;
     }
     else {
-      new File(myWizardContext.getProjectFileDirectory() + File.separator + ".idea").mkdirs();
       return myWizardContext.getProjectFileDirectory();
     }
+  }
+
+  @NotNull
+  public StorageScheme getStorageScheme() {
+    return myWizardContext.getProjectStorageFormat();
   }
 
   @Nullable

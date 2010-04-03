@@ -527,23 +527,20 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     final Content content = myUi.createContent(id, panel, id, icon, null);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
-    myUi.addListener(new ContentManagerAdapter() {
-      public void contentRemoved(ContentManagerEvent event) {
-        if (event.getContent() == content) {
-          myThreadDumpsCount -= 1;
-          if (myThreadDumpsCount == 0) {
-            myCurrentThreadDumpId = 1;
-          }
-          myUi.removeListener(this);
-        }
-      }
-    }, content);
     myUi.addContent(content);
     myThreadDumpsCount += 1;
     myCurrentThreadDumpId += 1;
     Disposer.register(this, new Disposable() {
       public void dispose() {
         myUi.removeContent(content, true);
+      }
+    });
+    Disposer.register(content, new Disposable() {
+      public void dispose() {
+        myThreadDumpsCount -= 1;
+        if (myThreadDumpsCount == 0) {
+          myCurrentThreadDumpId = 1;
+        }
       }
     });
     myUi.selectAndFocus(content, true, false);

@@ -33,6 +33,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
 
 public class IgnoreUnversionedAction extends AnAction {
+  public IgnoreUnversionedAction() {
+    super("Ignore...");
+  }
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);

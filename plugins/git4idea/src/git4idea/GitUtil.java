@@ -160,6 +160,22 @@ public class GitUtil {
   /**
    * Sort files by vcs root
    *
+   * @param files files to sort.
+   * @return the map from root to the files under the root
+   */
+  public static Map<VirtualFile, List<FilePath>> sortGitFilePathsByGitRoot(Collection<FilePath> files) {
+    try {
+      return sortFilePathsByGitRoot(files, true);
+    }
+    catch (VcsException e) {
+      throw new RuntimeException("Unexpected exception:", e);
+    }
+  }
+
+
+  /**
+   * Sort files by vcs root
+   *
    * @param files        files to sort.
    * @param ignoreNonGit if true, non-git files are ignored
    * @return the map from root to the files under the root
@@ -655,10 +671,9 @@ public class GitUtil {
   }
 
   public static void getLocalCommittedChanges(final Project project,
-                                                                   final VirtualFile root,
-                                                                   final Consumer<GitSimpleHandler> parametersSpecifier,
-                                                                   final Consumer<CommittedChangeList> consumer)
-    throws VcsException {
+                                              final VirtualFile root,
+                                              final Consumer<GitSimpleHandler> parametersSpecifier,
+                                              final Consumer<CommittedChangeList> consumer) throws VcsException {
     final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
 
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);

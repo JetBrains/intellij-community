@@ -582,6 +582,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private Editor doCreateEditor() {
     final EditorEx editor = createRealEditor();
+    editor.addEditorMouseListener(new EditorMouseAdapter() {
+      public void mouseReleased(final EditorMouseEvent e) {
+        final MouseEvent mouseEvent = e.getMouseEvent();
+        if (!mouseEvent.isPopupTrigger()) {
+          navigate(e);
+        }
+      }
+    });
+
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final MouseEvent mouseEvent = event.getMouseEvent();
@@ -641,15 +650,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
-
-    editor.addEditorMouseListener(new EditorMouseAdapter() {
-      public void mouseReleased(final EditorMouseEvent e) {
-        final MouseEvent mouseEvent = e.getMouseEvent();
-        if (!mouseEvent.isPopupTrigger()) {
-          navigate(e);
-        }
-      }
-    });
 
     final ConsoleViewImpl consoleView = this;
     editor.getContentComponent().addKeyListener(new KeyListener() {
@@ -1331,7 +1331,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * insert text to document
    * @param s inserted text
-   * @param offset relativly to all document text
+   * @param offset relatively to all document text
    */
   private void insertUserText(final String s, int offset) {
     final ConsoleViewImpl consoleView = this;
@@ -1356,21 +1356,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       int charCountToAdd;
 
-
+      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
       if (offset > info.endOffset) {
         startOffset = info.endOffset;
       }
       else if (offset < info.startOffset) {
-        startOffset = info.startOffset;
+        startOffset = Math.max(info.startOffset, deferredOffset);
       } else {
-        startOffset = offset;
+        startOffset = Math.max(offset, deferredOffset);
       }
+
+      consoleView.myDeferredUserInput.insert(startOffset - deferredOffset, s);
+
       charCountToAdd = s.length();
-
-      if (consoleView.myDeferredUserInput.length() < info.endOffset - info.startOffset) return; //user was quick
-
-      consoleView.myDeferredUserInput.insert(startOffset - info.startOffset, s);
-
       info.endOffset += charCountToAdd;
       consoleView.myContentSize += charCountToAdd;
     }
@@ -1410,7 +1408,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView.myDeferredUserInput.length() == 0) return;
       int charCountToReplace;
 
-      startOffset = getStartOffset(start, info);
+      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
+
+      startOffset = getStartOffset(start, info, deferredOffset);
       endOffset = getEndOffset(end, info);
 
       if (startOffset == -1 ||
@@ -1422,9 +1422,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       charCountToReplace = s.length() - endOffset + startOffset;
 
-      if (consoleView.myDeferredUserInput.length() < info.endOffset - info.startOffset) return; //user was quick
-
-      consoleView.myDeferredUserInput.replace(startOffset - info.startOffset, endOffset - info.startOffset, s);
+      consoleView.myDeferredUserInput.replace(startOffset - deferredOffset, endOffset - deferredOffset, s);
 
       info.endOffset += charCountToReplace;
       if (info.startOffset == info.endOffset) {
@@ -1458,17 +1456,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView.myDeferredUserInput.length() == 0) return;
       int charCountToDelete;
 
-      startOffset = getStartOffset(offset, info);
+      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
+      startOffset = getStartOffset(offset, info, deferredOffset);
       endOffset = getEndOffset(offset + length, info);
       if (startOffset == -1 ||
           endOffset == -1 ||
-          endOffset <= startOffset) {
+          endOffset <= startOffset ||
+          startOffset < deferredOffset) {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(offset);
         return;
       }
 
-      consoleView.myDeferredUserInput.delete(startOffset - info.startOffset, endOffset - info.startOffset);
+      consoleView.myDeferredUserInput.delete(startOffset - deferredOffset, endOffset - deferredOffset);
       charCountToDelete = endOffset - startOffset;
 
       info.endOffset -= charCountToDelete;
@@ -1485,12 +1485,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   //util methods for add, replace, delete methods
-  private static int getStartOffset(int offset, TokenInfo info) {
+  private static int getStartOffset(int offset, TokenInfo info, int deferredOffset) {
     int startOffset;
     if (offset >= info.startOffset && offset < info.endOffset) {
-      startOffset = offset;
+      startOffset = Math.max(offset, deferredOffset);
     } else if (offset < info.startOffset) {
-      startOffset = info.startOffset;
+      startOffset = Math.max(info.startOffset, deferredOffset);
     } else {
       startOffset = -1;
     }

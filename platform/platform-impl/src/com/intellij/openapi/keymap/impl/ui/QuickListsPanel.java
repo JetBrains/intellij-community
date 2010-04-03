@@ -26,9 +26,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
@@ -55,7 +55,7 @@ import java.util.List;
  * User: anna
  * Date: 13-Apr-2006
  */
-public class QuickListsPanel extends JPanel implements Configurable, MasterDetails {
+public class QuickListsPanel extends JPanel implements SearchableConfigurable, MasterDetails {
   private final DefaultListModel myQuickListsModel = new DefaultListModel();
   private JList myQuickListsList = new JList(myQuickListsModel);
   private final JPanel myRightPanel = new JPanel(new BorderLayout());
@@ -300,6 +300,14 @@ public class QuickListsPanel extends JPanel implements Configurable, MasterDetai
       lists[i] = (QuickList)myQuickListsModel.getElementAt(i);
     }
     return lists;
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   private static class MyQuickListCellRenderer extends DefaultListCellRenderer {

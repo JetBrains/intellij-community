@@ -29,6 +29,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   };
   private NameUtil.Matcher myMatcher;
   private final boolean myCaseSensitive;
+  private final int currentSetting;
 
   public CamelHumpMatcher(@NotNull final String prefix) {
     this(prefix, true);
@@ -36,11 +37,11 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   public CamelHumpMatcher(String prefix, boolean caseSensitive) {
     super(prefix);
+    currentSetting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
     myCaseSensitive = caseSensitive;
   }
 
   public boolean prefixMatches(@NotNull final String name) {
-    final int currentSetting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
     synchronized (ourPatternCache) {
       if (myMatcher == null) {
         if (ourLastCompletionCaseSetting != currentSetting) {

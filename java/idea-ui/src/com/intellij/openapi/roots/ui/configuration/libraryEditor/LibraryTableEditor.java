@@ -496,7 +496,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       final Library library = getSelectedLibrary();
       if (library != null) {
         myDescriptor.setTitle(getTitle());
-        myDescriptor.setTitle(getDescription());
+        myDescriptor.setDescription(getDescription());
         for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
           myDescriptor.putUserData(entry.getKey(), entry.getValue());
         }
@@ -673,6 +673,11 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
 
     protected OrderRootType getRootType() {
       return AnnotationOrderRootType.getInstance();
+    }
+
+    @Override
+    protected FileChooserDescriptor createDescriptor() {
+      return new FileChooserDescriptor(false, true, false, false, false, false);
     }
   }
 

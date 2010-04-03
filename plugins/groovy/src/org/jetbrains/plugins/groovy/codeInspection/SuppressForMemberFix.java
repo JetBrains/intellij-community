@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.codeInspection;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -24,7 +25,6 @@ import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -96,9 +96,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
   public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
     GrDocCommentOwner container = getContainer(element);
     assert container != null;
-    final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
-        .ensureFilesWritable(container.getContainingFile().getVirtualFile());
-    if (status.hasReadonlyFiles()) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
     final GrModifierList modifierList = (GrModifierList)((PsiModifierListOwner)container).getModifierList();
     if (modifierList != null) {
       addSuppressAnnotation(project, modifierList, myID);

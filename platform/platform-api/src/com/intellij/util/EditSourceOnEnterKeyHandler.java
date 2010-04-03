@@ -60,4 +60,15 @@ public class EditSourceOnEnterKeyHandler{
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
   }
 
+  public static void install(@Nullable final Runnable before, final JComponent component,
+                           @Nullable final Runnable whenPerformed) {
+    component.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        DataContext dataContext = DataManager.getInstance().getDataContext(component);
+        if (before != null) before.run();
+        OpenSourceUtil.openSourcesFrom(dataContext, true);
+        if (whenPerformed != null) whenPerformed.run();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
+  }
 }

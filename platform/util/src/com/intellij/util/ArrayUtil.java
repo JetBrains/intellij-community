@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
@@ -119,8 +120,7 @@ public class ArrayUtil {
   @NotNull
   public static String[] toStringArray(@NotNull Collection<String> collection) {
     if (collection.isEmpty()) return EMPTY_STRING_ARRAY;
-    //noinspection SSBasedInspection
-    return collection.toArray(new String[collection.size()]);
+    return ContainerUtil.toArray(collection, new String[collection.size()]);
   }
 
   @NotNull
@@ -194,11 +194,19 @@ public class ArrayUtil {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
+  public static <T> T[] append(@NotNull final T[] src,final T element, ArrayFactory<T> factory) {
+    int length=src.length;
+    T[] result= factory.create(length + 1);
+    System.arraycopy(src, 0, result, 0, length);
+    result[length] = element;
+    return result;
+  }
+
   @NotNull
   public static <T> T[] append(@NotNull T[] src, final T element, @NotNull Class<T> componentType) {
     int length=src.length;
     T[] result=(T[])Array.newInstance(componentType, length+ 1);
-    System.arraycopy(src,0,result,0,length);
+    System.arraycopy(src, 0, result, 0, length);
     result[length] = element;
     return result;
   }
@@ -216,8 +224,20 @@ public class ArrayUtil {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length-1);
-    System.arraycopy(src,0,result,0,idx);
-    System.arraycopy(src,idx+1,result,idx,length-idx-1);
+    System.arraycopy(src, 0, result, 0, idx);
+    System.arraycopy(src, idx+1, result, idx, length-idx-1);
+    return result;
+  }
+
+  @NotNull
+  public static <T> T[] remove(@NotNull final T[] src,int idx, ArrayFactory<T> factory) {
+    int length=src.length;
+    if (idx < 0 || idx >= length) {
+      throw new IllegalArgumentException("invalid index: " + idx);
+    }
+    T[] result=factory.create(length-1);
+    System.arraycopy(src, 0, result, 0, idx);
+    System.arraycopy(src, idx+1, result, idx, length-idx-1);
     return result;
   }
 
@@ -230,14 +250,22 @@ public class ArrayUtil {
   }
 
   @NotNull
+  public static <T> T[] remove(@NotNull final T[] src, T element, ArrayFactory<T> factory) {
+    final int idx = find(src, element);
+    if (idx == -1) return src;
+
+    return remove(src, idx, factory);
+  }
+
+  @NotNull
   public static int[] remove(@NotNull final int[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     int[] result = new int[src.length - 1];
-    System.arraycopy(src,0,result,0,idx);
-    System.arraycopy(src,idx+1,result,idx,length-idx-1);
+    System.arraycopy(src, 0, result, 0, idx);
+    System.arraycopy(src, idx+1, result, idx, length-idx-1);
     return result;
   }
 

@@ -15,21 +15,28 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -69,24 +76,56 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       return aClass;
     }
     final int endIndex = fqn.indexOf('#');
-    if (endIndex == -1) return null;
-    String className = fqn.substring(0, endIndex);
-    if (className == null) return null;
-    aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
-    if (aClass == null) return null;
-    String memberName = fqn.substring(endIndex + 1);
-    PsiField field = aClass.findFieldByName(memberName, false);
-    if (field != null) {
-      return field;
+    if (endIndex != -1) {
+      String className = fqn.substring(0, endIndex);
+      if (className != null) {
+        aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+        if (aClass != null) {
+          String memberName = fqn.substring(endIndex + 1);
+          PsiField field = aClass.findFieldByName(memberName, false);
+          if (field != null) {
+            return field;
+          }
+          PsiMethod[] methods = aClass.findMethodsByName(memberName, false);
+          if (methods.length != 0) {
+            return methods[0];
+          }
+        }
+      }
     }
-    PsiMethod[] methods = aClass.findMethodsByName(memberName, false);
-    if (methods.length == 0) return null;
-    return methods[0];
+
+    VirtualFile file = findFile(fqn, project);
+    if (file != null) {
+      return PsiManager.getInstance(project).findFile(file);
+    }
+    return null;
+  }
+
+  private static VirtualFile findFile(String fqn, Project project) {
+    List<LogicalRoot> lr = LogicalRootsManager.getLogicalRootsManager(project).getLogicalRoots();
+    for (LogicalRoot root : lr) {
+      VirtualFile vfr = root.getVirtualFile();
+      if (vfr == null) continue;
+      VirtualFile virtualFile = vfr.findFileByRelativePath(fqn);
+      if (virtualFile != null) return virtualFile;
+    }
+    for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+      VirtualFile rel = root.findFileByRelativePath(fqn);
+      if (rel != null) {
+        return rel;
+      }
+    }
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fqn);
+    if (file != null) return file;
+    PsiFile[] files = JavaPsiFacade.getInstance(project).getShortNamesCache().getFilesByName(fqn);
+    for (PsiFile psiFile : files) {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null) return virtualFile;
+    }
+    return null;
   }
 
   public void insertQualifiedName(String fqn, final PsiElement element, final Editor editor, final Project project) {
-    if (!(element instanceof PsiMember)) return;
-    PsiMember targetElement = (PsiMember) element;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = editor.getDocument();
 
@@ -98,10 +137,13 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     fqn = fqn.replace('#', '.');
     String toInsert;
     String suffix = "";
-    PsiElement elementToInsert = targetElement;
-    if (elementAtCaret != null && targetElement instanceof PsiMethod && PsiUtil.isInsideJavadocComment(elementAtCaret)) {
+
+    if (!(element instanceof PsiMember)) {
+      toInsert = fqn;
+    }
+    else if (elementAtCaret != null && element instanceof PsiMethod && PsiUtil.isInsideJavadocComment(elementAtCaret)) {
       // use fqn#methodName(ParamType)
-      PsiMethod method = (PsiMethod)targetElement;
+      PsiMethod method = (PsiMethod)element;
       PsiClass aClass = method.getContainingClass();
       String className = aClass == null ? "" : aClass.getQualifiedName();
       toInsert = className == null ? "" : className;
@@ -121,6 +163,8 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       toInsert = fqn;
     }
     else {
+      PsiMember targetElement = (PsiMember)element;
+
       toInsert = targetElement.getName();
       if (targetElement instanceof PsiMethod) {
         suffix = "()";
@@ -177,7 +221,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
     if (elementAtCaret != null && elementAtCaret.isValid()) {
       try {
-        shortenReference(elementAtCaret, targetElement);
+        shortenReference(elementAtCaret, element);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -192,7 +236,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     }
 
     int caretOffset = rangeMarker.getEndOffset();
-    if (elementToInsert instanceof PsiMethod && ((PsiMethod)elementToInsert).getParameterList().getParametersCount() != 0 && StringUtil.endsWithChar(suffix,')')) {
+    if (element instanceof PsiMethod && ((PsiMethod)element).getParameterList().getParametersCount() != 0 && StringUtil.endsWithChar(suffix,')')) {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);
@@ -240,7 +284,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     return PsiTreeUtil.getParentOfType(prevElement, PsiNewExpression.class) != null;
   }
 
-  private static void shortenReference(PsiElement element, PsiMember elementToInsert) throws IncorrectOperationException {
+  private static void shortenReference(PsiElement element, PsiElement elementToInsert) throws IncorrectOperationException {
     while (element.getParent() instanceof PsiJavaCodeReferenceElement) {
       element = element.getParent();
       if (element == null) return;
