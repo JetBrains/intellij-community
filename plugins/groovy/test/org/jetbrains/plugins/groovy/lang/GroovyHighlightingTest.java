@@ -226,4 +226,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testIndexPropertyAccess() throws Exception {
     doTest();
   }
+
+  public void testPropertyAndFieldDeclaration() throws Exception {
+    doTest();
+  }
 }
