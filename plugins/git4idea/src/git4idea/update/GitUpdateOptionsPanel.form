@@ -1,59 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="git4idea.update.GitUpdateOptionsPanel">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="true" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="332" height="82"/>
+      <xy x="20" y="20" width="342" height="138"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <component id="1d8b2" class="javax.swing.JLabel">
+      <vspacer id="d3b1e">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties>
-          <labelFor value="b73c5"/>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.type"/>
-        </properties>
-      </component>
-      <component id="a20d7" class="javax.swing.JCheckBox" binding="myStashChangesCheckBox">
-        <constraints>
-          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.stash"/>
-          <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.stash.tooltip"/>
-        </properties>
-      </component>
-      <grid id="f5eba" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      </vspacer>
+      <grid id="3ee0d" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-        <properties/>
-        <border type="none"/>
+        <properties>
+          <enabled value="false"/>
+          <toolTipText value=""/>
+        </properties>
+        <border type="etched" title-resource-bundle="git4idea/i18n/GitBundle" title-key="update.options.type">
+          <font/>
+          <title-color color="-16777216"/>
+        </border>
         <children>
-          <hspacer id="c2e96">
+          <component id="48ad6" class="javax.swing.JRadioButton" binding="myBranchDefaultRadioButton" default-binding="true">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </hspacer>
-          <component id="b73c5" class="javax.swing.JComboBox" binding="myTypeComboBox" default-binding="true">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.tooltip"/>
+              <selected value="true"/>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.default"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.default.tooltip"/>
+            </properties>
+          </component>
+          <component id="864a1" class="javax.swing.JRadioButton" binding="myForceRebaseRadioButton" default-binding="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.rebase"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.rebase.tooltip"/>
+            </properties>
+          </component>
+          <component id="dcccd" class="javax.swing.JRadioButton" binding="myForceMergeRadioButton" default-binding="true">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.merge"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.type.merge.tooltip"/>
             </properties>
           </component>
         </children>
       </grid>
-      <vspacer id="d3b1e">
+      <grid id="a6b25" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
-      </vspacer>
+        <properties/>
+        <border type="etched" title-resource-bundle="git4idea/i18n/GitBundle" title-key="update.options.save.before.update"/>
+        <children>
+          <component id="98593" class="javax.swing.JRadioButton" binding="myStashRadioButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.stash"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.stash.tooltip"/>
+            </properties>
+          </component>
+          <component id="d7fb3" class="javax.swing.JRadioButton" binding="myShelveRadioButton" default-binding="true">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.shelve"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.shelve.tooltip"/>
+            </properties>
+          </component>
+          <component id="4c529" class="javax.swing.JRadioButton" binding="myKeepRadioButton" default-binding="true">
+            <constraints>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.keep"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.keep.tooltip"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="myUpateTypeGroup">
+      <member id="48ad6"/>
+      <member id="864a1"/>
+      <member id="dcccd"/>
+    </group>
+    <group name="mySavePolicyGroup">
+      <member id="98593"/>
+      <member id="d7fb3"/>
+      <member id="4c529"/>
+    </group>
+  </buttonGroups>
 </form>

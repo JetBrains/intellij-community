@@ -16,7 +16,7 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.util.io.ExternalIntegerKeyDescriptor;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 
 /**
@@ -27,7 +27,7 @@ import com.intellij.util.io.KeyDescriptor;
  */
 public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedIndexExtension<Integer, V>{
   public final KeyDescriptor<Integer> getKeyDescriptor() {
-    return new ExternalIntegerKeyDescriptor();
+    return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
   public boolean dependsOnFileContent() {

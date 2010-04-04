@@ -122,12 +122,18 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       final String typeText = getTypeText(type);
       int lastDot = typeText.lastIndexOf('.');
       int idx = 0 < lastDot && lastDot < typeText.length() - 1 ? lastDot + 1 : 0;
-      char c = typeText.charAt(idx);
-      if (!Character.isLetter(c) || Character.isLowerCase(c) &&
-          !GroovyNamesUtil.isKeyword(typeText)) { //primitive type
+      if (typeText.length() == 0) {
         text.append("def ");
       }
-      text.append(typeText).append(" ");
+      else {
+        char c = typeText.charAt(idx);
+        if (!Character.isLetter(c) || Character.isLowerCase(c) && !GroovyNamesUtil.isKeyword(typeText)) { //primitive type
+          text.append("def ");
+        }
+        else {
+          text.append(typeText).append(" ");
+        }
+      }
     } else {
       text.append("def ");
     }

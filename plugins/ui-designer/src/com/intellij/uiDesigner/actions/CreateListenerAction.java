@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -226,7 +227,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         final PsiClass newClass = newClassRef.get();
         final SmartPsiElementPointer ptr = SmartPointerManager.getInstance(myClass.getProject()).createSmartPsiElementPointer(newClass);
         newClass.navigate(true);
-        SwingUtilities.invokeLater(new Runnable() {
+        IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
           public void run() {
             final PsiClass newClass = (PsiClass)ptr.getElement();
             final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());

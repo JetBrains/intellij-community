@@ -226,6 +226,13 @@ public class GitVcs extends AbstractVcs {
   }
 
   /**
+   * @return the vfs listener instance
+   */
+  public GitVFSListener getVFSListener() {
+    return myVFSListener;
+  }
+
+  /**
    * @return the command lock
    */
   public ReadWriteLock getCommandLock() {

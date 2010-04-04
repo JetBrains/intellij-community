@@ -598,6 +598,8 @@ public class ClsStubBuilder {
     private final int myIgnoreCount;
     private final int myParamCount;
     private final PsiParameterStubImpl[] myParamStubs;
+    private int myUsedParamSize = 0;
+    private int myUsedParamCount = 0;
 
     private AnnotationParamCollectingVisitor(final StubElement owner, final PsiModifierListStub modList, int ignoreCount, int paramCount,
                                              PsiParameterStubImpl[] paramStubs) {
@@ -609,10 +611,20 @@ public class ClsStubBuilder {
 
     @Override
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-      if (index >= myIgnoreCount && index < myIgnoreCount + myParamCount) {
-        PsiParameterStubImpl parameterStub = myParamStubs[index - myIgnoreCount];
+      if (index >= myIgnoreCount) {
+        // long and double variables increase the index by 2, not by 1
+        int paramIndex = (index - myIgnoreCount == myUsedParamSize) ? myUsedParamCount : index - myIgnoreCount;
+        if (paramIndex >= myParamCount) return;
+        PsiParameterStubImpl parameterStub = myParamStubs[paramIndex];
         if (parameterStub != null) {
           parameterStub.setName(name);
+        }
+        myUsedParamCount = paramIndex+1;
+        if ("D".equals(desc) || "J".equals(desc)) {
+          myUsedParamSize += 2;
+        }
+        else {
+          myUsedParamSize++;
         }
       }
     }

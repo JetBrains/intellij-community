@@ -104,6 +104,16 @@ public class RollbackWorker {
     }
 
     public void run() {
+      ChangesUtil.markInternalOperation(myChanges, true);
+      try {
+        doRun();
+      }
+      finally {
+        ChangesUtil.markInternalOperation(myChanges, false);        
+      }
+    }
+
+    private void doRun() {
       myIndicator = ProgressManager.getInstance().getProgressIndicator();
 
       final List<Change> changesToRefresh = new ArrayList<Change>();

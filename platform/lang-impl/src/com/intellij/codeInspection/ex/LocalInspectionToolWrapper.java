@@ -63,12 +63,17 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
     final PsiElementVisitor customVisitor = myTool.buildVisitor(holder, isOnTheFly);
     LOG.assertTrue(!(customVisitor instanceof PsiRecursiveElementVisitor), "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive");
 
+    LocalInspectionToolSession session = new LocalInspectionToolSession(file, 0, file.getTextLength());
+    myTool.inspectionStarted(session);
+
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override public void visitElement(PsiElement element) {
         element.accept(customVisitor);
         super.visitElement(element);
       }
     });
+
+    myTool.inspectionFinished(session);
 
     addProblemDescriptors(holder.getResults(), filterSuppressed);
   }

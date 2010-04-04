@@ -40,7 +40,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -572,17 +571,16 @@ public class PluginManager {
   private static Collection<URL> getClassLoaderUrls() {
     final ClassLoader classLoader = PluginManager.class.getClassLoader();
     final Class<? extends ClassLoader> aClass = classLoader.getClass();
-    if (aClass.getName().equals(UrlClassLoader.class.getName())) {
-      try {
-        return (List<URL>)aClass.getDeclaredMethod("getUrls").invoke(classLoader);
-      }
-      catch (IllegalAccessException e) {
-      }
-      catch (InvocationTargetException e) {
-      }
-      catch (NoSuchMethodException e) {
-      }
+    try {
+      return (List<URL>)aClass.getMethod("getUrls").invoke(classLoader);
     }
+    catch (IllegalAccessException e) {
+    }
+    catch (InvocationTargetException e) {
+    }
+    catch (NoSuchMethodException e) {
+    }
+
     if (classLoader instanceof URLClassLoader) {
       return Arrays.asList(((URLClassLoader)classLoader).getURLs());
     }

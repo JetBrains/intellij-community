@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -41,6 +42,8 @@ import java.util.*;
  * @author max
  */
 public class ChangesUtil {
+  private static final Key<Boolean> INTERNAL_OPERATION_KEY = Key.<Boolean>create("internal vcs operation");
+
   private ChangesUtil() {}
 
   @NotNull
@@ -311,6 +314,24 @@ public class ChangesUtil {
       }
     }
     return false;
+  }
+
+  public static void markInternalOperation(Iterable<Change> changes, boolean set) {
+    for (Change change : changes) {
+      VirtualFile file = change.getVirtualFile();
+      if (file != null) {
+        file.putUserData(INTERNAL_OPERATION_KEY, set);
+      }
+    }
+  }
+
+  public static void markInternalOperation(VirtualFile file, boolean set) {
+    file.putUserData(INTERNAL_OPERATION_KEY, set);
+  }
+
+  public static boolean isInternalOperation(VirtualFile file) {
+    Boolean data = file.getUserData(INTERNAL_OPERATION_KEY);
+    return data != null && data.booleanValue();   
   }
 
   public static String getDefaultChangeListName() {

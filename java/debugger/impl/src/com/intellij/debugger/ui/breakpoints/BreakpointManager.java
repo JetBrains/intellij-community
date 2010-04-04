@@ -828,8 +828,10 @@ public class BreakpointManager implements JDOMExternalizable {
   public void disableBreakpoints(final DebugProcessImpl debugProcess) {
     final List<Breakpoint> breakpoints = getBreakpoints();
     if (breakpoints.size() > 0) {
+      final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
       for (Breakpoint breakpoint : breakpoints) {
-        debugProcess.getRequestsManager().deleteRequest(breakpoint);
+        breakpoint.markVerified(requestManager.isVerified(breakpoint));
+        requestManager.deleteRequest(breakpoint);
       }
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
@@ -843,6 +845,7 @@ public class BreakpointManager implements JDOMExternalizable {
     final List<Breakpoint> breakpoints = getBreakpoints();
     if (breakpoints.size() > 0) {
       for (Breakpoint breakpoint : breakpoints) {
+        breakpoint.markVerified(false); // clean cached state
         breakpoint.createRequest(debugProcess);
       }
       SwingUtilities.invokeLater(new Runnable() {

@@ -81,6 +81,10 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   public ApplyPatchStatus execute() {
+    return execute(true);
+  }
+
+  public ApplyPatchStatus execute(boolean showSuccessNotification) {
     myRemainingPatches.addAll(myPatches);
 
     final ApplyPatchStatus status = ApplicationManager.getApplication().runWriteAction(new Computable<ApplyPatchStatus>() {
@@ -94,7 +98,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
         return refStatus.get();
       }
     });
-    showApplyStatus(myProject, status);
+    if(showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
+      showApplyStatus(myProject, status);
+    }
     refreshFiles();
     return status;
   }
@@ -144,16 +150,29 @@ public class PatchApplier<BinaryType extends FilePatch> {
               return;
             }
 
-            final ApplyPatchStatus status = actualApply(myVerifier);
+            try {
+              markInternalOperation(textPatches, true);
 
-            if (status != null) {
-              refStatus.set(status);
+              final ApplyPatchStatus status = actualApply(myVerifier);
+
+              if (status != null) {
+                refStatus.set(status);
+              }
+            }
+            finally {
+              markInternalOperation(textPatches, false);
             }
           } // end of Command run
         }, VcsBundle.message("patch.apply.command"), null);
         return refStatus.get();
       }
     });
+  }
+
+  private static void markInternalOperation(List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches, boolean set) {
+    for (Pair<VirtualFile, ApplyTextFilePatch> patch : textPatches) {
+      ChangesUtil.markInternalOperation(patch.getFirst(), set);
+    }
   }
 
   protected void refreshFiles() {
@@ -201,7 +220,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
         final List<FilePatch> appliedPatches = myCustomForBinaries.getAppliedPatches();
         moveForCustomBinaries(binaryPatches, appliedPatches);
-        
+
         status = ApplyPatchStatus.and(status, patchStatus);
         myRemainingPatches.removeAll(appliedPatches);
       }

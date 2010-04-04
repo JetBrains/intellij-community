@@ -108,6 +108,8 @@
 
     <refactoring.elementListenerProvider implementation="com.intellij.uiDesigner.palette.PaletteRefactoringListenerProvider"/>
     <paletteItemProvider implementation="com.intellij.uiDesigner.palette.UIDesignerPaletteProvider"/>
+
+    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.uiDesigner.binding.GeneratedCodeFoldingBuilder"/>
   </extensions>
 
   <project-components>
@@ -122,10 +124,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.uiDesigner.clientProperties.ClientPropertiesManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.binding.GeneratedCodeFoldingPassFactory</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>

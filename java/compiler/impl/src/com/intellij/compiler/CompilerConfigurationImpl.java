@@ -20,9 +20,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ModuleListener;
@@ -47,9 +50,9 @@ import java.util.*;
 @State(
   name = "CompilerConfiguration",
   storages = {
-    @Storage(id = "default", file = "$PROJECT_FILE$")
-   ,@Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
-    }
+    @Storage(id = "default", file = "$PROJECT_FILE$"),
+    @Storage(id = "dir", file = "$PROJECT_CONFIG_DIR$/compiler.xml", scheme = StorageScheme.DIRECTORY_BASED)
+  }
 )
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
@@ -231,11 +234,23 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       }
 
       try {
-        CompilerAPICompiler inprocessJavaCompiler = new CompilerAPICompiler(myProject);
-        myRegisteredCompilers.add(inprocessJavaCompiler);
+        CompilerAPICompiler inProcessJavaCompiler = new CompilerAPICompiler(myProject);
+        myRegisteredCompilers.add(inProcessJavaCompiler);
       }
       catch (NoClassDefFoundError e) {
         // wrong JDK
+      }
+
+      final BackendCompiler[] compilers = Extensions.getExtensions(BackendCompiler.EP_NAME, myProject);
+      final Set<FileType> types = new HashSet<FileType>();
+      for (BackendCompiler compiler : compilers) {
+        myRegisteredCompilers.add(compiler);
+        types.addAll(compiler.getCompilableFileTypes());
+      }
+
+      final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      for (FileType type : types) {
+        compilerManager.addCompilableFileType(type);
       }
     }
 
