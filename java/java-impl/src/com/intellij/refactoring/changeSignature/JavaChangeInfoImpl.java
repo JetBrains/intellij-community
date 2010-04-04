@@ -20,6 +20,8 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -30,9 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
-class ChangeInfoImpl implements ChangeInfo {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ChangeInfoImpl");
+class JavaChangeInfoImpl implements JavaChangeInfo {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
 
   final String newVisibility;
   private PsiMethod method;
@@ -62,21 +65,32 @@ class ChangeInfoImpl implements ChangeInfo {
   PsiType newTypeElement;
   final PsiExpression[] defaultValues;
 
+  final boolean isGenerateDelegate;
+  final Set<PsiMethod> propagateParametersMethods;
+  final Set<PsiMethod> propagateExceptionsMethods;
+
   /**
    * @param newExceptions null if not changed
    */
-  public ChangeInfoImpl(@Modifier String newVisibility,
+  public JavaChangeInfoImpl(@Modifier String newVisibility,
                     PsiMethod method,
                     String newName,
                     CanonicalTypes.Type newType,
                     @NotNull ParameterInfoImpl[] newParms,
-                    ThrownExceptionInfo[] newExceptions) {
+                    ThrownExceptionInfo[] newExceptions,
+                    boolean generateDelegate,
+                    Set<PsiMethod> propagateParametersMethods,
+                    Set<PsiMethod> propagateExceptionsMethods) {
     this.newVisibility = newVisibility;
     this.method = method;
     this.newName = newName;
     newReturnType = newType;
     this.newParms = newParms;
     wasVararg = method.isVarArgs();
+
+    this.isGenerateDelegate =generateDelegate;
+    this.propagateExceptionsMethods=propagateExceptionsMethods;
+    this.propagateParametersMethods=propagateParametersMethods;
 
     oldName = method.getName();
     final PsiManager manager = method.getManager();
@@ -178,8 +192,12 @@ class ChangeInfoImpl implements ChangeInfo {
   }
 
   @NotNull
-  public ParameterInfo[] getNewParameters() {
+  public JavaParameterInfo[] getNewParameters() {
     return newParms;
+  }
+
+  public String getNewVisibility() {
+    return newVisibility;
   }
 
   public boolean isParameterSetOrOrderChanged() {
@@ -240,6 +258,10 @@ class ChangeInfoImpl implements ChangeInfo {
     return method;
   }
 
+  public CanonicalTypes.Type getNewReturnType() {
+    return newReturnType;
+  }
+
   public void updateMethod(PsiMethod method) {
     this.method = method;
   }
@@ -258,5 +280,45 @@ class ChangeInfoImpl implements ChangeInfo {
   public PsiExpression getValue(int i, PsiCallExpression expr) throws IncorrectOperationException {
     if (defaultValues[i] != null) return defaultValues[i];
     return newParms[i].getValue(expr);
+  }
+
+  public boolean isVisibilityChanged() {
+    return isVisibilityChanged;
+  }
+
+  public boolean isNameChanged() {
+    return isNameChanged;
+  }
+
+  public boolean isReturnTypeChanged() {
+    return isReturnTypeChanged;
+  }
+
+  public String getNewName() {
+    return newName;
+  }
+
+  public Language getLanguage() {
+    return StdLanguages.JAVA;
+  }
+
+  public boolean isExceptionSetChanged() {
+    return isExceptionSetChanged;
+  }
+
+  public boolean isExceptionSetOrOrderChanged() {
+    return isExceptionSetOrOrderChanged;
+  }
+
+  public boolean isParameterNamesChanged() {
+    return isParameterNamesChanged;
+  }
+
+  public boolean isParameterTypesChanged() {
+    return isParameterTypesChanged;
+  }
+
+  public boolean isGenerateDelegate() {
+    return isGenerateDelegate;
   }
 }

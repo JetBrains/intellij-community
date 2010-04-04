@@ -210,6 +210,8 @@
   <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate"/>
   <extensionPoint name="refactoring.extractIncludeHandler"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="refactoring.changeSignatureUsageProcessor"
+                  interface="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor"/>
 
   <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider"/>
 

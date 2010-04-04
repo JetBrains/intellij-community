@@ -16,6 +16,8 @@
 
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.lang.Language;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,4 +36,20 @@ public interface ChangeInfo {
   ParameterInfo[] getNewParameters();
 
   boolean isParameterSetOrOrderChanged();
+
+  boolean isParameterTypesChanged();
+
+  boolean isParameterNamesChanged();
+
+  boolean isGenerateDelegate();
+
+  boolean isNameChanged();
+  
+  PsiElement getMethod();
+
+  boolean isReturnTypeChanged();
+
+  String getNewName();
+
+  Language getLanguage();
 }

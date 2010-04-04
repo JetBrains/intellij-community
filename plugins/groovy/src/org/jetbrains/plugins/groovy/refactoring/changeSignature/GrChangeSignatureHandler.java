@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -23,7 +22,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -40,7 +41,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
  * @author Maxim.Medvedev
  */
 public class GrChangeSignatureHandler implements ChangeSignatureHandler {
-  public static final String REFACTORING_NAME = GroovyRefactoringBundle.message("changeSignature.refactoring.name");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -81,8 +81,6 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
-    final PsiClass containingClass = method.getContainingClass();
-    final PsiReference refExpr = editor != null ? TargetElementUtil.findReference(editor) : null;
     if (!(method instanceof GrMethod)) return; //todo
     final GrChangeSignatureDialog dialog = new GrChangeSignatureDialog(project, (GrMethod)method);
     dialog.show();

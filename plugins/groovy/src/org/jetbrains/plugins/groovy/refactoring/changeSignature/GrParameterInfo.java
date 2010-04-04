@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCodeFragment;
-import com.intellij.refactoring.changeSignature.ParameterInfo;
+import com.intellij.psi.*;
+import com.intellij.refactoring.changeSignature.JavaParameterInfo;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -28,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 /**
  * @author Maxim.Medvedev
  */
-public class GrParameterInfo implements ParameterInfo {
+public class GrParameterInfo implements JavaParameterInfo {
   private GroovyCodeFragment myName;
   private GroovyCodeFragment myDefaultValue;
   private PsiTypeCodeFragment myType;
@@ -91,4 +90,18 @@ public class GrParameterInfo implements ParameterInfo {
   public String getDefaultValue() {
     return myDefaultValue.getText().trim();
   }
+
+  @Nullable
+  public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
+    try {
+      return myType.getType();
+    }
+    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+      return null;
+    }
+    catch (PsiTypeCodeFragment.NoTypeException e) {
+      return null;
+    }
+  }
+
 }

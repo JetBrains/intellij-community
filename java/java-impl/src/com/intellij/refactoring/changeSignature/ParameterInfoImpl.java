@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParameterInfoImpl implements ParameterInfo {
+public class ParameterInfoImpl implements JavaParameterInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterInfoImpl");
   public final int oldParameterIndex;
   boolean useAnySingleVariable;
