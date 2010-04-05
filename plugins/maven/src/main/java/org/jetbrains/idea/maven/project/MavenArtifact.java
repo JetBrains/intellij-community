@@ -102,8 +102,6 @@ public class MavenArtifact implements Serializable {
 
     myResolved = true;
     myStubbed = false;
-
-    myTrail = new ArrayList<String>();
   }
 
   private String getExtension(Artifact artifact) {
