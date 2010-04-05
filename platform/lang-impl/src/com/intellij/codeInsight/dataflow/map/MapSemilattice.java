@@ -12,12 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.dataflow;
+package com.intellij.codeInsight.dataflow.map;
 
-import java.util.ArrayList;
+import com.intellij.codeInsight.dataflow.Semilattice;
 
-public interface Semilattice<E> {
-  E join(ArrayList<E> ins);
-
-  boolean eq(E e1, E e2);
+public interface MapSemilattice<E> extends Semilattice<DFAMap<E>>{
+  // Invariant: join can return unmodified ins(0) or empty DFAMap
+  // DfaInstance must create new one before modifying
 }
