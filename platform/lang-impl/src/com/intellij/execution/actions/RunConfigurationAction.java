@@ -63,7 +63,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
     }
 
     try {
-      if (project == null || project.isDisposed()) {
+      if (project == null || project.isDisposed() || !project.isInitialized()) {
         //if (ProjectManager.getInstance().getOpenProjects().length > 0) {
         //  // do nothing if frame is not active
         //  return;
