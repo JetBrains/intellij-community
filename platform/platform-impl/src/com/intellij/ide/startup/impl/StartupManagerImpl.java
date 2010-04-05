@@ -98,7 +98,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void runStartupActivities() {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        assert !HeavyProcessLatch.INSTANCE.isRunning();
         HeavyProcessLatch.INSTANCE.processStarted();
         try {
           runActivities(myPreStartupActivities);

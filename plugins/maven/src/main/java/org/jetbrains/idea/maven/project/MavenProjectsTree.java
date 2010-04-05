@@ -1024,6 +1024,7 @@ public class MavenProjectsTree {
         process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
         embedder.resolvePlugin(each, nativeMavenProject, false);
       }
+      mavenProject.resetCache();
       firePluginsResolved(mavenProject);
     }
     finally {

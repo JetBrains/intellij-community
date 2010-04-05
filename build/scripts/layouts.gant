@@ -34,6 +34,7 @@ private List platformImplementationModules() {
           "smRunner",
           "xdebugger-impl",
           "testFramework",
+          "tests_bootstrap",
           "xml",
           "lvcs-impl",
           "images",
