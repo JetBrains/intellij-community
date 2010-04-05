@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,16 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.actions.MavenAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
-public abstract class MavenProjectsManagerAction extends MavenAction {
+public class DownloadActionGroup extends DefaultActionGroup {
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    perform(MavenActionUtil.getProjectsManager(e));
+  public void update(AnActionEvent e) {
+    super.update(e);
+    if (MavenActionUtil.getProject(e.getDataContext()) == null) return;
+    e.getPresentation().setEnabled(MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject());
   }
-
-  @Override
-  protected boolean isAvailable(AnActionEvent e) {
-    return super.isAvailable(e) && MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject();
-  }
-
-  protected abstract void perform(MavenProjectsManager manager);
 }
