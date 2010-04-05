@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
@@ -14,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
  * Represents a class declaration in source.
  */
 public interface PyClass extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyClassStub>, ScopeOwner {
+  @Nullable
+  ASTNode getNameNode();
+
   @NotNull
   PyStatementList getStatementList();
 

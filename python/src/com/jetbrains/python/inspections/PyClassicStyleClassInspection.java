@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.TransformClassicClassQuickFix;
@@ -56,16 +57,16 @@ public class PyClassicStyleClassInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyClass(PyClass node) {
-      if (!node.isNewStyleClass()) {
+      final ASTNode nameNode = node.getNameNode();
+      if (!node.isNewStyleClass() && nameNode != null) {
         PyExpression[] superClassExpressions = node.getSuperClassExpressions();
         if (superClassExpressions.length == 0) {
-          registerProblem(node, "Old-style class", new TransformClassicClassQuickFix());
+          registerProblem(nameNode.getPsi(), "Old-style class", new TransformClassicClassQuickFix());
         } else {
-          registerProblem(node, "Old-style class, because all classes from whom it inherited are old-style",
+          registerProblem(nameNode.getPsi(), "Old-style class, because all classes from whom it inherited are old-style",
                           new TransformClassicClassQuickFix());
         }
       }
     }
-
   }
 }
