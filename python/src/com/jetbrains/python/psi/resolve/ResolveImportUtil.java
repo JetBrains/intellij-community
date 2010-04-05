@@ -539,7 +539,7 @@ public class ResolveImportUtil {
       PsiElement module = root.isDirectory() ? psimgr.findDirectory(root) : psimgr.findFile(root);
       for (String component : qualifiedName.getComponents()) {
         if (component == null) {
-          break;
+          return true;
         }
         module = resolveChild(module, component, foothold_file, false); // only files, we want a module
       }
