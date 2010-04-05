@@ -122,21 +122,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
     for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       supports.put(support.getId(), support);
     }
-    myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<XmlTagInjection>() {
-      public XmlTagInjection create() {
-        return new XmlTagInjection();
-      }
-    }));
-    myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<XmlAttributeInjection>() {
-      public XmlAttributeInjection create() {
-        return new XmlAttributeInjection();
-      }
-    }));
-    myInjections.get(LanguageInjectionSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<MethodParameterInjection>() {
-      public MethodParameterInjection create() {
-        return new MethodParameterInjection();
-      }
-    }));
+    loadStateOld(element, supports.get(LanguageInjectionSupport.XML_SUPPORT_ID), supports.get(LanguageInjectionSupport.JAVA_SUPPORT_ID));
     for (Element child : (List<Element>)element.getChildren("injection")){
       final String key = child.getAttributeValue("injector-id");
       final LanguageInjectionSupport support = supports.get(key);
@@ -160,6 +146,31 @@ public final class Configuration implements PersistentStateComponent<Element> {
           injection.initializePlaces(true);
         }
       }
+    }
+  }
+
+  private void loadStateOld(Element element, final LanguageInjectionSupport xmlSupport, final LanguageInjectionSupport javaSupport) {
+    if (xmlSupport != null) {
+      final Element xmlTagMarker = new Element("XmlTagInjection");
+      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<BaseInjection>() {
+        public BaseInjection create() {
+          return xmlSupport.createInjection(xmlTagMarker);
+        }
+      }));
+      final Element xmlAttributeMarker = new Element("XmlAttributeInjection");
+      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<BaseInjection>() {
+        public BaseInjection create() {
+          return xmlSupport.createInjection(xmlAttributeMarker);
+        }
+      }));
+    }
+    if (javaSupport != null) {
+      final Element javaMethodMarker = new Element("MethodParameterInjection");
+      myInjections.get(LanguageInjectionSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<BaseInjection>() {
+        public BaseInjection create() {
+          return javaSupport.createInjection(javaMethodMarker);
+        }
+      }));
     }
   }
 

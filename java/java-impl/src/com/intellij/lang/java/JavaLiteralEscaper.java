@@ -31,4 +31,12 @@ public class JavaLiteralEscaper implements LiteralEscaper {
     }
     return originalText;
   }
+
+  public String escapeText(String originalText) {
+    return StringUtil.escapeStringCharacters(originalText);
+  }
+
+  public String unescapeText(String originalText) {
+    return StringUtil.unescapeStringCharacters(originalText);
+  }
 }

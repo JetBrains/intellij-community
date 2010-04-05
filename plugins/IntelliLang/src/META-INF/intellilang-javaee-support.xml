@@ -4,6 +4,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.inject.config.JspSupportProxy"
-                        serviceImplementation="org.intellij.plugins.intelliLang.inject.config.JspSupportProxy$Impl"/>
+                        serviceImplementation="org.intellij.plugins.intelliLang.inject.config.JspSupportProxyImpl"/>
   </extensions>
 </idea-plugin>

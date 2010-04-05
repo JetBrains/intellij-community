@@ -18,7 +18,6 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
@@ -27,9 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
-import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
-import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
-import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,86 +66,6 @@ public class PatternBasedInjectionHelper {
   //  }
   //  return StandardPatterns.or(list.toArray(new ElementPattern[list.size()]));
   //}
-
-  public static List<String> getPatternString(final MethodParameterInjection injection) {
-    final ArrayList<String> list = new ArrayList<String>();
-    final String className = injection.getClassName();
-    for (MethodParameterInjection.MethodInfo info : injection.getMethodInfos()) {
-      final boolean[] paramFlags = info.getParamFlags();
-      final int paramFlagsLength = paramFlags.length;
-      final String methodName = info.getMethodName();
-      final String typesString = getParameterTypesString(info.getMethodSignature());
-      if (info.isReturnFlag()) {
-        list.add(getPatternStringForJavaPlace(methodName, typesString, -1, className));
-      }
-      for (int i = 0; i < paramFlagsLength; i++) {
-        if (paramFlags[i]) {
-          list.add(getPatternStringForJavaPlace(methodName, typesString, i, className));
-        }
-      }
-    }
-    return list;
-  }
-
-  public static String getParameterTypesString(final String signature) {
-    @NonNls final StringBuilder sb = new StringBuilder();
-    final StringTokenizer st = new StringTokenizer(signature, "(,)");
-    //noinspection ForLoopThatDoesntUseLoopVariable
-    for (int i = 0; st.hasMoreTokens(); i++) {
-      final String token = st.nextToken().trim();
-      if (i > 1) sb.append(", ");
-      final int idx;
-      if (i == 0) {
-        // nothing
-      }
-      else {
-        sb.append('\"');
-        if ((idx = token.indexOf(' ')) > -1) {
-          sb.append(token.substring(0, idx));
-        }
-        else {
-          sb.append(token);
-        }
-        sb.append('\"');
-      }
-    }
-    return sb.toString();
-  }
-
-  public static String getPatternStringForJavaPlace(final String methodName, final String parametersStrings, final int parameterIndex, final String className) {
-    final StringBuilder sb = new StringBuilder();
-    if (parameterIndex >= 0) {
-      sb.append("psiParameter().ofMethod(").append(parameterIndex).append(", ");
-    }
-    sb.append("psiMethod().withName(\"").append(methodName)
-      .append("\").withParameters(").append(parametersStrings)
-      .append(").definedInClass(\"").append(className).append("\")");
-    if (parameterIndex >= 0) {
-      sb.append(")");
-    }
-    return sb.toString();
-  }
-
-  public static String getPatternString(final XmlAttributeInjection injection) {
-    final String name = injection.getAttributeName();
-    final String namespace = injection.getAttributeNamespace();
-    final StringBuilder result = new StringBuilder("xmlAttribute()");
-    if (StringUtil.isNotEmpty(name)) result.append(".withLocalName(string().matches(\"").append(name).append("\"))");
-    if (StringUtil.isNotEmpty(namespace)) result.append(".withNamespace(string().matches(\"").append(namespace).append("\"))");
-    if (StringUtil.isNotEmpty(injection.getTagName()) || StringUtil.isNotEmpty(injection.getTagNamespace())) {
-      result.append(".inside(").append(getPatternString((AbstractTagInjection)injection)).append(")");
-    }
-    return result.toString();
-  }
-
-  public static String getPatternString(final AbstractTagInjection injection) {
-    final String name = injection.getTagName();
-    final String namespace = injection.getTagNamespace();
-    final StringBuilder result = new StringBuilder("xmlTag()");
-    if (StringUtil.isNotEmpty(name)) result.append(".withLocalName(string().matches(\"").append(name).append("\"))");
-    if (StringUtil.isNotEmpty(namespace)) result.append(".withNamespace(string().matches(\"").append(namespace).append("\"))");
-    return result.toString();
-  }
 
   @Nullable
   public static ElementPattern<PsiElement> createElementPattern(final String text, final String displayName, final String supportId) {
