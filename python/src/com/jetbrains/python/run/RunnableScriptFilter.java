@@ -6,7 +6,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Filters out Ruby scripts for which it doesn't make sense to run the standard Ruby configuration,
+ * Filters out Python scripts for which it doesn't make sense to run the standard Python configuration,
  * and which are (possibly) run by other configurations instead.
  *
  * @author yole

@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
@@ -18,13 +19,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
-import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+
+import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestType;
 
 /**
  * @author Leonid Shalupov
@@ -151,6 +153,15 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
 
   public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
     RunnerAndConfigurationSettings settings;
+
+    Module module = location.getModule();
+    if (module != null) {
+      for (RunnableUnitTestFilter f : Extensions.getExtensions(RunnableUnitTestFilter.EP_NAME)) {
+        if (f.isRunnableUnitTest(location.getPsiElement().getContainingFile(), module)) {
+          return null;
+        }
+      }
+    }
 
     settings = createConfigurationFromFolder(location);
     if (settings != null) return settings;
