@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.*;
 
 import java.io.File;
@@ -104,6 +105,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return findFacet(model, myFacetType, myDefaultFacetName);
   }
 
+  @NotNull
   protected <T extends Facet > T findFacet(FacetModel model, FacetType<T, ?> type, String defaultFacetName) {
     T result = model.findFacet(type.getId(), defaultFacetName);
     if (result == null) result = model.getFacetByType(type.getId());
