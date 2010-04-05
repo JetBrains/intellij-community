@@ -47,6 +47,11 @@ public class PyDeprecatedModulesInspection extends LocalInspectionTool {
     return new Visitor(holder);
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   private static class Visitor extends PyInspectionVisitor {
     private static final Map<LanguageLevel, Set<String>> DEPRECATED_MODULES = new HashMap<LanguageLevel, Set<String>>();
 

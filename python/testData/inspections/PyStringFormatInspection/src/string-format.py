@@ -63,3 +63,10 @@ def foo(a):
 print "%s" % foo(1)  #Too many arguments for format string
 
 print("| [%(issue_id)s|http://youtrack.jetbrains.net/issue/%(issue_id)s] (%(issue_type)s)|%(summary)s|" % (issue_id, issue_type, summary)) #Format requires a mapping (PY-704)
+
+my_list = list()
+for i in range(0,3):
+    my_list.append( ("hey", "you") )
+
+for item in my_list:
+    print '%s %s' % item   # ok (PY-734)

@@ -38,6 +38,11 @@ public class PyDefaultArgumentInspection extends LocalInspectionTool {
     return "PyDefaultArgumentInspection";
   }
 
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
