@@ -120,6 +120,17 @@ public class SplitterTest extends TestCase {
     correctListToCheck(checkAreas, text, new String[]{});
   }
 
+   public void testIdentifiersWithNumbers() {
+    String text = "result1";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"result"});
+  }
+
+    public void testIdentifiersWithNumbersInside() {
+    String text = "result1result";
+    List<CheckArea> checkAreas = SplitterFactory.getInstance().getIdentifierSplitter().split(text);
+    correctListToCheck(checkAreas, text, new String[]{"result","result"});
+  }
 
   public void testWordWithApostrophe2() {
     String text = "customers'";
