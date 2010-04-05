@@ -48,7 +48,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
             "startsWith,endsWith";
 
     @SuppressWarnings({"PublicField"})
-    public boolean ignoreBooleanMethods = true;
+    public boolean ignoreBooleanMethods = false;
 
     List<String> questionList = new ArrayList(32);
 
