@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaLangImportInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "java.lang.import.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "java.lang.import.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new DeleteImportFix();
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new JavaLangImportVisitor();
     }
@@ -68,12 +72,12 @@ public class JavaLangImportInspection extends BaseInspection {
             final PsiImportStatement[] importStatements =
                     importList.getImportStatements();
             for(PsiImportStatement importStatement : importStatements) {
-                checkImportStatment(importStatement, file);
+                checkImportStatement(importStatement, file);
             }
         }
 
-        private void checkImportStatment(PsiImportStatement importStatement,
-                                         PsiJavaFile file){
+        private void checkImportStatement(PsiImportStatement importStatement,
+                                          PsiJavaFile file){
             final PsiJavaCodeReferenceElement reference =
                     importStatement.getImportReference();
             if (reference == null) {
