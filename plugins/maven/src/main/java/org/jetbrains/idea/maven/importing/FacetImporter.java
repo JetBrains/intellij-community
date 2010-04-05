@@ -105,7 +105,6 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
     return findFacet(model, myFacetType, myDefaultFacetName);
   }
 
-  @NotNull
   protected <T extends Facet > T findFacet(FacetModel model, FacetType<T, ?> type, String defaultFacetName) {
     T result = model.findFacet(type.getId(), defaultFacetName);
     if (result == null) result = model.getFacetByType(type.getId());
