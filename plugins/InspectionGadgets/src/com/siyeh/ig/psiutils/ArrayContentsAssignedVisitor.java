@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
+class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
 
     private boolean assigned = false;
     private final PsiVariable variable;
@@ -40,7 +40,9 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
-        final PsiElement referent = ((PsiReference) arrayExpression).resolve();
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression)arrayExpression;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return;
         }
@@ -66,7 +68,9 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
-        final PsiElement referent = ((PsiReference) arrayExpression).resolve();
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression)arrayExpression;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return;
         }
@@ -91,7 +95,9 @@ public class ArrayContentsAssignedVisitor extends JavaRecursiveElementVisitor {
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
-        final PsiElement referent = ((PsiReference) arrayExpression).resolve();
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression)arrayExpression;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return;
         }
