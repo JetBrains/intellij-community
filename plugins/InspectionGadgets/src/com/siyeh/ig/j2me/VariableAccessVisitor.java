@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.performance;
+package com.siyeh.ig.j2me;
 
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -21,17 +21,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class VariableAccessVisitor extends JavaRecursiveElementVisitor {
+class VariableAccessVisitor extends JavaRecursiveElementVisitor {
 
     private final Map<PsiField,Integer> m_accessCounts =
             new HashMap<PsiField, Integer>(2);
     private final Set<PsiField> m_overAccessedFields =
             new HashSet<PsiField>(2);
 
-    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
+    @Override public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
-
         if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
             return;
         }
@@ -51,7 +51,7 @@ public class VariableAccessVisitor extends JavaRecursiveElementVisitor {
         final Integer count = accessCounts.get(field);
         if (count == null) {
             accessCounts.put(field, 1);
-        } else if (count == 1) {
+        } else if (count.intValue() == 1) {
             accessCounts.put(field, 2);
         } else {
             overAccessedFields.add(field);
