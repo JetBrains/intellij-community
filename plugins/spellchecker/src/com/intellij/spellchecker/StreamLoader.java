@@ -27,8 +27,8 @@ public class StreamLoader implements Loader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.StreamLoader");
   private static final String ENCODING = "UTF-8";
 
-  private InputStream stream;
-  private String name;
+  private final InputStream stream;
+  private final String name;
 
   public StreamLoader(InputStream stream, String name) {
     this.stream = stream;

@@ -133,24 +133,24 @@ public class AbstractTreeUi {
 
   private boolean myWasEverIndexNotReady;
   private boolean myShowing;
-  private FocusAdapter myFocusListener = new FocusAdapter() {
+  private final FocusAdapter myFocusListener = new FocusAdapter() {
     @Override
     public void focusGained(FocusEvent e) {
       maybeReady();
     }
   };
-  private Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
   private TreePath myRequestedExpand;
-  private ActionCallback myInitialized = new ActionCallback();
-  private Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
+  private final ActionCallback myInitialized = new ActionCallback();
+  private final Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
 
   private boolean myPassthroughMode = false;
 
 
-  private Set<Object> myAutoExpandRoots = new HashSet<Object>();
+  private final Set<Object> myAutoExpandRoots = new HashSet<Object>();
   private final RegistryValue myAutoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
-  private Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
   private SimpleTimerTask myCleanupTask;
 
   protected void init(AbstractTreeBuilder builder,
@@ -3874,9 +3874,9 @@ public class AbstractTreeUi {
 
   static class LoadedChildren {
 
-    private List myElements;
-    private Map<Object, NodeDescriptor> myDescriptors = new HashMap<Object, NodeDescriptor>();
-    private Map<NodeDescriptor, Boolean> myChanges = new HashMap<NodeDescriptor, Boolean>();
+    private final List myElements;
+    private final Map<Object, NodeDescriptor> myDescriptors = new HashMap<Object, NodeDescriptor>();
+    private final Map<NodeDescriptor, Boolean> myChanges = new HashMap<NodeDescriptor, Boolean>();
 
     LoadedChildren(Object[] elements) {
       myElements = Arrays.asList(elements != null ? elements : ArrayUtil.EMPTY_OBJECT_ARRAY);

@@ -42,8 +42,8 @@ import java.util.Map;
  * @author nik
  */
 public class ArtifactExternalDependenciesImporter {
-  private ManifestFilesInfo myManifestFiles = new ManifestFilesInfo();
-  private Map<Artifact, List<PackagingElement<?>>> myExternalDependencies = new HashMap<Artifact, List<PackagingElement<?>>>();
+  private final ManifestFilesInfo myManifestFiles = new ManifestFilesInfo();
+  private final Map<Artifact, List<PackagingElement<?>>> myExternalDependencies = new HashMap<Artifact, List<PackagingElement<?>>>();
 
   @Nullable
   public ManifestFileConfiguration getManifestFile(@NotNull Artifact artifact,

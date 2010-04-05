@@ -158,7 +158,7 @@ public class GitVcs extends AbstractVcs {
   /**
    * The changelist provider
    */
-  private GitCommittedChangeListProvider myCommittedChangeListProvider;
+  private final GitCommittedChangeListProvider myCommittedChangeListProvider;
   /**
    * The tracker that checks validity of git roots
    */
@@ -190,7 +190,7 @@ public class GitVcs extends AbstractVcs {
 
   private final TreeDiffProvider myTreeDiffProvider;
 
-  private GitCommitAndPushExecutor myCommitAndPushExecutor;
+  private final GitCommitAndPushExecutor myCommitAndPushExecutor;
 
   public static GitVcs getInstance(@NotNull Project project) {
     return (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(NAME);

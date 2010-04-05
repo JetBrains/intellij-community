@@ -47,7 +47,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   protected final WizardContext myWizardContext;
   protected final StepSequence mySequence;
   protected final WizardMode myMode;
-  private ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
+  private final ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
 
   public ProjectNameStep(WizardContext wizardContext, StepSequence sequence, final WizardMode mode) {
     myWizardContext = wizardContext;

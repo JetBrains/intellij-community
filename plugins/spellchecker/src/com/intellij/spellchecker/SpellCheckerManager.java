@@ -46,7 +46,7 @@ public class SpellCheckerManager {
   private static final int MAX_SUGGESTIONS_THRESHOLD = 5;
   private static final int MAX_METRICS = 1;
 
-  private Project project;
+  private final Project project;
 
   private SpellCheckerEngine spellChecker;
 

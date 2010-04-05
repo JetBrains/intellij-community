@@ -71,7 +71,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   private MyProjectManagerListener myProjectManagerListener;
 
-  private AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
+  private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
 
   @NonNls private static final String PROJECT_LAYER = "project-components";
 

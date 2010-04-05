@@ -109,7 +109,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Application myApp;
 
-  private Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
+  private final Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
 
   /**
    * invoked by reflection

@@ -61,7 +61,7 @@ import java.util.List;
 )
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
-  private ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
+  private final ArtifactEditorSettings myDefaultSettings = new ArtifactEditorSettings();
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project);

@@ -99,7 +99,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   public static final String BREAKPOINT_CONDITION = "breakpoint";
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
-  private Icon myIcon;
+  private final Icon myIcon;
 
   public DebuggerSessionTab(final Project project, final String sessionName, @Nullable final Icon icon) {
     super(project);

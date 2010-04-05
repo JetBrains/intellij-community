@@ -17,7 +17,7 @@ import java.util.List;
  * @author nik
  */
 public class ModuleProjectStructureElement extends ProjectStructureElement {
-  private Module myModule;
+  private final Module myModule;
 
   public ModuleProjectStructureElement(@NotNull StructureConfigurableContext context, @NotNull Module module) {
     super(context);

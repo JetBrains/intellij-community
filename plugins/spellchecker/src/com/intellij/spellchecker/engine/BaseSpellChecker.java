@@ -32,11 +32,11 @@ import java.util.*;
 public class BaseSpellChecker implements SpellCheckerEngine {
 
 
-  private Transformation transform = new Transformation();
+  private final Transformation transform = new Transformation();
 
   private final Set<EditableDictionary> dictionaries = new THashSet<EditableDictionary>();
   private final Set<Dictionary> bundledDictionaries = new THashSet<Dictionary>();
-  private Metrics metrics = new LevenshteinDistance();
+  private final Metrics metrics = new LevenshteinDistance();
 
 
   public BaseSpellChecker() {

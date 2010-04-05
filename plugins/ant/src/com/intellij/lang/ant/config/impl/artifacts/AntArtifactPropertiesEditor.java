@@ -39,7 +39,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JCheckBox myRunTargetCheckBox;
   private FixedSizeButton mySelectTargetButton;
   private AntBuildTarget myTarget;
-  private boolean myPostProcessing;
+  private final boolean myPostProcessing;
 
   public AntArtifactPropertiesEditor(AntArtifactProperties properties, Project project, boolean postProcessing) {
     myProperties = properties;

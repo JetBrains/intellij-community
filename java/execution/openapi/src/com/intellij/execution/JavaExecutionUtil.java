@@ -66,7 +66,7 @@ public class JavaExecutionUtil {
     private final String myContentName;
     private final Filter[] myFilters;
     private final Project myProject;
-    private Icon myIcon;
+    private final Icon myIcon;
 
     public DefaultRunProfile(final Project project, final JavaParameters parameters, final String contentName, final Icon icon, Filter[] filters) {
       myProject = project;

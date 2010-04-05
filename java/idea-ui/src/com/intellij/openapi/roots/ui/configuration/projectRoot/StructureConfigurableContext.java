@@ -42,7 +42,7 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
   private final ProjectStructureDaemonAnalyzer myDaemonAnalyzer;
   public final ModulesConfigurator myModulesConfigurator;
   public final Map<String, LibrariesModifiableModel> myLevel2Providers = new THashMap<String, LibrariesModifiableModel>();
-  private List<LibraryEditorListener> myLibraryEditorListeners = new ArrayList<LibraryEditorListener>();
+  private final List<LibraryEditorListener> myLibraryEditorListeners = new ArrayList<LibraryEditorListener>();
   private final Project myProject;
 
 

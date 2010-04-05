@@ -41,7 +41,7 @@ public class CustomTemplateCallback {
   private final Editor myEditor;
   private final PsiFile myFile;
   private int myStartOffset;
-  private Project myProject;
+  private final Project myProject;
   private RangeMarker myGlobalMarker;
   private RangeMarker myEndOffsetMarker;
   private final Map<Object, RangeMarker> myCheckpoints = new HashMap<Object, RangeMarker>();

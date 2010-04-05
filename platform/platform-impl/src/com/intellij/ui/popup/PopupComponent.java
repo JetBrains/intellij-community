@@ -79,7 +79,7 @@ public interface PopupComponent {
   }
 
   class DialogPopupWrapper implements PopupComponent {
-    private JDialog myDialog;
+    private final JDialog myDialog;
 
     public DialogPopupWrapper(Component owner, Component content, int x, int y) {
       if (!owner.isShowing()) {
@@ -119,7 +119,7 @@ public interface PopupComponent {
 
   class AwtPopupWrapper implements PopupComponent {
 
-    private Popup myPopup;
+    private final Popup myPopup;
 
     public AwtPopupWrapper(Popup popup) {
       myPopup = popup;

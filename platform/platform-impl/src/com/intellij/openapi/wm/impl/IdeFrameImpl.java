@@ -66,7 +66,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private final LayoutFocusTraversalPolicyExt myLayoutFocusTraversalPolicy;
 
   private IdeRootPane myRootPane;
-  private BalloonLayout myBalloonLayout;
+  private final BalloonLayout myBalloonLayout;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManager actionManager, UISettings uiSettings, DataManager dataManager,
                       KeymapManager keymapManager, final Application application, final String[] commandLineArgs) {

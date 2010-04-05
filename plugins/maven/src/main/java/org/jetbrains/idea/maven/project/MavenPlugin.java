@@ -38,9 +38,9 @@ public class MavenPlugin implements Serializable {
   private boolean myDefault;
 
   private Element myConfiguration;
-  private List<Execution> myExecutions = new ArrayList<Execution>();
+  private final List<Execution> myExecutions = new ArrayList<Execution>();
 
-  private List<MavenId> myDependencies = new ArrayList<MavenId>();
+  private final List<MavenId> myDependencies = new ArrayList<MavenId>();
 
   protected MavenPlugin() {
   }

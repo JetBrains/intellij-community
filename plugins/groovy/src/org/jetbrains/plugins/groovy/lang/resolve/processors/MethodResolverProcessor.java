@@ -46,7 +46,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor");
   private final PsiType myThisType;
   @Nullable
-  private PsiType[] myArgumentTypes;
+  private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
 
   private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();

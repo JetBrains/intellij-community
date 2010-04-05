@@ -252,7 +252,7 @@ public class ProjectRootsTraversing {
     }
 
     public static class RecursiveModules implements Visit<ModuleOrderEntry> {
-      private boolean myIncludeTests;
+      private final boolean myIncludeTests;
 
       public RecursiveModules(boolean includeTests) {
         myIncludeTests = includeTests;

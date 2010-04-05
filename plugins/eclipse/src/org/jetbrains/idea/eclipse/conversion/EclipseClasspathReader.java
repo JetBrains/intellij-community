@@ -360,8 +360,8 @@ public class EclipseClasspathReader {
   }
 
   private static class EPathVariable {
-    private String myVariable;
-    private String myRelatedPath;
+    private final String myVariable;
+    private final String myRelatedPath;
 
     private EPathVariable(final Set<String> usedVariables, final String variable, final String relatedPath) {
       myVariable = variable;

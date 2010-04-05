@@ -34,9 +34,9 @@ public class ConversionRunner {
   private boolean myProcessProjectFile;
   private boolean myProcessWorkspaceFile;
   private boolean myProcessRunConfigurations;
-  private List<File> myModulesFilesToProcess = new ArrayList<File>();
-  private ProjectConverter myConverter;
-  private ConversionProcessor<RunManagerSettings> myRunConfigurationsConverter;
+  private final List<File> myModulesFilesToProcess = new ArrayList<File>();
+  private final ProjectConverter myConverter;
+  private final ConversionProcessor<RunManagerSettings> myRunConfigurationsConverter;
 
   public ConversionRunner(ConverterProvider provider, ConversionContextImpl context) {
     myProvider = provider;

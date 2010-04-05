@@ -54,11 +54,11 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   public String PROJECT_PROFILE;
   public boolean USE_PROJECT_PROFILE = !isPlatform();
 
-  private ApplicationProfileManager myApplicationProfileManager;
+  private final ApplicationProfileManager myApplicationProfileManager;
 
-  private Map<String, Profile> myProfiles = new HashMap<String, Profile>();
+  private final Map<String, Profile> myProfiles = new HashMap<String, Profile>();
   private final DependencyValidationManager myHolder;
-  private List<ProfileChangeAdapter> myProfilesListener = new ArrayList<ProfileChangeAdapter>();
+  private final List<ProfileChangeAdapter> myProfilesListener = new ArrayList<ProfileChangeAdapter>();
   @NonNls private static final String PROJECT_DEFAULT_PROFILE_NAME = "Project Default";
 
   public DefaultProjectProfileManager(final Project project, final String profileType, final DependencyValidationManager holder) {

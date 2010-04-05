@@ -76,9 +76,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
-  private NewMappings myMappings;
+  private final NewMappings myMappings;
   private final Project myProject;
-  private MappingsToRoots myMappingsToRoots;
+  private final MappingsToRoots myMappingsToRoots;
 
   private volatile boolean myIsDisposed = false;
   private final Object myDisposeLock = new Object();
@@ -100,13 +100,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
   private boolean myCheckinHandlerFactoriesLoaded = false;
-  private DefaultVcsRootPolicy myDefaultVcsRootPolicy;
+  private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
   private volatile int myBackgroundOperationCounter = 0;
 
   private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
-  private List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
+  private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
 
   public ProjectLevelVcsManagerImpl(Project project) {
     myProject = project;

@@ -28,9 +28,9 @@ import java.util.regex.Pattern;
  * @author peter
  */
 public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
-  private static String OPTION_START = "<option>";
-  private static String OPTION_END = "</option>";
-  private static Pattern PATTERN = Pattern.compile(OPTION_START + "(\\w+=(true|false+|\\d|\\w+))" + OPTION_END + "\n");
+  private static final String OPTION_START = "<option>";
+  private static final String OPTION_END = "</option>";
+  private static final Pattern PATTERN = Pattern.compile(OPTION_START + "(\\w+=(true|false+|\\d|\\w+))" + OPTION_END + "\n");
 
   @Override
   protected String getBasePath() {

@@ -131,7 +131,7 @@ public class AnalyzeStacktraceUtil {
   }
 
   public static final class StacktraceEditorPanel extends JPanel implements DataProvider, Disposable {
-    private Project myProject;
+    private final Project myProject;
     private final Editor myEditor;
 
     public StacktraceEditorPanel(Project project, Editor editor) {

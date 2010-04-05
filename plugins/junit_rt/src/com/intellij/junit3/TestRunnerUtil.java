@@ -116,6 +116,7 @@ public class TestRunnerUtil {
             return null;
           }
           try {
+            //noinspection SSBasedInspection
             test = (Test)suiteMethod.invoke(null, new Class[0]); // static method
             test = new SuiteMethodWrapper(test, suiteClassName);
           }
@@ -179,6 +180,7 @@ public class TestRunnerUtil {
       catch(ClassCastException e1) {
         boolean methodExists;
         try {
+          //noinspection SSBasedInspection
           testClass.getMethod(methodName, new Class[0]);
           methodExists = true;
         }
@@ -239,8 +241,8 @@ public class TestRunnerUtil {
   }
 
   public static class SuiteMethodWrapper implements Test {
-    private Test mySuite;
-    private String myClassName;
+    private final Test mySuite;
+    private final String myClassName;
 
     public SuiteMethodWrapper(Test suite, String className) {
       mySuite = suite;

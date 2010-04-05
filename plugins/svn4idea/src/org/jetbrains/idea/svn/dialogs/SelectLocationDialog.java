@@ -44,13 +44,13 @@ import java.awt.*;
  * @author alex
  */
 public class SelectLocationDialog extends DialogWrapper {
-  private Project myProject;
+  private final Project myProject;
   private RepositoryBrowserComponent myRepositoryBrowser;
-  private SVNURL myURL;
-  private String myDstName;
-  private String myDstLabel;
+  private final SVNURL myURL;
+  private final String myDstName;
+  private final String myDstLabel;
   private JTextField myDstText;
-  private boolean myIsShowFiles;
+  private final boolean myIsShowFiles;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.common";
 

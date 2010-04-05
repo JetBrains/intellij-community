@@ -37,8 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class EclipseClasspathWriter {
-  private ModuleRootModel myModel;
-  private Map<String, Element> myOldEntries = new HashMap<String, Element>();
+  private final ModuleRootModel myModel;
+  private final Map<String, Element> myOldEntries = new HashMap<String, Element>();
 
   public EclipseClasspathWriter(final ModuleRootModel model) {
     myModel = model;

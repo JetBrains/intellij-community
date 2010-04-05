@@ -37,8 +37,8 @@ public class DictionaryTest extends TestCase {
 
   private Dictionary dictionary;
 
-  private Map<String, Integer> sizes = new HashMap<String, Integer>();
-  private Map<String, Integer> times = new HashMap<String, Integer>();
+  private final Map<String, Integer> sizes = new HashMap<String, Integer>();
+  private final Map<String, Integer> times = new HashMap<String, Integer>();
   private static final String JETBRAINS_DIC = "jetbrains.dic";
   private static final String ENGLISH_DIC = "english.dic";
 

@@ -40,14 +40,14 @@ import java.util.Set;
 
 public abstract class VersionsComponent {
   private JPanel myMainPanel;
-  private static String UNKNOWN_RI_NAME = "Unknown";
+  private static final String UNKNOWN_RI_NAME = "Unknown";
 
   private final @NotNull Module myModule;
-  private FacetLibrariesValidator myValidator;
+  private final FacetLibrariesValidator myValidator;
 
-  private ButtonGroup myButtonGroup = new ButtonGroup();
+  private final ButtonGroup myButtonGroup = new ButtonGroup();
 
-  private Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<String, Pair<JRadioButton, JComboBox>>();
+  private final Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<String, Pair<JRadioButton, JComboBox>>();
 
   private LibraryVersionInfo myCurrentVersion = null;
 

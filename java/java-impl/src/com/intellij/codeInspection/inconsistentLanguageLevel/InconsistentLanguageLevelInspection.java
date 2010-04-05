@@ -125,7 +125,7 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
   }
 
   private static class OpenModuleSettingsFix implements QuickFix {
-    private Module myModule;
+    private final Module myModule;
 
     private OpenModuleSettingsFix(Module module) {
       myModule = module;

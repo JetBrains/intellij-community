@@ -59,7 +59,7 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
   /**
    * A set of roots that have non-pushed merges
    */
-  private Set<VirtualFile> myRootsWithMerges;
+  private final Set<VirtualFile> myRootsWithMerges;
   /**
    * The registration number for the rebase editor
    */
@@ -163,11 +163,11 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
     /**
      * The reordered commits
      */
-    private List<String> myCommits;
+    private final List<String> myCommits;
     /**
      * The true means that the root has merges
      */
-    private boolean myHasMerges;
+    private final boolean myHasMerges;
 
     /**
      * The constructor from fields that is expected to be

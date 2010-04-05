@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ArchiveAntCopyInstructionCreator implements AntCopyInstructionCreator {
-  private String myPrefix;
+  private final String myPrefix;
 
   public ArchiveAntCopyInstructionCreator(String prefix) {
     myPrefix = prefix;

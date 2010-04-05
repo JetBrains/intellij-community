@@ -16,8 +16,8 @@
 package com.intellij.spellchecker.engine;
 
 public class Suggestion implements Comparable{
-  private String word;
-  private int metrics;
+  private final String word;
+  private final int metrics;
 
   public Suggestion(String word, int metrics) {
     this.word = word;

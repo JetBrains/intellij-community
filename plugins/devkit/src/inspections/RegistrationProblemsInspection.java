@@ -200,7 +200,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
     private final Set<String> myInterfaceClasses = new THashSet<String>();
-    private boolean myOnTheFly;
+    private final boolean myOnTheFly;
 
     public RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
       myManager = manager;

@@ -34,7 +34,7 @@ public class SvnNestedTypeRechecker {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnNestedTypeRechecker");
 
   private final MultiMap<VirtualFile, RootUrlInfo> myRoots;
-  private Map<String, RootUrlInfo> mySourceItems;
+  private final Map<String, RootUrlInfo> mySourceItems;
   private Map<String, Map<String, File>> myTreeTravellingMap;
   private final Project myProject;
 

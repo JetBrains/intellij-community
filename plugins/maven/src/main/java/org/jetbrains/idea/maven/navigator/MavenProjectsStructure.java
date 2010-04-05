@@ -531,7 +531,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class RootNode extends ProjectsGroupNode {
-    private ProfilesNode myProfilesNode;
+    private final ProfilesNode myProfilesNode;
 
     public RootNode() {
       super(null);

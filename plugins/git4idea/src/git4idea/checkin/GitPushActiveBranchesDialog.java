@@ -92,11 +92,11 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   /**
    * The context project
    */
-  private Project myProject;
+  private final Project myProject;
   /**
    * The vcs roots for the project
    */
-  private List<VirtualFile> myVcsRoots;
+  private final List<VirtualFile> myVcsRoots;
 
   /**
    * The constructor

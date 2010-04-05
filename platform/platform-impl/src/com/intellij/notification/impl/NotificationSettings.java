@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class NotificationSettings {
 
   private NotificationDisplayType myDisplayType;
-  private String myGroupId;
+  private final String myGroupId;
 
   public NotificationSettings(final String groupId, final NotificationDisplayType displayType) {
     myGroupId = groupId;

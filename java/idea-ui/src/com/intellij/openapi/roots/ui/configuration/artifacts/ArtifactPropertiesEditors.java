@@ -35,10 +35,10 @@ public class ArtifactPropertiesEditors {
   private static final List<String> STANDARD_TABS_ORDER = Arrays.asList(
     ArtifactPropertiesEditor.VALIDATION_TAB, ArtifactPropertiesEditor.PRE_PROCESSING_TAB, ArtifactPropertiesEditor.POST_PROCESSING_TAB
   );
-  private Map<String, JPanel> myMainPanels;
+  private final Map<String, JPanel> myMainPanels;
   private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
-  private List<PropertiesEditorInfo> myEditors;
+  private final List<PropertiesEditorInfo> myEditors;
 
   public ArtifactPropertiesEditors(ArtifactEditorContext context, Artifact originalArtifact, Artifact artifact) {
     myContext = context;
@@ -106,9 +106,9 @@ public class ArtifactPropertiesEditors {
   }
 
   private class PropertiesEditorInfo {
-    private ArtifactPropertiesEditor myEditor;
-    private ArtifactProperties<?> myProperties;
-    private ArtifactPropertiesProvider myProvider;
+    private final ArtifactPropertiesEditor myEditor;
+    private final ArtifactProperties<?> myProperties;
+    private final ArtifactPropertiesProvider myProvider;
 
     private PropertiesEditorInfo(ArtifactPropertiesProvider provider) {
       myProvider = provider;

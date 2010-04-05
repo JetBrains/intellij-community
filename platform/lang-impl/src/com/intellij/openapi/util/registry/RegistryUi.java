@@ -53,14 +53,14 @@ import java.util.Map;
  */
 public class RegistryUi implements Disposable {
 
-  private JTable myTable;
-  private JTextArea myDescriptionLabel;
+  private final JTable myTable;
+  private final JTextArea myDescriptionLabel;
 
-  private JPanel myContent = new JPanel();
+  private final JPanel myContent = new JPanel();
 
   private static final Icon RESTART_ICON = IconLoader.getIcon("/gutter/check.png");
-  private RestoreDefaultsAction myRestoreDefaultsAction;
-  private MyTableModel myModel;
+  private final RestoreDefaultsAction myRestoreDefaultsAction;
+  private final MyTableModel myModel;
 
   public RegistryUi() {
     myContent.setLayout(new BorderLayout());
@@ -186,7 +186,7 @@ public class RegistryUi implements Disposable {
 
   private static class MyTableModel extends AbstractTableModel {
 
-    private List<RegistryValue> myAll;
+    private final List<RegistryValue> myAll;
 
     private MyTableModel() {
       myAll = Registry.getInstance().getAll();
@@ -307,7 +307,7 @@ public class RegistryUi implements Disposable {
 
   private static class MyRenderer implements TableCellRenderer {
 
-    private JLabel myLabel = new JLabel();
+    private final JLabel myLabel = new JLabel();
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       final RegistryValue v = (RegistryValue) value;
@@ -361,7 +361,7 @@ public class RegistryUi implements Disposable {
 
   private class MyEditor extends AbstractCellEditor implements TableCellEditor {
 
-    private JTextField myField = new JTextField();
+    private final JTextField myField = new JTextField();
     private RegistryValue myValue;
 
     @Nullable

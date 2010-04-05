@@ -23,28 +23,29 @@ import java.lang.reflect.Field;
  * @author yole
  */
 public class ColorDescriptor {
-  private Color myColor;
+  private final Color myColor;
   private String mySwingColor;
   private String mySystemColor;
   private String myAWTColor;
 
+  public ColorDescriptor(final Color color) {
+    myColor = color;
+  }
+
   public static ColorDescriptor fromSwingColor(final String swingColor) {
     ColorDescriptor result = new ColorDescriptor(null);
-    result.myColor = null;
     result.mySwingColor = swingColor;
     return result;
   }
 
   public static ColorDescriptor fromSystemColor(final String systemColor) {
     ColorDescriptor result = new ColorDescriptor(null);
-    result.myColor = null;
     result.mySystemColor = systemColor;
     return result;
   }
 
   public static ColorDescriptor fromAWTColor(final String awtColor) {
     ColorDescriptor result = new ColorDescriptor(null);
-    result.myColor = null;
     result.myAWTColor = awtColor;
     return result;
   }
@@ -60,10 +61,6 @@ public class ColorDescriptor {
     catch (IllegalAccessException e) {
       return Color.black;
     }
-  }
-
-  public ColorDescriptor(final Color color) {
-    myColor = color;
   }
 
   public Color getResolvedColor() {

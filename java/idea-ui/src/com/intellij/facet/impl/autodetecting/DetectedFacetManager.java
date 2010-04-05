@@ -407,7 +407,7 @@ public class DetectedFacetManager implements Disposable {
   }
 
   private static class FacetDetectedNotification extends Notification {
-    private List<DetectedFacetInfo<Module>> myFacets = new ArrayList<DetectedFacetInfo<Module>>();
+    private final List<DetectedFacetInfo<Module>> myFacets = new ArrayList<DetectedFacetInfo<Module>>();
 
     private FacetDetectedNotification(@NotNull String title, @NotNull String content, NotificationListener listener, Collection<DetectedFacetInfo<Module>> facets) {
       super(NOTIFICATION_ID, title, content, NotificationType.INFORMATION, listener);

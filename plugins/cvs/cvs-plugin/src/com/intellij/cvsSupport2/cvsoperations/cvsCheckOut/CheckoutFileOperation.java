@@ -39,8 +39,8 @@ import java.io.File;
 
 public class CheckoutFileOperation extends CvsOperationOnFiles {
   private final File myFile;
-  private boolean myIsDirectory;
-  private String myModuleName;
+  private final boolean myIsDirectory;
+  private final String myModuleName;
   private final RevisionOrDate myRevisionOrDate;
   private final boolean myMakeNewFilesReadOnly;
 
@@ -50,33 +50,44 @@ public class CheckoutFileOperation extends CvsOperationOnFiles {
                                Entry entry,
                                boolean makeNewFilesReadOnly,
                                final boolean isDirectory) {
-    this(parent, RevisionOrDateImpl.createOn(parent, entry, config.CHECKOUT_DATE_OR_REVISION_SETTINGS), fileName, makeNewFilesReadOnly);
-    myIsDirectory = isDirectory;
+    this(parent, RevisionOrDateImpl.createOn(parent, entry, config.CHECKOUT_DATE_OR_REVISION_SETTINGS), fileName, makeNewFilesReadOnly, isDirectory);
   }
 
   public CheckoutFileOperation(final VirtualFile parent,
                                RevisionOrDate revisionOrDate,
                                final String fileName,
                                boolean makeNewFilesReadOnly) {
+    this(parent, revisionOrDate, fileName, makeNewFilesReadOnly, null);
+
+    addFile(myFile.getAbsolutePath());
+  }
+
+  private static String getModuleName(final VirtualFile parent, final String fileName) {
+    return new WriteAction<String>() {
+      protected void run(Result<String> result) throws Throwable {
+        final String parentModule = CvsUtil.getModuleName(parent);
+        VirtualFile file = parent.findChild(fileName);
+        if (parentModule == null && file != null) {
+          result.setResult(CvsUtil.getModuleName(file));
+        }
+        else {
+          result.setResult(parentModule + "/" + fileName);
+        }
+      }
+    }.execute().getResultObject();
+  }
+
+  private CheckoutFileOperation(final VirtualFile parent,
+                                RevisionOrDate revisionOrDate,
+                                final String fileName,
+                                boolean makeNewFilesReadOnly,
+                                Boolean isDirectory/*null means detect*/) {
     super(new CheckoutAdminReader());
     myMakeNewFilesReadOnly = makeNewFilesReadOnly;
     myRevisionOrDate = revisionOrDate;
     myFile = CvsVfsUtil.getFileFor(parent, fileName);
-    myIsDirectory = myFile.isDirectory();
-    new WriteAction() {
-      protected void run(Result result) throws Throwable {
-        final String parentModule = CvsUtil.getModuleName(parent);
-        VirtualFile file = parent.findChild(fileName);
-        if (parentModule == null && file != null) {
-          myModuleName = CvsUtil.getModuleName(file);
-        }
-        else {
-          myModuleName = parentModule + "/" + fileName;
-        }
-      }
-    }.execute();
-
-    addFile(myFile.getAbsolutePath());
+    myIsDirectory = isDirectory == null ? myFile.isDirectory() : isDirectory;
+    myModuleName = getModuleName(parent, fileName);
   }
 
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {

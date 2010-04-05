@@ -26,8 +26,8 @@ import java.util.Set;
 
 public class EclipseModuleManager {
   private CachedXmlDocumentSet myDocumentSet;
-  private Map<String, String> myEclipseVariablePaths = new HashMap<String, String>();
-  private Set<String> myUnknownCons = new HashSet<String>();
+  private final Map<String, String> myEclipseVariablePaths = new HashMap<String, String>();
+  private final Set<String> myUnknownCons = new HashSet<String>();
   private boolean myForceConfigureJDK = false;
   private static final String SRC_PREFIX = "src:";
   private static final String SRC_LINK_PREFIX = "linksrc:";

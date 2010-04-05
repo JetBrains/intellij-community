@@ -29,7 +29,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 public abstract class GoToMnemonicBookmarkActionBase extends AnAction implements DumbAware {
-  private int myNumber;
+  private final int myNumber;
 
   public GoToMnemonicBookmarkActionBase(int n) {
     myNumber = n;

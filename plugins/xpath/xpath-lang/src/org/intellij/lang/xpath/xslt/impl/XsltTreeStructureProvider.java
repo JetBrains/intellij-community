@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class XsltTreeStructureProvider implements TreeStructureProvider {
-  private Project myProject;
+  private final Project myProject;
 
   public XsltTreeStructureProvider(Project project) {
     myProject = project;

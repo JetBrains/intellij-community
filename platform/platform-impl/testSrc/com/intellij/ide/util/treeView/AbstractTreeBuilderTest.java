@@ -437,7 +437,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
     private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<NodeElement, NodeElement>();
     private final Map<NodeElement, Node> myElement2Node = new HashMap<NodeElement, Node>();
-    private Set<NodeElement> myLeaves = new HashSet<NodeElement>();
+    private final Set<NodeElement> myLeaves = new HashSet<NodeElement>();
 
     public Object getRootElement() {
       return myRoot.myElement;

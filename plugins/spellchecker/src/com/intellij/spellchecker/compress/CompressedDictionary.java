@@ -31,9 +31,9 @@ public final class CompressedDictionary implements Dictionary {
   private byte[][] words;
   private int[] lengths;
 
-  private Encoder encoder;
-  private String name;
-  private Compressor compressor;
+  private final Encoder encoder;
+  private final String name;
+  private final Compressor compressor;
 
   private final Map<Integer, SortedSet<byte[]>> rawData = new THashMap<Integer, SortedSet<byte[]>>();
   private static final Comparator<byte[]> COMPARATOR = new Comparator<byte[]>() {

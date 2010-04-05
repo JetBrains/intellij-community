@@ -194,7 +194,7 @@ public class MavenProject {
 
     Map<Artifact, MavenArtifact> nativeToConvertedMap =
       new THashMap<Artifact, MavenArtifact>(new TObjectIdentityHashingStrategy<Artifact>());
-    newDependencyTree.addAll(convertDependencyNodes(readerResult.dependencyTree, nativeToConvertedMap, state.myLocalRepository));
+    newDependencyTree.addAll(convertDependencyNodes(null, readerResult.dependencyTree, nativeToConvertedMap, state.myLocalRepository));
     newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts(), nativeToConvertedMap, state.myLocalRepository));
 
     newPlugins.addAll(collectPlugins(readerResult.settings, model));
@@ -256,7 +256,8 @@ public class MavenProject {
     return result;
   }
 
-  private static List<MavenArtifactNode> convertDependencyNodes(Collection<DependencyNode> nodes,
+  private static List<MavenArtifactNode> convertDependencyNodes(MavenArtifactNode parent,
+                                                                Collection<DependencyNode> nodes,
                                                                 Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                                 File localRepository) {
     List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
@@ -282,9 +283,10 @@ public class MavenProject {
       }
       MavenArtifact relatedMA = each.getRelatedArtifact() == null ? null
                                 : convertArtifact(each.getRelatedArtifact(), nativeToConvertedMap, localRepository);
-      List<MavenArtifactNode> children = convertDependencyNodes(each.getChildren(), nativeToConvertedMap, localRepository);
-      result.add(new MavenArtifactNode(ma, state, relatedMA, each.getOriginalScope(),
-                                       each.getPremanagedVersion(), each.getPremanagedScope(), children));
+      MavenArtifactNode newNode = new MavenArtifactNode(parent, ma, state, relatedMA, each.getOriginalScope(),
+                                                        each.getPremanagedVersion(), each.getPremanagedScope());
+      newNode.setDependencies(convertDependencyNodes(newNode, each.getChildren(), nativeToConvertedMap, localRepository));
+      result.add(newNode);
     }
     return result;
   }

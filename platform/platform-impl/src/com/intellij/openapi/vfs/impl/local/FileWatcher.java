@@ -65,7 +65,7 @@ public class FileWatcher {
   private List<String> myDirtyRecursivePaths = new ArrayList<String>();
   private List<String> myDirtyDirs = new ArrayList<String>();
   private List<String> myManualWatchRoots = new ArrayList<String>();
-  private List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
+  private final List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
 
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();

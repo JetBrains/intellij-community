@@ -568,7 +568,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
   }
 
   private abstract static class PostprocessFormattingTask implements Comparable<PostprocessFormattingTask> {
-    private RangeMarker myRange;
+    private final RangeMarker myRange;
 
     public PostprocessFormattingTask(RangeMarker rangeMarker) {
       myRange = rangeMarker;

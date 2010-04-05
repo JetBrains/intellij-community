@@ -75,7 +75,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Gregory.Shrago
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
-  private static int SEPARATOR_THICKNESS = 1;
+  private static final int SEPARATOR_THICKNESS = 1;
 
   private final Project myProject;
 
@@ -88,7 +88,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private String myTitle;
   private String myPrompt = "> ";
-  private LightVirtualFile myHistoryFile;
+  private final LightVirtualFile myHistoryFile;
 
   private Editor myCurrentEditor;
 

@@ -92,7 +92,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
 
   private final WiseSplitter myInnerSplitter;
-  private MessageBusConnection myConnection;
+  private final MessageBusConnection myConnection;
   private TreeState myState;
 
   public CommittedChangesTreeBrowser(final Project project, final List<CommittedChangeList> changeLists) {

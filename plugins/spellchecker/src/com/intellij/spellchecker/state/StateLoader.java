@@ -27,7 +27,7 @@ import java.util.Set;
 
 public class StateLoader implements EditableDictionaryLoader {
 
-  private Project project;
+  private final Project project;
   private EditableDictionary dictionary;
 
   public StateLoader(Project project) {

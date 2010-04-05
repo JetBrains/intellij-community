@@ -28,9 +28,9 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 public class ApplyPatchForBaseRevisionTexts {
-  private CharSequence myLocal;
+  private final CharSequence myLocal;
   private CharSequence myBase;
-  private String myPatched;
+  private final String myPatched;
   private ApplyPatchStatus myStatus;
   private VcsException myException;
 

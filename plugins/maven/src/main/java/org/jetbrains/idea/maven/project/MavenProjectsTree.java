@@ -57,7 +57,7 @@ public class MavenProjectsTree {
   private volatile Pattern myIgnoredFilesPatternsCache;
 
   private volatile Set<String> myExplicitProfiles = new THashSet<String>();
-  private volatile Set<String> myTemporarilyRemovedExplicitProfiles = new THashSet<String>();
+  private final Set<String> myTemporarilyRemovedExplicitProfiles = new THashSet<String>();
 
   private final List<MavenProject> myRootProjects = new ArrayList<MavenProject>();
 
