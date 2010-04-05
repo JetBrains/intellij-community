@@ -40,16 +40,7 @@ class UndoRedoStacksHolder {
     myUndo = isUndo;
   }
 
-  public LinkedList<UndoableGroup> getStack(Document d) {
-    return getStack(createReferenceOrGetOriginal(d));
-  }
-
-  private static DocumentReference createReferenceOrGetOriginal(Document d) {
-    Document original = UndoManagerImpl.getOriginal(d);
-    return DocumentReferenceManager.getInstance().create(original);
-  }
-
-  public LinkedList<UndoableGroup> getStack(@NotNull DocumentReference r) {
+  private LinkedList<UndoableGroup> getStack(@NotNull DocumentReference r) {
     return r.getFile() != null ? doGetStackForFile(r) : doGetStackForDocument(r);
   }
 
@@ -161,15 +152,15 @@ class UndoRedoStacksHolder {
 
   public void clearStacks(boolean clearGlobal, Set<DocumentReference> affectedDocuments) {
     if (clearGlobal) myGlobalStack.clear();
-    for (DocumentReference each : affectedDocuments) {
-      List<UndoableGroup> stack = getStack(each);
+    for (DocumentReference ref : affectedDocuments) {
+      List<UndoableGroup> stack = getStack(ref);
       stack.clear();
 
-      if (each.getFile() != null) {
-        myDocumentStacks.remove(each);
+      if (ref.getFile() != null) {
+        myDocumentStacks.remove(ref);
       }
       else {
-        Document d = each.getDocument();
+        Document d = ref.getDocument();
         d.putUserData(STACK_IN_DOCUMENT_KEY, null);
         myDocumentsWithStacks.remove(d);
       }

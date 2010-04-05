@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableUsedInArrayInitializerVisitor
-        extends JavaRecursiveElementVisitor{
+class VariableUsedInArrayInitializerVisitor extends JavaRecursiveElementVisitor{
 
     @NotNull
     private final PsiVariable variable;
@@ -42,11 +41,9 @@ public class VariableUsedInArrayInitializerVisitor
             return;
         }
         super.visitArrayInitializerExpression(expression);
-
-        final PsiExpression[] args = expression.getInitializers();
-        for(final PsiExpression arg : args){
-
-            if(VariableAccessUtils.mayEvaluateToVariable(arg, variable)){
+        final PsiExpression[] initializers = expression.getInitializers();
+        for(final PsiExpression initializer : initializers){
+            if(VariableAccessUtils.mayEvaluateToVariable(initializer, variable)){
                 passed = true;
             }
         }

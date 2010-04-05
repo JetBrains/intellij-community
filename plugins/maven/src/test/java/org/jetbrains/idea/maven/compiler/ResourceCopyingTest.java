@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -221,6 +223,38 @@ public class ResourceCopyingTest extends MavenImportingTestCase {
 
     compileModules("project");
     assertNotCopied("target/classes/file.properties");
+  }
+
+  public void testDoNotCopyExcludedStandardResources() throws Exception {
+    if (ignore()) return;
+    
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    configuration.addResourceFilePattern("*.zzz");
+
+    createProjectSubFile("res/file.xxx");
+    createProjectSubFile("res/file.zzz");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <includes>" +
+                  "        <include>**/*.xxx</include>" +
+                  "      </includes>" +
+                  "      <excludes>" +
+                  "        <exclude>**/*.zzz</exclude>" +
+                  "      </excludes>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+    assertCopied("target/classes/file.xxx");
+    assertNotCopied("target/classes/file.zzz");
   }
 
   public void testDeletingManuallyCopyedFiles() throws Exception {
