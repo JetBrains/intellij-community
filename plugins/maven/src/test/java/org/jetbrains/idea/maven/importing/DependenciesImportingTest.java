@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -527,30 +526,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDepScope("m1", "m4", DependencyScope.TEST);
   }
 
-  public void testOptionalLibraryDependencyIsNotExportable() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>group</groupId>" +
-                  "    <artifactId>lib1</artifactId>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>group</groupId>" +
-                  "    <artifactId>lib2</artifactId>" +
-                  "    <version>1</version>" +
-                  "    <optional>true</optional>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    assertModules("project");
-    assertExportedModuleDeps("project", "Maven: group:lib1:1");
-  }
-
-  public void testOptionalModuleDependencyIsNotExportable() throws Exception {
+  public void testDependenciesAreNotExported() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -572,10 +548,9 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "    <version>1</version>" +
                           "  </dependency>" +
                           "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m3</artifactId>" +
+                          "    <groupId>lib</groupId>" +
+                          "    <artifactId>lib</artifactId>" +
                           "    <version>1</version>" +
-                          "    <optional>true</optional>" +
                           "  </dependency>" +
                           "</dependencies>");
 
@@ -583,55 +558,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1</version>");
 
-    createModulePom("m3", "<groupId>test</groupId>" +
-                          "<artifactId>m3</artifactId>" +
-                          "<version>1</version>");
-
     importProject();
-
-    assertExportedModuleDeps("m1", "m2");
-  }
-
-  public void testOnlyCompileAndRuntimeDependenciesAreExported() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>test</groupId>" +
-                  "    <artifactId>compile</artifactId>" +
-                  "    <scope>compile</scope>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>test</groupId>" +
-                  "    <artifactId>runtime</artifactId>" +
-                  "    <scope>runtime</scope>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>test</groupId>" +
-                  "    <artifactId>test</artifactId>" +
-                  "    <scope>test</scope>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>test</groupId>" +
-                  "    <artifactId>provided</artifactId>" +
-                  "    <scope>provided</scope>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "  <dependency>" +
-                  "    <groupId>test</groupId>" +
-                  "    <artifactId>system</artifactId>" +
-                  "    <scope>system</scope>" +
-                  "    <systemPath>${java.home}/lib/tools.jar</systemPath>" +
-                  "    <version>1</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    assertExportedModuleDeps("project", "Maven: test:compile:1", "Maven: test:runtime:1");
+    assertExportedDeps("m1");
   }
 
   public void testTransitiveDependencies() throws Exception {

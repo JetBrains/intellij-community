@@ -24,7 +24,7 @@ public class DownloadActionGroup extends DefaultActionGroup {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    if (MavenActionUtil.getProject(e.getDataContext()) == null) return;
+    if (MavenActionUtil.getProject(e.getDataContext()) == null) return; // todo: remove this when kirill fixes the problem
     e.getPresentation().setEnabled(MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject());
   }
 }
