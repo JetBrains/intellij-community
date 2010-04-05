@@ -25,6 +25,8 @@ import java.util.List;
 public class MavenArtifactNode implements Serializable {
   public enum State { ADDED, EXCLUDED, CONFLICT, DUPLICATE, CYCLE}
 
+  private MavenArtifactNode myParent;
+
   private MavenArtifact myArtifact;
   private State myState;
   private MavenArtifact myRelatedArtifact;
@@ -39,21 +41,28 @@ public class MavenArtifactNode implements Serializable {
   protected MavenArtifactNode() {
   }
 
-  public MavenArtifactNode(MavenArtifact artifact,
+  public MavenArtifactNode(MavenArtifactNode parent,
+                           MavenArtifact artifact,
                            State state,
                            MavenArtifact relatedArtifact,
                            String originalScope,
                            String premanagedVersion,
-                           String premanagedScope,
-                           List<MavenArtifactNode> dependencies) {
+                           String premanagedScope) {
+    myParent = parent;
     myArtifact = artifact;
     myState = state;
     myRelatedArtifact = relatedArtifact;
     myOriginalScope = originalScope;
     myPremanagedVersion = premanagedVersion;
     myPremanagedScope = premanagedScope;
-    myDependencies = dependencies;
   }
+
+  @Nullable
+  public MavenArtifactNode getParent() {
+    return myParent;
+  }
+
+
 
   public MavenArtifact getArtifact() {
     return myArtifact;
@@ -85,6 +94,10 @@ public class MavenArtifactNode implements Serializable {
 
   public List<MavenArtifactNode> getDependencies() {
     return myDependencies;
+  }
+
+  public void setDependencies(List<MavenArtifactNode> dependencies) {
+    myDependencies = dependencies;
   }
 
   @Override
