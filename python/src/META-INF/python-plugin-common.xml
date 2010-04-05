@@ -160,6 +160,7 @@
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
+    <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
 
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>

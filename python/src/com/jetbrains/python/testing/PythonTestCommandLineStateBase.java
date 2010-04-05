@@ -63,15 +63,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
 
     envs.put(PYTHONUNBUFFERED, "1");
 
-    List<String> pythonPathList = new ArrayList<String>();
-    pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
-    final Module module = myConfiguration.getModule();
-    if (module != null) {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      for (VirtualFile contentRoot : contentRoots) {
-        pythonPathList.add(FileUtil.toSystemDependentName(contentRoot.getPath()));
-      }
-    }
+    List<String> pythonPathList = buildPythonPath();
     String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
     if (new File(myConfiguration.getInterpreterPath()).getName().toLowerCase().startsWith("jython")) {  // HACK rewrite with cleaner API
       cmd.getParametersList().add("-Dpython.path=" + pythonPath);
@@ -87,6 +79,19 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     cmd.setPassParentEnvs(myConfiguration.isPassParentEnvs());
 
     return cmd;
+  }
+
+  protected List<String> buildPythonPath() {
+    List<String> pythonPathList = new ArrayList<String>();
+    pythonPathList.add(PythonHelpersLocator.getHelpersRoot().getPath());
+    final Module module = myConfiguration.getModule();
+    if (module != null) {
+      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+      for (VirtualFile contentRoot : contentRoots) {
+        pythonPathList.add(FileUtil.toSystemDependentName(contentRoot.getPath()));
+      }
+    }
+    return pythonPathList;
   }
 
   protected abstract void addTestRunnerParameters(GeneralCommandLine cmd);
