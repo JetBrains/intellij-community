@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.utils.actions;
+package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
-public abstract class MavenToggleAction extends ToggleAction implements DumbAware {
+public class DownloadActionGroup extends DefaultActionGroup {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(isAvailable(e));
+    e.getPresentation().setEnabled(MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject());
   }
-
-  protected boolean isAvailable(AnActionEvent e) {
-    return true;
-  }
-
-  public final boolean isSelected(AnActionEvent e) {
-    if (!isAvailable(e)) return false;
-    return doIsSelected(e);
-  }
-
-  protected abstract boolean doIsSelected(AnActionEvent e);
 }

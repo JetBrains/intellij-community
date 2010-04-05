@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.dataflow;
+package com.intellij.codeInsight.dataflow.map;
 
-import java.util.ArrayList;
+import com.intellij.codeInsight.dataflow.DfaInstance;
 
-public interface Semilattice<E> {
-  E join(ArrayList<E> ins);
-
-  boolean eq(E e1, E e2);
+public interface DfaMapInstance<E> extends DfaInstance<DFAMap<E>> {
 }

@@ -293,7 +293,8 @@
       </action>
     </group>
 
-    <group id="Maven.DownloadAllGroup" popup="true" icon="/images/download.png">
+    <group id="Maven.DownloadAllGroup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
+           icon="/images/download.png">
       <reference id="Maven.DownloadAllSources"/>
       <reference id="Maven.DownloadAllDocs"/>
       <reference id="Maven.DownloadAllSourcesAndDocs"/>

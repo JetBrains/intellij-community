@@ -33,6 +33,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -365,31 +366,28 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
-    final Map<GrNamedArgument, List<GrNamedArgument>> map = DuplicatesUtil.factorDuplicates(listOrMap.getNamedArguments(), new TObjectHashingStrategy<GrNamedArgument>() {
-      public int computeHashCode(GrNamedArgument arg) {
-        final GrArgumentLabel label = arg.getLabel();
-        if (label == null) return 0;
+    MultiMap<String, GrNamedArgument> map = new MultiMap<String, GrNamedArgument>();
+
+    for (GrNamedArgument element : listOrMap.getNamedArguments()) {
+      final GrArgumentLabel label = element.getLabel();
+      if (label != null) {
         final String name = label.getName();
-        if (name == null) return 0;
-        return name.hashCode();
-      }
-
-      public boolean equals(GrNamedArgument arg1, GrNamedArgument arg2) {
-        final GrArgumentLabel label1 = arg1.getLabel();
-        final GrArgumentLabel label2 = arg2.getLabel();
-        if (label1 == null || label2 == null) {
-          return label1 == null && label2 == null;
+        if (name != null) {
+          map.putValue(name, element);
         }
-        final String name1 = label1.getName();
-        final String name2 = label2.getName();
-        if (name1 == null || name2 == null) {
-          return name1 == null && name2 == null;
-        }
-        return name1.equals(name2);
       }
-    });
+    }
 
-    processDuplicates(map, myHolder);
+    for (String key : map.keySet()) {
+      final Collection<GrNamedArgument> arguments = map.get(key);
+      if (arguments.size() > 1) {
+        final List<GrNamedArgument> args = new ArrayList<GrNamedArgument>(arguments);
+        for (int i = 1; i < args.size(); i++) {
+          GrNamedArgument namedArgument = args.get(i);
+          myHolder.createWarningAnnotation(namedArgument.getLabel(), GroovyBundle.message("duplicate.element.in.the.map"));
+        }
+      }
+    }
   }
 
   @Override
@@ -731,15 +729,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiElement parent = grMethod.getParent();
     if (parent instanceof GrOpenBlock || parent instanceof GrClosableBlock) {
       holder.createErrorAnnotation(grMethod.getNameIdentifierGroovy(), GroovyBundle.message("Inner.methods.are.not.supported"));
-    }
-  }
-
-  protected static void processDuplicates(Map<GrNamedArgument, List<GrNamedArgument>> map, AnnotationHolder holder) {
-    for (List<GrNamedArgument> args : map.values()) {
-      for (int i = 1; i < args.size(); i++) {
-        GrNamedArgument namedArgument = args.get(i);
-        holder.createWarningAnnotation(namedArgument, GroovyBundle.message("duplicate.element.in.the.map"));
-      }
     }
   }
 

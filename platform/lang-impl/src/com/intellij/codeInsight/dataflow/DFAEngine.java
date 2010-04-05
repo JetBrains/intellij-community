@@ -39,18 +39,18 @@ public class DFAEngine<E> {
   }
 
 
-  public List<DFAMap<E>> performDFA() {
-    final ArrayList<DFAMap<E>> info = new ArrayList<DFAMap<E>>(myFlow.length);
+  public List<E> performDFA() {
+    final ArrayList<E> info = new ArrayList<E>(myFlow.length);
     return performDFA(info);
   }
 
-  public List<DFAMap<E>> performDFA(final List<DFAMap<E>> info) {
+  public List<E> performDFA(final List<E> info) {
     if (LOG.isDebugEnabled()){
       LOG.debug("Perfoming DFA\n" + "Instance: "  + myDfa + " Semilattice: " + mySemilattice);
     }
 
 // initializing dfa
-    final DFAMap<E> initial = myDfa.initial();
+    final E initial = myDfa.initial();
     for (int i = 0; i < myFlow.length; i++) {
       info.add(i, initial);
     }
@@ -104,12 +104,12 @@ public class DFAEngine<E> {
           }
 
           final int currentNumber = currentInstruction.num();
-          final DFAMap<E> oldE = info.get(currentNumber);
-          final DFAMap<E> joinedE = join(currentInstruction, info);
-          final DFAMap<E> newE = myDfa.fun(joinedE, currentInstruction);
+          final E oldE = info.get(currentNumber);
+          final E joinedE = join(currentInstruction, info);
+          final E newE = myDfa.fun(joinedE, currentInstruction);
           if (!mySemilattice.eq(newE, oldE)) {
             if (LOG.isDebugEnabled()){
-              LOG.debug("Number: " + currentNumber + " old: " + oldE.keySet() + " new: " + newE.keySet());
+              LOG.debug("Number: " + currentNumber + " old: " + oldE.toString() + " new: " + newE.toString());
             }
             info.set(currentNumber, newE);
             for (Instruction next : getNext(currentInstruction)) {
@@ -148,9 +148,9 @@ public class DFAEngine<E> {
     return allPred * 2;
   }
 
-  private DFAMap<E> join(final Instruction instruction, final List<DFAMap<E>> info) {
+  private E join(final Instruction instruction, final List<E> info) {
     final Iterable<? extends Instruction> prev = myDfa.isForward() ? instruction.allPred() : instruction.allSucc();
-    final ArrayList<DFAMap<E>> prevInfos = new ArrayList<DFAMap<E>>();
+    final ArrayList<E> prevInfos = new ArrayList<E>();
     for (Instruction i : prev) {
       prevInfos.add(info.get(i.num()));
     }
