@@ -48,6 +48,31 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyCallExpression(final PyCallExpression node) {
+    if ("exit".equals(node.getCallee().getText())){
+      final Instruction instruction = myBuilder.startNode(node);
+      for (PyExpression expression : node.getArguments()) {
+        expression.accept(this);
+      }
+
+      // Here we process pending instructions!!!
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        public void process(final PsiElement pendingScope, final Instruction instruction) {
+          if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
+            myBuilder.addPendingEdge(null, instruction);
+          } else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        }
+      });
+      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+      myBuilder.flowAbrupted();
+    } else {
+      super.visitPyCallExpression(node);
+    }
+  }
+
+  @Override
   public void visitPySubscriptionExpression(PySubscriptionExpression node) {
     myBuilder.startNode(node);
     node.getOperand().accept(this);
