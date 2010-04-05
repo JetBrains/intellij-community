@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.naming;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,20 +26,28 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.ui.AddAction;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.RemoveAction;
+import com.siyeh.ig.ui.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BooleanMethodNameMustStartWithQuestionInspection
         extends BaseInspection{
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreBooleanMethods = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreInAnnotationInterface = true;
 
     /** @noinspection PublicField*/
     @NonNls public String questionString =
@@ -51,41 +60,97 @@ public class BooleanMethodNameMustStartWithQuestionInspection
         parseString(questionString, questionList);
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "boolean.method.name.must.start.with.question.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "boolean.method.name.must.start.with.question.problem.descriptor");
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
         parseString(questionString, questionList);
     }
 
+    @Override
     public void writeSettings(Element element) throws WriteExternalException{
         questionString = formatString(questionList);
         super.writeSettings(element);
     }
 
+    @Override
     public JComponent createOptionsPanel(){
-        final Form form = new Form();
-        return form.getContentPanel();
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final IGTable table =
+                new IGTable(new ListWrappingTableModel(questionList,
+                        InspectionGadgetsBundle.message(
+                                "boolean.method.name.must.start.with.question.table.column.name")));
+        final JScrollPane scrollPane = new JScrollPane(table);
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.gridheight = 3;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        final JButton addButton = new JButton(new AddAction(table));
+        constraints.gridx = 1;
+        constraints.gridheight = 1;
+        constraints.weightx = 0.0;
+        constraints.weighty = 0.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(addButton, constraints);
+
+        final JButton removeButton = new JButton(new RemoveAction(table));
+        constraints.gridy = 1;
+        panel.add(removeButton, constraints);
+
+        final BlankFiller filler = new BlankFiller();
+        constraints.gridy = 2;
+        constraints.weighty = 1.0;
+        panel.add(filler, constraints);
+
+        final CheckBox checkBox1 =
+                new CheckBox(InspectionGadgetsBundle.message(
+                        "ignore.methods.with.boolean.return.type.option"),
+                        this, "ignoreBooleanMethods");
+        constraints.gridy = 3;
+        constraints.gridx = 0;
+        constraints.gridwidth = 2;
+        constraints.weighty = 0.0;
+        panel.add(checkBox1, constraints);
+
+        final CheckBox checkBox2 =
+                new CheckBox(InspectionGadgetsBundle.message(
+                        "ignore.boolean.methods.in.an.interface.option"),
+                        this, "ignoreInAnnotationInterface");
+        constraints.gridy = 4;
+        panel.add(checkBox2, constraints);
+        return panel;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new BooleanMethodNameMustStartWithQuestionVisitor();
     }
@@ -95,8 +160,20 @@ public class BooleanMethodNameMustStartWithQuestionInspection
 
         @Override public void visitMethod(@NotNull PsiMethod method){
             final PsiType returnType = method.getReturnType();
-            if(returnType == null || !returnType.equals(PsiType.BOOLEAN)){
+            if(returnType == null){
                 return;
+            } else if(!returnType.equals(PsiType.BOOLEAN)){
+                if (ignoreBooleanMethods ||
+                    !returnType.equalsToText("java.lang.Boolean")) {
+                    return;
+                }
+            }
+            if (ignoreInAnnotationInterface) {
+                final PsiClass containingClass = method.getContainingClass();
+                if (containingClass != null &&
+                    containingClass.isAnnotationType()) {
+                    return;
+                }
             }
             final String name = method.getName();
             for(String question : questionList){
@@ -108,30 +185,6 @@ public class BooleanMethodNameMustStartWithQuestionInspection
                 return;
             }
             registerMethodError(method);
-        }
-    }
-
-    private class Form{
-
-        JPanel contentPanel;
-        JButton addButton;
-        JButton removeButton;
-        IGTable table;
-
-        Form(){
-            super();
-            addButton.setAction(new AddAction(table));
-            removeButton.setAction(new RemoveAction(table));
-        }
-
-        private void createUIComponents(){
-            table = new IGTable(new ListWrappingTableModel(questionList,
-                    InspectionGadgetsBundle.message(
-                            "boolean.method.name.must.start.with.question.table.column.name")));
-        }
-
-        public JComponent getContentPanel(){
-            return contentPanel;
         }
     }
 }
