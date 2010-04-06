@@ -63,7 +63,7 @@ public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
-  static final int RUN_TIMEOUT = 10 * 1000; // 10 seconds per script invocation is plenty enough; anything more is clearly wrong.
+  static final int RUN_TIMEOUT = 30 * 1000; // 30 seconds per script invocation is plenty; anything more seems wrong (10 wasn't enough tho).
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -550,7 +550,7 @@ public class PythonSdkType extends SdkType {
     assert bin_path != null;
     String working_dir = new File(bin_path).getParent();
     final String sep = File.separator;
-    @NonNls final String stubs_path = PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + working_dir.hashCode() + sep;
+    @NonNls final String stubs_path = PathManager.getSystemPath() + sep + SKELETON_DIR_NAME + sep + bin_path.hashCode() + sep;
     // we have a number of lib dirs, those listed in python's sys.path
     if (indicator != null) {
       indicator.setText("Adding library roots");
@@ -688,7 +688,7 @@ public class PythonSdkType extends SdkType {
       getVirtualEnvAdditionalEnv(binary_path), RUN_TIMEOUT
     );
     if (run_result.getExitCode() != 0) {
-      LOG.error(run_result.getStderr());
+      LOG.error(run_result.getStderr() + (run_result.isTimeout()? "\nTimed out" : "\nExit code " + run_result.getExitCode()));
     }
   }
 

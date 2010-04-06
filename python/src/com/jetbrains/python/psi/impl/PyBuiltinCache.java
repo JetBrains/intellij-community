@@ -1,10 +1,14 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -13,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -22,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Provides access to Python builtins via skeletons.
@@ -64,20 +68,28 @@ public class PyBuiltinCache {
         }
       }
       if (sdk != null) {
-        // dig out the builtins file, create an instance based on it
-        final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUILTIN_ROOT_TYPE);
-        for (String url : urls) {
-          if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
-            final String builtins_url = url + "/" + ((PythonSdkType)sdk.getSdkType()).getBuiltinsFileName(sdk);
-            File builtins = new File(VfsUtil.urlToPath(builtins_url));
-            if (builtins.isFile() && builtins.canRead()) {
-              VirtualFile builtins_vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(builtins);
-              if (builtins_vfile != null) {
-                PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
-                if (builtins_psifile instanceof PyFile) {
-                  instance = new PyBuiltinCache((PyFile)builtins_psifile);
-                  ourInstanceCache.put(instance_key, instance);
-                  return instance;
+        SdkType sdk_type = sdk.getSdkType();
+        if (sdk_type instanceof PythonSdkType) {
+          // dig out the builtins file, create an instance based on it
+          final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUILTIN_ROOT_TYPE);
+          for (String url : urls) {
+            if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
+              final String builtins_url = url + "/" + ((PythonSdkType)sdk.getSdkType()).getBuiltinsFileName(sdk);
+              File builtins = new File(VfsUtil.urlToPath(builtins_url));
+              if (builtins.isFile() && builtins.canRead()) {
+                VirtualFile builtins_vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(builtins);
+                if (builtins_vfile != null) {
+                  PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
+                  if (builtins_psifile instanceof PyFile) {
+                    instance = new PyBuiltinCache((PyFile)builtins_psifile);
+                    ourInstanceCache.put(instance_key, instance);
+                    if (! ourListenedProjects.contains(project)) {
+                      final MessageBusConnection connection = project.getMessageBus().connect();
+                      connection.subscribe(ProjectTopics.PROJECT_ROOTS, RESETTER);
+                      ourListenedProjects.add(project);
+                    }
+                    return instance;
+                  }
                 }
               }
             }
@@ -94,6 +106,28 @@ public class PyBuiltinCache {
    * Here we store our instances, keyed either by module or by project (for the module-less case of PyCharm).
    */
   private static final Map<ComponentManager, PyBuiltinCache> ourInstanceCache = new HashMap<ComponentManager, PyBuiltinCache>();
+
+
+  public static void clearInstanceCache() {
+    ourInstanceCache.clear();
+  }
+
+  /**
+   * Here we store projects whose ProjectRootManagers have our listeners already.
+   */
+  private static final List<Project> ourListenedProjects = new LinkedList<Project>();
+
+
+  private static class CacheResetter implements ModuleRootListener {
+    public void beforeRootsChange(ModuleRootEvent event) {
+      // nothing
+    }
+
+    public void rootsChanged(ModuleRootEvent event) {
+      clearInstanceCache();
+    }
+  }
+  private static final CacheResetter RESETTER = new CacheResetter();
 
   private PyFile myBuiltinsFile;
 
@@ -218,4 +252,5 @@ public class PyBuiltinCache {
     }
     return myBuiltinsFile == the_file; // files are singletons, no need to compare URIs
   }
+
 }

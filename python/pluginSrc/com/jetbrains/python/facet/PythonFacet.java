@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,6 +59,7 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> {
           if (library == null) {
             // we just create new project library
             library = PythonSdkTableListener.addLibrary(sdk);
+            PyBuiltinCache.clearInstanceCache();
           }
           model.addLibraryEntry(library);
           modelChanged = true;
@@ -89,6 +91,7 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> {
               final String libraryName = library.getName();
               if (libraryName!=null && libraryName.endsWith(PYTHON_FACET_LIBRARY_NAME_SUFFIX)) {
                 model.removeOrderEntry(entry);
+                //PyBuiltinCache.clearInstanceCache();
               }
             }
           }
