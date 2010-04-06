@@ -119,9 +119,14 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     final char completionChar = context.getCompletionChar();
     if (completionChar == '!') return item.getTailType();
     if (completionChar == '(') {
-      final PsiMethod psiMethod = (PsiMethod)item.getObject();
-      return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
-             ? TailType.NONE : TailType.SEMICOLON;
+      final Object o = item.getObject();
+      if (o instanceof PsiMethod) {
+        final PsiMethod psiMethod = (PsiMethod)o;
+        return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
+               ? TailType.NONE : TailType.SEMICOLON;
+      } else if (o instanceof PsiClass) { // it may be a constructor
+        return TailType.NONE;
+      }
     }
     if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
     if (!context.shouldAddCompletionChar()) {

@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -36,28 +35,10 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
   public static final ConstructorInsertHandler INSTANCE = new ConstructorInsertHandler();
 
   public void handleInsert(InsertionContext context, LookupElementDecorator<LookupItem> item) {
-    final Editor editor = context.getEditor();
-    final Document document = editor.getDocument();
-
     @SuppressWarnings({"unchecked"}) final LookupItem<PsiClass> delegate = item.getDelegate();
     delegate.handleInsert(context);
 
-    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
-
-    final PsiFile file = context.getFile();
-    final PsiElement place = file.findElementAt(context.getStartOffset());
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
-    assert place != null;
-    boolean hasParams = false;
-    for (PsiMethod constructor : delegate.getObject().getConstructors()) {
-      if (!resolveHelper.isAccessible(constructor, place, null)) continue;
-      if (constructor.getParameterList().getParametersCount() > 0) {
-        hasParams = true;
-        break;
-      }
-    }
-
-    PsiMethodInsertHandler.insertParentheses(context, delegate, false, hasParams);
+    insertParentheses(context, delegate, delegate.getObject());
 
     final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
 
@@ -71,16 +52,34 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
         if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || psiClass.isInterface()) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
 
-          document.insertString(editor.getCaretModel().getOffset(), " {}");
+          final Editor editor = context.getEditor();
+          editor.getDocument().insertString(editor.getCaretModel().getOffset(), " {}");
           editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 2);
-          context.setLaterRunnable(generateAnonymousBody(editor, file));
-
+          context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
         }
         else {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
         }
       }
     }
+  }
+
+  public static void insertParentheses(InsertionContext context, LookupItem delegate, final PsiClass psiClass) {
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
+
+    final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
+    assert place != null;
+    boolean hasParams = false;
+    for (PsiMethod constructor : psiClass.getConstructors()) {
+      if (!resolveHelper.isAccessible(constructor, place, null)) continue;
+      if (constructor.getParameterList().getParametersCount() > 0) {
+        hasParams = true;
+        break;
+      }
+    }
+
+    PsiMethodInsertHandler.insertParentheses(context, delegate, false, hasParams);
   }
 
   private static Runnable generateAnonymousBody(final Editor editor, PsiFile file) {

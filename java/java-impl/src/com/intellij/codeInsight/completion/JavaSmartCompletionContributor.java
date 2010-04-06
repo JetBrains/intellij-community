@@ -97,12 +97,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(
     psiElement(PsiReferenceExpression.class).afterLeaf(
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
-  private static final DefaultInsertHandler NO_TAIL_HANDLER = new DefaultInsertHandler(){
-    @Override
-    protected TailType getTailType(char completionChar) {
-      return TailType.NONE;
-    }
-  };
 
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
@@ -180,7 +174,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                   JavaCompletionUtil.setShowFQN((LookupItem)item);
                 } else {
                 }
-                ((LookupItem) item).setInsertHandler(NO_TAIL_HANDLER);
+                ((LookupItem) item).setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
                 result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.INSTANCE), infos));
               }
             }
@@ -396,7 +390,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
-              item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
               if (item.getObject() instanceof PsiClass) {
                 JavaCompletionUtil.setShowFQN(item);
               }
@@ -419,7 +412,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (lookupElement instanceof LookupItem) {
       final LookupItem lookupItem = (LookupItem)lookupElement;
       if (lookupItem.getInsertHandler() == null) {
-        lookupItem.setInsertHandler(NO_TAIL_HANDLER);
+        lookupItem.setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
       }
     }
 
@@ -585,7 +578,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
 
-    item.setInsertHandler(NO_TAIL_HANDLER);
+    item.setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
     result.addElement(decorate(type instanceof PsiClassType ? LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.INSTANCE) : item, infos));
   }
 

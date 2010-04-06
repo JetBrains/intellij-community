@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -26,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -51,6 +49,12 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   private Editor myEditor;
   protected Document myDocument;
   private InsertHandlerState myState;
+  public static final DefaultInsertHandler NO_TAIL_HANDLER = new DefaultInsertHandler(){
+    @Override
+    protected TailType getTailType(char completionChar) {
+      return TailType.NONE;
+    }
+  };
 
   public void handleInsert(final InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);
@@ -70,12 +74,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     myDocument = myEditor.getDocument();
 
     TailType tailType = getTailType(completionChar);
-    if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      //tailType = TailType.SMART_COMPLETION;
-    }
-    if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null && completionChar == '(') {
-      tailType = TailType.NONE;
-    }
 
     myState = new InsertHandlerState(myContext.getSelectionEndOffset(), myContext.getSelectionEndOffset());
 
@@ -104,15 +102,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       }
     }
 
-    RangeMarker saveMaker = null;
-    final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
-    if (generateAnonymousBody){
-      saveMaker = myDocument.createRangeMarker(myState.caretOffset, myState.caretOffset);
-      myDocument.insertString(myState.tailOffset, "{}");
-      myState.caretOffset = myState.tailOffset + 1;
-      myState.tailOffset += 2;
-    }
-
     myContext.setTailOffset(myState.tailOffset);
     myState.caretOffset = processTail(tailType, myState.caretOffset, myState.tailOffset);
     myEditor.getSelectionModel().removeSelection();
@@ -127,16 +116,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     if (tailType == TailType.DOT){
       AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor, null);
-    }
-
-    if (generateAnonymousBody) {
-      if (hasParams) {
-        int offset = saveMaker.getStartOffset();
-        myEditor.getCaretModel().moveToOffset(offset);
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        myEditor.getSelectionModel().removeSelection();
-      }
-      return;
     }
 
     if (completionChar == '#') {
@@ -214,7 +193,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   }
 
   private void handleParenses(final boolean hasParams, final boolean needParenth, TailType tailType){
-    final boolean generateAnonymousBody = myLookupItem.getAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR) != null;
     boolean insertRightParenth = tailType != TailType.SMART_COMPLETION;
 
     if (needParenth){
@@ -252,7 +230,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
             myState.caretOffset++;
           }
           else{
-            if (tailType != TailTypes.CALL_RPARENTH || generateAnonymousBody) {
+            if (tailType != TailTypes.CALL_RPARENTH) {
               myState.tailOffset += 2;
               myState.caretOffset += 2;
             }
@@ -276,62 +254,24 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
   }
 
   private boolean isToInsertParenth(){
-    boolean needParens = false;
-    if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      needParens = true;
-      final PsiClass aClass = (PsiClass)myLookupItem.getObject();
-
-      PsiElement place = myFile.findElementAt(myContext.getStartOffset());
-
-      if(myLookupItem.getAttribute(LookupItem.DONT_CHECK_FOR_INNERS) == null){
-        PsiClass[] classes = aClass.getInnerClasses();
-        for (PsiClass inner : classes) {
-          if (!inner.hasModifierProperty(PsiModifier.STATIC)) continue;
-          if (!JavaPsiFacade.getInstance(inner.getProject()).getResolveHelper().isAccessible(inner, place, null)) continue;
-          needParens = false;
-          break;
-        }
-      }
-    } else if (insertingAnnotationWithParameters()) {
-      needParens = true;
-    }
-    return needParens;
+    return insertingAnnotationWithParameters();
   }
 
   private boolean hasParams(){
-    boolean hasParms = false;
-    if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null){
-      PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      final PsiClass aClass = (PsiClass)myLookupItem.getObject();
-
+    final String lookupString = myLookupItem.getLookupString();
+    if (PsiKeyword.SYNCHRONIZED.equals(lookupString)) {
       final PsiElement place = myFile.findElementAt(myContext.getStartOffset());
-
-      final PsiMethod[] constructors = aClass.getConstructors();
-      for (PsiMethod constructor : constructors) {
-        if (!JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper().isAccessible(constructor, place, null)) continue;
-        if (constructor.getParameterList().getParametersCount() > 0) {
-          hasParms = true;
-          break;
-        }
-      }
+      return PsiTreeUtil.getParentOfType(place, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock;
     }
-    else {
-      final String lookupString = myLookupItem.getLookupString();
-      if (PsiKeyword.SYNCHRONIZED.equals(lookupString)) {
-        final PsiElement place = myFile.findElementAt(myContext.getStartOffset());
-        hasParms = PsiTreeUtil.getParentOfType(place, PsiMember.class, PsiCodeBlock.class) instanceof PsiCodeBlock;
-      }
-      else if(PsiKeyword.CATCH.equals(lookupString) ||
-              PsiKeyword.SWITCH.equals(lookupString) ||
-              PsiKeyword.WHILE.equals(lookupString) ||
-              PsiKeyword.FOR.equals(lookupString))
-        hasParms = true;
-      else if (insertingAnnotationWithParameters()) {
-        hasParms = true;
-      }
+    else if(PsiKeyword.CATCH.equals(lookupString) ||
+            PsiKeyword.SWITCH.equals(lookupString) ||
+            PsiKeyword.WHILE.equals(lookupString) ||
+            PsiKeyword.FOR.equals(lookupString))
+      return true;
+    else if (insertingAnnotationWithParameters()) {
+      return true;
     }
-    return hasParms;
+    return false;
   }
 
   private boolean insertingAnnotationWithParameters() {
@@ -389,13 +329,11 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       case '=': return TailType.EQ;
       case ' ': return TailType.SPACE;
       case ':': return TailType.CASE_COLON; //?
-      case '(': return TailTypeEx.SMART_LPARENTH;
       case '<':
       case '>':
       case '#':
       case '\"':
       case '[': return TailType.createSimpleTailType(completionChar);
-      //case '!': if (!(myLookupItem.getObject() instanceof PsiVariable)) return TailType.EXCLAMATION;
     }
     final TailType attr = myLookupItem.getTailType();
     return attr == TailType.UNKNOWN ? TailType.NONE : attr;
