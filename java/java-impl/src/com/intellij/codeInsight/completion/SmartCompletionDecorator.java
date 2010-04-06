@@ -191,7 +191,6 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
 
         final PsiClass psiClass = (PsiClass)item.getObject();
 
-        item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
         if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || psiClass.isInterface()) {
           item.setAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR, "");
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
