@@ -23,11 +23,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @author shkate@jetbrains.com
- */
 public class SpellcheckingStrategy {
 
 

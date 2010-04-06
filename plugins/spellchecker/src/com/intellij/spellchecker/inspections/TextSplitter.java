@@ -44,10 +44,13 @@ public class TextSplitter {
   private static final Pattern URL = Pattern.compile("(https?|ftp|mailto)\\:\\/\\/");
 
   @NonNls
-  private static final Pattern COMPLEX = Pattern.compile("(\\.[^\\.]+)|([@]+)");
+  private static final Pattern COMPLEX = Pattern.compile("([@]+)");
 
   @NonNls
-  private static final Pattern SPECIAL = Pattern.compile("^&\\p{Alnum}{4};");
+  private static final Pattern SPECIAL = Pattern.compile("&\\p{Alnum}{4};|#\\p{Alnum}{3,6}");
+
+  @NonNls
+  private static final Pattern DOT_SEPARATED = Pattern.compile("\\p{L}(\\.)+");
 
   private static final String delimiters = ".,;:!?*/&\"";
 
@@ -55,9 +58,13 @@ public class TextSplitter {
   private TextSplitter() {
   }
 
-
   @Nullable
   public static List<CheckArea> splitText(@Nullable String text) {
+    return splitText(text, null);
+  }
+
+  @Nullable
+  public static List<CheckArea> splitText(@Nullable String text, @Nullable ProgressManager manager) {
     if (text == null || StringUtil.isEmpty(text)) {
       return null;
     }
@@ -67,7 +74,9 @@ public class TextSplitter {
     List<CheckArea> results = new ArrayList<CheckArea>();
     String[] pieces = text.substring(i).split(WORD_SPLITTER);
     for (String s : pieces) {
-      ProgressManager.checkCanceled();
+      if (manager != null) {
+        ProgressManager.checkCanceled();
+      }
       if (s.length() > 0 && startWithLetterOrDelimiter(s)) {
         int p1 = text.indexOf(s, i);
         TextRange range = TextRange.from(p1, s.length());
@@ -82,13 +91,14 @@ public class TextSplitter {
   }
 
   private static boolean startWithLetterOrDelimiter(@NotNull String s) {
-    return Character.isLetter(s.charAt(0)) || delimiters.contains(s.substring(0,1));
+    return Character.isLetter(s.charAt(0)) || delimiters.contains(s.substring(0, 1));
   }
 
   @Nullable
   private static List<CheckArea> splitNonSpace(String text, TextRange range) {
     String nonSpaceArea = text.substring(range.getStartOffset(), range.getEndOffset());
-    if (URL.matcher(nonSpaceArea).find() || COMPLEX.matcher(nonSpaceArea).find()) {
+
+    if (URL.matcher(nonSpaceArea).find() || COMPLEX.matcher(nonSpaceArea).find() || SPECIAL.matcher(nonSpaceArea).find()) {
       return null;
     }
     return splitWord(text, range);
@@ -159,7 +169,7 @@ public class TextSplitter {
     }
 
     Matcher extendedMatcher = EXTENDED_WORD.matcher(word);
-    if (extendedMatcher.find()) {
+    while (extendedMatcher.find()) {
       TextRange found = matcherRange(range, extendedMatcher);
       results.addAll(splitSimpleWord(text, found));
     }
@@ -168,11 +178,13 @@ public class TextSplitter {
 
   }
 
+
+
   private static void addWord(String text, List<CheckArea> results, boolean flag, TextRange found) {
     boolean tooShort = (found.getEndOffset() - found.getStartOffset()) <= 3;
-    for (int i = found.getStartOffset(); i<found.getEndOffset();i++){
-      if (!Character.isLetter(text.charAt(i)) && text.charAt(i)!='\''){
-         return;
+    for (int i = found.getStartOffset(); i < found.getEndOffset(); i++) {
+      if (!Character.isLetter(text.charAt(i)) && text.charAt(i) != '\'') {
+        return;
       }
     }
     final CheckArea area = new CheckArea(text, found, flag || tooShort);

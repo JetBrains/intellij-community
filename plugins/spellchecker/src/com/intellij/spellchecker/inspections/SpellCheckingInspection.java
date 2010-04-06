@@ -22,6 +22,7 @@ import com.intellij.lang.*;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -155,7 +156,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
 
   private static void inspect(Token token, ProblemsHolder holder, boolean isOnTheFly,@NotNull Set<String> alreadyChecked, @NotNull SpellCheckerManager manager, NamesValidator... validators) {
-    List<CheckArea> areaList = TextSplitter.splitText(token.getText());
+    List<CheckArea> areaList = TextSplitter.splitText(token.getText(), ProgressManager.getInstance());
     if (areaList == null) {
       return;
     }
