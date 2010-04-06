@@ -161,6 +161,15 @@ def sortedNoCase(p_array):
     
   return p_array
 
+def cleanup(value):
+  result = ''
+  for c in value:
+    if c == '\n': result += '\\n'
+    elif c == '\r': result += '\\r'
+    elif c < ' ' or c > chr(127): result += '?'
+    else: result += c
+  return result
+
 _prop_types = [type(property())]
 try: _prop_types.append(types.GetSetDescriptorType)
 except: pass
@@ -613,7 +622,7 @@ class ModuleRedeclarator(object):
           else:
             # a forward / circular declaration happens
             notice = ""
-            s = repr(p_value).replace("\n", "\\n").replace("\r", "\\r")
+            s = cleanup(repr(p_value))
             if found_name:
               if found_name == as_name:
                 notice = " # (!) real value is " + s
