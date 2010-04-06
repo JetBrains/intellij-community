@@ -1,5 +1,4 @@
 # encoding: utf-8
-import re
 """
 This thing tries to restore public interface of objects that don't have a python
 source: C extensions and built-in objects. It does not reimplement the
@@ -33,6 +32,9 @@ except ImportError:
   inspect = None # it may fail
 
 import re
+
+if sys.platform == 'cli':
+  import clr
 
 string_mod = string
 
@@ -173,12 +175,19 @@ def cleanup(value):
 
 # http://blogs.msdn.com/curth/archive/2009/03/29/an-ironpython-profiler.aspx
 def print_profile():
-  import clr
   data = []
   data.extend(clr.GetProfilerData())
   data.sort(lambda x, y: -cmp(x.InclusiveTime, y.InclusiveTime))
   for p in data:
     print '%s\t%d\t%d\t%d' % (p.Name, p.InclusiveTime, p.ExclusiveTime, p.Calls)
+
+def is_clr_type(t):
+  if not t: return False
+  try:
+    clr.GetClrType(t)
+    return True
+  except TypeError:
+    return False
 
 _prop_types = [type(property())]
 try: _prop_types.append(types.GetSetDescriptorType)
@@ -758,6 +767,27 @@ class ModuleRedeclarator(object):
       spec.append("**" + kwarg)
     return flatten(spec)
 
+  def restoreClr(self, p_func, p_name, p_class):
+    """Restore the function signature by the CLR type signature"""
+    clr_type = clr.GetClrType(p_class)
+    if p_name == '__new__':
+      methods = clr_type.GetConstructors()
+      if not methods:
+        return p_name + '(*args)   # could not find CLR constructor'
+    else:
+      methods = [m for m in clr_type.GetMethods() if m.Name == p_name]
+      if not methods:
+        return p_name + '(*args)   # could not find CLR method'
+    method = methods[0]
+    for overload in methods[1:]:
+      if len(overload.GetParameters()) < len(method.GetParameters()): method = overload
+    params = [p.Name for p in method.GetParameters()]
+    if not method.IsStatic:
+      params = ['self'] + params
+    if len(methods) > 1:
+      params.append("*___args")
+    return p_name + '(' + ', '.join(params) + ')'
+
   def redoFunction(self, p_func, p_name, indent, p_class=None, p_modname=None):
     """
     Restore function argument list as best we can.
@@ -790,6 +820,7 @@ class ModuleRedeclarator(object):
       #self.out("@staticmethod # known case of __new__", indent)
       deco = "staticmethod"
       deco_comment = " # known case of __new__"
+
     if deco and HAS_DECORATORS:
       self.out("@" + deco + deco_comment, indent)
     if inspect and inspect.isfunction(p_func):
@@ -799,7 +830,10 @@ class ModuleRedeclarator(object):
       spec, sig_note = self.restorePredefinedBuiltin(classname, p_name)
       self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocAttr(p_func, indent+1, p_class)
-
+    elif sys.platform == 'cli' and is_clr_type(p_class):
+      spec = self.restoreClr(p_func, p_name, p_class)
+      self.out("def " + spec + ":", indent)
+      self.outDocAttr(p_func, indent+1, p_class)
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
@@ -1088,13 +1122,16 @@ if __name__ == "__main__":
   else:
     doing_builtins = False
 
-  refs = opts.get('-c', '')
-  if refs:
-    import clr
-    for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
+  if sys.platform == 'cli':
+    refs = opts.get('-c', '')
+    if refs:
+      for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
 
-  if '-p' in opts:
-    atexit.register(print_profile)
+    if '-p' in opts:
+      atexit.register(print_profile)
+
+    from System import DateTime
+    start = DateTime.Now
 
   # go on
   for name in names:
@@ -1156,3 +1193,6 @@ if __name__ == "__main__":
         raise
       else:
         continue
+
+  if sys.platform == 'cli':
+    print "Generation completed in " + str((DateTime.Now - start).TotalMilliseconds) + " ms"
