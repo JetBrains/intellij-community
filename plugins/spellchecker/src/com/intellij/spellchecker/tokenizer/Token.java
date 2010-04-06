@@ -17,11 +17,7 @@ package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @author shkate@jetbrains.com
- */
+
 public class Token<T extends PsiElement> {
 
   private String text;

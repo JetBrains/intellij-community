@@ -42,7 +42,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
   @NotNull
   public String getName() {
-   return SpellCheckerBundle.message("change.to");
+    return SpellCheckerBundle.message("change.to");
   }
 
   @NotNull

@@ -18,29 +18,29 @@ package com.intellij.spellchecker.state;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionary;
 
 @State(
   name = "CachedDictionaryState",
   storages = {@Storage(
     id = "spellchecker",
     file = "$APP_CONFIG$/cachedDictionary.xml")})
-public class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState>{
+public class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
   public static final String DEFAULT_NAME = "cached";
 
   public CachedDictionaryState() {
     name = DEFAULT_NAME;
   }
 
-  public CachedDictionaryState(Dictionary dictionary) {
+  public CachedDictionaryState(EditableDictionary dictionary) {
     super(dictionary);
     name = DEFAULT_NAME;
   }
 
   @Override
   public void loadState(DictionaryState state) {
-    if (state.name==null){
-      state.name= DEFAULT_NAME;
+    if (state.name == null) {
+      state.name = DEFAULT_NAME;
     }
     super.loadState(state);
   }

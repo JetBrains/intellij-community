@@ -15,24 +15,27 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.spellchecker.trie.Action;
+import com.intellij.util.Consumer;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-public class ProjectDictionary implements Dictionary {
+public class ProjectDictionary implements EditableDictionary {
 
   private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
   private String activeName;
-  private Set<Dictionary> dictionaries;
+  private Set<EditableDictionary> dictionaries;
 
 
   public ProjectDictionary() {
   }
 
-  public ProjectDictionary(Set<Dictionary> dictionaries) {
+  public ProjectDictionary(Set<EditableDictionary> dictionaries) {
     this.dictionaries = dictionaries;
   }
 
@@ -73,20 +76,20 @@ public class ProjectDictionary implements Dictionary {
   }
 
   @NotNull
-  private Dictionary getActiveDictionary() {
+  private EditableDictionary getActiveDictionary() {
     return ensureCurrentUserDictionary();
   }
 
   @NotNull
-  private Dictionary ensureCurrentUserDictionary() {
+  private EditableDictionary ensureCurrentUserDictionary() {
     if (activeName == null) {
       activeName = DEFAULT_CURRENT_USER_NAME;
     }
-    Dictionary result = getDictionaryByName(activeName);
+    EditableDictionary result = getDictionaryByName(activeName);
     if (result == null) {
       result = new UserDictionary(this.activeName);
       if (dictionaries == null) {
-        dictionaries = new HashSet<Dictionary>();
+        dictionaries = new THashSet<EditableDictionary>();
       }
       dictionaries.add(result);
     }
@@ -94,12 +97,12 @@ public class ProjectDictionary implements Dictionary {
   }
 
   @Nullable
-  private Dictionary getDictionaryByName(@NotNull String name) {
+  private EditableDictionary getDictionaryByName(@NotNull String name) {
     if (dictionaries == null) {
       return null;
     }
-    Dictionary result = null;
-    for (Dictionary dictionary : dictionaries) {
+    EditableDictionary result = null;
+    for (EditableDictionary dictionary : dictionaries) {
       if (dictionary.getName().equals(name)) {
         result = dictionary;
         break;
@@ -130,13 +133,21 @@ public class ProjectDictionary implements Dictionary {
     return words;
   }
 
-  public void traverse(Action action) {
+  public int size(){
+    int result = 0;
+    for (Dictionary dictionary : dictionaries) {
+      result+=dictionary.size();
+    }
+    return result;
+  }
+
+  public void traverse(final Consumer<String> consumer) {
     if (dictionaries == null) {
       return;
     }
 
-    for (Dictionary dictionary : dictionaries) {
-      dictionary.traverse(action);
+    for (EditableDictionary dictionary : dictionaries) {
+      dictionary.traverse(consumer);
     }
 
   }
@@ -146,21 +157,12 @@ public class ProjectDictionary implements Dictionary {
     return getActiveDictionary().getWords();
   }
 
-  @Nullable
-  public Set<String> getNotEditableWords() {
-    Set<String> words = getWords();
-    Set<String> editable = getEditableWords();
-    if (words != null && editable != null) {
-      words.removeAll(editable);
-    }
-    return words;
-  }
 
   public void addToDictionary(@Nullable Collection<String> words) {
     getActiveDictionary().addToDictionary(words);
   }
 
-  public Set<Dictionary> getDictionaries() {
+  public Set<EditableDictionary> getDictionaries() {
     return dictionaries;
   }
 

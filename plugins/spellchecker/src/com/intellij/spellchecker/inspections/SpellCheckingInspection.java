@@ -36,6 +36,7 @@ import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.containers.hash.HashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,14 +44,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 
 public class SpellCheckingInspection extends LocalInspectionTool {
-  
+
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
   private static final AcceptWordAsCorrect BATCH_ACCEPT_FIX = new AcceptWordAsCorrect();
 
@@ -145,56 +144,68 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         if (tokens == null) {
           return;
         }
+        SpellCheckerManager manager = SpellCheckerManager.getInstance(element.getProject());
+        Set<String> alreadyChecked = new THashSet<String>();
         for (Token token : tokens) {
-          inspect(token, holder, isOnTheFly, getNamesValidators());
+          inspect(token, holder, isOnTheFly, alreadyChecked, manager,NAMES_VALIDATORS);
         }
       }
     };
   }
 
-  private static void inspect(Token token, ProblemsHolder holder, boolean isOnTheFly, NamesValidator... validators) {
+
+  private static void inspect(Token token, ProblemsHolder holder, boolean isOnTheFly,@NotNull Set<String> alreadyChecked, @NotNull SpellCheckerManager manager, NamesValidator... validators) {
     List<CheckArea> areaList = TextSplitter.splitText(token.getText());
     if (areaList == null) {
       return;
     }
     for (CheckArea area : areaList) {
       boolean ignored = area.isIgnored();
-      boolean keyword = isKeyword(validators, token.getElement(), area.getWord());
-      if (!ignored && !keyword) {
-        inspect(area, token, holder, isOnTheFly);
+      final TextRange textRange = area.getTextRange();
+
+      if (ignored || textRange ==null){
+        continue;
       }
+
+      final String word = area.getWord();
+      if (word==null || (!isOnTheFly && alreadyChecked.contains(word))){
+        continue;
+      }
+
+      boolean keyword = isKeyword(validators, token.getElement(), word);
+      if (keyword){
+        continue;
+      }
+
+      boolean hasProblems = manager.hasProblem(word);
+      if (hasProblems){
+        if (!isOnTheFly){
+          alreadyChecked.add(word);
+          addBatchDescriptor(textRange,token,holder);
+        } else{
+          addRegularDescriptor(textRange,token,holder);
+        }
+      }
+
     }
   }
 
 
-  private static void inspect(@NotNull CheckArea area, @NotNull Token token, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(token.getElement().getProject());
-
-    final TextRange textRange = area.getTextRange();
-    final String word = area.getWord();
-
-    if (textRange == null || word == null) {
-      return;
-    }
-
-    if (manager.hasProblem(word)) {
+  private static void addBatchDescriptor(@NotNull TextRange textRange, @NotNull Token token, @NotNull ProblemsHolder holder) {
       List<SpellCheckerQuickFix> fixes = new ArrayList<SpellCheckerQuickFix>();
-      if (isOnTheFly) {
-        if (!token.isUseRename()) {
-          fixes.add(new ChangeTo());
-        }
-        else {
-          fixes.add(new RenameTo());
-        }
-      }
+      fixes.add(BATCH_ACCEPT_FIX);
 
-      final AcceptWordAsCorrect acceptWordAsCorrect = isOnTheFly ? new AcceptWordAsCorrect() : BATCH_ACCEPT_FIX;
-      fixes.add(acceptWordAsCorrect);
-
-      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes, isOnTheFly);
+      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes, false);
       holder.registerProblem(problemDescriptor);
-    }
+  }
 
+  private static void addRegularDescriptor(@NotNull TextRange textRange, @NotNull Token token, @NotNull ProblemsHolder holder) {
+      List<SpellCheckerQuickFix> fixes = new ArrayList<SpellCheckerQuickFix>();
+      fixes.add((token.isUseRename()?new RenameTo():new ChangeTo()));
+      fixes.add(new AcceptWordAsCorrect());
+
+      final ProblemDescriptor problemDescriptor = createProblemDescriptor(token, holder, textRange, fixes, true);
+      holder.registerProblem(problemDescriptor);
   }
 
   private static ProblemDescriptor createProblemDescriptor(Token token,
