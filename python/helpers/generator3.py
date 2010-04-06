@@ -613,7 +613,7 @@ class ModuleRedeclarator(object):
           else:
             # a forward / circular declaration happens
             notice = ""
-            s = repr(p_value)
+            s = repr(p_value).replace("\n", "\\n").replace("\r", "\\r")
             if found_name:
               if found_name == as_name:
                 notice = " # (!) real value is " + s

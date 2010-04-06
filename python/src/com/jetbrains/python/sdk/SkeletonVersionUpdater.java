@@ -18,7 +18,7 @@ import java.util.List;
 public class SkeletonVersionUpdater implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SkeletonVersionUpdater");
 
-  public static int SKELETONS_VERSION = 2;
+  public static int SKELETONS_VERSION = 3;
 
   public SkeletonVersionUpdater(StartupManager startupManager) {
     startupManager.registerStartupActivity(new Runnable() {
