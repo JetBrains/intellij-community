@@ -331,6 +331,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+    if (isFocusTransferReady()) {
+      runnable.run();
+      return;
+    }
+
     final boolean needsRestart = isIdleQueueEmpty();
     myIdleRequests.add(runnable);
     if (needsRestart) {
