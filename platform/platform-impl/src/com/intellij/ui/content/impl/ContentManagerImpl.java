@@ -205,6 +205,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       myContents.remove(content);
       content.removePropertyChangeListener(this);
 
+      fireContentRemoved(content, indexToBeRemoved, ContentManagerEvent.ContentOperation.remove);
+      ((ContentImpl)content).setManager(null);
+
+
+      if (dispose) {
+        Disposer.dispose(content);
+      }
+
       int newSize = myContents.size();
       if (newSize > 0 && trackSelection) {
         if (indexToSelect > -1) {
@@ -221,13 +229,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
       else {
         mySelection.clear();
-      }
-      fireContentRemoved(content, indexToBeRemoved, ContentManagerEvent.ContentOperation.remove);
-      ((ContentImpl)content).setManager(null);
-
-
-      if (dispose) {
-        Disposer.dispose(content);
       }
 
       return true;

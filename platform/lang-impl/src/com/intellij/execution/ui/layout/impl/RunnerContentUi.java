@@ -311,6 +311,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
           grid.processAddToUi(false);
         }
 
+        if (myManager.getComponent().isShowing()) {
+          grid.restoreLastUiState();
+        }
+
         updateTabsUI(false);
 
 

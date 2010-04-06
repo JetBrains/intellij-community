@@ -528,6 +528,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     myUi.addContent(content);
+    myUi.selectAndFocus(content, true, true);
     myThreadDumpsCount += 1;
     myCurrentThreadDumpId += 1;
     Disposer.register(this, new Disposable() {

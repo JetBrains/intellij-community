@@ -102,6 +102,7 @@ public class GridCellImpl implements GridCell, Disposable {
         if (UIUtil.isCloseClick(e)) {
           if (isDetached()) {
             myPopup.cancel();
+            myPopup = null;
           }
           else {
             minimize(e);
@@ -171,6 +172,11 @@ public class GridCellImpl implements GridCell, Disposable {
     if (myContents.size() == 0) {
       myPlaceholder.removeAll();
       myTabs.removeAllTabs();
+
+      if (myPopup != null) {
+        myPopup.cancel();
+        myPopup = null;
+      }
     }
     else {
       if (myPlaceholder.isNull() && !isDetached()) {
@@ -290,7 +296,7 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     }
 
-    if (!isRestoringFromDetach() && myContainer.getTab().isDetached(myPlaceInGrid)) {
+    if (!isRestoringFromDetach() && myContainer.getTab().isDetached(myPlaceInGrid) && contents.length > 0) {
       _detach(!myContext.isStateBeingRestored()).notifyWhenDone(result);
     } else {
       result.setDone();
@@ -419,7 +425,11 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   private ActionCallback detachTo(Point screenPoint, Dimension size, boolean dragging, final boolean requestFocus) {
-    if (isDetached()) return new ActionCallback.Done();
+    if (isDetached()) {
+      if (myPopup != null) {
+        return new ActionCallback.Done();
+      }
+    }
 
     final Content[] contents = getContents();
 
@@ -472,7 +482,7 @@ public class GridCellImpl implements GridCell, Disposable {
       .setModalContext(false)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
-          if (myDisposed) return Boolean.TRUE;
+          if (myDisposed || myContents.size() == 0) return Boolean.TRUE;
           myRestoreFromDetach.restoreInGrid();
           myRestoreFromDetach = null;
           myContext.saveUiState();
@@ -487,6 +497,7 @@ public class GridCellImpl implements GridCell, Disposable {
   public void attach() {
     if (isDetached()) {
       myPopup.cancel();
+      myPopup = null;
     }
   }
 
