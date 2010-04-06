@@ -96,6 +96,9 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       tailType = TailType.SMART_COMPLETION;
     }
+    if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null && completionChar == '(') {
+      tailType = TailType.NONE;
+    }
 
     myState = new InsertHandlerState(myContext.getSelectionEndOffset(), myContext.getSelectionEndOffset());
 
