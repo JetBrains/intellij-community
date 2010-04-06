@@ -52,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
@@ -109,49 +108,8 @@ public class PythonSdkType extends SdkType {
         return findDigits(o1).compareTo(findDigits(o2));
       }
     });
-    if (SystemInfo.isWindows) {
-      findSubdirInstallations(candidates, "C:\\", PYTHON_STR, "python.exe");
-      findSubdirInstallations(candidates, "C:\\Program Files\\", PYTHON_STR, "python.exe");
-      findSubdirInstallations(candidates, "C:\\", "jython", "jython.bat");
-    }
-    else if (SystemInfo.isMac) {
-      final String pythonPath = "/Library/Frameworks/Python.framework/Versions";
-      VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
-      if (rootVDir != null) {
-        for (VirtualFile dir : rootVDir.getChildren()) {
-          final String dir_name = dir.getName().toLowerCase();
-          if (dir.isDirectory()) {
-            if ("Current".equals(dir_name) || dir_name.startsWith("2") || dir_name.startsWith("3") || dir_name.startsWith("jython")) {
-              VirtualFile bin_dir = dir.findChild("bin");
-              if (bin_dir != null && bin_dir.isDirectory()) {
-                VirtualFile python_exe = dir.findChild(PYTHON_STR);
-                if (python_exe != null) candidates.add(python_exe.getPath());
-                python_exe = dir.findChild("jython"); // maybe it's in bin/
-                if (python_exe != null) candidates.add(python_exe.getPath());
-              }
-              else {
-                VirtualFile python_exe = dir.findChild("jython"); // maybe it's not in bin/
-                if (python_exe != null) candidates.add(python_exe.getPath());
-              }
-            }
-          }
-        }
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/bin");
-      if (rootDir != null) {
-        VirtualFile[] suspects = rootDir.getChildren();
-        for (VirtualFile child : suspects) {
-          if (!child.isDirectory()) {
-            final String child_name = child.getName();
-            if (child_name.startsWith(PYTHON_STR) || child_name.startsWith("jython")) {
-              candidates.add(child.getPath());
-            }
-          }
-        }
-        candidates.add(rootDir.getPath());
-      }
+    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
+      candidates.addAll(flavor.suggestHomePaths());
     }
 
     if (candidates.size() > 0) {
@@ -174,20 +132,18 @@ public class PythonSdkType extends SdkType {
     return s;
   }
 
-  private static void findSubdirInstallations(TreeSet<String> candidates, String rootDir, String dir_prefix, String exe_name) {
-    VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath("C:\\");
-    if (rootVDir != null) {
-      for (VirtualFile dir : rootVDir.getChildren()) {
-        if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
-          VirtualFile python_exe = dir.findChild(exe_name);
-          if (python_exe != null) candidates.add(python_exe.getPath());
-        }
-      }
-    }
+  public boolean isValidSdkHome(final String path) {
+    return getFlavor(path) != null;
   }
 
-  public boolean isValidSdkHome(final String path) {
-    return isPythonSdkHome(path) || isJythonSdkHome(path);
+  @Nullable
+  private static PythonSdkFlavor getFlavor(String sdkPath) {
+    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -223,29 +179,6 @@ public class PythonSdkType extends SdkType {
     };
     result.setTitle(PyBundle.message("sdk.select.path"));
     return result;
-  }
-
-  /**
-   * Checks if the path is the name of a Python intepreter.
-   *
-   * @param path path to check.
-   * @return true if paths points to a valid home.
-   */
-  @NonNls
-  private static boolean isPythonSdkHome(final String path) {
-    File file = new File(path);
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
-  }
-
-  /**
-   * Checks if the path is the name of a Jython intepreter.
-   *
-   * @param path path to check.
-   * @return true if paths points to a valid home.
-   */
-  private static boolean isJythonSdkHome(final String path) {
-    File file = new File(path);
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("jython");
   }
 
   /**
@@ -639,28 +572,8 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public String getVersionString(final String sdkHome) {
-    final String binaryPath = getInterpreterPath(sdkHome);
-    if (binaryPath == null) {
-      return null;
-    }
-    final boolean isJython = isJythonSdkHome(sdkHome);
-    @NonNls String version_regexp, version_opt;
-    if (isJython) {
-      version_regexp = "(Jython \\S+) on .*";
-      version_opt = "--version";
-    }
-    else { // CPython
-      version_regexp = "(Python \\S+).*";
-      version_opt = "-V";
-    }
-    Pattern pattern = Pattern.compile(version_regexp);
-    String run_dir = new File(binaryPath).getParent();
-    final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{binaryPath, version_opt});
-    if (process_output.getExitCode() != 0) {
-      throw new RuntimeException(process_output.getStderr() + " (exit code " + process_output.getExitCode() + ")");
-    }
-    String version = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
-    return version;
+    final PythonSdkFlavor flavor = getFlavor(sdkHome);
+    return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
 
   @Nullable
