@@ -48,10 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
@@ -97,8 +94,6 @@ public class PythonSdkType extends SdkType {
     }
     return PyBuiltinCache.BUILTIN_FILE;
   }
-
-  @NonNls static final private String PYTHON_STR = "python";
 
   @NonNls
   @Nullable
@@ -352,9 +347,8 @@ public class PythonSdkType extends SdkType {
       }
     }
     // fix skeletons as needed
-    String url = findSkeletonsUrl(currentSdk);
-    if (url != null) {
-      final String path = VfsUtil.urlToPath(url);
+    final String path = findSkeletonsPath(currentSdk);
+    if (path != null) {
       File stubs_dir = new File(path);
       if (!stubs_dir.exists()) {
         final ProgressManager progman = ProgressManager.getInstance();
@@ -364,7 +358,7 @@ public class PythonSdkType extends SdkType {
           public void run(@NotNull final ProgressIndicator indicator) {
             try {
               generateBuiltinStubs(currentSdk.getHomePath(), path);
-              generateBinaryStubs(currentSdk.getHomePath(), path, indicator);
+              generateBinarySkeletons(currentSdk.getHomePath(), path, indicator);
             }
             catch (Exception e) {
               LOG.error(e);
@@ -410,11 +404,11 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static String findSkeletonsUrl(Sdk sdk) {
+  public static String findSkeletonsPath(Sdk sdk) {
     final String[] urls = sdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
     for (String url : urls) {
       if (url.contains(SKELETON_DIR_NAME)) {
-        return url;
+        return VfsUtil.urlToPath(url);
       }
     }
     return null;
@@ -528,7 +522,7 @@ public class PythonSdkType extends SdkType {
       // regenerate stubs, existing or not
       final File stubs_dir = new File(stubs_path);
       if (!stubs_dir.exists()) stubs_dir.mkdirs();
-      generateBinaryStubs(bin_path, stubs_path, indicator);
+      generateBinarySkeletons(bin_path, stubs_path, indicator);
     }
   }
 
@@ -603,8 +597,7 @@ public class PythonSdkType extends SdkType {
    * @param stubsRoot where to put results (expected to exist).
    * @param indicator ProgressIndicator to update, or null.
    */
-  public static void generateBinaryStubs(final String binaryPath, final String stubsRoot, ProgressIndicator indicator)
-  {
+  public static void generateBinarySkeletons(final String binaryPath, final String stubsRoot, ProgressIndicator indicator) {
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs");
     }
@@ -635,19 +628,7 @@ public class PythonSdkType extends SdkType {
             indicator.setText2(modname);
           }
           LOG.info("Skeleton for " + modname);
-          final ProcessOutput gen_result = SdkUtil.getProcessOutput(
-            parent_dir,
-            new String[]{binaryPath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", stubsRoot, modname},
-            getVirtualEnvAdditionalEnv(binaryPath),
-            RUN_TIMEOUT
-          );
-          if (gen_result.getExitCode() != 0) {
-            StringBuffer sb = new StringBuffer("Skeleton for ");
-            sb.append(modname).append(" failed. stderr: --");
-            for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
-            sb.append("--");
-            LOG.warn(sb.toString());
-          }
+          generateSkeleton(binaryPath, stubsRoot, modname, Collections.<String>emptyList());
         }
       }
     }
@@ -658,6 +639,34 @@ public class PythonSdkType extends SdkType {
       ;
       for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
       throw new InvalidSdkException(sb.toString());
+    }
+  }
+
+  public static void generateSkeleton(String binaryPath, String stubsRoot, String modname, List<String> assemblyRefs) {
+    final String parent_dir = new File(binaryPath).getParent();
+    List<String> commandLine = new ArrayList<String>();
+    commandLine.add(binaryPath);
+    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
+    commandLine.add("-d");
+    commandLine.add(stubsRoot);
+    if (!assemblyRefs.isEmpty()) {
+      commandLine.add("-c");
+      commandLine.add(StringUtil.join(assemblyRefs, ";"));
+    }
+    commandLine.add(modname);
+
+    final ProcessOutput gen_result = SdkUtil.getProcessOutput(
+      parent_dir,
+      commandLine.toArray(new String[commandLine.size()]),
+      getVirtualEnvAdditionalEnv(binaryPath),
+      RUN_TIMEOUT*10
+    );
+    if (gen_result.getExitCode() != 0) {
+      StringBuffer sb = new StringBuffer("Skeleton for ");
+      sb.append(modname).append(" failed. stderr: --");
+      for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
+      sb.append("--");
+      LOG.warn(sb.toString());
     }
   }
 

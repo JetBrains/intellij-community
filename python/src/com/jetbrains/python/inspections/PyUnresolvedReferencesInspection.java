@@ -16,10 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.actions.AddFieldQuickFix;
-import com.jetbrains.python.actions.AddImportAction;
-import com.jetbrains.python.actions.AddMethodQuickFix;
-import com.jetbrains.python.actions.ImportFromExistingFix;
+import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -373,6 +370,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
       }
 
+      if (GenerateBinaryStubsFix.isApplicable(reference)) {
+        actions.add(new GenerateBinaryStubsFix(reference));
+      }
       addPluginQuickFixes(reference, actions);
 
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
