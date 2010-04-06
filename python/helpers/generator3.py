@@ -1051,8 +1051,9 @@ if __name__ == "__main__":
   -q -- quiet, do not print anything on stdout. Errors still go to stderr.
   -u -- update, only recreate skeletons for newer files, and skip unchanged.
   -x -- die on exceptions with a stacktrace; only for debugging.
+  -c modules -- import CLR assemblies with specified names
   """
-  opts, fnames = getopt(sys.argv[1:], "d:hbqux")
+  opts, fnames = getopt(sys.argv[1:], "d:hbquxc:")
   opts = dict(opts)
   if not opts or '-h' in opts:
     print(helptext)
@@ -1075,6 +1076,12 @@ if __name__ == "__main__":
       names.remove('__main__') # we don't want ourselves processed
   else:
     doing_builtins = False
+
+  refs = opts.get('-c', '')
+  if refs:
+    import clr
+    for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
+
   # go on
   for name in names:
     if not quiet:
