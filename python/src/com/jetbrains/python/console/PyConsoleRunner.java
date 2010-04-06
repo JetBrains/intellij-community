@@ -15,6 +15,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -226,6 +227,9 @@ public class PyConsoleRunner {
     };
     EmptyAction.setupAction(myRunAction, "Console.Python.Execute", null);
     toolbarActions.add(myRunAction);
+
+// Help
+    toolbarActions.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
 
 // history actions
     final PairProcessor<AnActionEvent, String> historyProcessor = new PairProcessor<AnActionEvent, String>() {

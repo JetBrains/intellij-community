@@ -1,24 +1,20 @@
 package com.jetbrains.python.codeInsight.dataflow;
 
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.dataflow.DFAMap;
+import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.DfaInstance;
+import com.intellij.codeInsight.dataflow.map.DfaMapInstance;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
-import com.jetbrains.python.psi.PyGlobalStatement;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author oleg
  */
-public class PyReachingDefsDfaInstance implements DfaInstance<ScopeVariable> {
+public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> {
   // Use this its own map, because check in PyReachingDefsDfaSemilattice is important
   public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<ScopeVariable>();
 

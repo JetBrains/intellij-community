@@ -1,9 +1,9 @@
 package com.jetbrains.python.codeInsight.dataflow;
 
-import com.intellij.codeInsight.dataflow.DFAMap;
+import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.Semilattice;
+import com.intellij.codeInsight.dataflow.map.MapSemilattice;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * @author oleg
  */
-public class PyReachingDefsSemilattice implements Semilattice<ScopeVariable> {
+public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> {
   public boolean eq(DFAMap<ScopeVariable> e1, DFAMap<ScopeVariable> e2) {
     if (e1 == PyReachingDefsDfaInstance.INITIAL_MAP && e2 != PyReachingDefsDfaInstance.INITIAL_MAP ||
         e2 == PyReachingDefsDfaInstance.INITIAL_MAP && e1 != PyReachingDefsDfaInstance.INITIAL_MAP) {

@@ -52,7 +52,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
-    getNode().replaceChild(findNameIdentifier(), nameElement);
+    getNode().replaceChild(getNameNode(), nameElement);
     return this;
   }
 
@@ -64,12 +64,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return stub.getName();
     }
     else {
-      ASTNode node = findNameIdentifier();
+      ASTNode node = getNameNode();
       return node != null ? node.getText() : null;
     }
   }
 
-  private ASTNode findNameIdentifier() {
+  public ASTNode getNameNode() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
@@ -447,7 +447,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public int getTextOffset() {
-    final ASTNode name = findNameIdentifier();
+    final ASTNode name = getNameNode();
     return name != null ? name.getStartOffset() : super.getTextOffset();
   }
 

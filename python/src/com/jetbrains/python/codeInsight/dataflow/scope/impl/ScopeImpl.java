@@ -2,9 +2,9 @@ package com.jetbrains.python.codeInsight.dataflow.scope.impl;
 
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.DFAEngine;
-import com.intellij.codeInsight.dataflow.DFAMap;
+import com.intellij.codeInsight.dataflow.map.DFAMap;
+import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
@@ -63,7 +63,7 @@ public class ScopeImpl implements Scope {
     if (myCachedScopeVariables == null) {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
-      final DFAEngine<ScopeVariable> engine = new DFAEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
+      final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
       myCachedScopeVariables = engine.performDFA();
     }
     return myCachedScopeVariables;
