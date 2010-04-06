@@ -30,35 +30,36 @@ import org.jetbrains.annotations.NotNull;
 public class JavaPsiClassReferenceElement extends LookupItem<Object> {             
   public static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
-      final PsiJavaCodeReferenceElement element =
-          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
+      if (completingRawConstructor(context, item)) {
+        DefaultInsertHandler.NO_TAIL_HANDLER.handleInsert(context, item);
+        ConstructorInsertHandler.insertParentheses(context, item, item.getObject());
+      } else {
+        new DefaultInsertHandler().handleInsert(context, item);
+      }
+    }
 
-      final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
+    private boolean completingRawConstructor(InsertionContext context, JavaPsiClassReferenceElement item) {
+      final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
+      final PsiElement prevElement = FilterPositionUtil.searchNonSpaceNonCommentBack(ref);
       if (prevElement != null && prevElement.getParent() instanceof PsiNewExpression) {
-        ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(context.getProject()).getExpectedTypes((PsiExpression) prevElement.getParent(), true);
-        boolean flag = true;
         PsiTypeParameter[] typeParameters = item.getObject().getTypeParameters();
-        for (ExpectedTypeInfo info : infos) {
+        for (ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes((PsiExpression) prevElement.getParent(), true)) {
           final PsiType type = info.getType();
 
           if (info.isArrayTypeInfo()) {
-            flag = false;
-            break;
+            return false;
           }
-          if (typeParameters.length > 0 && type instanceof PsiClassType) {
-            if (!((PsiClassType)type).isRaw()) {
-              flag = false;
-            }
+          if (typeParameters.length > 0 && type instanceof PsiClassType && !((PsiClassType)type).isRaw()) {
+            return false;
           }
         }
-        if (flag) {
-          item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
-          item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, ""); //strange hack
-        }
+        return true;
       }
-      new DefaultInsertHandler().handleInsert(context, item);
+
+      return false;
     }
   };
+
   private final PsiAnchor myClass;
   private final String myQualifiedName;
 

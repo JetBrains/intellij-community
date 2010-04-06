@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ControlFlowUtils;
 import com.siyeh.ipp.psiutils.EquivalenceChecker;
 import com.siyeh.ipp.psiutils.ErrorUtil;
+import com.siyeh.ipp.psiutils.VariableAccessUtils;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,7 +34,6 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiJavaToken token = (PsiJavaToken) element;
-
         final PsiElement parent = token.getParent();
         if(!(parent instanceof PsiIfStatement)){
             return false;
@@ -51,7 +52,19 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         if(ErrorUtil.containsError(nextIfStatement)){
             return false;
         }
-        return ifStatementsCanBeMerged(ifStatement, nextIfStatement);
+        if(!ifStatementsCanBeMerged(ifStatement, nextIfStatement)){
+            return false;
+        }
+        final PsiExpression condition = ifStatement.getCondition();
+        final Set<PsiVariable> variables =
+                VariableAccessUtils.collectUsedVariables(condition);
+        final PsiStatement thenBranch = ifStatement.getThenBranch();
+        if(VariableAccessUtils.isAnyVariableAssigned(variables, thenBranch)){
+            return false;
+        }
+        final PsiStatement elseBranch = ifStatement.getElseBranch();
+        return !VariableAccessUtils.isAnyVariableAssigned(variables,
+                elseBranch);
     }
 
     public static boolean ifStatementsCanBeMerged(PsiIfStatement statement1,
@@ -63,8 +76,8 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         }
         final PsiExpression firstCondition = statement1.getCondition();
         final PsiExpression secondCondition = statement2.getCondition();
-        if(! EquivalenceChecker.expressionsAreEquivalent(firstCondition,
-                                                         secondCondition)){
+        if(!EquivalenceChecker.expressionsAreEquivalent(firstCondition,
+                secondCondition)){
             return false;
         }
         final PsiStatement nextThenBranch = statement2.getThenBranch();
@@ -73,11 +86,11 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         }
         final PsiStatement nextElseBranch = statement2.getElseBranch();
         return elseBranch == null || nextElseBranch == null ||
-                canBeMerged(elseBranch, nextElseBranch);
+               canBeMerged(elseBranch, nextElseBranch);
     }
 
     private static boolean canBeMerged(PsiStatement statement1,
-                                      PsiStatement statement2){
+                                       PsiStatement statement2){
         if(!ControlFlowUtils.statementMayCompleteNormally(statement1)){
             return false;
         }
@@ -89,13 +102,13 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         final Set<String> statement2Declarations =
                 calculateTopLevelDeclarations(statement2);
         return !containsConflictingDeclarations(statement2Declarations,
-                                                statement1);
+                statement1);
     }
 
     private static boolean containsConflictingDeclarations(
-            Set<String> declarations, PsiStatement statement) {
+            Set<String> declarations, PsiElement context) {
         final DeclarationVisitor visitor = new DeclarationVisitor(declarations);
-        statement.accept(visitor);
+        context.accept(visitor);
         return visitor.hasConflict();
     }
 
@@ -119,18 +132,19 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
     }
 
     private static void addDeclarations(PsiDeclarationStatement statement,
-                                        Set<String> declaredVars){
+                                        Collection<String> declaredVariables){
         final PsiElement[] elements = statement.getDeclaredElements();
         for(final PsiElement element : elements){
             if(element instanceof PsiVariable){
                 final PsiVariable variable = (PsiVariable) element;
                 final String name = variable.getName();
-                declaredVars.add(name);
+                declaredVariables.add(name);
             }
         }
     }
 
-    private static class DeclarationVisitor extends JavaRecursiveElementWalkingVisitor{
+    private static class DeclarationVisitor
+            extends JavaRecursiveElementWalkingVisitor{
 
         private final Set<String> declarations;
         private boolean hasConflict = false;

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion.simple;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -25,7 +26,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -41,62 +41,67 @@ import org.jetbrains.annotations.Nullable;
 */
 public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMethod>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler");
-  private final PsiMethod myMethod;
+  public static final PsiMethodInsertHandler INSTANCE = new PsiMethodInsertHandler();
 
-  public PsiMethodInsertHandler(final PsiMethod method) {
-    myMethod = method;
+  public static void insertParentheses(final InsertionContext context, final LookupItem<? extends PsiElement> item, boolean overloadsMatter, boolean hasParams) {
+    final Editor editor = context.getEditor();
+    final TailType tailType = getTailType(item, context);
+    final PsiFile file = context.getFile();
+
+    context.setAddCompletionChar(false);
+
+
+    final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
+    final boolean needRightParenth = shouldInsertRParenth(context.getCompletionChar(), tailType, hasParams);
+
+    if (needLeftParenth) {
+      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+      ParenthesesInsertHandler.getInstance(hasParams,
+                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
+                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
+                                           needRightParenth,
+                                           styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+      ).handleInsert(context, item);
+    }
+
+    if (needLeftParenth && hasParams) {
+      // Invoke parameters popup
+      AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : item.getObject());
+    }
+    if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
+      tailType.processTail(editor, context.getTailOffset());
+    }
   }
 
   public void handleInsert(final InsertionContext context, final LookupItem<PsiMethod> item) {
     final Editor editor = context.getEditor();
-    final char completionChar = context.getCompletionChar();
-    final TailType tailType = getTailType(item, context);
     final Document document = editor.getDocument();
     final PsiFile file = context.getFile();
     final int offset = editor.getCaretModel().getOffset();
-
-    context.setAddCompletionChar(false);
+    final PsiMethod method = item.getObject();
 
     final LookupElement[] allItems = context.getElements();
     final boolean overloadsMatter = allItems.length == 1 && item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) == null;
 
-    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, overloadsMatter, myMethod);
-    final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
-    final boolean needRightParenth = shouldInsertRParenth(completionChar, tailType, hasParams);
+    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, overloadsMatter, method);
 
-    if (needLeftParenth) {
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
-      new MethodParenthesesHandler(myMethod, overloadsMatter,
-                                           styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
-                                           styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,
-                                           needRightParenth
-      ).handleInsert(context, item);
-    }
+    insertParentheses(context, item, overloadsMatter, hasParams);
 
     insertExplicitTypeParams(item, document, offset, file);
 
-    final PsiType type = myMethod.getReturnType();
-    if (completionChar == '!' && type != null && PsiType.BOOLEAN.isAssignableFrom(type)) {
-      PsiDocumentManager.getInstance(myMethod.getProject()).commitDocument(document);
-      final PsiMethodCallExpression methodCall =
-          PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethodCallExpression.class, false);
+    final PsiType type = method.getReturnType();
+    if (context.getCompletionChar() == '!' && type != null && PsiType.BOOLEAN.isAssignableFrom(type)) {
+      PsiDocumentManager.getInstance(method.getProject()).commitDocument(document);
+      final PsiMethodCallExpression methodCall = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethodCallExpression.class, false);
       if (methodCall != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
         document.insertString(methodCall.getTextRange().getStartOffset(), "!");
       }
     }
 
-    if (needLeftParenth && hasParams) {
-      // Invoke parameters popup
-      AutoPopupController.getInstance(myMethod.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : myMethod);
-    }
-    if (tailType == TailType.SMART_COMPLETION || needLeftParenth && needRightParenth) {
-      tailType.processTail(editor, context.getTailOffset());
-    }
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  private boolean shouldInsertRParenth(char completionChar, TailType tailType, boolean hasParams) {
+  private static boolean shouldInsertRParenth(char completionChar, TailType tailType, boolean hasParams) {
     if (tailType == TailType.SMART_COMPLETION) {
       return false;
     }
@@ -114,9 +119,14 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     final char completionChar = context.getCompletionChar();
     if (completionChar == '!') return item.getTailType();
     if (completionChar == '(') {
-      final PsiMethod psiMethod = (PsiMethod)item.getObject();
-      return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
-             ? TailType.NONE : TailType.SEMICOLON;
+      final Object o = item.getObject();
+      if (o instanceof PsiMethod) {
+        final PsiMethod psiMethod = (PsiMethod)o;
+        return psiMethod.getParameterList().getParameters().length > 0 || psiMethod.getReturnType() != PsiType.VOID
+               ? TailType.NONE : TailType.SEMICOLON;
+      } else if (o instanceof PsiClass) { // it may be a constructor
+        return TailType.NONE;
+      }
     }
     if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) return TailType.SMART_COMPLETION;
     if (!context.shouldAddCompletionChar()) {
@@ -126,7 +136,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     return LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
   }
 
-  private static boolean isToInsertParenth(PsiElement place){
+  public static boolean isToInsertParenth(PsiElement place){
     if (place == null) return true;
     return !(place.getParent() instanceof PsiImportStaticReferenceElement);
   }
@@ -143,7 +153,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     if (expression == null) return;
 
     final Project project = file.getProject();
-    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(project).getExpectedTypes(expression, true, false);
+    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expression, true, false);
     if (expectedTypes == null) return;
 
     for (final ExpectedTypeInfo type : expectedTypes) {

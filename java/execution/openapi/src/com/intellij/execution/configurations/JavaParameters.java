@@ -65,12 +65,15 @@ public class JavaParameters extends SimpleJavaParameters {
       return;
     }
 
-    Charset encoding = EncodingProjectManager.getInstance(module.getProject()).getDefaultCharset();
+    setDefaultCharset(module.getProject());
+    ProjectRootsTraversing.collectRoots(module, getPolicy(null, module, classPathType), getClassPath());
+  }
+
+  public void setDefaultCharset(final Project project) {
+    Charset encoding = EncodingProjectManager.getInstance(project).getDefaultCharset();
     if (encoding != null) {
       setCharset(encoding);
     }
-
-    ProjectRootsTraversing.collectRoots(module, getPolicy(null, module, classPathType), getClassPath());
   }
 
   public void configureByModule(final Module module, final int classPathType) throws CantRunException {

@@ -112,13 +112,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     }
 
-    //method throws clause
-    if (psiElement().inside(
-        psiElement(PsiReferenceList.class).save("refList").withParent(
-            psiMethod().withThrowsList(get("refList")))).accepts(element)) {
-      return THROWABLES_FILTER;
-    }
-
     return null;
   }
 
@@ -175,15 +168,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
             for (final LookupElement item : completeReference(element, reference, filter, true, parameters)) {
-              if (AFTER_THROW_NEW.accepts(element)) {
-                ((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
-                if (item.getObject() instanceof PsiClass) {
+              if (item.getObject() instanceof PsiClass) {
+                if (AFTER_THROW_NEW.accepts(element)) {
+                  //((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
                   JavaCompletionUtil.setShowFQN((LookupItem)item);
+                } else {
                 }
-              } else {
-                ((LookupItem)item).setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
+                ((LookupItem) item).setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
+                result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.INSTANCE), infos));
               }
-              result.addElement(decorate(item, infos));
             }
           }
           else if (INSIDE_TYPECAST_EXPRESSION.accepts(element)) {
@@ -192,6 +185,23 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             }
           }
 
+        }
+      }
+    });
+
+    //method throws clause
+    extend(CompletionType.SMART, psiElement().inside(
+      psiElement(PsiReferenceList.class).save("refList").withParent(
+        psiMethod().withThrowsList(get("refList")))), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        final PsiElement element = parameters.getPosition();
+        final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
+        assert reference != null;
+        for (final LookupElement item : completeReference(element, reference, THROWABLES_FILTER, true, parameters)) {
+          result.addElement(item);
         }
       }
     });
@@ -380,7 +390,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
-              item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
               if (item.getObject() instanceof PsiClass) {
                 JavaCompletionUtil.setShowFQN(item);
               }
@@ -403,12 +412,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (lookupElement instanceof LookupItem) {
       final LookupItem lookupItem = (LookupItem)lookupElement;
       if (lookupItem.getInsertHandler() == null) {
-        lookupItem.setInsertHandler(new DefaultInsertHandler(){
-          @Override
-          protected TailType getTailType(char completionChar) {
-            return TailType.NONE;
-          }
-        });
+        lookupItem.setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
       }
     }
 
@@ -567,15 +571,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     }
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), parameters.getPosition());
-    item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
     JavaCompletionUtil.setShowFQN(item);
-    item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
-    result.addElement(decorate(item, infos));
+
+    item.setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
+    result.addElement(decorate(type instanceof PsiClassType ? LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.INSTANCE) : item, infos));
   }
 
   static Set<LookupElement> completeReference(final PsiElement element, PsiReference reference, final ElementFilter filter, final boolean acceptClasses, CompletionParameters parameters) {

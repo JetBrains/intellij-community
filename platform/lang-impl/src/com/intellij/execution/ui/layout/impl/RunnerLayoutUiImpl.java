@@ -159,9 +159,13 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
   }
 
   public ActionCallback selectAndFocus(@Nullable final Content content, boolean requestFocus, final boolean forced) {
+    return selectAndFocus(content, requestFocus, forced, false);
+  }
+
+  public ActionCallback selectAndFocus(@Nullable final Content content, boolean requestFocus, final boolean forced, boolean implicit) {
     if (content == null) return new ActionCallback.Rejected();
 
-    return getContentManager().setSelectedContentCB(content, requestFocus || shouldRequestFocus(), forced);
+    return getContentManager().setSelectedContent(content, requestFocus || shouldRequestFocus(), forced, implicit);
   }
 
   private boolean shouldRequestFocus() {

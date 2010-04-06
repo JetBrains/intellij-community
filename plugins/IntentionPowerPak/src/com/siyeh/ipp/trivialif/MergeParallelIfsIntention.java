@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,13 @@ import org.jetbrains.annotations.NonNls;
 
 public class MergeParallelIfsIntention extends Intention {
 
+    @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
         return new MergeParallelIfsPredicate();
     }
 
+    @Override
     public void processIntention(PsiElement element)
             throws IncorrectOperationException {
         final PsiJavaToken token = (PsiJavaToken)element;
@@ -57,23 +59,23 @@ public class MergeParallelIfsIntention extends Intention {
         final PsiStatement firstThenBranch = firstStatement.getThenBranch();
         final PsiStatement secondThenBranch = secondStatement.getThenBranch();
         @NonNls String statement = "if(" + conditionText + ')' +
-                printStatementsInSequence(firstThenBranch,
-                        secondThenBranch);
+                                   printStatementsInSequence(firstThenBranch,
+                                           secondThenBranch);
         final PsiStatement firstElseBranch = firstStatement.getElseBranch();
         final PsiStatement secondElseBranch = secondStatement.getElseBranch();
         if (firstElseBranch != null || secondElseBranch != null) {
             if (firstElseBranch instanceof PsiIfStatement
-                    && secondElseBranch instanceof PsiIfStatement
-                    && MergeParallelIfsPredicate.ifStatementsCanBeMerged(
+                && secondElseBranch instanceof PsiIfStatement
+                && MergeParallelIfsPredicate.ifStatementsCanBeMerged(
                     (PsiIfStatement)firstElseBranch,
                     (PsiIfStatement)secondElseBranch)) {
                 statement += "else " +
-                        mergeIfStatements((PsiIfStatement)firstElseBranch,
-                                (PsiIfStatement)secondElseBranch);
+                             mergeIfStatements((PsiIfStatement)firstElseBranch,
+                                     (PsiIfStatement)secondElseBranch);
             } else {
                 statement += "else" +
-                        printStatementsInSequence(firstElseBranch,
-                                secondElseBranch);
+                             printStatementsInSequence(firstElseBranch,
+                                     secondElseBranch);
             }
         }
         return statement;

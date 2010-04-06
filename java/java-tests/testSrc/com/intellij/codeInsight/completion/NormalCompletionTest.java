@@ -494,6 +494,12 @@ public class NormalCompletionTest extends LightCompletionTestCase {
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
   }
 
+  public void testFinishClassNameWithLParen() throws Throwable {
+    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    type('(');
+    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+  }
+
   public void testSelectNoParameterSignature() throws Throwable {
     configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     final int parametersCount = ((PsiMethod)getLookup().getCurrentItem().getObject()).getParameterList().getParametersCount();

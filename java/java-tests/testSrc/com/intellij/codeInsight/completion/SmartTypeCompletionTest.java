@@ -720,6 +720,13 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testSameMethodArgumentsInIf() throws Throwable {
+    configureByTestName();
+    getLookup().setCurrentItem(getLookup().getItems().get(1));
+    select();
+    checkResultByTestName();
+  }
+
   public void testSuperConstructorArguments() throws Throwable {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(2));
