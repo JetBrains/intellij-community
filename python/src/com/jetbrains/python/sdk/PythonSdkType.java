@@ -62,7 +62,7 @@ public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
-  static final int RUN_TIMEOUT = 30 * 1000; // 30 seconds per script invocation is plenty; anything more seems wrong (10 wasn't enough tho).
+  static final int RUN_TIMEOUT = 60 * 1000; // 60 seconds per script invocation is plenty; anything more seems wrong (10 wasn't enough tho).
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
