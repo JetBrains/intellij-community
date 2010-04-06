@@ -24,6 +24,7 @@ import os
 import string
 import stat
 import types
+import atexit
 #import __builtin__
 
 try:
@@ -169,6 +170,15 @@ def cleanup(value):
     elif c < ' ' or c > chr(127): result += '?'
     else: result += c
   return result
+
+# http://blogs.msdn.com/curth/archive/2009/03/29/an-ironpython-profiler.aspx
+def print_profile():
+  import clr
+  data = []
+  data.extend(clr.GetProfilerData())
+  data.sort(lambda x, y: -cmp(x.InclusiveTime, y.InclusiveTime))
+  for p in data:
+    print '%s\t%d\t%d\t%d' % (p.Name, p.InclusiveTime, p.ExclusiveTime, p.Calls)
 
 _prop_types = [type(property())]
 try: _prop_types.append(types.GetSetDescriptorType)
@@ -1052,8 +1062,9 @@ if __name__ == "__main__":
   -u -- update, only recreate skeletons for newer files, and skip unchanged.
   -x -- die on exceptions with a stacktrace; only for debugging.
   -c modules -- import CLR assemblies with specified names
+  -p -- run CLR profiler
   """
-  opts, fnames = getopt(sys.argv[1:], "d:hbquxc:")
+  opts, fnames = getopt(sys.argv[1:], "d:hbquxc:p")
   opts = dict(opts)
   if not opts or '-h' in opts:
     print(helptext)
@@ -1081,6 +1092,9 @@ if __name__ == "__main__":
   if refs:
     import clr
     for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
+
+  if '-p' in opts:
+    atexit.register(print_profile)
 
   # go on
   for name in names:
