@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class SpellcheckerInspectionTestCase extends JavaCodeInsightFixtureTestCase {
