@@ -118,13 +118,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     }
 
-    //method throws clause
-    if (psiElement().inside(
-        psiElement(PsiReferenceList.class).save("refList").withParent(
-            psiMethod().withThrowsList(get("refList")))).accepts(element)) {
-      return THROWABLES_FILTER;
-    }
-
     return null;
   }
 
@@ -181,15 +174,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           if (filter != null) {
             final List<ExpectedTypeInfo> infos = Arrays.asList(getExpectedTypes(parameters));
             for (final LookupElement item : completeReference(element, reference, filter, true, parameters)) {
-              if (AFTER_THROW_NEW.accepts(element)) {
-                ((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
-                if (item.getObject() instanceof PsiClass) {
+              if (item.getObject() instanceof PsiClass) {
+                if (AFTER_THROW_NEW.accepts(element)) {
+                  //((LookupItem)item).setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
                   JavaCompletionUtil.setShowFQN((LookupItem)item);
+                } else {
                 }
-              } else {
-                ((LookupItem)item).setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
+                ((LookupItem) item).setInsertHandler(NO_TAIL_HANDLER);
+                result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.INSTANCE), infos));
               }
-              result.addElement(decorate(item, infos));
             }
           }
           else if (INSIDE_TYPECAST_EXPRESSION.accepts(element)) {
@@ -198,6 +191,23 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
             }
           }
 
+        }
+      }
+    });
+
+    //method throws clause
+    extend(CompletionType.SMART, psiElement().inside(
+      psiElement(PsiReferenceList.class).save("refList").withParent(
+        psiMethod().withThrowsList(get("refList")))), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        final PsiElement element = parameters.getPosition();
+        final PsiReference reference = element.getContainingFile().findReferenceAt(parameters.getOffset());
+        assert reference != null;
+        for (final LookupElement item : completeReference(element, reference, THROWABLES_FILTER, true, parameters)) {
+          result.addElement(item);
         }
       }
     });
