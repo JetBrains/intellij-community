@@ -18,17 +18,6 @@ public abstract class PythonSdkFlavor {
     return Collections.emptyList();
   }
 
-  /**
-   * Checks if the path is the name of a Python intepreter of this flavor.
-   *
-   * @param path path to check.
-   * @return true if paths points to a valid home.
-   */
-  public boolean isValidSdkHome(String path) {
-    File file = new File(path);
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
-  }
-
   public static List<PythonSdkFlavor> getApplicableFlavors() {
     List<PythonSdkFlavor> result = new ArrayList<PythonSdkFlavor>();
     if (SystemInfo.isWindows) {
@@ -41,21 +30,33 @@ public abstract class PythonSdkFlavor {
       result.add(UnixPythonSdkFlavor.INSTANCE);
     }
     result.add(JythonSdkFlavor.INSTANCE);
+    result.add(IronPythonSdkFlavor.INSTANCE);
     return result;
   }
 
-  public String getVersionString(String sdkHome) {
-    return getVersionFromOutput(sdkHome, "-V", "(Python \\S+).*");
+  /**
+   * Checks if the path is the name of a Python interpreter of this flavor.
+   *
+   * @param path path to check.
+   * @return true if paths points to a valid home.
+   */
+  public boolean isValidSdkHome(String path) {
+    File file = new File(path);
+    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
   }
 
-  protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp) {
+  public String getVersionString(String sdkHome) {
+    return getVersionFromOutput(sdkHome, "-V", "(Python \\S+).*", false);
+  }
+
+  protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp, boolean stdout) {
     Pattern pattern = Pattern.compile(version_regexp);
     String run_dir = new File(sdkHome).getParent();
     final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
     if (process_output.getExitCode() != 0) {
       throw new RuntimeException(process_output.getStderr() + " (exit code " + process_output.getExitCode() + ")");
     }
-    return SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
+    final List<String> lines = stdout ? process_output.getStdoutLines() : process_output.getStderrLines();
+    return SdkUtil.getFirstMatch(lines, pattern);
   }
-
 }
