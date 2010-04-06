@@ -14,6 +14,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -107,6 +108,12 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     }
     return PythonSdkType.getInterpreterPath(sdkHome);
   }
+
+  @Nullable
+  public PythonSdkFlavor getSdkFlavor() {
+    final String path = getInterpreterPath();
+    return path == null ? null : PythonSdkFlavor.getFlavor(path);
+  } 
 
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);

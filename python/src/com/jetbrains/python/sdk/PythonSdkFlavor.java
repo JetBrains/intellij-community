@@ -3,9 +3,11 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -34,6 +36,16 @@ public abstract class PythonSdkFlavor {
     return result;
   }
 
+  @Nullable
+  public static PythonSdkFlavor getFlavor(String sdkPath) {
+    for (PythonSdkFlavor flavor : getApplicableFlavors()) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }
+    return null;
+  }
+
   /**
    * Checks if the path is the name of a Python interpreter of this flavor.
    *
@@ -58,5 +70,9 @@ public abstract class PythonSdkFlavor {
     }
     final List<String> lines = stdout ? process_output.getStdoutLines() : process_output.getStderrLines();
     return SdkUtil.getFirstMatch(lines, pattern);
+  }
+
+  public Collection<String> getExtraDebugOptions() {
+    return Collections.emptyList();
   }
 }

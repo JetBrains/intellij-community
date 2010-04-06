@@ -1,6 +1,8 @@
 package com.jetbrains.python.sdk;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author yole
@@ -20,5 +22,10 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public String getVersionString(String sdkHome) {
     return "IronPython " + getVersionFromOutput(sdkHome, "-V", "\\w+ ([0-9\\.]+).*", true);
+  }
+
+  @Override
+  public Collection<String> getExtraDebugOptions() {
+    return Collections.singletonList("-X:Frames");
   }
 }

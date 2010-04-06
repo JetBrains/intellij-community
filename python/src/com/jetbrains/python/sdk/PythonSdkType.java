@@ -133,17 +133,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public boolean isValidSdkHome(final String path) {
-    return getFlavor(path) != null;
-  }
-
-  @Nullable
-  private static PythonSdkFlavor getFlavor(String sdkPath) {
-    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
-      if (flavor.isValidSdkHome(sdkPath)) {
-        return flavor;
-      }
-    }
-    return null;
+    return PythonSdkFlavor.getFlavor(path) != null;
   }
 
   @Override
@@ -572,7 +562,7 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public String getVersionString(final String sdkHome) {
-    final PythonSdkFlavor flavor = getFlavor(sdkHome);
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
 
