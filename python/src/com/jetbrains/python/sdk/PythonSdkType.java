@@ -588,7 +588,7 @@ public class PythonSdkType extends SdkType {
         "-b", // for builtins
         "-u", // for update-only mode
       },
-      getVirtualEnvAdditionalEnv(binary_path), RUN_TIMEOUT
+      getVirtualEnvAdditionalEnv(binary_path), RUN_TIMEOUT*5
     );
     if (run_result.getExitCode() != 0) {
       LOG.error(run_result.getStderr() + (run_result.isTimeout()? "\nTimed out" : "\nExit code " + run_result.getExitCode()));
