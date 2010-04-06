@@ -320,6 +320,10 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   public void beforeDispose() {
   }
 
+  public boolean canChangeSelectionTo(Content content, boolean implicit) {
+    return true;
+  }
+
   public void dispose() {
   }
 }

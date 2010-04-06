@@ -236,6 +236,10 @@ public class GridCellImpl implements GridCell, Disposable {
     updatePresentation(myTabs.findInfo(content), content);
   }
 
+  public boolean isMinimized(Content content) {
+    return myMinimizedContents.contains(content);
+  }
+
   private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
 
     Content myContent;
