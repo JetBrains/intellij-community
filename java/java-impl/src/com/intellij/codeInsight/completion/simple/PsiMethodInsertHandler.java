@@ -43,17 +43,14 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.simple.PsiMethodInsertHandler");
   public static final PsiMethodInsertHandler INSTANCE = new PsiMethodInsertHandler();
 
-  public static void insertParentheses(final InsertionContext context, final LookupItem<PsiMethod> item) {
+  public static void insertParentheses(final InsertionContext context, final LookupItem<? extends PsiElement> item, boolean overloadsMatter, boolean hasParams) {
     final Editor editor = context.getEditor();
     final TailType tailType = getTailType(item, context);
     final PsiFile file = context.getFile();
 
     context.setAddCompletionChar(false);
 
-    final LookupElement[] allItems = context.getElements();
-    final boolean overloadsMatter = allItems.length == 1 && item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) == null;
 
-    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, overloadsMatter, item.getObject());
     final boolean needLeftParenth = isToInsertParenth(file.findElementAt(context.getStartOffset()));
     final boolean needRightParenth = shouldInsertRParenth(context.getCompletionChar(), tailType, hasParams);
 
@@ -83,7 +80,12 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     final int offset = editor.getCaretModel().getOffset();
     final PsiMethod method = item.getObject();
 
-    insertParentheses(context, item);
+    final LookupElement[] allItems = context.getElements();
+    final boolean overloadsMatter = allItems.length == 1 && item.getUserData(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) == null;
+
+    final boolean hasParams = MethodParenthesesHandler.hasParams(item, allItems, overloadsMatter, method);
+
+    insertParentheses(context, item, overloadsMatter, hasParams);
 
     insertExplicitTypeParams(item, document, offset, file);
 

@@ -97,6 +97,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(
     psiElement(PsiReferenceExpression.class).afterLeaf(
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
+  private static final DefaultInsertHandler NO_TAIL_HANDLER = new DefaultInsertHandler(){
+    @Override
+    protected TailType getTailType(char completionChar) {
+      return TailType.NONE;
+    }
+  };
 
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
@@ -403,12 +409,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (lookupElement instanceof LookupItem) {
       final LookupItem lookupItem = (LookupItem)lookupElement;
       if (lookupItem.getInsertHandler() == null) {
-        lookupItem.setInsertHandler(new DefaultInsertHandler(){
-          @Override
-          protected TailType getTailType(char completionChar) {
-            return TailType.NONE;
-          }
-        });
+        lookupItem.setInsertHandler(NO_TAIL_HANDLER);
       }
     }
 
@@ -567,15 +568,15 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     }
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), parameters.getPosition());
-    item.setAttribute(LookupItem.DONT_CHECK_FOR_INNERS, "");
     JavaCompletionUtil.setShowFQN(item);
-    item.setAttribute(LookupItem.NEW_OBJECT_ATTR, "");
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
-    result.addElement(decorate(item, infos));
+
+    item.setInsertHandler(NO_TAIL_HANDLER);
+    result.addElement(decorate(type instanceof PsiClassType ? LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.INSTANCE) : item, infos));
   }
 
   static Set<LookupElement> completeReference(final PsiElement element, PsiReference reference, final ElementFilter filter, final boolean acceptClasses, CompletionParameters parameters) {

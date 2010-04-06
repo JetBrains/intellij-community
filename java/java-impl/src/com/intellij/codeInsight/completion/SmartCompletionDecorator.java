@@ -21,7 +21,6 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Computable;
@@ -176,31 +175,6 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
         }
       }
     }
-
-    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
-    if (item.getObject() instanceof PsiClass
-       && item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null
-       && enclosing instanceof PsiNewExpression
-       && !(position instanceof PsiParenthesizedExpression)
-       && item.getUserData(SmartCastProvider.TYPE_CAST) == null
-       && PsiTreeUtil.getContextOfType(position, PsiReferenceParameterList.class, false) == null
-      )
-    {
-      final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
-      if (anonymousClass == null || anonymousClass.getParent() != enclosing) {
-
-        final PsiClass psiClass = (PsiClass)item.getObject();
-
-        if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || psiClass.isInterface()) {
-          item.setAttribute(LookupItem.GENERATE_ANONYMOUS_BODY_ATTR, "");
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
-        }
-        else {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.afternew");
-        }
-      }
-    }
-
 
   }
 

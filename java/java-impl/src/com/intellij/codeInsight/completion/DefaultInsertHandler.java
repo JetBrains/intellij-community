@@ -16,18 +16,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiGenerationInfo;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -39,19 +33,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class DefaultInsertHandler extends TemplateInsertHandler implements Cloneable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.DefaultInsertHandler");
@@ -71,16 +58,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     handleInsertInner(context, (LookupItem)item, context.getCompletionChar());
   }
 
-  private void clear() {
-    myEditor = null;
-    myDocument = null;
-    myProject = null;
-    myFile = null;
-    myState = null;
-    myLookupItem = null;
-    myContext = null;
-  }
-
   private void handleInsertInner(InsertionContext context, LookupItem item, final char completionChar) {
     LOG.assertTrue(CommandProcessor.getInstance().getCurrentCommand() != null);
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getEditor().getDocument());
@@ -94,7 +71,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     TailType tailType = getTailType(completionChar);
     if (completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
-      tailType = TailType.SMART_COMPLETION;
+      //tailType = TailType.SMART_COMPLETION;
     }
     if (myLookupItem.getAttribute(LookupItem.NEW_OBJECT_ATTR) != null && completionChar == '(') {
       tailType = TailType.NONE;
@@ -138,7 +115,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
 
     myContext.setTailOffset(myState.tailOffset);
     myState.caretOffset = processTail(tailType, myState.caretOffset, myState.tailOffset);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
 
     qualifyIfNeeded();
@@ -154,7 +130,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
 
     if (generateAnonymousBody) {
-      context.setLaterRunnable(generateAnonymousBody());
       if (hasParams) {
         int offset = saveMaker.getStartOffset();
         myEditor.getCaretModel().moveToOffset(offset);
@@ -207,6 +182,9 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
         }
       }
       addImportForItem(myFile, myContext.getStartOffset(), myLookupItem);
+      if (myContext.getTailOffset() < 0) {  //hack, hack, hack. ideally the tail offset just should survive after the importing stuff
+        myContext.setTailOffset(myEditor.getCaretModel().getOffset());
+      }
     }
     catch(IncorrectOperationException e){
       LOG.error(e);
@@ -427,122 +405,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     myEditor.getCaretModel().moveToOffset(caretOffset);
     tailType.processTail(myEditor, tailOffset);
     return myEditor.getCaretModel().getOffset();
-  }
-
-  private Runnable generateAnonymousBody() {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-    int offset = myEditor.getCaretModel().getOffset();
-    PsiElement element = myFile.findElementAt(offset);
-    if (element == null) return null;
-    if (element.getParent() instanceof PsiAnonymousClass){
-      try{
-        CodeStyleManager.getInstance(myProject).reformat(element.getParent());
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-      }
-      offset = element.getParent().getTextRange().getEndOffset() - 1;
-      myEditor.getCaretModel().moveToOffset(offset);
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      myEditor.getSelectionModel().removeSelection();
-    }
-    final SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
-    return new Runnable() {
-      public void run(){
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-            PsiElement element = pointer.getElement();
-            if (element == null) return;
-
-            while(true){
-              if (element instanceof PsiFile) return;
-              PsiElement parent = element.getParent();
-              if (parent instanceof PsiAnonymousClass) break;
-              element = parent;
-            }
-            final PsiAnonymousClass aClass = (PsiAnonymousClass)element.getParent();
-
-            final Collection<CandidateInfo> candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
-            boolean invokeOverride = candidatesToImplement.isEmpty();
-            if (invokeOverride){
-              chooseAndOverrideMethodsInAdapter(myProject, myEditor, aClass);
-            }
-            else{
-              ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                public void run() {
-                  try{
-                    List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
-                    List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
-                    List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-                    GenerateMembersUtil.positionCaret(myEditor, resultMembers.get(0).getPsiMember(), true);
-                  }
-                  catch(IncorrectOperationException ioe){
-                    LOG.error(ioe);
-                  }
-                }
-              });
-            }
-
-            clear();
-          }
-        }, CompletionBundle.message("completion.smart.type.generate.anonymous.body"), null, UndoConfirmationPolicy.DEFAULT, myDocument);
-      }
-    };
-  }
-
-  private static void chooseAndOverrideMethodsInAdapter(final Project project, final Editor editor, final PsiAnonymousClass aClass) {
-    PsiClass baseClass = aClass.getBaseClassType().resolve();
-    if (baseClass == null) return;
-    PsiMethod[] allBaseMethods = baseClass.getMethods();
-    if(allBaseMethods.length == 0) return;
-
-    List<PsiMethodMember> methods = new ArrayList<PsiMethodMember>();
-    for (final PsiMethod method : allBaseMethods) {
-      if (OverrideImplementUtil.isOverridable(method)) {
-        methods.add(new PsiMethodMember(method, PsiSubstitutor.UNKNOWN));
-      }
-    }
-
-    boolean canInsertOverride = PsiUtil.isLanguageLevel5OrHigher(aClass) && (PsiUtil.isLanguageLevel6OrHigher(aClass) || !aClass.isInterface());
-    final PsiMethodMember[] array = methods.toArray(new PsiMethodMember[methods.size()]);
-    final MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(array, false, true, project, canInsertOverride);
-    chooser.setTitle(CompletionBundle.message("completion.smarttype.select.methods.to.override"));
-    chooser.setCopyJavadocVisible(true);
-
-    chooser.show();
-    List<PsiMethodMember> selected = chooser.getSelectedElements();
-    if (selected == null || selected.isEmpty()) return;
-
-
-    try{
-      final List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.overrideOrImplementMethods(aClass, selected, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-
-      final int offset = editor.getCaretModel().getOffset();
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          try{
-            for (PsiGenerationInfo<PsiMethod> prototype : prototypes) {
-              PsiStatement[] statements = prototype.getPsiMember().getBody().getStatements();
-              if (statements.length > 0 && PsiType.VOID.equals(prototype.getPsiMember().getReturnType())) {
-                statements[0].delete(); // remove "super(..)" call
-              }
-            }
-
-            List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
-            GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), true);
-          }
-          catch(IncorrectOperationException e){
-            LOG.error(e);
-          }
-        }
-      });
-    }
-    catch(IncorrectOperationException ioe){
-      LOG.error(ioe);
-    }
   }
 
   @Override
