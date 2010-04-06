@@ -217,6 +217,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return new ActionCallback.Done();
     }
 
+    public ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit) {
+      return new ActionCallback.Done();
+    }
+
     public ActionCallback requestFocus(@Nullable final Content content, final boolean forced) {
       return new ActionCallback.Done(); 
     }

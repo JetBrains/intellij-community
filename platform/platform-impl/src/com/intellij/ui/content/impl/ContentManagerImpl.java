@@ -309,7 +309,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public void addSelectedContent(@NotNull final Content content) {
-    if (!checkSelectionChangeShouldBeProcessed(content)) return;
+    if (!checkSelectionChangeShouldBeProcessed(content, false)) return;
 
     if (getIndexOfContent(content) == -1) {
       throw new IllegalArgumentException("content not found: " + content);
@@ -320,9 +320,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     }
   }
 
-  private boolean checkSelectionChangeShouldBeProcessed(Content content) {
+  private boolean checkSelectionChangeShouldBeProcessed(Content content, boolean implicit) {
+    if (!myUI.canChangeSelectionTo(content, implicit)) {
+      return false;
+    }
+
     final boolean result = !isSelected(content) || myContentWithChangedComponent.contains(content);
     myContentWithChangedComponent.remove(content);
+
     return result;
   }
 
@@ -359,11 +364,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
+    return setSelectedContent(content, requestFocus, forcedFocus, false);
+  }
+
+  public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
     if (isSelected(content) && requestFocus) {
       return requestFocus(content, forcedFocus);
     }
 
-    if (!checkSelectionChangeShouldBeProcessed(content)) return new ActionCallback.Rejected();
+    if (!checkSelectionChangeShouldBeProcessed(content, implicit)) {
+      return new ActionCallback.Rejected();
+    }
     if (!myContents.contains(content)) {
       throw new IllegalArgumentException("Cannot find content:" + content.getDisplayName());
     }
