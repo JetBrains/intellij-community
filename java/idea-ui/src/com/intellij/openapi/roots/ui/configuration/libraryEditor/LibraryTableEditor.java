@@ -94,7 +94,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
   private Tree myTree;
   private final Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
 
-  private LibraryTableModifiableModelProvider myLibraryTableProvider;
+  private final LibraryTableModifiableModelProvider myLibraryTableProvider;
   private final boolean myEditingModuleLibraries;
   private LibraryTableTreeBuilder myTreeBuilder;
   private LibraryTable.ModifiableModel myTableModifiableModel;
@@ -496,7 +496,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       final Library library = getSelectedLibrary();
       if (library != null) {
         myDescriptor.setTitle(getTitle());
-        myDescriptor.setTitle(getDescription());
+        myDescriptor.setDescription(getDescription());
         for (Map.Entry<DataKey, Object> entry : myFileChooserUserData.entrySet()) {
           myDescriptor.putUserData(entry.getKey(), entry.getValue());
         }
@@ -673,6 +673,11 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
 
     protected OrderRootType getRootType() {
       return AnnotationOrderRootType.getInstance();
+    }
+
+    @Override
+    protected FileChooserDescriptor createDescriptor() {
+      return new FileChooserDescriptor(false, true, false, false, false, false);
     }
   }
 

@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.actions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -116,28 +117,25 @@ public abstract class AbstractFileProcessor {
   }
 
   private void process(final PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    assert virtualFile != null;
-    if (!ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(virtualFile).hasReadonlyFiles()) {
-      final Runnable[] resultRunnable = new Runnable[1];
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
+    final Runnable[] resultRunnable = new Runnable[1];
 
-      execute(new Runnable() {
-        public void run() {
-          try {
-            resultRunnable[0] = preprocessFile(file);
-          }
-          catch (IncorrectOperationException incorrectoperationexception) {
-            logger.error(incorrectoperationexception);
-          }
+    execute(new Runnable() {
+      public void run() {
+        try {
+          resultRunnable[0] = preprocessFile(file);
         }
-      }, new Runnable() {
-        public void run() {
-          if (resultRunnable[0] != null) {
-            resultRunnable[0].run();
-          }
+        catch (IncorrectOperationException incorrectoperationexception) {
+          logger.error(incorrectoperationexception);
         }
-      });
-    }
+      }
+    }, new Runnable() {
+      public void run() {
+        if (resultRunnable[0] != null) {
+          resultRunnable[0].run();
+        }
+      }
+    });
   }
 
 

@@ -15,15 +15,21 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -33,7 +39,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.Assert;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,6 +53,12 @@ import java.util.*;
  * @author yole
  */
 public class PlatformTestUtil {
+  /**
+   * Measured on dual core p4 3HZ 1gig ram
+   */
+  protected static final long ETALON_TIMING = 438;
+  public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
+
   public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
@@ -59,9 +73,13 @@ public class PlatformTestUtil {
     });
   }
 
-  protected static String toString(Object node) {
+  protected static String toString(Object node, Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
-      return ((AbstractTreeNode)node).getTestPresentation();
+      if (printInfo != null) {
+        return ((AbstractTreeNode)node).toTestString(printInfo);
+      } else {
+        return ((AbstractTreeNode)node).getTestPresentation();
+      }
     }
     else if (node == null) {
       return "NULL";
@@ -90,7 +108,7 @@ public class PlatformTestUtil {
     final Object userObject = defaultMutableTreeNode.getUserObject();
     String nodeText;
     if (userObject != null) {
-      nodeText = toString(userObject);
+      nodeText = toString(userObject, null);
     }
     else {
       nodeText = defaultMutableTreeNode + "";
@@ -202,14 +220,34 @@ public class PlatformTestUtil {
     return Comparing.equal(who, SystemProperties.getUserName(), false);
   }
 
+  /**
+   * @deprecated use {@link #print(AbstractTreeStructure structure,
+                                   Object node,
+                                   int currentLevel,
+                                   Comparator comparator,
+                                   int maxRowCount,
+                                   char paddingChar,
+                                   String[] dumpNames)}
+   */
   public static StringBuffer print(AbstractTreeStructure structure,
                                    Object node,
                                    int currentLevel,
                                    Comparator comparator,
                                    int maxRowCount,
                                    char paddingChar) {
+
+    return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, null);
+  }
+
+  public static StringBuffer print(AbstractTreeStructure structure,
+                                   Object node,
+                                   int currentLevel,
+                                   Comparator comparator,
+                                   int maxRowCount,
+                                   char paddingChar,
+                                   Queryable.PrintInfo printInfo) {
     StringBuffer buffer = new StringBuffer();
-    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar);
+    doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
     return buffer;
   }
 
@@ -221,10 +259,22 @@ public class PlatformTestUtil {
                              int maxRowCount,
                              int currentLine,
                              char paddingChar) {
+    return doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, currentLine, paddingChar, null);
+  }
+
+  private static int doPrint(StringBuffer buffer,
+                             int currentLevel,
+                             Object node,
+                             AbstractTreeStructure structure,
+                             Comparator comparator,
+                             int maxRowCount,
+                             int currentLine,
+                             char paddingChar,
+                             Queryable.PrintInfo printInfo) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
 
     StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
-    buffer.append(toString(node)).append("\n");
+    buffer.append(toString(node, printInfo)).append("\n");
     currentLine++;
     Object[] children = structure.getChildElements(node);
 
@@ -234,7 +284,7 @@ public class PlatformTestUtil {
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
-      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar);
+      currentLine = doPrint(buffer, currentLevel + 1, child, structure, comparator, maxRowCount, currentLine, paddingChar, printInfo);
     }
 
     return currentLine;
@@ -248,7 +298,7 @@ public class PlatformTestUtil {
     StringBuilder result = new StringBuilder();
     for (Iterator iterator = c.iterator(); iterator.hasNext();) {
       Object each = iterator.next();
-      result.append(toString(each));
+      result.append(toString(each, null));
       if (iterator.hasNext()) {
         result.append("\n");
       }
@@ -260,7 +310,7 @@ public class PlatformTestUtil {
   public static String print(ListModel model) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < model.getSize(); i++) {
-      result.append(toString(model.getElementAt(i)));
+      result.append(toString(model.getElementAt(i), null));
       result.append("\n");
     }
     return result.toString();
@@ -272,5 +322,69 @@ public class PlatformTestUtil {
 
   public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
     Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ').toString());
+  }
+
+  public static void invokeNamedAction(final String actionId) {
+    final AnAction action = ActionManager.getInstance().getAction(actionId);
+    Assert.assertNotNull(action);
+    final Presentation presentation = new Presentation();
+    final AnActionEvent event =
+        new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", presentation, ActionManager.getInstance(), 0);
+    action.update(event);
+    Assert.assertTrue(presentation.isEnabled());
+    action.actionPerformed(event);
+  }
+
+  public static void assertTiming(String message, long expected, long actual) {
+    if (COVERAGE_ENABLED_BUILD) return;
+    long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / ETALON_TIMING);
+    final double acceptableChangeFactor = 1.1;
+
+    // Allow 10% more in case of test machine is busy.
+    // For faster machines (expectedOnMyMachine < expected) allow nonlinear performance rating:
+    // just perform better than acceptable expected
+    int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
+    String failMessage = message + "." +
+                         " Operation took " + percentage + "% longer than expected." +
+                         " Expected on my machine: " + expectedOnMyMachine + "." +
+                         " Actual: " + actual + "." +
+                         " Expected on Etalon machine: " + expected + ";" +
+                         " Actual on Etalon: " + actual * ETALON_TIMING / Timings.MACHINE_TIMING;
+    if (actual > expectedOnMyMachine * acceptableChangeFactor &&
+        (expectedOnMyMachine > expected || actual > expected * acceptableChangeFactor)) {
+      Assert.fail(failMessage);
+    }
+    else {
+      System.out.println(failMessage);
+    }
+  }
+
+  public static void assertTiming(String message, long expected, @NotNull Runnable actionToMeasure) {
+    assertTiming(message, expected, 4, actionToMeasure);
+  }
+
+  public static long measure(@NotNull Runnable actionToMeasure) {
+    long start = System.currentTimeMillis();
+    actionToMeasure.run();
+    long finish = System.currentTimeMillis();
+    return finish - start;
+  }
+
+  public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
+    while (true) {
+      attempts--;
+      long duration = measure(actionToMeasure);
+      try {
+        assertTiming(message, expected, duration);
+        break;
+      }
+      catch (AssertionFailedError e) {
+        if (attempts == 0) throw e;
+        System.gc();
+        System.gc();
+        System.gc();
+        System.out.println("Another epic fail: "+e.getMessage() +"; Attempts remained: "+attempts);
+      }
+    }
   }
 }

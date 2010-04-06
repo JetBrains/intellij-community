@@ -120,6 +120,7 @@ public class AnalyzeStacktraceUtil {
     EditorSettings settings = editor.getSettings();
     settings.setFoldingOutlineShown(false);
     settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
     settings.setLineNumbersShown(false);
     settings.setRightMarginShown(false);
 
@@ -130,7 +131,7 @@ public class AnalyzeStacktraceUtil {
   }
 
   public static final class StacktraceEditorPanel extends JPanel implements DataProvider, Disposable {
-    private Project myProject;
+    private final Project myProject;
     private final Editor myEditor;
 
     public StacktraceEditorPanel(Project project, Editor editor) {

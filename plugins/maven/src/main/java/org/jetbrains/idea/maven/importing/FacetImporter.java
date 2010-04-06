@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.*;
 
 import java.io.File;
@@ -158,7 +159,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
       tailBuff.append(e);
     }
     String tail = tailBuff.toString();
-    String result = new File(tail).isAbsolute() ? tail : new File(p.getDirectory(), tail).getPath();
+    String result = FileUtil.isAbsolute(tail) ? tail : new File(p.getDirectory(), tail).getPath();
 
     return FileUtil.toSystemIndependentName(PathUtil.getCanonicalPath(result));
   }

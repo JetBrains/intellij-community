@@ -140,7 +140,9 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
     if (classes.length == 1
         && (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName()))
-        && CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
+        && (JspPsiUtil.isInJspFile(psiFile) ?
+            CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
+            CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
         && codeAnalyzer.canChangeFileSilently(psiFile)) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         public void run() {
@@ -152,7 +154,9 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
     if (doShow && canImportHere) {
       String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
-      HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(), myRef.getTextRange().getEndOffset(), action);
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(), myRef.getTextRange().getEndOffset(), action);
+      }
       return Result.POPUP_SHOWN;
     }
     return Result.POPUP_NOT_SHOWN;
@@ -160,7 +164,6 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
   private boolean canImportHere(boolean allowCaretNearRef, Editor editor, PsiFile psiFile, String exampleClassName) {
     return (allowCaretNearRef || !isCaretNearRef(editor, myRef)) &&
-           !JspPsiUtil.isInJspFile(psiFile) &&
            !hasUnresolvedImportWhichCanImport(psiFile, exampleClassName);
   }
 

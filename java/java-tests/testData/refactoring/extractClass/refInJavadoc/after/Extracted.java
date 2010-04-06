@@ -1,5 +1,5 @@
 public class Extracted<T> {
-    private T myT;
+    T myT;
 
     public Extracted() {
     }

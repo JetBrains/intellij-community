@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,7 +30,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction {
@@ -64,7 +62,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     final Object value = myLiteral.getValue();
-    if ((value != null) && (value.toString().length() == 1)) {
+    if (value != null && value.toString().length() == 1) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
       final PsiExpression newExpression = factory.createExpressionFromText(quote(convertedValue(), ! isString(myLiteral.getType())),
@@ -77,7 +75,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     return true;
   }
 
-  private String quote(final String value, final boolean doubleQuotes) {
+  private static String quote(final String value, final boolean doubleQuotes) {
     final char quote = doubleQuotes ? '"' : '\'';
     return quote + value + quote;
   }
@@ -89,8 +87,8 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     return builder.toString();
   }
 
-  public static void createHighLighting(@NotNull final PsiMethod[] candidates, @NotNull final PsiConstructorCall call,
-                                        @NotNull final List<HighlightInfo> out) {
+  public static void registerFixes(@NotNull final PsiMethod[] candidates, @NotNull final PsiConstructorCall call,
+                                        @NotNull final HighlightInfo out) {
     final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
     if (call.getArgumentList() == null) {
       return;
@@ -104,8 +102,8 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
-  public static void createHighLighting(@NotNull final CandidateInfo[] candidates, @NotNull final PsiMethodCallExpression methodCall,
-                                        @NotNull final List<HighlightInfo> out) {
+  public static void registerFixes(@NotNull final CandidateInfo[] candidates, @NotNull final PsiMethodCallExpression methodCall,
+                                        @NotNull final HighlightInfo info) {
     final Set<PsiLiteralExpression> literals = new HashSet<PsiLiteralExpression>();
     boolean exactMatch = false;
     for (CandidateInfo candidate : candidates) {
@@ -114,18 +112,16 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
         exactMatch |= findMatchingExpressions(methodCall.getArgumentList().getExpressions(), method, literals);
       }
     }
-    if (! exactMatch) {
-      processLiterals(literals, methodCall, out);
+    if (!exactMatch) {
+      processLiterals(literals, methodCall, info);
     }
   }
 
   private static void processLiterals(@NotNull final Set<PsiLiteralExpression> literals, @NotNull final PsiCall call,
-                                        @NotNull final List<HighlightInfo> out) {
+                                        @NotNull final HighlightInfo info) {
     for (PsiLiteralExpression literal : literals) {
-      final HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, literal, null);
       final ChangeStringLiteralToCharInMethodCallFix fix = new ChangeStringLiteralToCharInMethodCallFix(literal, call);
       QuickFixAction.registerQuickFixAction(info, fix);
-      out.add(info);
     }
   }
 
@@ -142,19 +138,18 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
 
     boolean typeMatch = true;
-    for (int i = 0; (i < parameters.length) && (i < arguments.length); i++) {
+    for (int i = 0; i < parameters.length && i < arguments.length; i++) {
       final PsiParameter parameter = parameters[i];
       final PsiType parameterType = parameter.getType();
       final PsiType argumentType = arguments[i].getType();
 
       typeMatch &= Comparing.equal(parameterType, argumentType);
 
-      if ((arguments[i] instanceof PsiLiteralExpression) &&
-          (! result.contains(arguments[i])) &&
+      if (arguments[i] instanceof PsiLiteralExpression && ! result.contains(arguments[i]) &&
           (charToString(parameterType, argumentType) || charToString(argumentType, parameterType))) {
 
         final String value = String.valueOf(((PsiLiteralExpression) arguments[i]).getValue());
-        if ((value != null) && (value.length() == 1)) {
+        if (value != null && value.length() == 1) {
           result.add((PsiLiteralExpression) arguments[i]);
         }
       }
@@ -167,6 +162,6 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
   }
 
   private static boolean isString(final PsiType type) {
-    return (type != null) && "java.lang.String".equals((type.getCanonicalText()));
+    return type != null && "java.lang.String".equals(type.getCanonicalText());
   }
 }

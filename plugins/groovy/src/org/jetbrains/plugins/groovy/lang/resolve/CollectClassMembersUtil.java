@@ -22,6 +22,9 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.util.ArrayList;
@@ -37,42 +40,34 @@ public class CollectClassMembersUtil {
 
   private static final Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> CACHED_MEMBERS_INCLUDING_SYNTHETIC = Key.create("CACHED_MEMBERS_INCLUDING_SYNTHETIC");
 
+  private CollectClassMembersUtil() {
+  }
+
 
   public static Map<String, List<CandidateInfo>> getAllMethods(final PsiClass aClass, boolean includeSynthetic) {
-    Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> key = includeSynthetic ?
-        CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
+    return getCachedMembers(aClass, includeSynthetic).getSecond();
+  }
+
+  @NotNull
+  private static Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>> getCachedMembers(
+    PsiClass aClass,
+    boolean includeSynthetic) {
+    Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> key =
+      includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
     CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> cachedValue = aClass.getUserData(key);
     if (cachedValue == null) {
       cachedValue = buildCache(aClass, includeSynthetic);
+      aClass.putUserData(key, cachedValue);
     }
-
-    Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>> value = cachedValue.getValue();
-    assert value != null;
-    return value.getSecond();
+    return cachedValue.getValue();
   }
 
   public static Map<String, CandidateInfo> getAllInnerClasses(final PsiClass aClass, boolean includeSynthetic) {
-    Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> key = includeSynthetic ?
-        CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
-    CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> cachedValue = aClass.getUserData(key);
-    if (cachedValue == null) {
-      cachedValue = buildCache(aClass, includeSynthetic);
-    }
-
-    Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>> value = cachedValue.getValue();
-    assert value != null;
-    return value.getThird();
+    return getCachedMembers(aClass, includeSynthetic).getThird();
   }
 
   public static Map<String, CandidateInfo> getAllFields(final PsiClass aClass) {
-    CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> cachedValue = aClass.getUserData(CACHED_MEMBERS);
-    if (cachedValue == null) {
-      cachedValue = buildCache(aClass, false);
-    }
-
-    Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>> value = cachedValue.getValue();
-    assert value != null;
-    return value.getFirst();
+    return getCachedMembers(aClass, false).getFirst();
   }
 
   private static CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> buildCache(final PsiClass aClass, final boolean includeSynthetic) {
@@ -83,7 +78,7 @@ public class CollectClassMembersUtil {
         Map<String, CandidateInfo> allInnerClasses = new HashMap<String, CandidateInfo>();
 
         processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
-        return Result.create(new Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(Trinity.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
   }
@@ -96,6 +91,14 @@ public class CollectClassMembersUtil {
       String name = field.getName();
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
+      } else if (hasExplicitVisibilityModifiers(field)) {
+        final CandidateInfo candidateInfo = allFields.get(name);
+        final PsiElement element = candidateInfo.getElement();
+        if (element instanceof GrField &&
+            !(((GrField)element).getModifierList()).hasExplicitVisibilityModifiers() &&
+            aClass == ((GrField)element).getContainingClass()) { //replace property-field with field with explicit visibilityModifier 
+          allFields.put(name, new CandidateInfo(field, substitutor));
+        }
       }
     }
 
@@ -116,6 +119,15 @@ public class CollectClassMembersUtil {
         final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
         processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
       }
+    }
+  }
+
+  private static boolean hasExplicitVisibilityModifiers(PsiField field) {
+    if (field instanceof GrField) {
+      return ((GrModifierList)field.getModifierList()).hasExplicitVisibilityModifiers();
+    }
+    else {
+      return true;
     }
   }
 

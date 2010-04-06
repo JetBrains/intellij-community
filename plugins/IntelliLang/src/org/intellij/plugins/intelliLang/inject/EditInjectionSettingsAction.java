@@ -17,6 +17,7 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -62,8 +63,17 @@ public class EditInjectionSettingsAction implements IntentionAction {
     return injectedPsi != null && !injectedPsi.isEmpty();
   }
 
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        invokeImpl(project, editor, file);
+      }
+    });
+  }
+
+  private static void invokeImpl(Project project, Editor editor, PsiFile file) {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+    if (host == null) return;
     try {
       for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
         if (support.editInjectionInPlace(host)) return;

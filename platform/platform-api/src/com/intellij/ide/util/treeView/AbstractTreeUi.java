@@ -133,24 +133,24 @@ public class AbstractTreeUi {
 
   private boolean myWasEverIndexNotReady;
   private boolean myShowing;
-  private FocusAdapter myFocusListener = new FocusAdapter() {
+  private final FocusAdapter myFocusListener = new FocusAdapter() {
     @Override
     public void focusGained(FocusEvent e) {
       maybeReady();
     }
   };
-  private Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
   private TreePath myRequestedExpand;
-  private ActionCallback myInitialized = new ActionCallback();
-  private Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
+  private final ActionCallback myInitialized = new ActionCallback();
+  private final Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
 
   private boolean myPassthroughMode = false;
 
 
-  private Set<Object> myAutoExpandRoots = new HashSet<Object>();
+  private final Set<Object> myAutoExpandRoots = new HashSet<Object>();
   private final RegistryValue myAutoExpandDepth = Registry.get("ide.tree.autoExpandMaxDepth");
 
-  private Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
+  private final Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
   private SimpleTimerTask myCleanupTask;
 
   protected void init(AbstractTreeBuilder builder,
@@ -169,6 +169,16 @@ public class AbstractTreeUi {
     setTreeStructure(treeStructure);
     myNodeDescriptorComparator = comparator;
     myUpdateIfInactive = updateIfInactive;
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        if (!myRootNodeWasInitialized) {
+          if (myRootNode.getChildCount() == 0) {
+            insertLoadingNode(myRootNode, true);
+          }
+        }
+      }
+    });
 
     myExpansionListener = new MyExpansionListener();
     myTree.addTreeExpansionListener(myExpansionListener);
@@ -239,6 +249,8 @@ public class AbstractTreeUi {
         ourUi2Countdown.remove(eachUi);
         Runnable runnable = new Runnable() {
           public void run() {
+            if (isReleased()) return;
+
             myCleanupTask = null;
             getBuilder().cleanUp();
           }
@@ -1550,7 +1562,8 @@ public class AbstractTreeUi {
       }
 
       if (myInitialized.isDone()) {
-        for (ActionCallback each : getReadyCallbacks(true)) {
+        ActionCallback[] ready = getReadyCallbacks(true);
+        for (ActionCallback each : ready) {
           each.setDone();
         }
       }
@@ -2635,7 +2648,7 @@ public class AbstractTreeUi {
     };
 
     if (isPassthroughMode()) {
-
+      pooledThreadRunnable.run();
     } else {
       if (myWorker == null || myWorker.isDisposed()) {
         myWorker = new WorkerThread("AbstractTreeBuilder.Worker", 1);
@@ -3153,6 +3166,41 @@ public class AbstractTreeUi {
     }
   }
 
+  public void expandAll(@Nullable final Runnable onDone) {
+    final JTree tree = getTree();
+    if (tree.getRowCount() > 0) {
+      final int expandRecursionDepth = Math.max(2, Registry.intValue("ide.tree.expandRecursionDepth"));
+      new Runnable() {
+        private int myCurrentRow = 0;
+        private int myInvocationCount = 0;
+        public void run() {
+          if (++myInvocationCount > expandRecursionDepth) {
+            myInvocationCount = 0;
+            if (isPassthroughMode()) {
+              run();              
+            } else {
+              // need this to prevent stack overflow if the tree is rather big and is "synchronous"
+              SwingUtilities.invokeLater(this);
+            }
+          }
+          else {
+            final int row = myCurrentRow++;
+            if (row < tree.getRowCount()) {
+              final TreePath path = tree.getPathForRow(row);
+              final Object last = path.getLastPathComponent();
+              final Object elem = getElementFor(last);
+              expand(elem, this);
+            } else {
+              runDone(onDone);
+            }
+          }
+        }
+      }.run();
+    } else {
+      runDone(onDone);
+    }
+  }
+
   public void expand(final Object element, @Nullable final Runnable onDone) {
     expand(new Object[]{element}, onDone);
   }
@@ -3199,12 +3247,12 @@ public class AbstractTreeUi {
           }
         });
 
-        expandNext(element, 0, parentsOnly, checkIfInStructure, canSmartExpand, done);
+        expandNext(element, 0, parentsOnly, checkIfInStructure, canSmartExpand, done, 0);
       }
     });
   }
 
-  private void expandNext(final Object[] elements, final int index, final boolean parentsOnly, final boolean checkIfInStricture, final boolean canSmartExpand, final ActionCallback done) {
+  private void expandNext(final Object[] elements, final int index, final boolean parentsOnly, final boolean checkIfInStricture, final boolean canSmartExpand, final ActionCallback done, final int currentDepth) {
     if (elements.length <= 0) {
       done.setDone();
       return;
@@ -3214,12 +3262,29 @@ public class AbstractTreeUi {
       return;
     }
 
-    _expand(elements[index], new Runnable() {
+    final int[] actualDepth = new int[] {currentDepth};
+    boolean breakCallChain = false;
+    if (actualDepth[0] > Registry.intValue("ide.tree.expandRecursionDepth")) {
+      actualDepth[0] = 0;
+      breakCallChain = true;
+    }
+
+    Runnable expandRunnable = new Runnable() {
       public void run() {
-        done.setDone();
-        expandNext(elements, index + 1, parentsOnly, checkIfInStricture, canSmartExpand, done);
+        _expand(elements[index], new Runnable() {
+          public void run() {
+            done.setDone();
+            expandNext(elements, index + 1, parentsOnly, checkIfInStricture, canSmartExpand, done, actualDepth[0] + 1);
+          }
+        }, parentsOnly, checkIfInStricture, canSmartExpand);
       }
-    }, parentsOnly, checkIfInStricture, canSmartExpand);
+    };
+    
+    if (breakCallChain && !isPassthroughMode()) {
+      SwingUtilities.invokeLater(expandRunnable);
+    } else {
+      expandRunnable.run();
+    }
   }
 
   public void collapseChildren(final Object element, @Nullable final Runnable onDone) {
@@ -3809,9 +3874,9 @@ public class AbstractTreeUi {
 
   static class LoadedChildren {
 
-    private List myElements;
-    private Map<Object, NodeDescriptor> myDescriptors = new HashMap<Object, NodeDescriptor>();
-    private Map<NodeDescriptor, Boolean> myChanges = new HashMap<NodeDescriptor, Boolean>();
+    private final List myElements;
+    private final Map<Object, NodeDescriptor> myDescriptors = new HashMap<Object, NodeDescriptor>();
+    private final Map<NodeDescriptor, Boolean> myChanges = new HashMap<NodeDescriptor, Boolean>();
 
     LoadedChildren(Object[] elements) {
       myElements = Arrays.asList(elements != null ? elements : ArrayUtil.EMPTY_OBJECT_ARRAY);

@@ -398,7 +398,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     private static boolean isBinaryNumericPromotionApplicable(PsiType lType, PsiType rType, IElementType opType) {
-      if (lType == null && rType == null) {
+      if (lType == null || rType == null) {
         return false;
       }
       if (opType == JavaTokenType.EQEQ || opType == JavaTokenType.NE) {

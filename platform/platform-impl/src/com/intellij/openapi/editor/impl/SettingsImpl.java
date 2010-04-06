@@ -64,6 +64,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsSmartHome = null;
   private Boolean myIsBlockCursor = null;
   private Boolean myIsWhitespacesShown = null;
+  private Boolean myIndentGuidesShown = null;
   private Boolean myIsAnimatedScrolling = null;
   private Boolean myIsAdditionalPageAtBottom = null;
   private Boolean myIsDndEnabled = null;
@@ -93,6 +94,20 @@ public class SettingsImpl implements EditorSettings {
 
   public void setWhitespacesShown(boolean val) {
     myIsWhitespacesShown = Boolean.valueOf(val);
+  }
+
+  public boolean isIndentGuidesShown() {
+    return myIndentGuidesShown != null
+           ? myIndentGuidesShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().isIndentGuidesShown();
+  }
+
+  public void setIndentGuidesShown(boolean val) {
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myIndentGuidesShown)) return;
+
+    myIndentGuidesShown = newValue;
+    fireEditorRefresh();
   }
 
   public boolean isLineNumbersShown() {
@@ -184,7 +199,7 @@ public class SettingsImpl implements EditorSettings {
     if (myCachedTabSize != null) return myCachedTabSize.intValue();
 
     FileType fileType = getFileType();
-    int tabSize = CodeStyleFacade.getInstance(project).getTabSize(fileType);
+    int tabSize = project == null || project.isDisposed() ? 0 : CodeStyleFacade.getInstance(project).getTabSize(fileType);
     myCachedTabSize = Integer.valueOf(tabSize);
     return tabSize;
   }

@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -152,22 +153,22 @@ public class InjectedLanguageUtil {
   }
 
   @NotNull
-  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor editor, final PsiFile injectedFile) {
-    if (injectedFile == null || editor instanceof EditorWindow) return editor;
-    Document document = PsiDocumentManager.getInstance(editor.getProject()).getDocument(injectedFile);
-    if (!(document instanceof DocumentWindowImpl)) return editor;
+  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, final PsiFile injectedFile) {
+    if (injectedFile == null || hostEditor instanceof EditorWindow) return hostEditor;
+    Document document = PsiDocumentManager.getInstance(hostEditor.getProject()).getDocument(injectedFile);
+    if (!(document instanceof DocumentWindowImpl)) return hostEditor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    SelectionModel selectionModel = editor.getSelectionModel();
+    SelectionModel selectionModel = hostEditor.getSelectionModel();
     if (selectionModel.hasSelection()) {
       int selstart = selectionModel.getSelectionStart();
       int selend = selectionModel.getSelectionEnd();
       if (!documentWindow.containsRange(selstart, selend)) {
         // selection spreads out the injected editor range
-        return editor;
+        return hostEditor;
       }
     }
-    if (!documentWindow.isValid()) return editor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
-    return EditorWindow.create(documentWindow, (EditorImpl)editor, injectedFile);
+    if (!documentWindow.isValid()) return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
+    return EditorWindow.create(documentWindow, (EditorImpl)hostEditor, injectedFile);
   }
 
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
@@ -242,28 +243,37 @@ public class InjectedLanguageUtil {
     if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
-    PsiElement element = file.getViewProvider().findElementAt(offset, file.getLanguage());
-    return element == null ? null : findInside(element, file, offset, documentManager);
+    FileViewProvider provider = file.getViewProvider();
+    for (Language language : provider.getLanguages()) {
+
+      PsiElement element = provider.findElementAt(offset, language);
+      if (element == null) {
+        continue;
+      }
+      PsiElement injected = findInside(element, file, offset, documentManager);
+      if (injected != null) return injected;
+    }
+    return null;
   }
 
-  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile file, final int offset) {
-    PsiElement inj = findInjectedElementNoCommitWithOffset(file, offset);
+  public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
+    PsiElement inj = findInjectedElementNoCommitWithOffset(hostFile, offset);
     if (inj != null) return inj;
     if (offset != 0) {
-      inj = findInjectedElementNoCommitWithOffset(file, offset - 1);
+      inj = findInjectedElementNoCommitWithOffset(hostFile, offset - 1);
     }
     return inj;
   }
 
-  private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile file, final int offset, @NotNull final PsiDocumentManager documentManager) {
+  private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile hostFile, final int hostOffset, @NotNull final PsiDocumentManager documentManager) {
     final Ref<PsiElement> out = new Ref<PsiElement>();
-    enumerate(element, file, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    enumerate(element, hostFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
           TextRange hostRange = place.host.getTextRange();
-          if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(offset)) {
+          if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(hostOffset)) {
             DocumentWindowImpl document = (DocumentWindowImpl)documentManager.getCachedDocument(injectedPsi);
-            int injectedOffset = document.hostToInjected(offset);
+            int injectedOffset = document.hostToInjected(hostOffset);
             PsiElement injElement = injectedPsi.findElementAt(injectedOffset);
             out.set(injElement == null ? injectedPsi : injElement);
           }

@@ -38,6 +38,7 @@ import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -331,6 +332,11 @@ public class DualView extends JPanel {
     return myFlatView;
   }
 
+  public void setViewBorder(Border border) {
+    if (myTreeView != null) ((JComponent)myTreeView.getParent().getParent()).setBorder(border);
+    if (myFlatView != null) ((JComponent)myFlatView.getParent().getParent()).setBorder(border);
+  }
+
   public void setRootVisible(boolean aBoolean) {
     myRootVisible = aBoolean;
     myTreeView.setRootVisible(myRootVisible);
@@ -392,22 +398,27 @@ public class DualView extends JPanel {
     BaseTableView.store(myTreeStorage, myTreeView);
   }
 
-  public void setRoot(final TreeNode node, final Object selection) {
+  public void setRoot(final TreeNode node, final List<Object> selection) {
     ListTableModel model = myFlatView.getListTableModel();
     final int column = model.getSortedColumnIndex();
     final int sortingType = model.getSortingType();
-    final Object obj = myFlatView.getSelectedObject() != null ? myFlatView.getSelectedObject() : selection;
+
+    final List<Object> currentlySelected = myFlatView.getSelectedObjects();
+    final List<Object> targetSelection = (currentlySelected != null && (! currentlySelected.isEmpty())) ? currentlySelected : selection;
+    //final Object obj = myFlatView.getSelectedObject() != null ? myFlatView.getSelectedObject() : selection;
 
     myTreeView.getTreeViewModel().setRoot(node);
 
     if (column != -1) {
       model.sortByColumn(column, sortingType);
     }
-    if (obj != null) {
+    if ((targetSelection != null) && (! targetSelection.isEmpty())) {
       final List items = myFlatView.getItems();
-      if (items.contains(obj)) {
-        final int idx = items.indexOf(obj);
-        setSelectionInterval(idx, idx);
+      for (Object selElement : targetSelection) {
+        if (items.contains(selElement)) {
+          final int idx = items.indexOf(selElement);
+          setSelectionInterval(idx, idx);
+        }
       }
     }
   }

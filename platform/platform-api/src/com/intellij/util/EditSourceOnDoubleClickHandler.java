@@ -19,10 +19,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ui.Table;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,8 +34,15 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class EditSourceOnDoubleClickHandler {
+  private EditSourceOnDoubleClickHandler() {
+  }
+
+  public static void install(final JTree tree, @Nullable final Runnable whenPerformed) {
+    tree.addMouseListener(new TreeMouseListener(tree, whenPerformed));
+  }
+
   public static void install(final JTree tree) {
-    tree.addMouseListener(new TreeMouseListener(tree));
+    install(tree, null);
   }
 
   public static void install(final TreeTable treeTable) {
@@ -84,9 +92,15 @@ public class EditSourceOnDoubleClickHandler {
 
   public static class TreeMouseListener extends MouseAdapter {
     private final JTree myTree;
+    @Nullable private final Runnable myWhenPerformed;
 
     public TreeMouseListener(final JTree tree) {
+      this(tree, null);
+    }
+
+    public TreeMouseListener(final JTree tree, @Nullable final Runnable whenPerformed) {
       myTree = tree;
+      myWhenPerformed = whenPerformed;
     }
 
     public void mouseClicked(MouseEvent e) {
@@ -107,6 +121,7 @@ public class EditSourceOnDoubleClickHandler {
 
     protected void processDoubleClick(final MouseEvent e, final DataContext dataContext, final TreeNode lastPathComponent) {
       OpenSourceUtil.openSourcesFrom(dataContext, true);
+      if (myWhenPerformed != null) myWhenPerformed.run();
     }
 
     private static boolean expandOnDoubleClick(final TreeNode treeNode) {

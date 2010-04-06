@@ -24,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -125,11 +126,11 @@ public class ProjectRootsTraversing {
       myCurrentModuleManager = restored;
     }
 
-    public <T> T getUserData(Key<T> key) {
+    public <T> T getUserData(@NotNull Key<T> key) {
       return myUserData.getUserData(key);
     }
 
-    public <T> void putUserData(Key<T> key, T value) {
+    public <T> void putUserData(@NotNull Key<T> key, T value) {
       myUserData.putUserData(key, value);
     }
 
@@ -251,7 +252,7 @@ public class ProjectRootsTraversing {
     }
 
     public static class RecursiveModules implements Visit<ModuleOrderEntry> {
-      private boolean myIncludeTests;
+      private final boolean myIncludeTests;
 
       public RecursiveModules(boolean includeTests) {
         myIncludeTests = includeTests;

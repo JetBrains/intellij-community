@@ -203,14 +203,14 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
 
   public void testResolvingSystemProperties() throws Exception {
     String javaHome = System.getProperty("java.home");
-    String tempDir = System.getenv("TEMP");
+    String tempDir = System.getenv(getEnvVar());
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
     assertEquals(javaHome, resolve("${java.home}", myProjectPom));
-    assertEquals(tempDir, resolve("${env.TEMP}", myProjectPom));
+    assertEquals(tempDir, resolve("${env." + getEnvVar() + "}", myProjectPom));
   }
 
   public void testAllProperties() throws Exception {

@@ -1,6 +1,6 @@
 public class Extracted<R> {
     private final Test<R> test;
-    private R myT;
+    public R myT;
 
     public Extracted(Test<R> test) {
         this.test = test;

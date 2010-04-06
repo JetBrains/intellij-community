@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.util.Function;
+import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,18 +35,19 @@ import java.util.*;
  * @author yole
  */
 public class NativeFileIconProvider implements FileIconProvider {
-  private JFileChooser myFileChooser = new JFileChooser();
-  private final Map<String, Icon> myIconCache = new HashMap<String, Icon>();
+  private final JFileChooser myFileChooser = new JFileChooser();
+  private final Map<Ext, Icon> myIconCache = new HashMap<Ext, Icon>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
-  private final Set<String> myCustomIconExtensions =
-    SystemInfo.isWindows ? new HashSet<String>(Arrays.asList("exe", "ico")) : new HashSet<String>();
+  private final Set<Ext> myCustomIconExtensions =
+    SystemInfo.isWindows ? new HashSet<Ext>(Arrays.asList(new Ext("exe"), new Ext("ico"))) : new HashSet<Ext>();
   private final Map<String, Icon> myCustomIconCache = new HashMap<String, Icon>();
 
+  private static final Ext NO_EXT = new Ext(null);
+
   public Icon getIcon(VirtualFile file, int flags, @Nullable Project project) {
-    if (!(file.getFileType() instanceof NativeFileType) && !(file.getFileType() instanceof UnknownFileType)) {
-      return null;
-    }
-    final String ext = file.getExtension();
+    if (!isNativeFileType(file)) return null;
+
+    final Ext ext = file.getExtension() != null ? new Ext(file.getExtension()) : NO_EXT;
     final String filePath = file.getPath();
 
     Icon icon;
@@ -86,5 +88,27 @@ public class NativeFileIconProvider implements FileIconProvider {
         return icon;
       }
     });
+  }
+
+  protected boolean isNativeFileType(VirtualFile file) {
+    return file.getFileType() instanceof NativeFileType || file.getFileType() instanceof UnknownFileType;
+  }
+
+  private static class Ext extends ComparableObject.Impl {
+
+    private final Object[] myText;
+
+    private Ext(@Nullable String text) {
+      myText = new Object[] {text};
+    }
+
+    public Object[] getEqualityObjects() {
+      return myText;
+    }
+
+    @Override
+    public String toString() {
+      return myText[0] != null ? myText[0].toString() : null;
+    }
   }
 }

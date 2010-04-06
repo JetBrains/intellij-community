@@ -671,7 +671,10 @@ public class ImportHelper{
 
         PsiElement currentFileResolveScope = resolveResult.getCurrentFileResolveScope();
         if (!(currentFileResolveScope instanceof PsiImportStatementBase)) continue;
-        if (context != null && currentFileResolveScope instanceof JspxImportStatement && context != ((JspxImportStatement)currentFileResolveScope).getDeclarationFile()) {
+        if (context != null &&
+            (!currentFileResolveScope.isValid() ||
+            currentFileResolveScope instanceof JspxImportStatement &&
+            context != ((JspxImportStatement)currentFileResolveScope).getDeclarationFile())) {
           continue;
         }
 

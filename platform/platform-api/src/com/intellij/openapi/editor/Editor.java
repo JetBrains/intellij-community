@@ -308,4 +308,6 @@ public interface Editor extends UserDataHolder {
    */
   @Nullable
   JComponent getHeaderComponent();
+
+  IndentsModel getIndentsModel();
 }

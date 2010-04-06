@@ -17,14 +17,17 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.psi.PsiPackage;
+
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  * Date: Sep 19, 2003
  * Time: 3:51:02 PM
  */
-public final class PackageElement {
+public final class PackageElement implements Queryable {
   public static final DataKey<PackageElement> DATA_KEY =  DataKey.create("package.element");
 
   private final Module myModule;
@@ -68,5 +71,12 @@ public final class PackageElement {
 
   public boolean isLibraryElement() {
     return myIsLibraryElement;
+  }
+
+  public void putInfo(Map<String, String> info) {
+    PsiPackage pkg = getPackage();
+    if (pkg instanceof Queryable) {
+      ((Queryable)pkg).putInfo(info);
+    }
   }
 }

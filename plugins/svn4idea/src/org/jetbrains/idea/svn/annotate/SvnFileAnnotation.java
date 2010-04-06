@@ -37,7 +37,7 @@ import java.util.List;
 
 public class SvnFileAnnotation implements FileAnnotation {
   private final String myContents;
-  private final MyInfos myInfos;
+  private final MyPartiallyCreatedInfos myInfos;
   private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(SimpleDateFormat.getDateInstance(SimpleDateFormat.SHORT));
 
   private final SvnVcs myVcs;
@@ -51,7 +51,8 @@ public class SvnFileAnnotation implements FileAnnotation {
         return "";
       }
       else {
-        return DATE_FORMAT.format(myInfos.get(lineNumber).getDate());
+        final LineInfo lineInfo = myInfos.get(lineNumber);
+        return (lineInfo == null) ? "" : DATE_FORMAT.format(lineInfo.getDate());
       }
     }
   };
@@ -75,6 +76,7 @@ public class SvnFileAnnotation implements FileAnnotation {
         return "";
       }
       final LineInfo info = myInfos.get(lineNumber);
+      if (info == null) return null;
       SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
       if (svnRevision != null) {
         final String tooltip = "Revision " + info.getRevision() + ": " + svnRevision.getCommitMessage();
@@ -90,7 +92,8 @@ public class SvnFileAnnotation implements FileAnnotation {
         return "";
       }
       else {
-        return myInfos.get(lineNumber).getAuthor();
+        final LineInfo lineInfo = myInfos.get(lineNumber);
+        return (lineInfo == null) ? "" : lineInfo.getAuthor();
       }
     }
   };
@@ -106,6 +109,10 @@ public class SvnFileAnnotation implements FileAnnotation {
 
   public void setRevision(final long revision, final SvnFileRevision svnRevision) {
     myRevisionMap.put(revision, svnRevision);
+  }
+
+  public void clearRevisions() {
+    myRevisionMap.clear();
   }
 
   private SvnFileRevision getRevision(final long revision) {
@@ -157,7 +164,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     myVcs.getSvnEntriesFileListener().addListener(myListener);
     myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
 
-    myInfos = new MyInfos();
+    myInfos = new MyPartiallyCreatedInfos();
   }
 
   public void addListener(AnnotationListener listener) {
@@ -183,6 +190,7 @@ public class SvnFileAnnotation implements FileAnnotation {
       return "";
     }
     final LineInfo info = myInfos.get(lineNumber);
+    if (info == null) return "";
     SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
     if (svnRevision != null) {
       if (myInfos.getAnnotationSource(lineNumber).showMerged()) {
@@ -198,13 +206,14 @@ public class SvnFileAnnotation implements FileAnnotation {
     return myContents;
   }
 
-  public void appendLineInfo(final Date date, final long revision, final String author) {
-    myInfos.appendLineInfo(date, revision, author);
+  public void setLineInfo(final int lineNumber, final Date date, final long revision, final String author,
+                             @Nullable final Date mergeDate, final long mergeRevision, @Nullable final String mergeAuthor) {
+    myInfos.appendNumberedLineInfo(lineNumber, date, revision, author, mergeDate, mergeRevision, mergeAuthor);
   }
 
   public void appendLineInfo(final Date date, final long revision, final String author,
-                             @NotNull final Date mergeDate, final long mergeRevision, @NotNull final String mergeAuthor) {
-    myInfos.appendLineInfo(date, revision, author, mergeDate, mergeRevision, mergeAuthor);
+                             @Nullable final Date mergeDate, final long mergeRevision, @Nullable final String mergeAuthor) {
+    myInfos.appendNumberedLineInfo(date, revision, author, mergeDate, mergeRevision, mergeAuthor);
   }
 
   @Nullable
@@ -221,6 +230,7 @@ public class SvnFileAnnotation implements FileAnnotation {
       return null;
     }
     final LineInfo info = myInfos.get(lineNumber);
+    if (info == null) return null;
     SvnFileRevision svnRevision = myRevisionMap.get(info.getRevision());
     if (svnRevision != null) {
       return svnRevision.getRevisionNumber();
@@ -236,6 +246,10 @@ public class SvnFileAnnotation implements FileAnnotation {
       }
     });
     return result;
+  }
+
+  public boolean revisionsNotEmpty() {
+    return ! myRevisionMap.isEmpty();
   }
 
   @Nullable
@@ -272,16 +286,19 @@ public class SvnFileAnnotation implements FileAnnotation {
         return "";
       }
       else {
-        return String.valueOf(getRevision(lineNumber));
+        final long revision = getRevision(lineNumber);
+        return (revision == -1) ? "" : String.valueOf(revision);
       }
     }
 
     public Cursor getCursor(final int lineNum) {
-      return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+      final long revision = getRevision(lineNum);
+      return (revision == -1) ? Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     }
 
     protected long getRevision(final int lineNum) {
-      return myInfos.get(lineNum).getRevision();
+      final LineInfo lineInfo = myInfos.get(lineNum);
+      return (lineInfo == null) ? -1 : lineInfo.getRevision();
     }
 
     public void doAction(int lineNum) {
@@ -293,6 +310,72 @@ public class SvnFileAnnotation implements FileAnnotation {
       }
     }
   }
+
+  private static class MyPartiallyCreatedInfos {
+    private boolean myShowMergeSource;
+    private final Map<Integer, LineInfo> myMappedLineInfo;
+    private final Map<Integer, LineInfo> myMergeSourceInfos;
+    private int myMaxIdx;
+
+    private MyPartiallyCreatedInfos() {
+      myMergeSourceInfos = new HashMap<Integer, LineInfo>();
+      myMappedLineInfo = new HashMap<Integer, LineInfo>();
+      myMaxIdx = 0;
+    }
+
+    boolean isShowMergeSource() {
+      return myShowMergeSource;
+    }
+
+    void setShowMergeSource(boolean showMergeSource) {
+      myShowMergeSource = showMergeSource;
+    }
+
+    int size() {
+      return myMaxIdx + 1;
+    }
+
+    void appendNumberedLineInfo(final Date date, final long revision, final String author,
+                               @Nullable final Date mergeDate, final long mergeRevision, @Nullable final String mergeAuthor) {
+      appendNumberedLineInfo(myMaxIdx + 1, date, revision, author, mergeDate, mergeRevision, mergeAuthor);
+    }
+
+    void appendNumberedLineInfo(final int lineNumber, final Date date, final long revision, final String author,
+                               @Nullable final Date mergeDate, final long mergeRevision, @Nullable final String mergeAuthor) {
+      if (date == null) return;
+      if (myMappedLineInfo.get(lineNumber) != null) return;
+      myMaxIdx = (myMaxIdx < lineNumber) ? lineNumber : myMaxIdx;
+      myMappedLineInfo.put(lineNumber, new LineInfo(date, revision, author));
+      if (mergeDate != null) {
+        myMergeSourceInfos.put(lineNumber, new LineInfo(mergeDate, mergeRevision, mergeAuthor));
+      }
+    }
+
+    LineInfo get(final int idx) {
+      if (myShowMergeSource) {
+        final LineInfo lineInfo = myMergeSourceInfos.get(idx);
+        if (lineInfo != null) {
+          return lineInfo;
+        }
+      }
+      return myMappedLineInfo.get(idx);
+    }
+
+    AnnotationSource getAnnotationSource(final int line) {
+      return myShowMergeSource ? AnnotationSource.getInstance(myMergeSourceInfos.containsKey(line)) : AnnotationSource.LOCAL;
+    }
+
+    public long originalRevision(final int line) {
+      if (line >= size()) return -1;
+      final LineInfo lineInfo = myMappedLineInfo.get(line);
+      return lineInfo == null ? -1 : lineInfo.getRevision();
+    }
+
+    public boolean mergeSourceAvailable(int lineNumber) {
+      return myMergeSourceInfos.containsKey(lineNumber);
+    }
+  }
+  // todo end
 
   private static class MyInfos {
     private boolean myShowMergeSource;
@@ -314,6 +397,13 @@ public class SvnFileAnnotation implements FileAnnotation {
 
     int size() {
       return myLineInfos.size();
+    }
+
+    void appendNumberedLineInfo(final int lineNumber, final Date date, final long revision, final String author,
+                               @Nullable final Date mergeDate, final long mergeRevision, @Nullable final String mergeAuthor) {
+      if (myLineInfos.size() <= lineNumber) {
+        //myLineInfos.add();
+      }
     }
 
     void appendLineInfo(final Date date, final long revision, final String author) {

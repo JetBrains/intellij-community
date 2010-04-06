@@ -84,21 +84,21 @@ public class ExpectedTypesProvider {
     return new ExpectedTypeInfoImpl(type, kind, dims, defaultType, tailType);
   }
 
-  public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion) {
+  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion) {
     return getExpectedTypes(expr, forCompletion, false);
   }
 
-  public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, final boolean voidable) {
+  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, final boolean voidable) {
     return getExpectedTypes(expr, forCompletion, ourGlobalScopeClassProvider, voidable);
   }
 
-  public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr,
+  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr,
                                              boolean forCompletion,
                                              ExpectedClassProvider classProvider) {
     return getExpectedTypes(expr, forCompletion, classProvider, false);
   }
 
-  public ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
+  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
                                              final boolean voidable) {
     if (expr == null) return null;
     PsiElement parent = expr.getParent();
@@ -193,11 +193,11 @@ public class ExpectedTypesProvider {
     }
   }
 
-  private class MyParentVisitor extends JavaElementVisitor {
+  private static class MyParentVisitor extends JavaElementVisitor {
     private PsiExpression myExpr;
     private final boolean myForCompletion;
     private final ExpectedClassProvider myClassProvider;
-    private boolean myVoidable;
+    private final boolean myVoidable;
     private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY_ARRAY;
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";
 
@@ -280,7 +280,7 @@ public class ExpectedTypesProvider {
     }
 
     @Nullable
-    private PsiType getAnnotationMethodType(final PsiNameValuePair pair) {
+    private static PsiType getAnnotationMethodType(final PsiNameValuePair pair) {
       final PsiReference reference = pair.getReference();
       if (reference != null) {
         final PsiElement method = reference.resolve();
@@ -458,7 +458,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    private TailType getAssignmentRValueTailType(PsiAssignmentExpression assignment) {
+    private static TailType getAssignmentRValueTailType(PsiAssignmentExpression assignment) {
       if (assignment.getParent() instanceof PsiExpressionStatement) {
         if (!(assignment.getParent().getParent() instanceof PsiForStatement)) {
           return TailType.SEMICOLON;
@@ -897,7 +897,7 @@ public class ExpectedTypesProvider {
       return array.toArray(new ExpectedTypeInfo[array.size()]);
     }
 
-    private TailType getMethodArgumentTailType(final PsiExpression argument, final int index, final PsiMethod method, final PsiSubstitutor substitutor,
+    private static TailType getMethodArgumentTailType(final PsiExpression argument, final int index, final PsiMethod method, final PsiSubstitutor substitutor,
                                                final PsiParameter[] parms) {
       if (index >= parms.length) {
         return TailType.NONE;
@@ -909,9 +909,7 @@ public class ExpectedTypesProvider {
 
         PsiType returnType = method.getReturnType();
         if (returnType != null) returnType = substitutor.substitute(returnType);
-        return (PsiType.VOID.equals(returnType) || returnType == null) && call.getParent() instanceof PsiStatement
-               ? TailTypes.CALL_RPARENTH_SEMICOLON
-               : TailTypes.CALL_RPARENTH;
+        return getFinalCallParameterTailType(call, returnType, method);
       }
       return TailType.COMMA;
     }
@@ -956,7 +954,7 @@ public class ExpectedTypesProvider {
     }
 
     @Nullable
-    private PsiType getTypeParameterValue(PsiClass rootClass, PsiClass derivedClass, PsiSubstitutor substitutor, int index) {
+    private static PsiType getTypeParameterValue(PsiClass rootClass, PsiClass derivedClass, PsiSubstitutor substitutor, int index) {
       final PsiTypeParameter[] typeParameters = rootClass.getTypeParameters();
       if (typeParameters.length > index) {
         final PsiSubstitutor psiSubstitutor = TypeConversionUtil.getClassSubstitutor(rootClass, derivedClass, substitutor);
@@ -969,7 +967,7 @@ public class ExpectedTypesProvider {
     }
 
     @Nullable
-    protected PsiType checkMethod(PsiMethod method, @NonNls String className, NullableFunction<PsiClass,PsiType> function) {
+    protected static PsiType checkMethod(PsiMethod method, @NonNls String className, NullableFunction<PsiClass,PsiType> function) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return null;
 
@@ -1149,6 +1147,25 @@ public class ExpectedTypesProvider {
     PsiField[] findDeclaredFields(final PsiManager manager, String name);
 
     PsiMethod[] findDeclaredMethods(final PsiManager manager, String name);
+  }
+
+  public static TailType getFinalCallParameterTailType(PsiElement call, PsiType returnType, PsiMethod method) {
+    if (method.isConstructor() &&
+        call instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)call).getMethodExpression() instanceof PsiSuperExpression) {
+      return TailTypes.CALL_RPARENTH_SEMICOLON;
+    }
+
+    final boolean chainable = !PsiType.VOID.equals(returnType) && returnType != null;
+
+    final PsiElement parent = call.getParent();
+    final boolean statementContext = parent instanceof PsiExpressionStatement || parent instanceof PsiVariable ||
+                                     parent instanceof PsiCodeBlock || parent instanceof PsiThrowStatement;
+
+    if (statementContext && !chainable) {
+      return TailTypes.CALL_RPARENTH_SEMICOLON;
+    }
+
+    return TailTypes.CALL_RPARENTH;
   }
 
 }

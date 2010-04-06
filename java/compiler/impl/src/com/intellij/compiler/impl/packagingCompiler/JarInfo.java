@@ -27,9 +27,9 @@ import java.util.List;
  * @author nik
  */
 public class JarInfo {
-  private List<Pair<String, VirtualFile>> myPackedFiles;
-  private LinkedHashSet<Pair<String, JarInfo>> myPackedJars;
-  private List<DestinationInfo> myDestinations;
+  private final List<Pair<String, VirtualFile>> myPackedFiles;
+  private final LinkedHashSet<Pair<String, JarInfo>> myPackedJars;
+  private final List<DestinationInfo> myDestinations;
 
   public JarInfo() {
     myDestinations = new ArrayList<DestinationInfo>();

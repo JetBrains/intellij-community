@@ -142,8 +142,12 @@ public class SmoothProgressAdapter extends BlockingProgressIndicator {
       }
     );
 
-    super.stop(); // should be last to not leaveModal before closing the dialog
-    semaphore.up();
+    try {
+      super.stop(); // should be last to not leaveModal before closing the dialog
+    }
+    finally {
+      semaphore.up();
+    }
   }
 
   public synchronized void setText(String text) {

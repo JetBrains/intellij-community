@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -37,6 +38,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -52,8 +54,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.List;
+import java.util.Map;
 
-public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx {
+public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx,
+                                                                                            Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
   static final Object MIRROR_LOCK = new String("Mirror Lock");
@@ -225,17 +229,14 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       }
 
       PsiClass[] classes = getClasses();
-      if (classes.length == 1) {
-        if (!JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(classes[0].getName())) {
-          return; // Can happen for package-info.class, or classes compiled from languages, that support different class naming scheme, like Scala.
-        }
-      }
-
-      PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
-      LOG.assertTrue(classes.length == mirrorClasses.length);
-      if (classes.length == mirrorClasses.length) {
-        for (int i = 0; i < classes.length; i++) {
-          ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+      // Can happen for package-info.class, or classes compiled from languages, that support different class naming scheme, like Scala.
+      if (classes.length != 1 || JavaPsiFacade.getInstance(getProject()).getNameHelper().isIdentifier(classes[0].getName())) {
+        PsiClass[] mirrorClasses = ((PsiJavaFile)mirrorFile).getClasses();
+        LOG.assertTrue(classes.length == mirrorClasses.length);
+        if (classes.length == mirrorClasses.length) {
+          for (int i = 0; i < classes.length; i++) {
+            ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+          }
         }
       }
     }
@@ -442,5 +443,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   public PsiFile cacheCopy(final FileContent content) {
     return this;
+  }
+
+  public void putInfo(Map<String, String> info) {
+    PsiFileImpl.putInfo(this, info);
   }
 }

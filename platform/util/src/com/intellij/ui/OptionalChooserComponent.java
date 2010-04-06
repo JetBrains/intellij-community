@@ -30,7 +30,7 @@ public abstract class OptionalChooserComponent implements CheckBoxListListener {
   private JPanel myContentPane;
   private CheckBoxList myList;
   private DefaultListModel myListModel;
-  private List<Pair<String, Boolean>> myInitialList;
+  private final List<Pair<String, Boolean>> myInitialList;
   private ArrayList<Pair<String, Boolean>> myWorkingList;
 
   public OptionalChooserComponent(@NotNull final List<Pair<String, Boolean>> list) {

@@ -79,7 +79,7 @@ public class DefaultWordsScanner implements WordsScanner {
     }
   }
 
-  private static boolean stripWords(final Processor<WordOccurrence> processor,
+  protected static boolean stripWords(final Processor<WordOccurrence> processor,
                                     final CharSequence tokenText,
                                     int from,
                                     int to,

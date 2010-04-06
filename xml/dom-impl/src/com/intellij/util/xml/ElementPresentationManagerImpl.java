@@ -56,7 +56,7 @@ public class ElementPresentationManagerImpl extends ElementPresentationManager {
 
     private final Object myVariant;
     private final String myName;
-    private PsiElement myElement;
+    private final PsiElement myElement;
 
     public DomVariant(final Object variant, String name, final PsiElement element) {
       myVariant = variant;

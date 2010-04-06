@@ -386,7 +386,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
 
   private static class ItemRenderer extends JPanel implements ListCellRenderer {
     private final Project myProject;
-    private ColoredListCellRenderer myRenderer;
+    private final ColoredListCellRenderer myRenderer;
 
     private ItemRenderer(Project project) {
       super(new BorderLayout());
@@ -424,8 +424,8 @@ public class BookmarksAction extends AnAction implements DumbAware {
   }
 
   protected static class BookmarkInContextInfo {
-    private DataContext myDataContext;
-    private Project myProject;
+    private final DataContext myDataContext;
+    private final Project myProject;
     private Bookmark myBookmarkAtPlace;
     private VirtualFile myFile;
     private int myLine;
@@ -582,7 +582,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
     private final JList myList;
 
     private DeleteBookmarkAction(Project project, JList list) {
-      super("Delete", "Delete current bookmark", IconLoader.getIcon("/actions/delete.png"));
+      super("Delete", "Delete current bookmark", IconLoader.getIcon("/general/remove.png"));
       myProject = project;
       myList = list;
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("DELETE")), list);

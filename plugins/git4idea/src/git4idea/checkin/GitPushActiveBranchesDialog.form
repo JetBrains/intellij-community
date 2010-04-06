@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="git4idea.checkin.GitPushActiveBranchesDialog">
-  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="20" y="20" width="427" height="269"/>
@@ -30,7 +30,7 @@
           <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.commits"/>
         </properties>
       </component>
-      <grid id="a16e5" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="a16e5" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -45,16 +45,6 @@
             <properties>
               <enabled value="false"/>
               <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.view"/>
-            </properties>
-          </component>
-          <component id="8ca38" class="javax.swing.JCheckBox" binding="myAutoStashCheckBox" default-binding="true">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <selected value="true"/>
-              <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.autostash"/>
-              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="push.active.autostash.tooltip"/>
             </properties>
           </component>
           <vspacer id="90dc0">
@@ -82,6 +72,54 @@
           </component>
         </children>
       </grid>
+      <grid id="53049" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <hspacer id="9965">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
+          <component id="944a3" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="push.active.save.before.rebase"/>
+            </properties>
+          </component>
+          <component id="9490" class="javax.swing.JRadioButton" binding="myStashRadioButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.stash"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.stash.tooltip"/>
+            </properties>
+          </component>
+          <component id="6cdff" class="javax.swing.JRadioButton" binding="myShelveRadioButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.shelve"/>
+              <toolTipText resource-bundle="git4idea/i18n/GitBundle" key="update.options.save.shelve.tooltip"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="mySaveFilesPolicy">
+      <member id="9490"/>
+      <member id="6cdff"/>
+    </group>
+  </buttonGroups>
 </form>

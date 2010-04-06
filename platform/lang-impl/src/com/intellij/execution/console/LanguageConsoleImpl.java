@@ -34,10 +34,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -78,20 +75,20 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Gregory.Shrago
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
-  private static int SEPARATOR_THICKNESS = 1;
+  private static final int SEPARATOR_THICKNESS = 1;
 
   private final Project myProject;
 
   private final EditorEx myConsoleEditor;
   private final EditorEx myHistoryViewer;
   private final Document myEditorDocument;
-  private PsiFile myFile;
+  protected PsiFile myFile;
 
   private final JPanel myPanel = new JPanel(new BorderLayout());
 
   private String myTitle;
   private String myPrompt = "> ";
-  private LightVirtualFile myHistoryFile;
+  private final LightVirtualFile myHistoryFile;
 
   private Editor myCurrentEditor;
 
@@ -189,9 +186,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected AnAction[] createActions() {
-    return new AnAction[]{
-      new MyOpenInEditorAction()
-    };
+    return AnAction.EMPTY_ARRAY;
   }
 
   private static void setupEditorDefault(EditorEx editor) {
@@ -209,6 +204,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setVirtualSpace(false);
     editorSettings.setLineCursorWidth(1);
   }
@@ -216,6 +212,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public void setUiUpdateRunnable(Runnable uiUpdateRunnable) {
     assert myUiUpdateRunnable == null : "can be set only once";
     myUiUpdateRunnable = uiUpdateRunnable;
+  }
+
+  public void flushAllUiUpdates() {
+    myUpdateQueue.flush();
   }
 
   public LightVirtualFile getHistoryFile() {
@@ -259,18 +259,19 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this.myTitle = title;
   }
 
-  public void addToHistory(final String text, final ConsoleViewContentType contentType) {
+  public void addToHistory(final String text, final TextAttributes attributes) {
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
     final int offset = history.getTextLength();
     history.insertString(offset, text);
-    if (!text.endsWith("\n")) history.insertString(history.getTextLength(), "\n");
-    markupModel.addRangeHighlighter(offset, history.getTextLength(), HighlighterLayer.SYNTAX, contentType.getAttributes(),
+    markupModel.addRangeHighlighter(offset,
+                                    history.getTextLength(),
+                                    HighlighterLayer.SYNTAX,
+                                    attributes,
                                     HighlighterTargetArea.EXACT_RANGE);
     queueUiUpdate(scrollToEnd);
   }
-
 
   public String addCurrentToHistory(final TextRange textRange, final boolean erase) {
     final Ref<String> ref = Ref.create("");
@@ -287,7 +288,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return ref.get();
   }
 
-  private boolean shouldScrollHistoryToEnd() {
+  public boolean shouldScrollHistoryToEnd() {
     final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
     final int lineNum = (visibleArea.y + visibleArea.height + myHistoryViewer.getLineHeight()) / myHistoryViewer.getLineHeight();
     final int lineCount = myHistoryViewer.getDocument().getLineCount();
@@ -345,7 +346,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return myPanel;
   }
 
-  private void queueUiUpdate(final boolean forceScrollToEnd) {
+  public void queueUiUpdate(final boolean forceScrollToEnd) {
     myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
     myUpdateQueue.queue(new Update("UpdateUi") {
       public void run() {
@@ -505,7 +506,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           offset = 0;
         }
         editorManager.closeFile(file);
-        assert newVFile != null;
         editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
       }
     }
@@ -518,24 +518,4 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
     });
   }
-
-  private class MyOpenInEditorAction extends DumbAwareAction {
-
-    protected MyOpenInEditorAction() {
-      super("Open In Editor", null, null);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.CTRL_MASK | InputEvent.ALT_MASK)));
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      openInEditor();
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-    }
-  }
-
-
 }

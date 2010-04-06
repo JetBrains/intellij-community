@@ -20,8 +20,8 @@ import com.intellij.openapi.vcs.FilePath;
 import java.util.List;
 
 public class VcsInvalidated {
-  private List<VcsDirtyScope> myScopes;
-  private boolean myEverythingDirty;
+  private final List<VcsDirtyScope> myScopes;
+  private final boolean myEverythingDirty;
 
   public VcsInvalidated(final List<VcsDirtyScope> scopes, final boolean everythingDirty) {
     myScopes = scopes;

@@ -91,18 +91,19 @@ public class OSProcessHandler extends ProcessHandler {
 
     public ProcessWaitFor(final Process process) {
       myWaitSemaphore.down();
-      final Runnable action = new Runnable() {
+
+      myWaitForThreadFuture = executeOnPooledThread(new Runnable() {
         public void run() {
           try {
             myExitCode = process.waitFor();
           }
           catch (InterruptedException ignored) {
           }
-          myWaitSemaphore.up();
+          finally {
+            myWaitSemaphore.up();
+          }
         }
-      };
-
-      myWaitForThreadFuture = executeOnPooledThread(action);
+      });
     }
 
     public int waitFor() {
@@ -154,8 +155,9 @@ public class OSProcessHandler extends ProcessHandler {
               }
               catch (ExecutionException ignored) {
               }
-
-              onOSProcessTerminated(exitCode);
+              finally {
+                onOSProcessTerminated(exitCode);
+              }
             }
           };
 

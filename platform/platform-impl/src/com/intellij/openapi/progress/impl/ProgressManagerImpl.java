@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -66,7 +67,7 @@ public class ProgressManagerImpl extends ProgressManager {
           }
         }
       };
-      thread.setPriority(Thread.MIN_PRIORITY + 1);
+      thread.setPriority(Thread.MAX_PRIORITY - 1);
       thread.start();
     }
   }
@@ -320,12 +321,15 @@ public class ProgressManagerImpl extends ProgressManager {
       progressIndicator = new EmptyProgressIndicator();
     }
     else {
-      final BackgroundableProcessIndicator indicator = new BackgroundableProcessIndicator(task);
-      final Project project = task.getProject();
-      Disposer.register(ApplicationManager.getApplication(), indicator);
-      progressIndicator = indicator;
+      progressIndicator = new BackgroundableProcessIndicator(task);
     }
+    runProcessWithProgressAsynchronously(task, progressIndicator);
+  }
 
+  public static void runProcessWithProgressAsynchronously(final Task.Backgroundable task, final ProgressIndicator progressIndicator) {
+    if (progressIndicator instanceof Disposable) {
+      Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
+    }
 
     final Runnable process = new TaskRunnable(task, progressIndicator);
 

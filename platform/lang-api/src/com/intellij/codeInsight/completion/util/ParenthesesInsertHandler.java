@@ -72,9 +72,9 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     final Document document = editor.getDocument();
     PsiElement element = findNextToken(context);
 
-    final boolean hasParams = placeCaretInsideParentheses(context, item);
-
     final char completionChar = context.getCompletionChar();
+    final boolean putCaretInside = completionChar == '(' || placeCaretInsideParentheses(context, item);
+
     if (completionChar == '(') {
       context.setAddCompletionChar(false);
     }
@@ -99,7 +99,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       if (isToken(last, ")")) {
         int rparenthOffset = last.getTextRange().getStartOffset();
         context.setTailOffset(rparenthOffset + 1);
-        if (!hasParams) {
+        if (!putCaretInside) {
           for (int i = lparenthOffset + 1; i < rparenthOffset; i++) {
             if (!Character.isWhitespace(document.getCharsSequence().charAt(i))) {
               return;
@@ -132,7 +132,7 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
       tailOffset = TailType.insertChar(editor, tailOffset, ' ');
     }
     document.insertString(tailOffset, ")");
-    editor.getCaretModel().moveToOffset(hasParams ? caret : context.getTailOffset());
+    editor.getCaretModel().moveToOffset(putCaretInside ? caret : context.getTailOffset());
   }
 
   @Nullable

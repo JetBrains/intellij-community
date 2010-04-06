@@ -17,6 +17,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
+import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
@@ -45,6 +46,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -66,11 +68,14 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -168,6 +173,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private ArrayList<TokenInfo> myTokens = new ArrayList<TokenInfo>();
   private final Hyperlinks myHyperlinks = new Hyperlinks();
+  private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<ConsoleFolding>();
 
   private String myHelpId;
 
@@ -182,10 +188,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final CompositeFilter myPredefinedMessageFilter;
   private final CompositeFilter myCustomFilter;
 
-  private ArrayList<String> myHistory = new ArrayList<String>();
+  private final ArrayList<String> myHistory = new ArrayList<String>();
   private int myHistorySize = 20;
 
-  private ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
+  private final ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
 
   public void addConsoleUserInputLestener(ConsoleInputListener consoleInputListener) {
     myConsoleInputListeners.add(consoleInputListener);
@@ -232,6 +238,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public ConsoleViewImpl(final Project project, boolean viewer, FileType fileType) {
+    this(project, GlobalSearchScope.allScope(project), viewer, fileType);
+  }
+
+
+  public ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType) {
     super(new BorderLayout());
     isViewer = viewer;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
@@ -240,8 +251,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     myCustomFilter = new CompositeFilter(project);
     myPredefinedMessageFilter = new CompositeFilter(project);
-    for (ConsoleFilterProvider filterProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
-      for (Filter filter : filterProvider.getDefaultFilters(project)) {
+    for (ConsoleFilterProvider eachProvider : Extensions.getExtensions(ConsoleFilterProvider.FILTER_PROVIDERS)) {
+      Filter[] filters = eachProvider instanceof ConsoleFilterProviderEx
+                         ? ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope)
+                         : eachProvider.getDefaultFilters(project);
+      for (Filter filter : filters) {
         myPredefinedMessageFilter.addFilter(filter);
       }
     }
@@ -568,6 +582,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private Editor doCreateEditor() {
     final EditorEx editor = createRealEditor();
+    editor.addEditorMouseListener(new EditorMouseAdapter() {
+      public void mouseReleased(final EditorMouseEvent e) {
+        final MouseEvent mouseEvent = e.getMouseEvent();
+        if (!mouseEvent.isPopupTrigger()) {
+          navigate(e);
+        }
+      }
+    });
+
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final MouseEvent mouseEvent = event.getMouseEvent();
@@ -616,8 +639,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     final EditorSettings editorSettings = editor.getSettings();
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
-    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setFoldingOutlineShown(true);
     editorSettings.setAdditionalPageAtBottom(false);
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(0);
@@ -626,15 +650,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     editor.setBackgroundColor(scheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
-
-    editor.addEditorMouseListener(new EditorMouseAdapter() {
-      public void mouseReleased(final EditorMouseEvent e) {
-        final MouseEvent mouseEvent = e.getMouseEvent();
-        if (!mouseEvent.isPopupTrigger()) {
-          navigate(e);
-        }
-      }
-    });
 
     final ConsoleViewImpl consoleView = this;
     editor.getContentComponent().addKeyListener(new KeyListener() {
@@ -792,21 +807,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myHyperlinks.getHyperlinkAt(offset);
   }
 
-  private void highlightHyperlinks(final int line1, final int line2){
+  private void highlightHyperlinks(final int line1, final int endLine){
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final Document document = myEditor.getDocument();
     final CharSequence chars = document.getCharsSequence();
     final TextAttributes hyperlinkAttributes = getHyperlinkAttributes();
 
-    for(int line = line1; line <= line2; line++) {
-      if (line < 0) continue;
-      final int startOffset = document.getLineStartOffset(line);
+    final int startLine = Math.max(0, line1);
+
+    final List<FoldRegion> toAdd = new ArrayList<FoldRegion>();
+
+    for(int line = startLine; line <= endLine; line++) {
       int endOffset = document.getLineEndOffset(line);
-      if (endOffset < document.getTextLength()){
+      if (endOffset < document.getTextLength()) {
         endOffset++; // add '\n'
       }
-      final String text = chars.subSequence(startOffset, endOffset).toString();
+      final String text = getLineText(document, line, true);
       Filter.Result result = myCustomFilter.applyFilter(text, endOffset);
       if (result == null) {
         result = myPredefinedMessageFilter.applyFilter(text, endOffset);
@@ -817,7 +834,68 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
         addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
       }
+      addFolding(document, chars, line, toAdd);
     }
+    if (!toAdd.isEmpty()) {
+      doUpdateFolding(toAdd);
+    }
+  }
+
+  private void doUpdateFolding(final List<FoldRegion> toAdd) {
+    final FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+      public void run() {
+        for (FoldRegion region : toAdd) {
+          region.setExpanded(false);
+          model.addFoldRegion(region);
+        }
+      }
+    });
+  }
+
+  private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
+    ConsoleFolding current = foldingForLine(getLineText(document, line, false));
+    myFolding.put(line, current);
+
+    final ConsoleFolding prevFolding = myFolding.get(line - 1);
+    if (current == null && prevFolding != null) {
+      final int lEnd = line - 1;
+      int lStart = lEnd;
+      while (prevFolding.equals(myFolding.get(lStart - 1))) lStart--;
+      if (lStart == lEnd) {
+        return;
+      }
+
+      List<String> toFold = new ArrayList<String>(lEnd - lStart + 1);
+      for (int i = lStart; i <= lEnd; i++) {
+        toFold.add(getLineText(document, i, false));
+      }
+
+      int oStart = document.getLineStartOffset(lStart);
+//      oStart = CharArrayUtil.shiftForward(chars, oStart, " \t");
+      if (oStart > 0) oStart--;
+      int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
+
+      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, prevFolding.getPlaceholderText(toFold), null));
+    }
+  }
+
+  private static String getLineText(Document document, int lineNumber, boolean includeEol) {
+    int endOffset = document.getLineEndOffset(lineNumber);
+    if (includeEol && endOffset < document.getTextLength()) {
+      endOffset++;
+    }
+    return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
+  }
+
+  private static ConsoleFolding foldingForLine(String lineText) {
+    ConsoleFolding current = null;
+    for (ConsoleFolding folding : ConsoleFolding.EP_NAME.getExtensions()) {
+      if (folding.shouldFoldLine(lineText)) {
+        current = folding;
+      }
+    }
+    return current;
   }
 
   private void addHyperlink(final int highlightStartOffset,
@@ -1151,6 +1229,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private OccurenceInfo next(final int delta, boolean doMove) {
     List<RangeHighlighter> ranges = new ArrayList<RangeHighlighter>(myHyperlinks.getRanges().keySet());
+    for (Iterator<RangeHighlighter> iterator = ranges.iterator(); iterator.hasNext();) {
+      RangeHighlighter highlighter = iterator.next();
+      if (myEditor.getFoldingModel().getCollapsedRegionAtOffset(highlighter.getStartOffset()) != null) {
+        iterator.remove();
+      }
+    }
     Collections.sort(ranges, new Comparator<RangeHighlighter>() {
       public int compare(final RangeHighlighter o1, final RangeHighlighter o2) {
         return o1.getStartOffset() - o2.getStartOffset();
@@ -1247,7 +1331,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * insert text to document
    * @param s inserted text
-   * @param offset relativly to all document text
+   * @param offset relatively to all document text
    */
   private void insertUserText(final String s, int offset) {
     final ConsoleViewImpl consoleView = this;
@@ -1272,21 +1356,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       int charCountToAdd;
 
-
+      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
       if (offset > info.endOffset) {
         startOffset = info.endOffset;
       }
       else if (offset < info.startOffset) {
-        startOffset = info.startOffset;
+        startOffset = Math.max(info.startOffset, deferredOffset);
       } else {
-        startOffset = offset;
+        startOffset = Math.max(offset, deferredOffset);
       }
+
+      consoleView.myDeferredUserInput.insert(startOffset - deferredOffset, s);
+
       charCountToAdd = s.length();
-
-      if (consoleView.myDeferredUserInput.length() < info.endOffset - info.startOffset) return; //user was quick
-
-      consoleView.myDeferredUserInput.insert(startOffset - info.startOffset, s);
-
       info.endOffset += charCountToAdd;
       consoleView.myContentSize += charCountToAdd;
     }
@@ -1326,7 +1408,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView.myDeferredUserInput.length() == 0) return;
       int charCountToReplace;
 
-      startOffset = getStartOffset(start, info);
+      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
+
+      startOffset = getStartOffset(start, info, deferredOffset);
       endOffset = getEndOffset(end, info);
 
       if (startOffset == -1 ||
@@ -1338,9 +1422,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       charCountToReplace = s.length() - endOffset + startOffset;
 
-      if (consoleView.myDeferredUserInput.length() < info.endOffset - info.startOffset) return; //user was quick
-
-      consoleView.myDeferredUserInput.replace(startOffset - info.startOffset, endOffset - info.startOffset, s);
+      consoleView.myDeferredUserInput.replace(startOffset - deferredOffset, endOffset - deferredOffset, s);
 
       info.endOffset += charCountToReplace;
       if (info.startOffset == info.endOffset) {
@@ -1374,17 +1456,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView.myDeferredUserInput.length() == 0) return;
       int charCountToDelete;
 
-      startOffset = getStartOffset(offset, info);
+      final int deferredOffset = myContentSize - consoleView.myDeferredUserInput.length();
+      startOffset = getStartOffset(offset, info, deferredOffset);
       endOffset = getEndOffset(offset + length, info);
       if (startOffset == -1 ||
           endOffset == -1 ||
-          endOffset <= startOffset) {
+          endOffset <= startOffset ||
+          startOffset < deferredOffset) {
         editor.getSelectionModel().removeSelection();
         editor.getCaretModel().moveToOffset(offset);
         return;
       }
 
-      consoleView.myDeferredUserInput.delete(startOffset - info.startOffset, endOffset - info.startOffset);
+      consoleView.myDeferredUserInput.delete(startOffset - deferredOffset, endOffset - deferredOffset);
       charCountToDelete = endOffset - startOffset;
 
       info.endOffset -= charCountToDelete;
@@ -1401,12 +1485,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   //util methods for add, replace, delete methods
-  private static int getStartOffset(int offset, TokenInfo info) {
+  private static int getStartOffset(int offset, TokenInfo info, int deferredOffset) {
     int startOffset;
     if (offset >= info.startOffset && offset < info.endOffset) {
-      startOffset = offset;
+      startOffset = Math.max(offset, deferredOffset);
     } else if (offset < info.startOffset) {
-      startOffset = info.startOffset;
+      startOffset = Math.max(info.startOffset, deferredOffset);
     } else {
       startOffset = -1;
     }

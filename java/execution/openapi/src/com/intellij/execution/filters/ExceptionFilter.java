@@ -21,6 +21,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -30,6 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -51,7 +54,8 @@ public class ExceptionFilter implements Filter, DumbAware {
     mySearchScope = scope;
   }
 
-  public Result applyFilter(final String line, final int textEndOffset) {
+  @Nullable
+  static Trinity<String, String, TextRange> parseExceptionLine(final String line) {
     int atIndex;
     if (line.startsWith(AT_PREFIX)){
       atIndex = 0;
@@ -69,16 +73,29 @@ public class ExceptionFilter implements Filter, DumbAware {
     final int lastDotIndex = line.lastIndexOf('.', lparenthIndex);
     if (lastDotIndex < 0 || lastDotIndex < atIndex) return null;
     String className = line.substring(atIndex + AT.length() + 1, lastDotIndex).trim();
+
+    String methodName = line.substring(lastDotIndex + 1, lparenthIndex).trim();
+
+    final int rparenthIndex = line.indexOf(')', lparenthIndex);
+    if (rparenthIndex < 0) return null;
+
+    return Trinity.create(className, methodName, new TextRange(lparenthIndex, rparenthIndex));
+  }
+
+  public Result applyFilter(final String line, final int textEndOffset) {
+    final Trinity<String, String, TextRange> info = parseExceptionLine(line);
+    if (info == null) {
+      return null;
+    }
+
+    String className = info.first;
     final int dollarIndex = className.indexOf('$');
     if (dollarIndex >= 0){
       className = className.substring(0, dollarIndex);
     }
 
-    //String methodName = text.substring(lastDotIndex + 1, lparenthIndex).trim();
-
-    final int rparenthIndex = line.indexOf(')', lparenthIndex);
-    if (rparenthIndex < 0) return null;
-
+    final int lparenthIndex = info.third.getStartOffset();
+    final int rparenthIndex = info.third.getEndOffset();
     final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
 
     final int colonIndex = fileAndLine.lastIndexOf(':');
@@ -102,20 +119,22 @@ public class ExceptionFilter implements Filter, DumbAware {
       */
 
       final int textStartOffset = textEndOffset - line.length();
+
       final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
       final int highlightEndOffset = textStartOffset + rparenthIndex;
       VirtualFile virtualFile = file.getVirtualFile();
-      final OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject, virtualFile, lineNumber - 1);
+      final OpenFileHyperlinkInfo linkInfo = new OpenFileHyperlinkInfo(myProject, virtualFile, lineNumber - 1);
       TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
       if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
         Color color = UIUtil.getTextInactiveTextColor();
         attributes.setForegroundColor(color);
         attributes.setEffectColor(color);
       }
-      return new Result(highlightStartOffset, highlightEndOffset, info, attributes);
+      return new Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
     }
     catch(NumberFormatException e){
       return null;
     }
   }
+
 }

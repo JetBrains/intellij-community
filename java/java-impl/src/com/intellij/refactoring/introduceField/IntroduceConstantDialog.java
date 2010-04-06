@@ -92,7 +92,7 @@ class IntroduceConstantDialog extends DialogWrapper {
   private JLabel myTargetClassNameLabel;
   private JCheckBox myCbNonNls;
   private JPanel myVisibilityPanel;
-  private VisibilityPanel myVPanel;
+  private final VisibilityPanel myVPanel;
   private final JCheckBox myIntroduceEnumConstantCb = new JCheckBox(RefactoringBundle.message("introduce.constant.enum.cb"), true);
 
   IntroduceConstantDialog(Project project,
@@ -142,7 +142,6 @@ class IntroduceConstantDialog extends DialogWrapper {
     return myIntroduceEnumConstantCb.isEnabled() && myIntroduceEnumConstantCb.isSelected();
   }
 
-  @Modifier
   public String getFieldVisibility() {
     return myVPanel.getVisibility();
   }

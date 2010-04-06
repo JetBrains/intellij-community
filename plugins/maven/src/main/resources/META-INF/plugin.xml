@@ -37,6 +37,8 @@
 
     <problemFileHighlightFilter implementation="org.jetbrains.idea.maven.utils.MavenProblemFileHighlighter"/>
 
+    <attachSourcesProvider implementation="org.jetbrains.idea.maven.utils.MavenAttachSourcesProvider"/>
+
     <xml.elementDescriptorProvider implementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorProvider"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription"/>
     <dom.fileDescription implementation="org.jetbrains.idea.maven.dom.MavenDomProfilesModelDescription"/>
@@ -69,6 +71,9 @@
 
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
+
+    <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"
+                    serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
 
     <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"
                     serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
@@ -162,13 +167,33 @@
             icon="/images/updateFolders.png">
     </action>
 
-    <action id="Maven.DownloadArtifacts" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsAction"
-            text="Download Sources And Javadoc For All Projects" description="Download sources and javadoc for all dependencies"
+    <action id="Maven.DownloadAllSources" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAction"
+            text="Download Sources" description="Download sources for all dependencies"
             icon="/images/download.png">
     </action>
 
-    <action id="Maven.DownloadArtifactsForProject" class="org.jetbrains.idea.maven.project.actions.DownloadArtifactsForProjectAction"
-            text="Download Sources And Javadoc" description="Download sources and javadoc for all dependencies for selected projects"
+    <action id="Maven.DownloadAllDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllDocsAction"
+            text="Download Documentation" description="Download documentation for all dependencies"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadAllSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadAllSourcesAndDocsAction"
+            text="Download Sources And Documentation" description="Download sources and documentation for all dependencies"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
+            text="Download Sources And Documentation" description="Download sources and documentation for all dependencies for selected projects"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadSelectedSources" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAction"
+            text="Download Sources" description="Download sources for all dependencies for selected projects"
+            icon="/images/download.png">
+    </action>
+
+    <action id="Maven.DownloadSelectedDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedDocsAction"
+            text="Download Documentation" description="Download documentation for all dependencies for selected projects"
             icon="/images/download.png">
     </action>
 
@@ -193,7 +218,6 @@
             text="Remove Projects"
             description="Remove selected Maven projects from the project tree"
             icon="/general/remove.png">
-      <keyboard-shortcut first-keystroke="DELETE" keymap="$default"/>
     </action>
 
     <action id="Maven.OpenSettingsXml"
@@ -230,12 +254,6 @@
             icon="/images/mavenSettings.png">
     </action>
 
-    <action id="Maven.ShowTemplateSettings"
-            class="org.jetbrains.idea.maven.project.actions.EditTemplateSettingsAction" text="Template Maven Settings"
-            description="Edit Maven integration settings for the template project"
-            icon="/general/applicationSettings.png">
-    </action>
-
     <action id="Maven.ToggleOffline"
             class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction" text="Toggle Offline Mode"
             description="Toggle offline mode for Maven builds"
@@ -250,24 +268,6 @@
 
     <action id="Maven.Help"
             class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
-
-    <group id="Maven.NavigatorSettingsGroup">
-      <action id="Maven.GroupProjects"
-              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
-              text="Group Projects"
-              description="Group projects according to Maven structure"
-              icon="/nodes/folder.png"/>
-      <action id="Maven.ShowIgnored"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
-              text="Show Ignored Projects"
-              description="Show ignored projects"
-              icon="/actions/showHiddens.png"/>
-      <action id="Maven.ShowBasicPhasesOnly"
-              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
-              text="Show Basic Phases Only"
-              description="Show basic phases only"
-              icon="/images/filterPhases.png"/>
-    </group>
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
@@ -293,10 +293,17 @@
       </action>
     </group>
 
-    <group id="Maven.NavigatorToolbar" description="Maven Projects Navigator Toolbar">
+    <group id="Maven.DownloadAllGroup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
+           icon="/images/download.png">
+      <reference id="Maven.DownloadAllSources"/>
+      <reference id="Maven.DownloadAllDocs"/>
+      <reference id="Maven.DownloadAllSourcesAndDocs"/>
+    </group>
+
+    <group id="Maven.NavigatorActionsToolbar">
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
-      <reference id="Maven.DownloadArtifacts"/>
+      <reference id="Maven.DownloadAllGroup"/>
       <separator/>
       <reference id="Maven.AddManagedFiles"/>
       <separator/>
@@ -305,23 +312,44 @@
       <reference id="Maven.ToggleSkipTests"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
-      <reference id="Maven.ShowTemplateSettings"/>
-      <separator/>
-      <reference id="Maven.NavigatorSettingsGroup"/>
-      <separator/>
       <reference id="Maven.Help"/>
+      <action id="Maven.GroupProjects"
+              class="org.jetbrains.idea.maven.navigator.actions.GroupProjectsAction"
+              text="Group Modules"
+              description="Group projects according to Maven structure"
+              secondary="true"
+              icon="/nodes/folder.png"/>
+      <action id="Maven.ShowIgnored"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowIgnoredProjectsAction"
+              text="Show Ignored Projects"
+              description="Show ignored projects"
+              secondary="true"
+              icon="/actions/showHiddens.png"/>
+      <action id="Maven.ShowBasicPhasesOnly"
+              class="org.jetbrains.idea.maven.navigator.actions.ShowBasicPhasesOnlyAction"
+              text="Show Basic Phases Only"
+              description="Show basic phases only"
+              secondary="true"
+              icon="/images/filterPhases.png"/>
+    </group>
+
+    <group id="Maven.DependencyMenu">
+      <reference id="Maven.DownloadSelectedSources"/>
+      <reference id="Maven.DownloadSelectedDocs"/>
+      <reference id="Maven.DownloadSelectedSourcesAndDocs"/>
     </group>
 
     <group id="Maven.BaseProjectMenu">
       <reference id="Maven.ReimportProject"/>
       <reference id="Maven.UpdateFoldersForProject"/>
-      <reference id="Maven.DownloadArtifactsForProject"/>
       <separator/>
       <reference id="Maven.IgnoreProjects"/>
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="Maven.OpenSettingsXml"/>
       <reference id="Maven.OpenProfilesXml"/>
+      <separator/>
+      <reference ref="Maven.DependencyMenu"/>
       <separator/>
     </group>
 
@@ -352,7 +380,7 @@
       <add-to-group group-id="GenerateGroup" anchor="first"/>
 
       <action id="GenerateDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
-      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateOverridingDependencyAction"/>
+      <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateAddManagedDependencyAction"/>
       <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
     </group>
   </actions>

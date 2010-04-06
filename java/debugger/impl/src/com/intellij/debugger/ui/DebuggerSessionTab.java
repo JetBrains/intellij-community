@@ -99,7 +99,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   public static final String BREAKPOINT_CONDITION = "breakpoint";
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
-  private Icon myIcon;
+  private final Icon myIcon;
 
   public DebuggerSessionTab(final Project project, final String sessionName, @Nullable final Icon icon) {
     super(project);
@@ -167,7 +167,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     watches.setAlertIcon(breakpointAlert);
     final DefaultActionGroup watchesGroup = new DefaultActionGroup();
     addAction(watchesGroup, DebuggerActions.NEW_WATCH);
-    addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
+    addAction(watchesGroup, XDebuggerActions.ADD_TO_WATCH);
     addAction(watchesGroup, DebuggerActions.REMOVE_WATCH);
     watches.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myWatchPanel.getTree());
     myUi.addContent(watches, 0, PlaceInGrid.right, false);
@@ -527,23 +527,20 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     final Content content = myUi.createContent(id, panel, id, icon, null);
     content.setCloseable(true);
     content.setDescription("Thread Dump");
-    myUi.addListener(new ContentManagerAdapter() {
-      public void contentRemoved(ContentManagerEvent event) {
-        if (event.getContent() == content) {
-          myThreadDumpsCount -= 1;
-          if (myThreadDumpsCount == 0) {
-            myCurrentThreadDumpId = 1;
-          }
-          myUi.removeListener(this);
-        }
-      }
-    }, content);
     myUi.addContent(content);
     myThreadDumpsCount += 1;
     myCurrentThreadDumpId += 1;
     Disposer.register(this, new Disposable() {
       public void dispose() {
         myUi.removeContent(content, true);
+      }
+    });
+    Disposer.register(content, new Disposable() {
+      public void dispose() {
+        myThreadDumpsCount -= 1;
+        if (myThreadDumpsCount == 0) {
+          myCurrentThreadDumpId = 1;
+        }
       }
     });
     myUi.selectAndFocus(content, true, false);

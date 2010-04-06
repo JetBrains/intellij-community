@@ -32,10 +32,12 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
@@ -60,12 +62,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
+public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageImpl");
 
   private final PsiManagerEx myManager;
@@ -99,7 +98,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   @NotNull
   public PsiDirectory[] getDirectories() {
     final Collection<PsiDirectory> collection = getAllDirectories();
-    return collection.toArray(new PsiDirectory[collection.size()]);
+    return ContainerUtil.toArray(collection, new PsiDirectory[collection.size()]);
   }
 
   private Collection<PsiDirectory> getAllDirectories() {
@@ -508,7 +507,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       }
       else {
         PsiClass[] classes = getClasses(scope);
-        if (!processClasses(processor, state, place, classes)) return false;
+        if (!processClasses(processor, state, classes)) return false;
         if (migration != null) {
           for (PsiClass psiClass : migration.getMigrationClasses(getQualifiedName())) {
             if (!processor.execute(psiClass, state)) {
@@ -553,17 +552,12 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   private boolean processClassesByName(PsiScopeProcessor processor, ResolveState state, PsiElement place, GlobalSearchScope scope, String className) {
     final PsiClass[] classes = findClassesByName(className, scope);
-    return !processClasses(processor, state, place, classes);
+    return !processClasses(processor, state, classes);
   }
 
-  private boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiElement place, PsiClass[] classes) {
-    boolean placePhysical = place.isPhysical();
-
-    final PsiResolveHelper helper = getFacade().getResolveHelper();
+  private static boolean processClasses(PsiScopeProcessor processor, ResolveState state, PsiClass[] classes) {
     for (PsiClass aClass : classes) {
-      if (!placePhysical || helper.isAccessible(aClass, place, null)) {
-        if (!processor.execute(aClass, state)) return false;
-      }
+      if (!processor.execute(aClass, state)) return false;
     }
     return true;
   }
@@ -576,17 +570,22 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return false;
   }
 
-  public void navigate(boolean requestFocus) {
-    final ProjectView projectView = ProjectView.getInstance(getProject());
-    projectView.changeView(PackageViewPane.ID);
-    final PsiDirectory[] directories = getDirectories();
-    final VirtualFile firstDir = directories[0].getVirtualFile();
-    final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, getProject());
+  public void navigate(final boolean requestFocus) {
+    ToolWindow window = ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    window.activate(null);
+    window.getActivation().doWhenDone(new Runnable() {
+      public void run() {
+        final ProjectView projectView = ProjectView.getInstance(getProject());
+        projectView.changeView(PackageViewPane.ID);
+        final PsiDirectory[] directories = getDirectories();
+        final VirtualFile firstDir = directories[0].getVirtualFile();
+        final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, getProject());
 
-    final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
-    final PackageElement packageElement = new PackageElement(module, this, isLibraryRoot);
-    projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
-    ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
+        final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
+        final PackageElement packageElement = new PackageElement(module, PsiPackageImpl.this, isLibraryRoot);
+        projectView.getProjectViewPaneById(PackageViewPane.ID).select(packageElement, firstDir, requestFocus);
+      }
+    });
   }
 
   public boolean isPhysical() {
@@ -636,5 +635,10 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
 
   public PsiQualifiedNamedElement getContainer() {
     return getParentPackage();
+  }
+
+  public void putInfo(Map<String, String> info) {
+    info.put("packageName", getName());
+    info.put("packageQualifiedName", getQualifiedName());
   }
 }

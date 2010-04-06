@@ -115,6 +115,9 @@ public class JavaSdkImpl extends JavaSdk {
     if (SystemInfo.isMac) {
       return "/System/Library/Frameworks/JavaVM.framework/Versions/";
     }
+    if (SystemInfo.isLinux) {
+      return "/usr/lib/jvm/";
+    }
     return null;
   }
 
@@ -263,6 +266,21 @@ public class JavaSdkImpl extends JavaSdk {
     addDocs(jdkHomeFile, sdkModificator);
     sdkModificator.commitChanges();
     return jdk;
+  }
+
+  public static Sdk getMockJdkCE() {
+    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK");
+    if (mockJdkCEPath.exists()) {
+      return createMockJdk(mockJdkCEPath.getPath(), "java 1.5", getInstance());
+    }
+
+    mockJdkCEPath = new File(PathManager.getHomePath(), "community/java/mockJDK");
+    if (mockJdkCEPath.exists()) {
+      return createMockJdk(mockJdkCEPath.getPath(), "java 1.5", getInstance());
+    }
+
+    return getMockJdk("java 1.5");
+
   }
 
   public static Sdk getMockJdk(@NonNls String versionName) {

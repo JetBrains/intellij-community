@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -26,7 +27,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -454,13 +454,7 @@ public class Browser extends JPanel {
       if (element instanceof RefElement) {
         PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null && psiElement.isValid()) {
-          if (!psiElement.isWritable()) {
-            final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(myView.getProject())
-              .ensureFilesWritable(psiElement.getContainingFile().getVirtualFile());
-            if (operationStatus.hasReadonlyFiles()) {
-              return;
-            }
-          }
+          if (!CodeInsightUtilBase.preparePsiElementForWrite(psiElement)) return;
 
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {

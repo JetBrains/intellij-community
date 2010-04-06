@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class DelegatedPackagingElementPresentation extends PackagingElementPresentation {
-  private TreeNodePresentation myDelegate;
+  private final TreeNodePresentation myDelegate;
 
   public DelegatedPackagingElementPresentation(TreeNodePresentation delegate) {
     myDelegate = delegate;

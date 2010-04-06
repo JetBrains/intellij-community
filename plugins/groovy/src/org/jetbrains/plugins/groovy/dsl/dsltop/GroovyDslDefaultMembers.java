@@ -22,14 +22,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GdslMembersHolderConsumer;
 import org.jetbrains.plugins.groovy.dsl.holders.DelegatedMembersHolder;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 /**
  * @author ilyas
  */
+@SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
 public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**
@@ -89,23 +93,30 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
    * Returns enclosing method call of a given context's place
    */
   @Nullable
-  public GrMethodCallExpression enclosingCall(String name, GdslMembersHolderConsumer consumer) {
+  public GrCall enclosingCall(String name, GdslMembersHolderConsumer consumer) {
     final PsiElement place = consumer.getPlace();
     if (place == null) return null;
-    GrMethodCallExpression call = PsiTreeUtil.getParentOfType(place, GrMethodCallExpression.class, true);
+    GrCall call = PsiTreeUtil.getParentOfType(place, GrCall.class, true);
     if (call == null) return null;
     while (call != null && !name.equals(getInvokedMethodName(call))) {
-      call = PsiTreeUtil.getParentOfType(call, GrMethodCallExpression.class, true);
+      call = PsiTreeUtil.getParentOfType(call, GrCall.class, true);
     }
     if (call == null) return null;
-    for (GrExpression arg : call.getClosureArguments()) {
-      if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
-        return call;
+
+    final GrArgumentList argumentList = call.getArgumentList();
+    if (argumentList != null) {
+      for (GrExpression arg : argumentList.getExpressionArguments()) {
+        if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
+          return call;
+        }
       }
     }
-    for (GrExpression arg : call.getExpressionArguments()) {
-      if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
-        return call;
+
+    if (call instanceof GrMethodCallExpression) {
+      for (GrExpression arg : ((GrMethodCallExpression)call).getClosureArguments()) {
+        if (arg instanceof GrClosableBlock && PsiTreeUtil.findCommonParent(place, arg) == arg) {
+          return call;
+        }
       }
     }
     return null;
@@ -134,11 +145,12 @@ public class GroovyDslDefaultMembers implements GdslMembersProvider {
     return PsiTreeUtil.getParentOfType(place, PsiClass.class, true);
   }
 
-  private static String getInvokedMethodName(GrMethodCallExpression call) {
-    final GrExpression expr = call.getInvokedExpression();
+  @Nullable
+  private static String getInvokedMethodName(GrCall call) {
+    final GrExpression expr = call instanceof GrApplicationStatement ? ((GrApplicationStatement)call).getFunExpression() :
+                              call instanceof GrMethodCallExpression ? ((GrMethodCallExpression)call).getInvokedExpression() : null;
     if (expr instanceof GrReferenceExpression) {
-      GrReferenceExpression ref = (GrReferenceExpression)expr;
-      return ref.getName();
+      return ((GrReferenceExpression)expr).getName();
     }
     return null;
   }

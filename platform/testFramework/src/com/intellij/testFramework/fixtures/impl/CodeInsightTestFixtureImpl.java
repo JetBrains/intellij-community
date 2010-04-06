@@ -254,11 +254,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     for (InspectionToolProvider provider: providers) {
       for (Class clazz: provider.getInspectionClasses()) {
         try {
-          LocalInspectionTool inspection = (LocalInspectionTool)clazz.getConstructor().newInstance();
-          tools.add(inspection);
+          Object o = clazz.getConstructor().newInstance();
+          if (o instanceof LocalInspectionTool) {
+            LocalInspectionTool inspection = (LocalInspectionTool)o;
+            tools.add(inspection);
+          }
         }
         catch (Exception e) {
-          throw new RuntimeException("Cannot instantiate " + clazz);
+          throw new RuntimeException("Cannot instantiate " + clazz, e);
         }
       }
     }
@@ -393,11 +396,27 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<IntentionAction> getAvailableIntentions(final String... filePaths) throws Exception {
 
-    final Project project = myProjectFixture.getProject();
-    return new WriteCommandAction<List<IntentionAction>>(project) {
+    return new WriteCommandAction<List<IntentionAction>>(myProjectFixture.getProject()) {
       protected void run(final Result<List<IntentionAction>> result) throws Exception {
         configureByFilesInner(filePaths);
         result.setResult(getAvailableIntentions());
+      }
+    }.execute().getResultObject();
+  }
+
+  @NotNull
+  public List<IntentionAction> getAllQuickFixes(@NonNls final String... filePaths) {
+    return new WriteCommandAction<List<IntentionAction>>(myProjectFixture.getProject()) {
+      protected void run(final Result<List<IntentionAction>> result) throws Exception {
+        configureByFilesInner(filePaths);
+        List<HighlightInfo> infos = doHighlighting();
+        ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
+        for (HighlightInfo info : infos) {
+          for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+            actions.add(pair.getFirst().getAction());
+          }
+        }
+        result.setResult(actions);
       }
     }.execute().getResultObject();
   }
@@ -509,10 +528,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public void renameElement(final PsiElement element, final String newName) throws Exception {
+    final boolean searchInComments = false;
+    final boolean searchTextOccurrences = false;
+    renameElement(element, newName, searchInComments, searchTextOccurrences);
+  }
+
+  public void renameElement(final PsiElement element,
+                             final String newName,
+                             final boolean searchInComments,
+                             final boolean searchTextOccurrences) throws Exception {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Exception {
         final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myEditor);
-        new RenameProcessor(myProjectFixture.getProject(), substitution, newName, false, false).run();
+        new RenameProcessor(myProjectFixture.getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
      }
     }.execute().throwException();
   }
@@ -555,7 +583,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
-  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) throws Exception {
+  public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
     final PsiElement targetElement = TargetElementUtilBase
@@ -739,11 +767,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  public void checkResult(final String text) throws IOException {
+  public void checkResult(final String text) {
     checkResult(text, false);
   }
 
-  public void checkResult(String text, boolean stripTrailingSpaces) throws IOException {
+  public void checkResult(String text, boolean stripTrailingSpaces) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
     checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text, getProject()), myFile.getText());
@@ -886,7 +914,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return configureByFileInner(filePaths[0]);
   }
 
-  public void configureByFile(final String file) throws IOException {
+  public void configureByFile(final String file) {
     assertInitialized();
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Exception {
@@ -895,7 +923,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute();
   }
 
-  public void configureByFiles(@NonNls final String... files) throws Exception {
+  public void configureByFiles(@NonNls final String... files) {
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Exception {
         configureByFilesInner(files);

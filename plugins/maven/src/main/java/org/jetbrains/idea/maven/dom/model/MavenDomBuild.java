@@ -19,8 +19,11 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.openapi.paths.PathReference;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
+import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,7 +46,8 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  GenericDomValue<String> getSourceDirectory();
+  @Convert(value = PathReferenceConverter.class, soft = false)
+  GenericDomValue<PathReference> getSourceDirectory();
 
   /**
    * Returns the value of the scriptSourceDirectory child.
@@ -56,7 +60,8 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  GenericDomValue<String> getScriptSourceDirectory();
+  @Convert(value = PathReferenceConverter.class, soft = false)
+  GenericDomValue<PathReference> getScriptSourceDirectory();
 
   /**
    * Returns the value of the testSourceDirectory child.
@@ -69,7 +74,8 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  GenericDomValue<String> getTestSourceDirectory();
+  @Convert(value = PathReferenceConverter.class, soft = false)
+  GenericDomValue<PathReference> getTestSourceDirectory();
 
   /**
    * Returns the value of the outputDirectory child.
@@ -82,7 +88,8 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  GenericDomValue<String> getOutputDirectory();
+  @Convert(value = PathReferenceConverter.class, soft = false)
+  GenericDomValue<PathReference> getOutputDirectory();
 
   /**
    * Returns the value of the testOutputDirectory child.
@@ -95,7 +102,8 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  GenericDomValue<String> getTestOutputDirectory();
+  @Convert(value = PathReferenceConverter.class, soft = false)
+  GenericDomValue<PathReference> getTestOutputDirectory();
 
   /**
    * Returns the value of the extensions child.

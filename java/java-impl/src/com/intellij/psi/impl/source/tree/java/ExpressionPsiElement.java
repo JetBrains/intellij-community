@@ -25,6 +25,13 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpressionPsiElement extends CompositePsiElement {
+  private final int myHC = ourHC++;
+
+  @Override
+  public final int hashCode() {
+    return myHC;
+  }
+
   public ExpressionPsiElement(final IElementType type) {
     super(type);
   }

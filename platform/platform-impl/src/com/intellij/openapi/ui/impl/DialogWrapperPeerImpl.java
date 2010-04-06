@@ -32,7 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -77,8 +77,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   private final java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
   private Project myProject;
 
-  private ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
-  private ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
+  private final ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
+  private final ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -458,7 +458,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
 
-  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider, TestableUi {
+  private static class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, FocusTrackback.Provider, Queryable {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     /**
      * Initial size of the dialog. When the dialog is being closed and
@@ -940,8 +940,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private class MyFocusCommand extends FocusCommand implements KeyEventProcessor {
 
       private Context myContextOnFinish;
-      private ArrayList<KeyEvent> myEvents = new ArrayList<KeyEvent>();
-      private DialogWrapper myWrapper;
+      private final ArrayList<KeyEvent> myEvents = new ArrayList<KeyEvent>();
+      private final DialogWrapper myWrapper;
 
       private MyFocusCommand(DialogWrapper wrapper) {
         myWrapper = getDialogWrapper();

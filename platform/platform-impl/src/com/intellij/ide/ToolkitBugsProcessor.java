@@ -65,7 +65,7 @@ public class ToolkitBugsProcessor {
 
   abstract static class Handler {
 
-    private String myDetails;
+    private final String myDetails;
 
     protected Handler() {
       myDetails = StringUtil.getShortName(getClass().getName());
@@ -124,6 +124,43 @@ public class ToolkitBugsProcessor {
       if (e instanceof ClassCastException && stack.length > 1) {
         return stack[0].getClassName().equals("javax.swing.plaf.synth.SynthButtonUI")
           && stack[0].getMethodName().equals("updateStyle");
+      }
+      return false;
+    }
+  }
+
+  static class Sun_6322854 extends Handler {
+    Sun_6322854() {
+      super("NPE - Failed to retrieve atom name");
+    }
+
+    @Override
+    boolean process(Throwable e, StackTraceElement[] stack) {
+      if (e instanceof NullPointerException && stack.length > 2) {
+        return (e.getMessage() != null && e.getMessage().startsWith("Failed to retrieve atom name"))
+          && stack[1].getClassName().equals("sun.awt.X11.XAtom");
+
+      }
+      return false;
+    }
+  }
+
+  static class Tricky_JEditorPane_registerEditorKitForContentType_NPE extends Handler {
+    Tricky_JEditorPane_registerEditorKitForContentType_NPE() {
+      super("http://ea.jetbrains.com/browser/ea_problems/13587 - JEditorPane_registerEditorKitForContentType_NPE");
+    }
+
+    @Override
+    boolean process(Throwable e, StackTraceElement[] stack) {
+      if (e instanceof NullPointerException && stack.length > 3) {
+        //bombed for possible future fix
+        if (SystemInfo.isJavaVersionAtLeast("1.7")) return false;
+        
+        return stack[0].getClassName().equals("java.util.Hashtable")
+          && stack[0].getMethodName().equals("put")
+          && stack[3].getClassName().equals("javax.swing.JEditorPane")
+          && stack[3].getMethodName().equals("loadDefaultKitsIfNecessary");
+
       }
       return false;
     }

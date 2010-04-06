@@ -38,16 +38,16 @@ import java.util.*;
  */
 public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationContext {
   @NonNls public static final String ARTIFACTS_TEMP_DIR_PROPERTY = "artifacts.temp.dir";
-  private Map<Artifact, String> myArtifact2Target = new THashMap<Artifact, String>();
-  private List<Generator> myBeforeBuildGenerators = new ArrayList<Generator>();
-  private List<Generator> myAfterBuildGenerators = new ArrayList<Generator>();
-  private Set<String> myTempFileNames = new THashSet<String>();
-  private Set<String> myCreatedTempSubdirs = new THashSet<String>();
-  private Set<String> myProperties = new LinkedHashSet<String>();
+  private final Map<Artifact, String> myArtifact2Target = new THashMap<Artifact, String>();
+  private final List<Generator> myBeforeBuildGenerators = new ArrayList<Generator>();
+  private final List<Generator> myAfterBuildGenerators = new ArrayList<Generator>();
+  private final Set<String> myTempFileNames = new THashSet<String>();
+  private final Set<String> myCreatedTempSubdirs = new THashSet<String>();
+  private final Set<String> myProperties = new LinkedHashSet<String>();
   private final Project myProject;
-  private GenerationOptions myGenerationOptions;
-  private List<Generator> myBeforeCurrentArtifact = new ArrayList<Generator>();
-  private Set<Artifact> myArtifactsToClean = new THashSet<Artifact>();
+  private final GenerationOptions myGenerationOptions;
+  private final List<Generator> myBeforeCurrentArtifact = new ArrayList<Generator>();
+  private final Set<Artifact> myArtifactsToClean = new THashSet<Artifact>();
 
   public ArtifactAntGenerationContextImpl(Project project, GenerationOptions generationOptions, List<Artifact> allArtifacts) {
     myProject = project;

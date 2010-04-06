@@ -57,11 +57,11 @@ import java.util.List;
 
 public class ChooseLibrariesDialog extends DialogWrapper{
 
-  private SimpleTree myTree = new SimpleTree();
+  private final SimpleTree myTree = new SimpleTree();
   private AbstractTreeBuilder myBuilder;
 
   private List<Library> myResult;
-  private Map<Object, Object> myLibraryMap = new THashMap<Object, Object>();
+  private final Map<Object, Object> myLibraryMap = new THashMap<Object, Object>();
 
   protected ChooseLibrariesDialog(final Project project, final String title) {
     super(project, false);

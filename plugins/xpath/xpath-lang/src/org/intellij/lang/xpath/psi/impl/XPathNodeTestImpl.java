@@ -110,6 +110,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
             super(element, nameNode);
         }
 
+        @NotNull
         public Object[] getVariants() {
             // handled in XPathCompletionData
             return EMPTY_ARRAY;

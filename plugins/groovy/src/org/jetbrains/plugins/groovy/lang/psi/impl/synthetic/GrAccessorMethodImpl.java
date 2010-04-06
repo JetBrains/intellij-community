@@ -17,12 +17,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -31,11 +34,11 @@ import java.util.Set;
  */
 public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccessorMethod {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrAccessorMethodImpl");
-  private final GrField myProperty;
+  @NotNull private final GrField myProperty;
 
   private final boolean myIsSetter;
 
-  public GrAccessorMethodImpl(GrField property, boolean isSetter, String name) {
+  public GrAccessorMethodImpl(@NotNull GrField property, boolean isSetter, String name) {
     super(property.getManager(), name);
     myProperty = property;
     myIsSetter = isSetter;
@@ -109,6 +112,7 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
     return myProperty.getContainingFile();
   }
 
+  @NotNull
   @Override
   public PsiElement getNavigationElement() {
     return myProperty;
@@ -122,6 +126,7 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
     return myProperty.isValid();
   }
 
+  @NotNull
   public GrField getProperty() {
     return myProperty;
   }
@@ -129,5 +134,10 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   @Override
   public PsiElement getContext() {
     return myProperty;
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return GroovyIcons.PROPERTY;
   }
 }

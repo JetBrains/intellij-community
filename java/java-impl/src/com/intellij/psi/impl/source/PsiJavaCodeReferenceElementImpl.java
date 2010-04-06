@@ -25,6 +25,7 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.parsing.Parsing;
@@ -57,6 +58,13 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public static final int CLASS_FQ_NAME_KIND = 4;
   public static final int CLASS_FQ_OR_PACKAGE_NAME_KIND = 5;
   public static final int CLASS_IN_QUALIFIED_NEW_KIND = 6;
+
+  private final int myHC = ourHC++;
+
+  @Override
+  public final int hashCode() {
+    return myHC;
+  }
 
   public PsiJavaCodeReferenceElementImpl() {
     super(JavaElementType.JAVA_CODE_REFERENCE);
@@ -93,7 +101,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       if (isQualified()) {
         return CLASS_OR_PACKAGE_NAME_KIND;
       }
-
       return CLASS_NAME_KIND;
     }
     if (i == JavaElementType.NEW_EXPRESSION) {
@@ -168,7 +175,10 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
-      message += " Parent: '" + parent+"'; ";
+      message += " Parent: '" + parent+"'; \n";
+    }
+    if (parent != null) {
+      message += DebugUtil.treeToString(parent, false);
     }
     LOG.error(message);
     return CLASS_NAME_KIND;
@@ -545,7 +555,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
     final PsiManager manager = aClass.getManager();
-    String text = qName + getParameterList().getText();
+    final PsiReferenceParameterList parameterList = getParameterList();
+    String text = (parameterList != null ? qName + parameterList.getText() : qName);
     ASTNode ref = Parsing.parseJavaCodeReferenceText(manager, text, SharedImplUtil.findCharTableByTree(this));
     LOG.assertTrue(ref != null, "Failed to parse reference from text '" + text + "'");
     getTreeParent().replaceChildInternal(this, (TreeElement)ref);
@@ -562,6 +573,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     switch (getKind()) {
       case CLASS_OR_PACKAGE_NAME_KIND:
         if (resolve() instanceof PsiPackage) return true;
+        //noinspection fallthrough
       case CLASS_NAME_KIND:
         break;
 
@@ -693,6 +705,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     myCachedTextSkipWhiteSpaceAndComments = null;
   }
 
+  @NotNull
   public Object[] getVariants() {
     final ElementFilter filter;
     switch (getKind()) {

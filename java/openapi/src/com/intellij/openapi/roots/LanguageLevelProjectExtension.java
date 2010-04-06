@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -28,9 +29,10 @@ public abstract class LanguageLevelProjectExtension {
     return ServiceManager.getService(project, LanguageLevelProjectExtension.class);
   }
 
+  @NotNull
   public abstract LanguageLevel getLanguageLevel();
 
-  public abstract void setLanguageLevel(LanguageLevel languageLevel);
+  public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
-  public abstract void reloadProjectOnLanguageLevelChange(LanguageLevel languageLevel, boolean forceReload);
+  public abstract void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload);
 }

@@ -80,12 +80,12 @@ public class SvnCopiesRefreshManager {
           semaphore.up();
         }
       };
+      semaphore.down();
       if (isOnlyInit) {
         myRequestMerger.ensureInitialization(waiter);
       } else {
         myRequestMerger.waitRefresh(waiter);
       }
-      semaphore.down();
       while (true) {
         if (semaphore.waitFor(ourQueryInterval)) break;
         if (pi != null) {

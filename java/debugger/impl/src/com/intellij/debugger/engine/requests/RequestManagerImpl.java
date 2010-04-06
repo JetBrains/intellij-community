@@ -85,12 +85,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myFilterThread = filterThread;
   }
 
-  public Set findRequests(Requestor requestor) {
+  public Set<EventRequest> findRequests(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (!myRequestorToBelongedRequests.containsKey(requestor)) {
+    final Set<EventRequest> requestSet = myRequestorToBelongedRequests.get(requestor);
+    if (requestSet == null) {
       return Collections.emptySet();
     }
-    return Collections.unmodifiableSet(myRequestorToBelongedRequests.get(requestor));
+    return Collections.unmodifiableSet(requestSet);
   }
 
   public Requestor findRequestor(EventRequest request) {
@@ -355,6 +356,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void setInvalid(Requestor requestor, String message) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    deleteRequest(requestor);
+    myRequestorToBelongedRequests.remove(requestor); // clear any mapping to empty set if any
     myRequestWarnings.put(requestor, message);
   }
   
@@ -365,8 +368,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public boolean isVerified(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    //ClassPrepareRequest is added in any case
-    return findRequests(requestor).size() > 1;
+    for (EventRequest request : findRequests(requestor)) {
+      /*ClassPrepareRequest is added in any case, so do not count it*/
+      if (!(request instanceof ClassPrepareRequest)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {
@@ -452,5 +460,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         process.getRequestsManager().deleteRequest(breakpoint);
       }
     });
+  }
+
+  public void clearWarnings() {
+    myRequestWarnings.clear();
   }
 }

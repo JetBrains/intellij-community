@@ -64,6 +64,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final Map<String, NewVirtualFile> myRoots = new HashMap<String, NewVirtualFile>();
   private final Object INPUT_LOCK = new Object();
+  /**
+   * always  in range [0, PersistentFS.FILE_LENGTH_TO_CACHE_THRESHOLD]
+   */
+  public static final int MAX_INTELLISENSE_FILESIZE = maxIntellisenseFileSize();
+  @NonNls private static final String MAX_INTELLISENSE_SIZE_PROPERTY = "idea.max.intellisense.filesize";
 
   public PersistentFS(MessageBus bus) {
     myEventsBus = bus;
@@ -387,8 +392,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final NewVirtualFileSystem delegate = getDelegate(file);
       final byte[] content = delegate.contentsToByteArray(file);
 
-      synchronized (INPUT_LOCK) {
-        if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
+      if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
+        synchronized (INPUT_LOCK) {
           DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
           try {
             FileUtil.copy(new ByteArrayInputStream(content), sink);
@@ -918,6 +923,17 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
     else {
       setFlag(id, MUST_RELOAD_CONTENT, true);
+    }
+  }
+
+  private static int maxIntellisenseFileSize() {
+    final int maxLimitBytes = (int)FILE_LENGTH_TO_CACHE_THRESHOLD;
+    final String userLimitKb = System.getProperty(MAX_INTELLISENSE_SIZE_PROPERTY);
+    try {
+      return userLimitKb != null ? Math.min(Integer.parseInt(userLimitKb) * 1024, maxLimitBytes) : maxLimitBytes;
+    }
+    catch (NumberFormatException ignored) {
+      return maxLimitBytes;
     }
   }
 }

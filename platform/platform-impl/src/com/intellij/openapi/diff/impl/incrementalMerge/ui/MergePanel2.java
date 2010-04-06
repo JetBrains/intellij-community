@@ -76,7 +76,7 @@ public class MergePanel2 implements DiffViewer {
   private final DividersRepainter myDividersRepainter = new DividersRepainter();
   private StatusUpdater myStatusUpdater;
   private final DialogBuilder myBuilder;
-  private MyDataProvider myProvider;
+  private final MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, Disposable parent) {
     ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();

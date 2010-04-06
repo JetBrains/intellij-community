@@ -82,6 +82,8 @@ public class ShowUsagesAction extends AnAction {
   private static final int USAGES_PAGE_SIZE = 100;
   private static final Comparator<Object> USAGE_COMPARATOR = new Comparator<Object>() {
     public int compare(Object c1, Object c2) {
+      if (!(c1 instanceof UsageNode)) return 1;
+      if (!(c2 instanceof UsageNode)) return -1;
       Usage o1 = ((UsageNode)c1).getUsage();
       Usage o2 = ((UsageNode)c2).getUsage();
       if (o1 == NullUsage.INSTANCE) return 1;
@@ -109,6 +111,8 @@ public class ShowUsagesAction extends AnAction {
     }
   };
 
+  // used from plugin.xml
+  @SuppressWarnings({"UnusedDeclaration"})
   public ShowUsagesAction() {
     setInjectedContext(true);
     showSettingsDialogBefore = false;
@@ -180,6 +184,7 @@ public class ShowUsagesAction extends AnAction {
     usageViewSettings.GROUP_BY_MODULE = false;
     usageViewSettings.GROUP_BY_PACKAGE = false;
     usageViewSettings.GROUP_BY_USAGE_TYPE = false;
+    usageViewSettings.GROUP_BY_SCOPE = false;
 
     UsageViewManager manager = UsageViewManager.getInstance(handler.getProject());
     final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
@@ -190,6 +195,7 @@ public class ShowUsagesAction extends AnAction {
         usageViewSettings.GROUP_BY_MODULE = save.GROUP_BY_MODULE;
         usageViewSettings.GROUP_BY_PACKAGE = save.GROUP_BY_PACKAGE;
         usageViewSettings.GROUP_BY_USAGE_TYPE = save.GROUP_BY_USAGE_TYPE;
+        usageViewSettings.GROUP_BY_SCOPE = save.GROUP_BY_SCOPE;
       }
     });
 
@@ -222,7 +228,11 @@ public class ShowUsagesAction extends AnAction {
     final String title = presentation.getTabText();
 
     JBPopup popup = createUsagePopup(usages, visibleNodes, title, handler, editor, popupPosition, maxUsages, usageView);
-    if (popup != null) {
+    if (popup == null) {
+      Disposer.dispose(usageView);
+    }
+    else {
+      Disposer.register(popup, usageView);
       popup.show(popupPosition);
     }
   }
@@ -306,7 +316,6 @@ public class ShowUsagesAction extends AnAction {
       if (usages.isEmpty()) {
         String text = UsageViewBundle.message("no.usages.found.in", searchScopePresentableName(handler));
         showHint(text, editor, popupPosition, handler, maxUsages);
-        Disposer.dispose(usageView);
         return null;
       }
       else {
@@ -318,29 +327,30 @@ public class ShowUsagesAction extends AnAction {
       Usage usage = visibleNodes.iterator().next().getUsage();
       navigateAndHint(usage, UsageViewBundle.message("show.usages.only.usage", searchScopePresentableName(handler)), handler, popupPosition,
                       maxUsages);
-      Disposer.dispose(usageView);
       return null;
     }
     if (visibleNodes.size() == 1 && usages.size() >= 1) {
       // usage view can filter usages down to one
       Usage usage = visibleNodes.iterator().next().getUsage();
-      navigateAndHint(usage, UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(handler)),
-                      handler, popupPosition, maxUsages);
-      Disposer.dispose(usageView);
-      return null;
+      if (areAllUsagesInThisLine(usage, usages)) {
+        String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(handler));
+        navigateAndHint(usage, hint, handler, popupPosition, maxUsages);
+        return null;
+      }
     }
 
     if (hasMore) {
       usages.add(NullUsage.INSTANCE);
       visibleNodes.add(UsageViewImpl.NULL_NODE);
     }
-    addUsageNodes(usageView.getRoot(), usageView, new ArrayList<UsageNode>());
-
+    List<UsageNode> outNodes = new ArrayList<UsageNode>();
+    addUsageNodes(usageView.getRoot(), usageView, outNodes);
+    int filtered = filtered(usages, usageView);
 
     final JTable table = new MyTable();
     TableScrollingUtil.installActions(table);
     final Vector<Object> data = new Vector<Object>();
-    setModel(table, usages, visibleNodes, usageView, data);
+    setModel(table, visibleNodes, usageView, data, filtered);
 
     final Runnable navigateRunnable = new Runnable() {
       public void run() {
@@ -390,7 +400,7 @@ public class ShowUsagesAction extends AnAction {
         s = "<html><body><b>Some</b> " + title + " " + "<b>(Only " + (visibleNodes.size() - 1) + " usages shown)</b></body></html>";
       }
       else {
-        s = title + " (" + usages.size() + " usages found)";
+        s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + " found)";
       }
       builder.setTitle(s);
     }
@@ -408,8 +418,6 @@ public class ShowUsagesAction extends AnAction {
         });
       }
     };
-
-
 
     KeyboardShortcut shortcut = getSettingsShortcut();
     if (shortcut != null) {
@@ -452,7 +460,6 @@ public class ShowUsagesAction extends AnAction {
     builder.setSettingButton(toolBar);
 
     popup[0] = builder.createPopup();
-    Disposer.register(popup[0], usageView);
     for (AnAction action : filters.getChildren(null)) {
       action.unregisterCustomShortcutSet(usageView.getComponent());
       action.registerCustomShortcutSet(action.getShortcutSet(), popup[0].getContent());
@@ -468,14 +475,46 @@ public class ShowUsagesAction extends AnAction {
     return popup[0];
   }
 
-  private static int setModel(JTable table, List<Usage> usages, Collection<UsageNode> visibleNodes, UsageViewImpl usageView,
-                                         final Vector<Object> data) {
-    if (visibleNodes.isEmpty()) {
-      data.add(UsageViewBundle.message("usages.were.filtered.out", usages.size()));
+  private static int filtered(List<Usage> usages, UsageViewImpl usageView) {
+    int count=0;
+    for (Usage usage : usages) {
+      if (!usageView.isVisible(usage)) count++;
     }
-    else {
-      data.addAll(visibleNodes);
+    return count;
+  }
+
+  private static int getUsageOffset(Usage usage) {
+    if (!(usage instanceof UsageInfo2UsageAdapter)) return -1;
+    PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
+    if (element == null) return -1;
+    return element.getTextRange().getStartOffset();
+  }
+  private static boolean areAllUsagesInThisLine(Usage usage, List<Usage> usages) {
+    Editor editor = getEditorFor(usage);
+    if (editor == null) return false;
+    int offset = getUsageOffset(usage);
+    if (offset == -1) return false;
+    int lineNumber = editor.getDocument().getLineNumber(offset);
+    for (Usage other : usages) {
+      Editor otherEditor = getEditorFor(other);
+      if (otherEditor != editor) return false;
+      int otherOffset = getUsageOffset(other);
+      if (otherOffset == -1) return false;
+      int otherLine = otherEditor.getDocument().getLineNumber(otherOffset);
+      if (otherLine != lineNumber) return false;
     }
+    return true;
+  }
+
+  private static int setModel(JTable table,
+                              Collection<UsageNode> visibleNodes,
+                              UsageViewImpl usageView,
+                              final Vector<Object> data,
+                              int filtered) {
+    if (filtered != 0) {
+      data.add(UsageViewBundle.message("usages.were.filtered.out", filtered));
+    }
+    data.addAll(visibleNodes);
     Collections.sort(data, USAGE_COMPARATOR);
     AbstractTableModel model = new AbstractTableModel() {
       public int getRowCount() {
@@ -553,10 +592,11 @@ public class ShowUsagesAction extends AnAction {
 
         final List<UsageNode> nodes = new ArrayList<UsageNode>();
         addUsageNodes(usageView.getRoot(), usageView, nodes);
+        int filtered = filtered(usages, usageView);
 
         int old = table.getModel().getRowCount();
         Vector<Object> data = new Vector<Object>();
-        int width = setModel(table, usages, nodes, usageView, data);
+        int width = setModel(table, nodes, usageView, data, filtered);
 
 
         if (myWidth == -1) myWidth = width;
@@ -602,30 +642,35 @@ public class ShowUsagesAction extends AnAction {
                                final int maxUsages) {
     usage.navigate(true);
     if (hint == null) return;
-    FileEditorLocation location = usage.getLocation();
-    FileEditor newFileEditor = location == null ? null : location.getEditor();
-    final Editor newEditor = newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
-    if (newEditor != null) {
-      final Project project = handler.getProject();
-      //opening editor is performing in invokeLater
-      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
-        public void run() {
-          newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-            public void run() {
-              // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
-              IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
-                public void run() {
+    final Editor newEditor = getEditorFor(usage);
+    if (newEditor == null) return;
+    final Project project = handler.getProject();
+    //opening editor is performing in invokeLater
+    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+      public void run() {
+        newEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+          public void run() {
+            // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
+            IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
+              public void run() {
+                if (newEditor.getComponent().isShowing()) {
                   showHint(hint, newEditor, popupPosition, handler, maxUsages);
                 }
-              });
-            }
-          });
-        }
-      });
-    }
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
-  static class MyTable extends Table implements DataProvider {
+  private static Editor getEditorFor(Usage usage) {
+    FileEditorLocation location = usage.getLocation();
+    FileEditor newFileEditor = location == null ? null : location.getEditor();
+    return newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
+  }
+
+  private static class MyTable extends Table implements DataProvider {
     @Override
     public boolean getScrollableTracksViewportWidth() {
       return true;

@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,6 +57,9 @@ public class ObjectsConvertor {
       return o != null;
     }
   };
+
+  private ObjectsConvertor() {
+  }
 
   public static List<VirtualFile> fp2vf(final Collection<FilePath> in) {
     return convert(in, FILEPATH_TO_VIRTUAL);

@@ -34,6 +34,7 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -228,6 +229,14 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener, @NotNull final Disposable parentDisposable) {
     myAllBreakpointsDispatcher.addListener(listener, parentDisposable);
+  }
+
+  public void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage) {
+    final CustomizedBreakpointPresentation presentation = new CustomizedBreakpointPresentation();
+    presentation.setErrorMessage(errorMessage);
+    presentation.setIcon(icon);
+    ((XLineBreakpointImpl)breakpoint).setCustomizedPresentation(presentation);
+    myLineBreakpointManager.queueBreakpointUpdate(breakpoint);
   }
 
   public BreakpointManagerState getState() {

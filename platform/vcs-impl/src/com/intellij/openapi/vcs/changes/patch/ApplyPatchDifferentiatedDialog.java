@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchReader;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -67,7 +65,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final ZipperUpdater myLoadQueue;
-  private TextFieldWithBrowseButton myPatchFile;
+  private final TextFieldWithBrowseButton myPatchFile;
 
   private final List<FilePatchInProgress> myPatches;
   private final MyChangeTreeList myChangesTreeList;
@@ -76,12 +74,12 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private JComponent mySouthPanel;
   private final Project myProject;
 
-  private AtomicReference<FilePresentation> myRecentPathFileChange;
-  private ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;
-  private Runnable myReset;
-  private ChangeListChooserPanel myChangeListChooser;
-  private ChangesLegendCalculator myInfoCalculator;
-  private CommitLegendPanel myCommitLegendPanel;
+  private final AtomicReference<FilePresentation> myRecentPathFileChange;
+  private final ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;
+  private final Runnable myReset;
+  private final ChangeListChooserPanel myChangeListChooser;
+  private final ChangesLegendCalculator myInfoCalculator;
+  private final CommitLegendPanel myCommitLegendPanel;
   private final Consumer<ApplyPatchDifferentiatedDialog> myCallback;
 
   private boolean myContainBasedChanges;
@@ -212,7 +210,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
     PatchReader reader;
     try {
-      reader = new PatchReader(patchFile);
+      reader = PatchVirtualFileReader.create(patchFile);
     }
     catch (IOException e) {
       //todo
@@ -817,8 +815,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private class MyShowDiff extends AnAction {
+    private final MyChangeComparator myMyChangeComparator;
     private MyShowDiff() {
       super("Show Diff", "Show Diff", IconLoader.getIcon("/actions/diff.png"));
+      myMyChangeComparator = new MyChangeComparator();
     }
 
     public void update(AnActionEvent e) {
@@ -828,7 +828,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     public void actionPerformed(AnActionEvent e) {
       if (myPatches.isEmpty() || (! myContainBasedChanges)) return;
       final List<FilePatchInProgress.PatchChange> changes = getAllChanges();
-      Collections.sort(changes, MyChangeComparator.getInstance());
+      Collections.sort(changes, myMyChangeComparator);
       final List<FilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
 
       int selectedIdx = 0;
@@ -852,14 +852,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private static class MyChangeComparator implements Comparator<FilePatchInProgress.PatchChange> {
-    private static final MyChangeComparator ourInstance = new MyChangeComparator();
-
-    public static MyChangeComparator getInstance() {
-      return ourInstance;
-    }
-
+  private class MyChangeComparator implements Comparator<FilePatchInProgress.PatchChange> {
     public int compare(FilePatchInProgress.PatchChange o1, FilePatchInProgress.PatchChange o2) {
+      if (PropertiesComponent.getInstance(myProject).isTrueValue("ChangesBrowser.SHOW_FLATTEN")) {
+        return o1.getPatchInProgress().getIoCurrentBase().getName().compareTo(o2.getPatchInProgress().getIoCurrentBase().getName());
+      }
       return o1.getPatchInProgress().getIoCurrentBase().compareTo(o2.getPatchInProgress().getIoCurrentBase());
     }
   }

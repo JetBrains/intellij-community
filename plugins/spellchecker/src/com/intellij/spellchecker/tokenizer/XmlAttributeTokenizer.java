@@ -16,21 +16,17 @@
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.spellchecker.inspections.SplitterFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- *
- * @author shkate@jetbrains.com
- */
 public class XmlAttributeTokenizer  extends Tokenizer<XmlAttributeValue>{
 
 
   @Nullable
   @Override
   public Token[] tokenize(@NotNull XmlAttributeValue element) {
-    return new Token[]{new Token<XmlAttributeValue>(element, element.getText(),false)};
+    return new Token[]{new Token<XmlAttributeValue>(element, element.getText(),false, SplitterFactory.getInstance().getAttributeValueSplitter())};
   }
 
 

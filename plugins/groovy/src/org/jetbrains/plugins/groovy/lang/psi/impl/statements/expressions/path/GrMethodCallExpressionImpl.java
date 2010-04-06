@@ -46,6 +46,7 @@ import java.util.Arrays;
  */
 public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements GrMethodCallExpression {
   private static final Function<GrMethodCallExpressionImpl, PsiType> TYPES_CALCULATOR = new Function<GrMethodCallExpressionImpl, PsiType>() {
+    @Nullable
     public PsiType fun(GrMethodCallExpressionImpl callExpression) {
       GrExpression invoked = callExpression.getInvokedExpression();
       if (invoked instanceof GrReferenceExpression) {
@@ -57,7 +58,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
         for (GroovyResolveResult resolveResult : resolveResults) {
           PsiElement resolved = resolveResult.getElement();
           PsiType returnType = null;
-          if (resolved instanceof PsiMethod && !GroovyPsiManager.getInstance(resolved.getProject()).isTypeBeingInferred(resolved)) {
+          if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
             PsiMethod method = (PsiMethod) resolved;
             returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
             if (returnType == null) {
@@ -67,7 +68,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
             PsiType refType = refExpr.getType();
             final PsiType type = refType == null ? ((GrVariable) resolved).getTypeGroovy() : refType;
             if (type instanceof GrClosureType) {
-              returnType = ((GrClosureType) type).getClosureReturnType();
+              returnType = ((GrClosureType) type).getSignature().getReturnType();
             }
           }
           if (returnType == null) return null;
@@ -94,7 +95,8 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
 
   @Nullable
   private static PsiType getClosureCallOrCurryReturnType(GrMethodCallExpressionImpl callExpression,
-                                                         GrReferenceExpression refExpr, PsiMethod resolved) {
+                                                         GrReferenceExpression refExpr,
+                                                         PsiMethod resolved) {
     PsiClass clazz = resolved.getContainingClass();
     if (clazz != null && GrClosableBlock.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
       if ("call".equals(resolved.getName()) || "curry".equals(resolved.getName())) {
@@ -103,9 +105,10 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
           PsiType qType = qualifier.getType();
           if (qType instanceof GrClosureType) {
             if ("call".equals(resolved.getName())) {
-              return ((GrClosureType) qType).getClosureReturnType();
-            } else if ("curry".equals(resolved.getName())) {
-              return ((GrClosureType) qType).curry(callExpression.getExpressionArguments().length);
+              return ((GrClosureType)qType).getSignature().getReturnType();
+            }
+            else if ("curry".equals(resolved.getName())) {
+              return ((GrClosureType)qType).curry(callExpression.getExpressionArguments().length);
             }
           }
         }
@@ -130,6 +133,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
+  @Nullable
   public GrExpression getInvokedExpression() {
     return findChildByClass(GrExpression.class);
   }
@@ -151,7 +155,8 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
       int refIndex = allArgs.size() - 1;
 
       // New argument list
-      GrArgumentList newArgList = GroovyPsiElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(GrExpression.EMPTY_ARRAY));
+      GrArgumentList newArgList =
+        GroovyPsiElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(new GrExpression[allArgs.size()]));
       while (closure.getNode().getTreePrev() != null &&
           !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
         parentNode.removeChild(closure.getNode().getTreePrev());

@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -29,8 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,9 +42,7 @@ import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -536,7 +531,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class RootNode extends ProjectsGroupNode {
-    private ProfilesNode myProfilesNode;
+    private final ProfilesNode myProfilesNode;
 
     public RootNode() {
       super(null);
@@ -646,7 +641,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       myLifecycleNode = new LifecycleNode(this);
       myPluginsNode = new PluginsNode(this);
-      myDependenciesNode = new DependenciesNode(this);
+      myDependenciesNode = new DependenciesNode(this, mavenProject);
       myModulesNode = new ModulesNode(this);
 
       setUniformIcon(MavenIcons.MAVEN_PROJECT_ICON);
@@ -681,7 +676,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       setErrorLevel(myMavenProject.getProblems().isEmpty() ? ErrorLevel.NONE : ErrorLevel.ERROR);
       myLifecycleNode.updateGoalsList();
       myPluginsNode.updatePlugins(myMavenProject);
-      myDependenciesNode.updateDependencies(myMavenProject);
+      myDependenciesNode.updateDependencies();
 
       myTooltipCache = makeDescription();
 
@@ -1016,10 +1011,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public abstract class BaseDependenciesNode extends GroupNode {
+    protected final MavenProject myMavenProject;
     private List<DependencyNode> myChildren = new ArrayList<DependencyNode>();
 
-    protected BaseDependenciesNode(MavenSimpleNode parent) {
+    protected BaseDependenciesNode(MavenSimpleNode parent, MavenProject mavenProject) {
       super(parent);
+      myMavenProject = mavenProject;
+    }
+
+    public MavenProject getMavenProject() {
+      return myMavenProject;
     }
 
     @Override
@@ -1045,11 +1046,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       }
       return new DependencyNode(this, artifact, mavenProject);
     }
+
+    @Override
+    String getMenuId() {
+      return "Maven.DependencyMenu";
+    }
   }
 
   public class DependenciesNode extends BaseDependenciesNode {
-    public DependenciesNode(ProjectNode parent) {
-      super(parent);
+    public DependenciesNode(ProjectNode parent, MavenProject mavenProject) {
+      super(parent, mavenProject);
       setIcons(MavenIcons.CLOSED_DEPENDENCIES_ICON, MavenIcons.OPEN_DEPENDENCIES_ICON);
     }
 
@@ -1058,20 +1064,22 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return message("view.node.dependencies");
     }
 
-    public void updateDependencies(MavenProject mavenProject) {
-      updateChildren(mavenProject.getDependenciesNodes(), mavenProject);
+    public void updateDependencies() {
+      updateChildren(myMavenProject.getDependencyTree(), myMavenProject);
     }
   }
 
   public class DependencyNode extends BaseDependenciesNode {
     private final MavenArtifact myArtifact;
-    private final MavenProject myMavenProject;
 
     public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject) {
-      super(parent);
-      myMavenProject = mavenProject;
+      super(parent, mavenProject);
       myArtifact = artifactNode.getArtifact();
       setUniformIcon(MavenIcons.DEPENDENCY_ICON);
+    }
+
+    public MavenArtifact getArtifact() {
+      return myArtifact;
     }
 
     @Override

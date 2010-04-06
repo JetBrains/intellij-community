@@ -466,12 +466,6 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  void expandAll() {
-    for (int i = 0; i < getTree().getRowCount(); i++) {
-      getTree().expandRow(i);
-    }
-  }
-
   /**
    * Sets whether packages are shown or not.
    */

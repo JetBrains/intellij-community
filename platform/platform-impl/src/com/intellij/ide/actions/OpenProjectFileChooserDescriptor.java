@@ -16,9 +16,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,7 +58,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
 
   @Nullable
   public static Icon getImporterIcon(final VirtualFile virtualFile, final boolean open) {
-    final ProjectOpenProcessor provider = ProjectUtil.getImportProvider(virtualFile);
+    final ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if(provider!=null) {
       return provider.getIcon();
     }
@@ -66,12 +66,13 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   public boolean isFileVisible(final VirtualFile file, final boolean showHiddenFiles) {
+    if (!showHiddenFiles && FileElement.isFileHidden(file)) return false;
     return isProjectFile(file) || super.isFileVisible(file, showHiddenFiles) && file.isDirectory();
   }
 
   private static boolean isProjectFile(final VirtualFile file) {
     return (!file.isDirectory() && file.getName().toLowerCase().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) ||
-           (ProjectUtil.getImportProvider(file) != null);
+           (ProjectOpenProcessor.getImportProvider(file) != null);
   }
 
   private static boolean isProjectDirectory(final VirtualFile virtualFile) {

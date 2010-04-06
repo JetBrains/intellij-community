@@ -17,6 +17,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.util.Alarm;
@@ -103,19 +104,23 @@ public class CodeStyleMainPanel extends JPanel {
 
   public void onCurrentSchemeChanged() {
     myLayout.show(mySettingsPanel, WAIT_CARD);
-
-    myAlarm.cancelAllRequests();
-    final Runnable request = new Runnable() {
+    final Runnable replaceLayout = new Runnable() {
       public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            ensureCurrentPanel().onSomethingChanged();
-            myLayout.show(mySettingsPanel, myModel.getSelectedScheme().getName());
-          }
-        });
+        ensureCurrentPanel().onSomethingChanged();
+        myLayout.show(mySettingsPanel, myModel.getSelectedScheme().getName());
       }
     };
-    myAlarm.addRequest(request, 200);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      replaceLayout.run();
+    } else {
+      myAlarm.cancelAllRequests();
+      final Runnable request = new Runnable() {
+        public void run() {
+          SwingUtilities.invokeLater(replaceLayout);
+        }
+      };
+      myAlarm.addRequest(request, 200);
+    }
   }
 
   public NewCodeStyleSettingsPanel[] getPanels() {
@@ -174,7 +179,6 @@ public class CodeStyleMainPanel extends JPanel {
       panel.setModel(myModel);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
-      mySchemesPanel.setLanguageComboVisible(panel.isMultilanguage());
       mySchemesPanel.setCodeStyleSettingsPanel(panel);
     }
 

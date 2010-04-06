@@ -210,6 +210,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
                ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isInterface()) {
         if (type == JavaTokenType.PUBLIC_KEYWORD) return;
       }
+      else if (parentTreeElement.getElementType() == JavaElementType.ANNOTATION_METHOD &&
+               parentTreeElement.getTreeParent().getElementType() == JavaElementType.CLASS &&
+               ((PsiClass)SourceTreeToPsiMap.treeElementToPsi(parentTreeElement.getTreeParent())).isAnnotationType()) {
+        if (type == JavaTokenType.PUBLIC_KEYWORD || type == JavaTokenType.ABSTRACT_KEYWORD) return;
+      }
 
       if (type == JavaTokenType.PUBLIC_KEYWORD
           || type == JavaTokenType.PRIVATE_KEYWORD

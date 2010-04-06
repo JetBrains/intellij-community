@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class DirectoryAntCopyInstructionCreator implements AntCopyInstructionCreator {
-  private String myOutputDirectory;
+  private final String myOutputDirectory;
 
   public DirectoryAntCopyInstructionCreator(String outputDirectory) {
     myOutputDirectory = outputDirectory;

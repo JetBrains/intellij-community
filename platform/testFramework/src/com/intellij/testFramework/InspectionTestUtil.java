@@ -17,19 +17,19 @@ package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import junit.framework.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.CharArrayReader;
 import java.io.File;
@@ -141,7 +141,7 @@ expected:
     compareWithExpected(expectedDocument, doc, checkRange);
   }
 
-  public static void runTool(final InspectionTool tool, AnalysisScope scope, GlobalInspectionContextImpl globalContext, final InspectionManagerEx inspectionManager) {
+  public static void runTool(final InspectionTool tool, final AnalysisScope scope, GlobalInspectionContextImpl globalContext, final InspectionManagerEx inspectionManager) {
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
@@ -155,21 +155,12 @@ expected:
       ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
     }
 
-    tool.runInspection(scope, inspectionManager);
-    if (tool instanceof LocalInspectionToolWrapper) {
-      // local tools inspect injected stuff in LocalInspectionPass
-      scope.accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(PsiElement element) {
-          InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-            public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-              tool.runInspection(new AnalysisScope(injectedPsi), inspectionManager);
-            }
-          });
-          super.visitElement(element);
-        }
-      });
-    }
+    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+      public void run() {
+        tool.runInspection(scope, inspectionManager);
+      }
+    }, new EmptyProgressIndicator());
+
 
     tool.queryExternalUsagesRequests(inspectionManager);
   }

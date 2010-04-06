@@ -17,9 +17,13 @@
 package com.intellij.util.indexing;
 
 import com.intellij.AppTopics;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,6 +31,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -50,6 +55,7 @@ import com.intellij.psi.PsiLock;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
@@ -61,6 +67,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TIntHashSet;
@@ -73,6 +80,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -106,7 +115,7 @@ public class FileBasedIndex implements ApplicationComponent {
   public static final int OK = 1;
   public static final int REQUIRES_REBUILD = 2;
   public static final int REBUILD_IN_PROGRESS = 3;
-  private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
+  private static final Map<ID<?, ?>, AtomicInteger> ourRebuildStatus = new HashMap<ID<?,?>, AtomicInteger>();
 
   private final VirtualFileManagerEx myVfManager;
   private final FileDocumentManager myFileDocumentManager;
@@ -114,9 +123,11 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private static final int ALREADY_PROCESSED = 0x02;
-  private @Nullable String myConfigPath;
-  private @Nullable String mySystemPath;
+  private @Nullable final String myConfigPath;
+  private @Nullable final String mySystemPath;
   private final boolean myIsUnitTestMode;
+  private ScheduledFuture<?> myFlushingFuture;
+  private volatile int myLocalModCount;
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, true);
@@ -217,6 +228,16 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     });
 
+    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      public void fileContentReloaded(VirtualFile file, Document document) {
+        cleanupMemoryStorage();
+      }
+
+      public void unsavedDocumentsDropped() {
+        cleanupMemoryStorage();
+      }
+    });
+
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       public void writeActionStarted(Object action) {
         myUpToDateIndices.clear();
@@ -224,19 +245,19 @@ public class FileBasedIndex implements ApplicationComponent {
     });
 
     myChangedFilesCollector = new ChangedFilesCollector();
-  }
 
-  public void initComponent() {
+    /*
     final File workInProgressFile = getMarkerFile();
     if (workInProgressFile.exists()) {
       // previous IDEA session was closed incorrectly, so drop all indices
       FileUtil.delete(PathManager.getIndexRoot());
     }
+    */
 
     try {
       final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        myRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
+        ourRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
       }
 
       final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
@@ -249,7 +270,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
       // check if rebuild was requested for any index during registration
       for (ID<?, ?> indexId : myIndices.keySet()) {
-        if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
+        if (ourRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
           try {
             clearIndex(indexId);
           }
@@ -264,18 +285,28 @@ public class FileBasedIndex implements ApplicationComponent {
 
       registerIndexableSet(new AdditionalIndexableFileSet());
     }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
         public void run() {
           performShutdown();
         }
       });
-      FileUtil.createIfDoesntExist(workInProgressFile);
+      //FileUtil.createIfDoesntExist(workInProgressFile);
       saveRegisteredIndices(myIndices.keySet());
+      myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+        int lastModCount = 0;
+        public void run() {
+          if (lastModCount == myLocalModCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
+            flushAllIndices();
+          }
+          lastModCount = myLocalModCount;
+        }
+      }, 5000, 5000, TimeUnit.MILLISECONDS);
+
     }
+  }
+
+  public void initComponent() {
   }
 
   private static String calcConfigPath(final String path) {
@@ -289,13 +320,12 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private static FileBasedIndex ourInstance = CachedSingletonsRegistry.markCachedField(FileBasedIndex.class);
-  public static FileBasedIndex getInstance() {
-    if (ourInstance == null) {
-      ourInstance = ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
-    }
+  private static class FileBasedIndexHolder {
+    private static final FileBasedIndex ourInstance = ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
+  }
 
-    return ourInstance;
+  public static FileBasedIndex getInstance() {
+    return FileBasedIndexHolder.ourInstance;
   }
 
   /**
@@ -503,12 +533,17 @@ public class FileBasedIndex implements ApplicationComponent {
     performShutdown();
   }
 
-  private AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
+  private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
   private void performShutdown() {
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
+    if (myFlushingFuture != null) {
+      myFlushingFuture.cancel(false);
+      myFlushingFuture = null;
+    }
+
     myFileDocumentManager.saveAllDocuments();
     
     LOG.info("START INDEX SHUTDOWN");
@@ -525,7 +560,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
       myVfManager.removeVirtualFileListener(myChangedFilesCollector);
 
-      FileUtil.delete(getMarkerFile());
+      //FileUtil.delete(getMarkerFile());
     }
     catch (Throwable e) {
       LOG.info("Problems during index shutdown", e);
@@ -534,22 +569,20 @@ public class FileBasedIndex implements ApplicationComponent {
     LOG.info("END INDEX SHUTDOWN");
   }
 
-  public void flushCaches() {
+  private void flushAllIndices() {
     IndexingStamp.flushCache();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        for (ID<?, ?> indexId : myIndices.keySet()) {
-          //noinspection ConstantConditions
-          try {
-            getIndex(indexId).flush();
-          }
-          catch (StorageException e) {
-            LOG.info(e);
-            requestRebuild(indexId);
-          }
+    for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndices.keySet())) {
+      try {
+        final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+        if (index != null) {
+          index.flush();
         }
       }
-    });
+      catch (StorageException e) {
+        LOG.info(e);
+        requestRebuild(indexId);
+      }
+    }
   }
 
   /**
@@ -567,9 +600,9 @@ public class FileBasedIndex implements ApplicationComponent {
    * @param project it is guaranteeed to return data which is up-to-date withing the project
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @NotNull Project project) {
+  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
     try {
-      ensureUpToDate(indexId, project, GlobalSearchScope.allScope(project));
+      ensureUpToDate(indexId, project, project != null? GlobalSearchScope.allScope(project) : new EverythingGlobalScope());
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (index == null) return true;
       return index.processAllKeys(processor);
@@ -626,7 +659,7 @@ public class FileBasedIndex implements ApplicationComponent {
    * DO NOT CALL DIRECTLY IN CLIENT CODE
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
-  public <K> void ensureUpToDate(final ID<K, ?> indexId, @NotNull Project project, @Nullable GlobalSearchScope filter) {
+  public <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
     if (isDumb(project)) {
       handleDumbMode(indexId, project);
     }
@@ -664,28 +697,38 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void handleDumbMode(final ID<?, ?> indexId, Project project) {
+  private void handleDumbMode(final ID<?, ?> indexId, @Nullable Project project) {
     if (myNotRequiringContentIndices.contains(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }
 
     ProgressManager.checkCanceled(); // DumbModeAction.CANCEL
 
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator instanceof BackgroundableProcessIndicator) {
-      final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
-      if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
-        assert !ApplicationManager.getApplication().isDispatchThread();
-        DumbService.getInstance(project).waitForSmartMode();
-        return;
+    if (project != null) {
+      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (progressIndicator instanceof BackgroundableProcessIndicator) {
+        final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
+        if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
+          assert !ApplicationManager.getApplication().isDispatchThread();
+          DumbService.getInstance(project).waitForSmartMode();
+          return;
+        }
       }
     }
 
     throw new IndexNotReadyException();
   }
 
-  private static boolean isDumb(Project project) {
-    return DumbServiceImpl.getInstance(project).isDumb();
+  private static boolean isDumb(@Nullable Project project) {
+    if (project != null) {
+      return DumbServiceImpl.getInstance(project).isDumb();
+    }
+    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
+      if (DumbServiceImpl.getInstance(proj).isDumb()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
@@ -737,7 +780,7 @@ public class FileBasedIndex implements ApplicationComponent {
                                         final GlobalSearchScope filter) {
     try {
       final Project project = filter.getProject();
-      assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
@@ -810,7 +853,7 @@ public class FileBasedIndex implements ApplicationComponent {
                                          GlobalSearchScope filter) {
     try {
       final Project project = filter.getProject();
-      assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
+      //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter);
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
@@ -897,7 +940,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
-    if (myRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
+    if (ourRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
       final Runnable rebuildRunnable = new Runnable() {
@@ -913,7 +956,7 @@ public class FileBasedIndex implements ApplicationComponent {
             LOG.info(e);
           }
           finally {
-            myRebuildStatus.get(indexId).compareAndSet(REBUILD_IN_PROGRESS, OK);
+            ourRebuildStatus.get(indexId).compareAndSet(REBUILD_IN_PROGRESS, OK);
           }
         }
       };
@@ -936,7 +979,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
 
-    if (myRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
+    if (ourRebuildStatus.get(indexId).get() == REBUILD_IN_PROGRESS) {
       throw new ProcessCanceledException();
     }
   }
@@ -972,7 +1015,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return docs;
   }
 
-  private void indexUnsavedDocuments(ID<?, ?> indexId, Project project, GlobalSearchScope filter) throws StorageException {
+  private void indexUnsavedDocuments(ID<?, ?> indexId, @Nullable Project project, GlobalSearchScope filter) throws StorageException {
 
     if (myUpToDateIndices.contains(indexId)) {
       return; // no need to index unsaved docs
@@ -1055,65 +1098,63 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
 // returns false if doc was not indexed because the file does not fit in scope
-private boolean indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, final Project project,
-                                     GlobalSearchScope filter) throws StorageException {
-  final VirtualFile vFile = myFileDocumentManager.getFile(document);
-  if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
+  private boolean indexUnsavedDocument(final Document document, final ID<?, ?> requestedIndexId, final Project project, GlobalSearchScope filter) throws StorageException {
+    final VirtualFile vFile = myFileDocumentManager.getFile(document);
+    if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
+      return true;
+    }
+    if (filter != null && !filter.accept(vFile)) {
+      return false;
+    }
+    final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
+
+    final DocumentContent content;
+    if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
+      content = new PsiContent(document, dominantContentFile);
+    }
+    else {
+      content = new AuthenticContent(document);
+    }
+
+    final long currentDocStamp = content.getModificationStamp();
+    if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp).longValue()) {
+      final Ref<StorageException> exRef = new Ref<StorageException>(null);
+      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
+        public void run() {
+          try {
+            final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
+
+            if (dominantContentFile != null) {
+              dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
+              newFc.putUserData(PSI_FILE, dominantContentFile);
+            }
+
+            if (content instanceof AuthenticContent) {
+              newFc.putUserData(EDITOR_HIGHLIGHTER, document instanceof DocumentImpl ? ((DocumentImpl)document) .getEditorHighlighterForCachesBuilding() : null);
+            }
+
+            if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
+              newFc.putUserData(PROJECT, project);
+              final int inputId = Math.abs(getFileId(vFile));
+              getIndex(requestedIndexId).update(inputId, newFc);
+            }
+
+            if (dominantContentFile != null) {
+              dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
+            }
+          }
+          catch (StorageException e) {
+            exRef.set(e);
+          }
+        }
+      });
+      final StorageException storageException = exRef.get();
+      if (storageException != null) {
+        throw storageException;
+      }
+    }
     return true;
   }
-  if (filter != null && !filter.accept(vFile)) {
-    return false;
-  }
-  final PsiFile dominantContentFile = findDominantPsiForDocument(document, project);
-
-  final DocumentContent content;
-  if (dominantContentFile != null && dominantContentFile.getModificationStamp() != document.getModificationStamp()) {
-    content = new PsiContent(document, dominantContentFile);
-  }
-  else {
-    content = new AuthenticContent(document);
-  }
-
-  final long currentDocStamp = content.getModificationStamp();
-  if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp).longValue()) {
-    final Ref<StorageException> exRef = new Ref<StorageException>(null);
-    ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-      public void run() {
-        try {
-          final FileContent newFc = new FileContent(vFile, content.getText(), vFile.getCharset());
-
-          if (dominantContentFile != null) {
-                dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
-                newFc.putUserData(PSI_FILE, dominantContentFile);
-              }
-
-          if (content instanceof AuthenticContent) {
-                newFc.putUserData(EDITOR_HIGHLIGHTER, document instanceof DocumentImpl
-                                                      ? ((DocumentImpl)document).getEditorHighlighterForCachesBuilding() : null);
-              }
-
-          if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
-                newFc.putUserData(PROJECT, project);
-                final int inputId = Math.abs(getFileId(vFile));
-                getIndex(requestedIndexId).update(inputId, newFc);
-              }
-
-          if (dominantContentFile != null) {
-                dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
-              }
-        }
-        catch (StorageException e) {
-          exRef.set(e);
-        }
-      }
-    });
-    final StorageException storageException = exRef.get();
-    if (storageException != null) {
-      throw storageException;
-    }
-  }
-  return true;
-}
 
   public static final Key<PsiFile> PSI_FILE = new Key<PsiFile>("PSI for stubs");
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
@@ -1121,12 +1162,12 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
   public static final Key<VirtualFile> VIRTUAL_FILE = new Key<VirtualFile>("Context virtual file");
 
   @Nullable
-  private PsiFile findDominantPsiForDocument(final Document document, Project project) {
+  private PsiFile findDominantPsiForDocument(final Document document, @Nullable Project project) {
     if (myTransactionMap.containsKey(document)) {
       return myTransactionMap.get(document);
     }
 
-    return findLatestKnownPsiForUncomittedDocument(document, project);
+    return project == null? null : findLatestKnownPsiForUncomittedDocument(document, project);
   }
 
   private final StorageGuard myStorageLock = new StorageGuard();
@@ -1171,14 +1212,14 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
     }
   }
 
-  public void requestRebuild(ID<?, ?> indexId) {
+  public static void requestRebuild(ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
 
-  public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
+  public static void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
     LOG.info("Rebuild requested for index " + indexId, throwable);
-    myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
+    ourRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
 
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
@@ -1190,6 +1231,10 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
   private InputFilter getInputFilter(ID<?, ?> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     return pair != null? pair.getSecond() : null;
+  }
+
+  public int getNumberOfPendingInvalidations() {
+    return myChangedFilesCollector.getNumberOfPendingInvalidations();
   }
 
   public Collection<VirtualFile> getFilesToUpdate(final Project project) {
@@ -1258,9 +1303,10 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
 
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC)
     throws StorageException {
-    if (myRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
+    if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
     }
+    myLocalModCount++;
 
     final StorageGuard.Holder lock = setDataBufferingEnabled(false);
 
@@ -1532,6 +1578,16 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
       IndexingStamp.flushCache();
       if (unexpectedError != null) {
         LOG.error(unexpectedError);
+      }
+    }
+
+    public int getNumberOfPendingInvalidations() {
+      r.lock();
+      try {
+        return myFutureInvalidations.size();
+      }
+      finally {
+        r.unlock();
       }
     }
 
@@ -1863,12 +1919,14 @@ private boolean indexUnsavedDocument(final Document document, final ID<?, ?> req
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
-          final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
-          final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
-          for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
-            for (VirtualFile root : roots) {
-              if (visitedRoots.add(root)) {
-                iterateRecursively(root, processor, indicator);
+          if (orderEntry.isValid()) {
+            final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
+            final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
+            for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
+              for (VirtualFile root : roots) {
+                if (visitedRoots.add(root)) {
+                  iterateRecursively(root, processor, indicator);
+                }
               }
             }
           }

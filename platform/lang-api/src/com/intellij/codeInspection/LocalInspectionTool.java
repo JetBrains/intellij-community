@@ -34,12 +34,26 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   private static final Logger LOG = Logger.getInstance("#" + LocalInspectionTool.class.getName());
   /**
    * @return descriptive name to be used in "suppress" comments and annotations,
-   *         must consist of [a-zA-Z_0-9]+
+   *         must satisfy [a-zA-Z_0-9.]+ regexp pattern.
    */
   @Pattern("[a-zA-Z_0-9.]+")
   @NonNls
   @NotNull public String getID() {
-    return getShortName();
+    String id = getShortName();
+    if (!isValidID(id)) {
+      LOG.error("Inspection ID must satisfy [a-zA-Z_0-9.]+ pattern. Inspection: "+getClass()+"; ID: '"+id+"'");
+    }
+    return id;
+  }
+
+  private static boolean isValidID(@NotNull String id) {
+    int length = id.length();
+    if (length == 0) return false;
+    for (int i = 0; i < length; i++) {
+      char c = id.charAt(i);
+      if (!Character.isLetterOrDigit(c) && c != '_' && c != '.') return false;
+    }
+    return true;
   }
 
   @NonNls

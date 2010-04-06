@@ -157,6 +157,7 @@ public class IdRefReference extends BasicAttributeValueReference {
     return result[0];
   }
 
+  @NotNull
   public Object[] getVariants() {
     final List<String> result = new LinkedList<String>();
 

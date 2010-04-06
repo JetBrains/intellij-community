@@ -188,7 +188,7 @@ public class FileStatusMap implements Disposable {
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(file)) return null;
+      if (!CollectHighlightsUtil.shouldHighlightFile(file)) return null;
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
         return file == null ? null : file.getTextRange();
@@ -276,7 +276,7 @@ public class FileStatusMap implements Disposable {
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (CollectHighlightsUtil.isOutsideSourceRootJavaFile(file)) return true;
+      if (!CollectHighlightsUtil.shouldHighlightFile(file)) return true;
 
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinfished && status.allDirtyScopesAreNull();

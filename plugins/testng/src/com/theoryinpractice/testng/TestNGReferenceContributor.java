@@ -28,6 +28,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -95,13 +96,16 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         PsiMethod[] methods = cls.getMethods();
         @NonNls String val = getValue();
         for (PsiMethod method : methods) {
-          if (AnnotationUtil.isAnnotated(method, DataProvider.class.getName(), false)) {
-            PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+          PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+          if (dataProviderAnnotation != null) {
             PsiNameValuePair[] values = dataProviderAnnotation.getParameterList().getAttributes();
             for (PsiNameValuePair value : values) {
-              if ("name".equals(value.getName())) {
+              if ("name".equals(value.getName()) && val.equals(StringUtil.unquoteString(value.getText()))) {
                 return method;
               }
+            }
+            if (val.equals(method.getName())) {
+              return method;
             }
           }
         }
@@ -109,6 +113,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
+    @NotNull
     public Object[] getVariants() {
       final List<Object> list = new ArrayList<Object>();
       final PsiClass cls = PsiUtil.getTopLevelClass(getElement());
@@ -117,13 +122,22 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
         final PsiMethod[] methods = cls.getMethods();
         for (PsiMethod method : methods) {
           if (current != null && method.getName().equals(current.getName())) continue;
-          if (AnnotationUtil.isAnnotated(method, DataProvider.class.getName(), false)) {
-            PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+          final PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+          if (dataProviderAnnotation != null) {
+            boolean nameFoundInAttributes = false;
             PsiNameValuePair[] values = dataProviderAnnotation.getParameterList().getAttributes();
             for (PsiNameValuePair value : values) {
               if ("name".equals(value.getName())) {
-                list.add(LookupValueFactory.createLookupValue(value.getText(), null));
+                final PsiAnnotationMemberValue memberValue = value.getValue();
+                if (memberValue != null) {
+                  list.add(LookupValueFactory.createLookupValue(StringUtil.unquoteString(memberValue.getText()), null));
+                  nameFoundInAttributes = true;
+                  break;
+                }
               }
+            }
+            if (!nameFoundInAttributes) {
+              list.add(LookupValueFactory.createLookupValue(method.getName(), null));
             }
           }
         }
@@ -159,6 +173,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
+    @NotNull
     public Object[] getVariants() {
       List<Object> list = new ArrayList<Object>();
       PsiClass cls = PsiUtil.getTopLevelClass(getElement());
@@ -189,6 +204,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
       return null;
     }
 
+    @NotNull
     public Object[] getVariants() {
       List<Object> list = new ArrayList<Object>();
 

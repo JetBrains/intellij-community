@@ -23,4 +23,5 @@ public interface RegExpLanguageHost {
   boolean supportsPerl5EmbeddedComments();
   boolean supportsPossessiveQuantifiers();
   boolean supportsPythonNamedGroups();
+  boolean supportsPythonConditionalRefs();
 }

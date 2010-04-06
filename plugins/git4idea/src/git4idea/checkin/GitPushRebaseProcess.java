@@ -27,6 +27,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.StringScanner;
+import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
 import git4idea.update.GitBaseRebaseProcess;
@@ -48,9 +49,9 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
    */
   private static final Logger LOG = Logger.getInstance(GitPushRebaseProcess.class.getName());
   /**
-   * If true, auto-stash is required before running rebase
+   * Save changes policy
    */
-  private final boolean myAutoStash;
+  private final GitVcsSettings.UpdateChangesPolicy mySavePolicy;
   /**
    * The map from vcs root to list of the commit identifier for reordered commits, if vcs root is not provided, the reordering is not needed.
    */
@@ -58,7 +59,7 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
   /**
    * A set of roots that have non-pushed merges
    */
-  private Set<VirtualFile> myRootsWithMerges;
+  private final Set<VirtualFile> myRootsWithMerges;
   /**
    * The registration number for the rebase editor
    */
@@ -74,17 +75,17 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
    * @param vcs             the vcs instance
    * @param project         the project instance
    * @param exceptions      the list of exceptions for the process
-   * @param autoStash       if true, the auto-stash is required
+   * @param savePolicy      the save policy for the rebase process
    * @param rootsWithMerges a set of roots with merges
    */
   public GitPushRebaseProcess(final GitVcs vcs,
                               final Project project,
                               List<VcsException> exceptions,
-                              boolean autoStash,
+                              GitVcsSettings.UpdateChangesPolicy savePolicy,
                               Map<VirtualFile, List<String>> reorderedCommits,
                               Set<VirtualFile> rootsWithMerges) {
     super(vcs, project, exceptions);
-    myAutoStash = autoStash;
+    mySavePolicy = savePolicy;
     myReorderedCommits = reorderedCommits;
     myRootsWithMerges = rootsWithMerges;
     myRebaseEditorService = GitRebaseEditorService.getInstance();
@@ -151,8 +152,8 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
    * {@inheritDoc}
    */
   @Override
-  protected boolean isAutoStash() {
-    return myAutoStash;
+  protected GitVcsSettings.UpdateChangesPolicy getUpdatePolicy() {
+    return mySavePolicy;
   }
 
   /**
@@ -162,11 +163,11 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
     /**
      * The reordered commits
      */
-    private List<String> myCommits;
+    private final List<String> myCommits;
     /**
      * The true means that the root has merges
      */
-    private boolean myHasMerges;
+    private final boolean myHasMerges;
 
     /**
      * The constructor from fields that is expected to be

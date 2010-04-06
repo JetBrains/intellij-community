@@ -21,6 +21,8 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,9 +31,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -41,29 +41,33 @@ public class CustomTemplateCallback {
   private final Editor myEditor;
   private final PsiFile myFile;
   private int myStartOffset;
-  private Project myProject;
+  private final Project myProject;
   private RangeMarker myGlobalMarker;
-
-  //private final Map<Object, MyCheckpoint> myCheckpoints = new HashMap<Object, MyCheckpoint>();
+  private RangeMarker myEndOffsetMarker;
   private final Map<Object, RangeMarker> myCheckpoints = new HashMap<Object, RangeMarker>();
 
-  /*private static class MyCheckpoint {
-    int myFixedLength = null;
-    RangeMarker myFixedOffset;
-  }*/
+  private FileType myFileType;
 
   public CustomTemplateCallback(Editor editor, PsiFile file) {
     myEditor = editor;
     myFile = file;
     myProject = file.getProject();
     myTemplateManager = TemplateManagerImpl.getInstance(myProject);
+    fixInitialState();
   }
 
-  public void fixInitialEditorState() {
+  public void fixInitialState() {
     myStartOffset = myEditor.getCaretModel().getOffset();
     myGlobalMarker = myEditor.getDocument().createRangeMarker(myStartOffset, myStartOffset);
     myGlobalMarker.setGreedyToLeft(true);
     myGlobalMarker.setGreedyToRight(true);
+  }
+
+  public void fixEndOffset() {
+    if (myEndOffsetMarker == null) {
+      int offset = myEditor.getCaretModel().getOffset();
+      myEndOffsetMarker = myEditor.getDocument().createRangeMarker(offset, offset);
+    }
   }
 
   public boolean isLiveTemplateApplicable(@NotNull String key) {
@@ -73,14 +77,23 @@ public class CustomTemplateCallback {
   @Nullable
   public TemplateImpl findApplicableTemplate(@NotNull String key) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
+    templates = filterApplicableCandidates(templates);
     return templates.size() > 0 ? templates.get(0) : null;
   }
 
+  private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
+    List<TemplateImpl> result = new ArrayList<TemplateImpl>();
+    for (TemplateImpl candidate : candidates) {
+      if (TemplateManagerImpl.isApplicable(myFile, myStartOffset, candidate)) {
+        result.add(candidate);
+      }
+    }
+    return result;
+  }
 
   public boolean templateContainsVars(@NotNull String key, String... varNames) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, myStartOffset, templates);
+    templates = filterApplicableCandidates(templates);
     if (templates.size() == 0) {
       return false;
     }
@@ -105,9 +118,9 @@ public class CustomTemplateCallback {
   public boolean startTemplate(@NotNull String key,
                                Map<String, String> predefinedVarValues,
                                @Nullable TemplateInvokationListener listener) {
-    int caretOffset = myEditor.getCaretModel().getOffset();
+    //int caretOffset = myEditor.getCaretModel().getOffset();
     List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = TemplateManagerImpl.filterApplicableCandidates(myFile, caretOffset, templates);
+    templates = filterApplicableCandidates(templates);
     if (templates.size() > 0) {
       TemplateImpl template = templates.get(0);
       return startTemplate(template, predefinedVarValues, listener);
@@ -131,12 +144,12 @@ public class CustomTemplateCallback {
     final boolean[] templateFinished = new boolean[]{false};
     myTemplateManager.startTemplate(myEditor, template, false, predefinedVarValues, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
-        final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+      public void templateFinished(Template template, final boolean brokenOff) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            //style.reformatText(myFile, myStartOffset, myStartOffset + lengthAfter - myStartLength);
-            style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+            if (brokenOff) {
+              reformat();
+            }
           }
         });
         if (brokenOff) return;
@@ -145,12 +158,22 @@ public class CustomTemplateCallback {
           listener.finished(true);
         }
       }
+
+      @Override
+      public void waitingForInput(Template template) {
+        reformat();
+      }
     });
     templateEnded[0] = true;
     if (templateFinished[0] && listener != null) {
       listener.finished(false);
     }
     return templateFinished[0];
+  }
+
+  private void reformat() {
+    CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+    style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
   }
 
   public void fixStartOfTemplate(@NotNull Object key) {
@@ -181,6 +204,21 @@ public class CustomTemplateCallback {
     return marker.getStartOffset();
   }
 
+  public void gotoEndOffset() {
+    if (myEndOffsetMarker != null) {
+      myEditor.getCaretModel().moveToOffset(myEndOffsetMarker.getStartOffset());
+    }
+  }
+
+  public void finish() {
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
+    if (myGlobalMarker != null) {
+      style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
+    }
+    gotoEndOffset();
+  }
+
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
     return settings.collectMatchingCandidates(templateKey, settings.getDefaultShortcutChar(), false);
@@ -191,11 +229,23 @@ public class CustomTemplateCallback {
     return myEditor;
   }
 
+  @NotNull
+  public FileType getFileType() {
+    if (myFileType == null) {
+      myFileType = myFile.getFileType();
+    }
+    return myFileType;
+  }
+
   public int getOffset() {
     return myEditor.getCaretModel().getOffset();
   }
 
   public PsiFile getFile() {
     return myFile;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }

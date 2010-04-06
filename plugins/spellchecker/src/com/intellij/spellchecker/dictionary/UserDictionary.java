@@ -15,20 +15,20 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.spellchecker.trie.Action;
-import com.intellij.spellchecker.trie.CharSequenceKeyAnalyzer;
-import com.intellij.spellchecker.trie.PatriciaTrie;
-import com.intellij.spellchecker.trie.Trie;
+import com.intellij.util.Consumer;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
-public class UserDictionary implements Dictionary {
+public class UserDictionary implements EditableDictionary {
 
-  private String name;
-  private Trie<String, String> trie = new PatriciaTrie<String, String>(new CharSequenceKeyAnalyzer());
+  private final String name;
+
+  @NotNull
+  private final THashSet<String> words = new THashSet<String>();
 
   public UserDictionary(String name) {
     this.name = name;
@@ -39,26 +39,25 @@ public class UserDictionary implements Dictionary {
   }
 
   public boolean contains(String word) {
-    return word != null && trie.containsKey(word);
+    return words.contains(word);
+  }
+
+  public int size() {
+    return words == null ? 0 : words.size();
   }
 
   @Nullable
   public Set<String> getWords() {
-    return trie.keySet();
+    return words;
   }
 
   @Nullable
   public Set<String> getEditableWords() {
-    return trie.keySet();
-  }
-
-  @Nullable
-  public Set<String> getNotEditableWords() {
-    return null;
+    return words;
   }
 
   public void clear() {
-    trie.clear();
+    words.clear();
   }
 
 
@@ -66,14 +65,14 @@ public class UserDictionary implements Dictionary {
     if (word == null) {
       return;
     }
-    trie.put(word, word);
+    words.add(word);
   }
 
   public void removeFromDictionary(String word) {
     if (word == null) {
       return;
     }
-    trie.remove(word);
+    words.remove(word);
   }
 
   public void replaceAll(@Nullable Collection<String> words) {
@@ -91,7 +90,7 @@ public class UserDictionary implements Dictionary {
   }
 
   public boolean isEmpty() {
-    return (trie == null || trie.size() == 0);
+    return words.size() == 0;
   }
 
   @Override
@@ -105,13 +104,10 @@ public class UserDictionary implements Dictionary {
 
   }
 
-  public void traverse(final Action action){
-    trie.traverse(new PatriciaTrie.Cursor<String, String>() {
-          public SelectStatus select(Map.Entry<? extends String, ? extends String> entry) {
-            action.run(entry);
-            return SelectStatus.CONTINUE;
-          }
-        });
+  public void traverse(final Consumer<String> consumer) {
+    for (String word : words) {
+      consumer.consume(word);
+    }
   }
 
   @Override
@@ -121,6 +117,6 @@ public class UserDictionary implements Dictionary {
 
   @Override
   public String toString() {
-    return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + trie.size() + '}';
+    return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + words.size() + '}';
   }
 }

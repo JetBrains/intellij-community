@@ -582,11 +582,14 @@ public abstract class ChooseByNameBase{
   private JLayeredPane getLayeredPane() {
     JLayeredPane layeredPane;
     final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
-    if (window instanceof JFrame) {
-      layeredPane = ((JFrame)window).getLayeredPane();
+
+    Component parent = UIUtil.findUltimateParent(window);
+
+    if (parent instanceof JFrame) {
+      layeredPane = ((JFrame)parent).getLayeredPane();
     }
-    else if (window instanceof JDialog) {
-      layeredPane = ((JDialog)window).getLayeredPane();
+    else if (parent instanceof JDialog) {
+      layeredPane = ((JDialog)parent).getLayeredPane();
     }
     else {
       throw new IllegalStateException("cannot find parent window: project=" + myProject +

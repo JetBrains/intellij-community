@@ -66,6 +66,23 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
+    configureGenericGroovyRunner(params, module, tests, "groovy.ui.GroovyMain");
+
+    addClasspathFromRootModel(module, tests, params);
+
+    params.getVMParametersList().addParametersString(configuration.vmParams);
+
+    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
+    params.getProgramParametersList().addParametersString(configuration.scriptParams);
+
+    addScriptEncodingSettings(params, script, module);
+
+    if (configuration.isDebugEnabled) {
+      params.getProgramParametersList().add("--debug");
+    }
+  }
+
+  public static void configureGenericGroovyRunner(JavaParameters params, Module module, boolean tests, String mainClass) throws CantRunException {
     assert module != null;
     final VirtualFile groovyJar = findGroovyJar(module);
     if (groovyJar != null) {
@@ -80,25 +97,13 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     final String confPath = getConfPath(groovyHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
 
-    params.getVMParametersList().addParametersString(configuration.vmParams);
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 
     params.getProgramParametersList().add("--conf");
     params.getProgramParametersList().add(confPath);
 
-    addClasspathFromRootModel(module, tests, params);
-
     params.getProgramParametersList().add("--main");
-    params.getProgramParametersList().add("groovy.ui.GroovyMain");
-
-    params.getProgramParametersList().add(FileUtil.toSystemDependentName(configuration.scriptPath));
-    params.getProgramParametersList().addParametersString(configuration.scriptParams);
-
-    addScriptEncodingSettings(params, script, module);
-
-    if (configuration.isDebugEnabled) {
-      params.getProgramParametersList().add("--debug");
-    }
+    params.getProgramParametersList().add(mainClass);
   }
 
   private static void addScriptEncodingSettings(final JavaParameters params, final VirtualFile scriptFile, Module module) {

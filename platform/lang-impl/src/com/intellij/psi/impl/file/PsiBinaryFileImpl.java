@@ -19,6 +19,7 @@ package com.intellij.psi.impl.file;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -34,8 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Map;
 
-public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, Cloneable {
+public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, Cloneable, Queryable {
   private final PsiManagerImpl myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
@@ -262,5 +264,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   @Override
   public PsiElement getContext() {
     return FileContextUtil.getFileContext(this);
+  }
+
+  public void putInfo(Map<String, String> info) {
+    info.put("fileName", getName());
+    info.put("fileType", getFileType().getName());
   }
 }

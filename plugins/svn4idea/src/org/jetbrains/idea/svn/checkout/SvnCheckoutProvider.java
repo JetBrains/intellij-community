@@ -60,18 +60,12 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       target.mkdirs();
     }
     final SVNException[] exception = new SVNException[1];
-    final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
-
+    final String[] selectedFormat = new String[1];
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        // allow to select working copy format
-        if (! promptForWCopyFormat(target, project)) {
-          // cancelled
-          actionStarted.set(Boolean.FALSE);
-          return;
-        }
-
+        SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(selectedFormat[0]));
+        
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
         client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
@@ -99,9 +93,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       }
 
       public void onSuccess() {
-        if (! Boolean.TRUE.equals(actionStarted.get())) {
-          return;
-        }
         if (exception[0] != null) {
           Messages.showErrorDialog(SvnBundle.message("message.text.cannot.checkout", exception[0].getMessage()), SvnBundle.message("message.title.check.out"));
         }
@@ -134,6 +125,12 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       }
     };
 
+    // allow to select working copy format
+    selectedFormat[0] = promptForWCopyFormat(target, project);
+    if (selectedFormat == null) {
+      // cancelled
+      return;
+    }
     ProgressManager.getInstance().run(checkoutBackgroundTask);
   }
 
@@ -157,14 +154,22 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static boolean promptForWCopyFormat(final File target, final Project project) {
+  public static boolean promptForWCFormatAndSelect(final File target, final Project project) {
+    final String result = promptForWCopyFormat(target, project);
+    if (result != null) {
+      SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(result));
+    }
+    return result != null;
+  }
+
+  @Nullable
+  private static String promptForWCopyFormat(final File target, final Project project) {
     String formatMode = null;
     final Ref<Boolean> wasOk = new Ref<Boolean>();
     while ((formatMode == null) && (! Boolean.FALSE.equals(wasOk.get()))) {
       formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_16, wasOk);
-      SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(formatMode));
     }
-    return Boolean.TRUE.equals(wasOk.get());
+    return Boolean.TRUE.equals(wasOk.get()) ? formatMode : null;
   }
 
   public static void doExport(final Project project, final File target, final String url, final SVNDepth depth,

@@ -24,7 +24,7 @@ import java.awt.event.KeyEvent;
 
 public abstract class TypeCommand extends AbstractCommand {
 
-  private static KeyStokeMap ourMap = new KeyStokeMap();
+  private static final KeyStokeMap ourMap = new KeyStokeMap();
 
   public TypeCommand(String text, int line) {
     super(text, line);
@@ -37,7 +37,7 @@ public abstract class TypeCommand extends AbstractCommand {
   protected void type(Robot robot, KeyStroke keyStroke) {
     boolean shift = (keyStroke.getModifiers() & KeyEvent.SHIFT_MASK) > 0;
     boolean alt = (keyStroke.getModifiers() & KeyEvent.ALT_MASK) > 0;
-    boolean control = (keyStroke.getModifiers() & KeyEvent.ALT_MASK) > 0;
+    boolean control = (keyStroke.getModifiers() & KeyEvent.CTRL_MASK) > 0;
     boolean meta = (keyStroke.getModifiers() & KeyEvent.META_MASK) > 0;
 
     if (shift) {

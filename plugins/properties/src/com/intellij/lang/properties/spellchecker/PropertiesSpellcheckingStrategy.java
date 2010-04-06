@@ -18,27 +18,31 @@ package com.intellij.lang.properties.spellchecker;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.psi.PsiElement;
-import com.intellij.spellchecker.tokenizer.SimpleTokenizer;
+import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Konstantin Bulenkov
- */
+
 public class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy {
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
-    if (element instanceof PropertyValueImpl) return new SimpleTokenizer();
-    if (element instanceof PropertyImpl) return new SimpleTokenizer<PropertyImpl>(false, ".") {
-      @Nullable
-      @Override
-      public String getText(PropertyImpl element) {
-        return element.getKey();
-      }
-    };
+    if (element instanceof PropertyValueImpl) {
+      return new Tokenizer<PropertyValueImpl>() {
+        public Token[] tokenize(@NotNull PropertyValueImpl element) {
+          return new Token[]{new Token<PropertyValueImpl>(element, element.getText(), false, SplitterFactory.getInstance().getStringLiteralSplitter())};
+        }
+      };
+    }
+    if (element instanceof PropertyImpl) {
+      return new Tokenizer<PropertyImpl>() {
+        public Token[] tokenize(@NotNull PropertyImpl element) {
+          return new Token[]{new Token<PropertyImpl>(element, element.getKey(), true, SplitterFactory.getInstance().getPropertiesSplitter())};
+        }
+      };
+    }
     return super.getTokenizer(element);
   }
 }

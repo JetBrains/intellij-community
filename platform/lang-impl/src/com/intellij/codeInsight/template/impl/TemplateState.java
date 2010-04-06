@@ -319,9 +319,12 @@ public class TemplateState implements Disposable {
         calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
         doReformat(null);
 
-        fireTemplateExpanded();
-
         int nextVariableNumber = getNextVariableNumber(-1);
+
+        if (nextVariableNumber >= 0) {
+          fireWaitingForInput();
+        }
+
         if (nextVariableNumber == -1) {
           finishTemplateEditing(false);
         }
@@ -1022,10 +1025,10 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void fireTemplateExpanded() {
+  private void fireWaitingForInput() {
     TemplateEditingListener[] listeners = myListeners.toArray(new TemplateEditingListener[myListeners.size()]);
     for (TemplateEditingListener listener : listeners) {
-      listener.templateExpanded(myTemplate);
+      listener.waitingForInput(myTemplate);
     }
   }
 

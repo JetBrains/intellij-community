@@ -97,6 +97,7 @@ public class AntMacroDefParameterReference extends AntGenericReference {
     return null;
   }
 
+  @NotNull
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Object[] getVariants() {
     final Set<String> variants = StringSetSpinAllocator.alloc();

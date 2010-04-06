@@ -19,20 +19,31 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.watcher.ChangeKind;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 public class FileWatcher {
@@ -47,13 +58,14 @@ public class FileWatcher {
   @NonNls private static final String ROOTS_COMMAND = "ROOTS";
   @NonNls private static final String REMAP_COMMAND = "REMAP";
   @NonNls private static final String EXIT_COMMAND = "EXIT";
+  @NonNls private static final String MESSAGE_COMMAND = "MESSAGE";
 
   private final Object LOCK = new Object();
   private List<String> myDirtyPaths = new ArrayList<String>();
   private List<String> myDirtyRecursivePaths = new ArrayList<String>();
   private List<String> myDirtyDirs = new ArrayList<String>();
   private List<String> myManualWatchRoots = new ArrayList<String>();
-  private List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
+  private final List<Pair<String, String>> myMapping = new ArrayList<Pair<String, String>>();
 
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();
@@ -243,7 +255,7 @@ public class FileWatcher {
             shutdownProcess();
             return;
           }
-          
+
           if (RESET_COMMAND.equals(command)) {
             reset();
           }
@@ -257,6 +269,20 @@ public class FileWatcher {
             while (true);
 
             setManualWatchRoots(roots);
+          }
+          else if (MESSAGE_COMMAND.equals(command)) {
+            final String message = readLine();
+            if (message == null) break;
+
+            Notifications.Bus.notify(
+              new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "File Watcher", message, NotificationType.WARNING,
+                               new NotificationListener() {
+                                 public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+                                   if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                     BrowserUtil.launchBrowser(event.getURL().toExternalForm());
+                                   }
+                                 }
+                               }));
           }
           else if (REMAP_COMMAND.equals(command)) {
             Set<Pair<String, String>> pairs = new HashSet<Pair<String, String>>();

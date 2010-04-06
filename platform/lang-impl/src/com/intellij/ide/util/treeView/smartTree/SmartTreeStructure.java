@@ -64,6 +64,11 @@ public class SmartTreeStructure extends AbstractTreeStructure {
     return new TreeElementWrapper(myProject, myModel.getRoot(), myModel);
   }
 
+  @Override
+  public boolean isAlwaysLeaf(Object element) {
+    return ((AbstractTreeNode)element).isAlwaysLeaf();
+  }
+
   public boolean hasSomethingToCommit() {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }

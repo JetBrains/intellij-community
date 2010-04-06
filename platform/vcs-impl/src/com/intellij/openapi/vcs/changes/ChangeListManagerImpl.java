@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
@@ -107,7 +108,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return (ChangeListManagerImpl) project.getComponent(ChangeListManager.class);
   }
 
-  public ChangeListManagerImpl(final Project project) {
+  public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
     myChangesViewManager = ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
@@ -120,6 +121,48 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
+
+    myListeners.addListener(new ChangeListAdapter() {
+      @Override
+      public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+        if (!ApplicationManager.getApplication().isUnitTestMode() &&
+          oldDefaultList instanceof LocalChangeList &&
+          oldDefaultList.getChanges().isEmpty()) {
+
+          invokeAfterUpdate(new Runnable() {
+            public void run() {
+              if (getChangeList(((LocalChangeList)oldDefaultList).getId()) == null) {
+                return; // removed already  
+              }
+              switch (config.REMOVE_EMPTY_INACTIVE_CHANGELISTS) {
+
+                case SHOW_CONFIRMATION:
+                  VcsConfirmationDialog dialog = new VcsConfirmationDialog(myProject, new VcsShowConfirmationOption() {
+                    public Value getValue() {
+                      return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
+                    }
+
+                    public void setValue(Value value) {
+                      config.REMOVE_EMPTY_INACTIVE_CHANGELISTS = value;
+                    }
+                  }, "<html>The empty changelist '" + StringUtil.first(oldDefaultList.getName(), 30, true) + "' is no longer active.<br>" +
+                     "Do you want to remove it?</html>", "&Remember my choice");
+                  dialog.show();
+                  if (!dialog.isOK()) {
+                    return;
+                  }
+                  break;
+                case DO_NOTHING_SILENTLY:
+                  return;
+                case DO_ACTION_SILENTLY:
+                  break;
+              }
+              removeChangeList((LocalChangeList)oldDefaultList);
+            }
+          }, InvokeAfterUpdateMode.SILENT, null, null);
+        }
+      }
+    });
   }
 
   public void projectOpened() {
@@ -446,7 +489,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   List<VirtualFile> getUnversionedFiles() {
-    return new ArrayList<VirtualFile>(myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles());
+    return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+  }
+
+  Pair<Integer, Integer> getUnversionedFilesSize() {
+    final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
+    return new Pair<Integer, Integer>(holder.getSize(), holder.getNumDirs());
   }
 
   List<VirtualFile> getModifiedWithoutEditing() {
@@ -767,7 +815,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
           myChangesViewManager.scheduleRefresh();
         }
-      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"), null);
+      },  InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE_NOT_AWT, VcsBundle.message("change.lists.manager.add.unversioned"), null);
     } else {
       myChangesViewManager.scheduleRefresh();
     }
@@ -971,9 +1019,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
     //private SlowlyClosingAlarm myAlarm;
-    private RemoteRevisionsCache myRevisionsCache;
+    private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
-    private ExecutorWrapper myExecutorWrapper;
+    private final ExecutorWrapper myExecutorWrapper;
     private final ExecutorService myService;
 
 
@@ -986,11 +1034,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     public void plus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+      final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
+      if (correctedPair == null) return;
       myService.submit(new Runnable() {
         public void run() {
           myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
             public void consume(AtomicSectionsAware atomicSectionsAware) {
-              myRevisionsCache.plus(getCorrectedPair(stringAbstractVcsPair));
+              myRevisionsCache.plus(correctedPair);
             }
           });
         }
@@ -998,23 +1048,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     public void minus(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
+      final Pair<String, AbstractVcs> correctedPair = getCorrectedPair(stringAbstractVcsPair);
+      if (correctedPair == null) return;
       myService.submit(new Runnable() {
         public void run() {
           myExecutorWrapper.submit(new Consumer<AtomicSectionsAware>() {
             public void consume(AtomicSectionsAware atomicSectionsAware) {
-              myRevisionsCache.minus(getCorrectedPair(stringAbstractVcsPair));
+              myRevisionsCache.minus(correctedPair);
             }
           });
-          myRevisionsCache.minus(getCorrectedPair(stringAbstractVcsPair));
+          myRevisionsCache.minus(correctedPair);
         }
       });
     }
 
+    @Nullable
     private Pair<String, AbstractVcs> getCorrectedPair(final Pair<String, AbstractVcs> stringAbstractVcsPair) {
       Pair<String, AbstractVcs> correctedPair = stringAbstractVcsPair;
       if (stringAbstractVcsPair.getSecond() == null) {
         final String path = stringAbstractVcsPair.getFirst();
-        correctedPair = new Pair<String, AbstractVcs>(path, myVcsManager.findVcsByName(findVcs(path).getName()));
+        final VcsKey vcsKey = findVcs(path);
+        if (vcsKey == null) return null;
+        correctedPair = new Pair<String, AbstractVcs>(path, myVcsManager.findVcsByName(vcsKey.getName()));
       }
       return correctedPair;
     }

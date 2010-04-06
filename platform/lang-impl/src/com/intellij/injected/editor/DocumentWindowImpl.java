@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -40,8 +41,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Alexey
@@ -254,9 +255,47 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     startOffset += perfixLength;
     endOffset -= suffixLength;
     s = s.subSequence(perfixLength, s.length() - suffixLength);
-    
-    deleteString(startOffset, endOffset);
-    insertString(startOffset, s);
+
+    doReplaceString(startOffset, endOffset, s);
+  }
+
+  private void doReplaceString(int startOffset, int endOffset, CharSequence s) {
+    assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
+    assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
+
+    List<Pair<TextRange,CharSequence>> hostRangesToModify = new ArrayList<Pair<TextRange, CharSequence>>(myShreds.size());
+
+    int offset = startOffset;
+    int curRangeStart = 0;
+    for (int i = 0; i < myShreds.size(); i++) {
+      PsiLanguageInjectionHost.Shred shred = myShreds.get(i);
+      curRangeStart += shred.prefix.length();
+      if (offset < curRangeStart) offset = curRangeStart;
+      RangeMarker hostRange = shred.getHostRangeMarker();
+      if (!hostRange.isValid()) continue;
+      int hostRangeLength = hostRange.getEndOffset() - hostRange.getStartOffset();
+      TextRange range = TextRange.from(curRangeStart, hostRangeLength);
+      if (range.contains(offset) || range.getEndOffset() == offset/* in case of inserting at the end*/) {
+        TextRange rangeToModify = new TextRange(offset, Math.min(range.getEndOffset(), endOffset));
+        TextRange hostRangeToModify = rangeToModify.shiftRight(hostRange.getStartOffset() - curRangeStart);
+        CharSequence toReplace = i == myShreds.size() - 1 ? s : s.subSequence(0, Math.min(hostRangeToModify.getLength(), s.length()));
+        s = s.subSequence(toReplace.length(), s.length());
+        hostRangesToModify.add(Pair.create(hostRangeToModify, toReplace));
+        offset = rangeToModify.getEndOffset();
+      }
+      curRangeStart += hostRangeLength;
+      curRangeStart += shred.suffix.length();
+      if (curRangeStart >= endOffset) break;
+    }
+
+    int delta = 0;
+    for (Pair<TextRange, CharSequence> pair : hostRangesToModify) {
+      TextRange hostRange = pair.getFirst();
+      CharSequence replace = pair.getSecond();
+
+      myDelegate.replaceString(hostRange.getStartOffset() + delta, hostRange.getEndOffset() + delta, replace);
+      delta -= hostRange.getLength() - replace.length();
+    }
   }
 
   public boolean isWritable() {

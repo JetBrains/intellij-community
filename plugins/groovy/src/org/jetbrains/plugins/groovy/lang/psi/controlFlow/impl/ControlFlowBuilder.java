@@ -15,8 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiConstantEvaluationHelper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
@@ -51,6 +53,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private List<InstructionImpl> myInstructions;
 
   private Stack<InstructionImpl> myProcessingStack;
+  private final PsiConstantEvaluationHelper myConstantEvaluator;
+
+  public ControlFlowBuilder(Project project) {
+    myConstantEvaluator = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
+
+  }
 
   private class ExceptionInfo {
     GrCatchClause myClause;
@@ -317,9 +325,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitUnaryExpression(GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (operand != null) {
-      myNegate = !myNegate;
+      final boolean negation = expression.getOperationTokenType() == GroovyElementTypes.mLNOT;
+      if (negation) {
+        myNegate = !myNegate;
+      }
       operand.accept(this);
-      myNegate = !myNegate;
+      if (negation) {
+        myNegate = !myNegate;
+      }
     }
   }
 
@@ -336,6 +349,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         final ReadWriteVariableInstructionImpl i = new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false);
         addNode(i);
         addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, true));
+        if (referenceExpression.getParent() instanceof GrUnaryExpression) {
+          addNode(new ReadWriteVariableInstructionImpl(referenceExpression, myInstructionNumber++, false));
+        }
         checkPending(i);
       }
       else {
@@ -485,7 +501,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (condition != null) {
       condition.accept(this);
     }
-    addPendingEdge(whileStatement, myHead); //break
+    final boolean endless = Boolean.TRUE.equals(myConstantEvaluator.computeConstantExpression(condition));
+    if (!endless) {
+      addPendingEdge(whileStatement, myHead); //break
+    }
     final GrCondition body = whileStatement.getBody();
     if (body != null) {
       body.accept(this);

@@ -63,7 +63,7 @@ public class MavenEmbedderFactory {
     Arrays.asList("clean", "validate", "generate-sources", "process-sources", "generate-resources",
                   "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources",
                   "generate-test-resources",
-                  "process-test-resources", "test-compile", "test", "package", "pre-integration-test", "integration-test",
+                  "process-test-resources", "test-compile", "test", "prepare-package", "package", "pre-integration-test", "integration-test",
                   "post-integration-test",
                   "verify", "install", "site", "deploy");
   private static final List<String> BASIC_PHASES =

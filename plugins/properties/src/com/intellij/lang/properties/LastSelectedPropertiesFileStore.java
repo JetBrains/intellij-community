@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.properties;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -34,6 +35,7 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -58,6 +60,7 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
     return ServiceManager.getService(LastSelectedPropertiesFileStore.class);
   }
 
+  @Nullable
   public String suggestLastSelectedPropertiesFileUrl(PsiFile context) {
     VirtualFile virtualFile = context.getVirtualFile();
 
@@ -85,14 +88,20 @@ public class LastSelectedPropertiesFileStore implements PersistentStateComponent
 
   public void saveLastSelectedPropertiesFile(PsiFile context, PropertiesFile file) {
     VirtualFile virtualFile = context.getVirtualFile();
+    if (virtualFile instanceof VirtualFileWindow) {
+      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+    }
     assert virtualFile != null;
     String contextUrl = virtualFile.getUrl();
-    String url = file.getVirtualFile().getUrl();
-    lastSelectedUrls.put(contextUrl, url);
-    VirtualFile containingDir = virtualFile.getParent();
-    lastSelectedUrls.put(containingDir.getUrl(), url);
-    lastSelectedFileUrl = url;
-    StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtil.urlToPath(url))));
+    final VirtualFile vFile = file.getVirtualFile();
+    if (vFile != null) {
+      String url = vFile.getUrl();
+      lastSelectedUrls.put(contextUrl, url);
+      VirtualFile containingDir = virtualFile.getParent();
+      lastSelectedUrls.put(containingDir.getUrl(), url);
+      lastSelectedFileUrl = url;
+      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PROPERTIES_FILE_STATISTICS_KEY, FileUtil.toSystemDependentName(VfsUtil.urlToPath(url))));
+    }
   }
 
   private void readExternal(@NonNls Element element) {

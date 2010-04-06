@@ -38,7 +38,7 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
   @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
   private SettingsXmlFile myWorkspaceFile;
   private SettingsXmlFile myProjectFile;
-  private List<SettingsXmlFile> mySharedConfigurationFiles;
+  private final List<SettingsXmlFile> mySharedConfigurationFiles;
 
   public RunManagerSettingsImpl(@NotNull File workspaceFile, @Nullable File projectFile, @Nullable File[] sharedConfigurationFiles,
                                 ConversionContextImpl context) throws CannotConvertException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,12 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageFilteringRule;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 17, 2005
  */
-public class ImportFilteringRule implements UsageFilteringRule{
+public class ImportFilteringRule extends com.intellij.usages.rules.ImportFilteringRule {
   public boolean isVisible(Usage usage) {
     if (usage instanceof PsiElementUsage) {
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();

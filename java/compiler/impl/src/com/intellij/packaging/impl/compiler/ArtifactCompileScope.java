@@ -17,6 +17,7 @@ package com.intellij.packaging.impl.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -31,10 +32,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -42,6 +40,7 @@ import java.util.Set;
 public class ArtifactCompileScope {
   private static final Key<Artifact[]> ARTIFACTS_KEY = Key.create("artifacts");
   private static final Key<Set<Artifact>> CACHED_ARTIFACTS_KEY = Key.create("cached_artifacts");
+  private static final Key<Key<?>> ARTIFACTS_CONTENT_ID_KEY = Key.create("build_artifacts_task");
 
   private ArtifactCompileScope() {
   }
@@ -70,6 +69,7 @@ public class ArtifactCompileScope {
 
   public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts) {
     baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
+    baseScope.putUserData(CompilerManager.CONTENT_ID_KEY, ARTIFACTS_CONTENT_ID_KEY);
     return baseScope;
   }
 
@@ -87,9 +87,10 @@ public class ArtifactCompileScope {
     Set<Artifact> artifacts = new HashSet<Artifact>();
     final ArtifactManager artifactManager = ArtifactManager.getInstance(project);
     final Set<Module> modules = new HashSet<Module>(Arrays.asList(compileScope.getAffectedModules()));
+    final List<Module> allModules = Arrays.asList(ModuleManager.getInstance(project).getModules());
     for (Artifact artifact : artifactManager.getArtifacts()) {
       if (artifact.isBuildOnMake()) {
-        if (modules.containsAll(Arrays.asList(ModuleManager.getInstance(project).getModules()))
+        if (modules.containsAll(allModules)
             || containsModuleOutput(artifact, modules, artifactManager)) {
           artifacts.add(artifact);
         }

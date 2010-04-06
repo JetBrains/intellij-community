@@ -46,7 +46,7 @@ public class ChangelistConflictTracker {
 
   private final Map<String, Conflict> myConflicts = new HashMap<String, Conflict>();
 
-  private Options myOptions = new Options();
+  private final Options myOptions = new Options();
   private final Project myProject;
 
   private final ChangeListManager myChangeListManager;
@@ -77,7 +77,7 @@ public class ChangelistConflictTracker {
         }
         Document document = e.getDocument();
         final VirtualFile file = myDocumentManager.getFile(document);
-        if (file == null) {
+        if (file == null || isFromActiveChangelist(file) || ChangesUtil.isInternalOperation(file)) {
           return;
         }
         myChangeListManager.invokeAfterUpdate(new Runnable() {

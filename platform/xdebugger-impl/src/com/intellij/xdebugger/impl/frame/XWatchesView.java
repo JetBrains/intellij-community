@@ -52,7 +52,7 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   private final XDebuggerTreePanel myTreePanel;
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
-  private WatchesRootNode myRootNode;
+  private final WatchesRootNode myRootNode;
 
   public XWatchesView(final XDebugSession session, final Disposable parentDisposable, final XDebugSessionData sessionData) {
     super(session, parentDisposable);
@@ -76,13 +76,12 @@ public class XWatchesView extends XDebugViewBase implements DnDNativeTarget {
   }
 
   public void addWatchExpression(@NotNull String expression, int index) {
+    XDebuggerEvaluator evaluator = null;
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     if (stackFrame != null) {
-      XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
-      if (evaluator != null) {
-        myRootNode.addWatchExpression(evaluator, expression, index);
-      }
+      evaluator = stackFrame.getEvaluator();
     }
+    myRootNode.addWatchExpression(evaluator, expression, index);
   }
 
   protected void rebuildView(final SessionEvent event) {

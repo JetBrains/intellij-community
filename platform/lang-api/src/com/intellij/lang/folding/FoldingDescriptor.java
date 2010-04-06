@@ -27,6 +27,9 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * Defines a single folding region in the code.
  *
@@ -39,6 +42,7 @@ public class FoldingDescriptor {
   private final ASTNode myElement;
   private final TextRange myRange;
   @Nullable private final FoldingGroup myGroup;
+  private Set<Object> myDependencies;
 
   /**
    * Creates a folding region related to the specified AST node and covering the specified
@@ -56,6 +60,10 @@ public class FoldingDescriptor {
     this(ObjectUtils.assertNotNull(element.getNode()), range, null);
   }
 
+  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
+    this(node, range, group, Collections.<Object>emptySet());
+  }
+
   /**
    * Creates a folding region related to the specified AST node and covering the specified
    * text range.
@@ -64,14 +72,17 @@ public class FoldingDescriptor {
    *              {@link FoldingBuilder#isCollapsedByDefault(com.intellij.lang.ASTNode)}.
    * @param range The folded text range.
    * @param group Regions with the same group instance expand and collapse together.
+   * @param dependencies folding dependencies: other files or elements that could change
+   * folding description
    */
-  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group) {
+  public FoldingDescriptor(@NotNull ASTNode node, @NotNull TextRange range, @Nullable FoldingGroup group, Set<Object> dependencies) {
     assert range.getStartOffset() + 1 < range.getEndOffset() : range;
     myElement = node;
     ProperTextRange.assertProperRange(range);
     myRange = range;
     myGroup = group;
     assert getRange().getLength() >= 2 : "range:" + getRange();
+    myDependencies = dependencies;
   }
 
   /**
@@ -117,5 +128,10 @@ public class FoldingDescriptor {
       return foldingBuilder.getPlaceholderText(myElement);
     }
     return null;
+  }
+  
+  @NotNull
+  public Set<Object> getDependencies() {
+    return myDependencies;
   }
 }

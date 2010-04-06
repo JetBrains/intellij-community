@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Bas Leijdekkers
+ * Copyright 2008-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ public class ReplaceConcatenationWithFormatStringIntention
         PsiElement parent = expression.getParent();
         while (ConcatenationUtils.isConcatenation(parent)) {
             expression = (PsiBinaryExpression)parent;
-            assert expression != null;
+            if (expression == null) {
+                return;
+            }
             parent = expression.getParent();
         }
 
@@ -67,7 +69,7 @@ public class ReplaceConcatenationWithFormatStringIntention
 
     private static boolean replaceWithPrintfExpression(
             PsiBinaryExpression expression,
-            CharSequence formatString, 
+            CharSequence formatString,
             List<PsiExpression> formatParameters)
             throws IncorrectOperationException {
         final PsiElement expressionParent = expression.getParent();
@@ -144,7 +146,8 @@ public class ReplaceConcatenationWithFormatStringIntention
             final String text = lhs.getText();
             final int length = text.length();
             final PsiType type = lhs.getType();
-            if (type != null && type.equalsToText("java.lang.String")) {
+            if (type != null && (type.equalsToText("java.lang.String") ||
+                 type.equalsToText("char"))) {
                 if (length > 2) {
                     formatString.append(text.substring(1, length - 1));
                 }

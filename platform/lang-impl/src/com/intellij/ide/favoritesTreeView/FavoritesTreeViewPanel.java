@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -59,6 +60,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -76,7 +78,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private final FavoritesTreeStructure myFavoritesTreeStructure;
   private FavoritesViewTreeBuilder myBuilder;
   private final CopyPasteDelegator myCopyPasteDelegator;
-  private MouseListener myTreePopupHandler;
+  private final MouseListener myTreePopupHandler;
 
   public static final DataKey<FavoritesTreeNodeDescriptor[]> CONTEXT_FAVORITES_ROOTS_DATA_KEY = DataKey.create("FavoritesRoot");
   @Deprecated public static final String CONTEXT_FAVORITES_ROOTS = CONTEXT_FAVORITES_ROOTS_DATA_KEY.getName();
@@ -447,24 +449,36 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private final class MyIdeView implements IdeView {
     public void selectElement(final PsiElement element) {
       if (element != null) {
+        selectPsiElement(element, false);
+        boolean requestFocus = true;
         final boolean isDirectory = element instanceof PsiDirectory;
         if (!isDirectory) {
           Editor editor = EditorHelper.openInEditor(element);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            requestFocus = false;
           }
+        }
+        if (requestFocus) {
+          selectPsiElement(element, true);
         }
       }
     }
 
-    private PsiDirectory getDirectory() {
+    private void selectPsiElement(PsiElement element, boolean requestFocus) {
+      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
+      FavoritesTreeViewPanel.this.selectElement(element, virtualFile, requestFocus);
+    }
+
+    @Nullable
+    private PsiDirectory[] getSelectedDirectories() {
       if (myBuilder == null) return null;
       final Object[] selectedNodeElements = getSelectedNodeElements();
       if (selectedNodeElements.length != 1) return null;
       for (FavoriteNodeProvider nodeProvider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
         final PsiElement psiElement = nodeProvider.getPsiElement(selectedNodeElements[0]);
         if (psiElement instanceof PsiDirectory) {
-          return (PsiDirectory)psiElement;
+          return new PsiDirectory[]{(PsiDirectory)psiElement};
         } else if (psiElement instanceof PsiDirectoryContainer) {
           final String moduleName = nodeProvider.getElementModuleName(selectedNodeElements[0]);
           GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
@@ -474,16 +488,15 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
               searchScope = GlobalSearchScope.moduleScope(module);
             }
           }
-          final PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
-          if (directories.length == 1) return directories[0];
+          return ((PsiDirectoryContainer)psiElement).getDirectories(searchScope);
         }
       }
-      return null;
+      return selectedNodeElements[0] instanceof PsiDirectory ? new PsiDirectory[] {(PsiDirectory)selectedNodeElements[0]} : null;
     }
 
     public PsiDirectory[] getDirectories() {
-      PsiDirectory directory = getDirectory();
-      return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
+      final PsiDirectory[] directories = getSelectedDirectories();
+      return directories == null ? PsiDirectory.EMPTY_ARRAY : directories;
     }
 
     public PsiDirectory getOrChooseDirectory() {

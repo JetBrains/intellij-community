@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
@@ -30,8 +31,10 @@ public class DummyIdentifierPatcher extends FileCopyPatcher {
   }
 
   public void patchFileCopy(@NotNull final PsiFile fileCopy, @NotNull final Document document, @NotNull final OffsetMap map) {
-    document.replaceString(map.getOffset(CompletionInitializationContext.START_OFFSET), map.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET),
-                           myDummyIdentifier);
+    if (StringUtil.isEmpty(myDummyIdentifier)) return;
+    int startOffset = map.getOffset(CompletionInitializationContext.START_OFFSET);
+    int endOffset = map.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+    document.replaceString(startOffset, endOffset, myDummyIdentifier);
   }
 
   @Override

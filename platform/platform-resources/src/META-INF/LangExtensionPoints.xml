@@ -115,6 +115,8 @@
   <extensionPoint name="lang.treePatcher" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.tokenSeparatorGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
+  <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
+
   <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="fileType.fileViewProviderFactory" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint"/>
   <extensionPoint name="multiLangCommenter"
@@ -237,6 +239,8 @@
 
   <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>
 
+  <extensionPoint name="console.folding" interface="com.intellij.execution.ConsoleFolding"/>
+
   <extensionPoint name="configurationProducer"
                   interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
 
@@ -309,6 +313,8 @@
 
   <extensionPoint name="usageFilteringRuleProvider"
                   interface="com.intellij.usages.rules.UsageFilteringRuleProvider"/>
+  <extensionPoint name="importFilteringRule"
+                  interface="com.intellij.usages.rules.ImportFilteringRule"/>
   <extensionPoint name="usageGroupingRuleProvider"
                   interface="com.intellij.usages.rules.UsageGroupingRuleProvider"/>
   <extensionPoint name="usageTypeProvider"
@@ -397,6 +403,8 @@
   <extensionPoint name="fileTemplateDefaultExtension" beanClass="com.intellij.ide.fileTemplates.FileTemplateDefaultExtension"/>
 
   <extensionPoint name="problemFileHighlightFilter" interface="com.intellij.openapi.util.Condition" area="IDEA_PROJECT"/>
+
+  <extensionPoint name="problemHighlightFilter" interface="com.intellij.codeInsight.daemon.ProblemHighlightFilter"/>
 
   <extensionPoint name="uiDebuggerExtension" interface="com.intellij.ui.debugger.UiDebuggerExtension"/>
 

@@ -106,7 +106,7 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   private LineMarkerInfo<PsiElement> resolveIconInfo(PsiType type, PsiExpression initializer, PsiElement bindingElement) {
-    if (initializer != null && isIconClassType(type)) {
+    if (initializer != null && initializer.isValid() && isIconClassType(type)) {
 
       final List<FileReference> refs = new ArrayList<FileReference>();
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {

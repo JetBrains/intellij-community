@@ -110,8 +110,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       myStoredEvaluationContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(myStoredEvaluationContext.getSuspendContext()) {
         public void contextAction() throws Exception {
           // re-setting the context will cause value recalculation
-          setContext(myStoredEvaluationContext);
-          semaphore.up();
+          try {
+            setContext(myStoredEvaluationContext);
+          }
+          finally {
+            semaphore.up();
+          }
         }
       });
       semaphore.waitFor();
@@ -325,17 +329,21 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   //returns expression that evaluates tree to this descriptor
   public PsiExpression getTreeEvaluation(DebuggerTreeNodeImpl debuggerTreeNode, DebuggerContextImpl context) throws EvaluateException {
     if(debuggerTreeNode.getParent() != null && debuggerTreeNode.getParent().getDescriptor() instanceof ValueDescriptor) {
-      NodeDescriptorImpl descriptor = debuggerTreeNode.getParent().getDescriptor();
-      ValueDescriptorImpl vDescriptor = ((ValueDescriptorImpl)descriptor);
-      PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation(debuggerTreeNode.getParent(), context);
+      final NodeDescriptorImpl descriptor = debuggerTreeNode.getParent().getDescriptor();
+      final ValueDescriptorImpl vDescriptor = ((ValueDescriptorImpl)descriptor);
+      final PsiExpression parentEvaluation = vDescriptor.getTreeEvaluation(debuggerTreeNode.getParent(), context);
+
+      if (parentEvaluation == null) {
+        return null;
+      }
 
       return DebuggerTreeNodeExpression.substituteThis(
-              vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(debuggerTreeNode, context),
-              parentEvaluation, vDescriptor.getValue());
+        vDescriptor.getRenderer(context.getDebugProcess()).getChildValueExpression(debuggerTreeNode, context),
+        parentEvaluation, vDescriptor.getValue()
+      );
     }
-    else {
-      return getDescriptorEvaluation(context);
-    }
+
+    return getDescriptorEvaluation(context);
   }
 
   //returns expression that evaluates descriptor value

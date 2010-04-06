@@ -774,4 +774,8 @@ public class IdeEventQueue extends EventQueue {
       });
     }
   }
+
+  public boolean isPopupActive() {
+    return myPopupManager.isPopupActive();
+  }
 }

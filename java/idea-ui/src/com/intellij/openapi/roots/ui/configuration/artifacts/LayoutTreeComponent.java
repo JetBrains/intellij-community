@@ -65,17 +65,17 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   @NonNls private static final String EMPTY_CARD = "<empty>";
   @NonNls private static final String PROPERTIES_CARD = "properties";
   private final ArtifactEditorImpl myArtifactsEditor;
-  private LayoutTree myTree;
-  private JPanel myTreePanel;
+  private final LayoutTree myTree;
+  private final JPanel myTreePanel;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters;
-  private ArtifactEditorContext myContext;
+  private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
   private SelectedElementInfo<?> mySelectedElementInfo = new SelectedElementInfo<PackagingElement<?>>(null);
   private JPanel myPropertiesPanelWrapper;
   private JPanel myPropertiesPanel;
-  private LayoutTreeBuilder myBuilder;
+  private final LayoutTreeBuilder myBuilder;
   private boolean mySortElements;
-  private LayoutTreeStructure myTreeStructure;
+  private final LayoutTreeStructure myTreeStructure;
 
   public LayoutTreeComponent(ArtifactEditorImpl artifactsEditor, ComplexElementSubstitutionParameters substitutionParameters,
                              ArtifactEditorContext context, Artifact originalArtifact, boolean sortElements) {

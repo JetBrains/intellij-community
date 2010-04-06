@@ -23,13 +23,16 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.io.Serializable;
 
 public class RawText implements Cloneable, Serializable {
-  public static final @NonNls DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(),
-                                                                 "Raw Text");
+  public static @NonNls DataFlavor ourFlavor;
   public String rawText;
 
   public RawText(final String rawText) {
@@ -43,5 +46,36 @@ public class RawText implements Cloneable, Serializable {
     catch(CloneNotSupportedException e){
       throw new RuntimeException();
     }
+  }
+
+  public static DataFlavor getDataFlavor() {
+    if (ourFlavor != null) {
+      return ourFlavor;
+    }
+    try {
+      ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + RawText.class.getName(), "Raw Text");
+    }
+    catch (NoClassDefFoundError e) {
+      return null;
+    }
+    return ourFlavor;
+  }
+
+  @Nullable
+  public static RawText fromTransferable(Transferable content) {
+    RawText raw = null;
+    final DataFlavor flavor = getDataFlavor();
+    if (flavor != null) {
+      try {
+        raw = (RawText)content.getTransferData(flavor);
+      }
+      catch (UnsupportedFlavorException e) {
+        // OK. raw will be null and we'll get plain string
+      }
+      catch (IOException e) {
+        // OK. raw will be null and we'll get plain string
+      }
+    }
+    return raw;
   }
 }

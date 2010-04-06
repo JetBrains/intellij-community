@@ -231,6 +231,8 @@ public abstract class JBPopupFactory {
   @Nullable
   public abstract List<JBPopup> getChildPopups(@NotNull Component parent);
 
+  public abstract boolean isPopupActive();
+
   public abstract BalloonBuilder createBalloonBuilder(@NotNull JComponent content);
 
 

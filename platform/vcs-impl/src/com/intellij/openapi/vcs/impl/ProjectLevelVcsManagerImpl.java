@@ -28,6 +28,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -74,9 +76,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final ProjectLevelVcsManagerSerialization mySerialization;
   private final OptionsAndConfirmations myOptionsAndConfirmations;
 
-  private NewMappings myMappings;
+  private final NewMappings myMappings;
   private final Project myProject;
-  private MappingsToRoots myMappingsToRoots;
+  private final MappingsToRoots myMappingsToRoots;
 
   private volatile boolean myIsDisposed = false;
   private final Object myDisposeLock = new Object();
@@ -98,13 +100,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private boolean myMappingsLoaded = false;
   private boolean myHaveLegacyVcsConfiguration = false;
   private boolean myCheckinHandlerFactoriesLoaded = false;
-  private DefaultVcsRootPolicy myDefaultVcsRootPolicy;
+  private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
   private volatile int myBackgroundOperationCounter = 0;
 
   private final Map<VcsBackgroundableActions, BackgroundableActionEnabledHandler> myBackgroundableActionHandlerMap;
 
-  private List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
+  private final List<Pair<String, TextAttributes>> myPendingOutput = new ArrayList<Pair<String, TextAttributes>>();
 
   public ProjectLevelVcsManagerImpl(Project project) {
     myProject = project;
@@ -117,6 +119,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myInitialization = new VcsInitialization(myProject);
     myMappings = new NewMappings(myProject, myEventDispatcher, this);
     myMappingsToRoots = new MappingsToRoots(myMappings, myProject);
+
+    ProjectManager.getInstance().addProjectManagerListener(myProject, new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        onProjectClosing();
+      }
+    });
   }
 
   public void initComponent() {
@@ -241,17 +250,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     });
   }
 
+  private void onProjectClosing() {
+    if (myEditorAdapter != null) {
+      final Editor editor = myEditorAdapter.getEditor();
+      if (! editor.isDisposed()) {
+        EditorFactory.getInstance().releaseEditor(editor);
+      }
+    }
+  }
+
   private void dispose() {
     // todo dispose lock is bad here..
     synchronized (myDisposeLock) {
       if (myIsDisposed) return;
 
-      if (myEditorAdapter != null) {
-        final Editor editor = myEditorAdapter.getEditor();
-        if (! editor.isDisposed()) {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      }
       myMappings.disposeMe();
       try {
         myContentManager = null;
@@ -320,9 +332,10 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     Content content = contentManager.findContent(displayName);
     if (content == null) {
       final EditorFactory editorFactory = EditorFactory.getInstance();
-      final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""));
+      final Editor editor = editorFactory.createViewer(editorFactory.createDocument(""), myProject);
       EditorSettings editorSettings = editor.getSettings();
       editorSettings.setLineMarkerAreaShown(false);
+      editorSettings.setIndentGuidesShown(false);
       editorSettings.setLineNumbersShown(false);
       editorSettings.setFoldingOutlineShown(false);
 

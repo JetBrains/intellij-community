@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -111,12 +112,19 @@ public class DumbServiceImpl extends DumbService {
       }
       try {
         final int size = runner.queryNeededFiles(indicator);
-        if (size < 50) {
-          // if not that many files found, process them on the spot, avoiding entering dumb mode
-          if (size > 0) {
-            runner.processFiles(indicator, false);
+        if (application.isHeadlessEnvironment() || (size + runner.getNumberOfPendingUpdateJobs(indicator)) < 50) {
+          // If not that many files found, process them on the spot, avoiding entering dumb mode
+          // Consider number of pending tasks as well, becase they may take noticeable time to process even if the number of files is small
+          try {
+            HeavyProcessLatch.INSTANCE.processStarted();
+            if (size > 0) {
+              runner.processFiles(indicator, false);
+            }
+            runner.updatingDone();
           }
-          runner.updatingDone();
+          finally {
+            HeavyProcessLatch.INSTANCE.processFinished();
+          }
           return;
         }
       }
@@ -226,10 +234,10 @@ public class DumbServiceImpl extends DumbService {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     runWhenSmart(new Runnable() {
-          public void run() {
-            semaphore.up();
-          }
-        });
+      public void run() {
+        semaphore.up();
+      }
+    });
     semaphore.waitFor();
   }
 
@@ -275,7 +283,14 @@ public class DumbServiceImpl extends DumbService {
                 }
               }
             });
-          runAction(proxy, myAction);
+
+          try {
+            HeavyProcessLatch.INSTANCE.processStarted();
+            runAction(proxy, myAction);
+          }
+          finally {
+            HeavyProcessLatch.INSTANCE.processFinished();
+          }
         }
 
         private void runAction(ProgressIndicator indicator, CacheUpdateRunner updateRunner) {
@@ -299,7 +314,7 @@ public class DumbServiceImpl extends DumbService {
               invokeOnEDT(new DumbAwareRunnable() {
                 public void run() {
                   if (myUpdatesQueue.isEmpty()) {
-                    // really terminate the tesk
+                    // really terminate the task
                     myActionQueue.offer(NULL_ACTION);
                     updateFinished();
                   }

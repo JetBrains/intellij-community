@@ -35,9 +35,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
 
 /**
  * Base class for code style settings panels supporting multiple programming languages.
@@ -46,8 +54,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstractPanel {
 
-  private Language myLanguage;
+  private static Language myLanguage;
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
+  private int myLangSelectionIndex;
+  private JTabbedPane tabbedPane;
 
   protected MultilanguageCodeStyleAbstractPanel(CodeStyleSettings settings) {
     super(settings);
@@ -80,10 +90,11 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     if (myLanguage != null) {
       return myLanguage.getAssociatedFileType();
     }
-    LanguageFileType availTypes[] = LanguageCodeStyleSettingsProvider.getLanguageFileTypes();
-    if (availTypes.length > 0) {
-      myLanguage = availTypes[0].getLanguage();
-      return availTypes[0];
+    Language langs[] = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    if (langs.length > 0) {
+      myLanguage = langs[0];
+      FileType type = langs[0].getAssociatedFileType();
+      if (type != null) return type;
     }
     return StdFileTypes.JAVA;
   }
@@ -99,13 +110,12 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     return null;
   }
 
+
   @Override
-  protected PsiFile doReformat(final Project project, PsiFile psiFile) {
+  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
     final String text = psiFile.getText();
-    final PsiFile file =
-      PsiFileFactory.getInstance(project).createFileFromText("a", getFileType(), text, LocalTimeCounter.currentTime(), true);
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    final Document doc = manager.getDocument(file);
+    final Document doc = manager.getDocument(psiFile);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -113,7 +123,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
             doc.replaceString(0, doc.getTextLength(), text);
             manager.commitDocument(doc);
             try {
-              CodeStyleManager.getInstance(project).reformat(file);
+              CodeStyleManager.getInstance(project).reformat(psiFile);
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -123,6 +133,81 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
       }
     }, "", "");
     manager.commitDocument(doc);
-    return file;
+    return psiFile;
   }
+
+  protected static JPanel createPreviewPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(IdeBorderFactory.createTitledBorder("Preview"));
+    panel.setPreferredSize(new Dimension(200, 0));
+    return panel;
+  }
+
+
+  @Override
+  protected void installPreviewPanel(final JPanel previewPanel) {
+    tabbedPane = new JTabbedPane();
+    tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+    Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    if (langs.length == 0) return;
+    for (Language lang : langs) {
+      tabbedPane.addTab(lang.getDisplayName(), createDummy());
+    }
+    tabbedPane.setComponentAt(0, getEditor().getComponent());
+    myLangSelectionIndex = 0;
+    if (myLanguage == null) {
+      setLanguage(langs[0]);
+    }
+    else {
+      updatePreviewEditor();
+    }
+    tabbedPane.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        onTabSelection((JTabbedPane)e.getSource());        
+      }
+    });
+    previewPanel.add(tabbedPane, BorderLayout.CENTER);
+    previewPanel.addAncestorListener(new AncestorListener(){
+      public void ancestorAdded(AncestorEvent event) {
+        selectCurrentLanguageTab();
+      }
+
+      public void ancestorRemoved(AncestorEvent event) {
+        // Do nothing
+      }
+
+      public void ancestorMoved(AncestorEvent event) {
+        // Do nothing
+      }
+    });
+  }
+
+  private void selectCurrentLanguageTab() {
+    for(int i = 0; i < tabbedPane.getTabCount(); i ++) {
+      if (myLanguage.getDisplayName().equals(tabbedPane.getTitleAt(i))) {
+        tabbedPane.setSelectedIndex(i);
+        return;
+      }
+    }
+  }
+
+
+  private void onTabSelection(JTabbedPane tabs) {
+    int i = tabs.getSelectedIndex();
+    tabs.setComponentAt(myLangSelectionIndex, createDummy());
+    tabs.setComponentAt(i, getEditor().getComponent());
+    myLangSelectionIndex = i;
+    String selectionTitle = tabs.getTitleAt(i);
+    Language lang = LanguageCodeStyleSettingsProvider.getLanguage(selectionTitle);
+    if (lang != null) {
+      setLanguage(lang);
+    }
+  }
+
+
+  private JComponent createDummy() {
+    return new JLabel("");
+  }
+
+
 }

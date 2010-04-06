@@ -43,7 +43,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<PredefinedLogFile>();
   @NonNls private static final String LOG_FILE = "log_file";
   @NonNls private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
-  private Icon myIcon;
+  private final Icon myIcon;
 
   protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
     myProject = project;

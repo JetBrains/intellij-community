@@ -18,10 +18,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ExternallyDefinedPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +63,17 @@ public class ProblemsHolder {
   }
 
   public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
-    if (myProblems == null) {
-      myProblems = new ArrayList<ProblemDescriptor>(1);
-    }
     PsiElement element = problemDescriptor.getPsiElement();
     if (element != null && !isInPsiFile(element)) {
+      ExternallyDefinedPsiElement external = PsiTreeUtil.getParentOfType(element, ExternallyDefinedPsiElement.class, false);
+      if (external != null) {
+        PsiElement newTarget = external.getProblemTarget();
+        if (newTarget != null) {
+          redirectProblem(problemDescriptor, newTarget);
+          return;
+        }
+      }
+
       PsiFile containingFile = element.getContainingFile();
       PsiElement context = containingFile.getContext();
       PsiElement myContext = myFile.getContext();
@@ -71,12 +82,41 @@ public class ProblemsHolder {
                 +"Inspection invoked for file: "+ myFile +"; context: "+(myContext == null ? null : myContext.getContainingFile())+"\n"
                 );
     }
+
+    if (myProblems == null) {
+      myProblems = new ArrayList<ProblemDescriptor>(1);
+    }
     myProblems.add(problemDescriptor);
   }
 
   private boolean isInPsiFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     return ArrayUtil.indexOf(myFile.getPsiRoots(), file) != -1;
+  }
+
+  private void redirectProblem(@NotNull final ProblemDescriptor problem, @NotNull final PsiElement target) {
+    final PsiElement original = problem.getPsiElement();
+    final VirtualFile vFile = original.getContainingFile().getVirtualFile();
+    assert vFile != null;
+    final String path = FileUtil.toSystemIndependentName(vFile.getPath());
+
+    String description = problem.getDescriptionTemplate();
+    if (description.startsWith("<html>")) {
+      description = description.replace("<html>", "").replace("</html>", "");
+    }
+    if (description.startsWith("<body>")) {
+      description = description.replace("<body>", "").replace("</body>", "");
+    }
+
+    final String template =
+      InspectionsBundle.message("inspection.redirect.template",
+                                description, path, original.getTextRange().getStartOffset(), vFile.getName());
+
+
+    final InspectionManager manager = InspectionManager.getInstance(original.getProject());
+    final ProblemDescriptor newProblem =
+      manager.createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
+    registerProblem(newProblem);
   }
 
   public void registerProblem(@NotNull PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
@@ -137,5 +177,9 @@ public class ProblemsHolder {
 
   public boolean isOnTheFly() {
     return myOnTheFly;
+  }
+
+  public final Project getProject() {
+    return myManager.getProject();
   }
 }

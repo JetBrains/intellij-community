@@ -238,7 +238,6 @@ public class Assertion extends Assert {
   public void size(int size, Collection collection) {
     if (collection.size() != size) {
       System.err.println("Expected: " + size + " actual: " + collection.size());
-      compareUnordered(ArrayUtil.EMPTY_OBJECT_ARRAY, collection);
     }
     Assert.assertEquals(size, collection.size());
   }

@@ -25,20 +25,21 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.IdeaTestUtil;
+import junit.framework.Assert;
+import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.idea.eclipse.config.CachedXmlDocumentSet;
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
-import org.jetbrains.idea.eclipse.config.EclipseModuleManager;
+import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 import org.jetbrains.idea.eclipse.importWizard.EclipseProjectFinder;
 
 import java.io.File;
@@ -61,17 +62,17 @@ public class EclipseEmlTest extends IdeaTestCase {
 
 
 
-  private void doTest(String relativePath) throws Exception {
-    final String path = getProject().getBaseDir().getPath() + relativePath;
+  protected static void doTest(String relativePath, final Project project) throws Exception {
+    final String path = project.getBaseDir().getPath() + relativePath;
     final Module module = ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
-        return ModuleManager.getInstance(getProject())
+        return ModuleManager.getInstance(project)
           .newModule(path + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA);
       }
     });
 
-    replaceRoot(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
-    replaceRoot(path, EclipseXml.DOT_CLASSPATH_EXT);
+    replaceRoot(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, project);
+    replaceRoot(path, EclipseXml.DOT_CLASSPATH_EXT, project);
 
 
     final EclipseClasspathStorageProvider.EclipseClasspathConverter converter =
@@ -81,30 +82,20 @@ public class EclipseEmlTest extends IdeaTestCase {
     final Element classpathElement = JDOMUtil.loadDocument(new String(FileUtil.loadFileText(new File(path, EclipseXml.DOT_CLASSPATH_EXT)))).getRootElement();
     converter.getClasspath(rootModel, classpathElement);
 
-    final File tempDirectory = FileUtil.createTempDirectory("", "");
-    tempDirectory.deleteOnExit();
-    FileUtil.copyDir(new File(path), tempDirectory);
-
-    new EclipseClasspathStorageProvider.EclipseClasspathConverter(module) {
-      @Override
-      public CachedXmlDocumentSet getFileSet() {
-        CachedXmlDocumentSet fileCache = new CachedXmlDocumentSet(module.getProject());
-        EclipseModuleManager.getInstance(module).setDocumentSet(fileCache);
-        EclipseClasspathStorageProvider
-          .registerFiles(fileCache, module, tempDirectory.getPath(), tempDirectory.getPath());
-        fileCache.preload();
-        return fileCache;
-      }
-    }.setClasspath(rootModel);
+    final Element root = new Element("component");
+    IdeaSpecificSettings.writeIDEASpecificClasspath(root, rootModel);
     rootModel.dispose();
 
-    IdeaTestUtil.assertDirectoriesEqual(LocalFileSystem.getInstance().findFileByIoFile(new File(path, EclipseXml.DOT_CLASSPATH_EXT).getParentFile()),
-                                        LocalFileSystem.getInstance().findFileByIoFile(tempDirectory), null);
+    final String resulted = new String(JDOMUtil.printDocument(new Document(root), "\n"));
+
+    final File emlFile = new File(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
+    Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
+                      JDOMUtil.areElementsEqual(root, JDOMUtil.loadDocument(new String(FileUtil.loadFileText(emlFile))).getRootElement()));
   }
 
-  private void replaceRoot(String path, final String child) throws IOException, JDOMException {
+  private static void replaceRoot(String path, final String child, final Project project) throws IOException, JDOMException {
     final File emlFile = new File(path, child);
-    String fileText = new String(FileUtil.loadFileText(emlFile)).replaceAll("\\$ROOT\\$", getProject().getBaseDir().getPath());
+    String fileText = new String(FileUtil.loadFileText(emlFile)).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
@@ -112,7 +103,7 @@ public class EclipseEmlTest extends IdeaTestCase {
   }
 
   public void testSrcInZip() throws Exception {
-    doTest("/test");
+    doTest("/test", getProject());
   }
 
 }

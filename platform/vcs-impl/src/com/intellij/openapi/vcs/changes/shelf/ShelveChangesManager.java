@@ -27,12 +27,13 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.options.StreamProvider;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -170,7 +171,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       if (ind != null && ind.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      final List<FilePatch> patches = PatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), true, false);
+      final List<FilePatch> patches = TextPatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), false);
       if (ind != null && ind.isCanceled()) {
         throw new ProcessCanceledException();
       }
@@ -242,6 +243,14 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
   public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
                                            @Nullable final List<ShelvedBinaryFile> binaryFiles, final LocalChangeList targetChangeList) {
+    unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, true);
+  }
+
+  public void unshelveChangeList(final ShelvedChangeList changeList,
+                                 @Nullable final List<ShelvedChange> changes,
+                                 @Nullable final List<ShelvedBinaryFile> binaryFiles,
+                                 final LocalChangeList targetChangeList,
+                                 boolean showSuccessNotification) {
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
 
     final List<TextFilePatch> textFilePatches;
@@ -269,8 +278,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
 
     final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
-    final PatchApplier patchApplier = new PatchApplier(myProject, myProject.getBaseDir(), patches, targetChangeList, binaryPatchApplier);
-    patchApplier.execute();
+    final PatchApplier<ShelvedBinaryFilePatch> patchApplier = new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(), patches, targetChangeList, binaryPatchApplier);
+    patchApplier.execute(showSuccessNotification);
     remainingPatches.addAll(patchApplier.getRemainingPatches());
 
     if ((remainingPatches.size() == 0) && remainingBinaries.isEmpty()) {
@@ -299,7 +308,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return textFilePatches;
   }
 
-  private class BinaryPatchApplier implements CustomBinaryPatchApplier {
+  private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {
     private final List<FilePatch> myAppliedPatches;
 
     private BinaryPatchApplier(final int binaryCount) {
@@ -307,9 +316,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
 
     @NotNull
-    public ApplyPatchStatus apply(final List<Pair<VirtualFile, FilePatch>> patches) throws IOException {
-      for (Pair<VirtualFile, FilePatch> patch : patches) {
-        final ShelvedBinaryFilePatch shelvedPatch = (ShelvedBinaryFilePatch) patch.getSecond();
+    public ApplyPatchStatus apply(final List<Pair<VirtualFile, ApplyFilePatchBase<ShelvedBinaryFilePatch>>> patches) throws IOException {
+      for (Pair<VirtualFile, ApplyFilePatchBase<ShelvedBinaryFilePatch>> patch : patches) {
+        final ShelvedBinaryFilePatch shelvedPatch = patch.getSecond().getPatch();
         unshelveBinaryFile(shelvedPatch.getShelvedBinaryFile(), patch.getFirst());
         myAppliedPatches.add(shelvedPatch);
       }
@@ -522,7 +531,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     return reader.readAllPatches();
   }
 
-  private static class ShelvedBinaryFilePatch extends FilePatch {
+  public static class ShelvedBinaryFilePatch extends FilePatch {
     private final ShelvedBinaryFile myShelvedBinaryFile;
 
     public ShelvedBinaryFilePatch(final ShelvedBinaryFile shelvedBinaryFile) {
@@ -540,14 +549,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     @Override
     public String getAfterFileName() {
       String[] pathNameComponents = myShelvedBinaryFile.AFTER_PATH.replace(File.separatorChar, '/').split("/");
-      return pathNameComponents [pathNameComponents.length-1];    
+      return pathNameComponents [pathNameComponents.length-1];
     }
 
-    protected void applyCreate(final VirtualFile newFile) throws IOException, ApplyPatchException {
-    }
-    protected ApplyPatchStatus applyChange(final VirtualFile fileToPatch) throws IOException, ApplyPatchException {
-      return null;
-    }
     public boolean isNewFile() {
       return myShelvedBinaryFile.BEFORE_PATH == null;
     }

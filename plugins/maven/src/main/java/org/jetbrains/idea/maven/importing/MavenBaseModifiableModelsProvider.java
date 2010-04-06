@@ -47,7 +47,7 @@ public abstract class MavenBaseModifiableModelsProvider implements MavenModifiab
   protected ModifiableArtifactModel myArtifactModel;
   protected final Project myProject;
   private MavenBaseModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
-  private ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;
+  private final ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;
 
   public MavenBaseModifiableModelsProvider(Project project) {
     myProject = project;

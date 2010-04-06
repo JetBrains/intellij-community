@@ -34,7 +34,7 @@ import java.util.*;
 public class ControlFlowWrapper {
   private static final Logger LOG = Logger.getInstance("#" + ControlFlowWrapper.class.getName());
 
-  private ControlFlow myControlFlow;
+  private final ControlFlow myControlFlow;
   private int myFlowStart;
 
   private int myFlowEnd;

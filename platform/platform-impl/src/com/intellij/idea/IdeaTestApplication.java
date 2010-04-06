@@ -30,7 +30,7 @@ public class IdeaTestApplication extends CommandLineApplication {
   private DataProvider myDataContext;
 
   private IdeaTestApplication() {
-    super(false, true, true);
+    super(true, true, true);
 
     PluginsFacade.INSTANCE = new PluginsFacade() {
       public IdeaPluginDescriptor getPlugin(PluginId id) {

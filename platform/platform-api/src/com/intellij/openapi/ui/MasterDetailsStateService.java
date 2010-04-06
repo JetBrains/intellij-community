@@ -42,8 +42,8 @@ import java.util.Map;
     )}
 )
 public class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.State>{
-  private Map<String, MasterDetailsComponent> myComponents = new HashMap<String, MasterDetailsComponent>();
-  private State myStates = new State();
+  private final Map<String, MasterDetailsComponent> myComponents = new HashMap<String, MasterDetailsComponent>();
+  private final State myStates = new State();
 
   public static MasterDetailsStateService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, MasterDetailsStateService.class);

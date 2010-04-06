@@ -37,7 +37,7 @@ import java.util.Comparator;
  */
 class SettingsUI {
 
-  private Configurable[] myConfigurables;
+  private final Configurable[] myConfigurables;
 
   private final JPanel myRoot = new JPanel(new BorderLayout());
   private final JTabbedPane myTabbedPane;

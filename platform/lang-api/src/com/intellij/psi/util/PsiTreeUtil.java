@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PsiTreeUtil {
@@ -48,7 +49,14 @@ public class PsiTreeUtil {
    */
   public static boolean isAncestor(@Nullable PsiElement ancestor, @NotNull PsiElement element, boolean strict) {
     if (ancestor == null) return false;
+    // fast path to avoid loading tree
+    if (ancestor instanceof StubBasedPsiElement && ((StubBasedPsiElement)ancestor).getStub() != null ||
+        element instanceof StubBasedPsiElement && ((StubBasedPsiElement)element).getStub() != null) {
+      if (ancestor.getContainingFile() != element.getContainingFile()) return false;
+    }
+
     boolean stopAtFileLevel = !(ancestor instanceof PsiFile || ancestor instanceof PsiDirectory);
+
     PsiElement parent = strict ? element.getParent() : element;
     while (true) {
       if (parent == null) return false;
@@ -172,6 +180,13 @@ public class PsiTreeUtil {
     }
     return null;
   }
+
+  @NotNull public static <T extends PsiElement> T getRequiredChildOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    final T child = getChildOfType(element, aClass);
+    assert child != null: "Missing required child of type " + aClass.getName();
+    return child;
+  }
+
   @Nullable public static <T extends PsiElement> T[] getChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     List<T> result = null;
     for(PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()){
@@ -331,7 +346,7 @@ public class PsiTreeUtil {
 
   @NotNull
   public static PsiElement[] collectElements(@Nullable PsiElement element, @NotNull PsiElementFilter filter) {
-    PsiElementProcessor.CollectFilteredElements processor = new PsiElementProcessor.CollectFilteredElements(filter);
+    PsiElementProcessor.CollectFilteredElements<PsiElement> processor = new PsiElementProcessor.CollectFilteredElements<PsiElement>(filter);
     processElements(element, processor);
     return processor.toArray();
   }
@@ -537,7 +552,8 @@ public class PsiTreeUtil {
     return false;
   }
 
-  public static PsiElement[] filterAncestors(PsiElement[] elements) {
+  @NotNull
+  public static PsiElement[] filterAncestors(@NotNull PsiElement[] elements) {
     if (LOG.isDebugEnabled()) {
       for (PsiElement element : elements) {
         LOG.debug("element = " + element);
@@ -545,9 +561,7 @@ public class PsiTreeUtil {
     }
 
     ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
-    for (PsiElement element : elements) {
-      filteredElements.add(element);
-    }
+    filteredElements.addAll(Arrays.asList(elements));
 
     int previousSize;
     do {

@@ -139,6 +139,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private void fillEditorSettings(final EditorSettings editorSettings) {
     editorSettings.setWhitespacesShown(true);
     editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setFoldingOutlineShown(false);
     editorSettings.setAdditionalColumnsCount(0);
@@ -160,11 +161,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myTextToReformat = myEditor.getDocument().getText();
     }
 
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    final Project finalProject = project;
+    final Project finalProject = getCurrentProject();
     CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
       public void run() {
         replaceText(finalProject);
@@ -179,9 +176,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       public void run() {
         try {
           //important not mark as generated not to get the classes before setting language level
-          PsiFile psiFile = PsiFileFactory.getInstance(project)
-            .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), myTextToReformat, LocalTimeCounter.currentTime(),
-                                false, false);
+          PsiFile psiFile = createFileFromText(project, myTextToReformat);
 
           prepareForReformat(psiFile);
           apply(mySettings);
@@ -208,9 +203,23 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected abstract void prepareForReformat(PsiFile psiFile);
 
-  protected PsiFile doReformat(Project project, PsiFile psiFile) {
+  protected PsiFile createFileFromText(Project project, String text) {
+    PsiFile psiFile = PsiFileFactory.getInstance(project)
+      .createFileFromText("a." + getFileTypeExtension(getFileType()), getFileType(), text, LocalTimeCounter.currentTime(), true);
+    return psiFile;
+  }
+
+  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
     CodeStyleManager.getInstance(project).reformat(psiFile);
     return psiFile;
+  }
+
+  protected Project getCurrentProject() {
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+    return project;
   }
 
   @NotNull
@@ -244,7 +253,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   public abstract JComponent getPanel();
 
-  public final void dispose() {
+  public void dispose() {
     myUpdateAlarm.cancelAllRequests();
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
@@ -326,5 +335,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    */
   protected boolean isMultilanguage() {
     return false;
+  }
+
+  protected Editor getEditor() {
+    return myEditor;
   }
 }

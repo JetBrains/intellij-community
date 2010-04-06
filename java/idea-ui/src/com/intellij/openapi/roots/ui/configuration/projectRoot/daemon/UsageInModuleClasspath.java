@@ -17,8 +17,8 @@ import javax.swing.*;
 public class UsageInModuleClasspath extends ProjectStructureElementUsage {
   private final StructureConfigurableContext myContext;
   private final ModuleProjectStructureElement myContainingElement;
-  private ProjectStructureElement mySourceElement;
-  private Module myModule;
+  private final ProjectStructureElement mySourceElement;
+  private final Module myModule;
 
   public UsageInModuleClasspath(@NotNull StructureConfigurableContext context, @NotNull ModuleProjectStructureElement containingElement, ProjectStructureElement sourceElement) {
     myContext = context;

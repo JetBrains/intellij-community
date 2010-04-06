@@ -1,15 +1,21 @@
-def gdslScriptContext = context(scope: scriptScope(), filetypes: ["gdsl"])
+def gdslScriptContext = context(scope: scriptScope(), filetypes:['gdsl'])
 
 contributor([gdslScriptContext]) {
   method name: "context", params: [args: [:]], type: "java.lang.Object"
   method name: "contributor", params: [contexts: "java.util.List", body: {}], type: void
+  method name: "contributor", params: [contexts: "java.util.Map", body: {}], type: void
+  method name: "contributor", params: [contexts: "java.lang.Object", body: {}], type: void
 
   // scopes
-  property name: "closureScope", type: {}
-  property name: "scriptScope", type: {}
+  property name: "closureScope", params: [contexts: "java.util.Map"], type: {}
+  property name: "scriptScope", params: [contexts: "java.util.Map"], type: {}
+
+  method name: "hasAnnotation", params:[fqn: "java.lang.String"], type: "java.lang.Object"
+  method name: "hasMethod", params:[memberPattern: "java.lang.Object"], type: "java.lang.Object"
+  method name: "hasField", params:[memberPattern: "java.lang.Object"], type: "java.lang.Object"
 }
 
-def contributorBody = context(scope: closureScope(isArg: true))
+def contributorBody = context(scope: closureScope(isArg: true), filetypes:['gdsl'])
 
 contributor([contributorBody]) {
   if (enclosingCall("contributor")) {
@@ -33,41 +39,38 @@ contributor([contributorBody]) {
   }
 }
 
-def psiClassContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiClass")
-contributor([psiClassContext]) {
+def enrich(String className) {
+  context(scope: closureScope(isArg: true), ctype: className, filetypes:['gdsl'])
+}
+
+contributor(enrich("com.intellij.psi.PsiClass")) {
   method name: "getMethods", type: "java.util.Collection"
   method name: "getQualName", type: "java.lang.String"
 }
 
-def psiMemberContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiMember")
-contributor([psiMemberContext]) {
+contributor(enrich("com.intellij.psi.PsiMember")) {
   method name: "hasAnnotation", params: [name: "java.lang.String"], type: "boolean"
   method name: "hasAnnotation", type: "boolean"
   method name: "getAnnotation", params: [name: "java.lang.String"], type: "com.intellij.psi.PsiAnnotation"
   method name: "getAnnotations", params: [name: "java.lang.String"], type: "java.util.Collection<com.intellij.psi.PsiAnnotation>"
 }
 
-def psiFieldContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiField")
-contributor([psiFieldContext]) {
+contributor(enrich("com.intellij.psi.PsiField")) {
   method name: "getClassType", type: "com.intellij.psi.PsiClass"
 }
 
-def psiMethodContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiMethod")
-contributor([psiMethodContext]) {
+contributor(enrich("com.intellij.psi.PsiMethod")) {
   method name: "getParamStringVector", type: "java.util.Map"
 }
 
-def psiElementContext = context(scope: closureScope(isArg: true), ctype: "com.intellij.psi.PsiElement")
-contributor([psiElementContext]) {
+contributor(enrich("com.intellij.psi.PsiElement")) {
   method name: "bind", type: "com.intellij.psi.PsiElement"
   method name: "eval", type: "java.lang.Object"
   method name: "asList", type: "java.util.collection<com.intellij.psi.PsiElement>"
   method name: "getQualifier", type: "com.intellij.psi.PsiElement"
 }
 
-def expressionContext = context(scope: closureScope(isArg: true),
-                                ctype: "org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression")
-contributor([expressionContext]) {
+contributor(enrich("org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression")) {
   method name: "getArguments", type: "java.util.Collection"
   method name: "getClassType", type: "com.intellij.psi.PsiClass"
 }

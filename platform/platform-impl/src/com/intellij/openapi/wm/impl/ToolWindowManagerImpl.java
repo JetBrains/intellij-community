@@ -109,7 +109,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private final Application myApp;
 
-  private Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
+  private final Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
 
   /**
    * invoked by reflection
@@ -293,11 +293,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandsList);
   }
 
-  public void addToolWindowManagerListener(final ToolWindowManagerListener l) {
+  public void addToolWindowManagerListener(@NotNull final ToolWindowManagerListener l) {
     myListenerList.add(ToolWindowManagerListener.class, l);
   }
 
-  public void removeToolWindowManagerListener(final ToolWindowManagerListener l) {
+  public void removeToolWindowManagerListener(@NotNull final ToolWindowManagerListener l) {
     myListenerList.remove(ToolWindowManagerListener.class, l);
   }
 
@@ -571,7 +571,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return myLayout.getInfo(id, true);
   }
 
-  public List<String> getIdsOn(final ToolWindowAnchor anchor) {
+  public List<String> getIdsOn(@NotNull final ToolWindowAnchor anchor) {
     return myLayout.getVisibleIdsOn(anchor, this);
   }
 
@@ -593,7 +593,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     execute(commandList);
   }
 
-  public void hideToolWindow(final String id, final boolean hideSide) {
+  public void hideToolWindow(@NotNull final String id, final boolean hideSide) {
     hideToolWindow(id, hideSide, true);
   }
 
@@ -913,7 +913,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return myLayoutToRestoreLater;
   }
 
-  public void setLayout(final DesktopLayout layout) {
+  public void setLayout(@NotNull final DesktopLayout layout) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     // hide tool window that are invisible in new layout

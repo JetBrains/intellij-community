@@ -60,7 +60,7 @@ public class CommittedChangesBrowser extends JPanel {
   private final JEditorPane myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
   private final JPanel myLeftPanel;
-  private JPanel myLoadingLabelPanel;
+  private final JPanel myLoadingLabelPanel;
 
   public CommittedChangesBrowser(final Project project, final CommittedChangesTableModel tableModel) {
     super(new BorderLayout());
@@ -72,7 +72,6 @@ public class CommittedChangesBrowser extends JPanel {
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myChangesView = new RepositoryChangesBrowser(project, tableModel.getItems());
-    myChangesView.getListPanel().setBorder(null);
 
     myChangeListsView.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

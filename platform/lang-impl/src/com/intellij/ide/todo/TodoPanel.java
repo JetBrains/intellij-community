@@ -369,7 +369,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }
 
     public void expandAll() {
-      myTodoTreeBuilder.expandAll();
+      myTodoTreeBuilder.expandAll(null);
     }
   }
 

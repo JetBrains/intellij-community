@@ -81,12 +81,10 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
 
     PsiElement current = element;
     while (current != null) {
-      if (current instanceof PsiFileSystemItem) {
-        break;
-      }
-      if (isTopLevelClass(current, baseRootFile)) {
-        break;
-      }
+
+      if (isSelectable(current)) break;
+      if (isTopLevelClass(current, baseRootFile)) break;
+
       current = current.getParent();
     }
 
@@ -96,7 +94,18 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         current = classes[0];
       }
     }
-    return current instanceof PsiClass ? current : baseRootFile;
+
+    return current != null ? current : baseRootFile;
+  }
+
+  private boolean isSelectable(PsiElement element) {
+    if (element instanceof PsiFileSystemItem) return true;
+
+    if (element instanceof PsiField || element instanceof PsiClass || element instanceof PsiMethod) {
+      return !(element.getParent() instanceof PsiAnonymousClass) && !(element instanceof PsiAnonymousClass);
+    }
+
+    return false;
   }
 
   @Nullable
@@ -113,9 +122,19 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     if (!(element instanceof PsiClass)) {
       return false;
     }
-    final PsiElement parent = element.getParent();
+
+    if (element instanceof PsiAnonymousClass) {
+      return false;
+    }
+
+    final PsiFile parentFile = parentFileOf((PsiClass)element);
                                         // do not select JspClass
-    return parent instanceof PsiFile && parent.getLanguage() == baseRootFile.getLanguage();
+    return parentFile != null && parentFile.getLanguage() == baseRootFile.getLanguage();
+  }
+
+  @Nullable
+  private static PsiFile parentFileOf(final PsiClass psiClass) {
+    return psiClass.getContainingClass() == null ? psiClass.getContainingFile() : null;
   }
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode {

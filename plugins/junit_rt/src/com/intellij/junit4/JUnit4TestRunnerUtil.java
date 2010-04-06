@@ -15,13 +15,23 @@
  */
 package com.intellij.junit4;
 
+import org.junit.Ignore;
+import org.junit.internal.AssumptionViolatedException;
+import org.junit.internal.requests.ClassRequest;
+import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
+import org.junit.runner.RunWith;
+import org.junit.runner.Runner;
 import org.junit.runner.manipulation.Filter;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.BlockJUnit4ClassRunner;
+import org.junit.runners.model.FrameworkMethod;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -106,7 +116,32 @@ public class JUnit4TestRunnerUtil {
       else {
         int index = suiteClassName.indexOf(',');
         if (index != -1) {
-          return Request.method(loadTestClass(suiteClassName.substring(0, index)), suiteClassName.substring(index + 1));
+          final Class clazz = loadTestClass(suiteClassName.substring(0, index));
+          final String methodName = suiteClassName.substring(index + 1);
+          if (clazz.getAnnotation(RunWith.class) == null) { //do not override external runners
+            try {
+              Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
+              final Method method = clazz.getMethod(methodName, null);
+              if (method != null && method.getAnnotation(Ignore.class) != null) { //override ignored case only
+                final Request classRequest = new ClassRequest(clazz) {
+                  public Runner getRunner() {
+                    try {
+                      return new IgnoreIgnoredTestJUnit4ClassRunner(clazz);
+                    }
+                    catch (Exception ignored) {
+                      //return super runner
+                    }
+                    return super.getRunner();
+                  }
+                };
+                return classRequest.filterWith(Description.createTestDescription(clazz, methodName));
+              }
+            }
+            catch (Exception ignored) {
+              //return simple method runner
+            }
+          }
+          return Request.method(clazz, methodName);
         }
         appendTestClass(result, suiteClassName);
       }
@@ -154,4 +189,27 @@ public class JUnit4TestRunnerUtil {
   }
 
 
+  private static class IgnoreIgnoredTestJUnit4ClassRunner extends BlockJUnit4ClassRunner {
+    public IgnoreIgnoredTestJUnit4ClassRunner(Class clazz) throws Exception {
+      super(clazz);
+    }
+
+    protected void runChild(FrameworkMethod method, RunNotifier notifier) {
+      final Description description = describeChild(method);
+      final EachTestNotifier eachNotifier = new EachTestNotifier(notifier, description);
+      eachNotifier.fireTestStarted();
+      try {
+        methodBlock(method).evaluate();
+      }
+      catch (AssumptionViolatedException e) {
+        eachNotifier.addFailedAssumption(e);
+      }
+      catch (Throwable e) {
+        eachNotifier.addFailure(e);
+      }
+      finally {
+        eachNotifier.fireTestFinished();
+      }
+    }
+  }
 }

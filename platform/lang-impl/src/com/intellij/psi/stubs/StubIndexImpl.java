@@ -252,12 +252,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
     catch (StorageException e) {
-      forceRebuild(e, project);
+      forceRebuild(e);
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
-        forceRebuild(e, project);
+        forceRebuild(e);
       }
       else {
         throw e;
@@ -275,14 +275,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return stub.getStubType();
   }
 
-  private static void forceRebuild(Throwable e, Project project) {
+  private static void forceRebuild(Throwable e) {
     LOG.info(e);
     requestRebuild();
     FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
   private static void requestRebuild() {
-    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
+    FileBasedIndex.requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 
   public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey, @NotNull Project project) {
@@ -293,12 +293,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       return index.getAllKeys();
     }
     catch (StorageException e) {
-      forceRebuild(e, project);
+      forceRebuild(e);
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof IOException || cause instanceof StorageException) {
-        forceRebuild(e, project);
+        forceRebuild(e);
       }
       throw e;
     }
@@ -380,11 +380,22 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   public Lock getWriteLock(StubIndexKey indexKey) {
     return myIndices.get(indexKey).getWriteLock();
   }
-  
+
   public Collection<StubIndexKey> getAllStubIndexKeys() {
     return Collections.<StubIndexKey>unmodifiableCollection(myIndices.keySet());
   }
-  
+
+  public void flush(StubIndexKey key) throws StorageException {
+    final MyIndex<?> index = myIndices.get(key);
+    index.getReadLock().lock();
+    try {
+      index.flush();
+    }
+    finally {
+      index.getReadLock().unlock();
+    }
+  }
+
   public <K> void updateIndex(StubIndexKey key, int fileId, final Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);

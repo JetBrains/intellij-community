@@ -606,9 +606,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   }
 
   private void removeBuildFileImpl(AntBuildFile buildFile) {
-    final XmlFile xmlFile = ((AntFile)buildFile.getAntFile()).getSourceElement();
-    xmlFile.putCopyableUserData(AntFileImpl.ANT_BUILD_FILE, null);
-    AntSupport.markFileAsAntFile(xmlFile.getVirtualFile(), xmlFile.getViewProvider(), false);
+    final AntFile antFile = (AntFile)buildFile.getAntFile();
+    if (antFile != null) {
+      final XmlFile xmlFile = antFile.getSourceElement();
+      xmlFile.putCopyableUserData(AntFileImpl.ANT_BUILD_FILE, null);
+      AntSupport.markFileAsAntFile(xmlFile.getVirtualFile(), xmlFile.getViewProvider(), false);
+    }
     synchronized (myBuildFiles) {
       myBuildFilesArray = null;
       myBuildFiles.remove(buildFile);

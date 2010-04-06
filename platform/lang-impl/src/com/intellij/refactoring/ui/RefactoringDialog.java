@@ -72,7 +72,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     doAction();
   }
 
-  private void doRefactorAction () {
+  protected void doRefactorAction () {
     myCbPreviewResults = false;
     doAction();
   }

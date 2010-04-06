@@ -67,6 +67,8 @@
       <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
       <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
       <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
+      <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
+
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
       <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
       <action id="EditorJoinLines" class="com.intellij.openapi.editor.actions.JoinLinesAction"/>
@@ -165,8 +167,8 @@
         <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
         <reference ref="EditorToggleShowWhitespaces"/>
         <reference ref="EditorToggleShowLineNumbers"/>
+        <reference ref="EditorToggleShowIndentLines" />
         <separator/>
-        <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
         <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction"/>
         <separator/>
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
@@ -348,6 +350,7 @@
 
     <group id="EditorGutterPopupMenu">
       <reference ref="EditorToggleShowLineNumbers"/>
+      <reference ref="EditorToggleShowIndentLines" />
     </group>
 
     <group id="FileChooserToolbar">

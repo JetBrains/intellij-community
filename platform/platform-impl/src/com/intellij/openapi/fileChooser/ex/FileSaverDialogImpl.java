@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
@@ -36,12 +37,16 @@ import java.util.List;
  */
 public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSaverDialog {
   protected final JTextField myFileName = new JTextField(20);
+  protected final JComboBox myExtentions = new JComboBox();
   protected final FileSaverDescriptor myDescriptor;
 
   public FileSaverDialogImpl(FileSaverDescriptor chooserDescriptor, Project project) {
     super(chooserDescriptor, project);
     myDescriptor = chooserDescriptor;
     setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
+    for (String ext : chooserDescriptor.getFileExtensions()) {
+      myExtentions.addItem(ext);
+    }
   }
 
   @Nullable
@@ -86,13 +91,13 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     boolean correctExt = true;
-    for (String ext : myDescriptor.getFileExtentions()) {
+    for (String ext : myDescriptor.getFileExtensions()) {
       correctExt = path.endsWith("." + ext);
       if (correctExt) break;
     }
 
     if (!correctExt) {
-      path += "." + myDescriptor.getFileExtentions()[0];
+      path += "." + myExtentions.getSelectedItem();
     }
 
     return new File(path);
@@ -109,9 +114,6 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
           myPathTextField.getField().setText(parent.getPath());
         }
       }
-    }
-    if (selection.size() == 0) {
-      myFileName.setText("");
     }
     updateOkButton();
   }
@@ -137,6 +139,10 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     });
 
     panel.add(myFileName, BorderLayout.CENTER);
+    if (myExtentions.getModel().getSize() > 0) {
+      myExtentions.setSelectedIndex(0);
+      panel.add(myExtentions, BorderLayout.EAST);
+    }
     return panel;
   }
 
@@ -154,5 +160,19 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   protected void setOKActionEnabled(boolean isEnabled) {
     //double check. FileChooserFactoryImpl sets enable ok button 
     super.setOKActionEnabled(isFileNameExist());
+  }
+
+  @Override
+  protected void doOKAction() {
+    final File file = getFile();
+    if (file != null && file.exists()) {
+      if (OK_EXIT_CODE != Messages.showYesNoDialog(this.getRootPane(),
+                                                  UIBundle.message("file.chooser.save.dialog.confirmation", file.getName()),
+                                                  UIBundle.message("file.chooser.save.dialog.confirmation.title"),
+                                                  Messages.getWarningIcon())) {
+        return;
+      }
+    }
+    super.doOKAction();
   }
 }

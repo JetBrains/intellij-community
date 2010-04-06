@@ -81,17 +81,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   private JPanel myErrorPanelPlace;
   private ThreeStateCheckBox myShowContentCheckBox;
   private FixedSizeButton myShowSpecificContentOptionsButton;
-  private ActionGroup myShowSpecificContentOptionsGroup;
+  private final ActionGroup myShowSpecificContentOptionsGroup;
   private final Project myProject;
   private final ComplexElementSubstitutionParameters mySubstitutionParameters = new ComplexElementSubstitutionParameters();
   private final EventDispatcher<ArtifactEditorListener> myDispatcher = EventDispatcher.create(ArtifactEditorListener.class);
   private final ArtifactEditorContextImpl myContext;
-  private SourceItemsTree mySourceItemsTree;
+  private final SourceItemsTree mySourceItemsTree;
   private final Artifact myOriginalArtifact;
   private final LayoutTreeComponent myLayoutTreeComponent;
   private TabbedPaneWrapper myTabbedPane;
   private ArtifactPropertiesEditors myPropertiesEditors;
-  private ArtifactValidationManagerImpl myValidationManager;
+  private final ArtifactValidationManagerImpl myValidationManager;
   private boolean myDisposed;
 
   public ArtifactEditorImpl(final @NotNull ArtifactsStructureConfigurableContext context, @NotNull Artifact artifact, @NotNull ArtifactEditorSettings settings) {

@@ -24,6 +24,7 @@ import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -134,7 +135,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(List<? extends ChangeList> changeLists, List<VirtualFile> unversionedFiles, final List<LocallyDeletedChange> locallyDeletedFiles,
+  public void updateModel(List<? extends ChangeList> changeLists, Trinity<List<VirtualFile>, Integer, Integer> unversionedFiles, final List<LocallyDeletedChange> locallyDeletedFiles,
                           List<VirtualFile> modifiedWithoutEditing,
                           MultiMap<String, VirtualFile> switchedFiles,
                           @Nullable Map<VirtualFile, String> switchedRoots,
@@ -256,7 +257,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     return files;
   }
 
-  private VirtualFile[] getSelectedFiles() {
+  protected VirtualFile[] getSelectedFiles() {
     final Change[] changes = getSelectedChanges();
     Collection<VirtualFile> files = new HashSet<VirtualFile>();
     for (Change change : changes) {
@@ -341,6 +342,10 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   public void setMenuActions(final ActionGroup menuGroup) {
     myMenuGroup = menuGroup;
     updateMenu();
+    editSourceRegistration();
+  }
+
+  protected void editSourceRegistration() {
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
   }

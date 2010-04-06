@@ -78,7 +78,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   VirtualFile copyDirectoryToProject(@NonNls String sourceFilePath, @NonNls String targetPath) throws IOException;
 
-  VirtualFile copyFileToProject(@NonNls String sourceFilePath) throws IOException;
+  VirtualFile copyFileToProject(@TestDataFile @NonNls String sourceFilePath) throws IOException;
 
   /**
    * Enables inspections for highlighting tests.
@@ -156,7 +156,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #getReferenceAtCaretPositionWithAssertion(String...)
    */
   @Nullable
-  PsiReference getReferenceAtCaretPosition(@NonNls String... filePaths) throws Exception;
+  PsiReference getReferenceAtCaretPosition(@TestDataFile @NonNls String... filePaths) throws Exception;
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
@@ -172,14 +172,18 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String... filePaths) throws Exception;
 
   /**
-   * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents.
+   * Collects available intentions at caret position.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return available intentions.
    * @throws Exception any exception.
+   * @see #CARET_MARKER
    */
   @NotNull
   List<IntentionAction> getAvailableIntentions(@NonNls String... filePaths) throws Exception;
+
+  @NotNull
+  List<IntentionAction> getAllQuickFixes(@NonNls String... filePaths) throws Exception;
 
   @NotNull
   List<IntentionAction> getAvailableIntentions() throws Exception;
@@ -204,9 +208,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void launchAction(@NotNull IntentionAction action) throws Exception;
 
-  void configureByFile(@TestDataFile @NonNls String file) throws Exception;
+  void configureByFile(@TestDataFile @NonNls String file);
 
-  void configureByFiles(@NonNls String... files) throws Exception;
+  void configureByFiles(@NonNls String... files);
 
   PsiFile configureByText(FileType fileType, @NonNls String text) throws IOException;
 
@@ -268,7 +272,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testRename(String fileAfter, String newName) throws Exception;
 
-  Collection<UsageInfo> testFindUsages(@NonNls String... fileNames) throws Exception;
+  Collection<UsageInfo> testFindUsages(@TestDataFile @NonNls String... fileNames);
 
   Collection<UsageInfo> findUsages(final PsiElement to) throws Exception;
 
@@ -291,9 +295,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @Nullable LookupElement[] complete(CompletionType type);
 
-  void checkResult(final String text) throws IOException;
+  void checkResult(final String text);
 
-  void checkResult(final String text, boolean stripTrailingSpaces) throws IOException;
+  void checkResult(final String text, boolean stripTrailingSpaces);
 
   Document getDocument(PsiFile file);
 
@@ -329,4 +333,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void allowTreeAccessForFile(VirtualFile file);
 
   void allowTreeAccessForAllFiles();
+
+  void renameElement(PsiElement element,
+                             String newName,
+                             boolean searchInComments,
+                             boolean searchTextOccurrences) throws Exception;
 }

@@ -223,7 +223,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
   private static class ErrorReportingCallback implements CompileStatusNotification {
     private final Semaphore mySemaphore;
     private Throwable myError;
-    private List<String> myMessages = new ArrayList<String>();
+    private final List<String> myMessages = new ArrayList<String>();
 
     public ErrorReportingCallback(Semaphore semaphore) {
       mySemaphore = semaphore;

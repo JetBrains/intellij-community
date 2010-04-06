@@ -39,9 +39,6 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   VirtualFile getProjectBaseDir();
 
-
-  void setStorageFormat(StorageFormat storageFormat);
-
   @Nullable
   String getLocation();
 
@@ -57,10 +54,6 @@ public interface IProjectStore extends IComponentStore {
   String getPresentableUrl();
 
   boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorage.StateStorageException, IOException;
-
-  enum StorageFormat {
-    FILE_BASED, DIRECTORY_BASED
-  }
 
   //------ This methods should be got rid of
   void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException;

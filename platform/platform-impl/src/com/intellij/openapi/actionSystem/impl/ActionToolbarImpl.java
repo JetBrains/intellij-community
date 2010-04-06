@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.UIUtil;
@@ -717,37 +718,41 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void updateActionsImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myNewVisibleActions.clear();
-    final DataContext dataContext = getDataContext();
+    IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
+      public void run() {
+        myNewVisibleActions.clear();
+        final DataContext dataContext = getDataContext();
 
-    Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager);
+        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager);
 
-    if (!myNewVisibleActions.equals(myVisibleActions)) {
-      // should rebuild UI
+        if (!myNewVisibleActions.equals(myVisibleActions)) {
+          // should rebuild UI
 
-      final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
+          final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
-      final ArrayList<AnAction> temp = myVisibleActions;
-      myVisibleActions = myNewVisibleActions;
-      myNewVisibleActions = temp;
+          final ArrayList<AnAction> temp = myVisibleActions;
+          myVisibleActions = myNewVisibleActions;
+          myNewVisibleActions = temp;
 
-      removeAll();
-      mySecondaryActions.removeAll();
-      mySecondaryActionsButton = null;
-      fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
+          removeAll();
+          mySecondaryActions.removeAll();
+          mySecondaryActionsButton = null;
+          fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
 
-      if (changeBarVisibility) {
-        revalidate();
-      }
-      else {
-        final Container parent = getParent();
-        if (parent != null) {
-          parent.invalidate();
-          parent.validate();
+          if (changeBarVisibility) {
+            revalidate();
+          }
+          else {
+            final Container parent = getParent();
+            if (parent != null) {
+              parent.invalidate();
+              parent.validate();
+            }
+          }
+          repaint();
         }
       }
-      repaint();
-    }
+    });
   }
 
   public void setTargetComponent(final JComponent component) {

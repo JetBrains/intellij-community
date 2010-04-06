@@ -26,9 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -48,7 +46,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor");
   private final PsiType myThisType;
   @Nullable
-  private PsiType[] myArgumentTypes;
+  private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
 
   private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
@@ -71,6 +69,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
+      
       if (method.isConstructor() != myIsConstructor) return true;
       if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
       substitutor = obtainSubstitutor(substitutor, method);
@@ -83,15 +82,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       }
 
       return true;
-    } else if (element instanceof PsiVariable) {
-      if (element instanceof GrField && ((GrField) element).isProperty() ||
-          isClosure((PsiVariable) element)) {
-        return super.execute(element, state);
-      } else {
-        myInapplicableCandidates.add(new GroovyResolveResultImpl(element, myCurrentFileResolveContext, substitutor, isAccessible((PsiVariable)element), isStaticsOK((PsiVariable)element)));
-      }
     }
-
 
     return true;
   }
@@ -124,14 +115,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     return substitutor;
-  }
-
-  private static boolean isClosure(PsiVariable variable) {
-    if (variable instanceof GrVariable) {
-      final PsiType type = ((GrVariable) variable).getTypeGroovy();
-      return type != null && type.equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
-    }
-    return variable.getType().equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE);
   }
 
   private PsiSubstitutor inferMethodTypeParameters(PsiMethod method, PsiSubstitutor partialSubstitutor, final PsiTypeParameter[] typeParameters, final PsiType[] argTypes) {
@@ -229,13 +212,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiManager manager = myPlace.getManager();
     GlobalSearchScope scope = myPlace.getResolveScope();
 
-    boolean methodsPresent = array[0].getElement() instanceof PsiMethod;
-    boolean propertiesPresent = !methodsPresent;
     Outer:
     for (int i = 1; i < array.length; i++) {
       PsiElement currentElement = array[i].getElement();
       if (currentElement instanceof PsiMethod) {
-        methodsPresent = true;
         PsiMethod currentMethod = (PsiMethod) currentElement;
         for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
           final GroovyResolveResult otherResolveResult = iterator.next();
@@ -250,18 +230,9 @@ public class MethodResolverProcessor extends ResolverProcessor {
             }
           }
         }
-      } else {
-        propertiesPresent = true;
       }
 
       result.add(array[i]);
-    }
-
-    if (methodsPresent && propertiesPresent) {
-      for (Iterator<GroovyResolveResult> iterator = result.iterator(); iterator.hasNext();) {
-        GroovyResolveResult resolveResult = iterator.next();
-        if (!(resolveResult.getElement() instanceof PsiMethod)) iterator.remove();
-      }
     }
 
     return result.toArray(new GroovyResolveResult[result.size()]);
@@ -312,13 +283,13 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return super.hasCandidates() || !myInapplicableCandidates.isEmpty();
   }
 
+  public boolean hasApplicableCandidates() {
+    return !myCandidates.isEmpty();
+  }
+
   @Nullable
   public PsiType[] getArgumentTypes() {
     return myArgumentTypes;
-  }
-
-  public void setArgumentTypes(@Nullable PsiType[] argumentTypes) {
-    myArgumentTypes = argumentTypes;
   }
 
   @Override

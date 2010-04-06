@@ -67,9 +67,12 @@ public class AppendAccessorsUsageInfo extends FixableUsageInfo{
         final IntroduceParameterObjectProcessor.ParameterChunk parameterChunk =
           IntroduceParameterObjectProcessor.ParameterChunk.getChunkByParameter(parameter, parameters);
         LOGGER.assertTrue(parameterChunk != null);
-        element.add(isGetter
-                    ? PropertyUtil.generateGetterPrototype(parameterChunk.getField())
-                    : PropertyUtil.generateSetterPrototype(parameterChunk.getField()));
+        final PsiField field = parameterChunk.getField();
+        if (field != null) {
+          element.add(isGetter
+                      ? PropertyUtil.generateGetterPrototype(field)
+                      : PropertyUtil.generateSetterPrototype(field));
+        }
 
       }
     }

@@ -431,52 +431,53 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void initInspectionTools() {
-    if (!ApplicationManager.getApplication().isUnitTestMode() || INIT_INSPECTIONS) {
-      synchronized (myInitialized) {
-        if (!myInitialized.getAndSet(true)) {
-          if (myBaseProfile != null) {
-            myBaseProfile.initInspectionTools();
+    if (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS) {
+      return;
+    }
+    synchronized (myInitialized) {
+      if (!myInitialized.getAndSet(true)) {
+        if (myBaseProfile != null) {
+          myBaseProfile.initInspectionTools();
+        }
+
+        final InspectionTool[] tools;
+        try {
+          tools = myRegistrar.createTools();
+        }
+        catch (ProcessCanceledException e) {
+          myInitialized.set(false);
+          return;
+        }
+        for (InspectionTool tool : tools) {
+          final String shortName = tool.getShortName();
+          HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+          if (key == null) {
+            if (tool instanceof LocalInspectionToolWrapper) {
+              key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID(),
+                                                 ((LocalInspectionToolWrapper)tool).getTool().getAlternativeID());
+            }
+            else {
+              key = HighlightDisplayKey.register(shortName);
+            }
           }
 
-          final InspectionTool[] tools;
-          try {
-            tools = myRegistrar.createTools();
-          }
-          catch (ProcessCanceledException e) {
-            myInitialized.set(false);
-            return;
-          }
-          for (InspectionTool tool : tools) {
-            final String shortName = tool.getShortName();
-            HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-            if (key == null) {
-              if (tool instanceof LocalInspectionToolWrapper) {
-                key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID(),
-                                                   ((LocalInspectionToolWrapper)tool).getTool().getAlternativeID());
-              }
-              else {
-                key = HighlightDisplayKey.register(shortName);
-              }
+          LOG.assertTrue(key != null, shortName + " ; number of initialized tools: " + myTools.size());
+          final ToolsImpl toolsList =
+            new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(),
+                          !myLockedProfile && (myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault()));
+          final Element element = myDeinstalledInspectionsSettings.remove(tool.getShortName());
+          if (element != null) {
+            try {
+              toolsList.readExternal(element, this);
             }
-
-            LOG.assertTrue(key != null, shortName + " ; number of initialized tools: " + myTools.size());
-            final ToolsImpl toolsList =
-              new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(),
-                            !myLockedProfile && (myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault()));
-            final Element element = myDeinstalledInspectionsSettings.remove(tool.getShortName());
-            if (element != null) {
-              try {
-                toolsList.readExternal(element, this);
-              }
-              catch (InvalidDataException e) {
-                LOG.error(e);
-              }
+            catch (InvalidDataException e) {
+              LOG.error(e);
             }
-            myTools.put(tool.getShortName(), toolsList);
           }
-          if (mySource != null) {
-            copyToolsConfigurations(mySource);
-          }
+          myTools.put(tool.getShortName(), toolsList);
+        }
+        if (mySource != null) {
+          copyToolsConfigurations(mySource);
         }
       }
     }

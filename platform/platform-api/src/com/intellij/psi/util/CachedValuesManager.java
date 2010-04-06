@@ -15,17 +15,19 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class CachedValuesManager {
+  private static final NotNullLazyKey<CachedValuesManager, Project> INSTANCE_KEY = ServiceManager.createLazyKey(CachedValuesManager.class);
 
   public static CachedValuesManager getManager(@NotNull Project project) {
-    return ServiceManager.getService(project, CachedValuesManager.class);
+    return INSTANCE_KEY.getValue(project);
   }
 
   /**

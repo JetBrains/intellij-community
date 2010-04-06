@@ -578,50 +578,51 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   private void waitForProcess(final RunContentDescriptor descriptor) {
-    String progressTitle =  ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName());
-
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      private ProgressIndicator myProgressIndicator;
-      private final Semaphore mySemaphore = new Semaphore();
+      public void run() {
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
 
-      private final Runnable myWaitThread = new Runnable() {
-        public void run() {
-          descriptor.getProcessHandler().waitFor();
-          mySemaphore.up();
-        }
-      };
-
-      private final Runnable myCancelListener = new Runnable() {
-        public void run() {
-          while(true) {
-            if(myProgressIndicator != null && (myProgressIndicator.isCanceled() || !myProgressIndicator.isRunning())) {
-              mySemaphore.up();
-              break;
-            }
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            final ProcessHandler processHandler = descriptor.getProcessHandler();
             try {
-              synchronized (this) {
-                wait(2000);
+              if (processHandler != null) {
+                processHandler.waitFor();
               }
             }
-            catch (InterruptedException ignore) {
+            finally {
+              semaphore.up();
             }
           }
+        });
+        
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+
+        if (progressIndicator != null) {
+          progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              while(true) {
+                if(progressIndicator.isCanceled() || !progressIndicator.isRunning()) {
+                  semaphore.up();
+                  break;
+                }
+                try {
+                  synchronized (this) {
+                    wait(2000L);
+                  }
+                }
+                catch (InterruptedException ignore) {
+                }
+              }
+            }
+          });
         }
-      };
 
-      public void run() {
-        myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (myProgressIndicator != null) {
-          myProgressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
-        }
-
-        ApplicationManager.getApplication().executeOnPooledThread(myWaitThread);
-        ApplicationManager.getApplication().executeOnPooledThread(myCancelListener);
-
-        mySemaphore.down();
-        mySemaphore.waitFor();
+        semaphore.waitFor();
       }
-    }, progressTitle, true, myProject);
+    }, ExecutionBundle.message("terminating.process.progress.title", descriptor.getDisplayName()), true, myProject);
   }
 
   public interface MyRunContentListener extends EventListener {

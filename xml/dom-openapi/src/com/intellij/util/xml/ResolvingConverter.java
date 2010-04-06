@@ -159,7 +159,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> {
    */
   public boolean isReferenceTo(@NotNull PsiElement element, final String stringValue, @Nullable T resolveResult,
                                final ConvertContext context) {
-    return element.getManager().areElementsEquivalent(element, resolveResult == null ? null : getPsiElement(resolveResult));
+    return resolveResult != null && element.getManager().areElementsEquivalent(element, getPsiElement(resolveResult));
   }
 
   /**

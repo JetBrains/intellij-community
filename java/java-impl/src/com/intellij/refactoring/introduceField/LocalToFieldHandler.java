@@ -34,6 +34,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
@@ -134,7 +135,6 @@ public class LocalToFieldHandler {
     final String variableName = local.getName();
     final String fieldName = settings.getFieldName();
     final BaseExpressionToFieldHandler.InitializationPlace initializerPlace = settings.getInitializerPlace();
-    @Modifier final String fieldVisibility = settings.getFieldVisibility();
     final PsiClass destinationClass = settings.getDestinationClass();
     boolean rebindNeeded = false;
     if (destinationClass != null) {
@@ -161,6 +161,9 @@ public class LocalToFieldHandler {
                                                               : createField(local, fieldName, initializerPlace == IN_FIELD_DECLARATION);
           field = (PsiField)aaClass.add(field);
           BaseExpressionToFieldHandler.setModifiers(field, settings, isStatic, occurences);
+          if (!settings.isIntroduceEnumConstant()) {
+            VisibilityUtil.fixVisibility(occurences, field, settings.getFieldVisibility());
+          }
 
           local.normalizeDeclaration();
           PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)local.getParent();

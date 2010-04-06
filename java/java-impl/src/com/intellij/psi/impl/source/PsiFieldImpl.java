@@ -18,9 +18,9 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.cache.InitializerTooLongException;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
@@ -44,9 +44,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx {
+public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFieldImpl");
 
   private volatile PatchedSoftReference<PsiType> myCachedType = null;
@@ -93,7 +94,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @NotNull
-  public final PsiIdentifier getNameIdentifier(){
+  public PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
@@ -238,12 +239,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   public boolean hasInitializer() {
     if (getStub() != null) {
-      try {
-        return getInitializerText() != null;
-      }
-      catch (InitializerTooLongException e) {
-        return true;
-      }
+      return getInitializerText() != null;
     }
 
     return getInitializer() != null;
@@ -262,6 +258,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
   }
 
+  @Nullable
   private Object _computeConstantValue(Set<PsiVariable> visitedVars) {
     Object cachedInitializerValue = myCachedInitializerValue;
     if (cachedInitializerValue != null && !(cachedInitializerValue instanceof PsiExpression)){
@@ -283,20 +280,20 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
         if (initializer == null) return null;
       }
       else{
-        try{
-          String initializerText = getInitializerText();
-          if (initializerText == null) return null;
+        String initializerText = getInitializerText();
+        if (initializerText == null) return null;
 
-          PsiManager manager = getManager();
-          final FileElement holderElement = DummyHolderFactory.createHolder(manager, this).getTreeElement();
-          CompositeElement exprElement = ExpressionParsing.parseExpressionText(manager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
-          holderElement.rawAddChildren(exprElement);
-          initializer = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprElement);
-        }
-        catch(InitializerTooLongException e){
+        if (PsiFieldStub.INITIALIZER_NOT_STORED.equals(initializerText)) return null;
+        if (PsiFieldStub.INITIALIZER_TOO_LONG.equals(initializerText)) {
           getNode();
           return computeConstantValue(visitedVars);
         }
+
+        PsiManager manager = getManager();
+        final FileElement holderElement = DummyHolderFactory.createHolder(manager, this).getTreeElement();
+        CompositeElement expressionElement = ExpressionParsing.parseExpressionText(manager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
+        holderElement.rawAddChildren(expressionElement);
+        initializer = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(expressionElement);
       }
     }
 
@@ -329,7 +326,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Nullable
-  private String getInitializerText() throws InitializerTooLongException {
+  private String getInitializerText() {
     final PsiFieldStub stub = getStub();
     if (stub != null) {
       return stub.getInitializerText();
@@ -432,4 +429,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return PsiImplUtil.getMemberUseScope(this);
   }
 
+  public void putInfo(Map<String, String> info) {
+    info.put("fieldName", getName());
+  }
 }

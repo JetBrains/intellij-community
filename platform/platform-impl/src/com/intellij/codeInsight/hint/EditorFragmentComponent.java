@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -121,15 +122,18 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   /**
+   * @param hideByAnyKey
    * @param x <code>x</code> coordinate in layered pane coordinate system.
    * @param y <code>y</code> coordinate in layered pane coordinate system.
    */
-  public static LightweightHint showEditorFragmentHintAt(
-      Editor editor,
-      TextRange range,
-      int x,
-      int y,
-      boolean showUpward, boolean showFolding) {
+  @Nullable
+  public static LightweightHint showEditorFragmentHintAt(Editor editor,
+                                                         TextRange range,
+                                                         int x,
+                                                         int y,
+                                                         boolean showUpward,
+                                                         boolean showFolding,
+                                                         boolean hideByAnyKey) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
 
     int startLine = editor.offsetToLogicalPosition(range.getStartOffset()).line;
@@ -147,7 +151,7 @@ public class EditorFragmentComponent extends JPanel {
 
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManagerImpl.HIDE_BY_ANY_KEY | HintManagerImpl.HIDE_BY_TEXT_CHANGE, 0, false);
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManagerImpl.HIDE_BY_ANY_KEY : 0) | HintManagerImpl.HIDE_BY_TEXT_CHANGE, 0, false);
     return hint;
   }
 
@@ -166,15 +170,18 @@ public class EditorFragmentComponent extends JPanel {
     return fragmentComponent;
   }
 
-  public static LightweightHint showEditorFragmentHint(Editor editor,TextRange range, boolean showFolding){
+  @Nullable
+  public static LightweightHint showEditorFragmentHint(Editor editor, TextRange range, boolean showFolding, boolean hideByAnyKey){
     int x = -2;
     int y = 0;
 
     JComponent editorComponent = editor.getComponent();
-    JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+    final JRootPane rootPane = editorComponent.getRootPane();
+    if (rootPane == null) return null;
+    JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point point = SwingUtilities.convertPoint(editorComponent, x, y, layeredPane);
 
-    return showEditorFragmentHintAt(editor, range, point.x, point.y, true, showFolding);
+    return showEditorFragmentHintAt(editor, range, point.x, point.y, true, showFolding, hideByAnyKey);
   }
 
   public static Color getBackgroundColor(Editor editor){

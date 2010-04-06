@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 * @author nik
 */
 public class LayoutTreeNavigateAction extends ArtifactEditorNavigateActionBase {
-  private LayoutTreeComponent myLayoutTreeComponent;
+  private final LayoutTreeComponent myLayoutTreeComponent;
 
   public LayoutTreeNavigateAction(LayoutTreeComponent layoutTreeComponent) {
     super(layoutTreeComponent.getLayoutTree());

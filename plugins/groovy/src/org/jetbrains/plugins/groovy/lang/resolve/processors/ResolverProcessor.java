@@ -179,5 +179,4 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     //todo[DIANA] implement me!
     return myName;
   }
-
 }

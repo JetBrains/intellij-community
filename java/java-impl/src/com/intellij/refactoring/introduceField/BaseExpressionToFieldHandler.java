@@ -205,7 +205,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             }
           }
           PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
-
+          setModifiers(field, settings, settings.isDeclareStatic(), occurrences);
           if ((anchorMember instanceof PsiField) &&
               anchorMember.hasModifierProperty(PsiModifier.STATIC) == field.hasModifierProperty(PsiModifier.STATIC)) {
             field = (PsiField)destClass.addBefore(field, anchorMember);
@@ -217,7 +217,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           else {
             field = (PsiField)destClass.add(field);
           }
-          setModifiers(field, settings, settings.isDeclareStatic(), occurrences);
+          if (!settings.isIntroduceEnumConstant()) {
+            VisibilityUtil.fixVisibility(occurrences, field, settings.getFieldVisibility());
+          }
           PsiStatement assignStatement = null;
           PsiElement anchorElementHere = null;
           if (initializerPlace == InitializationPlace.IN_CURRENT_METHOD && initializer != null ||
@@ -316,7 +318,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   public static void setModifiers(PsiField field, Settings settings, final boolean declareStatic, PsiExpression[] occurrences) {
     if (!settings.isIntroduceEnumConstant()) {
-      VisibilityUtil.fixVisibility(occurrences, field, settings.getFieldVisibility());
       if (declareStatic) {
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
       }
@@ -561,7 +562,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     private final boolean myDeclareStatic;
     private final boolean myDeclareFinal;
     private final InitializationPlace myInitializerPlace;
-    @Modifier private final String myVisibility;
+    private final String myVisibility;
     private final boolean myDeleteLocalVariable;
     private final TargetDestination myTargetClass;
     private final boolean myAnnotateAsNonNls;
@@ -593,7 +594,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myInitializerPlace;
     }
 
-    @Modifier
     public String getFieldVisibility() {
       return myVisibility;
     }
@@ -621,7 +621,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     public Settings(String fieldName, boolean replaceAll,
                     boolean declareStatic, boolean declareFinal,
-                    InitializationPlace initializerPlace, @Modifier String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
+                    InitializationPlace initializerPlace, String visibility, PsiLocalVariable localVariableToRemove, PsiType forcedType,
                     boolean deleteLocalVariable,
                     TargetDestination targetDestination,
                     final boolean annotateAsNonNls,

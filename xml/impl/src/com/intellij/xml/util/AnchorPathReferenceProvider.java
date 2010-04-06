@@ -57,7 +57,11 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
     final int pos = elementText.indexOf('?', anchorOffset);
     final String anchor;
     try {
-      anchor = elementText.substring(anchorOffset + 1, pos == -1 ? range.getEndOffset() : pos);
+      int endIndex = pos != -1 ? pos : range.getEndOffset();
+      if (endIndex <= anchorOffset) {
+        endIndex = anchorOffset + 1;
+      }
+      anchor = elementText.substring(anchorOffset + 1, endIndex);
     }
     catch (StringIndexOutOfBoundsException e) {      
       throw new RuntimeException(elementText, e);

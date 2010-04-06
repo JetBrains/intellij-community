@@ -26,12 +26,14 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -40,9 +42,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -256,13 +262,14 @@ public class DocumentationManager {
       }
     };
 
+    final KeyboardShortcut keyboardShortcut = ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc");
     final List<Pair<ActionListener, KeyStroke>> actions = Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           createToolWindow(element, originalElement, false);
           final JBPopup hint = getDocInfoHint();
           if (hint != null && hint.isVisible()) hint.cancel();
         }
-      }, ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc").getFirstKeyStroke()));
+      }, keyboardShortcut != null ? keyboardShortcut.getFirstKeyStroke() : null)); // Null keyStroke is ok here
 
       final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
           .setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)
@@ -525,38 +532,77 @@ public class DocumentationManager {
 
       @Nullable
       public String getDocumentation() throws Exception {
-        final DocumentationProvider provider = getProviderFromElement(element, originalElement);
-        if (myParameterInfoController != null) {
-          final Object[] objects = myParameterInfoController.getSelectedElements();
-
-          if (objects.length > 0) {
-            @NonNls StringBuffer sb = null;
-
-            for(Object o:objects) {
-              PsiElement parameter = null;
-              if (o instanceof PsiElement) {
-                parameter = (PsiElement)o;
-              }
-
-              if (parameter != null) {
-                final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
-                final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
-                if (str2 == null) continue;
-                if (sb == null) sb = new StringBuffer();
-                sb.append(str2);
-                sb.append("<br>");
-              } else {
-                sb = null;
-                break;
+        final DocumentationProvider provider = ApplicationManager.getApplication().runReadAction(
+            new Computable<DocumentationProvider>() {
+              public DocumentationProvider compute() {
+                return getProviderFromElement(element, originalElement);
               }
             }
-
-            if (sb != null) return sb.toString();
+        );
+        if (myParameterInfoController != null) {
+          final String doc = ApplicationManager.getApplication().runReadAction(
+              new Computable<String>() {
+                public String compute() {
+                  return generateParameterInfoDocumentation(provider);
+                }
+              }
+          );
+          if (doc != null) return doc;
+        }
+        if (provider instanceof ExternalDocumentationProvider) {
+          final List<String> urls = ApplicationManager.getApplication().runReadAction(
+              new Computable<List<String>>() {
+                public List<String> compute() {
+                  final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
+                  return provider.getUrlFor(element, originalElement != null ? originalElement.getElement() : null);
+                }
+              }
+          );
+          if (urls != null) {
+            final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(myProject, element, urls);
+            if (doc != null) return doc;
           }
         }
+        return ApplicationManager.getApplication().runReadAction(
+            new Computable<String>() {
+              @Nullable
+              public String compute() {
+                final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
+                return provider.generateDoc(element, originalElement != null ? originalElement.getElement() : null);
+              }
+            }
+        );
+      }
 
-        final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
-        return provider.generateDoc(element, originalElement != null ? originalElement.getElement() : null);
+      private String generateParameterInfoDocumentation(DocumentationProvider provider) {
+        final Object[] objects = myParameterInfoController.getSelectedElements();
+
+        if (objects.length > 0) {
+          @NonNls StringBuffer sb = null;
+
+          for (Object o : objects) {
+            PsiElement parameter = null;
+            if (o instanceof PsiElement) {
+              parameter = (PsiElement)o;
+            }
+
+            if (parameter != null) {
+              final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
+              final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
+              if (str2 == null) continue;
+              if (sb == null) sb = new StringBuffer();
+              sb.append(str2);
+              sb.append("<br>");
+            }
+            else {
+              sb = null;
+              break;
+            }
+          }
+
+          if (sb != null) return sb.toString();
+        }
+        return null;
       }
 
       @Nullable
@@ -610,18 +656,14 @@ public class DocumentationManager {
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
         final Throwable[] ex = new Throwable[1];
-        final String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Nullable
-          public String compute() {
-            try {
-              return provider.getDocumentation();
-            }
-            catch (Throwable e) {
-              ex[0] = e;
-            }
-            return null;
-          }
-        });
+        String text = null;
+        try {
+          text = provider.getDocumentation();
+        }
+        catch (Throwable e) {
+          ex[0] = e;
+        }
+
         if (ex[0] != null) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
@@ -645,6 +687,7 @@ public class DocumentationManager {
         if (element == null) {
           return;
         }
+        final String documentationText = text;
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
@@ -659,14 +702,14 @@ public class DocumentationManager {
               return;
             }
 
-            if (text == null) {
+            if (documentationText == null) {
               component.setText(CodeInsightBundle.message("no.documentation.found"), element, true);
             }
-            else if (text.length() == 0) {
+            else if (documentationText.length() == 0) {
               component.setText(component.getText(), element, true, clearHistory);
             }
             else {
-              component.setData(element, text, clearHistory);
+              component.setData(element, documentationText, clearHistory);
             }
 
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
@@ -753,7 +796,16 @@ public class DocumentationManager {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     final PsiElement psiElement = component.getElement();
     final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
-    if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
+    if (url.startsWith("open")) {
+      final PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile != null) {
+        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        final LibraryOrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
+        if (libraryEntry != null) {
+          ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(new NamedLibraryElement(libraryEntry.getOwnerModule(), libraryEntry));
+        }
+      }
+    } else if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
       final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());
       DocumentationProvider provider = getProviderFromElement(psiElement);
       final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
@@ -768,8 +820,14 @@ public class DocumentationManager {
         (new DocumentationCollector() {
           public String getDocumentation() throws Exception {
             if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
-              final DocumentationProvider provider = getProviderFromElement(psiElement);
-              final List<String> urls = provider.getUrlFor(psiElement, getOriginalElement(psiElement));
+              final List<String> urls = ApplicationManager.getApplication().runReadAction(
+                  new Computable<List<String>>() {
+                    public List<String> compute() {
+                      final DocumentationProvider provider = getProviderFromElement(psiElement);
+                      return provider.getUrlFor(psiElement, getOriginalElement(psiElement));
+                    }
+                  }
+              );
               BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : docUrl);
             } else {
               BrowserUtil.launchBrowser(docUrl);

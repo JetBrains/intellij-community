@@ -25,7 +25,9 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.Storage;
@@ -46,14 +48,28 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   private final Project myProject;
   private ConsoleView myConsole;
 
-  protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners = new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();
+  protected final HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>> myListeners =
+    new HashMap<AbstractProperty, ArrayList<TestFrameworkPropertyListener>>();
 
   public TestConsoleProperties(final Storage storage, Project project) {
     super(storage);
     myProject = project;
   }
 
-  public Project getProject() { return myProject; }
+  public Project getProject() {
+    return myProject;
+  }
+
+  public GlobalSearchScope getScope() {
+    Module[] modules = getConfiguration().getModules();
+    if (modules.length == 0) return GlobalSearchScope.allScope(myProject);
+   
+    GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
+    for (Module each : modules) {
+      scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(each, true));
+    }
+    return scope;
+  }
 
   public <T> void addListener(final AbstractProperty<T> property, final TestFrameworkPropertyListener<T> listener) {
     ArrayList<TestFrameworkPropertyListener> listeners = myListeners.get(property);

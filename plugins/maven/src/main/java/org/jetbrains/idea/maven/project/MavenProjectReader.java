@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.model.*;
@@ -31,6 +30,7 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.inheritance.DefaultModelInheritanceAssembler;
 import org.apache.maven.project.injection.DefaultProfileInjector;
 import org.apache.maven.project.validation.ModelValidationResult;
+import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.context.DefaultContext;
 import org.jdom.Element;
@@ -79,8 +79,12 @@ public class MavenProjectReader {
                                         Collections.singletonList(model.getBuild().getTestSourceDirectory()),
                                         Collections.singletonList(model.getBuild().getScriptSourceDirectory()));
 
-    return new MavenProjectReaderResult(generalSettings, readResult.first.problems, Collections.EMPTY_SET,
-                                        generalSettings.getEffectiveLocalRepository(), mavenProject);
+    return new MavenProjectReaderResult(generalSettings,
+                                        mavenProject,
+                                        Collections.<DependencyNode>emptyList(),
+                                        readResult.first.problems,
+                                        Collections.<MavenId>emptySet(),
+                                        generalSettings.getEffectiveLocalRepository());
   }
 
   private File getBaseDir(VirtualFile file) {
@@ -600,11 +604,13 @@ public class MavenProjectReader {
     MavenProject mavenProject = null;
     Collection<MavenProjectProblem> problems = createProblemsList();
     Set<MavenId> unresolvedArtifactsIds = new THashSet<MavenId>();
+    Collection<DependencyNode> dependencyTree = Collections.emptyList();
 
     try {
-      Pair<MavenProject, Set<MavenId>> result = doResolveProject(embedder, file, explicitProfiles, problems);
-      mavenProject = result.first;
-      unresolvedArtifactsIds = result.second;
+      MavenResolutionResult result = doResolveProject(embedder, file, explicitProfiles, problems);
+      mavenProject = result.getMavenProject();
+      unresolvedArtifactsIds = result.getUnresolvedArtifactIds();
+      dependencyTree = result.getOriginalDependencyTree();
     }
     catch (MavenProcessCanceledException e) {
       throw e;
@@ -630,16 +636,16 @@ public class MavenProjectReader {
       mavenProject = readProject(generalSettings, file, explicitProfiles, locator).nativeMavenProject;
     }
 
-    return new MavenProjectReaderResult(generalSettings, problems, unresolvedArtifactsIds, embedder.getLocalRepositoryFile(), mavenProject);
+    return new MavenProjectReaderResult(generalSettings, mavenProject, dependencyTree, problems, unresolvedArtifactsIds, embedder.getLocalRepositoryFile());
   }
 
-  private Pair<MavenProject, Set<MavenId>> doResolveProject(MavenEmbedderWrapper embedder,
+  private MavenResolutionResult doResolveProject(MavenEmbedderWrapper embedder,
                                                             VirtualFile file,
                                                             Collection<String> profiles,
                                                             Collection<MavenProjectProblem> problems) throws MavenProcessCanceledException {
-    MavenExecutionResult result = embedder.resolveProject(file, profiles);
+    MavenResolutionResult result = embedder.resolveProject(file, profiles);
     validate(file, result, problems);
-    return Pair.create(result.getMavenProject(), result.getUnresolvedArtifactIds());
+    return result;
   }
 
   private boolean validate(VirtualFile file, MavenExecutionResult r, Collection<MavenProjectProblem> problems) {
@@ -689,10 +695,11 @@ public class MavenProjectReader {
       if (project == null) return null;
 
       return new MavenProjectReaderResult(generalSettings,
+                                          project,
+                                          Collections.<DependencyNode>emptyList(),
                                           problems,
                                           result.getUnresolvedArtifactIds(),
-                                          embedder.getLocalRepositoryFile(),
-                                          project);
+                                          embedder.getLocalRepositoryFile());
     }
     catch (MavenProcessCanceledException e) {
       throw e;

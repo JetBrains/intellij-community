@@ -24,48 +24,27 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 
 /**
  * @author ven
  */
 public class GrClosureType extends PsiClassType {
   private final GlobalSearchScope myScope;
-  @Nullable
-  private final PsiType myReturnType;
-  private final PsiType[] myParameterTypes;
-  private final boolean[] myOptionals;
   private final PsiManager myManager;
+  private final @NotNull GrClosureSignature mySignature;
 
-  private GrClosureType(GlobalSearchScope scope,
-                        @Nullable PsiType returnType,
-                        PsiType[] parameters,
-                        boolean[] optionals,
-                        PsiManager manager, LanguageLevel languageLevel) {
+  private GrClosureType(LanguageLevel languageLevel, GlobalSearchScope scope, PsiManager manager, @NotNull GrClosureSignature closureSignature) {
     super(languageLevel);
     myScope = scope;
-    myReturnType = returnType;
-    myParameterTypes = parameters;
-    myOptionals = optionals;
     myManager = manager;
+    mySignature = closureSignature;
   }
 
   @Nullable
   public PsiClass resolve() {
     return JavaPsiFacade.getInstance(myManager.getProject()).findClass(GrClosableBlock.GROOVY_LANG_CLOSURE, getResolveScope());
-  }
-
-  @Nullable
-  public PsiType getClosureReturnType() {
-    return myReturnType;
-  }
-
-  public PsiType[] getClosureParameterTypes() {
-    return myParameterTypes;
-  }
-
-  public boolean isOptionalParameter(int parameterIndex) {
-    return myOptionals[parameterIndex];
   }
 
   public String getClassName() {
@@ -101,6 +80,7 @@ public class GrClosureType extends PsiClassType {
         return true;
       }
 
+      @Nullable
       public PsiElement getCurrentFileResolveScope() {
         return null;
       }
@@ -116,6 +96,7 @@ public class GrClosureType extends PsiClassType {
     return this;
   }
 
+  @NotNull
   public String getPresentableText() {
     return "Closure";
   }
@@ -127,25 +108,18 @@ public class GrClosureType extends PsiClassType {
     return resolved.getQualifiedName();
   }
 
+  @Nullable
   public String getInternalCanonicalText() {
     return getCanonicalText();
   }
 
   public boolean isValid() {
-    if (myParameterTypes.length > 0 && !myParameterTypes[0].isValid()) return false;
-    return myReturnType == null || myReturnType.isValid();
+    return mySignature.isValid();
   }
 
   public boolean equals(Object obj) {
     if (obj instanceof GrClosureType) {
-      GrClosureType other = (GrClosureType)obj;
-      if (!Comparing.equal(myReturnType, other.myReturnType)) return false;
-      if (myParameterTypes.length != other.myParameterTypes.length) return false;
-      for (int i = 0; i < myParameterTypes.length; i++) {
-        if (myOptionals[i] != other.myOptionals[i]) return false;
-        if (!other.myParameterTypes[i].equals(myParameterTypes[i])) return false;
-      }
-      return true;
+      return Comparing.equal(mySignature, ((GrClosureType)obj).mySignature);
     }
 
     return super.equals(obj);
@@ -154,14 +128,28 @@ public class GrClosureType extends PsiClassType {
   public boolean isAssignableFrom(@NotNull PsiType type) {
     if (type instanceof GrClosureType) {
       GrClosureType other = (GrClosureType)type;
-      if (myReturnType == null || other.myReturnType == null) {
-        return myReturnType == null && other.myReturnType == null;
+      GrClosureSignature otherSignature = other.mySignature;
+
+      final PsiType myReturnType = mySignature.getReturnType();
+      final PsiType otherReturnType = otherSignature.getReturnType();
+      if (myReturnType == null || otherReturnType == null) {
+        return myReturnType == null && otherReturnType == null;
       }
-      if (!myReturnType.isAssignableFrom(other.myReturnType)) return false;
-      if (myParameterTypes.length != other.myParameterTypes.length) return false;
-      for (int i = 0; i < myParameterTypes.length; i++) {
-        if (myOptionals[i] != other.myOptionals[i]) return false;
-        if (!other.myParameterTypes[i].isAssignableFrom(myParameterTypes[i])) return false;
+
+      if (!myReturnType.isAssignableFrom(otherReturnType)) return false;
+
+      final GrClosureParameter[] myParameters = mySignature.getParameters();
+      final GrClosureParameter[] otherParameters = otherSignature.getParameters();
+
+      if (myParameters.length != otherParameters.length) return false;
+      for (int i = 0; i < myParameters.length; i++) {
+        if (myParameters[i].isOptional() != otherParameters[i].isOptional()) return false;
+        final PsiType otherParamType = otherParameters[i].getType();
+        final PsiType myParamType = myParameters[i].getType();
+        if (myParamType == null || otherParamType == null) {
+          if (myParamType != null || otherParamType != null) return false;
+        }
+        else if (!otherParamType.isAssignableFrom(myParamType)) return false;
       }
       return true;
     }
@@ -183,45 +171,50 @@ public class GrClosureType extends PsiClassType {
   }
 
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    return create(myReturnType, myParameterTypes, myOptionals, myManager, myScope, languageLevel);
+    return create(mySignature, myManager, myScope, languageLevel);
   }
 
-  public static GrClosureType create(GrClosableBlock closure) {
-    return create(closure.getResolveScope(), closure.getReturnType(), closure.getAllParameters(), closure.getManager());
+  public static GrClosureType create(@NotNull GrClosableBlock closure) {
+    return create(GrClosureSignatureUtil.createSignature(closure), closure.getManager(), closure.getResolveScope(), LanguageLevel.JDK_1_5);
   }
 
-  public static GrClosureType create(GlobalSearchScope scope, PsiType returnType, PsiParameter[] parameters, PsiManager manager) {
-    PsiType[] parameterTypes = new PsiType[parameters.length];
-    boolean[] optionals = new boolean[parameters.length];
-    for (int i = 0; i < optionals.length; i++) {
-      PsiParameter parameter = parameters[i];
-      if (parameter instanceof GrParameter) {
-        optionals[i] = ((GrParameter)parameter).isOptional();
-      } else if (i == 0) { // for implicit "it" parameter
-        optionals[i] = true;
-      } else {
-        optionals[i] = false;
-      }
-      parameterTypes[i] = parameter.getType();
-    }
-    return create(returnType, parameterTypes, optionals, manager, scope, LanguageLevel.JDK_1_5);
+  public static GrClosureType create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    return create(GrClosureSignatureUtil.createSignature(method, substitutor), method.getManager(), GlobalSearchScope.allScope(method.getProject()), LanguageLevel.JDK_1_5);
   }
 
-  public static GrClosureType create(PsiType returnType,
-                                     PsiType[] parameterTypes,
-                                     boolean[] optionals,
+  public static GrClosureType create(@NotNull PsiParameter[] parameters,
+                                     @Nullable PsiType returnType,
                                      PsiManager manager,
-                                     GlobalSearchScope scope, LanguageLevel languageLevel) {
-    return new GrClosureType(scope, returnType, parameterTypes, optionals, manager,languageLevel);
+                                     GlobalSearchScope scope,
+                                     LanguageLevel languageLevel) {
+    return create(GrClosureSignatureUtil.createSignature(parameters, returnType), manager, scope, languageLevel);
+  }
+
+  public static GrClosureType create(@NotNull GrClosureSignature signature,
+                                     PsiManager manager,
+                                     GlobalSearchScope scope,
+                                     LanguageLevel languageLevel) {
+    return new GrClosureType(languageLevel, scope, manager, signature);
   }
 
   @Nullable
-  public PsiType curry(int num) {
-    if (num > myParameterTypes.length) return null;
-    PsiType[] newParameterTypes = new PsiType[myParameterTypes.length - num];
-    boolean[] newOptionals = new boolean[myParameterTypes.length - num];
-    System.arraycopy(myParameterTypes, num, newParameterTypes, 0, newParameterTypes.length);
-    System.arraycopy(myOptionals, num, newOptionals, 0, newOptionals.length);
-    return create(myReturnType, newParameterTypes, newOptionals, myManager, myScope, myLanguageLevel);
+  public PsiType curry(int count) {
+    final GrClosureSignature newSignature = mySignature.curry(count);
+    if (newSignature == null) return null;
+    return create(newSignature, myManager, myScope, myLanguageLevel);
+  }
+
+  @NotNull
+  public GrClosureSignature getSignature() {
+    return mySignature;
+  }
+
+  public PsiType[] getClosureParameterTypes() {
+    final GrClosureParameter[] parameters = mySignature.getParameters();
+    final PsiType[] types = new PsiType[parameters.length];
+    for (int i = 0; i < types.length; i++) {
+      types[i] = parameters[i].getType();
+    }
+    return types;
   }
 }

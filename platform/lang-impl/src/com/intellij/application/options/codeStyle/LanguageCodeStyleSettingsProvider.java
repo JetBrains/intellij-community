@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,37 +31,37 @@ import java.util.ArrayList;
  */
 public abstract class LanguageCodeStyleSettingsProvider {
   public enum SettingsType {
-    BLANK_LINE_SETTINGS, INDENT_AND_BRACES_SETTINGS, SPACING_SETTINGS
+    BLANK_LINE_SETTINGS, INDENT_AND_BRACES_SETTINGS, SPACING_SETTINGS, WRAPPING_SETTINGS
   }
   
   public static final ExtensionPointName<LanguageCodeStyleSettingsProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.langCodeStyleSettingsProvider");
 
-  public abstract LanguageFileType getLanguageFileType();
+  public abstract Language getLanguage();
 
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
 
-  public static LanguageFileType[] getLanguageFileTypes() {
-    ArrayList<LanguageFileType> langFileTypes = new ArrayList<LanguageFileType>();
+  public static Language[] getLanguagesWithCodeStyleSettings() {
+    ArrayList<Language> langs = new ArrayList<Language>();
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      langFileTypes.add(provider.getLanguageFileType());
+      langs.add(provider.getLanguage());
     }
-    return langFileTypes.toArray(new LanguageFileType[langFileTypes.size()]);
+    return langs.toArray(new Language[langs.size()]);
   }
 
   public static @Nullable String getCodeSample(Language lang, @NotNull SettingsType settingsType) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (provider.getLanguageFileType().getLanguage().equals(lang)) {
+      if (provider.getLanguage().equals(lang)) {
         return provider.getCodeSample(settingsType);
       }
     }
     return null;
   }
 
-  public static @Nullable LanguageFileType getFileType(String langName) {
+  public static @Nullable Language getLanguage(String langName) {
     for (LanguageCodeStyleSettingsProvider provider : Extensions.getExtensions(EP_NAME)) {
-      if (langName.equals(provider.getLanguageFileType().getLanguage().getDisplayName())) {
-        return provider.getLanguageFileType();
+      if (langName.equals(provider.getLanguage().getDisplayName())) {
+        return provider.getLanguage();
       }
     }
     return null;

@@ -45,6 +45,7 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
     CheckUtil.checkWritable(element);
     final CompositeElement attrNode = (CompositeElement)element.getNode();
     final ASTNode valueNode = attrNode.findLeafElementAt(range.getStartOffset());
+    LOG.assertTrue(valueNode != null, "Leaf not found in " + attrNode + " at offset " + range.getStartOffset());
     final PsiElement elementToReplace = valueNode.getPsi();
 
     String text;

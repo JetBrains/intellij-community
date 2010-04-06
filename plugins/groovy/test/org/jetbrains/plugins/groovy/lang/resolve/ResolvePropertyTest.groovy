@@ -81,6 +81,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 
+  public void testFromGetter2() throws Exception {
+    PsiReference ref = configureByFile("fromGetter2/A.groovy");
+    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+  }
+
+  public void testFromSetter2() throws Exception {
+    PsiReference ref = configureByFile("fromSetter2/A.groovy");
+    assertTrue(ref.resolve() instanceof GrAccessorMethod);
+  }
+
   public void testFromSetter() throws Exception {
     PsiReference ref = configureByFile("fromSetter/A.groovy");
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
@@ -290,6 +300,21 @@ class Foo {
     assertFalse ref.isReferenceTo(target.setter)
   }
 
+  public void testAliasedStaticImport() throws Exception {
+    myFixture.addClass """ class Main {
+  static def foo=4
+"""
+
+    myFixture.configureByText "a.groovy", """
+import static Main.foo as bar
+print ba<caret>r
+}
+"""
+    def ref = findReference()
+    def target = assertInstanceOf(ref.resolve(), PsiField)
+    assertEquals target.getName(), "foo"
+  }
+
   private void doTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
@@ -300,5 +325,139 @@ class Foo {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof GrReferenceExpression);
+  }
+
+  public void testBooleanProperty() throws Exception {
+    myFixture.configureByText("Abc.groovy", """class A{
+    boolean getFoo(){return true}
+ boolean isFoo(){return false}
+ }
+ print new A().f<caret>oo""");
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertNotNull resolved
+    assertEquals resolved.getName(), "isFoo"
+  }
+
+  public void testExplicitBooleanProperty() throws Exception {
+    myFixture.configureByText("Abc.groovy", """class A{
+    boolean foo
+ }
+ print new A().f<caret>oo""");
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertNotNull resolved
+    assertEquals resolved.getName(), "isFoo"
+  }
+
+  public void testStaticFieldAndNonStaticGetter() {
+    myFixture.configureByText("Abc.groovy", "print Float.N<caret>aN")
+    def ref = findReference()
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, PsiField.class
+  }
+
+  public void testPropertyAndFieldDeclarationInsideClass() {
+    myFixture.configureByText("a.groovy", """class Foo {
+  def foo
+  public def foo
+
+  def bar() {
+    print fo<caret>o
+  }
+}""")
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertInstanceOf resolved, GrField.class
+    assertTrue resolved.getModifierList().hasExplicitVisibilityModifiers()
+  }
+
+  public void testPropertyAndFieldDeclarationOutsideClass() {
+    myFixture.configureByText("a.groovy", """class Foo {
+  def foo
+  public def foo
+
+  def bar() {
+    print foo
+  }
+}
+print new Foo().fo<caret>o""")
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertInstanceOf resolved, GrAccessorMethod.class
+  }
+
+  public void testPropertyAndFieldDeclarationWithSuperClass1() {
+    myFixture.configureByText("a.groovy", """
+class Bar{
+  def foo
+}
+class Foo extends Bar {
+  public def foo
+
+  def bar() {
+    print foo
+  }
+}
+print new Foo().fo<caret>o""")
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertInstanceOf resolved, GrAccessorMethod.class
+  }
+
+  public void testPropertyAndFieldDeclarationWithSuperClass2() {
+    myFixture.configureByText("a.groovy", """
+class Bar{
+  def foo
+}
+class Foo extends Bar {
+  public def foo
+
+  def bar() {
+    print f<caret>oo
+  }
+}
+print new Foo().foo""")
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertInstanceOf resolved, GrField.class
+    assertTrue resolved.getModifierList().hasExplicitVisibilityModifiers()
+  }
+
+  public void testPropertyAndFieldDeclarationWithSuperClass3() {
+    myFixture.configureByText("a.groovy", """
+class Bar{
+  public def foo
+}
+class Foo extends Bar {
+  def foo
+
+  def bar() {
+    print foo
+  }
+}
+print new Foo().fo<caret>o""")
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertInstanceOf resolved, GrAccessorMethod.class
+  }
+  
+  public void testPropertyAndFieldDeclarationWithSuperClass4() {
+    myFixture.configureByText("a.groovy", """
+class Bar{
+  public def foo
+}
+class Foo extends Bar {
+  def foo
+
+  def bar() {
+    print f<caret>oo
+  }
+}
+print new Foo().foo""")
+    def ref = findReference()
+    def resolved = ref.resolve();
+    assertInstanceOf resolved, GrField.class
+    assertTrue !resolved.getModifierList().hasExplicitVisibilityModifiers()
   }
 }

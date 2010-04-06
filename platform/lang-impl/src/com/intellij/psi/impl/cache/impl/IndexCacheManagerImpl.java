@@ -96,6 +96,8 @@ public class IndexCacheManagerImpl implements CacheManager{
       }
     });
 
+    if (vFiles.isEmpty()) return true;
+
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
     final Processor<VirtualFile> virtualFileProcessor = new Processor<VirtualFile>() {
@@ -117,7 +119,7 @@ public class IndexCacheManagerImpl implements CacheManager{
 
 
     // IMPORTANT!!!
-    // Since implementation of virtualFileProcessor.process() may call indices dierctly or indirectly,
+    // Since implementation of virtualFileProcessor.process() may call indices directly or indirectly,
     // we cannot call it inside FileBasedIndex.processValues() method
     // If we do, deadlocks are possible (IDEADEV-42137). So first we obtain files with the word specified,
     // and then process them not holding indices' read lock.
@@ -179,7 +181,7 @@ public class IndexCacheManagerImpl implements CacheManager{
           count[0] += value.intValue();
           return true;
         }
-      }, GlobalSearchScope.allScope(myProject));
+      }, GlobalSearchScope.fileScope(myProject, file));
     return count[0];
   }
 

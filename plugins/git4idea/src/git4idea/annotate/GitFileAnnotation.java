@@ -243,6 +243,10 @@ public class GitFileAnnotation implements FileAnnotation {
     return result;
   }
 
+  public boolean revisionsNotEmpty() {
+    return ! myRevisionMap.isEmpty();
+  }
+
   public AnnotationSourceSwitcher getAnnotationSourceSwitcher() {
     return null;
   }

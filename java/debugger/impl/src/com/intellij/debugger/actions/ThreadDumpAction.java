@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,11 @@ public class ThreadDumpAction extends AnAction {
     for (ThreadReference threadReference : threads) {
       final StringBuilder buffer = new StringBuilder();
       boolean hasEmptyStack = true;
-      final String threadName = threadName(threadReference);
       final int threadStatus = threadReference.status();
+      if (threadStatus == ThreadReference.THREAD_STATUS_ZOMBIE) {
+        continue;
+      }
+      final String threadName = threadName(threadReference);
       final ThreadState threadState = new ThreadState(threadName, threadStatusToState(threadStatus));
       nameToThreadMap.put(threadName, threadState);
       result.add(threadState);
@@ -103,6 +106,7 @@ public class ThreadDumpAction extends AnAction {
           Value value = threadReference.getValue(daemon);
           if (value instanceof BooleanValue && ((BooleanValue)value).booleanValue()) {
             buffer.append(" ").append(DebuggerBundle.message("threads.export.attribute.label.daemon"));
+            threadState.setDaemon(true);
           }
         }
 

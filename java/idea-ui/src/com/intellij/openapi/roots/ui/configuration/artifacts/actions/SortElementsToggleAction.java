@@ -25,7 +25,7 @@ import com.intellij.openapi.util.IconLoader;
  * @author nik
  */
 public class SortElementsToggleAction extends ToggleAction implements DumbAware {
-  private LayoutTreeComponent myLayoutTreeComponent;
+  private final LayoutTreeComponent myLayoutTreeComponent;
 
   public SortElementsToggleAction(final LayoutTreeComponent layoutTreeComponent) {
     super("Sort Elements by Names and Types", "Sort Elements by Names and Types", IconLoader.getIcon("/objectBrowser/sorted.png"));

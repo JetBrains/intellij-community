@@ -24,7 +24,6 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -39,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
 /**
  * @author ilyas
@@ -89,6 +90,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   }
 
   private static class MyTypesCalculator implements Function<GrListOrMapImpl, PsiType> {
+    @Nullable
     public PsiType fun(GrListOrMapImpl listOrMap) {
       final GlobalSearchScope scope = listOrMap.getResolveScope();
       if (listOrMap.isMap()) {
@@ -109,7 +111,10 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
     @Nullable
     private static PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap, JavaPsiFacade facade, GlobalSearchScope scope) {
-      PsiClass mapClass = facade.findClass("java.util.Map", scope);
+      PsiClass mapClass = facade.findClass("java.util.LinkedHashMap", scope);
+      if (mapClass == null) {
+        mapClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, scope);
+      }
       PsiElementFactory factory = facade.getElementFactory();
       if (mapClass != null) {
         PsiTypeParameter[] typeParameters = mapClass.getTypeParameters();
@@ -146,15 +151,20 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       if (labels.length == 0) return null;
       PsiType result = null;
       PsiManager manager = labels[0].getManager();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(labels[0].getProject());
       for (GrArgumentLabel label : labels) {
         PsiElement el = label.getNameElement();
-        final PsiType other;
+        PsiType other;
         if (el instanceof GrParenthesizedExpression) {
           other = ((GrParenthesizedExpression)el).getType();
         }
         else {
-          if (el.getNode() != null) {
-            other = TypesUtil.getPsiType(el, el.getNode().getElementType());
+          final ASTNode node = el.getNode();
+          if (node != null) {
+            other = TypesUtil.getPsiType(el, node.getElementType());
+            if (other == null) {
+              other = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, el.getResolveScope());
+            }
           }
           else {
             other = null;
@@ -186,6 +196,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
       return result;
     }
 
+    @Nullable
     private static PsiType getLeastUpperBound(PsiType result, PsiType other, PsiManager manager) {
       if (other == null) return result;
       if (result == null) result = other;

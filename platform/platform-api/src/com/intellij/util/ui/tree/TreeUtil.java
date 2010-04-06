@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -311,7 +310,7 @@ public final class TreeUtil {
     }
   }
 
-  private static void addChildrenTo(final MutableTreeNode node, final List<TreeNode> children) {
+  public static void addChildrenTo(final MutableTreeNode node, final List<TreeNode> children) {
     for (final Object aChildren : children) {
       final MutableTreeNode child = (MutableTreeNode)aChildren;
       node.insert(child, node.getChildCount());

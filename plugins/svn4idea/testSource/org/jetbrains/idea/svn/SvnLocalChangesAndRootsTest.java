@@ -127,7 +127,7 @@ public class SvnLocalChangesAndRootsTest extends SvnTestCase {
     private final VirtualFile myRootDir;
     private final VirtualFile myInnerFile;
     private VirtualFile myNonVersionedUpper;
-    private VirtualFile myMappingTarget;
+    private final VirtualFile myMappingTarget;
 
     private SubTree(final VirtualFile base, final VirtualFile projectRoot) throws Throwable {
       // todo +-

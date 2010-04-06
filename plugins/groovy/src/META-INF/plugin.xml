@@ -24,12 +24,14 @@
   <depends>com.intellij.properties</depends>
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
+  <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
 
   <extensionPoints>
     <extensionPoint name="libraryManager" interface="org.jetbrains.plugins.groovy.config.AbstractGroovyLibraryManager"/>
 
     <extensionPoint name="nonCodeProcessor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor"/>
-    <extensionPoint name="propertyEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.PropertyEnhancer"/>
+    <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
+    <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter"/>
 
     <extensionPoint name="positionManagerDelegate" interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
     <extensionPoint name="compilerExtension" interface="org.jetbrains.plugins.groovy.compiler.GroovyCompilerExtension"/>
@@ -42,11 +44,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
-    <!--<nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.SingletonAnnotationProcessor"/>-->
-    <!--<nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.BindableAnnotationProcessor"/>-->
-    <!--<nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.VetoableAnnotationProcessor"/>-->
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor"/>
-    <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.dsl.DslMembersProcessor"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryManager"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gant.GantLibraryManager" order="last"/>
     <libraryManager implementation="org.jetbrains.plugins.groovy.gradle.GradleLibraryManager" order="last"/>
@@ -62,6 +60,8 @@
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiElementCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiMethodCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiExpressionCategory"/>
+
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -138,6 +138,8 @@
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
+    <stackFrameFilter implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
+
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
     <fileTypeIndentOptionsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyIndentOptionsProvider"/>
 
@@ -483,9 +485,6 @@
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
     </component>
-    <!--<component>
-      <implementation-class>org.jetbrains.plugins.groovy.config.GroovyLibraryListener</implementation-class>
-    </component>-->
     <component>
       <interface-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager</interface-class>
       <implementation-class>org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManagerImpl</implementation-class>

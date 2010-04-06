@@ -33,6 +33,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -65,7 +66,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private final LayoutFocusTraversalPolicyExt myLayoutFocusTraversalPolicy;
 
   private IdeRootPane myRootPane;
-  private BalloonLayout myBalloonLayout;
+  private final BalloonLayout myBalloonLayout;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManager actionManager, UISettings uiSettings, DataManager dataManager,
                       KeymapManager keymapManager, final Application application, final String[] commandLineArgs) {
@@ -84,6 +85,32 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     new MnemonicHelper().register(this);
 
     myBalloonLayout = new BalloonLayout(myRootPane.getLayeredPane(), new Insets(8, 8, 8, 8));
+
+    if (!Registry.is("ide.windowSystem.focusAppOnStartup") && !isThereActiveFrame()) {
+      setFocusableWindowState(false);
+    }
+
+  }
+
+  private boolean isThereActiveFrame() {
+    Frame[] all = Frame.getFrames();
+    for (Frame each : all) {
+      if (each.isActive()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  @Override
+  public void show() {
+    super.show();
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        setFocusableWindowState(true);
+      }
+    });
   }
 
   /**

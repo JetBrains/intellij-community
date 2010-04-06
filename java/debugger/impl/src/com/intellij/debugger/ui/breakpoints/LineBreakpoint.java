@@ -34,10 +34,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -52,13 +53,11 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
@@ -66,8 +65,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   // icons
   public static Icon ICON = DebuggerIcons.ENABLED_BREAKPOINT_ICON;
+  public static final Icon MUTED_ICON = DebuggerIcons.MUTED_BREAKPOINT_ICON;
   public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
+  public static final Icon MUTED_DISABLED_ICON = DebuggerIcons.MUTED_DISABLED_BREAKPOINT_ICON;
   private static final Icon ourVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png");
+  private static final Icon ourMutedVerifiedWarningsIcon = IconLoader.getIcon("/debugger/db_muted_verified_warning_breakpoint.png");
 
   private String myMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
@@ -80,25 +82,30 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project, highlighter);
   }
 
-  protected Icon getDisabledIcon() {
+  protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    return master == null? DISABLED_ICON : DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
+    if (isMuted) {
+      return master == null? MUTED_DISABLED_ICON : DebuggerIcons.MUTED_DISABLED_DEPENDENT_BREAKPOINT_ICON;
+    }
+    else {
+      return master == null? DISABLED_ICON : DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
+    }
   }
 
-  protected Icon getSetIcon() {
-    return ICON;
+  protected Icon getSetIcon(boolean isMuted) {
+    return isMuted? MUTED_ICON : ICON;
   }
 
-  protected Icon getInvalidIcon() {
-    return DebuggerIcons.INVALID_BREAKPOINT_ICON;
+  protected Icon getInvalidIcon(boolean isMuted) {
+    return isMuted? DebuggerIcons.MUTED_INVALID_BREAKPOINT_ICON : DebuggerIcons.INVALID_BREAKPOINT_ICON;
   }
 
-  protected Icon getVerifiedIcon() {
-    return DebuggerIcons.VERIFIED_BREAKPOINT_ICON;
+  protected Icon getVerifiedIcon(boolean isMuted) {
+    return isMuted? DebuggerIcons.MUTED_VERIFIED_BREAKPOINT_ICON : DebuggerIcons.VERIFIED_BREAKPOINT_ICON;
   }
 
-  protected Icon getVerifiedWarningsIcon() {
-    return ourVerifiedWarningsIcon;
+  protected Icon getVerifiedWarningsIcon(boolean isMuted) {
+    return isMuted? ourMutedVerifiedWarningsIcon : ourVerifiedWarningsIcon;
   }
 
   public Key<LineBreakpoint> getCategory() {
@@ -179,37 +186,41 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     final SourcePosition position = getSourcePosition();
     if (position != null) {
       final VirtualFile breakpointFile = position.getFile().getVirtualFile();
-      if (breakpointFile != null) {
-        final Collection<VirtualFile> candidates = findClassFileCandidates(className, debugProcess.getSearchScope());
-        if (!candidates.isEmpty()) {
-          for (VirtualFile classFile : candidates) {
-            if (breakpointFile.equals(classFile)) {
-              return true;
-            }
-          }
-          return false;
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      if (breakpointFile != null && fileIndex.isInSourceContent(breakpointFile)) {
+        // apply filtering to breakpoints from content sources only, not for sources attached to libraries
+        final Collection<VirtualFile> candidates = findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex);
+        if (candidates == null) {
+          return true;
         }
+        for (VirtualFile classFile : candidates) {
+          if (breakpointFile.equals(classFile)) {
+            return true;
+          }
+        }
+        return false;
       }
     }
     return true;
   }
 
-  @NotNull
-  private Collection<VirtualFile> findClassFileCandidates(final String className, final GlobalSearchScope scope) {
+  @Nullable
+  private Collection<VirtualFile> findClassCandidatesInSourceContent(final String className, final GlobalSearchScope scope, final ProjectFileIndex fileIndex) {
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+      @Nullable
       public Collection<VirtualFile> compute() {
         final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
         if (classes.length == 0) {
-          return Collections.emptyList();
+          return null;
         }
         final List<VirtualFile> list = new ArrayList<VirtualFile>(classes.length);
         for (PsiClass aClass : classes) {
           final PsiFile psiFile = aClass.getContainingFile();
           if (psiFile != null) {
             final VirtualFile vFile = psiFile.getVirtualFile();
-            if (vFile != null && vFile.getFileSystem() instanceof LocalFileSystem) {
+            if (vFile != null && fileIndex.isInSourceContent(vFile)) {
               list.add(vFile);
             }
           }

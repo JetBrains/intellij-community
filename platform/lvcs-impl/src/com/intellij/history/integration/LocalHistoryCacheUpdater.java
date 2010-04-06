@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class LocalHistoryCacheUpdater implements CacheUpdater {
   private final LocalVcs myVcs;
@@ -80,6 +83,10 @@ public class LocalHistoryCacheUpdater implements CacheUpdater {
 
   public void processFile(FileContent c) {
     myProcessor.processFile(c);
+  }
+
+  public int getNumberOfPendingUpdateJobs() {
+    return 0;
   }
 
   public void updatingDone() {

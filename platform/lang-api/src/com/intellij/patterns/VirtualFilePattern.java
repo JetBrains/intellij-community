@@ -43,7 +43,15 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
   public VirtualFilePattern withName(final String name) {
     return withName(PlatformPatterns.string().equalTo(name));
   }
-  
+
+  public VirtualFilePattern withExtension(@NotNull final String extension) {
+    return with(new PatternCondition<VirtualFile>("withExtension") {
+      public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
+        return extension.equals(virtualFile.getExtension());
+      }
+    });
+  }
+
   public VirtualFilePattern withName(final ElementPattern<String> namePattern) {
     return with(new PatternCondition<VirtualFile>("withName") {
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {

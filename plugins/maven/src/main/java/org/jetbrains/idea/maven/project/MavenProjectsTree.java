@@ -23,12 +23,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.maven.artifact.Artifact;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
@@ -55,7 +57,7 @@ public class MavenProjectsTree {
   private volatile Pattern myIgnoredFilesPatternsCache;
 
   private volatile Set<String> myExplicitProfiles = new THashSet<String>();
-  private volatile Set<String> myTemporarilyRemovedExplicitProfiles = new THashSet<String>();
+  private final Set<String> myTemporarilyRemovedExplicitProfiles = new THashSet<String>();
 
   private final List<MavenProject> myRootProjects = new ArrayList<MavenProject>();
 
@@ -669,7 +671,7 @@ public class MavenProjectsTree {
   }
 
   private long getFileTimestamp(VirtualFile file) {
-    if (file == null) return -1;
+    if (file == null || !file.isValid()) return -1;
     return file.getTimeStamp();
   }
 
@@ -972,15 +974,11 @@ public class MavenProjectsTree {
   }
 
   public List<MavenProject> getDependentProjects(MavenProject project) {
-    MavenId projectId = project.getMavenId();
-    List<MavenProject> result = new ArrayList<MavenProject>();
+    List<MavenProject> result = new SmartList<MavenProject>();
     for (MavenProject eachProject : getProjects()) {
       if (eachProject == project) continue;
-      for (MavenArtifact eachDependency : eachProject.getDependencies()) {
-        if (eachDependency.getMavenId().equals(projectId)) {
-          result.add(eachProject);
-          break;
-        }
+      if (!eachProject.findDependencies(project).isEmpty()) {
+        result.add(eachProject);
       }
     }
     return result;
@@ -1026,6 +1024,7 @@ public class MavenProjectsTree {
         process.setText(ProjectBundle.message("maven.downloading.pom.plugins", mavenProject.getDisplayName()));
         embedder.resolvePlugin(each, nativeMavenProject, false);
       }
+      mavenProject.resetCache();
       firePluginsResolved(mavenProject);
     }
     finally {
@@ -1063,18 +1062,28 @@ public class MavenProjectsTree {
                         });
   }
 
-  public void downloadArtifacts(MavenProject mavenProject,
-                                boolean downloadSources,
-                                boolean downloadDocs,
-                                MavenEmbeddersManager embeddersManager,
-                                MavenConsole console,
-                                MavenProgressIndicator process) throws MavenProcessCanceledException {
+  /**
+   * @return list of unresolved artifacts
+   */
+  public MavenArtifactDownloader.DownloadResult downloadArtifacts(Collection<MavenProject> projects,
+                                                                  @Nullable Collection<MavenArtifact> artifacts,
+                                                                  boolean downloadSources,
+                                                                  boolean downloadDocs,
+                                                                  MavenEmbeddersManager embeddersManager,
+                                                                  MavenConsole console,
+                                                                  MavenProgressIndicator process)
+    throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_DOWNLOAD);
     embedder.customizeForResolve(console, process);
 
     try {
-      MavenArtifactDownloader.download(this, Collections.singletonList(mavenProject), downloadSources, downloadDocs, embedder, process);
-      fireArtifactsDownloaded(mavenProject);
+      MavenArtifactDownloader.DownloadResult result =
+        MavenArtifactDownloader.download(this, projects, artifacts, downloadSources, downloadDocs, embedder, process);
+
+      for (MavenProject each : projects) {
+        fireArtifactsDownloaded(each);
+      }
+      return result;
     }
     finally {
       embeddersManager.release(embedder);

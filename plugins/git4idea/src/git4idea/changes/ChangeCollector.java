@@ -42,7 +42,7 @@ class ChangeCollector {
   /**
    * The dirty scope used in the collector
    */
-  private VcsDirtyScope myDirtyScope;
+  private final VcsDirtyScope myDirtyScope;
   /**
    * a vcs root for changes
    */
@@ -304,7 +304,7 @@ class ChangeCollector {
         if ('M' == status) {
           sc.boundedToken('\t');
           String file = GitUtil.unescapePath(sc.line());
-          VirtualFile vFile = myVcsRoot.findFileByRelativePath(GitUtil.unescapePath(sc.line()));
+          VirtualFile vFile = myVcsRoot.findFileByRelativePath(file);
           if (GitUtil.gitRootOrNull(vFile) != myVcsRoot) {
             continue;
           }

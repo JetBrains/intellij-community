@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
@@ -39,7 +40,7 @@ import java.awt.*;
  * recreated and maintained for each project, and still being able to use class-choosers
  * that will allow to browse the current project's classes.
  */
-public class Settings implements Configurable {
+public class Settings implements SearchableConfigurable {
 
   private final Configuration myConfiguration;
 
@@ -110,5 +111,13 @@ public class Settings implements Configurable {
 
   public void disposeUIResources() {
     mySettingsUI = null;
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

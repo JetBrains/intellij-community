@@ -264,12 +264,10 @@ public class MavenIndex {
     return myKind;
   }
 
-  public boolean isForLocal(String repositoryId, File repository) {
-    return myKind == Kind.LOCAL && myRepositoryId.equals(repositoryId) && getRepositoryFile().equals(repository);
-  }
-
-  public boolean isForRemote(String repositoryId, String url) {
-    return myKind == Kind.REMOTE && myRepositoryId.equals(repositoryId) && getRepositoryUrl().equalsIgnoreCase(normalizePathOrUrl(url));
+  public boolean isFor(Kind kind, String repositoryId, String pathOrUrl) {
+    if (myKind != kind || !myRepositoryId.equals(repositoryId)) return false;
+    if (kind == Kind.LOCAL) return FileUtil.pathsEqual(myRepositoryPathOrUrl, normalizePathOrUrl(pathOrUrl));
+    return myRepositoryPathOrUrl.equalsIgnoreCase(normalizePathOrUrl(pathOrUrl));
   }
 
   public synchronized long getUpdateTimestamp() {
@@ -749,12 +747,12 @@ public class MavenIndex {
     }
 
     public void flush() throws IOException {
-      groups.flush();
-      groupsWithArtifacts.flush();
-      groupsWithArtifactsWithVersions.flush();
+      groups.force();
+      groupsWithArtifacts.force();
+      groupsWithArtifactsWithVersions.force();
 
-      groupToArtifactMap.flush();
-      groupWithArtifactToVersionMap.flush();
+      groupToArtifactMap.force();
+      groupWithArtifactToVersionMap.force();
     }
   }
 

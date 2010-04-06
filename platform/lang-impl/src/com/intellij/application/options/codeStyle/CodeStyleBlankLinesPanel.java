@@ -49,7 +49,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
-  private static LanguageFileType myFileType = StdFileTypes.JSP; //TODO: Replace hardcoded value
+  private static final LanguageFileType myFileType = StdFileTypes.JSP; //TODO: Replace hardcoded value
 
   public CodeStyleBlankLinesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -126,21 +126,6 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
     return optionGroup.createPanel();
   }
-
-  private static JPanel createPreviewPanel() {
-    JPanel panel = new JPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.preview")));
-    panel.setPreferredSize(new Dimension(200, 0));
-    return panel;
-  }
-
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    return myFileType.getEditorHighlighter(project, null, scheme);
-  }  
 
   protected void resetImpl(final CodeStyleSettings settings) {
     myKeepBlankLinesInDeclarations.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_DECLARATIONS));

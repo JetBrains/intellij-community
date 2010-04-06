@@ -22,7 +22,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-2.2.0-uber.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -59,6 +59,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

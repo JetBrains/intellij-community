@@ -17,27 +17,21 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,19 +45,20 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
  */
-public class JavaDocumentationProvider implements CodeDocumentationProvider {
+public class JavaDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
+  private static final Logger LOG = Logger.getInstance("#" + JavaDocumentationProvider.class.getName());
   private static final String LINE_SEPARATOR = "\n";
 
   @NonNls private static final String PARAM_TAG = "@param";
@@ -548,32 +543,21 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
   @Nullable
   public static String generateExternalJavadoc(final PsiElement element) {
     final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
-    JavaDocExternalFilter docFilter = new JavaDocExternalFilter(element.getProject());
-    List<String> docURLs = getExternalJavaDocUrl(element);
-
-    if (docURLs != null) {
-      for (String docURL : docURLs) {
-        final String javadoc = generateExternalJavadoc(element, docURL, true, docFilter);
-        if (javadoc != null) return javadoc;
-      }
-    }
-
-    return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo());
+    final List<String> docURLs = getExternalJavaDocUrl(element);
+    return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(docURLs));
   }
 
 
   @Nullable
-  private static String generateExternalJavadoc(final PsiElement element, String fromUrl, boolean checkCompiled, JavaDocExternalFilter filter) {
-    if (!checkCompiled || element instanceof PsiCompiledElement) {
-      try {
-        String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
-        if (externalDoc != null && externalDoc.length() > 0) {
-          return externalDoc;
-        }
+  private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, JavaDocExternalFilter filter) {
+    try {
+      String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
+      if (externalDoc != null && externalDoc.length() > 0) {
+        return externalDoc;
       }
-      catch (Exception e) {
-        //try to generate some javadoc
-      }
+    }
+    catch (Exception e) {
+      //try to generate some javadoc
     }
     return null;
   }
@@ -611,56 +595,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
     sb.append(str);
     sb.append("</a>");
     sb.append("<br>");
-  }
-
-  public boolean isExternalDocumentationEnabled(final PsiElement element, final PsiElement originalElement) {
-    boolean actionEnabled = element != null && getExternalJavaDocUrl(element) != null;
-    if (element instanceof PsiVariable && !(element instanceof PsiField)) {
-      actionEnabled = false;
-    }
-    return actionEnabled;
-  }
-
-  public String getExternalDocumentation(@NotNull final String url, final Project project) throws Exception {
-    if (JavaDocExternalFilter.isJavaDocURL(url)) {
-      String text = new JavaDocExternalFilter(project).getExternalDocInfo(url);
-      if (text != null) {
-        return text;
-      }
-    }
-    return null;
-  }
-
-  public void openExternalDocumentation(final PsiElement element, final PsiElement originalElement) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
-    List<String> urls = getExternalJavaDocUrl(element);
-    if (urls != null && !urls.isEmpty()) {
-      final JavaDocExternalFilter filter = new JavaDocExternalFilter(element.getProject());
-      for (Iterator<String> it = urls.iterator(); it.hasNext();) {
-        String url = it.next();
-        if (generateExternalJavadoc(element, url, false, filter) == null) it.remove();
-      }
-      final HashSet<String> set = new HashSet<String>(urls);
-      if (set.size() > 1) {
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose javadoc root", ArrayUtil.toStringArray(set)) {
-          public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-            BrowserUtil.launchBrowser(selectedValue);
-            return FINAL_CHOICE;
-          }
-        }).showInBestPositionFor(DataManager.getInstance().getDataContext());
-      }
-      else if (set.size() == 1){
-        BrowserUtil.launchBrowser(urls.get(0));
-      }
-    }
-    else {
-      final JBPopup docInfoHint = DocumentationManager.getInstance(element.getProject()).getDocInfoHint();
-      if (docInfoHint != null && docInfoHint.isVisible()) {
-        docInfoHint.cancel();
-      }
-      Messages.showMessageDialog(element.getProject(), CodeInsightBundle.message("javadoc.documentation.not.found.message"),
-                                 CodeInsightBundle.message("javadoc.documentation.not.found.title"), Messages.getErrorIcon());
-    }
   }
 
   @Nullable
@@ -814,5 +748,29 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider {
 
   public PsiElement getDocumentationElementForLink(final PsiManager psiManager, final String link, final PsiElement context) {
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
+  }
+
+  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
+    return fetchExternalJavadoc(element, project, docUrls);
+  }
+
+  public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
+    final JavaDocExternalFilter docFilter = new JavaDocExternalFilter(project);
+
+    if (docURLs != null) {
+      for (String docURL : docURLs) {
+        try {
+          final String javadoc = fetchExternalJavadoc(element, docURL, docFilter);
+          if (javadoc != null) return javadoc;
+        }
+        catch (IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.info(e); //connection problems should be ignored
+        }
+      }
+    }
+    return null;
   }
 }

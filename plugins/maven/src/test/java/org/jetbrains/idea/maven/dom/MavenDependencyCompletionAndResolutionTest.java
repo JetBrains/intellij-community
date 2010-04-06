@@ -550,7 +550,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "    <artifactId>xxx</artifactId>" +
                      "    <version>xxx</version>" +
                      "    <scope>system</scope>" +
-                     "    <systemPath><caret>" + libPath + "</systemPath>" +
+                     "    <systemPath>" + libPath + "<caret></systemPath>" +
                      "  </dependency>" +
                      "</dependencies>");
 
@@ -586,7 +586,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     try {
       // prevent file path from wrapping.
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = CodeStyleSettings.DO_NOT_WRAP;
-      myCodeInsightFixture.launchAction(action);
+      myFixture.launchAction(action);
     }
     finally {
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().XML_TEXT_WRAP = prevValue;
@@ -658,7 +658,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "compile", "provided", "runtime", "test", "system", "import");
+    assertCompletionVariants(myProjectPom, "compile", "provided", "runtime", "test", "system");
   }
 
   public void testInvalidScopeHighlighting() throws Throwable {
@@ -671,7 +671,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "    <groupId>junit</groupId>" +
                      "    <artifactId>junit</artifactId>" +
                      "    <version>4.0</version>" +
-                     "    <scope>xxx</scope>" +
+                     "    <scope><error>xxx</error></scope>" +
                      "  </dependency>" +
                      "</dependencies>");
 

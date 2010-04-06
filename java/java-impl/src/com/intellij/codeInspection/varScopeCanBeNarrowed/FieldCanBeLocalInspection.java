@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -153,17 +154,21 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
           }
         }
       }
+      final Ref<Collection<PsiVariable>> writtenVariables = new Ref<Collection<PsiVariable>>();
       final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
       for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
         final PsiElement resolved = readBeforeWrite.resolve();
         if (resolved instanceof PsiField) {
           final PsiField field = (PsiField)resolved;
-          PsiElement parent = body.getParent();
-          if (!(parent instanceof PsiMethod) ||
-              !((PsiMethod)parent).isConstructor() ||
-              field.getInitializer() == null ||
-              field.hasModifierProperty(PsiModifier.STATIC)) {
-            candidates.remove(field);
+          if (!(field.getType() instanceof PsiPrimitiveType) || !PsiUtil.isConstantExpression(field.getInitializer()) || getWrittenVariables(controlFlow, writtenVariables).contains(field)){
+            PsiElement parent = body.getParent();
+            if (!(parent instanceof PsiMethod) ||
+                !((PsiMethod)parent).isConstructor() ||
+                field.getInitializer() == null ||
+                field.hasModifierProperty(PsiModifier.STATIC) ||
+                !PsiTreeUtil.isAncestor(((PsiMethod)parent).getContainingClass(), field, true)) {
+              candidates.remove(field);
+            }
           }
         }
       }
@@ -171,6 +176,13 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     catch (AnalysisCanceledException e) {
       candidates.clear();
     }
+  }
+
+  private static Collection<PsiVariable> getWrittenVariables(ControlFlow controlFlow, Ref<Collection<PsiVariable>> writtenVariables) {
+    if (writtenVariables.get() == null) {
+      writtenVariables.set(ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false));
+    }
+    return writtenVariables.get();
   }
 
   private static void removeFieldsReferencedFromInitializers(final PsiClass aClass, final Set<PsiField> candidates) {

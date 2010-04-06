@@ -157,6 +157,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   public synchronized void put(Key key, Value value) throws IOException {
     synchronized (ourLock) {
+      markDirty(true);
       myAppendCache.remove(key);
 
       final int id = enumerate(key);
@@ -185,6 +186,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   
   public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
     synchronized (ourLock) {
+      markDirty(true);
       appender.append(myAppendCache.get(key));
     }
   }
@@ -226,6 +228,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       byte[] data = new byte[header.size];
       long newAddress = myValueStorage.readBytes(header.address, data);
       if (newAddress != header.address) {
+        markDirty(true);
         header.address = newAddress;
         updateValueId(id, header);
         myGarbageSize += header.size;
@@ -260,6 +263,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       if (id == NULL_ID) {
         return;
       }
+      markDirty(true);
 
       final HeaderRecord record = readValueId(id);
       if (record != null) {
@@ -270,6 +274,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
+  public final void markDirty() throws IOException {
+    markDirty(true);
+  }
+
   protected void markClean() throws IOException {
     putMetaData(myGarbageSize);
     super.markClean();
@@ -277,10 +285,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   public synchronized void force() {
     synchronized (ourLock) {
-      myAppendCache.clear();
-      myValueStorage.force();
-
-      super.force();
+      try {
+        myAppendCache.clear();
+        myValueStorage.force();
+      }
+      finally {
+        super.force();
+      }
     }
   }
 
@@ -288,10 +299,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     synchronized (ourLock) {
       myAppendCache.clear();
       try {
-        super.close();
+        myValueStorage.dispose();
       }
       finally {
-        myValueStorage.dispose();
+        super.close();
       }
     }
   }

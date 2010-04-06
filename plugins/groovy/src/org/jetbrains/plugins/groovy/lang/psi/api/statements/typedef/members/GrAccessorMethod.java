@@ -17,16 +17,18 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 /**
  * synthetic method (either getter or setter) generated for groovy property
  * @author ven
  */
 public interface GrAccessorMethod extends PsiMethod {
-  public static final GrAccessorMethod[] EMPTY_ARRAY = new GrAccessorMethod[0];
-
+  GrAccessorMethod[] EMPTY_ARRAY = new GrAccessorMethod[0];
+  
+  @NotNull
   GrField getProperty();
 
   @Nullable

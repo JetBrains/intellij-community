@@ -393,7 +393,7 @@ public class BraceHighlightingHandler {
               int line2 = myDocument.getLineNumber(range.getEndOffset());
               line1 = Math.max(line1, line2 - 5);
               range = new TextRange(myDocument.getLineStartOffset(line1), range.getEndOffset());
-              EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true);
+              EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
             }
           }
         },

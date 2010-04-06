@@ -596,4 +596,12 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
     int hostOffset = myDocumentWindow.injectedToHost(offset);
     return myDelegate.calcColumnNumber(myDelegate.getDocument().getText(), hostStart, hostOffset, tabSize);
   }
+
+  public int calcColumnNumber(int offset, int lineIndex) {
+    return myDelegate.calcColumnNumber(myDocumentWindow.injectedToHost(offset), myDocumentWindow.injectedToHostLine(lineIndex));
+  }
+
+  public IndentsModel getIndentsModel() {
+    return myDelegate.getIndentsModel();
+  }
 }

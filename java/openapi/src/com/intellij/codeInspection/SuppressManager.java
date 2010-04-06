@@ -37,28 +37,28 @@ public abstract class SuppressManager {
     return ServiceManager.getService(SuppressManager.class);
   }
 
-  public abstract SuppressIntentionAction[] createSuppressActions(HighlightDisplayKey key);
+  public abstract SuppressIntentionAction[] createSuppressActions(@NotNull HighlightDisplayKey key);
 
-  public abstract boolean isSuppressedFor(final PsiElement element, final String toolId);
+  public abstract boolean isSuppressedFor(@NotNull PsiElement element, final String toolId);
 
-  public abstract PsiElement getElementMemberSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID);
-
-  @Nullable
-  public abstract PsiElement getAnnotationMemberSuppressedIn(PsiModifierListOwner owner, String inspectionToolID);
+  public abstract PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, final String inspectionToolID);
 
   @Nullable
-  public abstract PsiElement getDocCommentToolSuppressedIn(PsiDocCommentOwner owner, String inspectionToolID);
+  public abstract PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, String inspectionToolID);
+
+  @Nullable
+  public abstract PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, String inspectionToolID);
 
   @NotNull
-  public abstract Collection<String> getInspectionIdsSuppressedInAnnotation(PsiModifierListOwner owner);
+  public abstract Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner);
 
   @Nullable
-  public abstract String getSuppressedInspectionIdsIn(PsiElement element);
+  public abstract String getSuppressedInspectionIdsIn(@NotNull PsiElement element);
 
   @Nullable
-  public abstract PsiElement getElementToolSuppressedIn(PsiElement place, String toolId);
+  public abstract PsiElement getElementToolSuppressedIn(@NotNull PsiElement place, String toolId);
 
-  public abstract boolean canHave15Suppressions(PsiElement file);
+  public abstract boolean canHave15Suppressions(@NotNull PsiElement file);
 
-  public abstract boolean alreadyHas14Suppressions(PsiDocCommentOwner commentOwner);
+  public abstract boolean alreadyHas14Suppressions(@NotNull PsiDocCommentOwner commentOwner);
 }

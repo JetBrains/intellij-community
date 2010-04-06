@@ -51,6 +51,12 @@ public abstract class BaseParseTestcase extends TestCase {
 
   }
 
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
+    super.tearDown();
+  }
+
   public static String getTestDataRoot() {
     String homePath = PathManager.getHomePath();
     File candidate = new File(homePath, "community/RegExpSupport");
@@ -62,10 +68,5 @@ public abstract class BaseParseTestcase extends TestCase {
 
   protected String getTestDataPath() {
     return getTestDataRoot() + "/psi";
-  }
-
-  protected void tearDown() throws Exception {
-    myFixture.tearDown();
-    super.tearDown();
   }
 }

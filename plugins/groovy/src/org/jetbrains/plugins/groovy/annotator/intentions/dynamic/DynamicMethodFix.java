@@ -42,7 +42,7 @@ public class DynamicMethodFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    final PsiType[] methodArgumentsTypes = PsiUtil.getArgumentTypes(myReferenceExpression, false, false);
+    final PsiType[] methodArgumentsTypes = PsiUtil.getArgumentTypes(myReferenceExpression, false);
     StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getName());
     builder.append("(");
 

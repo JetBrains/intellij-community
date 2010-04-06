@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -33,7 +34,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   protected PsiElement myScope;
   protected PsiIdentifier myNameIdentifier;
   protected final PsiType myType;
-  protected PsiModifierList myModifierList;
+  protected final PsiModifierList myModifierList;
   protected boolean myWritable;
 
   public LightVariableBase(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
@@ -60,7 +61,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
 
   @NotNull
   public String getName() {
-    return getNameIdentifier().getText();
+    return StringUtil.notNullize(getNameIdentifier().getText());
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{

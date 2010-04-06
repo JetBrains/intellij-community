@@ -38,6 +38,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -62,15 +63,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable {
-  private CardLayout myLayout = new CardLayout();
+public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable, SearchableConfigurable {
+  private final CardLayout myLayout = new CardLayout();
   private JPanel myPanel;
 
   public static final String ID = "Errors";
   public static final String DISPLAY_NAME = "Inspections";
 
   protected JComboBox myProfiles;
-  private Map<String, SingleInspectionProfilePanel> myPanels = new HashMap<String, SingleInspectionProfilePanel>();
+  private final Map<String, SingleInspectionProfilePanel> myPanels = new HashMap<String, SingleInspectionProfilePanel>();
 
   private JPanel myWholePanel;
   private JButton myAddButton;
@@ -80,7 +81,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private JCheckBox myShareProfileCheckBox;
   private JButton myCopyButton;
 
-  private ArrayList<String> myDeletedProfiles = new ArrayList<String>();
+  private final ArrayList<String> myDeletedProfiles = new ArrayList<String>();
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
@@ -234,6 +235,18 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
   public String getHelpTopic() {
     return "preferences.inspections";
+  }
+
+  public String getId() {
+    return ID;
+  }
+
+  public Runnable enableSearch(final String option) {
+    return new Runnable(){
+      public void run() {
+        getSelectedPanel().filterTree(option);
+      }
+    };
   }
 
   public JComponent createComponent() {

@@ -19,6 +19,7 @@ package com.intellij.execution.filters;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.ArrayList;
 
@@ -27,11 +28,17 @@ import java.util.ArrayList;
  */
 public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private final Project myProject;
+  private final GlobalSearchScope myScope;
   private final ArrayList<Filter> myFilters = new ArrayList<Filter>();
   private boolean myViewer;
 
   public TextConsoleBuilderImpl(final Project project) {
+    this(project, GlobalSearchScope.allScope(project));
+  }
+
+  public TextConsoleBuilderImpl(final Project project, GlobalSearchScope scope) {
     myProject = project;
+    myScope = scope;
   }
 
   public ConsoleView getConsole() {
@@ -43,7 +50,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   }
 
   protected ConsoleViewImpl createConsole() {
-    return new ConsoleViewImpl(myProject, myViewer);
+    return new ConsoleViewImpl(myProject, myScope, myViewer, null);
   }
 
   public void addFilter(final Filter filter) {

@@ -495,9 +495,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   @Nullable
   private static SourceFileInfo loadSourceInfo(final VirtualFile file) {
-    final DataInputStream is = ourSourceFileAttribute.readAttribute(file);
-    if (is != null) {
-      try {
+    try {
+      final DataInputStream is = ourSourceFileAttribute.readAttribute(file);
+      if (is != null) {
         try {
           return new SourceFileInfo(is);
         }
@@ -505,9 +505,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           is.close();
         }
       }
-      catch (IOException ignored) {
-        LOG.info(ignored);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        LOG.info(e); // ignore IOExceptions
       }
+      else {
+        throw e;
+      }
+    }
+    catch (IOException ignored) {
+      LOG.info(ignored);
     }
     return null;
   }
@@ -533,9 +542,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   @Nullable
   private static OutputFileInfo loadOutputInfo(final VirtualFile file) {
-    final DataInputStream is = ourOutputFileAttribute.readAttribute(file);
-    if (is != null) {
-      try {
+    try {
+      final DataInputStream is = ourOutputFileAttribute.readAttribute(file);
+      if (is != null) {
         try {
           return new OutputFileInfo(is);
         }
@@ -543,9 +552,18 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           is.close();
         }
       }
-      catch (IOException ignored) {
-        LOG.info(ignored);
+    }
+    catch (RuntimeException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        LOG.info(e); // ignore IO exceptions
       }
+      else {
+        throw e;
+      }
+    }
+    catch (IOException ignored) {
+      LOG.info(ignored);
     }
     return null;
   }
@@ -973,6 +991,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         new Task.Backgroundable(project, CompilerBundle.message("compiler.initial.scanning.progress.text"), false) {
           public void run(@NotNull final ProgressIndicator indicator) {
             try {
+              if (project.isDisposed()) {
+                return;
+              }
               final IntermediateOutputCompiler[] compilers =
                   CompilerManager.getInstance(project).getCompilers(IntermediateOutputCompiler.class);
 
@@ -981,6 +1002,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 final Module[] modules = ModuleManager.getInstance(project).getModules();
                 for (IntermediateOutputCompiler compiler : compilers) {
                   for (Module module : modules) {
+                    if (module.isDisposed()) {
+                      continue;
+                    }
                     final VirtualFile outputRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(CompilerPaths.getGenerationOutputPath(compiler, module, false));
                     if (outputRoot != null) {
                       intermediateRoots.add(outputRoot);

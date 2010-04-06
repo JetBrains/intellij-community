@@ -378,7 +378,7 @@ public class TreeState implements JDOMExternalizable {
 
   static class JTreeFacade implements TreeFacade {
 
-    private JTree myTree;
+    private final JTree myTree;
 
     JTreeFacade(JTree tree) {
       myTree = tree;
@@ -396,7 +396,7 @@ public class TreeState implements JDOMExternalizable {
 
   static class BuilderFacade implements TreeFacade {
 
-    private AbstractTreeBuilder myBuilder;
+    private final AbstractTreeBuilder myBuilder;
 
     BuilderFacade(AbstractTreeBuilder builder) {
       myBuilder = builder;

@@ -297,6 +297,8 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameCompleteMacro"/>
 
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
+  
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
@@ -395,6 +397,7 @@
   <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler" id="EnterBetweenBracesHandler"/>
 
   <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
+  <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
 
   <codeFoldingOptionsProvider implementation="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
@@ -507,6 +510,9 @@
 
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
   <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.DisposerDebugger"/>
+
+  <applicationService serviceInterface="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"
+                      serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
   <inspectionToolProvider implementation="com.intellij.codeInspection.PlatformInspectionToolProvider"/>
 

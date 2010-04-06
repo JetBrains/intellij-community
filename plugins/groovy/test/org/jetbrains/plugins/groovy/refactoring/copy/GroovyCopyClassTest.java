@@ -23,6 +23,8 @@ import com.intellij.refactoring.copy.CopyClassesHandler;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
+import java.util.Collections;
+
 /**
  * @author peter
  */
@@ -42,7 +44,8 @@ public class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
     assertTrue(CopyClassesHandler.canCopyClass(srcClass));
     new WriteCommandAction(getProject()) {
       protected void run(Result result) throws Throwable {
-        CopyClassesHandler.doCopyClass(srcClass, testName + "_after", srcClass.getManager().findDirectory(myFixture.getTempDirFixture().getFile("bar")));
+        CopyClassesHandler.doCopyClasses(Collections.singletonMap(srcClass.getNavigationElement().getContainingFile(), new PsiClass[]{srcClass}), testName + "_after", srcClass.getManager().findDirectory(myFixture.getTempDirFixture().getFile("bar")),
+                                         getProject());
       }
     }.execute();
 

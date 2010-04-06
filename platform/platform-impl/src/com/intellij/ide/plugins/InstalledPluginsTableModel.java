@@ -219,14 +219,14 @@ public class InstalledPluginsTableModel extends PluginTableModel {
       final boolean sortDirection = (sortableProvider.getSortOrder() == SortableColumnModel.SORT_ASCENDING);
       return new Comparator<IdeaPluginDescriptorImpl>() {
         public int compare(final IdeaPluginDescriptorImpl o1, final IdeaPluginDescriptorImpl o2) {
-          if (o1.isEnabled()) {
-            if (o2.isEnabled()) {
+          if (myEnabled.get(o1.getPluginId())) {
+            if (myEnabled.get(o2.getPluginId())) {
               return 0;
             }
             return sortDirection ? -1 : 1;
           }
           else {
-            if (!o2.isEnabled()) {
+            if (!myEnabled.get(o2.getPluginId())) {
               return 0;
             }
             return sortDirection ? 1 : -1;

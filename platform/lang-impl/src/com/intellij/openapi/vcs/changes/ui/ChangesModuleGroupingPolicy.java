@@ -20,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +42,10 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
   }
 
   @Nullable
-  public ChangesBrowserNode getParentNodeFor(final ChangesBrowserNode node, final ChangesBrowserNode rootNode) {
+  public ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode rootNode) {
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    final FilePath path = TreeModelBuilder.getPathForObject(node.getUserObject());
-    VirtualFile vFile = path.getVirtualFile();
+
+    VirtualFile vFile = node.getVf();
     if (vFile != null && vFile == index.getContentRootForFile(vFile)) {
       Module module = index.getModuleForFile(vFile);
       return getNodeForModule(module, rootNode);

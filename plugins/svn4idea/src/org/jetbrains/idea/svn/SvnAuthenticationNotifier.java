@@ -16,10 +16,13 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -32,8 +35,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
+import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+
+import java.util.*;
 
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
@@ -41,11 +47,26 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private static final String ourGroupId = "SubversionId";
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
+  private final Map<SVNURL, Boolean> myCopiesPassiveResults;
+  private final Timer myTimer;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
     super(svnVcs.getProject(), ourGroupId, "Not Logged To Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
+    myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
+    // every 10 minutes
+    myTimer = new Timer("SVN authentication timer");
+    myTimer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        myCopiesPassiveResults.clear();
+      }
+    }, 10000, 10 * 60 * 1000);
+  }
+
+  public void stop() {
+    myTimer.cancel();
   }
 
   @Override
@@ -66,21 +87,23 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   private void onStateChangedToSuccess(final AuthenticationRequest obj) {
     myVcs.invokeRefreshSvnRoots(false);
+    myCopiesPassiveResults.put(getKey(obj), true);
     /*ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         myVcs.invokeRefreshSvnRoots(false);
       }
     });*/
 
-    /*final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
+    final List<SVNURL> outdatedRequests = new LinkedList<SVNURL>();
     final Collection<SVNURL> keys = getAllCurrentKeys();
     for (SVNURL key : keys) {
       final SVNURL commonURLAncestor = SVNURLUtil.getCommonURLAncestor(key, obj.getUrl());
-      if ((! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
-        final AuthenticationRequest currObj = getObj(key);
-        if ((currObj != null) && passiveValidation(myVcs.getProject(), key, true, currObj.getRealm(), currObj.getKind())) {
+      if ((commonURLAncestor != null) && (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getHost())) &&
+          (! StringUtil.isEmptyOrSpaces(commonURLAncestor.getPath()))) {
+        //final AuthenticationRequest currObj = getObj(key);
+        //if ((currObj != null) && passiveValidation(myVcs.getProject(), key, true, currObj.getRealm(), currObj.getKind())) {
           outdatedRequests.add(key);
-        }
+        //}
       }
     }
     log("on state changed ");
@@ -90,11 +113,13 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
           removeLazyNotificationByKey(key);
         }
       }
-    }, ModalityState.NON_MODAL);    */
+    }, ModalityState.NON_MODAL);
   }
 
   @Override
   public void ensureNotify(AuthenticationRequest obj) {
+    final SVNURL key = getKey(obj);
+    myCopiesPassiveResults.remove(key);
     /*ChangesViewBalloonProblemNotifier.showMe(myVcs.getProject(), "You are not authenticated to '" + obj.getRealm() + "'." +
       "To login, see pending notifications.", MessageType.ERROR);*/
     super.ensureNotify(obj);
@@ -131,10 +156,16 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
     // check there's no cancellation yet
     final boolean haveCancellation = getStateFor(wcCopy.getUrl());
-    if (! haveCancellation) return ThreeState.NO;
+    if (haveCancellation) return ThreeState.NO;
 
+    final Boolean keptResult = myCopiesPassiveResults.get(wcCopy.getUrl());
+    if (Boolean.TRUE.equals(keptResult)) return ThreeState.YES;
+    if (Boolean.FALSE.equals(keptResult)) return ThreeState.NO;
+    
     // check have credentials
-    return passiveValidation(myVcs.getProject(), wcCopy.getUrl()) ? ThreeState.YES : ThreeState.NO;
+    final boolean calculatedResult = passiveValidation(myVcs.getProject(), wcCopy.getUrl());
+    myCopiesPassiveResults.put(wcCopy.getUrl(), calculatedResult);
+    return calculatedResult ? ThreeState.YES : ThreeState.NO;
   }
 
   @NotNull

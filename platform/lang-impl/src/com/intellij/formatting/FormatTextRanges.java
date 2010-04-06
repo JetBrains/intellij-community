@@ -31,7 +31,7 @@ import java.util.List;
 public class FormatTextRanges {
   public static class FormatTextRange {
     private TextRange myRange;
-    private boolean myProcessHeadingWhitespace;
+    private final boolean myProcessHeadingWhitespace;
 
     public FormatTextRange(TextRange range, boolean processHeadingWhitespace) {
       myRange = range;
@@ -80,7 +80,7 @@ public class FormatTextRanges {
     }
   }
 
-  private List<FormatTextRange> myRanges = new ArrayList<FormatTextRange>();
+  private final List<FormatTextRange> myRanges = new ArrayList<FormatTextRange>();
 
   public FormatTextRanges() {
   }

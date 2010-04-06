@@ -30,9 +30,9 @@ public class Win32Kernel {
   public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
   public static final int FILE_ATTRIBUTE_READONLY =  0x0001;
 
-  private IdeaWin32 myKernel = new IdeaWin32();
+  private final IdeaWin32 myKernel = new IdeaWin32();
 
-  private Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
+  private final Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
 
   void clearCache() {
     myCache.clear();
@@ -61,14 +61,8 @@ public class Win32Kernel {
     return ArrayUtil.toStringArray(names);
   }
 
-  public boolean exists(String path) {
-    try {
+  public void exists(String path) throws FileNotFoundException {
       getInfo(path);
-      return true;
-    }
-    catch (FileNotFoundException e) {
-      return false;
-    }
   }
 
   public boolean isDirectory(String path) throws FileNotFoundException {

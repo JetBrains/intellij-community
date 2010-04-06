@@ -55,7 +55,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private final SvnVcs myVcs;
   private final VcsContextFactory myFactory;
-  private SvnFileUrlMappingImpl mySvnFileUrlMapping;
+  private final SvnFileUrlMappingImpl mySvnFileUrlMapping;
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;

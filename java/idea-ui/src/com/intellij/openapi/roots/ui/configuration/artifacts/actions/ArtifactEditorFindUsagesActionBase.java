@@ -37,8 +37,8 @@ import java.awt.*;
  * @author nik
  */
 public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInProjectStructureActionBase {
-  private Tree myTree;
-  private ArtifactsStructureConfigurableContext myArtifactContext;
+  private final Tree myTree;
+  private final ArtifactsStructureConfigurableContext myArtifactContext;
 
   public ArtifactEditorFindUsagesActionBase(Tree tree, Project project, ArtifactsStructureConfigurableContext artifactContext) {
     super(tree, project);

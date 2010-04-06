@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @see CommonProblemDescriptor#getFixes()
  */
 public interface QuickFix<D extends CommonProblemDescriptor> {
+  QuickFix[] EMPTY_ARRAY = new QuickFix[0];
   /**
    * Returns the name of the quick fix.
    *

@@ -17,9 +17,7 @@ package com.intellij.codeInsight.dataflow;
 import java.util.ArrayList;
 
 public interface Semilattice<E> {
-  // Invariant: join can return unmodified ins(0) or empty DFAMap
-  // DfaInstance must create new one before modifying
-  DFAMap<E> join(ArrayList<DFAMap<E>> ins);
+  E join(ArrayList<E> ins);
 
-  boolean eq(DFAMap<E> e1, DFAMap<E> e2);
+  boolean eq(E e1, E e2);
 }

@@ -211,6 +211,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return advancedResolve(true).getElement();
   }
 
+  @NotNull
   public Object[] getVariants() {
     PsiElement context = getContext();
     if (context == null) {
@@ -552,6 +553,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return doResolveMember(aClass, memberName);
   }
 
+  @Nullable
   private static PsiElement doResolveMember(PsiClass aClass, String memberName) {
     PsiMember member = aClass.findFieldByName(memberName, true);
     if (member != null) return member;

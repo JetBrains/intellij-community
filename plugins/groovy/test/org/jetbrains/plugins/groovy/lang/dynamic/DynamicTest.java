@@ -32,7 +32,7 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
   public void testMethod() throws Throwable {
     final GrReferenceExpression referenceExpression = doDynamicFix();
 
-    final PsiType[] psiTypes = PsiUtil.getArgumentTypes(referenceExpression, false, false);
+    final PsiType[] psiTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
     final String[] methodArgumentsNames = QuickfixUtil.getMethodArgumentsNames(getProject(), psiTypes);
     final List<MyPair> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, psiTypes);
 

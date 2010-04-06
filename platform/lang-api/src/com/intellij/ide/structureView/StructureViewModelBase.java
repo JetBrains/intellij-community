@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class StructureViewModelBase extends TextEditorBasedStructureViewModel {
-  private StructureViewTreeElement myRoot;
+  private final StructureViewTreeElement myRoot;
   private Sorter[] mySorters = Sorter.EMPTY_ARRAY;
   private Class[] mySuitableClasses = null;
 

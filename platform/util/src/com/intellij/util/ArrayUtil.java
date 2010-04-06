@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
@@ -112,13 +113,14 @@ public class ArrayUtil {
   @NotNull
   public static Object[] toObjectArray(@NotNull Collection<?> collection) {
     if (collection.isEmpty()) return EMPTY_OBJECT_ARRAY;
+    //noinspection SSBasedInspection
     return collection.toArray(new Object[collection.size()]);
   }
 
   @NotNull
   public static String[] toStringArray(@NotNull Collection<String> collection) {
     if (collection.isEmpty()) return EMPTY_STRING_ARRAY;
-    return collection.toArray(new String[collection.size()]);
+    return ContainerUtil.toArray(collection, new String[collection.size()]);
   }
 
   @NotNull
@@ -156,6 +158,32 @@ public class ArrayUtil {
   }
 
   /**
+   * Allocates new array of size <code>array.length + collection.size()</code> and copies elements of <code>array</code> and
+   * <code>collection</code> to it.
+   * @param array source array
+   * @param collection source collection
+   * @param factory array factory used to create destination array of type <code>T</code>
+   * @return destination array
+   */
+  @NotNull
+  public static <T> T[] mergeArrayAndCollection(@NotNull T[] array, @NotNull Collection<T> collection,
+                                                @NotNull final ArrayFactory<T> factory) {
+    if (collection.size() == 0) {
+      return array;
+    }
+
+    final T[] array2 = collection.toArray(factory.create(collection.size()));
+    if (array.length == 0) {
+      return array2;
+    }
+
+    final T[] result = factory.create(array.length + collection.size());
+    System.arraycopy(array, 0, result, 0, array.length);
+    System.arraycopy(array2, 0, result, array.length, array2.length);
+    return result;
+  }
+
+  /**
    * Appends <code>element</code> to the <code>src</code> array. As you can
    * imagine the appended element will be the last one in the returned result.
    * @param src array to which the <code>element</code> should be appended.
@@ -166,11 +194,19 @@ public class ArrayUtil {
     return append(src, element, (Class<T>)src.getClass().getComponentType());
   }
 
+  public static <T> T[] append(@NotNull final T[] src,final T element, ArrayFactory<T> factory) {
+    int length=src.length;
+    T[] result= factory.create(length + 1);
+    System.arraycopy(src, 0, result, 0, length);
+    result[length] = element;
+    return result;
+  }
+
   @NotNull
   public static <T> T[] append(@NotNull T[] src, final T element, @NotNull Class<T> componentType) {
     int length=src.length;
     T[] result=(T[])Array.newInstance(componentType, length+ 1);
-    System.arraycopy(src,0,result,0,length);
+    System.arraycopy(src, 0, result, 0, length);
     result[length] = element;
     return result;
   }
@@ -188,8 +224,20 @@ public class ArrayUtil {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     T[] result=(T[])Array.newInstance(src.getClass().getComponentType(), length-1);
-    System.arraycopy(src,0,result,0,idx);
-    System.arraycopy(src,idx+1,result,idx,length-idx-1);
+    System.arraycopy(src, 0, result, 0, idx);
+    System.arraycopy(src, idx+1, result, idx, length-idx-1);
+    return result;
+  }
+
+  @NotNull
+  public static <T> T[] remove(@NotNull final T[] src,int idx, ArrayFactory<T> factory) {
+    int length=src.length;
+    if (idx < 0 || idx >= length) {
+      throw new IllegalArgumentException("invalid index: " + idx);
+    }
+    T[] result=factory.create(length-1);
+    System.arraycopy(src, 0, result, 0, idx);
+    System.arraycopy(src, idx+1, result, idx, length-idx-1);
     return result;
   }
 
@@ -202,14 +250,22 @@ public class ArrayUtil {
   }
 
   @NotNull
+  public static <T> T[] remove(@NotNull final T[] src, T element, ArrayFactory<T> factory) {
+    final int idx = find(src, element);
+    if (idx == -1) return src;
+
+    return remove(src, idx, factory);
+  }
+
+  @NotNull
   public static int[] remove(@NotNull final int[] src,int idx){
     int length=src.length;
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
     int[] result = new int[src.length - 1];
-    System.arraycopy(src,0,result,0,idx);
-    System.arraycopy(src,idx+1,result,idx,length-idx-1);
+    System.arraycopy(src, 0, result, 0, idx);
+    System.arraycopy(src, idx+1, result, idx, length-idx-1);
     return result;
   }
 

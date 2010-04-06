@@ -30,6 +30,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -228,7 +229,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     List<String> list = new ArrayList<String>();
     list.addAll(STANDART_SEVERITIES.keySet());
     list.addAll(ourMap.keySet());
-    Collections.sort(list);
+    ContainerUtil.sort(list);
     return list;
   }
 
@@ -265,7 +266,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     for (SeverityBasedTextAttributes attributes : ourMap.values()) {
       order.add(attributes.getSeverity());
     }
-    Collections.sort(order);
+    ContainerUtil.sort(order);
     final List<String> result = new ArrayList<String>();
     for (HighlightSeverity severity : order) {
       result.add(severity.toString());

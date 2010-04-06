@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -54,8 +55,9 @@ import javax.swing.*;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Map;
 
-public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
+public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiDirectoryImpl");
 
   private final PsiManagerImpl myManager;
@@ -562,6 +564,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   protected Icon getElementIcon(final int flags) {
     return Icons.DIRECTORY_CLOSED_ICON;
+  }
+
+  public void putInfo(Map<String, String> info) {
+    info.put("fileName", getName());
   }
 }
 

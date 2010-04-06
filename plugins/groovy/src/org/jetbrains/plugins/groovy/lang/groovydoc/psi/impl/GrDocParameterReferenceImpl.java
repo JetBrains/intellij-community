@@ -131,6 +131,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return getManager().areElementsEquivalent(element, resolve());
   }
 
+  @NotNull
   public Object[] getVariants() {
     final PsiElement owner = GrDocCommentUtil.findDocOwner(this);
     final PsiElement firstChild = getFirstChild();

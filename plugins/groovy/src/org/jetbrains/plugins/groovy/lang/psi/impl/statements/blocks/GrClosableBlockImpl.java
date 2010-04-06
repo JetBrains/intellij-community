@@ -152,7 +152,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     mySyntheticItParameter = null;
   }
 
-  public PsiParameter getSyntheticItParameter() {
+  public synchronized PsiParameter getSyntheticItParameter() {
     if (mySyntheticItParameter == null) {
       mySyntheticItParameter = new ClosureSyntheticParameter(getManager(), this);
     }

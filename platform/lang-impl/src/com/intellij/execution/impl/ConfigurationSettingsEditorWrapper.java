@@ -53,7 +53,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private JPanel myStepsPanel;
   private Map<Key<? extends BeforeRunTask>, BeforeRunTask> myStepsBeforeLaunch;
-  private Map<Key<? extends BeforeRunTask>, StepBeforeLaunchRow> myStepBeforeLaunchRows = new THashMap<Key<? extends BeforeRunTask>, StepBeforeLaunchRow>();
+  private final Map<Key<? extends BeforeRunTask>, StepBeforeLaunchRow> myStepBeforeLaunchRows = new THashMap<Key<? extends BeforeRunTask>, StepBeforeLaunchRow>();
 
   private boolean myStoreProjectConfiguration;
 

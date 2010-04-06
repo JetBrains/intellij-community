@@ -194,8 +194,7 @@ public class BreakpointTree extends CheckboxTree {
 
     protected Icon getDisplayIcon() {
       return myBreakpoint instanceof BreakpointWithHighlighter ?
-        myBreakpoint.ENABLED? ((BreakpointWithHighlighter)myBreakpoint).getSetIcon() : ((BreakpointWithHighlighter)myBreakpoint).getDisabledIcon() :
-        myBreakpoint.getIcon();
+        myBreakpoint.ENABLED? ((BreakpointWithHighlighter)myBreakpoint).getSetIcon(false) : ((BreakpointWithHighlighter)myBreakpoint).getDisabledIcon(false) : myBreakpoint.getIcon();
     }
 
     public String getDisplayString() {

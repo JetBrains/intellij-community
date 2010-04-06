@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.trilead.ssh2.KnownHosts;
 import git4idea.commands.ScriptGenerator;
-import git4idea.i18n.GitBundle;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
@@ -115,12 +114,12 @@ public class GitSSHService implements ApplicationComponent {
    */
   @NotNull
   public synchronized File getScriptPath() throws IOException {
-    if (myScriptPath == null) {
+    if (myScriptPath == null || !myScriptPath.exists()) {
       ScriptGenerator generator = new ScriptGenerator(GIT_SSH_PREFIX, SSHMain.class);
       generator.addInternal(Integer.toString(myXmlRpcServer.getPortNumber()));
       generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
       generator.addClasses(KnownHosts.class, FileUtil.class);
-      generator.addResource(GitBundle.class, "/git4idea/i18n/GitBundle.properties");
+      generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
       myScriptPath = generator.generate();
     }
     return myScriptPath;

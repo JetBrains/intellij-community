@@ -89,7 +89,7 @@ public class CompositeScope extends UserDataHolderBase implements CompileScope{
     return modules.toArray(new Module[modules.size()]);
   }
 
-  public <T> T getUserData(Key<T> key) {
+  public <T> T getUserData(@NotNull Key<T> key) {
     for (CompileScope compileScope : myScopes) {
       T userData = compileScope.getUserData(key);
       if (userData != null) {

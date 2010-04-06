@@ -53,6 +53,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myCbShowMethodSeparators;
   private JCheckBox myAntialiasingInEditorCheckBox;
   private JCheckBox myCbShowIconsInGutter;
+  private JCheckBox myShowVerticalIndentGuidesCheckBox;
 
   public EditorAppearanceConfigurable() {
     myCbBlinkCaret.addActionListener(
@@ -81,6 +82,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbShowLineNumbers.setSelected(editorSettings.isLineNumbersShown());
     myCbBlockCursor.setSelected(editorSettings.isBlockCursor());
     myCbShowWhitespaces.setSelected(editorSettings.isWhitespacesShown());
+    myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
     myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
 
@@ -101,6 +103,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setRightMarginShown(myCbRightMargin.isSelected());
     editorSettings.setLineNumbersShown(myCbShowLineNumbers.isSelected());
     editorSettings.setWhitespacesShown(myCbShowWhitespaces.isSelected());
+    editorSettings.setIndentGuidesShown(myShowVerticalIndentGuidesCheckBox.isSelected());
 
     EditorOptionsPanel.reinitAllEditors();
 
@@ -113,6 +116,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       LafManager.getInstance().repaintUI();
       uiSettings.fireUISettingsChanged();
     }
+
+    EditorOptionsPanel.restartDaemons();
 
     super.apply();
   }
@@ -130,6 +135,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
 
     isModified |= isModified(myCbShowLineNumbers, editorSettings.isLineNumbersShown());
     isModified |= isModified(myCbShowWhitespaces, editorSettings.isWhitespacesShown());
+    isModified |= isModified(myShowVerticalIndentGuidesCheckBox, editorSettings.isIndentGuidesShown());
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
     isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;

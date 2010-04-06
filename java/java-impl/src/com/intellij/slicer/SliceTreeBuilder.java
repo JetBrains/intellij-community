@@ -36,7 +36,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   public final boolean dataFlowToThis;
   public volatile boolean analysisInProgress;
 
-  private static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = new Comparator<NodeDescriptor>() {
+  public static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = new Comparator<NodeDescriptor>() {
     public int compare(NodeDescriptor o1, NodeDescriptor o2) {
       if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
         return AlphaComparator.INSTANCE.compare(o1, o2);

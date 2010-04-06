@@ -41,8 +41,8 @@ public class ConversionResultImpl implements ConversionResult {
   private boolean myConversionNeeded;
   private boolean myConversionCanceled;
   private boolean myErrorOccurred;
-  private Set<File> myChangedFiles = new HashSet<File>();
-  private Set<File> myCreatedFiles = new HashSet<File>();
+  private final Set<File> myChangedFiles = new HashSet<File>();
+  private final Set<File> myCreatedFiles = new HashSet<File>();
 
   public ConversionResultImpl(boolean conversionNeeded, boolean conversionCanceled, boolean errorOccurred) {
     myConversionNeeded = conversionNeeded;

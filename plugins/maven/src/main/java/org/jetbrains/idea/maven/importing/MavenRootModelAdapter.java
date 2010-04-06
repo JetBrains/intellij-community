@@ -188,13 +188,13 @@ public class MavenRootModelAdapter {
   }
 
   private Path toPath(String path) {
-    if (!new File(path).isAbsolute()) {
+    if (!FileUtil.isAbsolute(path)) {
       path = new File(myMavenProject.getDirectory(), path).getPath();
     }
     return new Path(path);
   }
 
-  public void addModuleDependency(String moduleName, boolean isExportable, DependencyScope scope) {
+  public void addModuleDependency(String moduleName, DependencyScope scope) {
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -205,7 +205,6 @@ public class MavenRootModelAdapter {
       e = myRootModel.addInvalidModuleEntry(moduleName);
     }
 
-    e.setExported(isExportable);
     e.setScope(scope);
   }
 
@@ -215,7 +214,6 @@ public class MavenRootModelAdapter {
   }
 
   public void addLibraryDependency(MavenArtifact artifact,
-                                   boolean isExportable,
                                    DependencyScope scope,
                                    MavenModifiableModelsProvider provider,
                                    MavenProject project) {
@@ -234,7 +232,6 @@ public class MavenRootModelAdapter {
     }
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
-    e.setExported(isExportable);
     e.setScope(scope);
   }
 
@@ -321,6 +318,16 @@ public class MavenRootModelAdapter {
       if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
         return each;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static MavenArtifact findArtifact(MavenProject project, Library library) {
+    String name = library.getName();
+    for (MavenArtifact each : project.getDependencies()) {
+      if (makeLibraryName(each).equals(name)) return each;
+
     }
     return null;
   }

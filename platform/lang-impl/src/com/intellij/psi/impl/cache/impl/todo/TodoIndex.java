@@ -129,7 +129,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   };
 
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   public boolean dependsOnFileContent() {

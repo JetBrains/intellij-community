@@ -604,6 +604,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
+  public boolean canChangeSelectionTo(Content content, boolean implicit) {
+    if (implicit) {
+      GridImpl grid = getGridFor(content, false);
+      if (grid != null) {
+        return !grid.isMinimized(content);
+      }
+    }
+
+    return true;
+  }
+
   public void dispose() {
 
   }

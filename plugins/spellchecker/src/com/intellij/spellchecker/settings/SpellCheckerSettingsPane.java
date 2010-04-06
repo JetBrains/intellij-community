@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
@@ -50,8 +50,8 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel panelForDictionaryChooser;
   private JPanel panelForAcceptedWords;
   private JPanel panelForFolderChooser;
-  private OptionalChooserComponent optionalChooserComponent;
-  private PathsChooserComponent pathsChooserComponent;
+  private final OptionalChooserComponent optionalChooserComponent;
+  private final PathsChooserComponent pathsChooserComponent;
   private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<Pair<String, Boolean>>();
   private final List<String> dictionariesFolders = new ArrayList<String>();
   private final WordsPanel wordsPanel;
@@ -161,6 +161,13 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public void apply() throws ConfigurationException {
+    if (wordsPanel.isModified()){
+     manager.updateUserDictionary(wordsPanel.getWords());
+    }
+    if (!optionalChooserComponent.isModified() && !pathsChooserComponent.isModified()){
+      return;
+    }
+
     optionalChooserComponent.apply();
     pathsChooserComponent.apply();
     settings.setDictionaryFoldersPaths(pathsChooserComponent.getValues());
@@ -182,7 +189,8 @@ public class SpellCheckerSettingsPane implements Disposable {
     settings.setDisabledDictionariesPaths(disabledDictionaries);
     settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
 
-    manager.update(wordsPanel.getWords(), settings);
+    manager.updateBundledDictionaries();
+
   }
 
   private boolean isUserDictionary(final String dictionary) {
@@ -232,9 +240,9 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public static final class WordDescriber {
-    private Dictionary dictionary;
+    private final EditableDictionary dictionary;
 
-    public WordDescriber(Dictionary dictionary) {
+    public WordDescriber(EditableDictionary dictionary) {
       this.dictionary = dictionary;
     }
 
@@ -257,7 +265,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   private static final class WordsPanel extends AddDeleteListPanel implements Disposable {
-    private SpellCheckerManager manager;
+    private final SpellCheckerManager manager;
 
     private WordsPanel(SpellCheckerManager manager) {
       super(null, new WordDescriber(manager.getUserDictionary()).process());

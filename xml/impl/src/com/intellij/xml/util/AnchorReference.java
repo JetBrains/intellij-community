@@ -196,6 +196,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     return myElement.getManager().areElementsEquivalent(element,resolve());
   }
 
+  @NotNull
   public Object[] getVariants() {
     final Map<String, XmlTag> idMap = getIdMap();
     if (idMap == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;

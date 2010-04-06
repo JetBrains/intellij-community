@@ -46,8 +46,14 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     try {
       buf.append("<html><body>");
       if (myProblemDescriptions != null) {
+        int problems = 0;
         for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
           buf.append(problemDescription.getMessage()).append("<br>");
+          problems++;
+          if (problems >= 10 && myProblemDescriptions.size() > 12) {
+            buf.append(myProblemDescriptions.size() - problems).append(" more problems...<br>");
+            break;
+          }
         }
       }
       buf.append("</body></html>");

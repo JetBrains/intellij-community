@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.beans.Introspector;
 
@@ -31,6 +32,9 @@ import java.beans.Introspector;
  * @author ilyas
  */
 public class GroovyPropertyUtils {
+  private static final String IS_PREFIX = "is";
+  private static final String GET_PREFIX = "get";
+
   private GroovyPropertyUtils() {
   }
 
@@ -112,6 +116,11 @@ public class GroovyPropertyUtils {
     if (method == null || method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 0) return false;
     if (!isGetterName(method.getName())) return false;
+    if (method.getName().startsWith(IS_PREFIX) &&
+        !CommonClassNames.JAVA_LANG_BOOLEAN
+          .equals(TypesUtil.boxPrimitiveType(method.getReturnType(), method.getManager(), method.getResolveScope()).getCanonicalText())) {
+      return false;
+    }
     return (propertyName == null || propertyName.equals(getPropertyNameByGetter(method))) && method.getReturnType() != PsiType.VOID;
   }
 
@@ -132,10 +141,13 @@ public class GroovyPropertyUtils {
     }
 
     @NonNls String methodName = getterMethod.getName();
-    if (methodName.startsWith("get") && methodName.length() > 3) {
+    if (methodName.startsWith(GET_PREFIX) && methodName.length() > 3) {
       return decapitalize(methodName.substring(3));
     }
-    else if (methodName.startsWith("is") && methodName.length() > 2 && PsiType.BOOLEAN.equals(getterMethod.getReturnType())) {
+    else if (methodName.startsWith(IS_PREFIX) &&
+             methodName.length() > 2 &&
+             CommonClassNames.JAVA_LANG_BOOLEAN.equals(TypesUtil.boxPrimitiveType(getterMethod.getReturnType(), getterMethod.getManager(),
+                                                                                  getterMethod.getResolveScope()).getCanonicalText())) {
       return decapitalize(methodName.substring(2));
     }
     return methodName;
@@ -163,9 +175,22 @@ public class GroovyPropertyUtils {
   }
 
   public static boolean isGetterName(@NotNull String name) {
-    if (name.startsWith("get") && name.length() > 3 && isUpperCase(name.charAt(3))) return true;
-    if (name.startsWith("is") && name.length() > 2 && isUpperCase(name.charAt(2))) return true;
+    if (name.startsWith(GET_PREFIX) && name.length() > 3 && isUpperCase(name.charAt(3))) return true;
+    if (name.startsWith(IS_PREFIX) && name.length() > 2 && isUpperCase(name.charAt(2))) return true;
     return false;
+  }
+
+  /**
+   * Returns getter names in priority order
+   * @param name property name
+   * @return getter names
+   */
+  public static String[] suggestGettersName(@NotNull String name) {
+    return new String[]{IS_PREFIX + capitalize(name), GET_PREFIX + capitalize(name)};
+  }
+
+  public static String[] suggestSettersName(@NotNull String name) {
+    return new String[]{"set"+capitalize(name)};
   }
 
   public static boolean isSetterName(String name) {

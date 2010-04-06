@@ -25,23 +25,32 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.text.CharArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SelectWordAtCaretAction extends TextComponentEditorAction implements DumbAware {
   public SelectWordAtCaretAction() {
-    super(new Handler());
+    super(new DefaultHandler());
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorActionHandler {
+  @Override
+  public EditorActionHandler getHandler() {
+    return new Handler(super.getHandler());
+  }
+
+  private static class DefaultHandler extends EditorActionHandler {
     public void execute(Editor editor, DataContext dataContext) {
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       int caretOffset = editor.getCaretModel().getOffset();
@@ -72,6 +81,60 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       }
 
       editor.getSelectionModel().setSelection(startWordOffset, endWordOffset);
+    }
+  }
+
+  private static class Handler extends EditorActionHandler {
+    private final EditorActionHandler myDefaultHandler;
+
+    private Handler(EditorActionHandler defaultHandler) {
+      myDefaultHandler = defaultHandler;
+    }
+
+    @Override
+    public void execute(Editor editor, DataContext dataContext) {
+      final IndentGuideDescriptor guide = editor.getIndentsModel().getCaretIndentGuide();
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      if (guide != null && !selectionModel.hasSelection() && !selectionModel.hasBlockSelection() && isWhitespaceAtCaret(editor)) {
+        selectWithGuide(editor, guide);
+      }
+      else {
+        myDefaultHandler.execute(editor, dataContext);
+      }
+    }
+
+    private static boolean isWhitespaceAtCaret(Editor editor) {
+      final Document doc = editor.getDocument();
+
+      final int offset = editor.getCaretModel().getOffset();
+      if (offset >= doc.getTextLength()) return false;
+
+      final char c = doc.getCharsSequence().charAt(offset);
+      return c == ' ' || c == '\t' || c == '\n';
+    }
+
+    private static void selectWithGuide(Editor editor, IndentGuideDescriptor guide) {
+      final Document doc = editor.getDocument();
+      int startOffset = editor.logicalPositionToOffset(new LogicalPosition(guide.startLine, 0));
+      int endOffset = guide.endLine >= doc.getLineCount() ? doc.getTextLength() : doc.getLineStartOffset(guide.endLine);
+
+      final VirtualFile file = ((EditorEx)editor).getVirtualFile();
+      if (file != null) {
+        // Make sure selection contains closing matching brace.
+
+        final CharSequence chars = doc.getCharsSequence();
+        int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t\n");
+        HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(nonWhitespaceOffset);
+        if (BraceMatchingUtil.isRBraceToken(iterator, chars, file.getFileType())) {
+          if (((EditorEx)editor).calcColumnNumber(iterator.getStart(), doc.getLineNumber(iterator.getStart())) == guide.indentLevel) {
+            endOffset = iterator.getEnd();
+            endOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t");
+            if (endOffset < chars.length() && chars.charAt(endOffset) == '\n') endOffset++;
+          }
+        }
+      }
+
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
     }
   }
 }

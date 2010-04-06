@@ -25,6 +25,7 @@ import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 
 public class NewProjectUtil {
@@ -73,6 +75,14 @@ public class NewProjectUtil {
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
 
     try {
+      if (StorageScheme.DIRECTORY_BASED == dialog.getStorageScheme()) {
+        final File ideaDir = new File(projectFilePath + File.separator + ".idea");
+        if (!ideaDir.exists() && !ideaDir.mkdirs()) {
+          Messages.showErrorDialog("Unable to create '.idea' directory at: " + projectFilePath, "Project initialization failed");
+          return;
+        }
+      }
+
       final Project newProject =
         projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(dialog.getProjectName(), projectFilePath, true, false) : projectToClose;
 

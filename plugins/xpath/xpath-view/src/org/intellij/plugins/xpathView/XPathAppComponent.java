@@ -16,6 +16,7 @@
 package org.intellij.plugins.xpathView;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -44,7 +45,7 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-public class XPathAppComponent implements ApplicationComponent, JDOMExternalizable {
+public class XPathAppComponent implements ApplicationComponent, JDOMExternalizable, DefaultLiveTemplatesProvider {
 
     private static final String ACTION_FIND_NEXT = "FindNext";
     private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
@@ -239,4 +240,8 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
         }
         return ActionManager.getInstance().getId(action);
     }
+
+  public String[] getDefaultLiveTemplateFiles() {
+    return new String[] {"/liveTemplates/xsl"};
+  }
 }

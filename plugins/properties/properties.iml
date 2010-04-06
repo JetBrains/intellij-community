@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="spellchecker" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>
 

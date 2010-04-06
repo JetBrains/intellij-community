@@ -29,7 +29,7 @@ import java.util.Map;
  *         Date: Feb 18, 2009
  */
 public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, FileContent>{
-  private boolean myAcceptNullValues;
+  private final boolean myAcceptNullValues;
 
   protected SingleEntryIndexer(boolean acceptNullValues) {
     myAcceptNullValues = acceptNullValues;

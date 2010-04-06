@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PreferredAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -89,67 +90,82 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     final int caretOffset = myEditor.getCaretModel().getOffset();
     final int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
     PsiElement element;
+    final PsiElement hostElement;
     if (myFile instanceof PsiCompiledElement) {
-      element = myFile;
+      hostElement = element = myFile;
+
     }
     else if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
       //???
       FileViewProvider viewProvider = myFile.getViewProvider();
-      element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
+      hostElement = element = viewProvider.findElementAt(fileOffset, viewProvider.getBaseLanguage());
     }
     else {
+      hostElement = myFile.getViewProvider().findElementAt(fileOffset, myFile.getLanguage());
       element = InjectedLanguageUtil.findElementAtNoCommit(myFile, fileOffset);
     }
-    boolean result = removeInvalidActions(cachedActions, element);
-    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
-      IntentionAction action = descriptor.getAction();
-      if (!isAvailable(action, element)) continue;
-      if (element == null) continue;
-      IntentionActionWithTextCaching cachedAction = wrapAction(element, descriptor);
-      result &= !cachedActions.add(cachedAction);
+    PsiFile injectedFile;
+    Editor injectedEditor;
+    if (element == null || element == hostElement) {
+      injectedFile = myFile;
+      injectedEditor = myEditor;
     }
-    return result;
-  }
-
-  IntentionActionWithTextCaching wrapAction(PsiElement element, HighlightInfo.IntentionActionDescriptor descriptor) {
-    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor);
-    final List<IntentionAction> options = descriptor.getOptions(element);
-    if (options != null) {
-      for (IntentionAction option : options) {
-        if (!option.isAvailable(myProject, myEditor, element.getContainingFile())) continue;
-        IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
-        boolean isErrorFix = myCachedErrorFixes.contains(textCaching);
-        if (isErrorFix) {
-          cachedAction.addErrorFix(option);
-        }
-        boolean isInspectionFix = myCachedInspectionFixes.contains(textCaching);
-        if (isInspectionFix) {
-          cachedAction.addInspectionFix(option);
-        }
-        else {
-          cachedAction.addIntention(option);
-        }
-      }
+    else {
+      injectedFile = element.getContainingFile();
+      injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
     }
-    return cachedAction;
-  }
 
-  private boolean removeInvalidActions(final Collection<IntentionActionWithTextCaching> cachedActions, final PsiElement element) {
     boolean result = true;
     Iterator<IntentionActionWithTextCaching> iterator = cachedActions.iterator();
     while (iterator.hasNext()) {
       IntentionActionWithTextCaching cachedAction = iterator.next();
       IntentionAction action = cachedAction.getAction();
-      if (!isAvailable(action, element)) {
+      if (!ShowIntentionActionsHandler.availableFor(myFile, myEditor, action)
+        && (hostElement == element || element != null && !ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action))) {
         iterator.remove();
         result = false;
+      }
+    }
+    for (HighlightInfo.IntentionActionDescriptor descriptor : descriptors) {
+      final IntentionAction action = descriptor.getAction();
+      if (element != null && element != hostElement && ShowIntentionActionsHandler.availableFor(injectedFile, injectedEditor, action)) {
+        IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, element, injectedFile, injectedEditor);
+        result &= !cachedActions.add(cachedAction);
+      }
+      else if (hostElement != null && ShowIntentionActionsHandler.availableFor(myFile, myEditor, action)) {
+        IntentionActionWithTextCaching cachedAction = wrapAction(descriptor, hostElement, myFile, myEditor);
+        result &= !cachedActions.add(cachedAction);
       }
     }
     return result;
   }
 
-  private boolean isAvailable(IntentionAction action, PsiElement element) {
-    return ShowIntentionActionsHandler.availableFor(myFile, myEditor, action, element) != null;
+  IntentionActionWithTextCaching wrapAction(HighlightInfo.IntentionActionDescriptor descriptor, PsiElement element, PsiFile containingFile,
+                                            Editor containingEditor) {
+    IntentionActionWithTextCaching cachedAction = new IntentionActionWithTextCaching(descriptor);
+    final List<IntentionAction> options = descriptor.getOptions(element);
+    if (options == null) return cachedAction;
+    for (IntentionAction option : options) {
+      if (!option.isAvailable(myProject, containingEditor, containingFile)) {
+        // if option is not applicable in injected fragment, check in host file context
+        if (containingEditor == myEditor || !option.isAvailable(myProject, myEditor, myFile)) {
+          continue;
+        }
+      }
+      IntentionActionWithTextCaching textCaching = new IntentionActionWithTextCaching(option);
+      boolean isErrorFix = myCachedErrorFixes.contains(textCaching);
+      if (isErrorFix) {
+        cachedAction.addErrorFix(option);
+      }
+      boolean isInspectionFix = myCachedInspectionFixes.contains(textCaching);
+      if (isInspectionFix) {
+        cachedAction.addInspectionFix(option);
+      }
+      else {
+        cachedAction.addIntention(option);
+      }
+    }
+    return cachedAction;
   }
 
   public String getTitle() {
@@ -273,14 +289,18 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
     final IntentionAction action = value.getAction();
 
+    Object iconable = null;
     //custom icon
     if (action instanceof QuickFixWrapper) {
-      final QuickFixWrapper quickFix = (QuickFixWrapper)action;
-      if (quickFix.getFix() instanceof Iconable) {
-        final Icon icon = ((Iconable)quickFix.getFix()).getIcon(0);
-        if (icon != null) {
-          return icon;
-        }
+      iconable = ((QuickFixWrapper)action).getFix();
+    } else if (action instanceof IntentionActionWrapper) {
+      iconable = ((IntentionActionWrapper)action).getDelegate(); 
+    }
+
+    if (iconable instanceof Iconable) {
+      final Icon icon = ((Iconable)iconable).getIcon(0);
+      if (icon != null) {
+        return icon;
       }
     }
 

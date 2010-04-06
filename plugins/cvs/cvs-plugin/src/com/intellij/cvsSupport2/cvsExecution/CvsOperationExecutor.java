@@ -276,6 +276,7 @@ public class CvsOperationExecutor {
     EditorSettings editorSettings = result.getSettings();
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setLineNumbersShown(false);
+    editorSettings.setIndentGuidesShown(false);
     editorSettings.setFoldingOutlineShown(false);
     return result;
   }

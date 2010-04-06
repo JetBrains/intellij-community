@@ -78,6 +78,7 @@ public abstract class TestObject implements JavaCommandLine {
   private final RunnerSettings myRunnerSettings;
   private final ConfigurationPerRunnerSettings myConfigurationSettings;
   protected File myTempFile = null;
+  public File myListenersFile;
 
   public static TestObject fromString(final String id,
                                       final Project project,
@@ -217,10 +218,10 @@ public abstract class TestObject implements JavaCommandLine {
     }
     if (buf.length() > 0) {
       try {
-        final File tempFile = FileUtil.createTempFile("junitlisteners", "");
-        tempFile.deleteOnExit();
-        myJavaParameters.getProgramParametersList().add("@@" + tempFile.getPath());
-        FileUtil.writeToFile(tempFile, buf.toString().getBytes());
+        myListenersFile = FileUtil.createTempFile("junitlisteners", "");
+        myListenersFile.deleteOnExit();
+        myJavaParameters.getProgramParametersList().add("@@" + myListenersFile.getPath());
+        FileUtil.writeToFile(myListenersFile, buf.toString().getBytes());
       }
       catch (IOException e) {
         LOG.error(e);
@@ -279,12 +280,14 @@ public abstract class TestObject implements JavaCommandLine {
         if (myTempFile != null) {
           FileUtil.delete(myTempFile);
         }
+        if (myListenersFile != null) {
+          FileUtil.delete(myListenersFile);
+        }
         IJSwingUtilities.invoke(new Runnable() {
           public void run() {
             packetsReceiver.checkTerminated();
             final JUnitRunningModel model = packetsReceiver.getModel();
-            TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties,
-                                        Filter.DEFECT);
+            TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties, Filter.DEFECTIVE_LEAF);
           }
         });
       }

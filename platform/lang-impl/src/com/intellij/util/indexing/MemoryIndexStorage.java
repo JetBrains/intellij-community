@@ -46,6 +46,10 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myBackendStorage = backend;
   }
 
+  public IndexStorage<Key, Value> getBackendStorage() {
+    return myBackendStorage;
+  }
+
   public void addBufferingStateListsner(BufferingStateListener listener) {
     myListeners.add(listener);
   }
@@ -61,6 +65,10 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
         listener.bufferingStateChanged(enabled);
       }
     }
+  }
+
+  public boolean isBufferingEnabled() {
+    return myBufferingEnabled.get();
   }
 
   public void clearMemoryMap() {

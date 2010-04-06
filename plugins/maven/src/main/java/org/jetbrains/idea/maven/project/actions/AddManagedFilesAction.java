@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Arrays;
 public class AddManagedFilesAction extends MavenAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e);
+    final MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
     FileChooserDescriptor singlePomSelection = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -45,7 +45,7 @@ public class AddManagedFilesAction extends MavenAction {
       }
     };
 
-    Project project = MavenActionUtil.getProject(e);
+    Project project = MavenActionUtil.getProject(e.getDataContext());
     VirtualFile fileToSelect = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
     FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(singlePomSelection, project);

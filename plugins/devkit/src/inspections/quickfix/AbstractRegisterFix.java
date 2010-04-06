@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.CommandProcessor;
@@ -23,10 +24,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -69,8 +68,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   }
 
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    if (ReadonlyStatusHandler.getInstance(project)
-        .ensureFilesWritable(PsiUtilBase.getVirtualFile(descriptor.getPsiElement())).hasReadonlyFiles()) return;
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
     final PsiFile psiFile = myClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
     final Module module = ModuleUtil.findModuleForFile(psiFile.getVirtualFile(), project);
@@ -83,7 +81,8 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
             if (pluginXml != null) {
               DescriptorUtil.patchPluginXml(AbstractRegisterFix.this, myClass, pluginXml);
             }
-          } else {
+          }
+          else {
             List<Module> modules = PluginModuleType.getCandidateModules(module);
             if (modules.size() > 1) {
               final ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
@@ -104,8 +103,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
         }
         catch (IncorrectOperationException e) {
-          Messages.showMessageDialog(project,
-                                     filterMessage(e.getMessage()),
+          Messages.showMessageDialog(project, filterMessage(e.getMessage()),
                                      DevKitBundle.message("inspections.component.not.registered.quickfix.error", getType()),
                                      Messages.getErrorIcon());
         }

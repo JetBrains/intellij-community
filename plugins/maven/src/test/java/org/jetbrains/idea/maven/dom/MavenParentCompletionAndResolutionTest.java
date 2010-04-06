@@ -181,30 +181,6 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(parent));
   }
 
-  public void testResolvingByRelativePathWithoutPomXmlAtTheEnd() throws Throwable {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <relativePath><caret>parent</relativePath>" +
-                     "</parent>");
-
-    VirtualFile parent = createModulePom("parent",
-                                         "<groupId>test</groupId>" +
-                                         "<artifactId>parent</artifactId>" +
-                                         "<version>1</version>");
-
-    assertResolved(myProjectPom, findPsiFile(parent));
-  }
-
   public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() throws Throwable {
     createPomFile(myProjectRoot.getParent(),
                   "<groupId>test</groupId>" +
@@ -254,7 +230,27 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                     "<artifactId>two</artifactId>" +
                     "<version>1</version>");
 
-    assertCompletionVariants(myProjectPom, "dir/one/pom.xml", "two/pom.xml");
+    assertCompletionVariants(myProjectPom, "dir", "two", "pom.xml");
+  }
+
+  public void testRelativePathCompletion_2() throws Throwable {
+    importProject("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>" +
+
+                     "<parent>" +
+                     "  <groupId>test</groupId>" +
+                     "  <artifactId>parent</artifactId>" +
+                     "  <version>1</version>" +
+                     "  <relativePath>dir/<caret></relativePath>" +
+                     "</parent>");
+
+    createModulePom("dir/one", "<groupId>test</groupId>" + "<artifactId>one</artifactId>" + "<version>1</version>");
+
+    createModulePom("dir/two", "<groupId>test</groupId>" + "<artifactId>two</artifactId>" + "<version>1</version>");
+    createModulePom("dir", "<groupId>test</groupId>" + "<artifactId>two</artifactId>" + "<version>1</version>");
+
+    assertCompletionVariants(myProjectPom, "one", "two", "pom.xml");
   }
 
   public void testHighlightingUnknownValues() throws Throwable {
@@ -324,7 +320,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <groupId>junit</groupId>" +
                      "  <artifactId>junit</artifactId>" +
                      "  <version>4.0</version>" +
-                     "  <relativePath><error>parent/pom.xml</error></relativePath>" +
+                     "  <relativePath><error>parent</error>/<error>pom.xml</error></relativePath>" +
                      "</parent>");
 
     checkHighlighting();
@@ -353,10 +349,10 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <relativePath><caret>xxx</relativePath>" +
                      "</parent>");
 
-    IntentionAction i = getIntentionAtCaret("Fix relative path");
+    IntentionAction i = getIntentionAtCaret("Fix Relative Path");
     assertNotNull(i);
 
-    myCodeInsightFixture.launchAction(i);
+    myFixture.launchAction(i);
     PsiElement el = getElementAtCaret(myProjectPom);
 
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));

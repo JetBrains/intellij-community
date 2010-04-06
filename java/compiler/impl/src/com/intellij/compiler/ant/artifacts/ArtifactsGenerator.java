@@ -48,8 +48,8 @@ public class ArtifactsGenerator {
   @NonNls public static final String BUILD_ALL_ARTIFACTS_TARGET = "build.all.artifacts";
   @NonNls private static final String INIT_ARTIFACTS_TARGET = "init.artifacts";
   private final PackagingElementResolvingContext myResolvingContext;
-  private ArtifactAntGenerationContextImpl myContext;
-  private List<Artifact> myAllArtifacts;
+  private final ArtifactAntGenerationContextImpl myContext;
+  private final List<Artifact> myAllArtifacts;
 
   public ArtifactsGenerator(Project project, GenerationOptions genOptions) {
     myResolvingContext = ArtifactManager.getInstance(project).getResolvingContext();

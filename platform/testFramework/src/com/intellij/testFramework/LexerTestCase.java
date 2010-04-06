@@ -17,9 +17,13 @@ package com.intellij.testFramework;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author peter
@@ -30,7 +34,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     Lexer lexer = createLexer();
     lexer.start(text);
     String result = "";
-    for (; ;) {
+    while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) {
         break;
@@ -42,7 +46,18 @@ public abstract class LexerTestCase extends UsefulTestCase {
       lexer.advance();
     }
     assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
+  }
 
+  protected void doFileTest(@NonNls String fileExt) {
+    String fileName = PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + "." + fileExt;
+    String text = "";
+    try {
+      text = new String(FileUtil.loadFileText(new File(fileName))).trim();
+    }
+    catch (IOException e) {
+      fail("can't load file " + fileName + ": " + e.getMessage());
+    }
+    doTest(text);
   }
 
   private static String getTokenText(Lexer lexer) {

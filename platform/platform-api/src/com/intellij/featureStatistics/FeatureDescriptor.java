@@ -71,7 +71,7 @@ public class FeatureDescriptor{
                        @NonNls String tipFileName,
                        String displayName,
                        int daysBeforeFirstShowUp,
-                       int daysBetweenSuccesiveShowUps,
+                       int daysBetweenSuccessiveShowUps,
                        Set<String> dependencies,
                        int minUsageCount,
                        ProductivityFeaturesProvider provider) {
@@ -80,7 +80,7 @@ public class FeatureDescriptor{
     myTipFileName = tipFileName;
     myDisplayName = displayName;
     myDaysBeforeFirstShowUp = daysBeforeFirstShowUp;
-    myDaysBetweenSuccesiveShowUps = daysBetweenSuccesiveShowUps;
+    myDaysBetweenSuccesiveShowUps = daysBetweenSuccessiveShowUps;
     myDependencies = dependencies;
     myMinUsageCount = minUsageCount;
     myProvider = provider;
@@ -94,11 +94,11 @@ public class FeatureDescriptor{
     myDaysBetweenSuccesiveShowUps = Integer.parseInt(element.getAttributeValue(ATTRIBUTE_SUCCESSIVE_SHOW));
     String minUsageCount = element.getAttributeValue(ATTRIBUTE_MIN_USAGE_COUNT);
     myMinUsageCount = minUsageCount == null ? 1 : Integer.parseInt(minUsageCount);
-    List depenencies = element.getChildren(ELEMENT_DEPENDENCY);
-    if (depenencies != null && !depenencies.isEmpty()) {
+    List dependencies = element.getChildren(ELEMENT_DEPENDENCY);
+    if (dependencies != null && !dependencies.isEmpty()) {
       myDependencies = new HashSet<String>();
-      for (Object depenency : depenencies) {
-        Element dependencyElement = (Element)depenency;
+      for (Object dependency : dependencies) {
+        Element dependencyElement = (Element)dependency;
         myDependencies.add(dependencyElement.getAttributeValue(ATTRIBUTE_ID));
       }
     }

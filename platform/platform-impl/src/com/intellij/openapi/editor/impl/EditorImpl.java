@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
+import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
@@ -52,12 +53,13 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JScrollPane2;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,7 +101,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, TestableUi {
+public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
@@ -115,7 +117,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ComplementaryFontsRegistry registry; // load costly font info
   }
 
-  private final CommandProcessor myCommandProcessor;
+  private final CommandProcessor myCommandProcessor;              
   private final MyScrollBar myVerticalScrollBar;
 
   private final CopyOnWriteArrayList<EditorMouseListener> myMouseListeners = ContainerUtil.createEmptyCOWList();
@@ -221,6 +223,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
+  private final IndentsModel myIndentsModel;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -279,6 +282,36 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addDocumentListener(mySelectionModel);
     myDocument.addDocumentListener(myEditorDocumentAdapter);
 
+    myIndentsModel = new IndentsModelImpl(this);
+    myCaretModel.addCaretListener(new CaretListener() {
+      private LightweightHint myCurrentHint = null;
+      private IndentGuideDescriptor myCurrentCaretGuide = null;
+
+      public void caretPositionChanged(CaretEvent e) {
+        final IndentGuideDescriptor newGuide = myIndentsModel.getCaretIndentGuide();
+        if (!Comparing.equal(myCurrentCaretGuide, newGuide)) {
+          repaintGuide(newGuide);
+          repaintGuide(myCurrentCaretGuide);
+          myCurrentCaretGuide = newGuide;
+
+          if (myCurrentHint != null) {
+            myCurrentHint.hide();
+            myCurrentHint = null;
+          }
+
+          if (newGuide != null) {
+            final Rectangle visibleArea = getScrollingModel().getVisibleArea();
+            final int line = newGuide.startLine;
+            if (logicalLineToY(line) < visibleArea.y) {
+              TextRange textRange = new TextRange(myDocument.getLineStartOffset(line), myDocument.getLineEndOffset(line));
+
+              myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
+            }
+          }
+        }
+      }
+    });
+
     myCaretCursor = new CaretCursor();
 
     myFoldingModel.flushCaretShift();
@@ -336,6 +369,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
       });
+    }
+  }
+
+  private void repaintGuide(IndentGuideDescriptor guide) {
+    if (guide != null) {
+      repaintLines(guide.startLine, guide.endLine);
     }
   }
 
@@ -1167,6 +1206,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintBackgrounds(g, clip);
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
+    paintCustomRenderers((Graphics2D)g, clip);
     final MarkupModel docMarkup = myDocument.getMarkupModel(myProject);
     paintLineMarkersSeparators(g, clip, docMarkup);
     paintLineMarkersSeparators(g, clip, myMarkupModel);
@@ -1179,6 +1219,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintCaretCursor(g);
 
     paintComposedTextDecoration((Graphics2D)g);
+  }
+
+  private void paintCustomRenderers(Graphics2D g, Rectangle clip) {
+    MarkupModel mm = myMarkupModel;
+
+    int clipStartOffset = logicalPositionToOffset(xyToLogicalPosition(new Point(0, clip.y)));
+    int clipEndOffset = logicalPositionToOffset(xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight())));
+
+    for (RangeHighlighter highlighter : mm.getAllHighlighters()) {
+      if (highlighter.isValid()) {
+        final CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
+        if (customRenderer != null && clipStartOffset < highlighter.getEndOffset() && clipEndOffset > highlighter.getStartOffset()) {
+          customRenderer.paint(this, highlighter, g);
+        }
+      }
+    }
+  }
+
+  public IndentsModel getIndentsModel() {
+    return myIndentsModel;
   }
 
   public void setHeaderComponent(JComponent header) {
@@ -1396,7 +1456,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
           else {
-            paintAfterFileEndBackground(iterationState, g, position, clip, lineHeight, defaultBackground);
+            paintAfterFileEndBackground(iterationState,
+                                        g,
+                                        position, clip,
+                                        lineHeight, defaultBackground);
             break;
           }
 
@@ -2095,6 +2158,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
     assertReadAccess();
+    assertIsDispatchThread();
     if (myDocument.getLineCount() == 0) return 0;
 
     if (pos.line < 0) throw new IndexOutOfBoundsException("Wrong line: " + pos.line);
@@ -2283,7 +2347,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return lineIndex;
   }
 
-  private int calcColumnNumber(int offset, int lineIndex) {
+  public int calcColumnNumber(int offset, int lineIndex) {
     if (myDocument.getTextLength() == 0) return 0;
 
     CharSequence text = myDocument.getCharsSequence();

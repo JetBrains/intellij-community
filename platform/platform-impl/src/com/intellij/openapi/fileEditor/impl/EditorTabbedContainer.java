@@ -29,7 +29,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.ui.TestableUi;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -106,7 +106,7 @@ final class EditorTabbedContainer implements Disposable {
         updateTabBorder();
       }
 
-      public void toolWindowRegistered(final String id) {
+      public void toolWindowRegistered(@NotNull final String id) {
         updateTabBorder();
       }
     });
@@ -222,7 +222,7 @@ final class EditorTabbedContainer implements Disposable {
     if (tab != null) return;
 
     tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file).setTabColor(calcTabColor(myProject, file));
-    tab.setTestableUi(new MyTestableUi(tab));
+    tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTab(comp, tab));
@@ -231,11 +231,11 @@ final class EditorTabbedContainer implements Disposable {
     myTabs.addTab(tab, indexToInsert);
   }
 
-  private class MyTestableUi implements TestableUi {
+  private class MyQueryable implements Queryable {
 
-    private TabInfo myTab;
+    private final TabInfo myTab;
 
-    public MyTestableUi(TabInfo tab) {
+    public MyQueryable(TabInfo tab) {
       myTab = tab;
     }
 

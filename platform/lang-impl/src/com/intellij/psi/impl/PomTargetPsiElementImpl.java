@@ -123,7 +123,8 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
 
   @Override
   public boolean isEquivalentTo(PsiElement another) {
-    return equals(another);
+    return equals(another) ||
+           (another != null && myTarget instanceof PsiTarget && another.isEquivalentTo(((PsiTarget)myTarget).getNavigationElement()));
   }
 
   @Override

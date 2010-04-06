@@ -26,8 +26,13 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.util.IconLoader;
 
 public class DeleteUnversionedFilesAction extends AnAction {
+  public DeleteUnversionedFilesAction() {
+    super("Delete", "Delete", IconLoader.getIcon("/actions/cancel.png"));
+  }
+
   public void actionPerformed(AnActionEvent e) {
     DeleteProvider deleteProvider = e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER);
     assert deleteProvider != null;

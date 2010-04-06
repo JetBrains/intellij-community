@@ -58,8 +58,11 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ChangesViewManager extends AbstractProjectComponent implements JDOMExternalizable {
+  public static final int UNVERSIONED_MAX_SIZE = 50;
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
@@ -216,8 +219,14 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
   void refreshView() {
     if (myDisposed || ! myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    myView.updateModel(changeListManager.getChangeListsCopy(),
-                       changeListManager.getUnversionedFiles(),
+
+    final Pair<Integer, Integer> unv = changeListManager.getUnversionedFilesSize();
+    final boolean manyUnversioned = unv.getFirst() > UNVERSIONED_MAX_SIZE;
+    final Trinity<List<VirtualFile>, Integer, Integer> unversionedPair =
+      new Trinity<List<VirtualFile>, Integer, Integer>(manyUnversioned ? Collections.<VirtualFile>emptyList() : changeListManager.getUnversionedFiles(), unv.getFirst(),
+                                                       unv.getSecond());
+
+    myView.updateModel(changeListManager.getChangeListsCopy(), unversionedPair,
                        changeListManager.getDeletedFiles(),
                        changeListManager.getModifiedWithoutEditing(),
                        changeListManager.getSwitchedFilesMap(),

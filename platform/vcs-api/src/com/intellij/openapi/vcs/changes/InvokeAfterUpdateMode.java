@@ -21,7 +21,8 @@ public enum InvokeAfterUpdateMode {
   BACKGROUND_NOT_CANCELLABLE(false, false, false, true),
   SYNCHRONOUS_CANCELLABLE(true, false, true, true),
   SYNCHRONOUS_NOT_CANCELLABLE(false, false, true, true),
-  SILENT_CALLBACK_POOLED(false, true, false, false);
+  SILENT_CALLBACK_POOLED(false, true, false, false),
+  BACKGROUND_NOT_CANCELLABLE_NOT_AWT(false, false, false, false);
 
   private final boolean myCancellable;
   private final boolean mySilently;

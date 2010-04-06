@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -36,20 +37,23 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class StaticMethodOnlyUsedInOneClassInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "static.method.only.used.in.one.class.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         final PsiNamedElement element = (PsiNamedElement)infos[0];
@@ -68,13 +72,21 @@ public class StaticMethodOnlyUsedInOneClassInspection
                 "static.method.only.used.in.one.class.problem.descriptor", name);
     }
 
+    @Override
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new StaticMethodOnlyUsedInOneClassFix();
+        final PsiClass usageClass = (PsiClass)infos[0];
+        return new StaticMethodOnlyUsedInOneClassFix(usageClass);
     }
 
     private static class StaticMethodOnlyUsedInOneClassFix
             extends InspectionGadgetsFix {
+
+        private final PsiClass usageClass;
+
+        public StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
+            this.usageClass = usageClass;
+        }
 
         @NotNull
         public String getName() {
@@ -82,6 +94,7 @@ public class StaticMethodOnlyUsedInOneClassInspection
                     "static.method.only.used.in.one.class.quickfix");
         }
 
+        @Override
         protected void doFix(@NotNull final Project project,
                              ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
@@ -96,19 +109,28 @@ public class StaticMethodOnlyUsedInOneClassInspection
                             factory.createMoveHandler();
                     final DataManager dataManager = DataManager.getInstance();
                     final DataContext dataContext =
-                            dataManager.getDataContext();
-                    moveHandler.invoke(project, new PsiElement[]{method},
-                            dataContext);
+                            new DataContext() {
+
+                                public Object getData(@NonNls String name) {
+                                    if (LangDataKeys.TARGET_PSI_ELEMENT.is(name)) {
+                                        return usageClass;
+                                    }
+                                    return dataManager.getDataContext().getData(name);
+                                }
+                            };
+                    moveHandler.invoke(project,
+                            new PsiElement[]{method}, dataContext);
                 }
             });
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new StaticmethodOnlyUsedInOneClassVisitor();
+        return new StaticMethodOnlyUsedInOneClassVisitor();
     }
 
-    private static class StaticmethodOnlyUsedInOneClassVisitor
+    private static class StaticMethodOnlyUsedInOneClassVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethod(PsiMethod method) {
@@ -152,22 +174,22 @@ public class StaticMethodOnlyUsedInOneClassInspection
 
     private static class UsageProcessor implements Processor<PsiReference> {
 
-        private PsiClass usageClass = null;
+        private final AtomicReference<PsiClass> foundClass =
+                new AtomicReference<PsiClass>();
 
         public boolean process(PsiReference reference) {
             ProgressManager.checkCanceled();
             final PsiElement element = reference.getElement();
-            final PsiClass usageClass =
-                    ClassUtils.getContainingClass(element);
-          synchronized (this) {
-            if (this.usageClass != null &&
-                    !this.usageClass.equals(usageClass)) {
-                this.usageClass = null;
-                return false;
+            final PsiClass usageClass = ClassUtils.getContainingClass(element);
+            if (usageClass == null) {
+                return true;
             }
-            this.usageClass = usageClass;
-          }
-          return true;
+            if (foundClass.compareAndSet(null, usageClass)) {
+                return true;
+            }
+            final PsiClass aClass = foundClass.get();
+            final PsiManager manager = usageClass.getManager();
+            return manager.areElementsEquivalent(aClass, usageClass);
         }
 
         /**
@@ -183,42 +205,18 @@ public class StaticMethodOnlyUsedInOneClassInspection
             final String name = method.getName();
             final GlobalSearchScope scope =
                     GlobalSearchScope.allScope(method.getProject());
-            final FindUsagesCostProcessor costProcessor =
-                    new FindUsagesCostProcessor();
-            searchHelper.processAllFilesWithWord(name, scope,
-                    costProcessor, true);
-            if (costProcessor.isCostTooHigh()) {
-                return null;
-            }
+            if (searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator())
+                == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return null;
             progressManager.runProcess(new Runnable() {
                 public void run() {
                     final Query<PsiReference> query =
                             MethodReferencesSearch.search(method);
-                    query.forEach(UsageProcessor.this);
+                    if (!query.forEach(UsageProcessor.this)) {
+                      foundClass.set(null);
+                    }
                 }
             }, null);
-          synchronized (this) {
-            return usageClass;
-          }
-        }
-
-        private static class FindUsagesCostProcessor
-                implements Processor<PsiFile> {
-
-            private final AtomicInteger counter = new AtomicInteger();
-            private volatile boolean costTooHigh = false;
-
-            public boolean process(PsiFile psiFile) {
-              if (counter.incrementAndGet() >= 10) {
-                costTooHigh = true;
-                return false;
-              }
-                return true;
-            }
-
-            public boolean isCostTooHigh() {
-                return costTooHigh;
-            }
+            return foundClass.get();
         }
     }
 }

@@ -200,8 +200,8 @@ public class ActionMacro implements JDOMExternalizable {
 
     private String myText;
 
-    private List<Integer> myKeyCodes = new ArrayList<Integer>();
-    private List<Integer> myModifiers = new ArrayList<Integer>();
+    private final List<Integer> myKeyCodes = new ArrayList<Integer>();
+    private final List<Integer> myModifiers = new ArrayList<Integer>();
 
     public TypedDescriptor(String text, List<Integer> keyCodes, List<Integer> modifiers) {
       myText = text;
@@ -285,7 +285,7 @@ public class ActionMacro implements JDOMExternalizable {
 
   public static class ShortcutActionDesciption implements ActionDescriptor {
 
-    private String myKeyStroke;
+    private final String myKeyStroke;
 
     public ShortcutActionDesciption(String stroke) {
       myKeyStroke = stroke;

@@ -16,28 +16,31 @@
 package org.jetbrains.idea.maven.project;
 
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.dependency.tree.DependencyNode;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public class MavenProjectReaderResult {
-  public MavenGeneralSettings settings;
-  public Collection<MavenProjectProblem> readingProblems;
-  public Set<MavenId> unresolvedArtifactIds;
-  public File localRepository;
-  public MavenProject nativeMavenProject;
+  final public MavenGeneralSettings settings;
+  final public MavenProject nativeMavenProject;
+  final public Collection<DependencyNode> dependencyTree;
+  final public Collection<MavenProjectProblem> readingProblems;
+  final public Set<MavenId> unresolvedArtifactIds;
+  final public File localRepository;
 
   public MavenProjectReaderResult(MavenGeneralSettings settings,
+                                  MavenProject nativeMavenProject,
+                                  Collection<DependencyNode> dependencyTree,
                                   Collection<MavenProjectProblem> readingProblems,
                                   Set<MavenId> unresolvedArtifactIds,
-                                  File localRepository,
-                                  MavenProject nativeMavenProject) {
+                                  File localRepository) {
     this.settings = settings;
+    this.nativeMavenProject = nativeMavenProject;
+    this.dependencyTree = dependencyTree;
     this.readingProblems = readingProblems;
     this.unresolvedArtifactIds = unresolvedArtifactIds;
     this.localRepository = localRepository;
-    this.nativeMavenProject = nativeMavenProject;
   }
 }

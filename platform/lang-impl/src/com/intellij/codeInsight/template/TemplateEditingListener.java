@@ -26,5 +26,5 @@ public interface TemplateEditingListener {
   void templateFinished(Template template, boolean brokenOff);
   void templateCancelled(Template template);
   void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex);
-  void templateExpanded(Template template);
+  void waitingForInput(Template template);
 }

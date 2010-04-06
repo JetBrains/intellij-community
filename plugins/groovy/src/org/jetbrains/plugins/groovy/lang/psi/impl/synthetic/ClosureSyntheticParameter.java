@@ -22,12 +22,13 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterImpl;
 
 /**
  * @author ven
@@ -52,7 +53,7 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
 
   @Nullable
   public PsiType getTypeGroovy() {
-    return GrParameterImpl.findClosureParameterType(myClosure, getName(), JavaPsiFacade.getElementFactory(getProject()), this);
+    return GrVariableEnhancer.getEnhancedType(this);
   }
 
   @Nullable
@@ -92,5 +93,15 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
   @Override
   public PsiElement getContext() {
     return myClosure;
+  }
+
+  @Override
+  public boolean isOptional() {
+    return true;
+  }
+
+  @Override
+  public GrExpression getDefaultInitializer() {
+    return GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText("null");
   }
 }

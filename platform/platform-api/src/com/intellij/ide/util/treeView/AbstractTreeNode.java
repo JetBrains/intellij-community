@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NonNls;
@@ -29,8 +30,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.Map;
 
-public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor implements NavigationItem {
+public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor implements NavigationItem, Queryable.Contributor {
   private AbstractTreeNode myParent;
   private T myValue;
   private NodeDescriptor myParentDescriptor;
@@ -93,6 +95,10 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     return false;
   }
 
+  public boolean isAlwaysLeaf() {
+    return false;   
+  }
+
   public boolean isAlwaysExpand() {
     return false;
   }
@@ -136,6 +142,23 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
     myValue = value;
   }
 
+  @Nullable
+  public String toTestString(Queryable.PrintInfo printInfo) {
+    if (getValue() instanceof Queryable) {
+      String text = Queryable.Util.print((Queryable)getValue(), printInfo, this);
+      if (text != null) return text;
+    }
+
+    return getTestPresentation();
+  }
+
+  public void apply(Map<String, String> info) {
+  }
+
+  /**
+   * @deprecated use toTestString
+   * @return
+   */
   @Nullable
   @NonNls public String getTestPresentation() {
     if (myName != null) {

@@ -59,7 +59,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   private JLabel outputFileNameText;
   private String previousUri;
   private Runnable myOkAction;
-  private Project myProject;
+  private final Project myProject;
 
   public GenerateInstanceDocumentFromSchemaDialog(Project project, VirtualFile file) {
     super(project, true);

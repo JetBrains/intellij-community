@@ -20,10 +20,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.spellchecker.quickfixes.DictionarySuggestionProvider;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +50,6 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   private static DictionarySuggestionProvider findProvider() {
     Object[] extensions = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
 
-    DictionarySuggestionProvider provider = null;
     if (extensions != null) {
       for (Object extension : extensions) {
         if (extension instanceof DictionarySuggestionProvider) {
@@ -69,6 +66,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     return Anchor.FIRST;
   }
 
+  @SuppressWarnings({"SSBasedInspection"})
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

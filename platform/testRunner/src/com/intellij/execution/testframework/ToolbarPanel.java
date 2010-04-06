@@ -47,7 +47,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   protected final FailedTestsNavigator myOccurenceNavigator;
   protected final ScrollToTestSourceAction myScrollToSource;
 
-  private ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
+  private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final RunnerSettings runnerSettings,

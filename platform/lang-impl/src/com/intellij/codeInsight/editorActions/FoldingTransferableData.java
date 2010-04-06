@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
@@ -30,7 +29,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
   }
 
   public DataFlavor getFlavor() {
-    return FoldingData.FLAVOR;
+    return FoldingData.getDataFlavor();
   }
 
   public int getOffsetCount() {
@@ -66,8 +65,7 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
   }
 
   public static class FoldingData implements Cloneable, Serializable {
-    public static final @NonNls DataFlavor FLAVOR = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + FoldingData.class.getName(),
-                                                                   CodeInsightBundle.message("paste.data.flavor.folding"));
+    private static @NonNls DataFlavor ourFlavor;
 
     public int startOffset;
     public int endOffset;
@@ -86,6 +84,19 @@ public class FoldingTransferableData implements TextBlockTransferableData, Seria
       catch(CloneNotSupportedException e){
         throw new RuntimeException();
       }
+    }
+
+    public static DataFlavor getDataFlavor() {
+      if (ourFlavor != null) {
+        return ourFlavor;
+      }
+      try {
+        ourFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + FoldingData.class.getName(), "FoldingData");
+      }
+      catch (NoClassDefFoundError e) {
+        return null;
+      }
+      return ourFlavor;
     }
   }
 }

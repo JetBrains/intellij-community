@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.utils.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
 public class MavenActionGroup extends DefaultActionGroup {
@@ -28,7 +29,6 @@ public class MavenActionGroup extends DefaultActionGroup {
   }
 
   protected boolean isAvailable(AnActionEvent e) {
-    if (MavenActionUtil.getProject(e) == null) return false;
-    return !MavenActionUtil.getMavenProjects(e).isEmpty();
+    return !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
   }
 }

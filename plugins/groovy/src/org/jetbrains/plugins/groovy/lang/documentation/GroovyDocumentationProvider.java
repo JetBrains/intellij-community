@@ -21,6 +21,7 @@ import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -54,7 +55,7 @@ import java.util.Map;
 /**
  * @author ven
  */
-public class GroovyDocumentationProvider implements CodeDocumentationProvider {
+public class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 
   @NonNls private static final String PARAM_TAG = "@param";
@@ -238,6 +239,10 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider {
     }
 
     return JavaDocumentationProvider.generateExternalJavadoc(element);
+  }
+
+  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
+    return JavaDocumentationProvider.fetchExternalJavadoc(element, project, docUrls);
   }
 
   private static String getMethodCandidateInfo(GrReferenceExpression expr) {

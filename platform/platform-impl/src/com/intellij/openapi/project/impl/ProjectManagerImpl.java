@@ -100,7 +100,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private static ProjectManagerListener[] getListeners(Project project) {
     ArrayList<ProjectManagerListener> array = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (array == null) return ProjectManagerListener.EMPTY_ARRAY;
-    return array.toArray(new ProjectManagerListener[array.size()]);
+    return ContainerUtil.toArray(array, new ProjectManagerListener[array.size()]);
   }
 
   public ProjectManagerImpl(VirtualFileManagerEx virtualFileManagerEx) {
@@ -349,7 +349,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         return new Project[] {currentTestProject};
       }
     }
-    return myOpenProjects.toArray(new Project[myOpenProjects.size()]);
+    return ContainerUtil.toArray(myOpenProjects, new Project[myOpenProjects.size()]);
   }
 
   public boolean isProjectOpened(Project project) {

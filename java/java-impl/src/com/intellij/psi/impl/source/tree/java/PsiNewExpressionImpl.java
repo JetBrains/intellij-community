@@ -160,6 +160,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return null;
       }
 
+      @NotNull
       public Object[] getVariants() {
         return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }

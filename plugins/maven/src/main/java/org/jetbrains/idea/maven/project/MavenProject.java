@@ -26,8 +26,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIdentityHashingStrategy;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.*;
+import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,6 +176,7 @@ public class MavenProject {
     Set<MavenId> newUnresolvedArtifacts = new THashSet<MavenId>();
     LinkedHashSet<MavenRemoteRepository> newRepositories = new LinkedHashSet<MavenRemoteRepository>();
     LinkedHashSet<MavenArtifact> newDependencies = new LinkedHashSet<MavenArtifact>();
+    LinkedHashSet<MavenArtifactNode> newDependencyTree = new LinkedHashSet<MavenArtifactNode>();
     LinkedHashSet<MavenPlugin> newPlugins = new LinkedHashSet<MavenPlugin>();
     LinkedHashSet<MavenArtifact> newExtensions = new LinkedHashSet<MavenArtifact>();
 
@@ -181,19 +184,26 @@ public class MavenProject {
       if (state.myUnresolvedArtifactIds != null) newUnresolvedArtifacts.addAll(state.myUnresolvedArtifactIds);
       if (state.myRemoteRepositories != null) newRepositories.addAll(state.myRemoteRepositories);
       if (state.myDependencies != null) newDependencies.addAll(state.myDependencies);
+      if (state.myDependencyTree != null) newDependencyTree.addAll(state.myDependencyTree);
       if (state.myPlugins != null) newPlugins.addAll(state.myPlugins);
       if (state.myExtensions != null) newExtensions.addAll(state.myExtensions);
     }
 
     newUnresolvedArtifacts.addAll(readerResult.unresolvedArtifactIds);
     newRepositories.addAll(convertRepositories(model.getRepositories()));
-    newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts(), state.myLocalRepository));
+
+    Map<Artifact, MavenArtifact> nativeToConvertedMap =
+      new THashMap<Artifact, MavenArtifact>(new TObjectIdentityHashingStrategy<Artifact>());
+    newDependencyTree.addAll(convertDependencyNodes(null, readerResult.dependencyTree, nativeToConvertedMap, state.myLocalRepository));
+    newDependencies.addAll(convertArtifacts(nativeMavenProject.getArtifacts(), nativeToConvertedMap, state.myLocalRepository));
+
     newPlugins.addAll(collectPlugins(readerResult.settings, model));
-    newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts(), state.myLocalRepository));
+    newExtensions.addAll(convertArtifacts(nativeMavenProject.getExtensionArtifacts(), nativeToConvertedMap, state.myLocalRepository));
 
     state.myUnresolvedArtifactIds = newUnresolvedArtifacts;
     state.myRemoteRepositories = new ArrayList<MavenRemoteRepository>(newRepositories);
     state.myDependencies = new ArrayList<MavenArtifact>(newDependencies);
+    state.myDependencyTree = new ArrayList<MavenArtifactNode>(newDependencyTree);
     state.myPlugins = new ArrayList<MavenPlugin>(newPlugins);
     state.myExtensions = new ArrayList<MavenArtifact>(newExtensions);
   }
@@ -234,14 +244,60 @@ public class MavenProject {
     return result;
   }
 
-  private static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts, File localRepository) {
+  private static List<MavenArtifact> convertArtifacts(Collection<Artifact> artifacts,
+                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
+                                                      File localRepository) {
     if (artifacts == null) return new ArrayList<MavenArtifact>();
 
     List<MavenArtifact> result = new ArrayList<MavenArtifact>(artifacts.size());
     for (Artifact each : artifacts) {
-      result.add(new MavenArtifact(each, localRepository));
+      result.add(convertArtifact(each, nativeToConvertedMap, localRepository));
     }
     return result;
+  }
+
+  private static List<MavenArtifactNode> convertDependencyNodes(MavenArtifactNode parent,
+                                                                Collection<DependencyNode> nodes,
+                                                                Map<Artifact, MavenArtifact> nativeToConvertedMap,
+                                                                File localRepository) {
+    List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
+    for (DependencyNode each : nodes) {
+      Artifact a = each.getArtifact();
+      MavenArtifact ma = convertArtifact(a, nativeToConvertedMap, localRepository);
+
+      MavenArtifactNode.State state = MavenArtifactNode.State.ADDED;
+      switch (each.getState()) {
+        case DependencyNode.INCLUDED:
+          break;
+        case DependencyNode.OMITTED_FOR_CONFLICT:
+          state = MavenArtifactNode.State.CONFLICT;
+          break;
+        case DependencyNode.OMITTED_FOR_DUPLICATE:
+          state = MavenArtifactNode.State.DUPLICATE;
+          break;
+        case DependencyNode.OMITTED_FOR_CYCLE:
+          state = MavenArtifactNode.State.CYCLE;
+          break;
+        default:
+          MavenLog.LOG.error("unknown dependency node state: " + each.getState());
+      }
+      MavenArtifact relatedMA = each.getRelatedArtifact() == null ? null
+                                : convertArtifact(each.getRelatedArtifact(), nativeToConvertedMap, localRepository);
+      MavenArtifactNode newNode = new MavenArtifactNode(parent, ma, state, relatedMA, each.getOriginalScope(),
+                                                        each.getPremanagedVersion(), each.getPremanagedScope());
+      newNode.setDependencies(convertDependencyNodes(newNode, each.getChildren(), nativeToConvertedMap, localRepository));
+      result.add(newNode);
+    }
+    return result;
+  }
+
+  private static MavenArtifact convertArtifact(Artifact artifact, Map<Artifact, MavenArtifact> nativeToConvertedMap, File localRepository) {
+    MavenArtifact ma = nativeToConvertedMap.get(artifact);
+    if (ma == null) {
+      ma = new MavenArtifact(artifact, localRepository);
+      nativeToConvertedMap.put(artifact, ma);
+    }
+    return ma;
   }
 
   private static List<MavenPlugin> collectPlugins(MavenGeneralSettings settings, Model mavenModel) {
@@ -450,13 +506,8 @@ public class MavenProject {
                                                             locator);
     MavenProjectChanges changes = set(result, false, result.readingProblems.isEmpty(), false);
 
-    List<MavenImporter> importers = getSuitableImporters();
-    for (MavenPlugin eachPlugin : getPlugins()) {
-      for (MavenImporter eachImporter : importers) {
-        if (eachImporter.requiresResolvedPlugin(eachPlugin)) {
-          embedder.resolvePlugin(eachPlugin, result.nativeMavenProject, true);
-        }
-      }
+    for (MavenImporter eachImporter : getSuitableImporters()) {
+      eachImporter.resolve(this, result.nativeMavenProject, embedder);
     }
     return Pair.create(changes, result.nativeMavenProject);
   }
@@ -475,6 +526,13 @@ public class MavenProject {
     if (result == null || !result.readingProblems.isEmpty()) return Pair.create(false, MavenProjectChanges.NONE);
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);
+  }
+
+  public void resetCache() {
+    // todo a bit hacky
+    synchronized (myState) {
+      myState.resetCache();
+    }
   }
 
   public boolean isAggregator() {
@@ -631,53 +689,8 @@ public class MavenProject {
     return myState.myDependencies;
   }
 
-  public List<MavenArtifactNode> getDependenciesNodes() {
-    return buildDependenciesNodes(myState.myDependencies);
-  }
-
-  private static List<MavenArtifactNode> buildDependenciesNodes(List<MavenArtifact> artifacts) {
-    List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>();
-    for (MavenArtifact each : artifacts) {
-      List<MavenArtifactNode> currentScope = result;
-      for (String eachKey : each.getTrail()) {
-        MavenArtifactNode node = findNodeFor(eachKey, currentScope, true);
-        if (node == null) {
-          node = findNodeFor(eachKey, result, false);
-          if (node == null) {
-            MavenArtifact artifact = findArtifactFor(eachKey, artifacts);
-            if (artifact == null) break;
-            node = new MavenArtifactNode(artifact, new ArrayList<MavenArtifactNode>());
-          }
-          currentScope.add(node);
-        }
-        currentScope = node.getDependencies();
-      }
-    }
-    return result;
-  }
-
-  private static MavenArtifactNode findNodeFor(String artifactKey, Collection<MavenArtifactNode> nodes, boolean strict) {
-    for (MavenArtifactNode each : nodes) {
-      if (each.getArtifact().getDisplayStringWithTypeAndClassifier().equals(artifactKey)) {
-        return each;
-      }
-    }
-    if (strict) return null;
-
-    for (MavenArtifactNode each : nodes) {
-      MavenArtifactNode result = findNodeFor(artifactKey, each.getDependencies(), strict);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  private static MavenArtifact findArtifactFor(String artifactKey, Collection<MavenArtifact> artifacts) {
-    for (MavenArtifact each : artifacts) {
-      if (each.getDisplayStringWithTypeAndClassifier().equals(artifactKey)) {
-        return each;
-      }
-    }
-    return null;
+  public List<MavenArtifactNode> getDependencyTree() {
+    return myState.myDependencyTree;
   }
 
   public boolean isSupportedDependency(MavenArtifact artifact) {
@@ -703,9 +716,21 @@ public class MavenProject {
   }
 
   public List<MavenArtifact> findDependencies(MavenProject depProject) {
+    return findDependencies(depProject.getMavenId());
+  }
+
+  public List<MavenArtifact> findDependencies(MavenId id) {
     List<MavenArtifact> result = new SmartList<MavenArtifact>();
     for (MavenArtifact each : getDependencies()) {
-      if (each.getMavenId().equals(depProject.getMavenId())) result.add(each);
+      if (each.getMavenId().equals(id)) result.add(each);
+    }
+    return result;
+  }
+
+  public List<MavenArtifact> findDependencies(String groupId, String artifactId) {
+    List<MavenArtifact> result = new SmartList<MavenArtifact>();
+    for (MavenArtifact each : getDependencies()) {
+      if (each.getMavenId().equals(groupId, artifactId)) result.add(each);
     }
     return result;
   }
@@ -865,6 +890,7 @@ public class MavenProject {
     List<MavenArtifact> myExtensions;
 
     List<MavenArtifact> myDependencies;
+    List<MavenArtifactNode> myDependencyTree;
 
     Map<String, String> myModulesPathsAndNames;
 
@@ -887,15 +913,19 @@ public class MavenProject {
     public State clone() {
       try {
         State result = (State)super.clone();
-        result.myProblemsCache = null;
-        result.myUnresolvedDependenciesCache = null;
-        result.myUnresolvedPluginsCache = null;
-        result.myUnresolvedExtensionsCache = null;
+        result.resetCache();
         return result;
       }
       catch (CloneNotSupportedException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    private void resetCache() {
+      myProblemsCache = null;
+      myUnresolvedDependenciesCache = null;
+      myUnresolvedPluginsCache = null;
+      myUnresolvedExtensionsCache = null;
     }
 
     public MavenProjectChanges getChanges(State other) {

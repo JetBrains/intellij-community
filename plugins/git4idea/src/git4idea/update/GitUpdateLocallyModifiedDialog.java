@@ -61,7 +61,7 @@ public class GitUpdateLocallyModifiedDialog extends DialogWrapper {
   /**
    * The collection with locally modified files
    */
-  private List<String> myLocallyModifiedFiles;
+  private final List<String> myLocallyModifiedFiles;
 
   /**
    * The constructor

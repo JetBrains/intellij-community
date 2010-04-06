@@ -28,6 +28,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -90,7 +91,7 @@ public abstract class RefEntityImpl implements RefEntity {
   }
   
  @Nullable
-  public <T> T getUserData(Key<T> key){
+  public <T> T getUserData(@NotNull Key<T> key){
     synchronized(this){
       if (myUserMap == null) return null;
       //noinspection unchecked
@@ -106,7 +107,7 @@ public abstract class RefEntityImpl implements RefEntity {
     });
   }
 
-  public <T> void putUserData(Key<T> key, T value){
+  public <T> void putUserData(@NotNull Key<T> key, T value){
     synchronized(this){
       if (myUserMap == null){
         if (value == null) return;

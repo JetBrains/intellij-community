@@ -16,12 +16,11 @@
 
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.meta.PsiMetaOwner;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,7 +44,6 @@ public class DefaultNonCodeSearchElementDescriptionProvider implements ElementDe
       return ((PsiDirectory) element).getName();
     }
 
-    if (ncdLocation.isNonJava()) return null;
     if (element instanceof PsiMetaOwner) {
       final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
       final PsiMetaData metaData = psiMetaOwner.getMetaData();
@@ -57,7 +55,7 @@ public class DefaultNonCodeSearchElementDescriptionProvider implements ElementDe
       return ((PsiNamedElement)element).getName();
     }
     else {
-      LOG.error("Unknown element type: " + element);
+     // LOG.error("Unknown element type: " + element);
       return null;
     }
   }

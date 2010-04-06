@@ -53,6 +53,9 @@ public class ViewAsGroup extends ActionGroup{
 
     public boolean isSelected(AnActionEvent e) {
       DebuggerTreeNodeImpl[] nodes = DebuggerAction.getSelectedNodes(e.getDataContext());
+      if (nodes == null) {
+        return false;
+      }
       for (DebuggerTreeNodeImpl node : nodes) {
         if (node.getDescriptor() instanceof ValueDescriptorImpl) {
           if (((ValueDescriptorImpl)node.getDescriptor()).getLastRenderer() != myNodeRenderer) {

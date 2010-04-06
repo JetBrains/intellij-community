@@ -117,9 +117,13 @@ public class ZipUtil {
   }
 
   public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter) throws IOException {
+    extract(file, outputDir, filenameFilter, true);
+  }
+
+  public static void extract(@NotNull File file, @NotNull File outputDir, @Nullable FilenameFilter filenameFilter, boolean overwrite) throws IOException {
     final ZipFile zipFile = new ZipFile(file);
     try {
-      extract(zipFile, outputDir, filenameFilter);
+      extract(zipFile, outputDir, filenameFilter, overwrite);
     }
     finally {
       zipFile.close();
@@ -129,20 +133,33 @@ public class ZipUtil {
   public static void extract(final @NotNull ZipFile zipFile,
                              @NotNull File outputDir,
                              @Nullable FilenameFilter filenameFilter) throws IOException {
+    extract(zipFile, outputDir, filenameFilter, true);
+  }
+
+  public static void extract(final @NotNull ZipFile zipFile,
+                             @NotNull File outputDir,
+                             @Nullable FilenameFilter filenameFilter,
+                             boolean overwrite) throws IOException {
     final Enumeration entries = zipFile.entries();
     while (entries.hasMoreElements()) {
       ZipEntry entry = (ZipEntry)entries.nextElement();
       final File file = new File(outputDir, entry.getName());
       if (filenameFilter == null || filenameFilter.accept(file.getParentFile(), file.getName())) {
-        extractEntry(entry, zipFile.getInputStream(entry), outputDir);
+        extractEntry(entry, zipFile.getInputStream(entry), outputDir, overwrite);
       }
     }
   }
 
   public static void extractEntry(ZipEntry entry, final InputStream inputStream, File outputDir) throws IOException {
+    extractEntry(entry, inputStream, outputDir, true);
+  }
+
+  public static void extractEntry(ZipEntry entry, final InputStream inputStream, File outputDir, boolean overwrite) throws IOException {
     final boolean isDirectory = entry.isDirectory();
     final String relativeName = entry.getName();
     final File file = new File(outputDir, relativeName);
+    if (file.exists() && !overwrite) return;
+
     FileUtil.createParentDirs(file);
     if (isDirectory) {
       file.mkdir();

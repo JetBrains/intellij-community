@@ -30,6 +30,7 @@ public interface AntBuildFile {
 
   AntBuildModel getModel();
 
+  @Nullable
   PsiFile getAntFile();
 
   Project getProject();

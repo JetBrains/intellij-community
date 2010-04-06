@@ -48,14 +48,15 @@ public abstract class GotoActionBase extends AnAction {
 
   protected abstract void gotoActionPerformed(AnActionEvent e);
 
-  public final void update(final AnActionEvent event) {
+  public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-    presentation.setEnabled(!getClass().equals (myInAction) && project != null && hasContributors());
-    presentation.setVisible(hasContributors());
+    final DataContext dataContext = event.getDataContext();
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    presentation.setEnabled(!getClass().equals (myInAction) && project != null && hasContributors(dataContext));
+    presentation.setVisible(hasContributors(dataContext));
   }
 
-  protected boolean hasContributors() {
+  protected boolean hasContributors(final DataContext dataContext) {
     return true;
   }
 

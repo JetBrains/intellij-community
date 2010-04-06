@@ -85,6 +85,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
       return new CopyOnWriteArrayList<BaseInjection>();
     }
   };
+  private ArrayList<BaseInjection> myDefaultInjections;
 
   // runtime pattern validation instrumentation
   @NotNull private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;
@@ -121,21 +122,7 @@ public final class Configuration implements PersistentStateComponent<Element> {
     for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
       supports.put(support.getId(), support);
     }
-    myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<XmlTagInjection>() {
-      public XmlTagInjection create() {
-        return new XmlTagInjection();
-      }
-    }));
-    myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<XmlAttributeInjection>() {
-      public XmlAttributeInjection create() {
-        return new XmlAttributeInjection();
-      }
-    }));
-    myInjections.get(LanguageInjectionSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<MethodParameterInjection>() {
-      public MethodParameterInjection create() {
-        return new MethodParameterInjection();
-      }
-    }));
+    loadStateOld(element, supports.get(LanguageInjectionSupport.XML_SUPPORT_ID), supports.get(LanguageInjectionSupport.JAVA_SUPPORT_ID));
     for (Element child : (List<Element>)element.getChildren("injection")){
       final String key = child.getAttributeValue("injector-id");
       final LanguageInjectionSupport support = supports.get(key);
@@ -162,6 +149,31 @@ public final class Configuration implements PersistentStateComponent<Element> {
     }
   }
 
+  private void loadStateOld(Element element, final LanguageInjectionSupport xmlSupport, final LanguageInjectionSupport javaSupport) {
+    if (xmlSupport != null) {
+      final Element xmlTagMarker = new Element("XmlTagInjection");
+      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(TAG_INJECTION_NAME), new Factory<BaseInjection>() {
+        public BaseInjection create() {
+          return xmlSupport.createInjection(xmlTagMarker);
+        }
+      }));
+      final Element xmlAttributeMarker = new Element("XmlAttributeInjection");
+      myInjections.get(LanguageInjectionSupport.XML_SUPPORT_ID).addAll(readExternal(element.getChild(ATTRIBUTE_INJECTION_NAME), new Factory<BaseInjection>() {
+        public BaseInjection create() {
+          return xmlSupport.createInjection(xmlAttributeMarker);
+        }
+      }));
+    }
+    if (javaSupport != null) {
+      final Element javaMethodMarker = new Element("MethodParameterInjection");
+      myInjections.get(LanguageInjectionSupport.JAVA_SUPPORT_ID).addAll(readExternal(element.getChild(PARAMETER_INJECTION_NAME), new Factory<BaseInjection>() {
+        public BaseInjection create() {
+          return javaSupport.createInjection(javaMethodMarker);
+        }
+      }));
+    }
+  }
+
   private static boolean readBoolean(Element element, String key, boolean defValue) {
     final String value = JDOMExternalizerUtil.readField(element, key);
     if (value == null) return defValue;
@@ -169,15 +181,29 @@ public final class Configuration implements PersistentStateComponent<Element> {
   }
 
   private void mergeWithDefaultConfiguration() {
-    Configuration cfg = null;
-    try {
-      cfg = load(getClass().getResourceAsStream("/" + COMPONENT_NAME + ".xml"));
+    final ArrayList<Configuration> cfgList = new ArrayList<Configuration>();
+    for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
+      final String url = support.getDefaultConfigUrl();
+      if (url != null) {
+        try {
+          cfgList.add(load(support.getClass().getResourceAsStream(url)));
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      }
     }
-    catch (Exception e) {
-      LOG.warn(e);
+    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
+    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    myDefaultInjections = new ArrayList<BaseInjection>();
+    for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
+      for (Configuration cfg : cfgList) {
+        final List<BaseInjection> imported = cfg.getInjections(supportId);
+        myDefaultInjections.addAll(imported);
+        importInjections(getInjections(supportId), imported, originalInjections, newInjections);
+      }
     }
-    if (cfg == null) return;
-    importFrom(cfg);
+    replaceInjections(newInjections, originalInjections);
   }
 
   public Element getState() {
@@ -189,10 +215,13 @@ public final class Configuration implements PersistentStateComponent<Element> {
     JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
     JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, String.valueOf(myResolveReferences));
 
-    final List<String> injectoIds = new ArrayList<String>(myInjections.keySet());
-    Collections.sort(injectoIds);
-    for (String key : injectoIds) {
+    final List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
+    Collections.sort(injectorIds);
+    for (String key : injectorIds) {
       final List<BaseInjection> injections = new ArrayList<BaseInjection>(myInjections.get(key));
+      if (myDefaultInjections != null) {
+        injections.removeAll(myDefaultInjections);
+      }
       Collections.sort(injections, new Comparator<BaseInjection>() {
         public int compare(final BaseInjection o1, final BaseInjection o2) {
           return Comparing.compare(o1.getDisplayName(), o2.getDisplayName());

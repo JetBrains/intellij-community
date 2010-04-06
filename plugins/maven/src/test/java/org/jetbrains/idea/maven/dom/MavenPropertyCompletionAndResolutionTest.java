@@ -91,6 +91,24 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<name>${<caret>pom.basedir}</name>");
 
     assertResolved(myProjectPom, baseDir);
+
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>baseUri}</name>");
+
+    assertResolved(myProjectPom, baseDir);
+  }
+
+  public void testBuiltInTimestampProperty() throws Exception {
+    createProjectPom("<groupId>test</groupId" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<name>${<caret>maven.build.timestamp}</name>");
+
+    assertResolved(myProjectPom, findTag("project.name"));
   }
 
   public void testResolutionWithSeveralProperties() throws Exception {
@@ -644,11 +662,11 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
 
-                     "<name>${<caret>env.TEMP}</name>");
+                     "<name>${<caret>env." + getEnvVar() + "}</name>");
 
     assertResolved(myProjectPom, MavenDomUtil.findProperty(myProject,
                                                            MavenPropertiesVirtualFileSystem.ENV_PROPERTIES_FILE,
-                                                           "TEMP"));
+                                                           getEnvVar()));
   }
 
   public void testHighlightUnresolvedProperties() throws Exception {
@@ -748,10 +766,11 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                   "parentPomProfilesProp",
                   "parentProfilesXmlProp");
     assertContain(variants, "artifactId", "project.artifactId", "pom.artifactId");
-    assertContain(variants, "basedir", "project.basedir", "pom.basedir");
+    assertContain(variants, "basedir", "project.basedir", "pom.basedir", "baseUri", "project.baseUri", "pom.basedir");
+    assertContain(variants, "maven.build.timestamp");
     assertContain(variants, "settingsXmlProp");
     assertContain(variants, "settings.localRepository");
-    assertContain(variants, "user.home", "env.TEMP");
+    assertContain(variants, "user.home", "env." + getEnvVar());
   }
 
   public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {

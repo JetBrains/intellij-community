@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -34,11 +35,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Git virtual file adapter
  */
 public class GitVFSListener extends VcsVFSListener {
+  /**
+   * More than zero if events are suppressed
+   */
+  final AtomicInteger myEventsSuppressLevel = new AtomicInteger(0);
 
   /**
    * A constructor for listener
@@ -48,6 +54,29 @@ public class GitVFSListener extends VcsVFSListener {
    */
   public GitVFSListener(final Project project, final GitVcs vcs) {
     super(project, vcs);
+  }
+
+  /**
+   * Set events suppressed, the events should be unsuppressed later
+   *
+   * @param value true if events should be suppressed, false otherwise
+   */
+  public void setEventsSuppressed(boolean value) {
+    if (value) {
+      myEventsSuppressLevel.incrementAndGet();
+    }
+    else {
+      int v = myEventsSuppressLevel.decrementAndGet();
+      assert v >= 0;
+    }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected boolean isEventIgnored(VirtualFileEvent event) {
+    return super.isEventIgnored(event) || myEventsSuppressLevel.get() != 0;
   }
 
   /**

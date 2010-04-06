@@ -23,7 +23,6 @@ import com.intellij.openapi.compiler.TimestampValidityState;
 import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -47,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -63,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethodImplementation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
@@ -128,7 +127,7 @@ public class GroovyToJavaGenerator {
       if (compilerConfiguration.isResourceFile(file)) continue;
 
       final Module module = getModuleByFile(context, file);
-      if (module == null || !(module.getModuleType() instanceof JavaModuleType)) {
+      if (!GroovyUtils.isSuitableModule(module)) {
         continue;
       }
 
@@ -644,7 +643,7 @@ public class GroovyToJavaGenerator {
       }
 
       text.append("\n  ");
-      writeFieldModifiers(text, modifierList, JAVA_MODIFIERS, variable);
+      writeFieldModifiers(text, modifierList, JAVA_MODIFIERS);
 
       //type
       text.append(type).append(" ").append(name).append(" = ").append(initializer).append(";\n");
@@ -673,7 +672,7 @@ public class GroovyToJavaGenerator {
     PsiType retType;
     if (method instanceof GrMethod) {
       retType = ((GrMethod) method).getDeclaredReturnType();
-      if (retType == null) retType = TypesUtil.getJavaLangObject((GrMethod) method);
+      if (retType == null) retType = TypesUtil.getJavaLangObject(method);
     } else retType = method.getReturnType();
 
     text.append(getTypeText(retType, false));
@@ -731,17 +730,8 @@ public class GroovyToJavaGenerator {
     return wasAddedModifiers;
   }
 
-  private static void writeFieldModifiers(StringBuffer text, GrModifierList modifierList, String[] modifiers, GrVariable variable) {
-    final boolean isProperty = variable instanceof GrField && !modifierList.hasExplicitVisibilityModifiers() && !(((GrField)variable).getContainingClass().isInterface());
-    if (isProperty) {
-      text.append("private ");
-    }
-
+  private static void writeFieldModifiers(StringBuffer text, GrModifierList modifierList, String[] modifiers) {
     for (String modifierType : modifiers) {
-      if (isProperty && modifierType.equals(PsiModifier.PUBLIC)) {
-        continue;
-      }
-
       if (modifierList.hasModifierProperty(modifierType)) {
         text.append(modifierType);
         text.append(" ");

@@ -7,7 +7,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">
-    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjectionSupport"/>
+    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjectionSupport"
+                     config="/resources/xmlInjections.xml"/>
   </extensions>
 
 </idea-plugin>

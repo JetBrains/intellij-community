@@ -16,13 +16,13 @@
 
 package com.intellij.ide.ui.search;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ex.GlassPanel;
+import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
+import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -62,11 +62,8 @@ public class SearchUtil {
   }
 
   public static void processProjectConfigurables(Project project, HashMap<SearchableConfigurable, TreeSet<OptionDescription>> options) {
-    processConfigurables(project.getExtensions(Configurable.PROJECT_CONFIGURABLES), options);
-    processConfigurables(project.getComponents(Configurable.class), options);
-    final Application app = ApplicationManager.getApplication();
-    processConfigurables(app.getExtensions(Configurable.APPLICATION_CONFIGURABLES), options);
-    processConfigurables(app.getComponents(Configurable.class), options);
+    processConfigurables(new ProjectConfigurablesGroup(project, false).getConfigurables(), options);
+    processConfigurables(new IdeConfigurablesGroup().getConfigurables(), options);
   }
 
   private static void processConfigurables(final Configurable[] configurables,
@@ -282,9 +279,10 @@ public class SearchUtil {
 
   public static boolean isComponentHighlighted(String text, String option, final boolean force, final SearchableConfigurable configurable) {
     if (text == null || option == null || option.length() == 0) return false;
-    SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
+    final Set<String> words = searchableOptionsRegistrar.getProcessedWords(option);
     final Set<String> options =
-      configurable != null ? searchableOptionsRegistrar.replaceSynonyms(searchableOptionsRegistrar.getProcessedWords(option), configurable) : null;
+      configurable != null ? searchableOptionsRegistrar.replaceSynonyms(words, configurable) : words;
     if (options == null || options.isEmpty()) {
       return text.toLowerCase().indexOf(option.toLowerCase()) != -1;
     }

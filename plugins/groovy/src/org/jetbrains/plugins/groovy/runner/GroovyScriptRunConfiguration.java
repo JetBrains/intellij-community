@@ -86,7 +86,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   private String getAbsoluteWorkDir() {
-    if (!new File(workDir).isAbsolute()) {
+    if (!FileUtil.isAbsolute(workDir)) {
       return new File(getProject().getLocation(), workDir).getAbsolutePath();
     }
     return workDir;
@@ -172,20 +172,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
     final JavaCommandLineState state = new JavaCommandLineState(environment) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        JavaParameters params = new JavaParameters();
-        params.setCharset(null);
-
-        if (module != null) {
-          final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-          if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-            params.setJdk(sdk);
-          }
-        }
-        if (params.getJdk() == null) {
-          params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
-        }
+        JavaParameters params = createJavaParametersWithSdk(module);
         params.setWorkingDirectory(getAbsoluteWorkDir());
-
         scriptRunner.configureCommandLine(params, module, tests, script, GroovyScriptRunConfiguration.this);
 
         return params;
@@ -195,6 +183,22 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     return state;
 
+  }
+
+  public static JavaParameters createJavaParametersWithSdk(Module module) {
+    JavaParameters params = new JavaParameters();
+    params.setCharset(null);
+
+    if (module != null) {
+      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+        params.setJdk(sdk);
+      }
+    }
+    if (params.getJdk() == null) {
+      params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
+    }
+    return params;
   }
 
   @Nullable

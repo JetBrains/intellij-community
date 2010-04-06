@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
@@ -23,14 +24,16 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
   protected boolean isAvailable(AnActionEvent e) {
-    for (VirtualFile each : MavenActionUtil.getMavenProjectsFiles(e)) {
-      if (MavenActionUtil.getProjectsManager(e).isManagedFile(each)) return true;
+    final DataContext context = e.getDataContext();
+    for (VirtualFile each : MavenActionUtil.getMavenProjectsFiles(context)) {
+      if (MavenActionUtil.getProjectsManager(context).isManagedFile(each)) return true;
     }
     return false;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    MavenActionUtil.getProjectsManager(e).removeManagedFiles(MavenActionUtil.getMavenProjectsFiles(e));
+    final DataContext context = e.getDataContext();
+    MavenActionUtil.getProjectsManager(context).removeManagedFiles(MavenActionUtil.getMavenProjectsFiles(context));
   }
 }

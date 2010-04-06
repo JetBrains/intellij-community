@@ -311,7 +311,9 @@ public class FSRecords implements Disposable, Forceable {
       synchronized (lock) {
         myNames.force();
 
-        if (myAttributes.flushSome() && myContents.flushSome()) {
+        final boolean attribsFlushed = myAttributes.flushSome();
+        final boolean contentsFlushed = myContents.flushSome();
+        if (attribsFlushed && contentsFlushed) {
           try {
             markClean();
           }

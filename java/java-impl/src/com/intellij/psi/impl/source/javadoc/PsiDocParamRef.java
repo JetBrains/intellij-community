@@ -100,6 +100,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return getManager().areElementsEquivalent(resolve(), element);
       }
 
+      @NotNull
       public Object[] getVariants() {
         final PsiElement firstChild = getFirstChild();
         if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {

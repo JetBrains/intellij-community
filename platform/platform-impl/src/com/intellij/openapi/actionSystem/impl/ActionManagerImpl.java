@@ -107,6 +107,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   @NonNls public static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
   @NonNls public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
   @NonNls public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
+  @NonNls public static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
   @NonNls public static final String KEYMAP_ATTR_NAME = "keymap";
   @NonNls public static final String KEYSTROKE_ATTR_NAME = "keystroke";
   @NonNls public static final String REF_ATTR_NAME = "ref";
@@ -375,7 +376,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     return stub;
   }
 
-  private ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
+  private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
     @NonNls final String resBundleName = plugin != null && !plugin.getPluginId().getIdString().equals("com.intellij") ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
@@ -625,7 +626,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     group.addAction(action, new Constraints(anchor, relativeToActionId), this).setAsSecondary(secondary);
   }
 
-  public boolean checkRelativeToAction(final String relativeToActionId,
+  public static boolean checkRelativeToAction(final String relativeToActionId,
                                        @NotNull final Anchor anchor,
                                        @NotNull final String actionName,
                                        @Nullable final PluginId pluginId) {
@@ -637,7 +638,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
   }
 
   @Nullable
-  public Anchor parseAnchor(final String anchorStr,
+  public static Anchor parseAnchor(final String anchorStr,
                             @Nullable final String actionName,
                             @Nullable final PluginId pluginId) {
     if (anchorStr == null) {
@@ -739,8 +740,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
-
-    keymap.addShortcut(actionId, new KeyboardShortcut(firstKeyStroke, secondKeyStroke));
+    final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
+    final KeyboardShortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
+    if (Boolean.valueOf(removeOption)) {
+      keymap.removeShortcut(actionId, shortcut);
+    } else {
+      keymap.addShortcut(actionId, shortcut);
+    }
   }
 
   private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
@@ -769,7 +775,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       return;
     }
 
-    keymap.addShortcut(actionId, shortcut);
+    final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
+    if (Boolean.valueOf(removeOption)) {
+      keymap.removeShortcut(actionId, shortcut);
+    } else {
+      keymap.addShortcut(actionId, shortcut);
+    }
   }
 
   @Nullable
@@ -946,13 +957,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   public void removeActionPopup(final ActionPopupMenuImpl menu) {
     final boolean removed = myPopups.remove(menu);
-    if (removed && myPopups.size() == 0) {
+    if (removed && myPopups.isEmpty()) {
       flushActionPerformed();
     }
   }
 
   public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
-    if (myPopups.size() > 0) {
+    if (!myPopups.isEmpty()) {
       myQueuedNotifications.put(action, context);
     } else {
       fireAfterActionPerformed(action, context, event);
@@ -961,7 +972,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
 
   public boolean isActionPopupStackEmpty() {
-    return myPopups.size() == 0;
+    return myPopups.isEmpty();
   }
 
   private void flushActionPerformed() {
@@ -1036,9 +1047,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     final ShortcutSet shortcutSet = action.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     for (final Shortcut shortcut : shortcuts) {
-      KeyboardShortcut kb = (KeyboardShortcut)shortcut;
-      if (kb.getSecondKeyStroke() == null) {
-        return (KeyboardShortcut)shortcut;
+      // Shortcut can be MouseShortcut here.
+      // For example IdeaVIM often assigns them
+      if (shortcut instanceof KeyboardShortcut){
+        final KeyboardShortcut kb = (KeyboardShortcut)shortcut;
+        if (kb.getSecondKeyStroke() == null) {
+          return (KeyboardShortcut)shortcut;
+        }
       }
     }
 
@@ -1268,7 +1283,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     });
   }
 
-  private DataContext getContextBy(Component contextComponent) {
+  private static DataContext getContextBy(Component contextComponent) {
     final DataManager dataManager = DataManager.getInstance();
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
   }

@@ -18,6 +18,7 @@ package com.intellij.spellchecker;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.spellchecker.inspections.SplitterFactory;
 import com.intellij.spellchecker.tokenizer.Token;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +47,12 @@ public class DocCommentTokenizer extends Tokenizer<PsiDocComment> {
         PsiDocTag tag = (PsiDocTag)el;
         if (!Arrays.asList(excludedTags).contains(tag.getName())) {
           for (PsiElement data : tag.getDataElements()) {
-            result.add(new Token<PsiElement>(data, data.getText(),false));
+            result.add(new Token<PsiElement>(data, data.getText(),false, SplitterFactory.getInstance().getCommentSplitter()));
           }
         }
       }
       else {
-        result.add(new Token<PsiElement>(el, el.getText(),false));
+        result.add(new Token<PsiElement>(el, el.getText(),false, SplitterFactory.getInstance().getCommentSplitter()));
       }
     }
     Token[] t = new Token[result.size()];

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Arrays;
@@ -88,6 +89,10 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    */
   public boolean UPDATE_STASH = true;
   /**
+   * The policy that specifies how files are saved before update or rebase
+   */
+  public UpdateChangesPolicy UPDATE_CHANGES_POLICY = null;
+  /**
    * The type of update operation to perform
    */
   public UpdateType UPDATE_TYPE = UpdateType.BRANCH_DEFAULT;
@@ -99,6 +104,21 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * If true, the dialog is shown with conversion options
    */
   public boolean LINE_SEPARATORS_CONVERSION_ASK = true;
+  /**
+   * The policy used in push active branches dialog
+   */
+  public UpdateChangesPolicy PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdateChangesPolicy.STASH;
+
+  /**
+   * @return get (a possibly converted value) of update stash policy
+   */
+  @NotNull
+  public UpdateChangesPolicy updateChangesPolicy() {
+    if (UPDATE_CHANGES_POLICY == null) {
+      UPDATE_CHANGES_POLICY = UPDATE_STASH ? UpdateChangesPolicy.STASH : UpdateChangesPolicy.KEEP;
+    }
+    return UPDATE_CHANGES_POLICY;
+  }
 
   /**
    * Save an author of the commit and make it the first one. If amount of authors exceeds the limit, remove least recently selected author.
@@ -201,6 +221,24 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
   }
 
   /**
+   * The way the local changes are saved before update if user has selected auto-stash
+   */
+  public enum UpdateChangesPolicy {
+    /**
+     * Stash changes
+     */
+    STASH,
+    /**
+     * Shelve changes
+     */
+    SHELVE,
+    /**
+     * Keep files in working tree
+     */
+    KEEP
+  }
+
+  /**
    * Kinds of SSH executable to be used with the git
    */
   public enum SshExecutable {
@@ -217,11 +255,17 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings> 
    * The type of update to perform
    */
   public enum UpdateType {
-    /** Use default specified in the config file for the branch */
+    /**
+     * Use default specified in the config file for the branch
+     */
     BRANCH_DEFAULT,
-    /** Merge fetched commits with local branch */
+    /**
+     * Merge fetched commits with local branch
+     */
     MERGE,
-    /** Rebase local commits upon the fetched branch*/
+    /**
+     * Rebase local commits upon the fetched branch
+     */
     REBASE
   }
 

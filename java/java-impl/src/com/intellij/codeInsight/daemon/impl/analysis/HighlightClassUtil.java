@@ -51,7 +51,7 @@ import java.util.List;
 
 public class HighlightClassUtil {
   public static final String INTERFACE_EXPECTED = JavaErrorMessages.message("interface.expected");
-  public static final String CLASS_EXPECTED = JavaErrorMessages.message("class.expected");
+  public static final String NO_INTERFACE_EXPECTED = JavaErrorMessages.message("no.interface.expected");
   private static final String STATIC_DECLARATION_IN_INNER_CLASS = JavaErrorMessages.message("static.declaration.in.inner.class");
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
@@ -397,7 +397,7 @@ public class HighlightClassUtil {
     if (extendFrom.isInterface() != mustBeInterface) {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       context,
-                                                      mustBeInterface ? INTERFACE_EXPECTED : CLASS_EXPECTED);
+                                                      mustBeInterface ? INTERFACE_EXPECTED : NO_INTERFACE_EXPECTED);
       PsiClassType type =
         JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type));

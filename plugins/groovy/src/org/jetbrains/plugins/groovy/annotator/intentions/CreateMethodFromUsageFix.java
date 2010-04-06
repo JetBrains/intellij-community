@@ -70,7 +70,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
     StringBuffer methodBuffer = new StringBuffer();
     if (PsiUtil.isInStaticContext(myRefExpression, myTargetClass)) methodBuffer.append("static ");
     methodBuffer.append("Object ").append(myRefExpression.getReferenceName()).append(" (");
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefExpression, false, false);
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(myRefExpression, false);
     assert argTypes != null;
     ChooseTypeExpression[] paramTypesExpressions = new ChooseTypeExpression[argTypes.length];
     for (int i = 0; i < argTypes.length; i++) {

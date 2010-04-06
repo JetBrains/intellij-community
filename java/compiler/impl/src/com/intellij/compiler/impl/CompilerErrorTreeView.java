@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionFix;
-import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
+import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -154,7 +154,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       final NavigatableMessageElement messageElement = (NavigatableMessageElement)getSelectedErrorTreeElement();
       final String[] text = messageElement.getText();
       final String id = text[0].substring(1, text[0].indexOf("]"));
-      final AddSuppressInspectionFix suppressInspectionFix = getSuppressAction(id);
+      final SuppressFix suppressInspectionFix = getSuppressAction(id);
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       assert project != null;
       final OpenFileDescriptor navigatable = (OpenFileDescriptor)messageElement.getNavigatable();
@@ -206,7 +206,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
               final PsiElement context = psiFile.findElementAt(fileDescriptor.getOffset());
               if (context == null) return;
               final String id = text[0].substring(1, text[0].indexOf("]"));
-              final AddSuppressInspectionFix suppressInspectionFix = getSuppressAction(id);
+              final SuppressFix suppressInspectionFix = getSuppressAction(id);
               final boolean available = suppressInspectionFix.isAvailable(project, null, context);
               presentation.setEnabled(available);
               if (available) {
@@ -218,8 +218,8 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       }
     }
 
-    protected AddSuppressInspectionFix getSuppressAction(final String id) {
-      return new AddSuppressInspectionFix(id) {
+    protected SuppressFix getSuppressAction(final String id) {
+      return new SuppressFix(id) {
         @Override
         @SuppressWarnings({"SimplifiableIfStatement"})
         public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
@@ -237,8 +237,8 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   private class SuppressJavacWarningForClassAction extends SuppressJavacWarningsAction {
     @Override
-    protected AddSuppressInspectionFix getSuppressAction(final String id) {
-      return new AddSuppressInspectionForClassFix(id){
+    protected SuppressFix getSuppressAction(final String id) {
+      return new SuppressForClassFix(id){
         @Override
         protected boolean use15Suppressions(final PsiDocCommentOwner container) {
           return true;

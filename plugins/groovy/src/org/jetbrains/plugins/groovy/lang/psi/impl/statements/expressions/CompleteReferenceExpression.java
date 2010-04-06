@@ -374,7 +374,7 @@ public class CompleteReferenceExpression {
       if (qualifierClass != null) {
         qualifierClass.processDeclarations(processor, ResolveState.initial(), null, refExpr);
       }
-      if (!ResolveUtil.processCategoryMembers(refExpr, processor, (PsiClassType)qualifierType)) return;
+      if (!ResolveUtil.processCategoryMembers(refExpr, processor)) return;
     }
     else if (qualifierType instanceof PsiArrayType) {
       final GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(project).getArrayClass();

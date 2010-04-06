@@ -87,7 +87,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   public GroovyResolveResult[] multiResolveConstructor() {
     PsiClass clazz = getDelegatedClass();
     if (clazz != null) {
-      PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false, false);
+      PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
       PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
       PsiSubstitutor substitutor;
       if (isThisCall()) {
@@ -160,6 +160,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
 
   }
 
+  @NotNull
   public Object[] getVariants() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

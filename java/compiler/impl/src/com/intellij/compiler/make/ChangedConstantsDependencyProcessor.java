@@ -25,6 +25,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -43,22 +44,31 @@ class ChangedConstantsDependencyProcessor {
   private final CachingSearcher mySearcher;
   private final DependencyCache myDependencyCache;
   private final int myQName;
+  private final boolean mySkipExpressionResolve;
   private final FieldChangeInfo[] myChangedFields;
   private final FieldChangeInfo[] myRemovedFields;
   private static final long ANALYSIS_DURATION_THRESHOLD_MILLIS = 15000L /*15 sec*/;
 
 
-  public ChangedConstantsDependencyProcessor(Project project, CachingSearcher searcher, DependencyCache dependencyCache, int qName, FieldChangeInfo[] changedFields, FieldChangeInfo[] removedFields) {
+  public ChangedConstantsDependencyProcessor(Project project,
+                                             CachingSearcher searcher,
+                                             DependencyCache dependencyCache,
+                                             int qName, boolean skipExpressionResolve, FieldChangeInfo[] changedFields,
+                                             FieldChangeInfo[] removedFields) {
     myProject = project;
     mySearcher = searcher;
     myDependencyCache = dependencyCache;
     myQName = qName;
+    mySkipExpressionResolve = skipExpressionResolve;
     myChangedFields = changedFields;
     myRemovedFields = removedFields;
   }
 
   public void run() throws CacheCorruptedException {
     final CacheCorruptedException[] _ex = new CacheCorruptedException[] {null};
+
+    DumbService.getInstance(myProject).waitForSmartMode(); // ensure running in smart mode
+
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
@@ -109,7 +119,7 @@ class ChangedConstantsDependencyProcessor {
     final PsiSearchHelper psiSearchHelper = PsiManager.getInstance(myProject).getSearchHelper();
 
     final long analysisStart = System.currentTimeMillis();
-    boolean skipResolve = false;
+    boolean skipResolve = mySkipExpressionResolve;
 
     PsiIdentifier[] identifiers = findIdentifiers(psiSearchHelper, myDependencyCache.resolve(info.getName()), searchScope, UsageSearchContext.IN_CODE);
     for (PsiIdentifier identifier : identifiers) {

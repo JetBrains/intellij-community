@@ -95,7 +95,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
     final AntConfigurationBase antConfig = AntConfigurationBase.getInstance(myFile.getProject());
     for (AntBuildFile buildFile : antConfig.getBuildFiles()) {
       final AntFile antFile = (AntFile)buildFile.getAntFile();
-      final String path = PathUtil.getLocalPath(antFile.getVirtualFile());
+      final String path = antFile != null? PathUtil.getLocalPath(antFile.getVirtualFile()) : null;
       if (path != null && !myPathToFileMap.containsKey(path) && !FileUtil.pathsEqual(path, myLocalPath)) {
         final AntProject antProject = antFile.getAntProject();
         if (antProject != null && antProject.getImportedFiles().length > 0) {

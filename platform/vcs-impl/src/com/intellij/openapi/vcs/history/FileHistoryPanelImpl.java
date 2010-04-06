@@ -123,10 +123,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
   private final Alarm myUpdateAlarm;
 
-  private final String myRepositoryPath;
-
-  private boolean myInRefresh;
-  private Object myTargetSelection;
+  private volatile boolean myInRefresh;
+  private List<Object> myTargetSelection;
   private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
 
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
@@ -263,7 +261,6 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history");
     myProvider = provider;
     myAnnotationProvider = annotationProvider;
-    myRepositoryPath = repositoryPath;
     myProject = project;
     myRefresher = refresher;
     myHistorySession = session;         
@@ -279,7 +276,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     replaceTransferable();
 
-    myUpdateAlarm = new Alarm(session.allowAsyncRefresh() ? Alarm.ThreadToUse.SHARED_THREAD : Alarm.ThreadToUse.SWING_THREAD);
+    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
 
@@ -314,7 +311,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         FileHistoryPanelImpl.this.refresh(vcsHistorySession);
       }
     };
-    
+
+    // todo react to event?
     myUpdateAlarm.addRequest(new Runnable() {
       public void run() {
         if (myProject.isDisposed()) {
@@ -322,13 +320,13 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         }
         final boolean refresh = (! myInRefresh) && myHistorySession.shouldBeRefreshed();
         myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(this, 10000);
+        myUpdateAlarm.addRequest(this, 20000);
 
         if (refresh) {
           refreshImpl();
         }
       }
-    }, 10000);
+    }, 20000);
 
     init();
 
@@ -636,7 +634,10 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       }
     };
     commentGroup.add(commentLabel, BorderLayout.NORTH);
-    commentGroup.add(ScrollPaneFactory.createScrollPane(myComments), BorderLayout.CENTER);
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
+    pane.setBorder(BorderFactory.createMatteBorder(1, 1, myAdditionalDetails == null ? 0 : 1, 0, UIUtil.getBorderSeparatorColor()));
+
+    commentGroup.add(pane, BorderLayout.CENTER);
     detailsSplitter.setFirstComponent(commentGroup);
     detailsSplitter.setSecondComponent(myAdditionalDetails);
 
@@ -645,6 +646,8 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     //myLoadingLabel.setVisible(false);
     myLoadingLabel.setBackground(UIUtil.getToolTipBackground());
     wrapper.add(myLoadingLabel, BorderLayout.NORTH);
+
+    myDualView.setViewBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, UIUtil.getBorderSeparatorColor()));
     wrapper.add(myDualView, BorderLayout.CENTER);
 
     mySplitter.setFirstComponent(wrapper);
@@ -742,7 +745,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
       public void run() {
         if (myInRefresh) return;
         myInRefresh = true;
-        myTargetSelection = myDualView.getFlatView().getSelectedObject();
+        myTargetSelection = myDualView.getFlatView().getSelectedObjects();
 
         myLoadingLabel.setVisible(true);
         mySplitter.revalidate();

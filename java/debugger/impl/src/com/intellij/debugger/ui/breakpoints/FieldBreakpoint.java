@@ -63,11 +63,17 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   private String myFieldName;
 
   public static Icon ICON = IconLoader.getIcon("/debugger/db_field_breakpoint.png");
+  public static Icon MUTED_ICON = IconLoader.getIcon("/debugger/db_muted_field_breakpoint.png");
   public static Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_field_breakpoint.png");
   public static Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_field_breakpoint.png");
+  public static Icon MUTED_DISABLED_ICON = IconLoader.getIcon("/debugger/db_muted_disabled_field_breakpoint.png");
+  public static Icon MUTED_DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_muted_dep_field_breakpoint.png");
   private static final Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_field_breakpoint.png");
+  private static final Icon ourMutedInvalidIcon = IconLoader.getIcon("/debugger/db_muted_invalid_field_breakpoint.png");
   private static final Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.png");
+  private static final Icon ourMutedVerifiedIcon = IconLoader.getIcon("/debugger/db_muted_verified_field_breakpoint.png");
   private static final Icon ourVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_field_warning_breakpoint.png");
+  private static final Icon ourMutedVerifiedWarningIcon = IconLoader.getIcon("/debugger/db_muted_field_warning_breakpoint.png");
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
   protected FieldBreakpoint(Project project) {
@@ -88,25 +94,30 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
 
-  protected Icon getDisabledIcon() {
+  protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+    if (isMuted) {
+      return master == null? MUTED_DISABLED_ICON : MUTED_DISABLED_DEP_ICON;
+    }
+    else {
+      return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+    }
   }
 
-  protected Icon getSetIcon() {
-    return ICON;
+  protected Icon getSetIcon(boolean isMuted) {
+    return isMuted? MUTED_ICON : ICON;
   }
 
-  protected Icon getInvalidIcon () {
-    return ourInvalidIcon;
+  protected Icon getInvalidIcon(boolean isMuted) {
+    return isMuted? ourMutedInvalidIcon : ourInvalidIcon;
   }
 
-  protected Icon getVerifiedIcon() {
-    return ourVerifiedIcon;
+  protected Icon getVerifiedIcon(boolean isMuted) {
+    return isMuted? ourMutedVerifiedIcon : ourVerifiedIcon;
   }
 
-  protected Icon getVerifiedWarningsIcon() {
-    return ourVerifiedWarningIcon;
+  protected Icon getVerifiedWarningsIcon(boolean isMuted) {
+    return isMuted? ourMutedVerifiedWarningIcon : ourVerifiedWarningIcon;
   }
 
   public Key<FieldBreakpoint> getCategory() {

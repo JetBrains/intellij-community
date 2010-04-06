@@ -44,7 +44,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private final MyServiceMessageVisitor myServiceMessageVisitor;
 
   private static class OutputChunk {
-    private Key myKey;
+    private final Key myKey;
     private String myText;
 
     private OutputChunk(Key key, String text) {

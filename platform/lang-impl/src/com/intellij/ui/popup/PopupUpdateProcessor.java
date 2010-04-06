@@ -30,7 +30,7 @@ import java.awt.*;
  */
 public abstract class PopupUpdateProcessor extends JBPopupAdapter {
 
-  private Project myProject;
+  private final Project myProject;
 
   protected PopupUpdateProcessor(Project project) {
     myProject = project;

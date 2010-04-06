@@ -16,9 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.Set;
 
@@ -84,5 +88,11 @@ public class GrSyntheticMethodImplementation extends GrSyntheticMethod {
   @Override
   public PsiElement getContext() {
     return myInterfaceMethod;
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    RowIcon baseIcon = createLayeredIcon(GroovyIcons.METHOD, ElementPresentationUtil.getFlags(this, false));
+    return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 }

@@ -145,6 +145,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return myPatternExpression.isReferenceTo(element);
   }
 
+  @NotNull
   public Object[] getVariants() {
     return myPatternExpression.getVariants();
   }

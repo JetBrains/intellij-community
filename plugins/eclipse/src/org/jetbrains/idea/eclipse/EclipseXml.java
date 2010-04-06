@@ -68,4 +68,7 @@ public interface EclipseXml {
   @NonNls String PLATFORM_PROTOCOL = "platform:/";
   @NonNls String JAR_PREFIX = "jar:";
   String JAVA_SDK_TYPE = "/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType";
+  @NonNls String LINKED_RESOURCES = "linkedResources";
+  @NonNls String LINK = "link";
+  @NonNls String JAVADOC_LOCATION = "javadoc_location";
 }

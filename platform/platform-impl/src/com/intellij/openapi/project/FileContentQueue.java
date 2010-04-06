@@ -21,8 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,59 +76,11 @@ public class FileContentQueue {
   }
 
   private void put(VirtualFile file) throws InterruptedException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
     FileContent content = new FileContent(file);
 
     if (file.isValid()) {
-      final long contentLength = content.getLength();
-      boolean counterUpdated = false;
-      try {
-        if (contentLength < FileManagerImpl.MAX_INTELLISENSE_FILESIZE) {
-          synchronized (this) {
-            while (myTotalSize > SIZE_THRESHOLD) {
-              if (indicator != null) {
-                indicator.checkCanceled();
-              }
-              wait(300);
-            }
-            myTotalSize += contentLength;
-            counterUpdated = true;
-          }
-
-          content.getBytes(); // Reads the content bytes and caches them.
-        }
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        if (counterUpdated) {
-          synchronized (this) {
-            myTotalSize -= contentLength;   // revert size counter
-            notifyAll();
-          }
-        }
+      if (!doLoadContent(content)) {
         content.setEmptyContent();
-      }
-      catch (ProcessCanceledException e) {
-        if (counterUpdated) {
-          synchronized (this) {
-            myTotalSize -= contentLength;   // revert size counter
-            notifyAll();
-          }
-        }
-        throw e;
-      }
-      catch (InterruptedException e) {
-        if (counterUpdated) {
-          synchronized (this) {
-            myTotalSize -= contentLength;   // revert size counter
-            notifyAll();
-          }
-        }
-        return;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
       }
     }
     else {
@@ -134,6 +88,46 @@ public class FileContentQueue {
     }
 
     myQueue.put(content);
+  }
+
+  private boolean doLoadContent(final FileContent content) throws InterruptedException {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final long contentLength = content.getLength();
+
+    boolean counterUpdated = false;
+    try {
+      if (contentLength < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
+        synchronized (this) {
+          while (myTotalSize > SIZE_THRESHOLD) {
+            if (indicator != null) {
+              indicator.checkCanceled();
+            }
+            wait(300);
+          }
+          myTotalSize += contentLength;
+          counterUpdated = true;
+        }
+
+        content.getBytes(); // Reads the content bytes and caches them.
+      }
+
+      return true;
+    }
+    catch (Throwable e) {
+      if (counterUpdated) {
+        synchronized (this) {
+          myTotalSize -= contentLength;   // revert size counter
+          notifyAll();
+        }
+      }
+      if (e instanceof ProcessCanceledException) throw (ProcessCanceledException)e;
+      if (e instanceof InterruptedException) throw (InterruptedException)e;
+
+      if (e instanceof IOException || e instanceof InvalidVirtualFileAccessException) LOG.info(e);
+      else LOG.error(e);
+
+      return false;
+    }
   }
 
   public FileContent take() {
@@ -157,7 +151,7 @@ public class FileContentQueue {
     if (file == null) {
       return null;
     }
-    if (result.getLength() < FileManagerImpl.MAX_INTELLISENSE_FILESIZE) {
+    if (result.getLength() < PersistentFS.MAX_INTELLISENSE_FILESIZE) {
       synchronized (this) {
         try {
           myTotalSize -= result.getLength();

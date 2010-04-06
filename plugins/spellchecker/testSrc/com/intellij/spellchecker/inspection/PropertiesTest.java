@@ -25,7 +25,7 @@ public class PropertiesTest extends SpellcheckerInspectionTestCase {
     return getSpellcheckerTestDataPath() + "/inspection/propertiesWithMistakes";
   }
 
-  public void testXml() throws Throwable {
+  public void testProperties() throws Throwable {
     doTest("test.properties", SpellCheckerInspectionToolProvider.getInspectionTools());
   }
 }

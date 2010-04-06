@@ -54,6 +54,8 @@ public abstract class DomService {
 
   public abstract ModelMerger createModelMerger();
 
+  public abstract <T extends DomElement> DomAnchor<T> createAnchor(T domElement);
+
   @NotNull
   public abstract XmlFile getContainingFile(@NotNull DomElement domElement);
 

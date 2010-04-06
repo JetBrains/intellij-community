@@ -28,10 +28,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 
 public class BeanClassVisibilityUsageInfo extends FixableUsageInfo {
-  private PsiClass existingClass;
-  private UsageInfo[] usages;
-  private String myNewVisibility;
-  private PsiMethod myExistingClassCompatibleConstructor;
+  private final PsiClass existingClass;
+  private final UsageInfo[] usages;
+  private final String myNewVisibility;
+  private final PsiMethod myExistingClassCompatibleConstructor;
 
   public BeanClassVisibilityUsageInfo(PsiClass existingClass,
                                       UsageInfo[] usages,

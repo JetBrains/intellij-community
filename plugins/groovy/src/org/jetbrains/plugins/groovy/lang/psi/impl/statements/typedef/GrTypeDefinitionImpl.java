@@ -78,9 +78,10 @@ import java.util.List;
  */
 public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeDefinitionStub> implements GrTypeDefinition {
 
-  private PsiMethod[] myMethods;
-  private GrMethod[] myGroovyMethods;
-  private GrMethod[] myConstructors;
+  private volatile PsiClass[] myInnerClasses;
+  private volatile List<PsiMethod> myMethods;
+  private volatile GrMethod[] myGroovyMethods;
+  private volatile GrMethod[] myConstructors;
 
   public GrTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -326,34 +327,35 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiMethod[] getMethods() {
-    if (myMethods == null) {
-      List<PsiMethod> result = new ArrayList<PsiMethod>();
+    List<PsiMethod> cached = myMethods;
+    if (cached == null) {
+      cached = new ArrayList<PsiMethod>();
       GrTypeDefinitionBody body = getBody();
       if (body != null) {
-        result.addAll(body.getMethods());
+        cached.addAll(body.getMethods());
       }
-      GrClassImplUtil.addGroovyObjectMethods(this, result);
-      myMethods = result.toArray(new PsiMethod[result.size()]);
+
+      myMethods = cached;
     }
-    return myMethods;
+
+    List<PsiMethod> result = new ArrayList<PsiMethod>(cached);
+    GrClassImplUtil.addGroovyObjectMethods(this, result);
+    return result.toArray(new PsiMethod[result.size()]);
   }
 
   @NotNull
   public GrMethod[] getGroovyMethods() {
-    if (myGroovyMethods == null) {
+    GrMethod[] cached = myGroovyMethods;
+    if (cached == null) {
       GrTypeDefinitionBody body = getBody();
-      if (body != null) {
-        myGroovyMethods = body.getGroovyMethods();
-      }
-      else {
-        myGroovyMethods = GrMethod.EMPTY_ARRAY;
-      }
+      myGroovyMethods = cached = body != null ? body.getGroovyMethods() : GrMethod.EMPTY_ARRAY;
     }
-    return myGroovyMethods;
+    return cached;
   }
 
   public void subtreeChanged() {
     myMethods = null;
+    myInnerClasses = null;
     myConstructors = null;
     myGroovyMethods = null;
     super.subtreeChanged();
@@ -361,7 +363,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
 
   @NotNull
   public PsiMethod[] getConstructors() {
-    if (myConstructors == null) {
+    GrMethod[] cached = myConstructors;
+    if (cached == null) {
       List<GrMethod> result = new ArrayList<GrMethod>();
       for (final PsiMethod method : getMethods()) {
         if (method.isConstructor()) {
@@ -369,20 +372,20 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
         }
       }
 
-      myConstructors = result.toArray(new GrMethod[result.size()]);
-      return myConstructors;
+      myConstructors = cached = result.toArray(new GrMethod[result.size()]);
     }
-    return myConstructors;
+    return cached;
   }
 
   @NotNull
   public PsiClass[] getInnerClasses() {
-    final GrTypeDefinitionBody body = getBody();
-    if (body != null) {
-      return body.getInnerClasses();
+    PsiClass[] inners = myInnerClasses;
+    if (inners == null) {
+      final GrTypeDefinitionBody body = getBody();
+      myInnerClasses = inners = body != null ? body.getInnerClasses() : PsiClass.EMPTY_ARRAY;
     }
 
-    return PsiClass.EMPTY_ARRAY;
+    return inners;
   }
 
   @NotNull
@@ -594,7 +597,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
     final GroovyFile groovyFile = (GroovyFile)file;
     if (groovyFile.isScript()) return false;
     final GrTypeDefinition[] typeDefinitions = groovyFile.getTypeDefinitions();
-    if (typeDefinitions.length > 1) return false;
     final String name = getName();
     final VirtualFile vFile = groovyFile.getVirtualFile();
     return vFile != null && name != null && name.equals(vFile.getNameWithoutExtension());

@@ -155,7 +155,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                                                                                        "maven-resources-plugin"),
                                                                    "escapeString", "\\");
 
-          long propertiesHashCode = calculateHashCode(properties);
+          long propertiesHashCode = calculateHashCode(mavenProject, properties);
 
           List<ProcessingItem> moduleItemsToProcess = new ArrayList<ProcessingItem>();
           collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
@@ -188,18 +188,18 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return result;
   }
 
-  private static long calculateHashCode(Properties properties) {
+  private static long calculateHashCode(MavenProject project, Properties properties) {
     Set<String> sorted = new TreeSet<String>();
     for (Map.Entry<Object, Object> each : properties.entrySet()) {
       sorted.add(each.getKey().toString() + "->" + each.getValue().toString());
     }
-    return sorted.hashCode();
+    return project.getLastReadStamp() + 31 * sorted.hashCode();
   }
 
   private static Properties loadPropertiesAndFilters(CompileContext context, MavenProject mavenProject) {
     Properties properties = new Properties();
     properties.putAll(mavenProject.getProperties());
-    
+
     for (String each : mavenProject.getFilters()) {
       try {
         FileInputStream in = new FileInputStream(each);
@@ -242,7 +242,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       List<Pattern> includes = collectPatterns(each.getIncludes(), "**/*");
       List<Pattern> excludes = collectPatterns(each.getExcludes(), null);
       String targetPath = each.getTargetPath();
-      String resourceOutputDir = StringUtil.isEmptyOrSpaces(targetPath) ? outputDir : (outputDir + "/" + targetPath);
+      String resourceOutputDir = StringUtil.isEmptyOrSpaces(targetPath)
+                                 ? outputDir
+                                 : (FileUtil.isAbsolute(targetPath) ? targetPath : outputDir + "/" + targetPath);
 
       collectProcessingItems(module,
                              dir,
@@ -502,7 +504,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static class FakeProcessingItem implements ProcessingItem {
-    private LightVirtualFile myFile;
+    private final LightVirtualFile myFile;
 
     private FakeProcessingItem() {
       myFile = new LightVirtualFile(this.getClass().getName());

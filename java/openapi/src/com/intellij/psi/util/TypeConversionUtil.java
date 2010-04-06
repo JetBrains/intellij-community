@@ -1062,11 +1062,11 @@ public class TypeConversionUtil {
     return type != null && isPrimitiveWrapper(type.getCanonicalText());
   }
 
-  public static PsiType typeParameterErasure(final PsiTypeParameter typeParameter) {
+  public static PsiType typeParameterErasure(@NotNull PsiTypeParameter typeParameter) {
     return typeParameterErasure(typeParameter, PsiSubstitutor.EMPTY);
   }
 
-  private static PsiType typeParameterErasure(final PsiTypeParameter typeParameter, final PsiSubstitutor beforeSubstitutor) {
+  private static PsiType typeParameterErasure(@NotNull PsiTypeParameter typeParameter, final PsiSubstitutor beforeSubstitutor) {
     final PsiClassType[] extendsList = typeParameter.getExtendsList().getReferencedTypes();
     if (extendsList.length > 0) {
       final PsiClass psiClass = extendsList[0].resolve();

@@ -29,7 +29,6 @@ import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -155,7 +154,8 @@ public final class PsiUtil extends PsiUtilBase {
     PsiJavaCodeReferenceElement ref;
     if (exceptionName != null) {
       ref = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
-    } else {
+    }
+    else {
       PsiClassType type = factory.createType(exceptionClass);
       ref = factory.createReferenceElementByType(type);
     }
@@ -402,11 +402,7 @@ public final class PsiUtil extends PsiUtilBase {
     return getApplicabilityLevel(method, substitutorForMethod, argList) != ApplicabilityLevel.NOT_APPLICABLE;
   }
   public static boolean isApplicable(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpression[] argList) {
-    return getApplicabilityLevel(method, substitutorForMethod, ContainerUtil.map2Array(argList, PsiType.class, new Function<PsiExpression, PsiType>() {
-        public PsiType fun(final PsiExpression expression) {
-          return expression.getType();
-        }
-      }),getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
+    return getApplicabilityLevel(method, substitutorForMethod, ContainerUtil.map2Array(argList, PsiType.class, PsiExpression.EXPRESSION_TO_TYPE),getLanguageLevel(method)) != ApplicabilityLevel.NOT_APPLICABLE;
   }
 
   public static int getApplicabilityLevel(PsiMethod method, PsiSubstitutor substitutorForMethod, PsiExpressionList argList) {
@@ -534,7 +530,6 @@ public final class PsiUtil extends PsiUtilBase {
   /**
    * Checks whether given class is inner (as opposed to nested)
    *
-   * @param aClass
    */
   public static boolean isInnerClass(PsiClass aClass) {
     return !aClass.hasModifierProperty(PsiModifier.STATIC) && aClass.getContainingClass() != null;
@@ -620,23 +615,24 @@ public final class PsiUtil extends PsiUtilBase {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
   }
 
-  public static boolean isAssigned(final PsiParameter parameter) {
-    class MyProcessor implements Processor<PsiReference> {
-      boolean myIsWriteRefFound = false;
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiReferenceExpression) {
-          myIsWriteRefFound |= isAccessedForWriting((PsiExpression)element);
-        }
-        return !myIsWriteRefFound;
-      }
 
-      public boolean isWriteRefFound() {
-        return myIsWriteRefFound;
+  private static class ParamWriteProcessor implements Processor<PsiReference> {
+    private volatile boolean myIsWriteRefFound = false;
+    public boolean process(PsiReference reference) {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiReferenceExpression && isAccessedForWriting((PsiExpression)element)) {
+        myIsWriteRefFound = true;
+        return false;
       }
+      return true;
     }
 
-    MyProcessor processor = new MyProcessor();
+    public boolean isWriteRefFound() {
+      return myIsWriteRefFound;
+    }
+  }
+  public static boolean isAssigned(final PsiParameter parameter) {
+    ParamWriteProcessor processor = new ParamWriteProcessor();
     ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
     return processor.isWriteRefFound();
   }
@@ -689,12 +685,13 @@ public final class PsiUtil extends PsiUtilBase {
         myNextObtained = true;
         return;
       }
-      if (myCurrentOwner.hasModifierProperty(PsiModifier.STATIC) || myCurrentOwner.getContainingClass() == null) {
+      final PsiClass containingClass = myCurrentOwner.getContainingClass();
+      if (myCurrentOwner.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) {
         myNext = null;
         myNextObtained = true;
         return;
       }
-      myCurrentOwner = myCurrentOwner.getContainingClass();
+      myCurrentOwner = containingClass;
       obtainCurrentParams(myCurrentOwner);
       nextElement();
     }

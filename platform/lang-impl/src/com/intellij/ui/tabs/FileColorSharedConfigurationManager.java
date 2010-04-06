@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public class FileColorSharedConfigurationManager implements PersistentStateComponent<Element> {
-  private Project myProject;
+  private final Project myProject;
 
   public FileColorSharedConfigurationManager(@NotNull final Project project) {
     myProject = project;

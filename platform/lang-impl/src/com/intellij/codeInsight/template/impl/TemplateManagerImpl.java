@@ -224,32 +224,40 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
     TemplateSettings templateSettings = TemplateSettings.getInstance();
-    if (shortcutChar == templateSettings.getDefaultShortcutChar()) {
-      for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
-        final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
-        String key = customLiveTemplate.computeTemplateKey(callback);
-        if (key != null) {
-          int offset = callback.getEditor().getCaretModel().getOffset();
-          callback.getEditor().getDocument().deleteString(offset - key.length(), offset);
-          callback.fixInitialEditorState();
-          customLiveTemplate.execute(key, callback, null);
-          return true;
-        }
-      }
-    }
-    return startNonCustomTemplate(templateSettings, file, editor, shortcutChar, processor);
+    Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, templateSettings);
+    return startNonCustomTemplates(template2argument, editor, processor);
   }
 
-  private boolean startNonCustomTemplate(TemplateSettings templateSettings,
-                                         PsiFile file,
-                                         Editor editor,
-                                         char shortcutChar,
-                                         PairProcessor<String, String> processor) {
+  private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {
+    int argumentOffset = caretOffset - argument.length();
+    if (argumentOffset > 0 && text.charAt(argumentOffset - 1) == ' ') {
+      if (argumentOffset - 2 >= 0 && Character.isJavaIdentifierPart(text.charAt(argumentOffset - 2))) {
+        argumentOffset--;
+      }
+    }
+    return argumentOffset;
+  }
+
+  private static int getTemplateStart(TemplateImpl template, String argument, int caretOffset, CharSequence text) {
+    int templateStart;
+    if (argument == null) {
+      templateStart = caretOffset - template.getKey().length();
+    }
+    else {
+      int argOffset = getArgumentOffset(caretOffset, argument, text);
+      templateStart = argOffset - template.getKey().length();
+    }
+    return templateStart;
+  }
+
+  private Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
+                                                          Editor editor,
+                                                          char shortcutChar,
+                                                          TemplateSettings templateSettings) {
     final Document document = editor.getDocument();
-
     CharSequence text = document.getCharsSequence();
-
     final int caretOffset = editor.getCaretModel().getOffset();
+
     List<TemplateImpl> candidatesWithoutArgument = findMatchingTemplates(text, caretOffset, shortcutChar, templateSettings, false);
 
     int argumentOffset = passArgumentBack(text, caretOffset);
@@ -264,7 +272,9 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
     List<TemplateImpl> candidatesWithArgument = findMatchingTemplates(text, argumentOffset, shortcutChar, templateSettings, true);
 
-    if (candidatesWithArgument.isEmpty() && candidatesWithoutArgument.isEmpty()) return false;
+    if (candidatesWithArgument.isEmpty() && candidatesWithoutArgument.isEmpty()) {
+      return null;
+    }
 
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -277,27 +287,31 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     Map<TemplateImpl, String> candidate2Argument = new HashMap<TemplateImpl, String>();
     addToMap(candidate2Argument, candidatesWithoutArgument, null);
     addToMap(candidate2Argument, candidatesWithArgument, argument);
+    return candidate2Argument;
+  }
 
-    if (candidate2Argument.isEmpty()) {
+  private boolean startNonCustomTemplates(Map<TemplateImpl, String> template2argument,
+                                          Editor editor,
+                                          PairProcessor<String, String> processor) {
+    final int caretOffset = editor.getCaretModel().getOffset();
+    final Document document = editor.getDocument();
+    CharSequence text = document.getCharsSequence();
+
+    if (template2argument == null || template2argument.size() == 0) {
       return false;
     }
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), myProject)) {
       return false;
     }
 
-    if (candidate2Argument.size() == 1) {
-      TemplateImpl template = candidate2Argument.keySet().iterator().next();
-      if (candidatesWithoutArgument.size() == 1) {
-        int templateStart = caretOffset - template.getKey().length();
-        startTemplateWithPrefix(editor, template, templateStart, processor, null);
-      }
-      else {
-        int templateStart = argumentOffset - template.getKey().length();
-        startTemplateWithPrefix(editor, template, templateStart, processor, argument);
-      }
+    if (template2argument.size() == 1) {
+      TemplateImpl template = template2argument.keySet().iterator().next();
+      String argument = template2argument.get(template);
+      int templateStart = getTemplateStart(template, argument, caretOffset, text);
+      startTemplateWithPrefix(editor, template, templateStart, processor, argument);
     }
     else {
-      ListTemplatesHandler.showTemplatesLookup(myProject, editor, candidate2Argument);
+      ListTemplatesHandler.showTemplatesLookup(myProject, editor, template2argument);
     }
     return true;
   }
@@ -413,7 +427,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return templateState != null ? templateState.getTemplate() : null;
   }
 
-  static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
+  public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
     TemplateManager instance = getInstance(file.getProject());
     TemplateContext context = template.getTemplateContext();
     if (context.isEnabled(instance.getContextType(file, offset))) {

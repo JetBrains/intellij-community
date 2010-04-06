@@ -53,13 +53,13 @@ import java.util.List;
  <!==========================================================================> */
 public class GradlePanelWrapper
 {
-   private JPanel mainPanel = new JPanel( new BorderLayout() );
+   private final JPanel mainPanel = new JPanel( new BorderLayout() );
    private Project myProject;
    private GradleUISettings settings;
    private SinglePaneUIVersion1 singlePaneUIVersion1;
    private GradleSetupPanel gradleSetupPanel;
-   private List<GradleTabVersion1> additionalTabs = new ArrayList<GradleTabVersion1>();
-   private ObserverLord<GradleUIAvailabilityObserver> observerLord = new ObserverLord<GradleUIAvailabilityObserver>();
+   private final List<GradleTabVersion1> additionalTabs = new ArrayList<GradleTabVersion1>();
+   private final ObserverLord<GradleUIAvailabilityObserver> observerLord = new ObserverLord<GradleUIAvailabilityObserver>();
 
    public void initalize(@Nullable Module module, Project myProject)
    {

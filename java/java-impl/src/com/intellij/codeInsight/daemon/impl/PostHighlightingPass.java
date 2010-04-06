@@ -55,14 +55,12 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -131,7 +129,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     this(project, file, null, document, startOffset, endOffset);
   }
 
-  public void doCollectInformation(ProgressIndicator progress) {
+  public void doCollectInformation(final ProgressIndicator progress) {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
     final List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();
@@ -152,7 +150,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     myRefCountHolder = RefCountHolder.getInstance(myFile);
     if (!myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
       public void run() {
-        collectHighlights(elementSet, highlights);
+        collectHighlights(elementSet, highlights, progress);
         myHighlights = highlights;
         for (HighlightInfo info : highlights) {
           if (info.getSeverity() == HighlightSeverity.ERROR) {
@@ -207,7 +205,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return myHighlights;
   }
 
-  private void collectHighlights(Collection<PsiElement> elements, final List<HighlightInfo> result) throws ProcessCanceledException {
+  private void collectHighlights(@NotNull Collection<PsiElement> elements, @NotNull final List<HighlightInfo> result, @NotNull ProgressIndicator progress) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
@@ -236,11 +234,11 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
     for (PsiElement element : elements) {
-      ProgressManager.checkCanceled();
+      progress.checkCanceled();
 
       if (unusedSymbolEnabled && element instanceof PsiIdentifier) {
         PsiIdentifier identifier = (PsiIdentifier)element;
-        HighlightInfo info = processIdentifier(identifier);
+        HighlightInfo info = processIdentifier(identifier, progress);
         if (info != null) {
           result.add(info);
         }
@@ -259,27 +257,27 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processIdentifier(PsiIdentifier identifier) {
+  private HighlightInfo processIdentifier(PsiIdentifier identifier, ProgressIndicator progress) {
     if (InspectionManagerEx.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
     if (PsiUtilBase.hasErrorElementChild(parent)) return null;
     HighlightInfo info;
 
     if (parent instanceof PsiLocalVariable && myUnusedSymbolInspection.LOCAL_VARIABLE) {
-      info = processLocalVariable((PsiLocalVariable)parent);
+      info = processLocalVariable((PsiLocalVariable)parent, progress);
     }
     else if (parent instanceof PsiField && myUnusedSymbolInspection.FIELD) {
       final PsiField psiField = (PsiField)parent;
-      info = processField(psiField, identifier);
+      info = processField(psiField, identifier, progress);
     }
     else if (parent instanceof PsiParameter && myUnusedSymbolInspection.PARAMETER) {
-      info = processParameter((PsiParameter)parent);
+      info = processParameter((PsiParameter)parent, progress);
     }
     else if (parent instanceof PsiMethod && myUnusedSymbolInspection.METHOD) {
-      info = processMethod((PsiMethod)parent);
+      info = processMethod((PsiMethod)parent, progress);
     }
     else if (parent instanceof PsiClass && identifier.equals(((PsiClass)parent).getNameIdentifier()) && myUnusedSymbolInspection.CLASS) {
-      info = processClass((PsiClass)parent);
+      info = processClass((PsiClass)parent, progress);
     }
     else {
       return null;
@@ -289,10 +287,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
 
   @Nullable
-  private HighlightInfo processLocalVariable(PsiLocalVariable variable) {
+  private HighlightInfo processLocalVariable(PsiLocalVariable variable, ProgressIndicator progress) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) return null;
-    if (isImplicitUsage(variable)) return null;
+    if (isImplicitUsage(variable, progress)) return null;
     if (!myRefCountHolder.isReferenced(variable)) {
       String message = JavaErrorMessages.message("local.variable.is.never.used", identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
@@ -301,7 +299,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
 
     boolean referenced = myRefCountHolder.isReferencedForRead(variable);
-    if (!referenced && !isImplicitRead(variable)) {
+    if (!referenced && !isImplicitRead(variable, progress)) {
       String message = JavaErrorMessages.message("local.variable.is.not.used.for.reading", identifier.getText());
       HighlightInfo highlightInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
       QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedVariableFix(variable), myUnusedSymbolKey);
@@ -310,7 +308,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
     if (!variable.hasInitializer()) {
       referenced = myRefCountHolder.isReferencedForWrite(variable);
-      if (!referenced && !isImplicitWrite(variable)) {
+      if (!referenced && !isImplicitWrite(variable, progress)) {
         String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
         final HighlightInfo unusedSymbolInfo = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
         QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME), myUnusedSymbolKey);
@@ -322,10 +320,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
 
-  private boolean isImplicitUsage(final PsiModifierListOwner element) {
+  private boolean isImplicitUsage(final PsiModifierListOwner element, ProgressIndicator progress) {
     if (UnusedSymbolLocalInspection.isInjected(element, myUnusedSymbolInspection)) return true;
     for (ImplicitUsageProvider provider : myImplicitUsageProviders) {
-      ProgressManager.checkCanceled();
+      progress.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
       }
@@ -334,9 +332,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private boolean isImplicitRead(final PsiVariable element) {
+  private boolean isImplicitRead(final PsiVariable element, ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
-      ProgressManager.checkCanceled();
+      progress.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
       }
@@ -344,9 +342,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private boolean isImplicitWrite(final PsiVariable element) {
+  private boolean isImplicitWrite(final PsiVariable element, ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: myImplicitUsageProviders) {
-      ProgressManager.checkCanceled();
+      progress.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
       }
@@ -354,17 +352,13 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {
+  private static HighlightInfo createUnusedSymbolInfo(PsiElement element, String message, final HighlightInfoType highlightInfoType) {
     return HighlightInfo.createHighlightInfo(highlightInfoType, element, message);
   }
 
-  private HighlightInfo createDeadCodeInfo(PsiElement element, String message) {
-    return HighlightInfo.createHighlightInfo(myDeadCodeInfoType, element, message);
-  }
-
   @Nullable
-  private HighlightInfo processField(final PsiField field, final PsiIdentifier identifier) {
-    if (isImplicitUsage(field)) return null;
+  private HighlightInfo processField(final PsiField field, final PsiIdentifier identifier, ProgressIndicator progress) {
+    if (isImplicitUsage(field, progress)) return null;
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
       if (!myRefCountHolder.isReferenced(field)) {
         if (HighlightUtil.isSerializationImplicitlyUsedField(field)) {
@@ -378,7 +372,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
 
       final boolean readReferenced = myRefCountHolder.isReferencedForRead(field);
-      if (!readReferenced && !isImplicitRead(field)) {
+      if (!readReferenced && !isImplicitRead(field, progress)) {
         String message = JavaErrorMessages.message("private.field.is.not.used.for.reading", identifier.getText());
         return suggestionsToMakeFieldUsed(field, identifier, message);
       }
@@ -387,7 +381,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return null;
       }
       final boolean writeReferenced = myRefCountHolder.isReferencedForWrite(field);
-      if (!writeReferenced && !isImplicitWrite(field)) {
+      if (!writeReferenced && !isImplicitWrite(field, progress)) {
         String message = JavaErrorMessages.message("private.field.is.not.assigned", identifier.getText());
         final HighlightInfo info = createUnusedSymbolInfo(identifier, message, HighlightInfoType.UNUSED_SYMBOL);
 
@@ -402,7 +396,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return info;
       }
     }
-    else if (!myRefCountHolder.isReferenced(field) && weAreSureThereAreNoUsages(field)) {
+    else if (!myRefCountHolder.isReferenced(field) && weAreSureThereAreNoUsages(field, progress)) {
       return formatUnusedSymbolHighlightInfo("field.is.not.used", field, "fields", myDeadCodeKey, myDeadCodeInfoType);
     }
     return null;
@@ -423,7 +417,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processParameter(PsiParameter parameter) {
+  private HighlightInfo processParameter(PsiParameter parameter, ProgressIndicator progress) {
     PsiElement declarationScope = parameter.getDeclarationScope();
     if (declarationScope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)declarationScope;
@@ -437,7 +431,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           !method.hasModifierProperty(PsiModifier.NATIVE) &&
           !HighlightMethodUtil.isSerializationRelatedMethod(method, method.getContainingClass()) &&
           !PsiClassImplUtil.isMainMethod(method)) {
-        HighlightInfo highlightInfo = checkUnusedParameter(parameter);
+        HighlightInfo highlightInfo = checkUnusedParameter(parameter, progress);
         if (highlightInfo != null) {
           QuickFixAction.registerQuickFixAction(highlightInfo, new RemoveUnusedParameterFix(parameter), myUnusedSymbolKey);
           return highlightInfo;
@@ -445,7 +439,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
     else if (declarationScope instanceof PsiForeachStatement) {
-      HighlightInfo highlightInfo = checkUnusedParameter(parameter);
+      HighlightInfo highlightInfo = checkUnusedParameter(parameter, progress);
       if (highlightInfo != null) {
         QuickFixAction.registerQuickFixAction(highlightInfo, new EmptyIntentionAction(UnusedSymbolLocalInspection.DISPLAY_NAME), myUnusedSymbolKey);
         return highlightInfo;
@@ -456,8 +450,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo checkUnusedParameter(final PsiParameter parameter) {
-    if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter)) {
+  private HighlightInfo checkUnusedParameter(final PsiParameter parameter, ProgressIndicator progress) {
+    if (!myRefCountHolder.isReferenced(parameter) && !isImplicitUsage(parameter, progress)) {
       PsiIdentifier identifier = parameter.getNameIdentifier();
       assert identifier != null;
       String message = JavaErrorMessages.message("parameter.is.not.used", identifier.getText());
@@ -467,7 +461,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processMethod(final PsiMethod method) {
+  private HighlightInfo processMethod(final PsiMethod method, ProgressIndicator progress) {
     if (myRefCountHolder.isReferenced(method)) return null;
     boolean isPrivate = method.hasModifierProperty(PsiModifier.PRIVATE);
     PsiClass containingClass = method.getContainingClass();
@@ -479,19 +473,20 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           isIntentionalPrivateConstructor(method, containingClass)) {
         return null;
       }
-      if (isImplicitUsage(method)) {
+      if (isImplicitUsage(method, progress)) {
         return null;
       }
     }
     else {
       //class maybe used in some weird way, e.g. from XML, therefore the only constructor is used too
-      if (containingClass != null && method.isConstructor() && containingClass.getConstructors().length == 1 && isClassUnused(containingClass) == USED) return null;
-      if (isImplicitUsage(method)) return null;
+      if (containingClass != null && method.isConstructor() && containingClass.getConstructors().length == 1 && isClassUnused(containingClass,
+                                                                                                                              progress) == USED) return null;
+      if (isImplicitUsage(method, progress)) return null;
 
       if (method.findSuperMethods().length != 0) {
         return null;
       }
-      if (!weAreSureThereAreNoUsages(method)) {
+      if (!weAreSureThereAreNoUsages(method, progress)) {
         return null;
       }
       highlightInfoType = myDeadCodeInfoType;
@@ -514,7 +509,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     return highlightInfo;
   }
 
-  private boolean weAreSureThereAreNoUsages(PsiMember member) {
+  private boolean weAreSureThereAreNoUsages(PsiMember member, ProgressIndicator progress) {
     if (myInLibrary) return false;
     if (!myDeadCodeEnabled) return false;
     if (myDeadCodeInspection.isEntryPoint(member)) return false;
@@ -523,23 +518,17 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (name == null) return false;
     SearchScope useScope = member.getUseScope();
     if (!(useScope instanceof GlobalSearchScope)) return false;
-    final int[] count = {0};
     GlobalSearchScope scope = (GlobalSearchScope)useScope;
     // some classes may have references from within XML outside dependent modules, e.g. our actions
     if (member instanceof PsiClass) scope = scope.uniteWith(GlobalSearchScope.projectScope(myProject));
 
-    CacheManager cacheManager = ((PsiManagerEx)myFile.getManager()).getCacheManager();
-    if (!cacheManager.processFilesWithWord(new Processor<PsiFile>() {
-      public boolean process(PsiFile file) {
-        if (file == myFile) return true;
-        count[0]++;
-        return count[0] <= 10;
-      }
-    }, name, UsageSearchContext.ANY, scope, true)) return false;
+    PsiSearchHelper.SearchCostResult cheapEnough = myFile.getManager().getSearchHelper().isCheapEnoughToSearch(name, scope, myFile,
+                                                                                                               progress);
+    if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false;
 
     //search usages if it cheap
     //if count is 0 there is no usages since we've called myRefCountHolder.isReferenced() before
-    if (count[0] == 0 && !canbeReferencedViaWeirdNames(member)) return true;
+    if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES && !canbeReferencedViaWeirdNames(member)) return true;
 
     Query<PsiReference> query = member instanceof PsiMethod
                                 ? MethodReferencesSearch.search((PsiMethod)member, scope, true)
@@ -559,8 +548,8 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Nullable
-  private HighlightInfo processClass(PsiClass aClass) {
-    int usage = isClassUnused(aClass);
+  private HighlightInfo processClass(PsiClass aClass, ProgressIndicator progress) {
+    int usage = isClassUnused(aClass, progress);
     if (usage == USED) return null;
 
     String pattern;
@@ -595,22 +584,22 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   private static final int UNUSED_LOCALLY = 2;
   private static final int UNUSED_GLOBALLY = 3;
   private final TObjectIntHashMap<PsiClass> unusedClassCache = new TObjectIntHashMap<PsiClass>();
-  private int isClassUnused(PsiClass aClass) {
+  private int isClassUnused(PsiClass aClass, ProgressIndicator progress) {
     if (aClass == null) return USED;
     int result = unusedClassCache.get(aClass);
     if (result == 0) {
-      result = isReallyUnused(aClass);
+      result = isReallyUnused(aClass, progress);
       unusedClassCache.put(aClass, result);
     }
     return result;
   }
 
-  private int isReallyUnused(PsiClass aClass) {
-    if (isImplicitUsage(aClass) || myRefCountHolder.isReferenced(aClass)) return USED;
+  private int isReallyUnused(PsiClass aClass, ProgressIndicator progress) {
+    if (isImplicitUsage(aClass, progress) || myRefCountHolder.isReferenced(aClass)) return USED;
     if (aClass.getContainingClass() != null && aClass.hasModifierProperty(PsiModifier.PRIVATE) ||
            aClass.getParent() instanceof PsiDeclarationStatement ||
            aClass instanceof PsiTypeParameter) return UNUSED_LOCALLY;
-    if (weAreSureThereAreNoUsages(aClass)) return UNUSED_GLOBALLY;
+    if (weAreSureThereAreNoUsages(aClass, progress)) return UNUSED_GLOBALLY;
     return USED;
   }
 

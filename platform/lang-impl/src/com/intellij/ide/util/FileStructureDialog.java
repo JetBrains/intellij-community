@@ -34,13 +34,16 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.pom.Navigatable;
@@ -324,12 +327,18 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     public boolean navigateSelectedElement() {
-
-      final boolean succeeded = super.navigateSelectedElement();
-      if (succeeded) {
+      final Ref<Boolean> succeeded = new Ref<Boolean>();
+      final CommandProcessor commandProcessor = CommandProcessor.getInstance();
+      commandProcessor.executeCommand(myProject, new Runnable() {
+        public void run() {
+          succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
+          IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
+        }
+      }, "Navigate", null);
+      if (succeeded.get()) {
         close(CANCEL_EXIT_CODE);
       }
-      return succeeded;
+      return succeeded.get();
     }
 
     public Object getData(String dataId) {

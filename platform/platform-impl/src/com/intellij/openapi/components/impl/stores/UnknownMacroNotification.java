@@ -27,7 +27,7 @@ import java.util.Collection;
  * @author spleaner
  */
 public class UnknownMacroNotification extends Notification {
-  private Collection<String> myMacros;
+  private final Collection<String> myMacros;
 
   public UnknownMacroNotification(@NotNull String groupId,
                                   @NotNull String title,

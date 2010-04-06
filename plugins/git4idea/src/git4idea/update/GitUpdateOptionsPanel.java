@@ -17,46 +17,57 @@ package git4idea.update;
 
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVcsSettings.UpdateType;
-import git4idea.i18n.GitBundle;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
- * Update options
+ * Update options panel
  */
 public class GitUpdateOptionsPanel {
-  /**
-   * The merge policy
-   */
-  private static final String MERGE = GitBundle.getString("update.options.type.merge");
-  /**
-   * The rebase policy
-   */
-  private static final String REBASE = GitBundle.getString("update.options.type.rebase");
-  /**
-   * The rebase policy
-   */
-  private static final String DEFAULT = GitBundle.getString("update.options.type.default");
-  /**
-   * The type combobox
-   */
-  private JComboBox myTypeComboBox;
-  /**
-   * The stash changes checkbox
-   */
-  private JCheckBox myStashChangesCheckBox;
   /**
    * The root panel
    */
   private JPanel myPanel;
+  /**
+   * Update strategy option
+   */
+  private JRadioButton myBranchDefaultRadioButton;
+  /**
+   * Update strategy option
+   */
+  private JRadioButton myForceRebaseRadioButton;
+  /**
+   * Update strategy option
+   */
+  private JRadioButton myForceMergeRadioButton;
+  /**
+   * Save files option option
+   */
+  private JRadioButton myStashRadioButton;
+  /**
+   * Save files option option
+   */
+  private JRadioButton myShelveRadioButton;
+  /**
+   * Save files option option
+   */
+  private JRadioButton myKeepRadioButton;
 
   /**
-   * A constructor
+   * The constructor
    */
   public GitUpdateOptionsPanel() {
-    myTypeComboBox.addItem(DEFAULT);
-    myTypeComboBox.addItem(REBASE);
-    myTypeComboBox.addItem(MERGE);
+    myForceRebaseRadioButton.addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        boolean keepPossible = !myForceRebaseRadioButton.isSelected();
+        if (!keepPossible && myKeepRadioButton.isSelected()) {
+          myStashRadioButton.setSelected(true);
+        }
+        myKeepRadioButton.setEnabled(keepPossible);
+      }
+    });
   }
 
   /**
@@ -68,12 +79,20 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Check if the panel is modified relatively to settings
+   *
    * @param settings the settings to compare to
    * @return true if the UI modified the settings
    */
   public boolean isModified(GitVcsSettings settings) {
     UpdateType type = getUpdateType();
-    return type != settings.UPDATE_TYPE || myStashChangesCheckBox.isSelected() != settings.UPDATE_STASH;
+    return type != settings.UPDATE_TYPE || updateSaveFilesPolicy() != settings.updateChangesPolicy();
+  }
+
+  /**
+   * @return get policy value from selected radio buttons
+   */
+  private GitVcsSettings.UpdateChangesPolicy updateSaveFilesPolicy() {
+    return UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, myKeepRadioButton);
   }
 
   /**
@@ -81,13 +100,13 @@ public class GitUpdateOptionsPanel {
    */
   private UpdateType getUpdateType() {
     UpdateType type = null;
-    String typeVal = (String)myTypeComboBox.getSelectedItem();
-    if (REBASE.equals(typeVal)) {
+    if (myForceRebaseRadioButton.isSelected()) {
       type = UpdateType.REBASE;
     }
-    else if (MERGE.equals(typeVal)) {
+    else if (myForceMergeRadioButton.isSelected()) {
       type = UpdateType.MERGE;
-    } else if(DEFAULT.equals(typeVal)) {
+    }
+    else if (myBranchDefaultRadioButton.isSelected()) {
       type = UpdateType.BRANCH_DEFAULT;
     }
     assert type != null;
@@ -96,33 +115,34 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Save configuration to settings object
+   *
    * @param settings the settings to save to
    */
   public void applyTo(GitVcsSettings settings) {
     settings.UPDATE_TYPE = getUpdateType();
-    settings.UPDATE_STASH = myStashChangesCheckBox.isSelected();
+    settings.UPDATE_CHANGES_POLICY = updateSaveFilesPolicy();
   }
 
   /**
    * Update panel according to settings
+   *
    * @param settings the settings to use
    */
   public void updateFrom(GitVcsSettings settings) {
-    myStashChangesCheckBox.setSelected(settings.UPDATE_STASH);
-    String value = null;
-    switch(settings.UPDATE_TYPE) {
+    switch (settings.UPDATE_TYPE) {
       case REBASE:
-        value = REBASE;
+        myForceRebaseRadioButton.setSelected(true);
         break;
       case MERGE:
-        value = MERGE;
+        myForceMergeRadioButton.setSelected(true);
         break;
       case BRANCH_DEFAULT:
-        value = DEFAULT;
+        myBranchDefaultRadioButton.setSelected(true);
         break;
       default:
-        assert false : "Unknown value of update type: "+settings.UPDATE_TYPE;
+        assert false : "Unknown value of update type: " + settings.UPDATE_TYPE;
     }
-    myTypeComboBox.setSelectedItem(value);
+    UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myStashRadioButton, myShelveRadioButton, myKeepRadioButton);
   }
+
 }

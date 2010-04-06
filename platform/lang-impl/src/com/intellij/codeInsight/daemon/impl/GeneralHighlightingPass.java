@@ -43,7 +43,6 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -161,7 +160,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
       if (elements != null) {
         result.addAll(collectHighlights(elements, progress, filtered));
-        addInjectedPsiHighlights(elements);
+        addInjectedPsiHighlights(elements, progress);
       }
 
       if (!isDumbMode()) {
@@ -178,7 +177,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     myHighlights = result;
   }
 
-  private void addInjectedPsiHighlights(@NotNull final List<PsiElement> elements) {
+  private void addInjectedPsiHighlights(@NotNull final List<PsiElement> elements, final ProgressIndicator progress) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements.size() + injected.size());
 
@@ -209,7 +208,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             for (PsiLanguageInjectionHost.Shred place : places) {
               TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
               if (textRange.isEmpty()) continue;
-              String desc = injectedPsi.getText();
+              String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
               HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT, textRange, null, desc, injectedAttributes);
               addHighlightInfo(textRange, info);
             }
@@ -224,7 +223,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       public boolean process(final PsiFile injectedPsi) {
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         HighlightInfoHolder holder = createInfoHolder(injectedPsi);
-        runHighlightVisitosForInjected(injectedPsi, holder);
+        runHighlightVisitosForInjected(injectedPsi, holder, progress);
         for (int i=0; i<holder.size();i++) {
           HighlightInfo info = holder.get(i);
           final int startOffset = documentWindow.injectedToHost(info.startOffset);
@@ -327,7 +326,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return textRange;
   }
 
-  private void runHighlightVisitosForInjected(final PsiFile injectedPsi, final HighlightInfoHolder holder) {
+  private void runHighlightVisitosForInjected(final PsiFile injectedPsi, final HighlightInfoHolder holder, final ProgressIndicator progress) {
     HighlightVisitor[] visitors = createHighlightVisitors();
     try {
       HighlightVisitor[] filtered = filterVisitors(visitors, injectedPsi);
@@ -336,7 +335,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         hvisitor.analyze(new Runnable() {
           public void run() {
             for (PsiElement element : elements) {
-              ProgressManager.checkCanceled();
+              progress.checkCanceled();
               hvisitor.visit(element, holder);
             }
           }
@@ -452,7 +451,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           int nextLimit = chunkSize;
           for (int i = 0; i < elements.size(); i++) {
             PsiElement element = elements.get(i);
-            ProgressManager.checkCanceled();
+            progress.checkCanceled();
 
             if (element != myFile && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
               skipParentsSet.add(element.getParent());

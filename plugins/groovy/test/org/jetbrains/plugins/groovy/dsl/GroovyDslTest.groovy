@@ -84,6 +84,19 @@ public class GroovyDslTest extends CompletionTestBase {
       })
 """)
   }
+  
+  public void testDelegateToArgument2() throws Throwable {
+    doCustomTest("""
+      def ctx = context(scope: closureScope(isArgument: true))
+
+      contributor(ctx, {
+        def call = enclosingCall("boo")
+        if (call) {
+          delegatesTo(call.arguments[0]?.classType)
+        }
+      })
+""")
+  }
 
   public void testClassContext() throws Throwable {
     doCustomTest( """

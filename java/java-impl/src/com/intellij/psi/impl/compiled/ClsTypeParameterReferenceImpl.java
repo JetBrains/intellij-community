@@ -146,6 +146,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     throw new IncorrectOperationException(CAN_NOT_MODIFY_MESSAGE);
   }
 
+  @NotNull
   public Object[] getVariants() {
     throw new RuntimeException("Variants are not available for references to compiled code");
   }

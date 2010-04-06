@@ -113,9 +113,11 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
             }
           }
 
-          done.down();
-          scope.putUserData(RUN_CONFIGURATION, configuration);
-          compilerManager.make(scope, callback);
+          if (!myProject.isDisposed()) {
+            done.down();
+            scope.putUserData(RUN_CONFIGURATION, configuration);
+            compilerManager.make(scope, callback);
+          }
         }
       }, ModalityState.NON_MODAL);
     }

@@ -50,7 +50,7 @@ import java.util.List;
  */
 public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSource, Disposable{
   private final ArtifactEditorImpl myArtifactsEditor;
-  private SimpleTreeBuilder myBuilder;
+  private final SimpleTreeBuilder myBuilder;
 
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myArtifactsEditor = artifactsEditor;

@@ -15,7 +15,7 @@
  */
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.spellchecker.trie.Action;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,17 +23,17 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class AggregatedDictionary implements Dictionary {
+public class AggregatedDictionary implements EditableDictionary {
 
   private static final String DICTIONARY_NAME = "common";
-  private Dictionary cachedDictionary;
-  private ProjectDictionary projectDictionary;
+  private final EditableDictionary cachedDictionary;
+  private final ProjectDictionary projectDictionary;
 
   public String getName() {
     return DICTIONARY_NAME;
   }
 
-  public AggregatedDictionary(@NotNull ProjectDictionary projectDictionary, @NotNull Dictionary cachedDictionary) {
+  public AggregatedDictionary(@NotNull ProjectDictionary projectDictionary, @NotNull EditableDictionary cachedDictionary) {
     this.projectDictionary = projectDictionary;
     this.cachedDictionary = cachedDictionary;
     this.cachedDictionary.addToDictionary(projectDictionary.getWords());
@@ -77,15 +77,17 @@ public class AggregatedDictionary implements Dictionary {
     getProjectDictionary().clear();
   }
 
-  public void traverse(final Action action) {
-    cachedDictionary.traverse(action);
+  public void traverse(@NotNull final Consumer<String> consumer) {
+    cachedDictionary.traverse(consumer);
   }
 
 
   public Set<String> getWords() {
-    Set<String> words = new HashSet<String>();
-    words.addAll(cachedDictionary.getWords());
-    return words;
+    return cachedDictionary!=null?cachedDictionary.getWords():null;
+  }
+
+  public int size() {
+    return (cachedDictionary!=null?cachedDictionary.size():0);
   }
 
   @Nullable
@@ -93,22 +95,13 @@ public class AggregatedDictionary implements Dictionary {
     return getProjectDictionary().getEditableWords();
   }
 
-  @Nullable
-  public Set<String> getNotEditableWords() {
-    Set<String> words = getWords();
-    Set<String> editable = getEditableWords();
-    if (words != null && editable != null) {
-      words.removeAll(editable);
-    }
-    return words;
-  }
 
   public void addToDictionary(@Nullable Collection<String> words) {
     getProjectDictionary().addToDictionary(words);
     getCachedDictionary().addToDictionary(words);
   }
 
-  public Dictionary getCachedDictionary() {
+  public EditableDictionary getCachedDictionary() {
     return cachedDictionary;
   }
 

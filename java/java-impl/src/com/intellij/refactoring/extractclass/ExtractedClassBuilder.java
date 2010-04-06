@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -153,7 +152,7 @@ class ExtractedClassBuilder {
       out.append(' ' + backPointerName + ";");
     }
     outputFieldsAndInitializers(out);
-    if (hasNonStatic() || requiresBackPointer) {
+    if (needConstructor() || requiresBackPointer) {
       outputConstructor(out);
     }
     outputMethods(out);
@@ -206,7 +205,7 @@ class ExtractedClassBuilder {
     return false;
   }
 
-  private boolean hasNonStatic() {
+  private boolean needConstructor() {
     for ( PsiField field : fields) {
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         return true;
@@ -303,7 +302,6 @@ class ExtractedClassBuilder {
 
   private void outputConstructor(@NonNls StringBuffer out) {
     out.append("\tpublic " + className + '(');
-    boolean isFirst = true;
     if (requiresBackPointer) {
       final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(backPointerName, VariableKind.PARAMETER);
       out.append(originalClassName);
@@ -320,28 +318,6 @@ class ExtractedClassBuilder {
         out.append('>');
       }
       out.append(' ' + parameterName);
-      isFirst = false;
-    }
-    for (final PsiField field : fields) {
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        continue;
-      }
-      if (!field.hasInitializer()) {
-        continue;
-      }
-      final PsiExpression initializer = field.getInitializer();
-      if (PsiUtil.isConstantExpression(initializer)) {
-        continue;
-      }
-      if (!isFirst) {
-        out.append(", ");
-      }
-      isFirst = false;
-      final PsiType type = field.getType();
-      final String typeText = type.getCanonicalText();
-      final String name = calculateStrippedName(field);
-      final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
-      out.append(typeText + ' ' + parameterName);
     }
 
     out.append(")");
@@ -356,84 +332,11 @@ class ExtractedClassBuilder {
       }
 
     }
-    for (final PsiField field : fields) {
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        continue;
-      }
-      if (!field.hasInitializer()) {
-        continue;
-      }
-      final PsiExpression initializer = field.getInitializer();
-      if (PsiUtil.isConstantExpression(initializer)) {
-        continue;
-      }
-      final String name = calculateStrippedName(field);
-      final String parameterName = myJavaCodeStyleManager.propertyNameToVariableName(name, VariableKind.PARAMETER);
-      final String fieldName = field.getName();
-      if (fieldName.equals(parameterName)) {
-        out.append("\t\tthis." + fieldName + " = " + parameterName + ";");
-      }
-      else {
-        out.append("\t\t" + fieldName + " = " + parameterName + ";");
-      }
-    }
     out.append("\t}");
   }
 
   private void outputField(PsiField field, @NonNls StringBuffer out) {
-    final PsiDocComment docComment = getJavadocForVariable(field);
-    if (docComment != null) {
-      out.append(docComment.getText());
-    }
-    final PsiType type = field.getType();
-    final String typeText = type.getCanonicalText();
-    final String name = field.getName();
-
-    @NonNls String modifierString;
-    if (field.hasModifierProperty(PsiModifier.PUBLIC) && field.hasModifierProperty(PsiModifier.STATIC)) {
-      modifierString = "public ";
-    }
-    else {
-      modifierString = "private ";
-    }
-    if (field.hasModifierProperty(PsiModifier.STATIC)) {
-      modifierString += "static ";
-    }
-    if (field.hasModifierProperty(PsiModifier.FINAL) && (myFieldsNeedingSetters == null || !myFieldsNeedingSetters.contains(field))) {
-      modifierString += "final ";
-    }
-    if (field.hasModifierProperty(PsiModifier.TRANSIENT)) {
-      modifierString += "transient ";
-    }
-    final PsiModifierList modifierList = field.getModifierList();
-    final PsiAnnotation[] annotations = modifierList.getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      final String annotationText = annotation.getText();
-      out.append(annotationText);
-    }
-    out.append('\t');
-    out.append(modifierString);
-    out.append(typeText);
-    out.append(' ');
-    out.append(name);
-    if (field.hasInitializer()) {
-      final PsiExpression initializer = field.getInitializer();
-      if (PsiUtil.isConstantExpression(initializer)) {
-        out.append('=');
-        out.append(initializer.getText());
-      }
-    }
-    out.append(";");
-  }
-
-  private static PsiDocComment getJavadocForVariable(PsiVariable variable) {
-    final PsiElement[] children = variable.getChildren();
-    for (PsiElement child : children) {
-      if (child instanceof PsiDocComment) {
-        return (PsiDocComment)child;
-      }
-    }
-    return null;
+    field.accept(new Mutator(out));
   }
 
   public void setRequiresBackPointer(boolean requiresBackPointer) {
@@ -452,6 +355,16 @@ class ExtractedClassBuilder {
 
   public void setFieldsNeedingSetters(Set<PsiField> fieldsNeedingSetters) {
     myFieldsNeedingSetters = fieldsNeedingSetters;
+  }
+
+  private boolean fieldIsExtracted(PsiField field) {
+    for (PsiField psiField : fields) {
+      if (psiField.equals(field)) {
+        return true;
+      }
+    }
+    final PsiClass containingClass = field.getContainingClass();
+    return innerClasses.contains(containingClass);
   }
 
   private class Mutator extends JavaElementVisitor {
@@ -618,15 +531,7 @@ class ExtractedClassBuilder {
       out.append(backPointerName);
     }
 
-    private boolean fieldIsExtracted(PsiField field) {
-      for (PsiField psiField :  fields) {
-        if (psiField.equals(field)) {
-          return true;
-        }
-      }
-      final PsiClass containingClass = field.getContainingClass();
-      return innerClasses.contains(containingClass);
-    }
+
 
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       final PsiReferenceExpression expression = call.getMethodExpression();
