@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor{
+class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor{
 
     @NotNull private final PsiVariable variable;
     private boolean usedInInnerClass = false;
@@ -45,17 +45,17 @@ public class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor
         inInnerClass = wasInInnerClass;
     }
 
-    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
+    @Override public void visitReferenceExpression(
+            @NotNull PsiReferenceExpression referenceExpression){
         if(usedInInnerClass){
             return;
         }
-        super.visitReferenceExpression(ref);
-
+        super.visitReferenceExpression(referenceExpression);
         if(!inInnerClass){
             return;
         }
-        final PsiElement element = ref.resolve();
-        if(variable.equals(element)){
+        final PsiElement target = referenceExpression.resolve();
+        if(variable.equals(target)){
             usedInInnerClass = true;
         }
     }

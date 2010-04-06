@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,17 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.ui.AddAction;
-import com.siyeh.ig.ui.IGTable;
-import com.siyeh.ig.ui.ListWrappingTableModel;
-import com.siyeh.ig.ui.RemoveAction;
+import com.siyeh.ig.ui.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,47 +47,99 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
             "is,can,has,should,could,will,shall,check,contains,equals," +
             "startsWith,endsWith";
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreBooleanMethods = false;
+
     List<String> questionList = new ArrayList(32);
 
     public NonBooleanMethodNameMayNotStartWithQuestionInspection(){
         parseString(questionString, questionList);
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "non.boolean.method.name.must.not.start.with.question.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "non.boolean.method.name.must.not.start.with.question.problem.descriptor");
     }
 
+    @Override
     public void readSettings(Element element) throws InvalidDataException{
         super.readSettings(element);
         parseString(questionString, questionList);
     }
 
+    @Override
     public void writeSettings(Element element) throws WriteExternalException{
         questionString = formatString(questionList);
         super.writeSettings(element);
     }
 
+    @Override
     public JComponent createOptionsPanel(){
-        final Form form = new Form();
-        return form.getContentPanel();
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final IGTable table =
+                new IGTable(new ListWrappingTableModel(questionList,
+                        InspectionGadgetsBundle.message(
+                                "boolean.method.name.must.start.with.question.table.column.name")));
+        final JScrollPane scrollPane = new JScrollPane(table);
+
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.gridheight = 3;
+        constraints.weightx = 1.0;
+        constraints.weighty = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, constraints);
+
+        final JButton addButton = new JButton(new AddAction(table));
+        constraints.gridx = 1;
+        constraints.gridheight = 1;
+        constraints.weightx = 0.0;
+        constraints.weighty = 0.0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(addButton, constraints);
+
+        final JButton removeButton = new JButton(new RemoveAction(table));
+        constraints.gridy = 1;
+        panel.add(removeButton, constraints);
+
+        final BlankFiller filler = new BlankFiller();
+        constraints.gridy = 2;
+        constraints.weighty = 1.0;
+        panel.add(filler, constraints);
+
+        final CheckBox checkBox =
+                new CheckBox(InspectionGadgetsBundle.message(
+                        "ignore.methods.with.boolean.return.type.option"),
+                        this, "ignoreBooleanMethods");
+        constraints.gridy = 3;
+        constraints.gridx = 0;
+        constraints.gridwidth = 2;
+        constraints.weighty = 0.0;
+        panel.add(checkBox, constraints);
+        return panel;
     }
 
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos){
         return new RenameFix();
     }
 
+    @Override
     protected boolean buildQuickFixesOnlyForOnTheFlyErrors(){
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new NonBooleanMethodNameMayNotStartWithQuestionVisitor();
     }
@@ -97,6 +151,10 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
             super.visitMethod(method);
             final PsiType returnType = method.getReturnType();
             if(returnType == null || returnType.equals(PsiType.BOOLEAN)){
+                return;
+            }
+            if(ignoreBooleanMethods && returnType.equalsToText(
+                    "java.lang.Boolean")){
                 return;
             }
             final String name = method.getName();
@@ -119,30 +177,6 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
                 return;
             }
             registerMethodError(method);
-        }
-    }
-
-    private class Form{
-
-        JPanel contentPanel;
-        JButton addButton;
-        JButton removeButton;
-        IGTable table;
-
-        Form(){
-            super();
-            addButton.setAction(new AddAction(table));
-            removeButton.setAction(new RemoveAction(table));
-        }
-
-        private void createUIComponents(){
-            table = new IGTable(new ListWrappingTableModel(questionList,
-                    InspectionGadgetsBundle.message(
-                            "boolean.method.name.must.start.with.question.table.column.name")));
-        }
-
-        public JComponent getContentPanel(){
-            return contentPanel;
         }
     }
 }

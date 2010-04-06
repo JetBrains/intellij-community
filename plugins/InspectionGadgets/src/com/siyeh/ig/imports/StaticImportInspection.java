@@ -60,10 +60,10 @@ public class StaticImportInspection extends BaseInspection {
         final MultipleCheckboxOptionsPanel panel =
                 new MultipleCheckboxOptionsPanel(this);
         panel.addCheckbox(InspectionGadgetsBundle.message(
-                "ignore.single.field.static.imports"),
+                "ignore.single.field.static.imports.option"),
                 "ignoreSingleFieldImports");
         panel.addCheckbox(InspectionGadgetsBundle.message(
-                "ignore.single.method.static.imports"),
+                "ignore.single.method.static.imports.option"),
                 "ignoreSingeMethodImports");
         return panel;
     }

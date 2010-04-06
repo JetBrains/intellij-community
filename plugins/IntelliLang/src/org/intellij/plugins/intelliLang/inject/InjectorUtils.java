@@ -17,20 +17,17 @@
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageLiteralEscapers;
+import com.intellij.lang.LiteralEscaper;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,17 +53,6 @@ public class InjectorUtils {
     registrar.addPlace(prefix, suffix, host, textRange);
   }
 
-  public static String getUnescapedText(final PsiElement host, final String text) {
-    if (host instanceof PsiLiteralExpression) {
-      return StringUtil.unescapeStringCharacters(text);
-    }
-    else if (host instanceof XmlElement) {
-      return XmlUtil.unescape(text);
-    }
-    else {
-      return text;
-    }
-  }// Avoid sticking text and prefix/suffix together in a way that it would form a single token.
   // See http://www.jetbrains.net/jira/browse/IDEADEV-8302#action_111865
   // This code assumes that for the injected language a single space character is a token separator
   // that doesn't (significantly) change the semantics if added to the prefix/suffix
@@ -117,6 +103,7 @@ public class InjectorUtils {
     if (language == null/* && (pair.second.getLength() > 0*/) {
       return;
     }
+    final LiteralEscaper literalEscaper = LanguageLiteralEscapers.INSTANCE.forLanguage(containingFile.getLanguage());
     boolean injectionStarted = false;
     for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : list) {
       final PsiLanguageInjectionHost host = trinity.first;
@@ -134,7 +121,10 @@ public class InjectorUtils {
         // useful cases may break. This system is far from perfect still...
         final StringBuilder prefix = new StringBuilder(injectedLanguage.getPrefix());
         final StringBuilder suffix = new StringBuilder(injectedLanguage.getSuffix());
-        adjustPrefixAndSuffix(getUnescapedText(host, textRange.substring(host.getText())), prefix, suffix);
+        final String text = textRange.substring(host.getText());
+        final String result = literalEscaper != null ? literalEscaper.unescapeText(text) : text;
+
+        adjustPrefixAndSuffix(result, prefix, suffix);
 
         addPlaceSafe(registrar, prefix.toString(), suffix.toString(), host, textRange);
       }
