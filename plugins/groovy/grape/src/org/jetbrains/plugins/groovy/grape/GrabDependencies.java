@@ -172,7 +172,14 @@ public class GrabDependencies implements IntentionAction {
       for (VirtualFile jar : jars) {
         final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jar);
         if (jarRoot != null) {
-          final Library.ModifiableModel libModel = tableModel.createLibrary("Grab:" + jar.getName()).getModifiableModel();
+          final String libName = "Grab:" + jar.getName();
+
+          final Library existing = tableModel.getLibraryByName(libName);
+          if (existing != null) {
+            tableModel.removeLibrary(existing);
+          }
+
+          final Library.ModifiableModel libModel = tableModel.createLibrary(libName).getModifiableModel();
           libModel.addRoot(jarRoot, OrderRootType.CLASSES);
           libModel.commit();
         }
@@ -206,7 +213,7 @@ public class GrabDependencies implements IntentionAction {
       new WriteAction() {
         protected void run(Result result) throws Throwable {
           final String title = jars.size() + " dependencies added";
-          final String descr = myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
+          final String descr = jars.size() > 0 ? "@Grab completed successfully" : myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
           Notifications.Bus.notify(new Notification("Grape", title, descr, NotificationType.INFORMATION), NotificationDisplayType.BALLOON, myModule.getProject());
           if (!jars.isEmpty()) {
             addGrapeDependencies(jars);
