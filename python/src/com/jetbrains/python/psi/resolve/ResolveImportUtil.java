@@ -483,14 +483,6 @@ public class ResolveImportUtil {
     return null;
   }
 
-  interface SdkRootVisitor {
-    /**
-     * @param root what we're visiting.
-     * @return false when visiting must stop.
-     */
-    boolean visitRoot(VirtualFile root);
-  }
-
   static class LookupRootVisitor implements SdkRootVisitor {
     String path;
     PsiManager psimgr;

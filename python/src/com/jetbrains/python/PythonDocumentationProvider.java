@@ -2,11 +2,15 @@ package com.jetbrains.python;
 
 import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.SdkRootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.toolbox.*;
 import org.jetbrains.annotations.NonNls;
@@ -189,6 +193,20 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       }
       else if (element instanceof PyFile) {
         // what to prepend to a module description??
+        String path = VfsUtil.urlToPath(((PyFile)element).getUrl());
+        if ("".equals(path)) {
+          prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.module.path.unknown")));
+        }
+        else {
+          RootFinder finder = new RootFinder(path);
+          ResolveImportUtil.visitRoots(element, finder);
+          final String root_path = finder.getResult();
+          if (root_path != null) {
+            String after_part = path.substring(root_path.length());
+            prolog_cat.addWith(TagSmall, $(root_path).addWith(TagBold, $(after_part)));
+          }
+          else prolog_cat.addWith(TagSmall, $(path));
+        }
       }
       else { // not a func, not a class
         doc_cat.add(combUp(PyUtil.getReadableRepr(element, false)));
@@ -200,6 +218,28 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       return cat.toString();
     }
     return null;
+  }
+
+  private class RootFinder implements SdkRootVisitor {
+    private String myResult;
+    private String myPath;
+
+    private RootFinder(String path) {
+      myPath = path;
+    }
+
+    public boolean visitRoot(VirtualFile root) {
+      String vpath = VfsUtil.urlToPath(root.getUrl());
+      if (myPath.startsWith(vpath)) {
+        myResult = vpath;
+        return false;
+      }
+      else return true;
+    }
+
+    String getResult() {
+      return myResult;
+    }
   }
 
   private static PsiElement resolveToDocStringOwner(PsiElement element, PsiElement originalElement, ChainIterable<String> prolog_cat) {
@@ -263,7 +303,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                 .add(BR).add(BR)
                 .add(PyBundle.message("QDOC.copied.from.$0.$1", ancestor.getName(), meth_name))
                 .add(BR).add(BR)
-                .addWith(TagCode, $(inherited_doc))
+                .addWith(TagCode, combUpDocString(inherited_doc))
               ;
               not_found = false;
               break;
@@ -286,7 +326,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                 PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
                 String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
                 if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
-                  doc_cat.add(predefined_doc);
+                  doc_cat.add(combUpDocString(predefined_doc));
                   epilog_cat.add(BR).add(BR).add(PyBundle.message("QDOC.copied.from.builtin"));
                 }
               }
