@@ -13,38 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.growl;
+package com.intellij.ui.mac.foundation;
 
 import com.sun.jna.NativeLong;
 
 /**
  * @author spleaner
  */
-public class ID extends NativeLong {
+public class Selector extends NativeLong {
 
-  static ID fromLong(long value) {
-    return new ID(value);
+  private String myName;
+
+  public Selector() {
+    this("undefined selector", 0);
   }
 
-  // for JNA
-  public ID() {
-    super();
-  }
-
-  protected ID(long value) {
+  public Selector(String name, long value) {
     super(value);
+    myName = name;
   }
 
-  protected ID(ID anotherID) {
-    this(anotherID.longValue());
+  public String getName() {
+    return myName;
   }
 
   @Override
   public String toString() {
-    return String.format("[ID 0x%x]", longValue()); //$NON-NLS-1$
+    return String.format("[Selector %s]", myName);
   }
 
-  public boolean isNull() {
-    return longValue() == 0;
+  public Selector initName(final String name) {
+    myName = name;
+    return this;
   }
 }

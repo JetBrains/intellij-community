@@ -13,37 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.growl;
+package com.intellij.ui.mac.foundation;
 
-import com.sun.jna.NativeLong;
+import com.sun.jna.Pointer;
 
 /**
  * @author spleaner
  */
-public class Selector extends NativeLong {
-
-  private String myName;
-
-  public Selector() {
-    this("undefined selector", 0);
+public class ID extends Pointer {
+  public ID(long peer) {
+    super(peer);
   }
 
-  public Selector(String name, long value) {
-    super(value);
-    myName = name;
+  public long toLong() {
+    return peer;
+  }
+  
+  public int toInt() {
+    return (int) peer;
   }
 
-  public String getName() {
-    return myName;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("[Selector %s]", myName);
-  }
-
-  public Selector initName(final String name) {
-    myName = name;
-    return this;
+  public long getAddress() {
+    return peer;
   }
 }
