@@ -4,9 +4,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
@@ -31,7 +31,8 @@ public class TransformClassicClassQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement instanceof PyClass) {
+    psiElement = PsiTreeUtil.getParentOfType(psiElement, PyClass.class);
+    if (psiElement != null) {
       PyClass pyClass = (PyClass) psiElement;
       PyExpression[] superClassExpressions = pyClass.getSuperClassExpressions();
       PyElementGenerator generator = PyElementGenerator.getInstance(project);
