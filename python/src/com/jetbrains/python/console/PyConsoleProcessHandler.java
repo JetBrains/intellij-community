@@ -4,6 +4,7 @@ import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,16 +20,16 @@ import java.util.regex.Pattern;
 /**
  * @author oleg
  */
-class PyConsoleProcessHandler extends OSProcessHandler {
-  private final PyConsoleRunner myPyConsoleRunner;
+public class PyConsoleProcessHandler extends OSProcessHandler {
   private final Charset myCharset;
+  private final LanguageConsoleImpl myLanguageConsole;
 
-  public PyConsoleProcessHandler(final PyConsoleRunner pyConsoleRunner,
-                                 final Process process,
+  public PyConsoleProcessHandler(final Process process,
+                                 final LanguageConsoleImpl languageConsole,
                                  final String commandLine,
                                  final Charset charset) {
     super(process, commandLine);
-    myPyConsoleRunner = pyConsoleRunner;
+    myLanguageConsole = languageConsole;
     myCharset = charset;
   }
 
@@ -60,27 +61,31 @@ class PyConsoleProcessHandler extends OSProcessHandler {
 
   @Override
   public void notifyTextAvailable(final String text, final Key attributes) {
-    final LanguageConsoleImpl languageConsole = myPyConsoleRunner.getLanguageConsole();
-    String string = processPrompts(languageConsole, StringUtil.convertLineSeparators(text));
+    String string = processPrompts(myLanguageConsole, StringUtil.convertLineSeparators(text));
+    processOutput(myLanguageConsole, string, attributes);
+  }
 
+  public static void processOutput(LanguageConsoleImpl console, String string, final Key attributes) {
+    final ConsoleViewContentType type =
+      attributes == ProcessOutputTypes.STDERR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
     // Highlight output by pattern
     Matcher matcher;
     while ((matcher = CODE_ELEMENT_PATTERN.matcher(string)).find()) {
-      printToConsole(languageConsole, string.substring(0, matcher.start()), ConsoleViewContentType.NORMAL_OUTPUT);
+      printToConsole(console, string.substring(0, matcher.start()), type);
       // Number group
       if (matcher.group(1) != null) {
-        printToConsole(languageConsole, matcher.group(1), NUMBER_ATTRIBUTES);
+        printToConsole(console, matcher.group(1), NUMBER_ATTRIBUTES);
       }
       // String group
       else if (matcher.group(6) != null) {
-        printToConsole(languageConsole, matcher.group(6), STRING_ATTRIBUTES);
+        printToConsole(console, matcher.group(6), STRING_ATTRIBUTES);
       }
       else {
-        printToConsole(languageConsole, matcher.group(), ConsoleViewContentType.NORMAL_OUTPUT);
+        printToConsole(console, matcher.group(), type);
       }
       string = string.substring(matcher.end());
     }
-    printToConsole(languageConsole, string, ConsoleViewContentType.NORMAL_OUTPUT);
+    printToConsole(console, string, type);
   }
 
   private String processPrompts(final LanguageConsoleImpl languageConsole, String string) {
@@ -119,7 +124,7 @@ class PyConsoleProcessHandler extends OSProcessHandler {
     final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        console.addToHistory(string, attributes);
+        console.printToHistory(string, attributes);
       }
     }, ModalityState.stateForComponent(console.getComponent()));
   }

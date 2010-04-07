@@ -316,6 +316,11 @@
             text="Run Python Console..." description="Allows to quickly run Python console">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+    <action id="com.jetbrains.python.console.RunPythonConsoleActionNew"
+            class="com.jetbrains.python.console.RunPythonConsoleActionNew"
+            text="Run TRUE Python Console..." description="Allows to quickly run Python console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
     <action id="com.jetbrains.django.console.RunDjangoConsoleAction"
             class="com.jetbrains.django.console.RunDjangoConsoleAction"
             text="Run Django Console..." description="Allows to quickly run Django console">
