@@ -117,8 +117,13 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     final RunProfile profile = myEnvironment.getRunProfile();
 
     final ExecutionConsole console = myExecutionResult.getExecutionConsole();
-    final String runnerType = console instanceof ExecutionConsoleEx?
-                              JAVA_RUNNER +"." + ((ExecutionConsoleEx)console).getExecutionConsoleId(): JAVA_RUNNER;
+    String runnerType = JAVA_RUNNER;
+    if (console instanceof ExecutionConsoleEx) {
+      final String id = ((ExecutionConsoleEx)console).getExecutionConsoleId();
+      if (id != null) {
+        runnerType = JAVA_RUNNER + "." + id;
+      }
+    }
     myUi = RunnerLayoutUi.Factory.getInstance(myProject).create(runnerType, myExecutor.getId(), profile.getName(), this);
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
