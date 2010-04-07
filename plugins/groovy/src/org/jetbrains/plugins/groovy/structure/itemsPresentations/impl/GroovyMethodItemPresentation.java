@@ -24,7 +24,6 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.structure.itemsPresentations.GroovyItemPresentation;
 
 /**
@@ -52,7 +51,7 @@ public class GroovyMethodItemPresentation extends GroovyItemPresentation {
       }
       presentableText.append(")");
 
-      PsiType returnType = method instanceof GrMethod ? ((GrMethod)method).getDeclaredReturnType() : method.getReturnType();
+      PsiType returnType = method.getReturnType();
 
       if (returnType != null) {
         presentableText.append(":");

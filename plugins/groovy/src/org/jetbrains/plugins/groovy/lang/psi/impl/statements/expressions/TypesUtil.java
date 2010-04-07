@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -102,7 +103,7 @@ public class TypesUtil {
     if (candidates.length == 1) {
       final PsiElement element = candidates[0].getElement();
       if (element instanceof PsiMethod) {
-        return candidates[0].getSubstitutor().substitute(((PsiMethod)element).getReturnType());
+        return candidates[0].getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element));
       }
     }
     return null;

@@ -253,11 +253,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
                 "getClass".equals(method.getName())) {
           result = getTypeForObjectGetClass(facade, method);
         } else {
-          if (method instanceof GrAccessorMethod) {
-            result = ((GrAccessorMethod) method).getReturnTypeGroovy();
-          } else {
-            result = method.getReturnType();
-          }
+          result = PsiUtil.getSmartReturnType(method);
         }
 
       }
@@ -311,7 +307,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   @Nullable
   private PsiType getTypeForObjectGetClass(JavaPsiFacade facade, PsiMethod method) {
-    PsiType type = method.getReturnType();
+    PsiType type = PsiUtil.getSmartReturnType(method);
     if (type instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType) type).resolve();
       if (clazz != null &&
