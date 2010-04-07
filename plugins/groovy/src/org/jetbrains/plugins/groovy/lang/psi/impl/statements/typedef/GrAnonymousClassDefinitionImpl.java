@@ -17,7 +17,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
@@ -49,6 +50,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
+    //noinspection ConstantConditions
     return findChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
   }
 
@@ -59,6 +61,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
   @NotNull
   public GrArgumentList getArgumentListGroovy() {
+    //noinspection ConstantConditions
     return findChildByClass(GrArgumentList.class); //not null because of definition
   }
 
@@ -75,7 +78,16 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @NotNull
   public PsiJavaCodeReferenceElement getBaseClassReference() {
     final GrCodeReferenceElement ref = getBaseClassReferenceGroovy();
-    return JavaPsiFacade.getElementFactory(getProject()).createReferenceElementByType(new GrClassReferenceType(ref));
+    final PsiElement element = ref.resolve();
+    final Project project = getProject();
+    if (element instanceof PsiClass) {
+      String qName = ((PsiClass)element).getQualifiedName();
+      if (qName != null) {
+        return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, element.getResolveScope());
+      }
+    }
+    String qName = ref.getReferenceName(); //not null
+    return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, GlobalSearchScope.allScope(project));
   }
 
   @NotNull
@@ -86,7 +98,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
 
     PsiClassType type = null;
     if (myCachedBaseType != null) type = myCachedBaseType.get();
-    if (type != null) return type;
+    if (type != null && type.isValid()) return type;
 
     type = createClassType();
     myCachedBaseType = new SoftReference<PsiClassType>(type);
@@ -113,6 +125,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @NotNull
   @Override
   public PsiElement getNameIdentifierGroovy() {
+    //noinspection ConstantConditions
     return getBaseClassReferenceGroovy().getReferenceNameElement();
   }
 
@@ -135,8 +148,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   private PsiClassType getGroovyObjectType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory()
-      .createTypeByFQClassName(DEFAULT_BASE_CLASS_NAME, getResolveScope());
+    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(DEFAULT_BASE_CLASS_NAME, getResolveScope());
   }
 
   @Override
