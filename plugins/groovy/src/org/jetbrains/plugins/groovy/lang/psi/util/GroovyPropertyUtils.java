@@ -141,13 +141,16 @@ public class GroovyPropertyUtils {
     }
 
     @NonNls String methodName = getterMethod.getName();
+    final boolean isPropertyBoolean = CommonClassNames.JAVA_LANG_BOOLEAN.equals(TypesUtil
+      .boxPrimitiveType(getterMethod.getReturnType(), getterMethod.getManager(), getterMethod.getResolveScope()).getCanonicalText());
+    return getPropertyNameByGetterName(methodName, isPropertyBoolean);
+  }
+
+  public static String getPropertyNameByGetterName(String methodName, boolean canBeBoolean) {
     if (methodName.startsWith(GET_PREFIX) && methodName.length() > 3) {
       return decapitalize(methodName.substring(3));
     }
-    else if (methodName.startsWith(IS_PREFIX) &&
-             methodName.length() > 2 &&
-             CommonClassNames.JAVA_LANG_BOOLEAN.equals(TypesUtil.boxPrimitiveType(getterMethod.getReturnType(), getterMethod.getManager(),
-                                                                                  getterMethod.getResolveScope()).getCanonicalText())) {
+    else if (methodName.startsWith(IS_PREFIX) && methodName.length() > 2 && canBeBoolean) {
       return decapitalize(methodName.substring(2));
     }
     return methodName;
@@ -159,6 +162,10 @@ public class GroovyPropertyUtils {
     }
 
     @NonNls String methodName = setterMethod.getName();
+    return getPropertyNameBySetterName(methodName);
+  }
+
+  public static String getPropertyNameBySetterName(String methodName) {
     if (methodName.startsWith("set") && methodName.length() > 3) {
       return StringUtil.decapitalize(methodName.substring(3));
     }
