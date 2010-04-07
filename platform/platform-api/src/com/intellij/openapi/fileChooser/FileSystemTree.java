@@ -33,6 +33,9 @@ public interface FileSystemTree extends Disposable {
   @Nullable
   VirtualFile getSelectedFile();
 
+  @Nullable
+  VirtualFile getNewFileParent();
+
   /**
    * @deprecated since tree updating is an asynchronous operation
    */

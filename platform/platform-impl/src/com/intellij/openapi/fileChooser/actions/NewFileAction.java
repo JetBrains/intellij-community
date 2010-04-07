@@ -34,7 +34,7 @@ public class NewFileAction extends FileChooserAction {
     final FileType fileType = e.getData(FileChooserKeys.NEW_FILE_TYPE);
     if (fileType != null) {
       presentation.setVisible(true);
-      VirtualFile selectedFile = fileSystemTree.getSelectedFile();
+      VirtualFile selectedFile = fileSystemTree.getNewFileParent();
       presentation.setEnabled(selectedFile != null && selectedFile.isDirectory());
       presentation.setIcon(LayeredIcon.create(fileType.getIcon(), IconLoader.getIcon("/actions/new.png")));
     }
@@ -52,7 +52,7 @@ public class NewFileAction extends FileChooserAction {
   }
 
   private static void createNewFile(FileSystemTree fileSystemTree, final FileType fileType, final String initialContent) {
-    final VirtualFile file = fileSystemTree.getSelectedFile();
+    final VirtualFile file = fileSystemTree.getNewFileParent();
     if (file == null || !file.isDirectory()) return;
 
     String newFileName;
