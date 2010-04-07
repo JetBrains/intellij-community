@@ -161,9 +161,12 @@ public class UnsupportedFeatures extends PyAnnotator {
         getHolder().createWarningAnnotation(node,
                                             "Integer literals do not support a trailing \'l\' or \'L\' in Python 3").registerFix(new RemoveTrailingLIntention());
       }
-      if (text.length() > 1 && text.charAt(0) == '0' && (text.charAt(1) != 'o' || text.charAt(1) != 'b')) {
-        getHolder().createWarningAnnotation(node,
-                                            "Python 3 requires '0o' prefix for octal literals").registerFix(new ReplaceOctalNumericLiteralIntention());
+      if (text.length() > 1 && text.charAt(0) == '0') {
+        char c = Character.toLowerCase(text.charAt(1));
+        if (c != 'o' && c != 'b' && c != 'x') {
+          getHolder().createWarningAnnotation(node,
+                                              "Python 3 requires '0o' prefix for octal literals").registerFix(new ReplaceOctalNumericLiteralIntention());
+        }
       }
     }
   }

@@ -3,6 +3,8 @@ print(<warning descr="<> is not supported in Python 3, use != instead">a <> 3</w
 x = <warning descr="Method 'raw_input' has been removed, use 'input' instead">raw_input</warning>()
 a = <warning descr="Integer literals do not support a trailing 'l' or 'L' in Python 3">123l</warning>
 a = <warning descr="Python 3 requires '0o' prefix for octal literals">043</warning>
+a = 0X43
+a = 0b1
 s = <warning descr="String literals do not support a leading 'u' or 'U' in Python 3">u"text"</warning>
 <warning descr="Python 3 does not support this syntax">raise a, b, c</warning>
 <warning descr="Python 3 does not support this syntax">raise a, b</warning>
