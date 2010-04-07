@@ -70,7 +70,6 @@ public class CollectHighlightsUtil {
   }
 
   private static final int STARTING_TREE_HEIGHT = 100;
-  private static final boolean DEBUG = true;
   
   private static List<PsiElement> getElementsToHighlight(final PsiElement commonParent, final int startOffset, final int endOffset) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
@@ -135,56 +134,7 @@ public class CollectHighlightsUtil {
       }
     };
     commonParent.accept(visitor);
-    
-    if (DEBUG) {
-      final List<PsiElement> result2 = new ArrayList<PsiElement>();
-      final PsiElementVisitor oldVisitor = new PsiRecursiveElementVisitor() {
-        int offset = currentOffset;
-        @Override public void visitElement(PsiElement element) {
-          ProgressManager.checkCanceled();
-          for (Condition<PsiElement> filter : filters) {
-            if (!filter.value(element)) return;
-          }
-  
-          PsiElement child = element.getFirstChild();
-          if (child == null) {
-            // leaf element
-            offset += element.getTextLength();
-          }
-          else {
-            // composite element
-            while (child != null) {
-              if (offset > endOffset) break;
-  
-              int start = offset;
-              child.accept(this);
-              if (startOffset <= start && offset <= endOffset) result2.add(child);
-  
-              child = child.getNextSibling();
-            }
-          }
-        }
-      };
-      commonParent.accept(oldVisitor);
-      
-      boolean wasError = false;
-      
-      if(result.size() != result2.size()) {
-        LOG.error("Invalid number of elements:" + commonParent + "," + startOffset + "," + endOffset);
-        wasError = true;
-      } else {
-        for(int i = 0; i < result.size(); ++i) {
-          if (result.get(i) != result2.get(i)) {
-            LOG.error("Different elements:" + result.get(i) + "," + result2.get(i));
-            wasError = true;
-            break;
-          }
-        }
-      }
-      
-      if (wasError) return result2;
-    }
-    
+        
     return result;
   }
 
