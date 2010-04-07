@@ -51,7 +51,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
  * @author ilyas
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
-  private PsiParameter mySyntheticItParameter;
+  private volatile PsiParameter mySyntheticItParameter;
   private GrVariable myOwner;
 
   public GrClosableBlockImpl(@NotNull ASTNode node) {
@@ -152,9 +152,14 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     mySyntheticItParameter = null;
   }
 
-  public synchronized PsiParameter getSyntheticItParameter() {
+  public PsiParameter getSyntheticItParameter() {
     if (mySyntheticItParameter == null) {
-      mySyntheticItParameter = new ClosureSyntheticParameter(getManager(), this);
+      PsiParameter fresh = new ClosureSyntheticParameter(getManager(), this);
+      synchronized (this) {
+        if (mySyntheticItParameter == null) {
+          mySyntheticItParameter = fresh;
+        }
+      }
     }
     return mySyntheticItParameter;
   }

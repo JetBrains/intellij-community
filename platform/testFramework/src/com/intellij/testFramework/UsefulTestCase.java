@@ -346,6 +346,14 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(errorMsg, collection);
   }
 
+  public static void assertSize(int expectedSize, final Object[] array) {
+    assertEquals(expectedSize, array.length);
+  }
+
+  public static void assertSize(int expectedSize, final Collection<?> c) {
+    assertEquals(expectedSize, c.size());
+  }
+
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
     Disposer.register(myTestRootDisposable, disposable);
     return disposable;

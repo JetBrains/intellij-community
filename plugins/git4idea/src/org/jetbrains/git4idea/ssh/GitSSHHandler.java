@@ -47,11 +47,12 @@ public interface GitSSHHandler {
    * @param handler   a handler identifier
    * @param userName  a name of user
    * @param keyPath   a path for the key
+   * @param resetPassword a reset password if one was stored in password database
    * @param lastError a last error (or empty string)
    * @return the passphrase entered by the user
    */
   @Nullable
-  String askPassphrase(final int handler, final String userName, final String keyPath, final String lastError);
+  String askPassphrase(final int handler, final String userName, final String keyPath, boolean resetPassword, final String lastError);
 
   /**
    * Reply to challenge for keyboard-interactive method. Also used for
@@ -63,7 +64,7 @@ public interface GitSSHHandler {
    * @param numPrompts  amount of prompts
    * @param prompt      prompts
    * @param echo        whether the reply should be echoed (boolean values represented as string due to XML RPC limitation)
-   * @param lastError   @return answers provided by the user
+   * @param lastError   the last error from the challenge
    * @return a list or replies to challenges (the size should be equal to the number of prompts)
    */
   @SuppressWarnings({"UseOfObsoleteCollectionType"})
@@ -82,9 +83,10 @@ public interface GitSSHHandler {
    *
    * @param handlerNo a handler identifier
    * @param userName  a name of user to ask password for
+   * @param resetPassword a reset password if one was stored in password database
    * @param lastError a last error
    * @return the password or null if authentication failed.
    */
   @Nullable
-  String askPassword(final int handlerNo, final String userName, final String lastError);
+  String askPassword(final int handlerNo, final String userName, boolean resetPassword, final String lastError);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.growl;
+package com.intellij.ide.passwordSafe.impl;
 
-import com.sun.jna.NativeLong;
+import com.intellij.ide.passwordSafe.PasswordStorage;
 
 /**
- * @author spleaner
+ * The provider for password safe component
  */
-public class ID extends NativeLong {
+public abstract class PasswordSafeProvider implements PasswordStorage {
+  /**
+   * @return true, the implementation is supported in the current environment
+   */
+  public abstract boolean isSupported();
+  /**
+   * @return the description of the provider
+   */
+  public abstract String getDescription();
 
-  static ID fromLong(long value) {
-    return new ID(value);
-  }
-
-  // for JNA
-  public ID() {
-    super();
-  }
-
-  protected ID(long value) {
-    super(value);
-  }
-
-  protected ID(ID anotherID) {
-    this(anotherID.longValue());
-  }
-
-  @Override
-  public String toString() {
-    return String.format("[ID 0x%x]", longValue()); //$NON-NLS-1$
-  }
-
-  public boolean isNull() {
-    return longValue() == 0;
-  }
+  /**
+   * @return the name of provider
+   */
+  public abstract String getName();
 }

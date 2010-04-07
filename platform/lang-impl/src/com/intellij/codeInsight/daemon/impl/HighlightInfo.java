@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -125,8 +126,9 @@ public class HighlightInfo {
                                                   TextAttributes forcedAttributes) {
     LOG.assertTrue(ArrayUtil.find(HighlightSeverity.DEFAULT_SEVERITIES, type.getSeverity(element)) != -1 || element != null, "Custom type demands element to detect text attributes");
     HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, start, end, description, toolTip, type.getSeverity(null), isEndOfLine, null, false);
+    PsiFile file = element == null ? null : element.getContainingFile();
     for (HighlightInfoFilter filter : getFilters()) {
-      if (!filter.accept(highlightInfo, element != null ? element.getContainingFile() : null)) {
+      if (!filter.accept(highlightInfo, file)) {
         return null;
       }
     }

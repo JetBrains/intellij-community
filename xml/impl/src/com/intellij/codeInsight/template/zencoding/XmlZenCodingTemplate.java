@@ -345,20 +345,18 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     if (!webEditorOptions.isZenCodingEnabled()) {
       return false;
     }
-    if (file.getLanguage() instanceof XMLLanguage) {
-      PsiElement element = file.findElementAt(offset > 0 ? offset - 1 : offset);
-      if (element == null) {
-        return true;
+    PsiElement element = file.findElementAt(offset > 0 ? offset - 1 : offset);
+    if (element == null) {
+      element = file;
+    }
+    if (element.getLanguage() instanceof XMLLanguage) {
+      if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) {
+        return false;
       }
-      if (element.getLanguage() instanceof XMLLanguage) {
-        if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) {
-          return false;
-        }
-        if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
-          return false;
-        }
-        return true;
+      if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
+        return false;
       }
+      return true;
     }
     return false;
   }

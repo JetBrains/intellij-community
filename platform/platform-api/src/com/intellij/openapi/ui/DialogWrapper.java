@@ -1175,7 +1175,7 @@ public abstract class DialogWrapper {
         }
         myErrorText.repaint();
       }
-    }, 300);
+    }, 300, null);
   }
 
   private void updateHeightForErrorText() {
