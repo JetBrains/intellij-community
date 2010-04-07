@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
             PsiMethod method = (PsiMethod) resolved;
             returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
             if (returnType == null) {
-              returnType = method.getReturnType();
+              returnType = PsiUtil.getSmartReturnType(method);
             }
           } else if (resolved instanceof GrVariable) {
             PsiType refType = refExpr.getType();

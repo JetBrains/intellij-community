@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -108,7 +109,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       }
 
       if (!method.isConstructor()) {
-        appendTypeString(buffer, method.getReturnType());
+        appendTypeString(buffer, PsiUtil.getSmartReturnType(method));
         buffer.append(" ");
       }
       buffer.append(method.getName()).append(" ");
@@ -350,8 +351,9 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
           builder.append(LINE_SEPARATOR);
         }
 
-        if ((method.getReturnType() != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) &&
-            method.getReturnType() != PsiType.VOID) {
+        final PsiType returnType = method.getInferredReturnType();
+        if ((returnType != null || method.getModifierList().hasModifierProperty(GrModifier.DEF)) &&
+            returnType != PsiType.VOID) {
           builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
           builder.append(LINE_SEPARATOR);
         }

@@ -168,7 +168,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(newMethod);
       boolean hasTailExpr = GroovyRefactoringUtil.hasTailReturnExpression(method);
       final int returnCount = returnStatements.size();
-      PsiType methodType = method.getReturnType();
+      PsiType methodType = method.getInferredReturnType();
       GrOpenBlock body = newMethod.getBlock();
       assert body != null;
       GrStatement[] statements = body.getStatements();
@@ -404,7 +404,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (statements[0] instanceof GrExpression) return ((GrExpression) statements[0]);
       if (statements[0] instanceof GrReturnStatement) {
         GrExpression value = ((GrReturnStatement) statements[0]).getReturnValue();
-        if (value == null && (method.getReturnType() != PsiType.VOID)) {
+        if (value == null && (PsiUtil.getSmartReturnType(method) != PsiType.VOID)) {
           return GroovyPsiElementFactory.getInstance(method.getProject()).createExpressionFromText("null");
         }
         return value;
