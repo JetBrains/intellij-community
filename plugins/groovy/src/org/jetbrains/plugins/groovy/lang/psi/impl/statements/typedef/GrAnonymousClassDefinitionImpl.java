@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
@@ -81,10 +82,8 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     final PsiElement element = ref.resolve();
     final Project project = getProject();
     if (element instanceof PsiClass) {
-      String qName = ((PsiClass)element).getQualifiedName();
-      if (qName != null) {
-        return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, element.getResolveScope());
-      }
+      final GrClassReferenceType type = new GrClassReferenceType(ref);
+      return JavaPsiFacade.getElementFactory(project).createReferenceElementByType(type);
     }
     String qName = ref.getReferenceName(); //not null
     return JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(qName, GlobalSearchScope.allScope(project));

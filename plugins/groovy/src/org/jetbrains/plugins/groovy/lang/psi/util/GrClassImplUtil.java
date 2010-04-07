@@ -227,22 +227,29 @@ public class GrClassImplUtil {
     //todo [DIANA] look more carefully
     String name = nameHint == null ? null : nameHint.getName(state);
     ClassHint classHint = processor.getHint(ClassHint.KEY);
+    final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
+
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) {
       Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
       if (name != null) {
         CandidateInfo fieldInfo = fieldsMap.get(name);
         if (fieldInfo != null) {
-          final PsiElement element = fieldInfo.getElement();
-          if (!isSameDeclaration(place, element)) { //the same variable declaration
-            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) return false;
+          final PsiField field = (PsiField)fieldInfo.getElement();
+          if (!isSameDeclaration(place, field)) { //the same variable declaration
+            final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
+              .obtainFinalSubstitutor(field.getContainingClass(), fieldInfo.getSubstitutor(), grType, substitutor, place, factory);
+            if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
       }
       else {
         for (CandidateInfo info : fieldsMap.values()) {
-          final PsiElement element = info.getElement();
-          if (!isSameDeclaration(place, element)) {  //the same variable declaration
-            if (!processor.execute(element, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) return false;
+          final PsiField field = (PsiField)info.getElement();
+          if (!isSameDeclaration(place, field)) {  //the same variable declaration
+            final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
+              .obtainFinalSubstitutor(field.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
+            if (!processor.execute(field, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
       }
@@ -255,10 +262,12 @@ public class GrClassImplUtil {
         for (List<CandidateInfo> list : methodsMap.values()) {
           for (CandidateInfo info : list) {
             PsiMethod method = (PsiMethod)info.getElement();
-            if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) &&
-                !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) {
-              return false;
+            if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
+              final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
+                .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
+              if (!processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) {
+                return false;
+              }
             }
           }
         }
@@ -268,10 +277,12 @@ public class GrClassImplUtil {
         if (byName != null) {
           for (CandidateInfo info : byName) {
             PsiMethod method = (PsiMethod)info.getElement();
-            if (!isSameDeclaration(place, method) &&
-                isMethodVisible(isPlaceGroovy, method) &&
-                !processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, state.get(PsiSubstitutor.KEY)))) {
-              return false;
+            if (!isSameDeclaration(place, method) && isMethodVisible(isPlaceGroovy, method)) {
+              final PsiSubstitutor finalSubstitutor = PsiClassImplUtil
+                .obtainFinalSubstitutor(method.getContainingClass(), info.getSubstitutor(), grType, substitutor, place, factory);
+              if (!processor.execute(method, ResolveState.initial().put(PsiSubstitutor.KEY, finalSubstitutor))) {
+                return false;
+              }
             }
           }
         }
