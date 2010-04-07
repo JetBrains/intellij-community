@@ -108,21 +108,6 @@ class XmlZenCodingInterpreter {
       myCallback.fixEndOffset();
       editor.getCaretModel().moveToOffset(newOffset);
     }
-
-    /*CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
-    if (tagName != null) {
-      *//*if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
-        document.insertString(offset, "</" + tagName + '>');
-      }*//*
-    }
-    else if (offset != endOfTemplate) {
-      tagName = getPrecedingTagName(text, endOfTemplate, startOfTemplate);
-      if (tagName != null) {
-        *//*fixEndOffset();
-        document.insertString(endOfTemplate, "</" + tagName + '>');*//*
-        editor.getCaretModel().moveToOffset(endOfTemplate);
-      }
-    }*/
   }
 
   // returns if expanding finished
