@@ -2634,4 +2634,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(s_2,s2_3));
     assertEquals(1, findMatchesCount(s,s2_3));
   }
+  
+  public void testFindAnnotationDeclarations() throws Exception {
+    String s = "interface Foo {} interface Bar {} @interface X {}";
+    String s2 = "@interface 'x {}";
+        
+    assertEquals(1, findMatchesCount(s,s2));
+  }
+  
+  public void testFindEnums() throws Exception {
+    String s = "class Foo {} class Bar {} enum X {}";
+    String s2 = "enum 'x {}";
+        
+    assertEquals(1, findMatchesCount(s,s2));
+  }
 }

@@ -2,6 +2,8 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipController;
+import com.intellij.codeInsight.template.JavaCodeContextType;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +27,7 @@ import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -72,7 +75,10 @@ public class UIUtil {
     }
 
     TemplateContext context = new TemplateContext();
-
+    // TODO: this should be managed on template file type basis
+    final TemplateContextType contextType =
+      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
+    context.setEnabled(contextType, true);
     TemplateEditorUtil.setHighlighter(editor, context);
 
     if (addToolTipForVariableHandler) {

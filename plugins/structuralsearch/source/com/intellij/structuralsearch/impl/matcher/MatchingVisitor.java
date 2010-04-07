@@ -129,7 +129,11 @@ public class MatchingVisitor {
     }
 
     try {
-      if (clazz.isInterface()!=clazz2.isInterface()) return false;
+      final boolean templateIsInterface = clazz.isInterface();
+      if (templateIsInterface !=clazz2.isInterface()) return false;
+      if (templateIsInterface && clazz.isAnnotationType() && !clazz2.isAnnotationType()) return false;
+      final boolean templateIsEnum = clazz.isEnum();
+      if (templateIsEnum && !clazz2.isEnum()) return false;
 
       if (!matchInAnyOrder(clazz.getExtendsList(),clazz2.getExtendsList())) {
         return false;

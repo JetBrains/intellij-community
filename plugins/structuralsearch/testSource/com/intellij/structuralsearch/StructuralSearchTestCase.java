@@ -21,7 +21,7 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
     options = new MatchOptions();
     options.setLooseMatching(true);
     options.setRecursiveSearch(true);
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   @Override
