@@ -292,27 +292,16 @@ public class PyResolveUtil {
   }
 
   /**
-   * A simple interface allowing to filter processor results.
-   */
-  public interface Filter {
-    /**
-     * @param target the object a processor is currently looking at.
-     * @return true if the object is acceptable as a processor result.
-     */
-    boolean accept(Object target);
-  }
-
-  /**
    * Accepts only targets that are not the given object.
    */
-  public static class FilterNotInstance implements Filter {
+  public static class FilterNotInstance implements Condition<Object> {
     Object instance;
 
     public FilterNotInstance(Object instance) {
       this.instance = instance;
     }
 
-    public boolean accept(final Object target) {
+    public boolean value(final Object target) {
       return (instance != target);
     }
   }
@@ -320,14 +309,14 @@ public class PyResolveUtil {
   /**
    * Accepts only names not contained in a given collection.
    */
-  public static class FilterNameNotIn implements Filter {
+  public static class FilterNameNotIn implements Condition<Object> {
     private final Collection<String> myNames;
 
     public FilterNameNotIn(Collection<String> names) {
       myNames = names;
     }
 
-    public boolean accept(Object target) {
+    public boolean value(Object target) {
       if (target instanceof PsiNamedElement) {
         return !myNames.contains(((PsiNamedElement)target).getName());
       }

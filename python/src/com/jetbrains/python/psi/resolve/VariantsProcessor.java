@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -20,14 +21,14 @@ public class VariantsProcessor implements PsiScopeProcessor {
 
   protected final PsiElement myContext;
   protected String myNotice;
-  protected PyResolveUtil.Filter myFilter;
+  protected Condition<Object> myFilter;
 
   public VariantsProcessor(PsiElement context) {
     // empty
     myContext = context;
   }
 
-  public VariantsProcessor(PsiElement context, final PyResolveUtil.Filter filter) {
+  public VariantsProcessor(PsiElement context, final Condition<Object> filter) {
     myContext = context;
     myFilter = filter;
   }
@@ -60,7 +61,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState substitutor) {
-    if (myFilter != null && !myFilter.accept(element)) return true; // skip whatever the filter rejects
+    if (myFilter != null && !myFilter.value(element)) return true; // skip whatever the filter rejects
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;

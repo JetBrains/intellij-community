@@ -1,9 +1,13 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,7 +42,16 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   @NotNull
   @Override
   public Object[] getVariants() {
-    // complete to possible modules
-    return ResolveImportUtil.suggestImportVariants(myElement);
+    PyExpression qualifier = myElement.getQualifier();
+    if (qualifier != null) {
+      // qualifier's type must be module, it should know how to complete
+      PyType type = qualifier.getType();
+      if (type != null) return type.getCompletionVariants(myElement, new ProcessingContext());
+      else return ArrayUtil.EMPTY_OBJECT_ARRAY;
+    }
+    else {
+      // complete to possible modules
+      return ResolveImportUtil.suggestImportVariants(myElement);
+    }
   }
 }

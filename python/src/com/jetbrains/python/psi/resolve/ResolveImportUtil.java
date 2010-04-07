@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -644,16 +645,51 @@ public class ResolveImportUtil {
   }
 
 
-  private static void addImportedNames(PyImportElement[] import_elts, Collection<String> collected_names) {
+  private static void addImportedNames(PyImportElement[] import_elts, Collection<String> collected_names, Condition<Object> filter) {
     if (import_elts != null && collected_names != null) {
       for (PyImportElement ielt : import_elts) {
         String s;
         PyReferenceExpression ref = ielt.getImportReference();
         if (ref != null) {
           s = ref.getReferencedName();
-          if (s != null) collected_names.add(s);
+          if (s != null && filter.value(s)) collected_names.add(s);
         }
       }
+    }
+  }
+
+  /**
+   * Logical conjunction.
+   */
+  static class And<T> implements Condition<T> {
+    private Condition<T> myOne;
+    private Condition<T> myTwo;
+
+    public And(Condition<T> one, Condition<T> two) {
+      myOne = one;
+      myTwo = two;
+    }
+
+    public boolean value(T t) {
+      return myOne.value(t) && myTwo.value(t);
+    }
+  }
+
+  static class UnderscoreFilter implements Condition<Object> {
+    private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
+
+    public UnderscoreFilter(int allowed) {
+      myAllowed = allowed;
+    }
+
+    public boolean value(Object o) {
+      if (o == null) return false;
+      String name = o.toString();
+      if (name.length() < 1) return false; // empty strings make no sense
+      int have_underscores = 0;
+      if (name.charAt(0) == '_') have_underscores = 1;
+      if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
+      return myAllowed >= have_underscores;
     }
   }
 
@@ -669,6 +705,11 @@ public class ResolveImportUtil {
     if (current_file != null) current_file = current_file.getOriginalFile();
     int relative_level = 0;
     final Set<String> names_already = new java.util.HashSet<String>(); // don't propose already imported names
+    int underscores=0; // the number of underscores we're interested in
+    String ref_name = partial_ref.getName();
+    if (ref_name.startsWith("__")) underscores = 2;
+    else if (ref_name.startsWith("_")) underscores = 1;
+    final And<Object> filter = new And<Object>(new PyResolveUtil.FilterNameNotIn(names_already), new UnderscoreFilter(underscores));
     // are we in "import _" or "from foo import _"?
     PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
     if (from_import != null && partial_ref.getParent() != from_import) { // in "from foo import _"
@@ -676,9 +717,10 @@ public class ResolveImportUtil {
       if (src != null) {
         PsiElement mod_candidate = src.getReference().resolve();
         if (mod_candidate instanceof PyExpression) {
-          addImportedNames(from_import.getImportElements(), names_already); // don't propose already imported items
+          addImportedNames(from_import.getImportElements(), names_already, filter); // don't propose already imported items
           // collect what's within module file
-          final VariantsProcessor processor = new VariantsProcessor(partial_ref, new PyResolveUtil.FilterNameNotIn(names_already));
+          final VariantsProcessor processor = new VariantsProcessor(partial_ref, filter
+          );
           PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
           variants.addAll(processor.getResultList());
           // try to collect submodules
@@ -703,23 +745,24 @@ public class ResolveImportUtil {
         if (relative_level > 0) {
           PsiDirectory relative_dir = stepBackFrom(current_file, relative_level);
           if (relative_dir != null) {
-            addImportedNames(from_import.getImportElements(), names_already);
-            fillFromDir(relative_dir, current_file, names_already, variants);
+            addImportedNames(from_import.getImportElements(), names_already, filter);
+            fillFromDir(relative_dir, current_file, filter, variants);
           }
         }
       }
     }
     // in "import _" or "from _ import"
-    if (from_import != null) addImportedNames(from_import.getImportElements(), names_already);
+    if (from_import != null) addImportedNames(from_import.getImportElements(), names_already, filter);
     else {
+      names_already.add(PyNames.FUTURE_MODULE); // never add it to "import ..."
       PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(partial_ref, PyImportStatement.class);
       if (import_stmt != null) {
-        addImportedNames(import_stmt.getImportElements(), names_already);
+        addImportedNames(import_stmt.getImportElements(), names_already, filter);
       }
     }
     // look at current dir
     if (current_file != null && relative_level == 0 && ! isAbsoluteImportEnabledFor(current_file)) {
-      fillFromDir(current_file.getParent(), current_file, names_already, variants);
+      fillFromDir(current_file.getParent(), current_file, filter, variants);
     }
     if (relative_level == 0) {
       // look in SDK
@@ -728,7 +771,7 @@ public class ResolveImportUtil {
       if (module != null) {
         ModuleRootManager.getInstance(module).processOrder(new SdkRootVisitingPolicy(visitor), null);
         for (String name : visitor.getResult()) {
-          if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
+          if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
         }
       }
     }
@@ -737,7 +780,7 @@ public class ResolveImportUtil {
   }
 
   // adds variants found under given dir
-  private static void fillFromDir(PsiDirectory target_dir, PsiFile source_file, Set<String> names_already, List<Object> variants) {
+  private static void fillFromDir(PsiDirectory target_dir, PsiFile source_file, Condition<Object> filter, List<Object> variants) {
     if (target_dir != null) {
       for (PsiElement dir_item : target_dir.getChildren()) {
         if (dir_item != source_file) {
@@ -745,14 +788,14 @@ public class ResolveImportUtil {
             final PsiDirectory dir = (PsiDirectory)dir_item;
             if (dir.findFile(PyNames.INIT_DOT_PY) != null) {
               final String name = dir.getName();
-              if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
+              if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name);
             }
           }
           else if (dir_item instanceof PsiFile) { // plain file
             String filename = ((PsiFile)dir_item).getName();
             if (!PyNames.INIT_DOT_PY.equals(filename) && filename.endsWith(PyNames.DOT_PY)) {
               final String name = filename.substring(0, filename.length() - PyNames.DOT_PY.length());
-              if (PyNames.isIdentifier(name) && !names_already.contains(name)) variants.add(name);
+              if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name);
             }
           }
         }
@@ -765,13 +808,11 @@ public class ResolveImportUtil {
    */
   private static class PathChoosingVisitor implements SdkRootVisitor {
 
-    private final VirtualFile myFile;
     private String myFname;
     private String myResult = null;
     private int myDots = Integer.MAX_VALUE; // how many dots in the path
 
     private PathChoosingVisitor(VirtualFile file) {
-      myFile = file;
       myFname = file.getPath();
       // cut off the ext
       int pos = myFname.lastIndexOf('.');
