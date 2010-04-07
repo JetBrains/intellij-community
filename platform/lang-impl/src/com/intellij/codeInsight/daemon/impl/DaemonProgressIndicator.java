@@ -31,6 +31,6 @@ public class DaemonProgressIndicator extends ProgressIndicatorBase {
   }
 
   public synchronized void stopIfRunning() {
-    if (!isCanceled()) stop();
+    if (isRunning()) stop();
   }
 }

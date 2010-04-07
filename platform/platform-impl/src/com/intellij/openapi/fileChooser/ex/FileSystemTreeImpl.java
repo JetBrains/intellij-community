@@ -351,6 +351,17 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return descriptor.getElement().getFile();
   }
 
+  public VirtualFile getNewFileParent() {
+    if (getSelectedFile() != null) return getSelectedFile();
+
+    List<VirtualFile> roots = myDescriptor.getRoots();
+    for (VirtualFile each : roots) {
+      return each;
+    }
+
+    return null;
+  }
+
   public VirtualFile[] getSelectedFiles() {
     return collectSelectedFiles(new ConvertingIterator.IdConvertor<VirtualFile>());
   }

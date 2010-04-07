@@ -1,0 +1,13 @@
+print this.final
+-----
+Groovy script
+  Call expression
+    Reference expression
+      PsiElement(identifier)('print')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Reference expression
+        'this' reference expression
+          PsiElement(this)('this')
+        PsiElement(.)('.')
+        PsiElement(final)('final')

@@ -460,4 +460,40 @@ print new Foo().foo""")
     assertInstanceOf resolved, GrField.class
     assertTrue !resolved.getModifierList().hasExplicitVisibilityModifiers()
   }
+
+  public void testReadAccessToStaticallyImportedProperty() {
+    myFixture.configureByText("a.groovy", """class Foo {
+  def bar
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar
+print ba<caret>r
+""")
+    def ref=findReference()
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, GrAccessorMethod.class
+  }
+
+  public void testWriteAccessToStaticallyImportedProperty() {
+    myFixture.configureByText("a.groovy", """class Foo {
+  def bar
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar
+ba<caret>r = 2
+""")
+    def ref=findReference()
+    def resolved = ref.resolve()
+    assertInstanceOf resolved, GrAccessorMethod.class
+  }
+
+  public void testGetterToStaticallyImportedProperty() {
+    myFixture.configureByText("a.groovy", """class Foo {
+  def bar
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar
+set<caret>Bar(2)
+""")
+    def ref=findReference()
+    def resolved = ref.resolve()
+    assertNull resolved
+  }
 }
