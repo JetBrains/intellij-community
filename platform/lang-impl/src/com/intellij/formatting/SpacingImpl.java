@@ -28,7 +28,7 @@ class SpacingImpl extends Spacing {
 
   private static final int READ_ONLY_MASK = 1;
   private static final int SAFE_MASK = 2;
-  private static final int SHOULD_KEEP_LINEBEAKS_MASK = 4;
+  private static final int SHOULD_KEEP_LINE_BREAKS_MASK = 4;
   private static final int SHOULD_KEEP_FIRST_COLUMN_MASK = 8;
 
   public SpacingImpl(final int minSpaces,
@@ -57,7 +57,7 @@ class SpacingImpl extends Spacing {
     } else {
       myKeepBlankLines = keepBlankLines;
     }
-    myFlags = (isReadOnly ? READ_ONLY_MASK:0) | (safe ? SAFE_MASK:0) | (shouldKeepLineBreaks ? SHOULD_KEEP_LINEBEAKS_MASK:0) |
+    myFlags = (isReadOnly ? READ_ONLY_MASK:0) | (safe ? SAFE_MASK:0) | (shouldKeepLineBreaks ? SHOULD_KEEP_LINE_BREAKS_MASK :0) |
       (keepFirstColumn ? SHOULD_KEEP_FIRST_COLUMN_MASK:0);
   }
 
@@ -89,7 +89,7 @@ class SpacingImpl extends Spacing {
   }
 
   public final boolean shouldKeepLineFeeds() {
-    return (myFlags & SHOULD_KEEP_LINEBEAKS_MASK) != 0;
+    return (myFlags & SHOULD_KEEP_LINE_BREAKS_MASK) != 0;
   }
 
   public int getKeepBlankLines() {
