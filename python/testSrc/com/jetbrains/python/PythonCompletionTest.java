@@ -55,6 +55,30 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testClassPrivate() throws Exception {
+    doTest();
+  }
+
+  public void testClassPrivateNotInherited() throws Exception {
+    doTest();
+  }
+
+  public void testClassPrivateNotPublic() throws Exception {
+    doTest();
+  }
+
+  public void testTwoUnderscores() throws Exception {
+    doTest();
+  }
+
+  public void testOneUnderscore() throws Exception {
+    doTest();
+  }
+
+  public void testTwoUnderscoresNotOne() throws Exception {
+    doTest();
+  }
+
   public void testPy255() throws Exception {
     final String dirname = "completion/";
     final String testName = dirname + "moduleClass";

@@ -70,7 +70,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       final Set<String> names_already = new HashSet<String>(); // don't propose already imported names
       String ref_name = myElement.getName();
       Condition<PsiElement> node_filter = new PyResolveUtil.FilterNameNotIn(names_already);
-      Condition<String> underscore_filter = new UnderscoreFilter(PyUtil.getInitialUnderscores(ref_name));
+      Condition<String> underscore_filter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(ref_name));
       // are we in "import _" or "from foo import _"?
       PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(myElement, PyFromImportStatement.class);
       if (from_import != null && myElement.getParent() != from_import) { // in "from foo import _"

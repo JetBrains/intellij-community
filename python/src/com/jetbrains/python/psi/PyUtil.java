@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -703,5 +704,22 @@ public class PyUtil {
     if (name.startsWith("__")) underscores = 2;
     else if (name.startsWith("_")) underscores = 1;
     return underscores;
+  }
+
+  public static class UnderscoreFilter implements Condition<String> {
+    private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
+
+    public UnderscoreFilter(int allowed) {
+      myAllowed = allowed;
+    }
+
+    public boolean value(String name) {
+      if (name == null) return false;
+      if (name.length() < 1) return false; // empty strings make no sense
+      int have_underscores = 0;
+      if (name.charAt(0) == '_') have_underscores = 1;
+      if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
+      return myAllowed >= have_underscores;
+    }
   }
 }

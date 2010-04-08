@@ -3,13 +3,16 @@ package com.jetbrains.python.psi.types;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -115,19 +118,30 @@ public class PyClassType implements PyType {
   }
 
   public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
+    List<? extends PsiElement> class_list = new ParentMatcher(PyClass.class).search(referenceExpression);
+    boolean within_our_class = class_list != null && class_list.get(0) == this;
     Set<String> names_already = context.get(PyType.CTX_NAMES);
-    final VariantsProcessor processor = new VariantsProcessor(referenceExpression, new PyResolveUtil.FilterNotInstance(myClass));
-    myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     List<Object> ret = new ArrayList<Object>();
+    Condition<String> underscore_filter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(referenceExpression.getName()));
+    // from providers
     for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myClass)) {
-        ret.add(LookupElementBuilder.create(member.getName()).setIcon(member.getIcon()).setTypeText(member.getShortType()));
+        final String name = member.getName();
+        if (underscore_filter.value(name)) {
+          ret.add(LookupElementBuilder.create(name).setIcon(member.getIcon()).setTypeText(member.getShortType()));
+        }
       }
     }
+    // from our own class
+    final VariantsProcessor processor = new VariantsProcessor(
+      referenceExpression, new PyResolveUtil.FilterNotInstance(myClass), underscore_filter
+    );
+    myClass.processDeclarations(processor, ResolveState.initial(), null, referenceExpression);
     if (names_already != null) {
       for (LookupElement le : processor.getResultList()) {
         String name = le.getLookupString();
         if (names_already.contains(name)) continue;
+        if (! within_our_class && isClassPrivate(name)) continue;
         names_already.add(name);
         ret.add(le);
       }
@@ -137,14 +151,19 @@ public class PyClassType implements PyType {
       Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression, context);
       for (Object ob : ancestry) {
         if (ob instanceof LookupElementBuilder) {
-          ret.add(((LookupElementBuilder)ob).setTypeText(ancestor.getName()));
+          final LookupElementBuilder lookup_elt = (LookupElementBuilder)ob;
+          if (! isClassPrivate(lookup_elt.getLookupString())) ret.add(lookup_elt.setTypeText(ancestor.getName()));
         } else {
-          ret.add(ob);
+          if (! isClassPrivate(ob.toString())) ret.add(ob);
         }
       }
       ret.addAll(Arrays.asList(ancestry));
     }
     return ret.toArray();
+  }
+
+  private static boolean isClassPrivate(String lookup_string) {
+    return lookup_string.startsWith("__") && ! lookup_string.endsWith("__");
   }
 
   public String getName() {
