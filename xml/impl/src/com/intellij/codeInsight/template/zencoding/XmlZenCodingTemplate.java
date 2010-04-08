@@ -178,7 +178,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
 
   public static boolean isTrueXml(CustomTemplateCallback callback) {
     FileType type = callback.getFileType();
-    return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX;
+    return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
   }
 
   @Nullable
