@@ -15,17 +15,17 @@
  */
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.ide.passwordSafe.MasterPasswordUnavailableException;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 
 import javax.crypto.SecretKey;
 import java.io.UnsupportedEncodingException;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * The password safe that stores information in configuration file encrypted by master password
  */
-public final class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
+public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The test password key
    */
@@ -64,19 +64,27 @@ public final class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
   }
 
   /**
+   * @return true if the component is running in the test mode
+   */
+  protected boolean isTestMode() {
+    return false;
+  }
+
+  /**
    * Reset password for the password safe (clears password database). The method is used from plugin's UI.
    *
    * @param password the password to set
-   * @param encrypt if the password should be encrypted an stored is master database
+   * @param encrypt  if the password should be encrypted an stored is master database
    */
   void resetMasterPassword(String password, boolean encrypt) {
     this.key.set(EncryptionUtil.genPasswordKey(password));
     database.clear();
     try {
       storePassword(null, MasterKeyPasswordSafe.class, testKey(password), TEST_PASSWORD_VALUE);
-      if(encrypt) {
+      if (encrypt) {
         database.setPasswordInfo(encryptPassword(password));
-      } else {
+      }
+      else {
         database.setPasswordInfo(new byte[0]);
       }
     }
@@ -160,45 +168,51 @@ public final class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    */
   @Override
   protected SecretKey key(final Project project) throws PasswordSafeException {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!isTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
     }
     if (key.get() == null) {
-      final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          if (key.get() == null) {
-            try {
-              if (database.isEmpty()) {
-                ResetPasswordDialog.newPassword(project, MasterKeyPasswordSafe.this);
-              }
-              else {
-                if(isPasswordEncrypted()) {
-                  try {
-                     String s = decryptPassword(database.getPasswordInfo());
-                     if(setMasterPassword(s)) {
-                       return;
-                     }
-                  } catch(PasswordSafeException e) {
-                     // ignore exception and ask password
+      if (isPasswordEncrypted()) {
+        try {
+          String s = decryptPassword(database.getPasswordInfo());
+          setMasterPassword(s);
+        }
+        catch (PasswordSafeException e) {
+          // ignore exception and ask password
+        }
+      }
+      if (key.get() == null) {
+        final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          public void run() {
+            if (key.get() == null) {
+              try {
+                if (isTestMode()) {
+                  throw new MasterPasswordUnavailableException("Master password must be specified in test mode.");
+                }
+                if (database.isEmpty()) {
+                  if (!ResetPasswordDialog.newPassword(project, MasterKeyPasswordSafe.this)) {
+                    throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
                   }
                 }
-                MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this);
+                else {
+                  MasterPasswordDialog.askPassword(project, MasterKeyPasswordSafe.this);
+                }
+              }
+              catch (PasswordSafeException e) {
+                ex.set(e);
+              }
+              catch (Exception e) {
+                //noinspection ThrowableInstanceNeverThrown
+                ex.set(new MasterPasswordUnavailableException("The problem with retrieving the password", e));
               }
             }
-            catch (PasswordSafeException e) {
-              ex.set(e);
-            }
-            catch (Exception e) {
-              //noinspection ThrowableInstanceNeverThrown
-              ex.set(new MasterPasswordUnavailableException("The problem with retrieving the password", e));
-            }
           }
+        });
+        //noinspection ThrowableResultOfMethodCallIgnored
+        if (ex.get() != null) {
+          throw ex.get();
         }
-      });
-      //noinspection ThrowableResultOfMethodCallIgnored
-      if (ex.get() != null) {
-        throw ex.get();
       }
     }
     return this.key.get();

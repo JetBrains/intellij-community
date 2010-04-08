@@ -688,6 +688,8 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   }
 
   public AbstractProjectViewPane getProjectViewPaneById(String id) {
+    ensurePanesLoaded();
+
     final AbstractProjectViewPane pane = myId2Pane.get(id);
     if (pane != null) {
       return pane;

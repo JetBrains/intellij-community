@@ -99,7 +99,6 @@ public class PasswordDatabase implements PersistentStateComponent<PasswordDataba
    */
   public void putAll(Map<ByteArrayWrapper, byte[]> copy) {
     synchronized (myDatabase) {
-      myDatabase.clear();
       myDatabase.putAll(copy);
     }
   }
