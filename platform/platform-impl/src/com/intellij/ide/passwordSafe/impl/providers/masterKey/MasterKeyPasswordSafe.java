@@ -170,7 +170,9 @@ public final class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
           if (key.get() == null) {
             try {
               if (database.isEmpty()) {
-                ResetPasswordDialog.newPassword(project, MasterKeyPasswordSafe.this);
+                if(!ResetPasswordDialog.newPassword(project, MasterKeyPasswordSafe.this)) {
+                  throw new MasterPasswordUnavailableException("Master password is required to store passwords in the database.");
+                }
               }
               else {
                 if(isPasswordEncrypted()) {
