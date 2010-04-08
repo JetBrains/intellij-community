@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.growl;
-
-import com.sun.jna.NativeLong;
+package com.intellij.ide.passwordSafe;
 
 /**
- * @author spleaner
+ * The exception that is thrown when password safe is not available (unable to ask for master password)
  */
-public class Selector extends NativeLong {
-
-  private String myName;
-
-  public Selector() {
-    this("undefined selector", 0);
+public class PasswordSafeException extends Exception {
+  /**
+   * The constructor
+   *
+   * @param message the message
+   * @param cause   the cause
+   */
+  public PasswordSafeException(String message, Throwable cause) {
+    super(message, cause);
   }
 
-  public Selector(String name, long value) {
-    super(value);
-    myName = name;
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("[Selector %s]", myName);
-  }
-
-  public Selector initName(final String name) {
-    myName = name;
-    return this;
+  /**
+   * The constructor
+   *
+   * @param message the message
+   */
+  public PasswordSafeException(String message) {
+    super(message);
   }
 }

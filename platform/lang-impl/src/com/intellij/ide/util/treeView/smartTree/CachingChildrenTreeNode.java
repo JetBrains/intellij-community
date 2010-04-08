@@ -82,6 +82,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   }
 
   protected void sortChildren(Sorter[] sorters) {
+    if (myChildren == null) return;
+
     Collections.sort(myChildren, new CompositeComparator(sorters));
 
     for (CachingChildrenTreeNode child : myChildren) {

@@ -263,7 +263,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
       final PsiMethod method = (PsiMethod) element;
       if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO) {
         if (!method.isConstructor()) {
-          PsiType returnType = method.getReturnType();
+          PsiType returnType = PsiUtil.getSmartReturnType(method);
           if (returnType != null) {
             buffer.append(returnType.getPresentableText());
             buffer.append(" ");

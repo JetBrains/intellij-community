@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.growl;
+package com.intellij.ui.mac.growl;
 
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,30 +43,30 @@ public class Growl {
   }
 
   public void register() {
-    final ID autoReleasePool = createAutoReleasePool();
-    final ID applicationIcon = getApplicationIcon();
+    final Pointer autoReleasePool = createAutoReleasePool();
+    final Pointer applicationIcon = getApplicationIcon();
 
-    final ID defaultNotifications = fillArray(myDefaultNotification);
-    final ID allNotifications = fillArray(myAllNotifications);
+    final Pointer defaultNotifications = fillArray(myDefaultNotification);
+    final Pointer allNotifications = fillArray(myAllNotifications);
 
-    final ID userDict = createDict(new String[]{GROWL_APP_NAME, GROWL_APP_ICON, GROWL_DEFAULT_NOTIFICATIONS, GROWL_ALL_NOTIFICATIONS},
+    final Pointer userDict = createDict(new String[]{GROWL_APP_NAME, GROWL_APP_ICON, GROWL_DEFAULT_NOTIFICATIONS, GROWL_ALL_NOTIFICATIONS},
         new Object[]{myProductName, applicationIcon, defaultNotifications, allNotifications});
 
-    final ID center = invoke("NSDistributedNotificationCenter", "defaultCenter");
-    final Object notificationName = Foundation.cfString(GROWL_APPLICATION_REGISTRATION_NOTIFICATION).toNative();
+    final Pointer center = invoke("NSDistributedNotificationCenter", "defaultCenter");
+    final Object notificationName = Foundation.cfString(GROWL_APPLICATION_REGISTRATION_NOTIFICATION);
     invoke(center, "postNotificationName:object:userInfo:deliverImmediately:", notificationName, null, userDict, true);
 
     invoke(autoReleasePool, "release");
   }
 
   public void notifyGrowlOf(final String notification, final String title, final String description) {
-    final ID autoReleasePool = createAutoReleasePool();
+    final Pointer autoReleasePool = createAutoReleasePool();
 
-    final ID dict = createDict(new String[]{
+    final Pointer dict = createDict(new String[]{
         GROWL_NOTIFICATION_NAME, GROWL_NOTIFICATION_TITLE, GROWL_NOTIFICATION_DESCRIPTION, GROWL_APP_NAME},
         new Object[]{notification, title, description, myProductName});
-    final ID center = invoke("NSDistributedNotificationCenter", "defaultCenter");
-    final Object notificationName = Foundation.cfString(GROWL_NOTIFICATION).toNative();
+    final Pointer center = invoke("NSDistributedNotificationCenter", "defaultCenter");
+    final Object notificationName = Foundation.cfString(GROWL_NOTIFICATION);
 
     invoke(center, "postNotificationName:object:userInfo:deliverImmediately:", notificationName, null, dict, true);
     invoke(autoReleasePool, "release");
@@ -77,12 +80,12 @@ public class Growl {
     myDefaultNotification = defaultNotification;
   }
 
-  private static ID createAutoReleasePool() {
+  private static Pointer createAutoReleasePool() {
     return invoke("NSAutoreleasePool", "new");
   }
 
-  private static ID fillArray(final Object[] a) {
-    final ID result = invoke("NSMutableArray", "array");
+  private static Pointer fillArray(final Object[] a) {
+    final Pointer result = invoke("NSMutableArray", "array");
     for (Object s : a) {
       invoke(result, "addObject:", convertType(s));
     }
@@ -90,9 +93,9 @@ public class Growl {
     return result;
   }
 
-  private static ID createDict(@NotNull final String[] keys, @NotNull final Object[] values) {
-    final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
-    final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
+  private static Pointer createDict(@NotNull final String[] keys, @NotNull final Object[] values) {
+    final Pointer nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
+    final Pointer nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
 
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
   }
@@ -101,7 +104,7 @@ public class Growl {
     if (o instanceof ID) {
       return o;
     } else if (o instanceof String) {
-      return Foundation.cfString((String) o).toNative();
+      return Foundation.cfString((String) o);
     } else {
       throw new IllegalArgumentException("Unsupported type! " + o.getClass());
     }
@@ -116,21 +119,21 @@ public class Growl {
     return result;
   }
 
-  private static ID getApplicationIcon() {
-    final ID sharedApp = invoke("NSApplication", "sharedApplication");
-    final ID nsImage = invoke(sharedApp, "applicationIconImage");
+  private static Pointer getApplicationIcon() {
+    final Pointer sharedApp = invoke("NSApplication", "sharedApplication");
+    final Pointer nsImage = invoke(sharedApp, "applicationIconImage");
     return invoke(nsImage, "TIFFRepresentation");
   }
 
-  private static ID invoke(@NotNull final String className, @NotNull final String selector, Object... args) {
+  private static Pointer invoke(@NotNull final String className, @NotNull final String selector, Object... args) {
     return invoke(Foundation.getClass(className), selector, args);
   }
 
-  private static ID invoke(@NotNull final ID id, @NotNull final String selector, Object... args) {
+  private static Pointer invoke(@NotNull final Pointer id, @NotNull final String selector, Object... args) {
     return invoke(id, Foundation.createSelector(selector), args);
   }
 
-  private static ID invoke(@NotNull final ID id, @NotNull final Selector selector, Object... args) {
+  private static Pointer invoke(@NotNull final Pointer id, @NotNull final Pointer selector, Object... args) {
     return Foundation.invoke(id, selector, args);
   }
 }

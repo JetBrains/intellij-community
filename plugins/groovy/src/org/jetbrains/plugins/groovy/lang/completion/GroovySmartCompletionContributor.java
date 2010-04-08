@@ -39,6 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -133,7 +134,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       return PsiType.getJavaLangClass(context.getManager(), GlobalSearchScope.allScope(context.getProject()));
     }
     if (element instanceof PsiMethod) {
-      return ((PsiMethod)element).getReturnType();
+      return PsiUtil.getSmartReturnType((PsiMethod)element);
     }
     if (element instanceof GrVariable) {
       return ((GrVariable)element).getTypeGroovy();
