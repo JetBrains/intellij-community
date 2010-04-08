@@ -53,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -669,11 +668,8 @@ public class GroovyToJavaGenerator {
     }
 
     //append return type
-    PsiType retType;
-    if (method instanceof GrMethod) {
-      retType = ((GrMethod) method).getDeclaredReturnType();
-      if (retType == null) retType = TypesUtil.getJavaLangObject(method);
-    } else retType = method.getReturnType();
+    PsiType retType = method.getReturnType();
+    if (retType == null) retType = TypesUtil.getJavaLangObject(method);
 
     text.append(getTypeText(retType, false));
     text.append(" ");

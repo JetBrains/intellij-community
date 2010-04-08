@@ -36,8 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -49,6 +48,8 @@ public class NameSuggestionsField extends JPanel {
   private final Project myProject;
   private MyDocumentListener myDocumentListener;
   private MyComboBoxItemListener myComboBoxItemListener;
+
+  private boolean myNonHumanChange = false;
 
   public NameSuggestionsField(Project project) {
     super(new BorderLayout());
@@ -207,7 +208,13 @@ public class NameSuggestionsField extends JPanel {
   }
 
   private void setupComboBox(final ComboBox combobox, FileType fileType) {
-    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, fileType, combobox);
+    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, fileType, combobox) {
+      @Override
+      public void setItem(Object anObject) {
+        myNonHumanChange = true;
+        super.setItem(anObject);
+      }
+    };
 
     combobox.setEditor(comboEditor);
     combobox.setRenderer(new EditorComboBoxRenderer(comboEditor));
@@ -294,9 +301,10 @@ public class NameSuggestionsField extends JPanel {
     }
 
     public void documentChanged(DocumentEvent event) {
-      if (myComponent instanceof JComboBox) {
+      if (!myNonHumanChange && myComponent instanceof JComboBox && ((JComboBox)myComponent).isPopupVisible()) {
         ((JComboBox)myComponent).hidePopup();
       }
+      myNonHumanChange = false;
 
       fireDataChanged();
     }

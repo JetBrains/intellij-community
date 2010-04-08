@@ -27,6 +27,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -175,7 +176,13 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   public void update(final AnActionEvent event){
     final ConfigurationContext context = new ConfigurationContext(event.getDataContext());
     final Presentation presentation = event.getPresentation();
-    final RunnerAndConfigurationSettings configuration = context.getConfiguration();
+    RunnerAndConfigurationSettings configuration;
+    try {
+      configuration = context.getConfiguration();
+    }
+    catch (IndexNotReadyException e) {
+      configuration = null;
+    }
     if (configuration == null){
       presentation.setEnabled(false);
       presentation.setVisible(false);

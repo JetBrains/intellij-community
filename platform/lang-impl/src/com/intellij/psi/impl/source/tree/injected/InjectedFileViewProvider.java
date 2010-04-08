@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author cdr
 */
-class InjectedFileViewProvider extends SingleRootFileViewProvider {
+public class InjectedFileViewProvider extends SingleRootFileViewProvider {
   private final Object LOCK = new Object();
   private Place myShreds;
   private Project myProject;
@@ -113,7 +113,7 @@ class InjectedFileViewProvider extends SingleRootFileViewProvider {
 
   void setShreds(Place shreds) {
     synchronized (myLock) {
-      myShreds = new Place(shreds, shreds.getInjectedPsi());
+      myShreds = new Place(shreds);
       myProject = shreds.get(0).host.getProject();
       ((DocumentWindowImpl)myDocumentWindow).setShreds(myShreds);
     }

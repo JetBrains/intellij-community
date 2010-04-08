@@ -20,10 +20,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
-import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.fileChooser.ex.FileSaverDialogImpl;
+import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.mac.MacFileChooserDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,10 +34,18 @@ import java.util.Set;
 
 public class FileChooserFactoryImpl extends FileChooserFactory {
   public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project) {
+    if (SystemInfo.isMac && System.getProperty("idea.use.native.mac.filechooser", Boolean.FALSE.toString()).equals(Boolean.TRUE.toString())) {
+      return new MacFileChooserDialog(descriptor);
+    }
+
     return new FileChooserDialogImpl(descriptor, project);
   }
 
   public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent) {
+    if (SystemInfo.isMac && System.getProperty("idea.use.native.mac.filechooser", Boolean.FALSE.toString()).equals(Boolean.TRUE.toString())) {
+      return new MacFileChooserDialog(descriptor);
+    }
+
     return new FileChooserDialogImpl(descriptor, parent);
   }
 

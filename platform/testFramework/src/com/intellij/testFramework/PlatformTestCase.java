@@ -498,53 +498,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     SwingUtilities.invokeAndWait(runnable);
   }
 
-  protected void runTest() throws Throwable {
-    /*
-    Method runMethod = null;
-    try {
-      runMethod = getClass().getMethod(getName(), new Class[0]);
-    }
-    catch (NoSuchMethodException e) {
-      fail("Method \"" + getName() + "\" not found");
-    }
-    if (runMethod != null && !Modifier.isPublic(runMethod.getModifiers())) {
-      fail("Method \"" + getName() + "\" should be public");
-    }
-
-    final Method method = runMethod;
-    */
-
-    final Throwable[] throwables = new Throwable[1];
-
-    Runnable runnable = new Runnable() {
-      public void run() {
-        try {
-          PlatformTestCase.super.runTest();
-          /*
-          method.invoke(IdeaTestCase.this, new Class[0]);
-          */
-        }
-        catch (InvocationTargetException e) {
-          e.fillInStackTrace();
-          throwables[0] = e.getTargetException();
-        }
-        catch (IllegalAccessException e) {
-          e.fillInStackTrace();
-          throwables[0] = e;
-        }
-        catch (Throwable e) {
-          throwables[0] = e;
-        }
-      }
-    };
-
-    invokeTestRunnable(runnable);
-
-    if (throwables[0] != null) {
-      throw throwables[0];
-    }
-  }
-
   protected boolean isRunInWriteAction() {
     return true;
   }

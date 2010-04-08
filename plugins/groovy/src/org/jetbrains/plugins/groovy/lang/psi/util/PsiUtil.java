@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -541,7 +542,7 @@ public class PsiUtil {
     if (resolveResults.length == 0) return false;
     final PsiElement element = resolveResults[0].getElement();
     if (element instanceof PsiMethod) {
-      PsiType returnType = ((PsiMethod)element).getReturnType();
+      PsiType returnType = getSmartReturnType((PsiMethod)element);
       return isRawType(returnType, resolveResults[0].getSubstitutor());
     }
     return false;
@@ -599,7 +600,7 @@ public class PsiUtil {
       if (candidates.length == 1) {
         final PsiElement element = candidates[0].getElement();
         if (element instanceof PsiMethod) {
-          type = ((PsiMethod)element).getReturnType();
+          type = getSmartReturnType((PsiMethod)element);
         }
       }
       return isRawType(type, resolveResult.getSubstitutor());
@@ -729,5 +730,9 @@ public class PsiUtil {
       }
     }
     return elem;
+  }
+
+  public static PsiType getSmartReturnType(PsiMethod method) {
+    return method instanceof GrMethod ? ((GrMethod)method).getInferredReturnType() : method.getReturnType();
   }
 }

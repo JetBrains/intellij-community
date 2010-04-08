@@ -31,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author cdr
 */
-class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider<Places, PsiElement> {
-  public CachedValueProvider.Result<Places> compute(PsiElement element) {
+class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider<MultiHostRegistrarImpl, PsiElement> {
+  public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement element) {
     PsiFile hostPsiFile = element.getContainingFile();
     if (hostPsiFile == null) return null;
     FileViewProvider viewProvider = hostPsiFile.getViewProvider();
@@ -43,16 +43,17 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
     if (injectedManager == null) return null; //for tests
-    final Places result = doCompute(element, injectedManager, project, hostPsiFile);
+    final MultiHostRegistrarImpl result = doCompute(element, injectedManager, project, hostPsiFile);
 
-    return new CachedValueProvider.Result<Places>(result, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
+    return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
   }
 
   @Nullable
-  static Places doCompute(final PsiElement element, InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
+  static MultiHostRegistrarImpl doCompute(final PsiElement element, InjectedLanguageManagerImpl injectedManager, Project project, PsiFile hostPsiFile) {
     MyInjProcessor processor = new MyInjProcessor(project, hostPsiFile);
     injectedManager.processInPlaceInjectorsFor(element, processor);
-    return processor.hostRegistrar == null ? null : processor.hostRegistrar.result;
+    MultiHostRegistrarImpl registrar = processor.hostRegistrar;
+    return registrar == null || registrar.result == null ? null : registrar;
   }
 
   private static class MyInjProcessor implements InjectedLanguageManagerImpl.InjProcessor {
