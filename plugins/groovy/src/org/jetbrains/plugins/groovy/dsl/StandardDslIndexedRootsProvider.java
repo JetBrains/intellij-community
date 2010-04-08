@@ -40,7 +40,7 @@ public class StandardDslIndexedRootsProvider implements IndexedRootsProvider {
     }
 
     final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByPath(dirPath);
-    assert parent != null;
+    assert parent != null : dirPath;
     parent.getChildren();
     ourDslsDir = parent.getUrl();
     parent.refresh(true, true);
