@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,27 +52,12 @@ public class PySplitIfIntention extends BaseIntentionAction {
     }
     PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    StringBuilder builder = new StringBuilder();
-  
-    builder.append("if ").append(element.getLeftExpression().getText()).append(":\n");
-    builder.append("    if ").append(element.getRightExpression().getText()).append(":");
-    appendStatements(ifStatement.getIfPart().getStatementList(), builder);
-    final PyIfPart[] elifParts = ifStatement.getElifParts();
-    for (PyIfPart elifPart: elifParts) {
-      builder.append("\n    elif ").append(elifPart.getCondition().getText()).append(":");
-      appendStatements(elifPart.getStatementList(), builder);
-    }
-    final PyElsePart elsePart = ifStatement.getElsePart();
-    if (elsePart != null) {
-      builder.append("\n    else:");
-      appendStatements(elsePart.getStatementList(), builder);
-    }
-    ifStatement.getIfPart().replace(elementGenerator.createFromText(PyIfStatement.class, builder.toString()));
-  }
-
-  private static void appendStatements(PyStatementList statementList, StringBuilder builder) {
-    for (PyStatement statement : statementList.getStatements()) {
-      builder.append("\n       ").append(statement.getText());
-    }
+    
+    PyIfStatement subIf = (PyIfStatement) ifStatement.copy();
+    subIf.getIfPart().getCondition().replace(element.getRightExpression());
+    ifStatement.getIfPart().getCondition().replace(element.getLeftExpression());
+    PyStatementList statementList = elementGenerator.createFromText(PyIfStatement.class, "if a:\n    a = 1").getIfPart().getStatementList();
+    statementList.getStatements()[0].replace(subIf);
+    ifStatement.getIfPart().getStatementList().replace(statementList);
   }
 }

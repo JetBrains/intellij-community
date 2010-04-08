@@ -7,16 +7,11 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.Filter;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -38,16 +33,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.PairProcessor;
 import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
-import com.jetbrains.django.util.DjangoUtil;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,17 +56,17 @@ public class PyConsoleRunner {
   private final String myConsoleTitle;
 
   private OSProcessHandler myProcessHandler;
-  private final CommandLineArgumentsProvider myProvider;
-  private final String myWorkingDir;
+  protected final CommandLineArgumentsProvider myProvider;
+  protected final String myWorkingDir;
 
-  private PyLanguageConsoleView myConsoleView;
+  protected PyLanguageConsoleView myConsoleView;
   private final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
   private AnAction myRunAction;
 
-  private PyConsoleRunner(@NotNull final Project project,
+  public PyConsoleRunner(@NotNull final Project project,
                           @NotNull final String consoleTitle,
                           @NotNull final CommandLineArgumentsProvider provider,
-                          @Nullable final String workingDir) throws ExecutionException {
+                          @Nullable final String workingDir) {
     myProject = project;
     myConsoleTitle = consoleTitle;
     myProvider = provider;
@@ -88,39 +77,26 @@ public class PyConsoleRunner {
                          @NotNull final String consoleTitle,
                          @NotNull final CommandLineArgumentsProvider provider,
                          @Nullable final String workingDir) {
+
+    final PyConsoleRunner consoleRunner = new PyConsoleRunner(project, consoleTitle, provider, workingDir);
     try {
-      final PyConsoleRunner consoleRunner = createRunner(project, consoleTitle, provider, workingDir);
-      initAndRun(consoleRunner);
+      consoleRunner.initAndRun();
     }
     catch (ExecutionException e) {
       ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
     }
   }
 
-  @NotNull
-  public static PyConsoleRunner createRunner(@NotNull final Project project,
-                                             @NotNull final String consoleTitle,
-                                             @NotNull final CommandLineArgumentsProvider provider,
-                                             @Nullable final String workingDir) throws ExecutionException {
-    return new PyConsoleRunner(project, consoleTitle, provider, workingDir);
-  }
-
-  public static void initAndRun(@NotNull final PyConsoleRunner runner) throws ExecutionException {
-    runner.init();
-    runner.doRun();
-  }
-
-  private void init() throws ExecutionException {
-// add holder created
-    final Process process = Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
-
-    final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
-    myProcessHandler = new PyConsoleProcessHandler(this, process, getProviderCommandLine(), outputEncoding);
-
-    ProcessTerminatedListener.attach(myProcessHandler);
+  public void initAndRun() throws ExecutionException {
+    // Create Server process
+    final Process process = createProcess();
 
     // Init console view
     myConsoleView = new PyLanguageConsoleView(myProject, myConsoleTitle);
+
+    myProcessHandler = createProcessHandler(process);
+
+    ProcessTerminatedListener.attach(myProcessHandler);
 
     // Set language level
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
@@ -138,7 +114,7 @@ public class PyConsoleRunner {
         break;
       }
     }
-    
+
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
@@ -191,6 +167,19 @@ public class PyConsoleRunner {
         IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getCurrentEditor().getContentComponent(), true);
       }
     });
+// Run
+    myProcessHandler.startNotify();
+  }
+
+
+  @Nullable
+  protected Process createProcess() throws ExecutionException {
+    return Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
+  }
+
+  protected PyConsoleProcessHandler createProcessHandler(final Process process) {
+    final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
+    return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(), outputEncoding);
   }
 
   private void registerActionShortcuts(final AnAction[] actions, final JComponent component) {
@@ -252,11 +241,9 @@ public class PyConsoleRunner {
     return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
   }
 
-  private void doRun() {
-    myProcessHandler.startNotify();
-  }
-
-  private static void sendInput(final String input, final Charset charset, final OutputStream outputStream) {
+  protected void sendInput(final String input) {
+    final Charset charset = myProcessHandler.getCharset();
+    final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {
       byte[] bytes = input.getBytes(charset.name());
       outputStream.write(bytes);
@@ -285,7 +272,7 @@ public class PyConsoleRunner {
       myHistory.addToHistory(line);          
     }
     final String text2send = line.length() == 0 ? "\n\n" : line + "\n";
-    sendInput(text2send, myProcessHandler.getCharset(), myProcessHandler.getProcessInput());
+    sendInput(text2send);
     myConsoleView.inputSent(text2send);
   }
 

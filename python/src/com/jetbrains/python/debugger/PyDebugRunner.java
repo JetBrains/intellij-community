@@ -22,10 +22,12 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -66,6 +68,13 @@ public class PyDebugRunner extends GenericProgramRunner {
         // script name is the last parameter; all other params are for python interpreter; insert just before name
         final ParametersList parameters_list = commandLine.getParametersList();
         int parameter_offset = pyState.getInterpreterOptionsCount();
+        final PythonSdkFlavor flavor = pyState.getConfig().getSdkFlavor();
+        if (flavor != null) {
+          final Collection<String> options = flavor.getExtraDebugOptions();
+          for (String option : options) {
+            parameters_list.addAt(parameter_offset++, option);
+          }
+        }
         for (int i = 0; i < args.length; i++) {
           parameters_list.addAt(i + parameter_offset, args[i]);
         }

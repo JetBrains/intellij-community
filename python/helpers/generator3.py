@@ -1,5 +1,4 @@
 # encoding: utf-8
-import re
 """
 This thing tries to restore public interface of objects that don't have a python
 source: C extensions and built-in objects. It does not reimplement the
@@ -24,6 +23,7 @@ import os
 import string
 import stat
 import types
+import atexit
 #import __builtin__
 
 try:
@@ -32,6 +32,9 @@ except ImportError:
   inspect = None # it may fail
 
 import re
+
+if sys.platform == 'cli':
+  import clr
 
 string_mod = string
 
@@ -160,6 +163,31 @@ def sortedNoCase(p_array):
     p_array.sort(key=lambda x: x.upper())
     
   return p_array
+
+def cleanup(value):
+  result = ''
+  for c in value:
+    if c == '\n': result += '\\n'
+    elif c == '\r': result += '\\r'
+    elif c < ' ' or c > chr(127): result += '?'
+    else: result += c
+  return result
+
+# http://blogs.msdn.com/curth/archive/2009/03/29/an-ironpython-profiler.aspx
+def print_profile():
+  data = []
+  data.extend(clr.GetProfilerData())
+  data.sort(lambda x, y: -cmp(x.InclusiveTime, y.InclusiveTime))
+  for p in data:
+    print '%s\t%d\t%d\t%d' % (p.Name, p.InclusiveTime, p.ExclusiveTime, p.Calls)
+
+def is_clr_type(t):
+  if not t: return False
+  try:
+    clr.GetClrType(t)
+    return True
+  except TypeError:
+    return False
 
 _prop_types = [type(property())]
 try: _prop_types.append(types.GetSetDescriptorType)
@@ -613,7 +641,7 @@ class ModuleRedeclarator(object):
           else:
             # a forward / circular declaration happens
             notice = ""
-            s = repr(p_value)
+            s = cleanup(repr(p_value))
             if found_name:
               if found_name == as_name:
                 notice = " # (!) real value is " + s
@@ -739,6 +767,27 @@ class ModuleRedeclarator(object):
       spec.append("**" + kwarg)
     return flatten(spec)
 
+  def restoreClr(self, p_func, p_name, p_class):
+    """Restore the function signature by the CLR type signature"""
+    clr_type = clr.GetClrType(p_class)
+    if p_name == '__new__':
+      methods = clr_type.GetConstructors()
+      if not methods:
+        return p_name + '(*args)   # could not find CLR constructor'
+    else:
+      methods = [m for m in clr_type.GetMethods() if m.Name == p_name]
+      if not methods:
+        return p_name + '(*args)   # could not find CLR method'
+    method = methods[0]
+    for overload in methods[1:]:
+      if len(overload.GetParameters()) < len(method.GetParameters()): method = overload
+    params = [p.Name for p in method.GetParameters()]
+    if not method.IsStatic:
+      params = ['self'] + params
+    if len(methods) > 1:
+      params.append("*___args")
+    return p_name + '(' + ', '.join(params) + ')'
+
   def redoFunction(self, p_func, p_name, indent, p_class=None, p_modname=None):
     """
     Restore function argument list as best we can.
@@ -771,6 +820,7 @@ class ModuleRedeclarator(object):
       #self.out("@staticmethod # known case of __new__", indent)
       deco = "staticmethod"
       deco_comment = " # known case of __new__"
+
     if deco and HAS_DECORATORS:
       self.out("@" + deco + deco_comment, indent)
     if inspect and inspect.isfunction(p_func):
@@ -780,7 +830,10 @@ class ModuleRedeclarator(object):
       spec, sig_note = self.restorePredefinedBuiltin(classname, p_name)
       self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocAttr(p_func, indent+1, p_class)
-
+    elif sys.platform == 'cli' and is_clr_type(p_class):
+      spec = self.restoreClr(p_func, p_name, p_class)
+      self.out("def " + spec + ":", indent)
+      self.outDocAttr(p_func, indent+1, p_class)
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
@@ -1042,8 +1095,10 @@ if __name__ == "__main__":
   -q -- quiet, do not print anything on stdout. Errors still go to stderr.
   -u -- update, only recreate skeletons for newer files, and skip unchanged.
   -x -- die on exceptions with a stacktrace; only for debugging.
+  -c modules -- import CLR assemblies with specified names
+  -p -- run CLR profiler
   """
-  opts, fnames = getopt(sys.argv[1:], "d:hbqux")
+  opts, fnames = getopt(sys.argv[1:], "d:hbquxc:p")
   opts = dict(opts)
   if not opts or '-h' in opts:
     print(helptext)
@@ -1066,6 +1121,18 @@ if __name__ == "__main__":
       names.remove('__main__') # we don't want ourselves processed
   else:
     doing_builtins = False
+
+  if sys.platform == 'cli':
+    refs = opts.get('-c', '')
+    if refs:
+      for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
+
+    if '-p' in opts:
+      atexit.register(print_profile)
+
+    from System import DateTime
+    start = DateTime.Now
+
   # go on
   for name in names:
     if not quiet:
@@ -1126,3 +1193,6 @@ if __name__ == "__main__":
         raise
       else:
         continue
+
+  if sys.platform == 'cli':
+    print "Generation completed in " + str((DateTime.Now - start).TotalMilliseconds) + " ms"

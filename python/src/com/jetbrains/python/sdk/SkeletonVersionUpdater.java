@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -18,7 +18,7 @@ import java.util.List;
 public class SkeletonVersionUpdater implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SkeletonVersionUpdater");
 
-  public static int SKELETONS_VERSION = 2;
+  public static int SKELETONS_VERSION = 3;
 
   public SkeletonVersionUpdater(StartupManager startupManager) {
     startupManager.registerStartupActivity(new Runnable() {
@@ -30,10 +30,9 @@ public class SkeletonVersionUpdater implements ProjectComponent {
             writeVersion(versionFile, SKELETONS_VERSION);
             final List<Sdk> sdkList = PythonSdkType.getAllSdks();
             for (Sdk sdk : sdkList) {
-              final String url = PythonSdkType.findSkeletonsUrl(sdk);
-              final String path = VfsUtil.urlToPath(url);
+              final String path = PythonSdkType.findSkeletonsPath(sdk);
               PythonSdkType.generateBuiltinStubs(sdk.getHomePath(), path);
-              PythonSdkType.generateBinaryStubs(sdk.getHomePath(), path, ProgressManager.getInstance().getProgressIndicator());
+              PythonSdkType.generateBinarySkeletons(sdk.getHomePath(), path, ProgressManager.getInstance().getProgressIndicator());
             }
           }
         }

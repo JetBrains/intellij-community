@@ -48,11 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
-import java.util.regex.Pattern;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
 
@@ -63,7 +59,7 @@ public class PythonSdkType extends SdkType {
   private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
-  static final int RUN_TIMEOUT = 30 * 1000; // 30 seconds per script invocation is plenty; anything more seems wrong (10 wasn't enough tho).
+  static final int RUN_TIMEOUT = 60 * 1000; // 60 seconds per script invocation is plenty; anything more seems wrong (10 wasn't enough tho).
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -99,8 +95,6 @@ public class PythonSdkType extends SdkType {
     return PyBuiltinCache.BUILTIN_FILE;
   }
 
-  @NonNls static final private String PYTHON_STR = "python";
-
   @NonNls
   @Nullable
   public String suggestHomePath() {
@@ -109,49 +103,8 @@ public class PythonSdkType extends SdkType {
         return findDigits(o1).compareTo(findDigits(o2));
       }
     });
-    if (SystemInfo.isWindows) {
-      findSubdirInstallations(candidates, "C:\\", PYTHON_STR, "python.exe");
-      findSubdirInstallations(candidates, "C:\\Program Files\\", PYTHON_STR, "python.exe");
-      findSubdirInstallations(candidates, "C:\\", "jython", "jython.bat");
-    }
-    else if (SystemInfo.isMac) {
-      final String pythonPath = "/Library/Frameworks/Python.framework/Versions";
-      VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath(pythonPath);
-      if (rootVDir != null) {
-        for (VirtualFile dir : rootVDir.getChildren()) {
-          final String dir_name = dir.getName().toLowerCase();
-          if (dir.isDirectory()) {
-            if ("Current".equals(dir_name) || dir_name.startsWith("2") || dir_name.startsWith("3") || dir_name.startsWith("jython")) {
-              VirtualFile bin_dir = dir.findChild("bin");
-              if (bin_dir != null && bin_dir.isDirectory()) {
-                VirtualFile python_exe = dir.findChild(PYTHON_STR);
-                if (python_exe != null) candidates.add(python_exe.getPath());
-                python_exe = dir.findChild("jython"); // maybe it's in bin/
-                if (python_exe != null) candidates.add(python_exe.getPath());
-              }
-              else {
-                VirtualFile python_exe = dir.findChild("jython"); // maybe it's not in bin/
-                if (python_exe != null) candidates.add(python_exe.getPath());
-              }
-            }
-          }
-        }
-      }
-    }
-    else if (SystemInfo.isUnix) {
-      VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath("/usr/bin");
-      if (rootDir != null) {
-        VirtualFile[] suspects = rootDir.getChildren();
-        for (VirtualFile child : suspects) {
-          if (!child.isDirectory()) {
-            final String child_name = child.getName();
-            if (child_name.startsWith(PYTHON_STR) || child_name.startsWith("jython")) {
-              candidates.add(child.getPath());
-            }
-          }
-        }
-        candidates.add(rootDir.getPath());
-      }
+    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
+      candidates.addAll(flavor.suggestHomePaths());
     }
 
     if (candidates.size() > 0) {
@@ -174,20 +127,8 @@ public class PythonSdkType extends SdkType {
     return s;
   }
 
-  private static void findSubdirInstallations(TreeSet<String> candidates, String rootDir, String dir_prefix, String exe_name) {
-    VirtualFile rootVDir = LocalFileSystem.getInstance().findFileByPath("C:\\");
-    if (rootVDir != null) {
-      for (VirtualFile dir : rootVDir.getChildren()) {
-        if (dir.isDirectory() && dir.getName().toLowerCase().startsWith(dir_prefix)) {
-          VirtualFile python_exe = dir.findChild(exe_name);
-          if (python_exe != null) candidates.add(python_exe.getPath());
-        }
-      }
-    }
-  }
-
   public boolean isValidSdkHome(final String path) {
-    return isPythonSdkHome(path) || isJythonSdkHome(path);
+    return PythonSdkFlavor.getFlavor(path) != null;
   }
 
   @Override
@@ -223,29 +164,6 @@ public class PythonSdkType extends SdkType {
     };
     result.setTitle(PyBundle.message("sdk.select.path"));
     return result;
-  }
-
-  /**
-   * Checks if the path is the name of a Python intepreter.
-   *
-   * @param path path to check.
-   * @return true if paths points to a valid home.
-   */
-  @NonNls
-  private static boolean isPythonSdkHome(final String path) {
-    File file = new File(path);
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
-  }
-
-  /**
-   * Checks if the path is the name of a Jython intepreter.
-   *
-   * @param path path to check.
-   * @return true if paths points to a valid home.
-   */
-  private static boolean isJythonSdkHome(final String path) {
-    File file = new File(path);
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("jython");
   }
 
   /**
@@ -429,9 +347,8 @@ public class PythonSdkType extends SdkType {
       }
     }
     // fix skeletons as needed
-    String url = findSkeletonsUrl(currentSdk);
-    if (url != null) {
-      final String path = VfsUtil.urlToPath(url);
+    final String path = findSkeletonsPath(currentSdk);
+    if (path != null) {
       File stubs_dir = new File(path);
       if (!stubs_dir.exists()) {
         final ProgressManager progman = ProgressManager.getInstance();
@@ -441,7 +358,7 @@ public class PythonSdkType extends SdkType {
           public void run(@NotNull final ProgressIndicator indicator) {
             try {
               generateBuiltinStubs(currentSdk.getHomePath(), path);
-              generateBinaryStubs(currentSdk.getHomePath(), path, indicator);
+              generateBinarySkeletons(currentSdk.getHomePath(), path, indicator);
             }
             catch (Exception e) {
               LOG.error(e);
@@ -487,11 +404,11 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static String findSkeletonsUrl(Sdk sdk) {
+  public static String findSkeletonsPath(Sdk sdk) {
     final String[] urls = sdk.getRootProvider().getUrls(BUILTIN_ROOT_TYPE);
     for (String url : urls) {
       if (url.contains(SKELETON_DIR_NAME)) {
-        return url;
+        return VfsUtil.urlToPath(url);
       }
     }
     return null;
@@ -605,7 +522,7 @@ public class PythonSdkType extends SdkType {
       // regenerate stubs, existing or not
       final File stubs_dir = new File(stubs_path);
       if (!stubs_dir.exists()) stubs_dir.mkdirs();
-      generateBinaryStubs(bin_path, stubs_path, indicator);
+      generateBinarySkeletons(bin_path, stubs_path, indicator);
     }
   }
 
@@ -639,28 +556,8 @@ public class PythonSdkType extends SdkType {
 
   @Nullable
   public String getVersionString(final String sdkHome) {
-    final String binaryPath = getInterpreterPath(sdkHome);
-    if (binaryPath == null) {
-      return null;
-    }
-    final boolean isJython = isJythonSdkHome(sdkHome);
-    @NonNls String version_regexp, version_opt;
-    if (isJython) {
-      version_regexp = "(Jython \\S+) on .*";
-      version_opt = "--version";
-    }
-    else { // CPython
-      version_regexp = "(Python \\S+).*";
-      version_opt = "-V";
-    }
-    Pattern pattern = Pattern.compile(version_regexp);
-    String run_dir = new File(binaryPath).getParent();
-    final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{binaryPath, version_opt});
-    if (process_output.getExitCode() != 0) {
-      throw new RuntimeException(process_output.getStderr() + " (exit code " + process_output.getExitCode() + ")");
-    }
-    String version = SdkUtil.getFirstMatch(process_output.getStderrLines(), pattern);
-    return version;
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
+    return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }
 
   @Nullable
@@ -685,7 +582,7 @@ public class PythonSdkType extends SdkType {
         "-b", // for builtins
         "-u", // for update-only mode
       },
-      getVirtualEnvAdditionalEnv(binary_path), RUN_TIMEOUT
+      getVirtualEnvAdditionalEnv(binary_path), RUN_TIMEOUT*5
     );
     if (run_result.getExitCode() != 0) {
       LOG.error(run_result.getStderr() + (run_result.isTimeout()? "\nTimed out" : "\nExit code " + run_result.getExitCode()));
@@ -700,8 +597,7 @@ public class PythonSdkType extends SdkType {
    * @param stubsRoot where to put results (expected to exist).
    * @param indicator ProgressIndicator to update, or null.
    */
-  public static void generateBinaryStubs(final String binaryPath, final String stubsRoot, ProgressIndicator indicator)
-  {
+  public static void generateBinarySkeletons(final String binaryPath, final String stubsRoot, ProgressIndicator indicator) {
     if (indicator != null) {
       indicator.setText("Generating skeletons of binary libs");
     }
@@ -732,19 +628,7 @@ public class PythonSdkType extends SdkType {
             indicator.setText2(modname);
           }
           LOG.info("Skeleton for " + modname);
-          final ProcessOutput gen_result = SdkUtil.getProcessOutput(
-            parent_dir,
-            new String[]{binaryPath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-d", stubsRoot, modname},
-            getVirtualEnvAdditionalEnv(binaryPath),
-            RUN_TIMEOUT
-          );
-          if (gen_result.getExitCode() != 0) {
-            StringBuffer sb = new StringBuffer("Skeleton for ");
-            sb.append(modname).append(" failed. stderr: --");
-            for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
-            sb.append("--");
-            LOG.warn(sb.toString());
-          }
+          generateSkeleton(binaryPath, stubsRoot, modname, Collections.<String>emptyList());
         }
       }
     }
@@ -755,6 +639,34 @@ public class PythonSdkType extends SdkType {
       ;
       for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
       throw new InvalidSdkException(sb.toString());
+    }
+  }
+
+  public static void generateSkeleton(String binaryPath, String stubsRoot, String modname, List<String> assemblyRefs) {
+    final String parent_dir = new File(binaryPath).getParent();
+    List<String> commandLine = new ArrayList<String>();
+    commandLine.add(binaryPath);
+    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
+    commandLine.add("-d");
+    commandLine.add(stubsRoot);
+    if (!assemblyRefs.isEmpty()) {
+      commandLine.add("-c");
+      commandLine.add(StringUtil.join(assemblyRefs, ";"));
+    }
+    commandLine.add(modname);
+
+    final ProcessOutput gen_result = SdkUtil.getProcessOutput(
+      parent_dir,
+      commandLine.toArray(new String[commandLine.size()]),
+      getVirtualEnvAdditionalEnv(binaryPath),
+      RUN_TIMEOUT*10
+    );
+    if (gen_result.getExitCode() != 0) {
+      StringBuffer sb = new StringBuffer("Skeleton for ");
+      sb.append(modname).append(" failed. stderr: --");
+      for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
+      sb.append("--");
+      LOG.warn(sb.toString());
     }
   }
 

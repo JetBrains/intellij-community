@@ -102,6 +102,14 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     return callee;
   }
 
+  public boolean isCalleeText(@NotNull String name) {
+    final PyExpression callee = getCallee();
+    if (!(callee instanceof PyReferenceExpression)) {
+      return false;
+    }
+    return name.equals(((PyReferenceExpression)callee).getReferencedName());
+  }
+
   @Override
   public String toString() {
     return "PyDecorator: @" + PyUtil.getReadableRepr(getCallee(), true); //getCalledFunctionReference().getReferencedName();
