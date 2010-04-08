@@ -113,11 +113,13 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     TreeUtil.expandAll(myCommitTree);
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     UpdatePolicyUtils.updatePolicyItem(settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY, myStashRadioButton, myShelveRadioButton, null);
-    myStashRadioButton.addChangeListener(new ChangeListener() {
+    ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         settings.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null);
       }
-    });
+    };
+    myStashRadioButton.addChangeListener(listener);
+    myShelveRadioButton.addChangeListener(listener);
     myCommitTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         TreePath path = myCommitTree.getSelectionModel().getSelectionPath();
