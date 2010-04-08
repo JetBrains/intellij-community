@@ -73,14 +73,14 @@ public class VariantsProcessor implements PsiScopeProcessor {
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       final String name = psiNamedElement.getName();
-      if (name != null && !myVariants.containsKey(name) && myNameFilter != null && myNameFilter.value(name)) {
+      if (nameIsAcceptable(name)) {
         myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement).setIcon(element.getIcon(0))));
       }
     }
     else if (element instanceof PyReferenceExpression) {
       PyReferenceExpression expr = (PyReferenceExpression)element;
       String referencedName = expr.getReferencedName();
-      if (referencedName != null && !myVariants.containsKey(referencedName) && myNameFilter != null && myNameFilter.value(referencedName)) {
+      if (nameIsAcceptable(referencedName)) {
         myVariants.put(referencedName, setupItem(LookupElementBuilder.create(referencedName)));
       }
     }
@@ -92,7 +92,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
           Icon icon = element.getIcon(0);
           // things like PyTargetExpression cannot have a general icon, but here we only have variables
           if (icon == null) icon = Icons.VARIABLE_ICON;
-          if (referencedName != null && !myVariants.containsKey(referencedName) && myNameFilter != null && myNameFilter.value(referencedName)) {
+          if (nameIsAcceptable(referencedName)) {
             LookupElementBuilder lookup_item = setupItem(LookupElementBuilder.create(referencedName).setIcon(icon));
             if (definer instanceof PyImportElement) { // set notice to imported module name if needed
               PsiElement maybe_from_import = definer.getParent();
@@ -111,6 +111,10 @@ public class VariantsProcessor implements PsiScopeProcessor {
     }
 
     return true;
+  }
+
+  private boolean nameIsAcceptable(String name) {
+    return name != null && !myVariants.containsKey(name) && (myNameFilter == null || myNameFilter.value(name));
   }
 
   @Nullable
