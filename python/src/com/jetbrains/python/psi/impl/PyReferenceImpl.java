@@ -284,7 +284,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
 
     // include our own names
-    final VariantsProcessor processor = new VariantsProcessor(myElement);
+    final int underscores = PyUtil.getInitialUnderscores(myElement.getName());
+    final UnderscoreFilter filter = new UnderscoreFilter(underscores);
+    final VariantsProcessor processor = new VariantsProcessor(myElement, null, filter);
     PyResolveUtil.treeCrawlUp(processor, realContext); // names from here
     PyResolveUtil.scanOuterContext(processor, realContext); // possible names from around us at call time
 
@@ -315,7 +317,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       if (from_import_stmt != null) {
         final PyReferenceExpression import_src = from_import_stmt.getImportSource();
         if (import_src != null) {
-          processor.setNotice(import_src.getName());
+          final String imported_name = import_src.getName();
+          processor.setNotice(imported_name);
           PyResolveUtil.treeCrawlUp(processor, true, import_src.getReference().resolve()); // names from that module
         }
       }
@@ -324,11 +327,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     processor.setNotice("__builtin__");
     PyResolveUtil.treeCrawlUp(processor, true, PyBuiltinCache.getInstance(getElement()).getBuiltinsFile()); // names from __builtin__
 
-    // if we're a normal module, add module's attrs
-    PsiFile f = realContext.getContainingFile();
-    if (f instanceof PyFile) {
-      for (String name : PyModuleType.getPossibleInstanceMembers()) {
-        ret.add(LookupElementBuilder.create(name).setIcon(Icons.FIELD_ICON));
+    if (underscores >= 2) {
+      // if we're a normal module, add module's attrs
+      PsiFile f = realContext.getContainingFile();
+      if (f instanceof PyFile) {
+        for (String name : PyModuleType.getPossibleInstanceMembers()) {
+          ret.add(LookupElementBuilder.create(name).setIcon(Icons.FIELD_ICON));
+        }
       }
     }
 
@@ -418,5 +423,25 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public int hashCode() {
     return myElement.hashCode();
+  }
+
+  /**
+   * Logical conjunction.
+   */
+  protected static class UnderscoreFilter implements Condition<String> {
+    private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
+
+    public UnderscoreFilter(int allowed) {
+      myAllowed = allowed;
+    }
+
+    public boolean value(String name) {
+      if (name == null) return false;
+      if (name.length() < 1) return false; // empty strings make no sense
+      int have_underscores = 0;
+      if (name.charAt(0) == '_') have_underscores = 1;
+      if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
+      return myAllowed >= have_underscores;
+    }
   }
 }

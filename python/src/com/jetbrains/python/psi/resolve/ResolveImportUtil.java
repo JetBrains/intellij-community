@@ -37,7 +37,7 @@ public class ResolveImportUtil {
     }
   };
 
-  private static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
+  public static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
     if (foothold != null) {
       PsiFile file = foothold.getContainingFile();
       if (file instanceof PyFile) {
@@ -71,7 +71,7 @@ public class ResolveImportUtil {
    * @return found directory, or null.
    */
   @Nullable
-  private static PsiDirectory stepBackFrom(PsiFile base, int depth) {
+  public static PsiDirectory stepBackFrom(PsiFile base, int depth) {
     PsiDirectory result;
     if (base != null) {
       base = base.getOriginalFile(); // just to make sure 
@@ -540,37 +540,6 @@ public class ResolveImportUtil {
     }
   }
 
-  static class CollectingRootVisitor implements SdkRootVisitor {
-    Set<String> result;
-    PsiManager psimgr;
-
-    static String cutExt(String name) {
-      return name.substring(0, Math.max(name.length() - PyNames.DOT_PY.length(), 0));
-    }
-
-    public CollectingRootVisitor(PsiManager psimgr) {
-      result = new HashSet<String>();
-      this.psimgr = psimgr;
-    }
-
-    public boolean visitRoot(final VirtualFile root) {
-      for (VirtualFile vfile : root.getChildren()) {
-        if (vfile.getName().endsWith(PyNames.DOT_PY)) {
-          PsiFile pfile = psimgr.findFile(vfile);
-          if (pfile != null) result.add(cutExt(pfile.getName()));
-        }
-        else if (vfile.isDirectory() && (vfile.findChild(PyNames.INIT_DOT_PY) != null)) {
-          PsiDirectory pdir = psimgr.findDirectory(vfile);
-          if (pdir != null) result.add(pdir.getName());
-        }
-      }
-      return true; // continue forever
-    }
-
-    public Collection<String> getResult() {
-      return result;
-    }
-  }
 
   /**
   Tries to find referencedName under the parent element. Used to resolve any names that look imported.
@@ -645,163 +614,6 @@ public class ResolveImportUtil {
   }
 
 
-  private static void addImportedNames(PyImportElement[] import_elts, Collection<String> collected_names, Condition<Object> filter) {
-    if (import_elts != null && collected_names != null) {
-      for (PyImportElement ielt : import_elts) {
-        String s;
-        PyReferenceExpression ref = ielt.getImportReference();
-        if (ref != null) {
-          s = ref.getReferencedName();
-          if (s != null && filter.value(s)) collected_names.add(s);
-        }
-      }
-    }
-  }
-
-  /**
-   * Logical conjunction.
-   */
-  static class And<T> implements Condition<T> {
-    private Condition<T> myOne;
-    private Condition<T> myTwo;
-
-    public And(Condition<T> one, Condition<T> two) {
-      myOne = one;
-      myTwo = two;
-    }
-
-    public boolean value(T t) {
-      return myOne.value(t) && myTwo.value(t);
-    }
-  }
-
-  static class UnderscoreFilter implements Condition<Object> {
-    private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
-
-    public UnderscoreFilter(int allowed) {
-      myAllowed = allowed;
-    }
-
-    public boolean value(Object o) {
-      if (o == null) return false;
-      String name = o.toString();
-      if (name.length() < 1) return false; // empty strings make no sense
-      int have_underscores = 0;
-      if (name.charAt(0) == '_') have_underscores = 1;
-      if (have_underscores != 0 && name.length() > 1 && name.charAt(1) == '_') have_underscores = 2;
-      return myAllowed >= have_underscores;
-    }
-  }
-
-  /**
-   * Finds reasonable names to import to complete a patrial name.
-   * @param partial_ref reference containing the partial name.
-   * @return an array of names ready for getVariants().
-   */
-  public static Object[] suggestImportVariants(final PyReferenceExpression partial_ref) {
-    List<Object> variants = new ArrayList<Object>();
-    if (partial_ref == null) return variants.toArray();
-    PsiFile current_file = partial_ref.getContainingFile();
-    if (current_file != null) current_file = current_file.getOriginalFile();
-    int relative_level = 0;
-    final Set<String> names_already = new java.util.HashSet<String>(); // don't propose already imported names
-    int underscores=0; // the number of underscores we're interested in
-    String ref_name = partial_ref.getName();
-    if (ref_name.startsWith("__")) underscores = 2;
-    else if (ref_name.startsWith("_")) underscores = 1;
-    final And<Object> filter = new And<Object>(new PyResolveUtil.FilterNameNotIn(names_already), new UnderscoreFilter(underscores));
-    // are we in "import _" or "from foo import _"?
-    PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(partial_ref, PyFromImportStatement.class);
-    if (from_import != null && partial_ref.getParent() != from_import) { // in "from foo import _"
-      PyReferenceExpression src = from_import.getImportSource();
-      if (src != null) {
-        PsiElement mod_candidate = src.getReference().resolve();
-        if (mod_candidate instanceof PyExpression) {
-          addImportedNames(from_import.getImportElements(), names_already, filter); // don't propose already imported items
-          // collect what's within module file
-          final VariantsProcessor processor = new VariantsProcessor(partial_ref, filter
-          );
-          PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
-          variants.addAll(processor.getResultList());
-          // try to collect submodules
-          PyExpression module = (PyExpression)mod_candidate;
-          PyType qualifierType = module.getType();
-          if (qualifierType != null) {
-            ProcessingContext ctx = new ProcessingContext();
-            for (Object ex : variants) { // just in case: file's definitions shadow submodules
-              if (ex instanceof PyReferenceExpression) {
-                names_already.add(((PyReferenceExpression)ex).getReferencedName());
-              }
-            }
-            // collect submodules
-            ctx.put(PyType.CTX_NAMES, names_already);
-            Collections.addAll(variants, qualifierType.getCompletionVariants(partial_ref, ctx));
-          }
-          return variants.toArray();
-        }
-      }
-      else { // null source, must be a "from ... import"
-        relative_level = from_import.getRelativeLevel();
-        if (relative_level > 0) {
-          PsiDirectory relative_dir = stepBackFrom(current_file, relative_level);
-          if (relative_dir != null) {
-            addImportedNames(from_import.getImportElements(), names_already, filter);
-            fillFromDir(relative_dir, current_file, filter, variants);
-          }
-        }
-      }
-    }
-    // in "import _" or "from _ import"
-    if (from_import != null) addImportedNames(from_import.getImportElements(), names_already, filter);
-    else {
-      names_already.add(PyNames.FUTURE_MODULE); // never add it to "import ..."
-      PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(partial_ref, PyImportStatement.class);
-      if (import_stmt != null) {
-        addImportedNames(import_stmt.getImportElements(), names_already, filter);
-      }
-    }
-    // look at current dir
-    if (current_file != null && relative_level == 0 && ! isAbsoluteImportEnabledFor(current_file)) {
-      fillFromDir(current_file.getParent(), current_file, filter, variants);
-    }
-    if (relative_level == 0) {
-      // look in SDK
-      final CollectingRootVisitor visitor = new CollectingRootVisitor(partial_ref.getManager());
-      final Module module = ModuleUtil.findModuleForPsiElement(partial_ref);
-      if (module != null) {
-        ModuleRootManager.getInstance(module).processOrder(new SdkRootVisitingPolicy(visitor), null);
-        for (String name : visitor.getResult()) {
-          if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
-        }
-      }
-    }
-
-    return ArrayUtil.toObjectArray(variants);
-  }
-
-  // adds variants found under given dir
-  private static void fillFromDir(PsiDirectory target_dir, PsiFile source_file, Condition<Object> filter, List<Object> variants) {
-    if (target_dir != null) {
-      for (PsiElement dir_item : target_dir.getChildren()) {
-        if (dir_item != source_file) {
-          if (dir_item instanceof PsiDirectory) {
-            final PsiDirectory dir = (PsiDirectory)dir_item;
-            if (dir.findFile(PyNames.INIT_DOT_PY) != null) {
-              final String name = dir.getName();
-              if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name);
-            }
-          }
-          else if (dir_item instanceof PsiFile) { // plain file
-            String filename = ((PsiFile)dir_item).getName();
-            if (!PyNames.INIT_DOT_PY.equals(filename) && filename.endsWith(PyNames.DOT_PY)) {
-              final String name = filename.substring(0, filename.length() - PyNames.DOT_PY.length());
-              if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name);
-            }
-          }
-        }
-      }
-    }
-  }
 
   /**
    * Tries to find roots that contain given vfile, and among them the root that contains at the smallest depth.
@@ -859,7 +671,7 @@ public class ResolveImportUtil {
   }
 
 
-  private static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {
+  public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {
     private final SdkRootVisitor myVisitor;
 
     public SdkRootVisitingPolicy(SdkRootVisitor visitor) {

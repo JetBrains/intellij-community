@@ -294,29 +294,30 @@ public class PyResolveUtil {
   /**
    * Accepts only targets that are not the given object.
    */
-  public static class FilterNotInstance implements Condition<Object> {
+  public static class FilterNotInstance implements Condition<PsiElement> {
     Object instance;
 
     public FilterNotInstance(Object instance) {
       this.instance = instance;
     }
 
-    public boolean value(final Object target) {
+    public boolean value(final PsiElement target) {
       return (instance != target);
     }
+
   }
 
   /**
    * Accepts only names not contained in a given collection.
    */
-  public static class FilterNameNotIn implements Condition<Object> {
+  public static class FilterNameNotIn implements Condition<PsiElement> {
     private final Collection<String> myNames;
 
     public FilterNameNotIn(Collection<String> names) {
       myNames = names;
     }
 
-    public boolean value(Object target) {
+    public boolean value(PsiElement target) {
       if (target instanceof PsiNamedElement) {
         return !myNames.contains(((PsiNamedElement)target).getName());
       }

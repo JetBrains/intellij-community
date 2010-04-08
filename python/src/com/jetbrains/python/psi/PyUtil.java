@@ -692,4 +692,16 @@ public class PyUtil {
     }
     else return target; // don't touch non-dirs
   }
+
+  /**
+   * Counts initial underscores of an identifier.
+   * @param name identifier
+   * @return 0 if no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
+   */
+  public static int getInitialUnderscores(String name) {
+    int underscores=0;
+    if (name.startsWith("__")) underscores = 2;
+    else if (name.startsWith("_")) underscores = 1;
+    return underscores;
+  }
 }

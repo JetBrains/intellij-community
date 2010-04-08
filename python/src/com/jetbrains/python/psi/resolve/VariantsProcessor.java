@@ -21,16 +21,23 @@ public class VariantsProcessor implements PsiScopeProcessor {
 
   protected final PsiElement myContext;
   protected String myNotice;
-  protected Condition<Object> myFilter;
+  protected Condition<PsiElement> myNodeFilter;
+  protected Condition<String> myNameFilter;
 
   public VariantsProcessor(PsiElement context) {
     // empty
     myContext = context;
   }
 
-  public VariantsProcessor(PsiElement context, final Condition<Object> filter) {
+  public VariantsProcessor(PsiElement context, final Condition<PsiElement> nodefilter) {
     myContext = context;
-    myFilter = filter;
+    myNodeFilter = nodefilter;
+  }
+
+  public VariantsProcessor(PsiElement context, final Condition<PsiElement> nodefilter, final Condition<String> namefilter) {
+    myContext = context;
+    myNodeFilter = nodefilter;
+    myNameFilter = namefilter;
   }
 
   public void setNotice(@Nullable String notice) {
@@ -61,19 +68,19 @@ public class VariantsProcessor implements PsiScopeProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState substitutor) {
-    if (myFilter != null && !myFilter.value(element)) return true; // skip whatever the filter rejects
+    if (myNodeFilter != null && !myNodeFilter.value(element)) return true; // skip whatever the filter rejects
     // TODO: refactor to look saner; much code duplication
     if (element instanceof PsiNamedElement) {
       final PsiNamedElement psiNamedElement = (PsiNamedElement)element;
       final String name = psiNamedElement.getName();
-      if (name != null && !myVariants.containsKey(name)) {
+      if (name != null && !myVariants.containsKey(name) && myNameFilter != null && myNameFilter.value(name)) {
         myVariants.put(name, setupItem(LookupElementBuilder.create(psiNamedElement).setIcon(element.getIcon(0))));
       }
     }
     else if (element instanceof PyReferenceExpression) {
       PyReferenceExpression expr = (PyReferenceExpression)element;
       String referencedName = expr.getReferencedName();
-      if (referencedName != null && !myVariants.containsKey(referencedName)) {
+      if (referencedName != null && !myVariants.containsKey(referencedName) && myNameFilter != null && myNameFilter.value(referencedName)) {
         myVariants.put(referencedName, setupItem(LookupElementBuilder.create(referencedName)));
       }
     }
@@ -85,7 +92,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
           Icon icon = element.getIcon(0);
           // things like PyTargetExpression cannot have a general icon, but here we only have variables
           if (icon == null) icon = Icons.VARIABLE_ICON;
-          if (referencedName != null && !myVariants.containsKey(referencedName)) {
+          if (referencedName != null && !myVariants.containsKey(referencedName) && myNameFilter != null && myNameFilter.value(referencedName)) {
             LookupElementBuilder lookup_item = setupItem(LookupElementBuilder.create(referencedName).setIcon(icon));
             if (definer instanceof PyImportElement) { // set notice to imported module name if needed
               PsiElement maybe_from_import = definer.getParent();
