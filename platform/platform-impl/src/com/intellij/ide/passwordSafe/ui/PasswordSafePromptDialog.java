@@ -81,7 +81,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         myRememberThePasswordCheckBox.setToolTipText("The password will be stored only during this application session.");
         break;
       case DO_NOT_STORE:
-        myRememberThePasswordCheckBox.setEnabled(true);
+        myRememberThePasswordCheckBox.setEnabled(false);
         myRememberThePasswordCheckBox.setSelected(false);
         myRememberThePasswordCheckBox.setToolTipText("The password storing is disabled.");
         break;
