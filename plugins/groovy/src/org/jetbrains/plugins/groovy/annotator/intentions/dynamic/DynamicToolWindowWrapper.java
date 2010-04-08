@@ -28,7 +28,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -414,12 +413,10 @@ public class DynamicToolWindowWrapper {
         final DefaultMutableTreeNode dynamicItemNode = (DefaultMutableTreeNode)dynamicRow;
         final DefaultMutableTreeNode classNode = (DefaultMutableTreeNode)classRow;
 
-        if (classNode.getChildCount() == 1) {
-          if (!removeClass(classNode, isShowDialog, rowsCount)) return;
-
-        } else {
-
-          if (!removeDynamicElement(dynamicItemNode, isShowDialog, rowsCount)) return;
+        final boolean removeClass = classNode.getChildCount() == 1;
+        if (!removeDynamicElement(dynamicItemNode, isShowDialog, rowsCount)) return;
+        if (removeClass) {
+          removeNamedElement((DNamedElement)classNode.getUserObject());
         }
       }
     }
