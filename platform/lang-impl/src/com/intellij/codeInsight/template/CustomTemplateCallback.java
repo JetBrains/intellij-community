@@ -19,19 +19,23 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -91,25 +95,6 @@ public class CustomTemplateCallback {
     return result;
   }
 
-  public boolean templateContainsVars(@NotNull String key, String... varNames) {
-    List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = filterApplicableCandidates(templates);
-    if (templates.size() == 0) {
-      return false;
-    }
-    TemplateImpl template = templates.get(0);
-    Set<String> varSet = new HashSet<String>();
-    for (int i = 0; i < template.getVariableCount(); i++) {
-      varSet.add(template.getVariableNameAt(i));
-    }
-    for (String varName : varNames) {
-      if (!varSet.contains(varName)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   /**
    * @param key
    * @param predefinedVarValues
@@ -118,7 +103,6 @@ public class CustomTemplateCallback {
   public boolean startTemplate(@NotNull String key,
                                Map<String, String> predefinedVarValues,
                                @Nullable TemplateInvokationListener listener) {
-    //int caretOffset = myEditor.getCaretModel().getOffset();
     List<TemplateImpl> templates = getMatchingTemplates(key);
     templates = filterApplicableCandidates(templates);
     if (templates.size() > 0) {
@@ -247,5 +231,15 @@ public class CustomTemplateCallback {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public void moveToOffset(int offset) {
+    myEditor.getCaretModel().moveToOffset(offset);
+  }
+
+  public void insertString(int offset, String text) {
+    Document document = myEditor.getDocument();
+    document.insertString(offset, text);
+    PsiDocumentManager.getInstance(myProject).commitDocument(document);
   }
 }
