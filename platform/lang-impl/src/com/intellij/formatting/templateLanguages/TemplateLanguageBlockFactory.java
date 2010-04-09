@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.templateLanguages;
 
+import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,8 @@ import java.util.List;
  *         Time: 6:56:55 PM
  */
 public interface TemplateLanguageBlockFactory {
-  TemplateLanguageBlock createTemplateLanguageBlock(@NotNull ASTNode node, @Nullable List<DataLanguageBlockWrapper> foreignChildren,
+  TemplateLanguageBlock createTemplateLanguageBlock(@NotNull ASTNode node,
+                                                    @Nullable Wrap wrap,
+                                                    @Nullable List<DataLanguageBlockWrapper> foreignChildren,
                                                     @NotNull CodeStyleSettings codeStyleSettings); 
 }
