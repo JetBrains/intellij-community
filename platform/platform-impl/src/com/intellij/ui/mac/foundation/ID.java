@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,20 @@
  */
 package com.intellij.ui.mac.foundation;
 
-import com.sun.jna.Pointer;
+import com.sun.jna.NativeLong;
 
 /**
- * @author spleaner
+ * Could be an address in memory (if pointer to a class or method) or a value (like 0 or 1)
+ *
+ * User: spLeaner
  */
-public class ID extends Pointer {
+public class ID extends NativeLong {
+
+  public ID() {
+  }
+
   public ID(long peer) {
     super(peer);
   }
 
-  public long toLong() {
-    return peer;
-  }
-  
-  public int toInt() {
-    return (int) peer;
-  }
-
-  public long getAddress() {
-    return peer;
-  }
 }
