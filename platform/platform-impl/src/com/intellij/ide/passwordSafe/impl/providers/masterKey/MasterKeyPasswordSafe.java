@@ -233,6 +233,17 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
    * {@inheritDoc}
    */
   @Override
+  public void removePassword(Project project, Class requester, String key) throws PasswordSafeException {
+    if (database.isEmpty()) {
+      return;
+    }
+    super.removePassword(project, requester, key);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   protected byte[] getEncryptedPassword(byte[] key) {
     return database.get(key);
   }
