@@ -58,7 +58,7 @@ public class ResetPasswordDialog extends DialogWrapper {
     setTitle(firstTime ? "Master Password" : "Reset Master Password");
     setOKButtonText(firstTime ? "Set Password" : "Reset Password");
     if (safe.isOsProtectedPasswordSupported()) {
-      myEncryptMasterPasswordWithCheckBox.setSelected(true);
+      myEncryptMasterPasswordWithCheckBox.setSelected(false);
     }
     else {
       myEncryptMasterPasswordWithCheckBox.setSelected(false);
