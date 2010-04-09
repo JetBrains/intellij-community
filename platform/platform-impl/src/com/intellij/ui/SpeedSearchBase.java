@@ -185,7 +185,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
       }
       if (Character.isUpperCase(ch)) {
         // for camel humps
-        buf.append("[a-z]*");
+        buf.append("[A-Za-z_]*");
       }
       buf.append(ch);
     }

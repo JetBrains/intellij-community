@@ -15,14 +15,14 @@
  */
 package com.intellij.ide.passwordSafe.ui;
 
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.PasswordSafeException;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -81,7 +81,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
         myRememberThePasswordCheckBox.setToolTipText("The password will be stored only during this application session.");
         break;
       case DO_NOT_STORE:
-        myRememberThePasswordCheckBox.setEnabled(true);
+        myRememberThePasswordCheckBox.setEnabled(false);
         myRememberThePasswordCheckBox.setSelected(false);
         myRememberThePasswordCheckBox.setToolTipText("The password storing is disabled.");
         break;
@@ -235,8 +235,8 @@ public class PasswordSafePromptDialog extends DialogWrapper {
    * @param requester     the password requester
    * @param key           the password key
    * @param resetPassword if true, the old password is removed from database and new password will be asked.
-   * @param error
-   *@param promptLabel   the prompt label text
+   * @param error         the error text to show in the dialog
+   * @param promptLabel   the prompt label text
    * @param checkboxLabel the checkbox text   @return null if dialog was cancelled or password (stored in database or a entered by user)
    */
   private static String askPassword(final Project project,
