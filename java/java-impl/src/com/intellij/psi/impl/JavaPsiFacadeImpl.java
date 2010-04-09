@@ -423,7 +423,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         if (list == null) list = new ArrayList<PsiClass>();
         for (PsiClass aClass : classes) {
           // class file can be located in wrong place inside file system
-          if (Comparing.strEqual(((PsiClassOwner)aClass.getContainingFile()).getPackageName(), packageName)) {
+          String qualifiedName = aClass.getQualifiedName();
+          if (qualifiedName != null) qualifiedName = StringUtil.getPackageName(qualifiedName);
+          if (Comparing.strEqual(qualifiedName, packageName)) {
             list.add(aClass);
           }
         }
