@@ -35,11 +35,7 @@ import java.util.ArrayList;
  * <ul>
  *   <li>{@link #getLineFeeds() lineFeeds};</li>
  *   <li>{@link #getSpaces() spaces};</li>
- *   <li>{@link #getIndentSpaces()};
- *        number of indent space symbols (white spaces that are produced from tabulation symbols. E.g. target text fragment contains two tabulation symbols
- *        if current {@link WhiteSpace} object contains eight <code>'indent white space'</code> symbols and formatting settings define that one tabulation
- *        symbol is mapped to four white space symbols);
- *    </li>
+ *   <li>{@link #getIndentSpaces()};</li>
  * </ul>
  * <p/>
  * Provides ability to build string representation of the managed settings taking into consideration user settings for tabulation vs white space usage, tabulation
