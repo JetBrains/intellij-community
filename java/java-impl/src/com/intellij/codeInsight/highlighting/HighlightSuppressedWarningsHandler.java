@@ -32,6 +32,10 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -104,26 +108,40 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
   public void computeUsages(List<PsiLiteralExpression> targets) {
     final Project project = myTarget.getProject();
     final PsiElement parent = myTarget.getParent().getParent();
-    LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(), parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
+    final LocalInspectionsPass pass = new LocalInspectionsPass(myFile, myFile.getViewProvider().getDocument(), parent.getTextRange().getStartOffset(), parent.getTextRange().getEndOffset());
     final InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (PsiLiteralExpression target : targets) {
       final Object value = target.getValue();
-      if (value instanceof String) {
-        final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById(((String)value), target);
-        if (toolById instanceof LocalInspectionToolWrapper) {
-          final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
-          final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
-          final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-          tool.initialize(context);
-          ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
+      if (!(value instanceof String)) {
+        continue;
+      }
+      final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById((String)value, target);
+      if (!(toolById instanceof LocalInspectionToolWrapper)) {
+        continue;
+      }
+      final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
+      final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
+      final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+      tool.initialize(context);
+      ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      Runnable inspect = new Runnable() {
+        public void run() {
           pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool), false);
-          for (HighlightInfo info : pass.getInfos()) {
-            final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
-            if (element != null) {
-              addOccurrence(element);
-            }
-          }
+        }
+      };
+      if (indicator == null) {
+        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
+      }
+      else {
+        inspect.run();
+      }
+
+      for (HighlightInfo info : pass.getInfos()) {
+        final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
+        if (element != null) {
+          addOccurrence(element);
         }
       }
     }
