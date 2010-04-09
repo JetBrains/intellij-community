@@ -24,4 +24,7 @@ public interface Iconable {
   int ICON_FLAG_CLOSED = 0x0008;
 
   Icon getIcon(int flags);
+
+  Key<Icon> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
+
 }

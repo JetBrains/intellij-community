@@ -19,6 +19,7 @@ package com.intellij.psi.impl;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -47,14 +48,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!(this instanceof PsiElement)) return null;
 
     try {
-      final PsiElement element = (PsiElement)this;
-
-      final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
-      if (providersIcon != null) {
-        return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
-      }
-
-      return getElementIcon(flags);
+      return computeIcon(flags);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -67,6 +61,17 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         return null;
       }
     }
+
+  private Icon computeIcon(int flags) {
+    final PsiElement element = (PsiElement)this;
+
+    final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
+    if (providersIcon != null) {
+      return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
+    }
+
+    return getElementIcon(flags);
+  }
 
   protected Icon getElementIcon(final int flags) {
     final PsiElement element = (PsiElement)this;
