@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +38,7 @@ public class MacFileChooserDialog implements FileChooserDialog {
   private static boolean myFileChooserActive = false;
 
   private static final Callback SHOULD_SHOW_FILENAME_CALLBACK = new Callback() {
-      public boolean callback(Pointer self, String selector, Pointer panel, Pointer filename) {
+      public boolean callback(ID self, String selector, ID panel, ID filename) {
         final String fileName = Foundation.toStringViaUTF8(filename);
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
         return virtualFile != null && (virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
@@ -47,7 +46,7 @@ public class MacFileChooserDialog implements FileChooserDialog {
     };
 
   private static final Callback IS_VALID_FILENAME_CALLBACK = new Callback() {
-      public boolean callback(Pointer self, String selector, Pointer panel, Pointer filename) {
+      public boolean callback(ID self, String selector, ID panel, ID filename) {
         final String fileName = Foundation.toStringViaUTF8(filename);
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
         return virtualFile != null && (!virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
@@ -55,7 +54,7 @@ public class MacFileChooserDialog implements FileChooserDialog {
     };
 
   static {
-    final Pointer delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "NSOpenPanelDelegate_");
+    final ID delegateClass = Foundation.registerObjcClass(Foundation.getClass("NSObject"), "NSOpenPanelDelegate_");
     if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B@:*"))
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     if (!Foundation.addMethod(delegateClass, Foundation.createSelector("panel:isValidFilename:"), IS_VALID_FILENAME_CALLBACK, "B@:*"))
@@ -81,13 +80,13 @@ public class MacFileChooserDialog implements FileChooserDialog {
 
     myFileChooserActive = true;
 
-    final Pointer autoReleasePool = createAutoReleasePool();
+    final ID autoReleasePool = createAutoReleasePool();
 
     try {
-      final Pointer chooser = invoke("NSOpenPanel", "openPanel");
+      final ID chooser = invoke("NSOpenPanel", "openPanel");
 
-      invoke(chooser, "setPrompt:", Foundation.cfString("Choose"));
       invoke(chooser, "autorelease");
+      invoke(chooser, "setPrompt:", Foundation.cfString("Choose"));
       invoke(chooser, "setCanChooseFiles:", myChooserDescriptor.isChooseFiles());
       invoke(chooser, "setCanChooseDirectories:", myChooserDescriptor.isChooseFolders());
       invoke(chooser, "setAllowsMultipleSelection:", myChooserDescriptor.isChooseMultiple());
@@ -95,20 +94,21 @@ public class MacFileChooserDialog implements FileChooserDialog {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
 
-      final Pointer delegate = invoke(Foundation.getClass("NSOpenPanelDelegate_"), "new");
+      final ID delegate = invoke(Foundation.getClass("NSOpenPanelDelegate_"), "new");
       invoke(chooser, "setDelegate:", delegate);
       
-      final Object directory = toSelect != null ? toSelect.isDirectory() ? Foundation.cfString(toSelect.getPath()).toLong() : null : null;
-      final Object file = toSelect != null ? !toSelect.isDirectory() ? Foundation.cfString(toSelect.getPath()).toLong() : null : null;
+      final Object directory = toSelect != null ? toSelect.isDirectory() ? Foundation.cfString(toSelect.getPath()) : null : null;
+      final Object file = toSelect != null ? !toSelect.isDirectory() ? Foundation.cfString(toSelect.getPath()) : null : null;
       final ID result = invoke(chooser, "runModalForDirectory:file:", directory, file);
-      if (result != null && OK == result.toInt()) {
+
+      if (result != null && OK == result.intValue()) {
         ID fileNamesArray = invoke(chooser, "filenames");
         ID enumerator = invoke(fileNamesArray, "objectEnumerator");
 
         final ArrayList<VirtualFile> fileNames = new ArrayList<VirtualFile>();
         while (true) {
           final ID filename = invoke(enumerator, "nextObject");
-          if (0 == filename.toInt()) break;
+          if (0 == filename.intValue()) break;
 
           String s = Foundation.toStringViaUTF8(filename);
           if (s != null) {
@@ -119,8 +119,6 @@ public class MacFileChooserDialog implements FileChooserDialog {
 
         return fileNames.toArray(new VirtualFile[fileNames.size()]);
       }
-
-      invoke(delegate, "release");
     }
     finally {
       invoke(autoReleasePool, "drain");
@@ -130,7 +128,7 @@ public class MacFileChooserDialog implements FileChooserDialog {
     return new VirtualFile[0];
   }
 
-  private static Pointer createAutoReleasePool() {
+  private static ID createAutoReleasePool() {
     return invoke("NSAutoreleasePool", "new");
   }
 
@@ -138,7 +136,7 @@ public class MacFileChooserDialog implements FileChooserDialog {
     return invoke(Foundation.getClass(className), selector, args);
   }
 
-  private static ID invoke(@NotNull final Pointer id, @NotNull final String selector, Object... args) {
+  private static ID invoke(@NotNull final ID id, @NotNull final String selector, Object... args) {
     return Foundation.invoke(id, Foundation.createSelector(selector), args);
   }
 }
