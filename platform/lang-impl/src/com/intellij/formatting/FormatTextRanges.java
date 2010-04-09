@@ -132,6 +132,15 @@ public class FormatTextRanges {
     myRanges.add(new FormatTextRange(range, processHeadingWhitespace));
   }
 
+  /**
+   * Batches {@link FormatTextRange#isWhitespaceReadOnly(TextRange)} operation for all aggregated ranges.
+   * <p/>
+   * I.e. this method allows to check if given range has intersections with any of aggregated ranges.
+   *
+   * @param range     range to check
+   * @return               <code>true</code> if given range doesn't have intersections with all aggregated ranges;
+   *                             <code>false</code> if given range intersects at least one of aggregated ranges
+   */
   public boolean isWhitespaceReadOnly(TextRange range) {
     for (FormatTextRange formatTextRange : myRanges) {
       if (!formatTextRange.isWhitespaceReadOnly(range)) {
