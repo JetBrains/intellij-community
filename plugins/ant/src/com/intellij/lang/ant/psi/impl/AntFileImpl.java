@@ -31,7 +31,6 @@ import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -49,7 +48,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Alarm;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -1003,7 +1001,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
     private static final List<SoftReference<Pair<ReflectedProject, ClassLoader>>> ourProjects =
       new ArrayList<SoftReference<Pair<ReflectedProject, ClassLoader>>>();
-    private static final Alarm ourAlarm = new Alarm();
 
     private final Object myProject;
     private Hashtable myTaskDefinitions;
@@ -1012,38 +1009,23 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     private Class myTargetClass;
 
     private static ReflectedProject getProject(final ClassLoader classLoader) {
-      try {
-        synchronized (ourProjects) {
-          for (final SoftReference<Pair<ReflectedProject, ClassLoader>> ref : ourProjects) {
-            final Pair<ReflectedProject, ClassLoader> pair = ref.get();
-            if (pair != null && pair.second == classLoader) {
-              return pair.first;
-            }
+      for (Iterator<SoftReference<Pair<ReflectedProject, ClassLoader>>> iterator = ourProjects.iterator(); iterator.hasNext();) {
+        final SoftReference<Pair<ReflectedProject, ClassLoader>> ref = iterator.next();
+        final Pair<ReflectedProject, ClassLoader> pair = ref.get();
+        if (pair == null) {
+          iterator.remove();
+        }
+        else {
+          if (pair.second == classLoader) {
+            return pair.first;
           }
-          ReflectedProject project = new ReflectedProject(classLoader);
-          final SoftReference<Pair<ReflectedProject, ClassLoader>> ref =
-            new SoftReference<Pair<ReflectedProject, ClassLoader>>(new Pair<ReflectedProject, ClassLoader>(project, classLoader));
-          for (int i = 0; i < ourProjects.size(); ++i) {
-            final Pair<ReflectedProject, ClassLoader> pair = ourProjects.get(i).get();
-            if (pair == null) {
-              ourProjects.set(i, ref);
-              return project;
-            }
-          }
-          ourProjects.add(ref);
-          return project;
         }
       }
-      finally {
-        ourAlarm.cancelAllRequests();
-        ourAlarm.addRequest(new Runnable() {
-          public void run() {
-            synchronized (ourProjects) {
-              ourProjects.clear();
-            }
-          }
-        }, 30000, ModalityState.NON_MODAL);
-      }
+      final ReflectedProject project = new ReflectedProject(classLoader);
+      ourProjects.add(new SoftReference<Pair<ReflectedProject, ClassLoader>>(
+        new Pair<ReflectedProject, ClassLoader>(project, classLoader)
+      ));
+      return project;
     }
 
     private ReflectedProject(final ClassLoader classLoader) {
