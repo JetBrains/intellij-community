@@ -40,10 +40,12 @@ public class JavaSourceFilterScope extends GlobalSearchScope {
   }
 
   public boolean contains(final VirtualFile file) {
+    if (myDelegate != null && !myDelegate.contains(file)) {
+      return false;
+    }
     final FileType fileType = file.getFileType();
-    return (myDelegate == null || myDelegate.contains(file)) &&
-           (StdFileTypes.JAVA == fileType && myIndex.isInSourceContent(file) ||
-            StdFileTypes.CLASS == fileType && myIndex.isInLibraryClasses(file));
+    return  StdFileTypes.JAVA == fileType && myIndex.isInSourceContent(file) ||
+            StdFileTypes.CLASS == fileType && myIndex.isInLibraryClasses(file);
   }
 
   public int compare(final VirtualFile file1, final VirtualFile file2) {

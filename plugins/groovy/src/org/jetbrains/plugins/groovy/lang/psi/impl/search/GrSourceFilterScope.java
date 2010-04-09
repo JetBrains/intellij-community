@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.search;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -39,9 +38,7 @@ public class GrSourceFilterScope extends GlobalSearchScope {
   }
 
   public boolean contains(final VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    return (myDelegate == null || myDelegate.contains(file)) &&
-            GroovyFileType.GROOVY_FILE_TYPE == fileType && myIndex.isInSourceContent(file);
+    return (myDelegate == null || myDelegate.contains(file)) && myIndex.isInSourceContent(file) && GroovyFileType.GROOVY_FILE_TYPE == file.getFileType();
     }
     
   public int compare(final VirtualFile file1, final VirtualFile file2) {
