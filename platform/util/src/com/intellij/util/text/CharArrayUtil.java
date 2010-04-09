@@ -279,6 +279,25 @@ public class CharArrayUtil {
     return indexOf(buffer, pattern, fromIndex, buffer.length());
   }
 
+  /**
+   * Tries to find index of given pattern at the given buffer.
+   * <p/>
+   * <b>Note:</b> given <code>'toIndex'</code> value restricts examination to <code>'toIndex -1'</code> value (exclusive).. I.e. invocation like below
+   * doesn't find the match:
+   * <pre>
+   *        String buffer = "aab";
+   *        String pattern = "ab";
+   *        CharArrayUtil.indexOf(buffer, pattern, 0, buffer.length()); // right boundary is "aab".length() - 1 = 2 (exclusive)
+   * </pre>
+   * <p/>
+   * This is historical behavior and is not going to be changed in order to preserve backward compatibility.
+   *
+   * @param buffer          characters buffer which contents should be checked for the given pattern
+   * @param pattern         target characters sequence to find at the given buffer
+   * @param fromIndex    start index (inclusive). Zero is used if given index is negative
+   * @param toIndex        defines end index (exclusive) by the formula <code>'toIndex - 1'</code>
+   * @return                    index of the given pattern at the given buffer if the match is found; <code>-1</code> otherwise
+   */
   public static int indexOf(final CharSequence buffer, final CharSequence pattern, int fromIndex, final int toIndex) {
     final int patternLength = pattern.length();
     int limit = toIndex - patternLength;

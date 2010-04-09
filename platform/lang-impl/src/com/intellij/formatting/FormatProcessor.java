@@ -326,7 +326,7 @@ class FormatProcessor {
 
   private void saveDependancy(final SpacingImpl spaceProperty) {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
-    final TextRange dependancy = dependantSpaceProperty.getDependancy();
+    final TextRange dependancy = dependantSpaceProperty.getDependency();
     if (dependantSpaceProperty.wasLFUsed()) {
       myPreviousDependancies.put(dependancy,new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
     }
@@ -344,8 +344,8 @@ class FormatProcessor {
 
     if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return false;
 
-    final TextRange dependancy = ((DependantSpacingImpl)spaceProperty).getDependancy();
-    return whiteSpace.getStartOffset() < dependancy.getEndOffset();
+    final TextRange dependency = ((DependantSpacingImpl)spaceProperty).getDependency();
+    return whiteSpace.getStartOffset() < dependency.getEndOffset();
   }
 
   private boolean processWrap(Spacing spacing) {

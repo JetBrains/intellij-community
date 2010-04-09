@@ -96,11 +96,10 @@ public class DocumentBasedFormattingModel implements FormattingModel {
         int at = CharArrayUtil.indexOf(myDocument.getCharsSequence(), marker, textRange.getStartOffset(), textRange.getEndOffset() + 1);
         String ws = myDocument.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset()).toString();
         newWs = mergeWsWithCdataMarker(whiteSpace, ws, at - textRange.getStartOffset());
-        
+
         if (removesPattern(textRange, whiteSpace, marker = "]]>")) {
-          int i = newWs.lastIndexOf('\n');
-          
-          if (i > 0) {
+          int i;
+          if (newWs != null && (i = newWs.lastIndexOf('\n')) > 0) {
             int cdataStart = newWs.indexOf("<![CDATA[");
             int i2 = newWs.lastIndexOf('\n', cdataStart);
             String cdataIndent = i2 != -1 ? newWs.substring(i2 + 1, cdataStart):"";
@@ -120,9 +119,21 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return new TextRange(textRange.getStartOffset(), textRange.getStartOffset() + whiteSpace.length());
   }
 
+  /**
+   * Allows to check if following conditions are met:
+   * <ul>
+   *   <li>target document contains given pattern within the given range;</li>
+   *   <li>given white space string contains given pattern;</li>
+   * </ul>
+   *
+   * @param textRange       target range to use during checking given pattern at the target document
+   * @param whiteSpace      white space symbol to check at the given pattern
+   * @param pattern           pattern to check at the target document
+   * @return                      <code>true</code> if target conditions are met; <code>false</code> otherwise
+   */
   private boolean removesPattern(final TextRange textRange, final String whiteSpace, final String pattern) {
-    return CharArrayUtil.indexOf(myDocument.getCharsSequence(), pattern, textRange.getStartOffset(), textRange.getEndOffset() + 1) != -1 &&
-        CharArrayUtil.indexOf(whiteSpace, pattern, 0) == -1;
+    return CharArrayUtil.indexOf(myDocument.getCharsSequence(), pattern, textRange.getStartOffset(), textRange.getEndOffset() + 1) >= 0 &&
+        CharArrayUtil.indexOf(whiteSpace, pattern, 0) >= 0;
   }
 
   public TextRange shiftIndentInsideRange(TextRange range, int indent) {
