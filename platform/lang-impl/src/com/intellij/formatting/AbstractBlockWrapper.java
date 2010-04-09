@@ -78,6 +78,12 @@ public abstract class AbstractBlockWrapper {
     return myEnd - myStart;
   }
 
+  /**
+   * Applies given start offset to the current block wrapper and recursively calls this method on parent block wrapper
+   * if it starts at the same place as the current one.
+   *
+   * @param startOffset     new start offset value to apply
+   */
   protected void arrangeStartOffset(final int startOffset) {
     if (getStartOffset() == startOffset) return;
     boolean isFirst = getParent() != null && getStartOffset() == getParent().getStartOffset();
@@ -204,6 +210,9 @@ public abstract class AbstractBlockWrapper {
     else myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
   }
 
+  /**
+   * Applies start offset of the current block wrapper to the parent block wrapper if the one is defined.
+   */
   public void arrangeParentTextRange() {
     if (myParent != null) {
       myParent.arrangeStartOffset(getStartOffset());
