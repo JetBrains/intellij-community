@@ -337,7 +337,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public boolean isApplicable(PsiFile file, int offset, boolean selection) {
-    return selection && isApplicable(file, offset);
+    return isApplicable(file, offset);
   }
 
   private static boolean isApplicable(PsiFile file, int offset) {
@@ -422,6 +422,10 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
   @NotNull
   public String getTitle() {
     return XmlBundle.message("zen.coding.title");
+  }
+
+  public char getShortcut() {
+    return WebEditorOptions.getInstance().getZenCodingExpandShortcut();
   }
 
   @Nullable

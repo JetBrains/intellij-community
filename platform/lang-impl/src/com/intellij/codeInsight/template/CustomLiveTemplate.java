@@ -37,4 +37,6 @@ public interface CustomLiveTemplate {
 
   @NotNull
   String getTitle();
+
+  char getShortcut();
 }
