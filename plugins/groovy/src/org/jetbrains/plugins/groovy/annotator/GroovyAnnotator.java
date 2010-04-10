@@ -231,7 +231,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
         minModifier = PsiModifier.PUBLIC;
       }
-      String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
+      String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL};
       PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
       if (accessObjectClass == null) {
         accessObjectClass = ((GroovyFile)place.getContainingFile()).getScriptClass();
