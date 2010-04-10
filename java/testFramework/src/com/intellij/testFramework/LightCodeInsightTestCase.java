@@ -25,6 +25,10 @@ import com.intellij.openapi.module.StdModuleTypes;
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
+  protected LightCodeInsightTestCase() {
+    IdeaTestCase.initPlatformPrefix();
+  }
+
   public static JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(ourProject);
   }

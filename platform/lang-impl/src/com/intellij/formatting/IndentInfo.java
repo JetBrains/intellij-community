@@ -49,6 +49,11 @@ public class IndentInfo {
     return myLineFeeds;
   }
 
+  /**
+   * Builds string that contains line feeds, white spaces and tabulation symbols known to the current {@link IndentInfo} object.
+   *
+   * @param options              indentation formatting options
+   */
   public String generateNewWhiteSpace(CodeStyleSettings.IndentOptions options) {
     StringBuffer buffer = new StringBuffer();
     StringUtil.repeatSymbol(buffer, '\n', myLineFeeds);

@@ -18,6 +18,10 @@ package com.intellij.formatting;
 
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * Extends {@link Spacing} in order to keep number of additional settings like <code>'minSpaces'</code>, <code>'minLineFeeds'</code>,
+ * <code>'prefLineFeeds'</code> etc.
+ */
 class SpacingImpl extends Spacing {
   private int myMinSpaces;
   private int myKeepBlankLines;
@@ -28,7 +32,7 @@ class SpacingImpl extends Spacing {
 
   private static final int READ_ONLY_MASK = 1;
   private static final int SAFE_MASK = 2;
-  private static final int SHOULD_KEEP_LINEBEAKS_MASK = 4;
+  private static final int SHOULD_KEEP_LINE_BREAKS_MASK = 4;
   private static final int SHOULD_KEEP_FIRST_COLUMN_MASK = 8;
 
   public SpacingImpl(final int minSpaces,
@@ -57,7 +61,7 @@ class SpacingImpl extends Spacing {
     } else {
       myKeepBlankLines = keepBlankLines;
     }
-    myFlags = (isReadOnly ? READ_ONLY_MASK:0) | (safe ? SAFE_MASK:0) | (shouldKeepLineBreaks ? SHOULD_KEEP_LINEBEAKS_MASK:0) |
+    myFlags = (isReadOnly ? READ_ONLY_MASK:0) | (safe ? SAFE_MASK:0) | (shouldKeepLineBreaks ? SHOULD_KEEP_LINE_BREAKS_MASK :0) |
       (keepFirstColumn ? SHOULD_KEEP_FIRST_COLUMN_MASK:0);
   }
 
@@ -85,11 +89,16 @@ class SpacingImpl extends Spacing {
     return (myFlags & SAFE_MASK) != 0;
   }
 
+  /**
+   * Allows to ask to refresh current state using given formatter if necessary.
+   *
+   * @param formatter     formatter to use during state refresh
+   */
   public void refresh(FormatProcessor formatter) {
   }
 
   public final boolean shouldKeepLineFeeds() {
-    return (myFlags & SHOULD_KEEP_LINEBEAKS_MASK) != 0;
+    return (myFlags & SHOULD_KEEP_LINE_BREAKS_MASK) != 0;
   }
 
   public int getKeepBlankLines() {
@@ -100,6 +109,14 @@ class SpacingImpl extends Spacing {
     return (myFlags & SHOULD_KEEP_FIRST_COLUMN_MASK) != 0;
   }
 
+  /**
+   * <b>Note:</b> current implementation uses soft type check, i.e. it checks that instance of the given object IS-A {@link SpacingImpl} and compares
+   * state defined at this class only. That means that sub-classes are assumed not to override this method in order to preserve <code>'symmetric'</code> property.
+   *
+   * @param o   {@inheritDoc}
+   * @return      {@inheritDoc}
+   */
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof SpacingImpl)) return false;
     final SpacingImpl spacing = (SpacingImpl)o;
@@ -111,6 +128,7 @@ class SpacingImpl extends Spacing {
            myKeepBlankLines == spacing.myKeepBlankLines;
   }
 
+  @Override
   public int hashCode() {
     return myMinSpaces + myMaxSpaces * 29 + myMinLineFeeds * 11 + myFlags + myKeepBlankLines + myPrefLineFeeds;
   }

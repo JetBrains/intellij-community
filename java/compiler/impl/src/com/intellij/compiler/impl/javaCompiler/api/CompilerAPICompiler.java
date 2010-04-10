@@ -16,7 +16,6 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
-import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.DependencyProcessor;
 import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
@@ -30,14 +29,8 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +41,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 
 public class CompilerAPICompiler implements BackendCompiler {
@@ -65,25 +61,6 @@ public class CompilerAPICompiler implements BackendCompiler {
   }
 
   public boolean checkCompiler(final CompileScope scope) {
-    final Module[] modules = scope.getAffectedModules();
-    final Set<Sdk> checkedJdks = new HashSet<Sdk>();
-    for (final Module module : modules) {
-      final Sdk jdk  = ModuleRootManager.getInstance(module).getSdk();
-      if (jdk == null) {
-        continue;
-      }
-      checkedJdks.add(jdk);
-    }
-    Sdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
-    if (projectJdk != null) checkedJdks.add(projectJdk);
-
-    for (Sdk sdk : checkedJdks) {
-      String versionString = sdk.getVersionString();
-      if (sdk.getSdkType() instanceof JavaSdk && !CompilerUtil.isOfVersion(versionString, "1.6") && !CompilerUtil.isOfVersion(versionString, "1.7")) {
-        Messages.showErrorDialog(myProject, "Compiler API requires JDK version 6 or later: "+ versionString, "Incompatible JDK");
-        return false;
-      }
-    }
     return true;
   }
 

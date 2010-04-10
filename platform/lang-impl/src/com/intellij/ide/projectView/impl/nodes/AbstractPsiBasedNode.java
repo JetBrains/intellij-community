@@ -31,6 +31,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -152,6 +153,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     for(ProjectViewNodeDecorator decorator: Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
       decorator.decorate(this, data);
     }
+
+    value.putUserData(Iconable.LAST_COMPUTED_ICON, data.getIcon(false));
   }
 
   protected int getIconableFlags() {

@@ -36,8 +36,6 @@ import javax.swing.*;
 
 public class IconUtil {
 
-  public static final Key<Icon> LAST_FILE_ICON = Key.create("lastVFileIcon");
-
   private IconUtil() {
   }
 
@@ -88,7 +86,7 @@ public class IconUtil {
   }
 
   public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
-    Icon lastIcon = file.getUserData(LAST_FILE_ICON);
+    Icon lastIcon = file.getUserData(Iconable.LAST_COMPUTED_ICON);
 
     return IconDeferrer.getInstance().defer(lastIcon != null ? lastIcon : file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
       public Icon fun(final FileIconKey key) {
@@ -114,7 +112,7 @@ public class IconUtil {
           icon = new LayeredIcon(icon, Icons.LOCKED_ICON);
         }
         
-        file.putUserData(LAST_FILE_ICON, icon);
+        file.putUserData(Iconable.LAST_COMPUTED_ICON, icon);
 
         return icon;
       }

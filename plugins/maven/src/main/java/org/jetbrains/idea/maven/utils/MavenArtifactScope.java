@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.mac.foundation;
+package org.jetbrains.idea.maven.utils;
 
-import com.sun.jna.NativeLong;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Could be an address in memory (if pointer to a class or method) or a value (like 0 or 1)
- *
- * User: spLeaner
+ * @author Konstantin Bulenkov
  */
-public class ID extends NativeLong {
+public enum MavenArtifactScope {
+  COMPILE, PROVIDEED, RUNTIME, TEST, SYSTEM, IMPORT;
 
-  public ID() {
+  @Nullable
+  public static MavenArtifactScope fromString(String name) {
+    for (MavenArtifactScope scope : MavenArtifactScope.values()) {
+      if (scope.name().equalsIgnoreCase(name)) return scope;
+    }
+    return null;
   }
-
-  public ID(long peer) {
-    super(peer);
-  }
-
 }
