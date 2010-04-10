@@ -101,19 +101,14 @@ public class CustomTemplateCallback {
    * @param predefinedVarValues
    * @param listener            @return returns if template invokation is finished
    */
-  public boolean startTemplate(@NotNull String key,
-                               Map<String, String> predefinedVarValues,
-                               @Nullable TemplateInvokationListener listener) {
+  public void startTemplate(@NotNull String key,
+                            Map<String, String> predefinedVarValues) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
     templates = filterApplicableCandidates(templates);
     if (templates.size() > 0) {
       TemplateImpl template = templates.get(0);
-      return startTemplate(template, predefinedVarValues, listener);
+      startTemplate(template, predefinedVarValues);
     }
-    else if (listener != null) {
-      listener.finished(false);
-    }
-    return true;
   }
 
   /**
@@ -155,14 +150,10 @@ public class CustomTemplateCallback {
     }
     return templateFinished[0];
   }*/
-  public boolean startTemplate(@NotNull TemplateImpl template,
-                               Map<String, String> predefinedVarValues,
-                               @Nullable final TemplateInvokationListener listener) {
-    moveToOffset(myBuilder.insertTemplate(myOffset, template, predefinedVarValues));
-    if (listener != null) {
-      listener.finished(false);
-    }
-    return true;
+  public void startTemplate(@NotNull TemplateImpl template,
+                            Map<String, String> predefinedVarValues) {
+    int offset = myBuilder.insertTemplate(myOffset, template, predefinedVarValues);
+    moveToOffset(offset);
   }
 
   /*private void reformat() {

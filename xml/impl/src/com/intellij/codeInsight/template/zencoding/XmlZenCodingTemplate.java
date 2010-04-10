@@ -360,17 +360,16 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     return false;
   }
 
-  public void expand(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener) {
-    expand(key, callback, null, listener);
+  public void expand(String key, @NotNull CustomTemplateCallback callback) {
+    expand(key, callback, null);
   }
 
   private static void expand(String key,
                              @NotNull CustomTemplateCallback callback,
-                             String surroundedText,
-                             @Nullable TemplateInvokationListener listener) {
+                             String surroundedText) {
     List<Token> tokens = parse(key, callback);
     assert tokens != null;
-    XmlZenCodingInterpreter.interpret(tokens, 0, callback, State.WORD, surroundedText, listener);
+    XmlZenCodingInterpreter.interpret(tokens, 0, callback, State.WORD, surroundedText);
   }
 
   public void wrap(final String selection,
@@ -411,7 +410,10 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
             EditorModificationUtil.deleteSelectedText(callback.getEditor());
             PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
             callback.fixInitialState();
-            expand(abbreviation, callback, selection, listener);
+            expand(abbreviation, callback, selection);
+            if (listener != null) {
+              listener.finished();
+            }
           }
         }, CodeInsightBundle.message("insert.code.template.command"), null);
       }
@@ -435,16 +437,15 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     int caretAt = editor.getCaretModel().getOffset();
     if (isApplicable(file, caretAt)) {
       final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
-      TemplateInvokationListener listener = new TemplateInvokationListener() {
-        public void finished(boolean inSeparateEvent) {
-          callback.finish();
-        }
-      };
       if (abbreviation != null) {
         String selection = callback.getEditor().getSelectionModel().getSelectedText();
         assert selection != null;
         selection = selection.trim();
-        doWrap(selection, abbreviation, callback, listener);
+        doWrap(selection, abbreviation, callback, new TemplateInvokationListener() {
+          public void finished() {
+            callback.finish();
+          }
+        });
       }
       else {
         XmlZenCodingTemplate template = new XmlZenCodingTemplate();
@@ -452,7 +453,8 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
         if (key != null) {
           int offsetBeforeKey = caretAt - key.length();
           callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretAt);
-          template.expand(key, callback, listener);
+          template.expand(key, callback);
+          callback.finish();
           return true;
         }
         // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
