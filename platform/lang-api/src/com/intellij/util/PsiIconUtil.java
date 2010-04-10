@@ -24,6 +24,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.DeferredIcon;
+import com.intellij.ui.IconDeferrer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

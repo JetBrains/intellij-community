@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.mac.foundation;
+package com.intellij.lang.ant.dom;
 
-import com.sun.jna.NativeLong;
+import com.intellij.util.xml.DomElement;
 
 /**
- * Could be an address in memory (if pointer to a class or method) or a value (like 0 or 1)
- *
- * User: spLeaner
+ * @author Eugene Zhuravlev
+ *         Date: Apr 6, 2010
  */
-public class ID extends NativeLong {
-
-  public ID() {
-  }
-
-  public ID(long peer) {
-    super(peer);
-  }
-
+public interface AntDomElement extends DomElement {
 }

@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.mac.foundation;
+package com.intellij.lang.ant.dom;
 
-import com.sun.jna.NativeLong;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.SubTagList;
 
 /**
- * Could be an address in memory (if pointer to a class or method) or a value (like 0 or 1)
- *
- * User: spLeaner
+ * @author Eugene Zhuravlev
+ *         Date: Apr 6, 2010
  */
-public class ID extends NativeLong {
+public interface AntTarget extends AntDomElement{
+  @Attribute("name")
+  GenericAttributeValue<String> getName();
 
-  public ID() {
-  }
+  @Attribute("if")
+  GenericAttributeValue<String> getIfPropertyName();
 
-  public ID(long peer) {
-    super(peer);
-  }
-
+  @Attribute("unless")
+  GenericAttributeValue<String> getUnlessPropertyName();
 }

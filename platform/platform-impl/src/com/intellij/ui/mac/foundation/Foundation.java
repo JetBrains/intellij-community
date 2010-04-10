@@ -15,10 +15,8 @@
  */
 package com.intellij.ui.mac.foundation;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
 import com.sun.jna.Callback;
-import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
@@ -29,8 +27,6 @@ import java.util.Map;
  * @author spleaner
  */
 public class Foundation {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.foundation.Foundation");
-
   private static final FoundationLibrary myFoundationLibrary;
 
   static {
@@ -40,7 +36,7 @@ public class Foundation {
     System.setProperty("jna.encoding", "UTF8");
 
     Map<String, Object> foundationOptions = new HashMap<String, Object>();
-    foundationOptions.put(Library.OPTION_TYPE_MAPPER, FoundationTypeMapper.INSTANCE);
+    //foundationOptions.put(Library.OPTION_TYPE_MAPPER, FoundationTypeMapper.INSTANCE);
 
     myFoundationLibrary = (FoundationLibrary)Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
   }
@@ -51,7 +47,7 @@ public class Foundation {
   /**
    * Get the ID of the NSClass with className
    */
-  public static Pointer getClass(String className) {
+  public static ID getClass(String className) {
     return myFoundationLibrary.objc_getClass(className);
   }
 
@@ -59,27 +55,23 @@ public class Foundation {
     return myFoundationLibrary.sel_registerName(s);
   }
 
-  public static ID invoke(final Pointer id, final Pointer selector, Object... args) {
+  public static ID invoke(final ID id, final Pointer selector, Object... args) {
     return myFoundationLibrary.objc_msgSend(id, selector, args);
   }
 
-  public static Pointer registerObjcClass(Pointer superCls, String name) {
+  public static ID registerObjcClass(ID superCls, String name) {
     return myFoundationLibrary.objc_allocateClassPair(superCls, name, 0);
   }
 
-  public static void registerObjcClassPair(Pointer cls) {
+  public static void registerObjcClassPair(ID cls) {
     myFoundationLibrary.objc_registerClassPair(cls);
   }
 
-  public static boolean isClassRespondsToSelector(Pointer cls, Pointer selectorName) {
+  public static boolean isClassRespondsToSelector(ID cls, Pointer selectorName) {
     return myFoundationLibrary.class_respondsToSelector(cls, selectorName);
   }
 
-  public static Pointer createClassInstance(Pointer cls) {
-    return myFoundationLibrary.class_createInstance(cls, 0);
-  }
-
-  public static boolean addMethod(Pointer cls, Pointer selectorName, Callback impl, String types) {
+  public static boolean addMethod(ID cls, Pointer selectorName, Callback impl, String types) {
     return myFoundationLibrary.class_addMethod(cls, selectorName, impl, types);
   }
 
@@ -92,7 +84,7 @@ public class Foundation {
    * <p/>
    * Note that the returned string must be freed with {@link #cfRelease(ID)}.
    */
-  public static ID cfString(String s) {
+  public static Pointer cfString(String s) {
     // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
     // Turns out about 10% quicker for long strings.
     try {
@@ -105,7 +97,7 @@ public class Foundation {
     }
   }
 
-  public static String toStringViaUTF8(Pointer cfString) {
+  public static String toStringViaUTF8(ID cfString) {
     int lengthInChars = myFoundationLibrary.CFStringGetLength(cfString);
     int potentialLengthInBytes = 3 * lengthInChars + 1; // UTF8 fully escaped 16 bit chars, plus nul
 
@@ -113,13 +105,5 @@ public class Foundation {
     byte ok = myFoundationLibrary.CFStringGetCString(cfString, buffer, buffer.length, 0x08000100);
     if (ok == 0) throw new RuntimeException("Could not convert string");
     return Native.toString(buffer);
-  }
-
-  public static void cfRetain(final Pointer id) {
-    myFoundationLibrary.CFRetain(id);
-  }
-
-  public static void cfRelease(final Pointer id) {
-    myFoundationLibrary.CFRelease(id);
   }
 }

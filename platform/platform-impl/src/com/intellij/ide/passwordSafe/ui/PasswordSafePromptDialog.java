@@ -202,7 +202,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
                                      final String key,
                                      boolean resetPassword,
                                      String error) {
-    return askPassword(project, title, message, requester, key, resetPassword, error, "&Passphrase:", "&Remember the passphrase");
+    return askPassword(project, title, message, requester, key, resetPassword, error, "Passphrase:", "Remember the passphrase");
   }
 
   /**

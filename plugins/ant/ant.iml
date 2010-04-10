@@ -19,6 +19,8 @@
     <orderEntry type="module" module-name="properties" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="xml-openapi" />
   </component>
   <component name="copyright">
     <Base>

@@ -324,12 +324,14 @@ public class PsiClassImplUtil {
   };
 
   public static Icon getClassIcon(final int flags, final PsiClass aClass) {
-    Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
-    RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, 0);
+    Icon base = aClass.getUserData(Iconable.LAST_COMPUTED_ICON);
+    if (base == null) {
+      Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, 0);
+      base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
+    }
 
-    return IconDeferrer.getInstance().defer(ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon),
-                                            new ClassIconRequest(aClass, flags),
-                                            FULL_ICON_EVALUATOR);
+    return IconDeferrer.getInstance().defer(base, new ClassIconRequest(aClass, flags), FULL_ICON_EVALUATOR);
   }
 
   public static SearchScope getClassUseScope(final PsiClass aClass) {
