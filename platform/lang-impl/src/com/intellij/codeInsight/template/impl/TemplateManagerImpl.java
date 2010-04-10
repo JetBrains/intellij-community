@@ -252,11 +252,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
             CharSequence text = editor.getDocument().getCharsSequence();
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
               callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretOffset);
-              customLiveTemplate.expand(key, callback, new TemplateInvokationListener() {
-                public void finished(boolean inSeparateEvent) {
-                  callback.finish();
-                }
-              });
+              customLiveTemplate.expand(key, callback);
               return true;
             }
           }
