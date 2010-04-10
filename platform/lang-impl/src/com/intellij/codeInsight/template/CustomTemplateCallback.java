@@ -111,55 +111,11 @@ public class CustomTemplateCallback {
     }
   }
 
-  /**
-   * @param template
-   * @param predefinedVarValues
-   * @param listener
-   * @return returns if template invokation is finished
-   */
-  /*public boolean startTemplate(@NotNull Template template,
-                               Map<String, String> predefinedVarValues,
-                               @Nullable final TemplateInvokationListener listener) {
-    final boolean[] templateEnded = new boolean[]{false};
-    final boolean[] templateFinished = new boolean[]{false};
-    myTemplateManager.startTemplate(myEditor, template, false, predefinedVarValues, new TemplateEditingAdapter() {
-      @Override
-      public void templateFinished(Template template, final boolean brokenOff) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            if (brokenOff) {
-              reformat();
-            }
-          }
-        });
-        if (brokenOff) return;
-        templateFinished[0] = true;
-        if (templateEnded[0] && listener != null) {
-          listener.finished(true);
-        }
-      }
-
-      @Override
-      public void waitingForInput(Template template) {
-        reformat();
-      }
-    });
-    templateEnded[0] = true;
-    if (templateFinished[0] && listener != null) {
-      listener.finished(false);
-    }
-    return templateFinished[0];
-  }*/
   public void startTemplate(@NotNull TemplateImpl template,
                             Map<String, String> predefinedVarValues) {
     int offset = myBuilder.insertTemplate(myOffset, template, predefinedVarValues);
     moveToOffset(offset);
   }
-
-  /*private void reformat() {
-    CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-    style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
-  }*/
 
   public void fixStartOfTemplate(@NotNull Object key) {
     LiveTemplateBuilder.Marker marker = myBuilder.createMarker(myOffset);
