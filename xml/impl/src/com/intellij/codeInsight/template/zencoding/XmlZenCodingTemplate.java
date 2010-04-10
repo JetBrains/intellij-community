@@ -298,8 +298,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
-    int offset = callback.getOffset();
-    PsiElement element = callback.getFile().findElementAt(offset > 0 ? offset - 1 : offset);
+    PsiElement element = callback.getContext();
     int line = editor.getCaretModel().getLogicalPosition().line;
     int lineStart = editor.getDocument().getLineStartOffset(line);
     int parentStart;
