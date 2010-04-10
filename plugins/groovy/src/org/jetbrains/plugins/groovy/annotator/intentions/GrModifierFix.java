@@ -23,7 +23,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
@@ -67,7 +66,7 @@ public class GrModifierFix implements IntentionAction {
     else {
       name = myMember.getName();
     }
-    String modifierText = VisibilityUtil.toPresentableText(myModifier);
+    String modifierText = toPresentableText(myModifier);
 
     if (myDoSet) {
       return GroovyBundle.message("change.modifier", name, modifierText);
@@ -75,6 +74,10 @@ public class GrModifierFix implements IntentionAction {
     else {
       return GroovyBundle.message("change.modifier.not", name, modifierText);
     }
+  }
+
+  private static String toPresentableText(String modifier) {
+    return GroovyBundle.message(modifier + ".visibility.presentation");
   }
 
   @NotNull
