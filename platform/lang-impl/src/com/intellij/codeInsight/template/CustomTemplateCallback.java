@@ -221,7 +221,13 @@ public class CustomTemplateCallback {
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
-    return settings.collectMatchingCandidates(templateKey, settings.getDefaultShortcutChar(), false);
+    List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
+    for (TemplateImpl template : settings.getTemplates(templateKey)) {
+      if (!template.isDeactivated() && !template.isSelectionTemplate()) {
+        candidates.add(template);
+      }
+    }
+    return candidates;
   }
 
   @NotNull
