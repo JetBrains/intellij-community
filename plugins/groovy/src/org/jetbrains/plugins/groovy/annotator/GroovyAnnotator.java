@@ -74,8 +74,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -232,7 +231,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
         minModifier = PsiModifier.PUBLIC;
       }
-      String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
+      String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL};
       PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
       if (accessObjectClass == null) {
         accessObjectClass = ((GroovyFile)place.getContainingFile()).getScriptClass();
@@ -991,7 +990,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition)extendsClause.getParent()));
     }
 
+    checkForWildCards(holder, extendsClause);
+    checkForWildCards(holder, implementsClause);
+
     checkDuplicateClass(typeDefinition, holder);
+  }
+
+  private static void checkForWildCards(AnnotationHolder holder, @Nullable GrReferenceList clause) {
+    if (clause == null) return;
+    final GrCodeReferenceElement[] elements = clause.getReferenceElements();
+    for (GrCodeReferenceElement element : elements) {
+      final GrTypeArgumentList list = element.getTypeArgumentList();
+      if (list != null) {
+        for (GrTypeElement type : list.getTypeArgumentElements()) {
+          if (type instanceof GrWildcardTypeArgument) {
+            holder.createErrorAnnotation(type, GroovyBundle.message("wildcards.are.not.allowed.in.extends.list"));
+          }
+        }
+      }
+    }
   }
 
   private static void checkDuplicateClass(GrTypeDefinition typeDefinition, AnnotationHolder holder) {
