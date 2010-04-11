@@ -732,7 +732,16 @@ public class PsiUtil {
     return elem;
   }
 
+  @Nullable
   public static PsiType getSmartReturnType(PsiMethod method) {
-    return method instanceof GrMethod ? ((GrMethod)method).getInferredReturnType() : method.getReturnType();
+    if (method instanceof GrMethod) {
+      return ((GrMethod)method).getInferredReturnType();
+    }
+    else if (method instanceof GrAccessorMethod) {
+      return ((GrAccessorMethod)method).getInferredReturnType();
+    }
+    else {
+      return method.getReturnType();
+    }
   }
 }
