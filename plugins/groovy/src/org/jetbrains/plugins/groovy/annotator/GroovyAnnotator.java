@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -79,6 +80,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -1186,6 +1188,28 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (argumentTypes != null &&
              !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
                                    methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+      
+      //check for implicit use of property getter which returns closure
+      if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
+        if (method instanceof GrMethod || method instanceof GrAccessorMethod) {
+          final PsiType returnType = PsiUtil.getSmartReturnType(method);
+          if (returnType instanceof GrClosureType) {
+            if (PsiUtil.isApplicable(argumentTypes, ((GrClosureType)returnType), element.getManager())) {
+              return;
+            }
+          }
+        }
+
+        PsiType returnType = method.getReturnType();
+        if (returnType != null) {
+          final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
+            .createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
+          if (TypesUtil.isAssignable(closureType, returnType, place.getManager(), place.getResolveScope())) {
+            return;
+          }
+        }
+      }
+
       highlightInapplicableMethodUsage(methodResolveResult, place, holder, method, argumentTypes);
     }
   }

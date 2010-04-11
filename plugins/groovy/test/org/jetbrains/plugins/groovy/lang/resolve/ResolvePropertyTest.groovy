@@ -499,4 +499,23 @@ set<caret>Bar(2)
     def resolved = ref.resolve()
     assertNull resolved
   }
+
+  public void resolvePropertyInCallExpression() {
+    myFixture.configureByText("a.groovy", """
+class Foo {
+  def foo = {
+    return {int i -> print i}
+  }
+
+  def foo(String s){
+    print s
+  }
+}
+new Foo().fo<caret>o(2)"""
+    )
+    def ref = findReference()
+    def resolved = ref.resolve()
+
+    assertInstanceOf resolved, GrAccessorMethod
+  }
 }
