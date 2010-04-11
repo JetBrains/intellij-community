@@ -32,5 +32,5 @@ public interface GrAccessorMethod extends PsiMethod {
   GrField getProperty();
 
   @Nullable
-  PsiType getReturnTypeGroovy();
+  PsiType getInferredReturnType();
 }
