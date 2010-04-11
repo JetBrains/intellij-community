@@ -241,4 +241,5 @@ public class GroovyPropertyUtils {
   public static String decapitalize(String s) {
     return Introspector.decapitalize(s);
   }
+
 }

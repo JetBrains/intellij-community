@@ -25,34 +25,38 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
+import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipWhitespaces;
@@ -74,6 +78,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> TYPE_IN_VARIABLE_DECLARATION_AFTER_MODIFIER = PlatformPatterns
     .or(psiElement(PsiElement.class).withParent(GrVariable.class).afterLeaf(MODIFIERS),
         psiElement(PsiElement.class).withParent(GrParameter.class));
+
+  private static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL =
+    psiElement().withParent(psiElement().withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
 
   private static final String[] THIS_SUPER = {"this", "super"};
 
@@ -229,7 +236,123 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
       }
     });
+
+    extend(CompletionType.BASIC, IN_ARGUMENT_LIST_OF_CALL, new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        final GrArgumentList argumentList = (GrArgumentList)parameters.getPosition().getParent().getParent();
+        final GrCall call = (GrCall)argumentList.getParent();
+        List<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
+        //costructor call
+        if (call instanceof GrConstructorCall) {
+          GrConstructorCall constructorCall = (GrConstructorCall)call;
+          results.addAll(Arrays.asList(constructorCall.multiResolveConstructor()));
+          results.addAll(Arrays.asList(constructorCall.multiResolveClass()));
+        }
+        else if (call instanceof GrCallExpression) {
+          GrCallExpression constructorCall = (GrCallExpression)call;
+          results.addAll(Arrays.asList(constructorCall.getMethodVariants()));
+          final PsiType type = ((GrCallExpression)call).getType();
+          if (type instanceof PsiClassType) {
+            final PsiClass psiClass = ((PsiClassType)type).resolve();
+            results.add(new GroovyResolveResultImpl(psiClass, true));
+          }
+        }
+        else if (call instanceof GrApplicationStatement) {
+          final GrExpression element = ((GrApplicationStatement)call).getFunExpression();
+          if (element instanceof GrReferenceElement) {
+            results.addAll(Arrays.asList(((GrReferenceElement)element).multiResolve(true)));
+          }
+        }
+
+
+
+        Set<PsiClass> usedClasses = new HashSet<PsiClass>();
+        Set<String> usedNames = new HashSet<String>();
+        for (GroovyResolveResult resolveResult : results) {
+          PsiElement element = resolveResult.getElement();
+          if (element instanceof PsiMethod) {
+            final PsiMethod method = (PsiMethod)element;
+            final PsiClass containingClass = method.getContainingClass();
+            addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
+            if (method instanceof GrMethod) {
+              Set<String>[] parametersArray = ((GrMethod)method).getNamedParametersArray();
+              for (Set<String> namedParameters : parametersArray) {
+                for (String parameter : namedParameters) {
+                  final LookupElementBuilder lookup =
+                    LookupElementBuilder.create(parameter).setIcon(GroovyIcons.DYNAMIC).setInsertHandler(new NamedArgumentInsertHandler());
+                  result.addElement(lookup);
+                }
+              }
+            }
+          }
+          else if (element instanceof PsiClass) {
+            addPropertiesForClass(result, usedClasses, usedNames, (PsiClass)element, call);
+          }
+        }
+      }
+    });
   }
+
+  private static void addPropertiesForClass(CompletionResultSet result,
+                                            Set<PsiClass> usedClasses,
+                                            Set<String> usedNames,
+                                            PsiClass containingClass,
+                                            GrCall call
+  ) {
+    if (usedClasses.contains(containingClass)) return;
+    usedClasses.add(containingClass);
+    final PsiClass eventListener =
+      JavaPsiFacade.getInstance(call.getProject()).findClass("java.util.EventListener", call.getResolveScope());
+    Map<String, PsiMethod> writableProperties = new HashMap<String, PsiMethod>();
+    for (PsiMethod method : containingClass.getAllMethods()) {
+      if (GroovyPropertyUtils.isSimplePropertySetter(method)) {
+        if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK(method, call)) {
+          final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
+          if (!writableProperties.containsKey(name)) {
+            writableProperties.put(name, method);
+          }
+        }
+      }
+      else if (eventListener != null) {
+        consumeListenerProperties(result, usedNames, method, eventListener);
+      }
+    }
+
+    for (String name : writableProperties.keySet()) {
+      if (usedNames.contains(name)) continue;
+      usedNames.add(name);
+      final LookupElementBuilder builder =
+        LookupElementBuilder.create(writableProperties.get(name), name).setIcon(GroovyIcons.PROPERTY)
+          .setInsertHandler(new NamedArgumentInsertHandler());
+      result.addElement(builder);
+    }
+  }
+
+  private static void consumeListenerProperties(CompletionResultSet result,
+                                                Set<String> usedNames, PsiMethod method, PsiClass eventListenerClass) {
+    if (method.getName().startsWith("add") && method.getParameterList().getParametersCount() == 1) {
+      final PsiParameter parameter = method.getParameterList().getParameters()[0];
+      final PsiType type = parameter.getType();
+      if (type instanceof PsiClassType) {
+        final PsiClassType classType = (PsiClassType)type;
+        final PsiClass listenerClass = classType.resolve();
+        if (listenerClass != null) {
+          final PsiMethod[] listenerMethods = listenerClass.getMethods();
+          if (InheritanceUtil.isInheritorOrSelf(listenerClass, eventListenerClass, true)) {
+            for (PsiMethod listenerMethod : listenerMethods) {
+              final String name = listenerMethod.getName();
+              usedNames.add(name);
+              result.addElement(LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setInsertHandler(new NamedArgumentInsertHandler()));
+            }
+          }
+        }
+      }
+    }
+  }
+
 
   private static boolean checkForInnerClass(PsiClass psiClass, PsiElement identifierCopy) {
     return !PsiUtil.isInnerClass(psiClass) ||

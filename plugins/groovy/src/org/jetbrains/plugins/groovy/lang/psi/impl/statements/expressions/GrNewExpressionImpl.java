@@ -154,6 +154,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return getCandidates(ref, classResults, PsiUtil.getArgumentTypes(ref, false));
   }
 
+  public GroovyResolveResult[] multiResolveClass() {
+    return getReferenceElement().multiResolve(false);
+  }
+
   private GroovyResolveResult[] getCandidates(GrCodeReferenceElement ref, GroovyResolveResult[] classResults, PsiType[] argTypes) {
     List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
     for (GroovyResolveResult classResult : classResults) {
