@@ -1204,7 +1204,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         if (returnType != null) {
           final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
             .createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
-          if (TypesUtil.isAssignable(closureType, returnType, element.getManager(), returnType.getResolveScope())) {
+          if (TypesUtil.isAssignable(closureType, returnType, place.getManager(), place.getResolveScope())) {
             return;
           }
         }
