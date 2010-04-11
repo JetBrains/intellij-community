@@ -45,7 +45,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -271,6 +273,16 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         Set<PsiClass> usedClasses = new HashSet<PsiClass>();
         Set<String> usedNames = new HashSet<String>();
+        for (GrNamedArgument argument : argumentList.getNamedArguments()) {
+          final GrArgumentLabel label = argument.getLabel();
+          if (label != null) {
+            final String name = label.getName();
+            if (name != null) {
+              usedNames.add(name);
+            }
+          }
+        }
+
         for (GroovyResolveResult resolveResult : results) {
           PsiElement element = resolveResult.getElement();
           if (element instanceof PsiMethod) {
