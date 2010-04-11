@@ -220,11 +220,45 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     }
   }
 
+  private static boolean containsTemplateStartingBefore(Map<TemplateImpl, String> template2argument,
+                                                        int offset,
+                                                        int caretOffset,
+                                                        CharSequence text) {
+    for (TemplateImpl template : template2argument.keySet()) {
+      String argument = template2argument.get(template);
+      int templateStart = getTemplateStart(template, argument, caretOffset, text);
+      if (templateStart <= offset) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean startTemplate(final Editor editor, char shortcutChar, final PairProcessor<String, String> processor) {
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return false;
     TemplateSettings templateSettings = TemplateSettings.getInstance();
+
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, templateSettings);
+
+    for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+      if (shortcutChar == customLiveTemplate.getShortcut()) {
+        int caretOffset = editor.getCaretModel().getOffset();
+        if (customLiveTemplate.isApplicable(file, caretOffset, false)) {
+          final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+          String key = customLiveTemplate.computeTemplateKey(callback);
+          if (key != null) {
+            int offsetBeforeKey = caretOffset - key.length();
+            CharSequence text = editor.getDocument().getCharsSequence();
+            if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
+              callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretOffset);
+              customLiveTemplate.expand(key, callback);
+              return true;
+            }
+          }
+        }
+      }
+    }
     return startNonCustomTemplates(template2argument, editor, processor);
   }
 
