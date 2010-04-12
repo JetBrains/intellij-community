@@ -387,7 +387,9 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     long wastedTime = ProgressManagerImpl.getWastedTime();
     if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 1000) {
       JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.add(new JLabel(" Your wasted time: " + formatTime(wastedTime) + " "), BorderLayout.CENTER);
+      JLabel label = new JLabel(" Wasted time: " + formatTime(wastedTime) + " ");
+      label.setForeground(UIUtil.getPanelBackground().darker());
+      wrapper.add(label, BorderLayout.CENTER);
       wrapper.add(myProgressIcon, BorderLayout.EAST);
 
       long time = System.currentTimeMillis() - ApplicationManagerEx.getApplicationEx().getStartTime();
