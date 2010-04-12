@@ -261,7 +261,7 @@ public class AbstractTreeUi {
         if (isPassthroughMode()) {
           runnable.run();
         } else {
-          UIUtil.invokeAndWaitIfNeeded(runnable);
+          UIUtil.invokeLaterIfNeeded(runnable);
         }
       }
     }
@@ -3724,9 +3724,17 @@ public class AbstractTreeUi {
     public void treeExpanded(TreeExpansionEvent event) {
       dropUpdaterStateIfExternalChange();
 
-      TreePath path = event.getPath();
+      final TreePath path = event.getPath();
 
-      if (myRequestedExpand != null && !myRequestedExpand.equals(path)) return;
+      if (myRequestedExpand != null && !myRequestedExpand.equals(path)) {
+        getReady(AbstractTreeUi.this).doWhenDone(new Runnable() {
+          public void run() {
+            Object element = getElementFor(path.getLastPathComponent());
+            expand(element, null);
+          }
+        });
+        return;
+      }
 
       //myRequestedExpand = null;
 

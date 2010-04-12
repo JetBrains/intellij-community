@@ -967,6 +967,10 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     doItemTest();
   }
 
+  public void testNewAbstractClassWithConstructorArgs() throws Throwable {
+    doItemTest();
+  }
+
   public void testInsideGenericClassLiteral() throws Throwable {
     configureByTestName();
     testByCount(3, "String.class", "StringBuffer.class", "StringBuilder.class");

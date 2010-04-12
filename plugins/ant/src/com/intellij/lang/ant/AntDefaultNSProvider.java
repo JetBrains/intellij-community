@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant;
 
+import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlDocument;
@@ -34,7 +35,7 @@ public class AntDefaultNSProvider implements XmlFileNSInfoProvider {
 
   // nsPrefix, namespaceId
   public String[][] getDefaultNamespaces(@NotNull XmlFile xmlFile) {
-    if (xmlFile.getCopyableUserData(AntFileImpl.ANT_BUILD_FILE) != null) return myNamespaces;
+    if (xmlFile.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY) != null) return myNamespaces;
     final XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();

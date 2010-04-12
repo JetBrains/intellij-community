@@ -300,7 +300,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         tag,
         localizedMessage,
         isInjectedHtmlTagForWhichNoProblemsReporting((HtmlTag)tag) ?
-          HighlightInfoType.INFORMATION : 
+          HighlightInfoType.INFORMATION :
           SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key, tag).getSeverity()),
         intentionAction,
         basicIntention);
@@ -345,7 +345,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private static boolean skipValidation(PsiElement context) {
     return context.getUserData(DO_NOT_VALIDATE_KEY) != null;
   }
-  
+
   public static void setSkipValidation(@NotNull PsiElement element) {
     element.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
@@ -537,8 +537,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             ", start offset: " + referenceRange.getStartOffset() + ", end offset: " + referenceRange.getEndOffset());
           }
 
+          HighlightInfoType type = getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class));
+          if (type.getSeverity(null).compareTo(HighlightInfoType.WARNING.getSeverity(null)) > 0 && value instanceof XmlAttributeValue) {
+            PsiElement parent = value.getParent();
+            if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().toLowerCase().endsWith("stylename")) {
+              type = HighlightInfoType.WARNING;
+            }
+          }
           HighlightInfo info = HighlightInfo.createHighlightInfo(
-            getTagProblemInfoType(PsiTreeUtil.getParentOfType(value, XmlTag.class)),
+            type,
             startOffset + referenceRange.getStartOffset(),
             startOffset + referenceRange.getEndOffset(),
             description

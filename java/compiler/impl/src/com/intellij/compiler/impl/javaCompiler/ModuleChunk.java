@@ -23,15 +23,13 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
+import com.intellij.util.JarClasspathHelper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.OrderedSet;
@@ -198,6 +196,7 @@ public class ModuleChunk extends Chunk<Module> {
 
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
+
       final OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       boolean skip = true;
       for (OrderEntry orderEntry : orderEntries) {
@@ -208,12 +207,13 @@ public class ModuleChunk extends Chunk<Module> {
         if (skip) {
           continue;
         }
-        if ((mySourcesFilter & TEST_SOURCES) == 0) {
-          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.PRODUCTION_COMPILATION_CLASSES)));
+
+        VirtualFile[] files = orderEntry.getFiles((mySourcesFilter & TEST_SOURCES) == 0 ? OrderRootType.PRODUCTION_COMPILATION_CLASSES : OrderRootType.COMPILATION_CLASSES);
+        if (orderEntry instanceof ModuleOrderEntry) {
+          Project project = module.getProject();
+          JarClasspathHelper.patchFiles(files, project);
         }
-        else {
-          cpFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
-        }
+        cpFiles.addAll(Arrays.asList(files));
       }
     }
     return cpFiles;

@@ -18,11 +18,11 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.search.UsageSearchContext;
@@ -30,8 +30,10 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -61,23 +63,33 @@ public class MethodLateBoundReferencesSearcher implements QueryExecutor<PsiRefer
     return true;
   }
 
-  private SearchScope getUseScopeInReadAction(final PsiMethod method) {
+  private static SearchScope getUseScopeInReadAction(final PsiMethod method) {
     return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
-        return method.getUseScope();
+        final SearchScope scope = method.getUseScope();
+        final PsiFile file = method.getContainingFile();
+        if (file != null && scope instanceof GlobalSearchScope) {
+          final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
+          final Project project = method.getProject();
+          if (vfile != null && ProjectRootManager.getInstance(project).getFileIndex().isInSource(vfile)) {
+            return new GrSourceFilterScope((GlobalSearchScope)scope, project);
+          }
+        }
+        return scope;
       }
     });
   }
 
-  private String getPropertyName(final PsiMethod method) {
+  private static String getPropertyName(final PsiMethod method) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>(){
+      @Nullable
       public String compute() {
         return PropertyUtil.getPropertyName(method);
       }
     });
   }
 
-  private boolean processTextOccurrences(SearchScope searchScope, final String name, final Processor<PsiReference> consumer, Project project) {
+  private static boolean processTextOccurrences(SearchScope searchScope, final String name, final Processor<PsiReference> consumer, Project project) {
     final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
         PsiReference ref = element.getReference();

@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,57 @@ import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 public class MavenDomProjectProcessorUtils {
   private MavenDomProjectProcessorUtils() {
+  }
+
+  @NotNull
+  public static List<MavenDomProjectModel> collectChildrenProjects(@NotNull final MavenDomProjectModel model) {
+
+    MavenProject mavenProject = MavenDomUtil.findProject(model);
+    if (mavenProject != null) {
+      final Project project = model.getManager().getProject();
+      Set<MavenProject> inheritors = MavenProjectsManager.getInstance(project).findInheritors(mavenProject);
+
+
+      return ContainerUtil.mapNotNull(inheritors, new Function<MavenProject, MavenDomProjectModel>() {
+        public MavenDomProjectModel fun(MavenProject childProject) {
+          return MavenDomUtil.getMavenDomProjectModel(project, childProject.getFile());
+        }
+      });
+    }
+    return Collections.emptyList();
+  }
+  @NotNull
+  public static Set<MavenDomProjectModel> collectParentProjects(@NotNull final MavenDomProjectModel projectDom,
+                                                                @NotNull final Project project) {
+    Set<MavenDomProjectModel> parents = new HashSet<MavenDomProjectModel>();
+    MavenDomProjectModel parent = findParent(projectDom, project);
+    while (parent != null) {
+      if (parents.contains(parent)) break;
+      parents.add(parent);
+      parent = findParent(parent, project);
+    }
+
+    return parents;
+  }
+
+  @Nullable
+  public static MavenDomProjectModel findParent(@NotNull MavenDomProjectModel model, Project project) {
+      return findParent(model.getMavenParent(), project);
+  }
+
+@Nullable
+  public static MavenDomProjectModel findParent(@NotNull MavenDomParent mavenDomParent, Project project) {
+    if (!DomUtil.hasXml(mavenDomParent)) return null;
+
+    MavenId id = new MavenId(mavenDomParent.getGroupId().getStringValue(), mavenDomParent.getArtifactId().getStringValue(),
+                             mavenDomParent.getVersion().getStringValue());
+    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(id);
+
+    return mavenProject != null ? MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile()) : null;
   }
 
   @Nullable
@@ -227,6 +273,7 @@ public class MavenDomProjectProcessorUtils {
     return process(projectDom, processor, project, domProfileFunction, projectDomFunction, new HashSet<MavenDomProjectModel>());
   }
 
+
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
                                     @NotNull final Processor<T> processor,
                                     @NotNull final Project project,
@@ -261,6 +308,8 @@ public class MavenDomProjectProcessorUtils {
 
     return aBoolean == null ? false : aBoolean.booleanValue();
   }
+
+
 
   private static <T> boolean processSettingsXml(@Nullable MavenProject mavenProject,
                                                 @NotNull Processor<T> processor,

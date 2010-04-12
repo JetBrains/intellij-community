@@ -18,7 +18,6 @@ package com.intellij.lang.ant.dom;
 import com.intellij.lang.ant.AntLanguageExtension;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
   }
 
   protected void initializeFileDescription() {
-    // todo
+    registerReferenceInjector(new AntReferenceInjector());
   }
 
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {

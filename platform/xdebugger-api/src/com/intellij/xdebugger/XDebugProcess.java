@@ -62,10 +62,8 @@ public abstract class XDebugProcess {
   /**
    * @return editor provider which will be used to produce editors for "Evaluate" and "Set Value" actions
    */
-  @Nullable
-  public XDebuggerEditorsProvider getEditorsProvider() {
-    return null;
-  }
+  @NotNull
+  public abstract XDebuggerEditorsProvider getEditorsProvider();
 
   /**
    * Called when {@link XDebugSession} is initialized and breakpoints are registered in

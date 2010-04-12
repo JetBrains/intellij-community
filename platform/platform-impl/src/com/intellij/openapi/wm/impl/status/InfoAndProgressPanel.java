@@ -387,12 +387,14 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     long wastedTime = ProgressManagerImpl.getWastedTime();
     if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 1000) {
       JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.add(new JLabel(" Your wasted time: " + formatTime(wastedTime) + " "), BorderLayout.CENTER);
+      JLabel label = new JLabel(" Wasted time: " + formatTime(wastedTime) + " ");
+      label.setForeground(UIUtil.getPanelBackground().darker());
+      wrapper.add(label, BorderLayout.CENTER);
       wrapper.add(myProgressIcon, BorderLayout.EAST);
 
       long time = System.currentTimeMillis() - ApplicationManagerEx.getApplicationEx().getStartTime();
       long percentage = wastedTime * 100 / time;
-      String period = new SimpleDateFormat("mm 'min' HH 'hours'").format(new Date(2000, 0, 1, 0, 0, 0).getTime() + time);
+      String period = new SimpleDateFormat("m 'min' H 'hours'").format(new Date(2000, 0, 1, 0, 0, 0).getTime() + time);
 
       List<Pair<String, Long>> list = ProgressManagerImpl.getTimeWasters();
       StringBuilder s = new StringBuilder("<html>Successfully wasted " + percentage +"% of your time in " + period  + ":<br><border>");

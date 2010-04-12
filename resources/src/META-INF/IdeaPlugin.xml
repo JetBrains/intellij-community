@@ -440,6 +440,9 @@
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
 
+    <compiler.buildParticipantProvider implementation="com.intellij.compiler.impl.jarr.JarBuildParticipantProvider"/>
+    <java.programPatcher implementation="com.intellij.execution.impl.JarProgramPatcher"/>
+
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Control Flow</category>

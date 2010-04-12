@@ -61,7 +61,7 @@ public class PropertyUtil {
       }
       if (returnType != null && PsiType.VOID.equals(returnType)) return false;
     }
-    else if (methodName.startsWith("is")) {
+    else if (methodName.startsWith("is") && methodName.length() > "is".length()) {
       if (Character.isLowerCase(methodName.charAt("is".length()))
           && (methodName.length() == "is".length() + 1 || Character.isLowerCase(methodName.charAt("is".length() + 1)))) {
         return false;
