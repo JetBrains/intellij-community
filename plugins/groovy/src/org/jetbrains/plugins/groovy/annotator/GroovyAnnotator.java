@@ -81,6 +81,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -1364,13 +1365,21 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
     if (argumentTypes == null) return;
 
-    if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) {
-      final String typesString = buildArgTypesList(argumentTypes);
-      String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
-      PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
-      if (elementToHighlight == null) elementToHighlight = place;
-      holder.createWarningAnnotation(elementToHighlight, message);
+    if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) return;
+
+    if (argumentTypes.length == 1) {
+      PsiType arg = argumentTypes[0];
+      if (arg instanceof GrTupleType) {
+        argumentTypes = ((GrTupleType)arg).getComponentTypes();
+        if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) return;
+      }
     }
+
+    final String typesString = buildArgTypesList(argumentTypes);
+    String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    if (elementToHighlight == null) elementToHighlight = place;
+    holder.createWarningAnnotation(elementToHighlight, message);
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
