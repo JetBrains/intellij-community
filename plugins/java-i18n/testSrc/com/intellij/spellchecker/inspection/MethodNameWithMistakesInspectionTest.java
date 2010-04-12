@@ -21,7 +21,7 @@ import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
  */
-public class MethodNameWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
+public class MethodNameWithMistakesInspectionTest extends JavaSpellcheckerInspectionTestCase {
 
    protected String getBasePath() {
     return getSpellcheckerTestDataPath() + "/inspection/methodNameWithMistakes";

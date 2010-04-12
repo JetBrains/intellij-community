@@ -17,21 +17,18 @@ package com.intellij.spellchecker.inspection;
 
 import com.intellij.spellchecker.inspections.SpellCheckerInspectionToolProvider;
 
-
 /**
  * Created by IntelliJ IDEA.
  * User: Ekaterina Shliakhovetskaja
  */
-public class StringWithMistakesInspectionTest extends SpellcheckerInspectionTestCase {
+public class LocalVariableWithMistakesInspectionTest extends JavaSpellcheckerInspectionTestCase {
 
-  protected String getBasePath() {
-    return getSpellcheckerTestDataPath() + "/inspection/stringWithMistakes";
+   protected String getBasePath() {
+    return getSpellcheckerTestDataPath() + "/inspection/localVariableNameWithMistakes";
   }
-
 
   public void testJava() throws Throwable {
-    doTest("SPITest5.java", SpellCheckerInspectionToolProvider.getInspectionTools());
+    doTest("SPITest3.java", SpellCheckerInspectionToolProvider.getInspectionTools());
   }
 
-  
 }
