@@ -241,4 +241,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testWildcardInExtendsList() throws Exception {
     doTest();
   }
+
+  public void testOverrideAnnotation() throws Exception {
+    doTest();
+  }
 }
