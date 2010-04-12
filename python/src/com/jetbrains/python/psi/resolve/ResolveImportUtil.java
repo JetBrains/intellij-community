@@ -229,6 +229,9 @@ public class ResolveImportUtil {
 
     PsiElement seeker = directory;
     for (String name : qualifiedName.getComponents()) {
+      if (name == null) {
+        return null;
+      }
       seeker = resolveChild(seeker, name, sourceFile, true);
     }
     return seeker;
@@ -313,7 +316,11 @@ public class ResolveImportUtil {
         }
         else return null; // topmost qualifier not found
         while (it.hasNext()) {
-          last_resolved =  resolveChild(last_resolved, it.next().getName(), containing_file, true);
+          final String name = it.next().getName();
+          if (name == null) {
+            return null;
+          }
+          last_resolved =  resolveChild(last_resolved, name, containing_file, true);
           if (last_resolved == null) return null; // anything in the chain unresolved means that the whole chain fails
         }
         if (referencedName != null) {
