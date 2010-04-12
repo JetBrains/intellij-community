@@ -107,6 +107,9 @@ public abstract class AbstractBlockWrapper {
     return wraps.get(0);
   }
 
+  /**
+   * @return    wrap object configured for the current block wrapper if any; <code>null</code> otherwise
+   */
   public WrapImpl getOwnWrap() {
     return myWrap;
   }
