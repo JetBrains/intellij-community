@@ -633,7 +633,8 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   public static boolean addResult(Processor<UsageInfo> results, PsiReference ref, FindUsagesOptions options, PsiElement refElement) {
     if (filterUsage(ref.getElement(), options, refElement)){
       TextRange rangeInElement = ref.getRangeInElement();
-      return results.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
+      final boolean validRef = ref.isReferenceTo(refElement);
+      return results.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), !validRef));
     }
     return true;
   }
