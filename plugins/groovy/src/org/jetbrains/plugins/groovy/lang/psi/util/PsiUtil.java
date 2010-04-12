@@ -123,7 +123,7 @@ public class PsiUtil {
 
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
-      signature.curry(1);
+      signature = signature.curry(1);
     }
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());
   }
@@ -150,7 +150,6 @@ public class PsiUtil {
     return null;
   }
 
-  // Returns arguments types not including Map for named arguments
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom) {
     PsiElement parent = place.getParent();
