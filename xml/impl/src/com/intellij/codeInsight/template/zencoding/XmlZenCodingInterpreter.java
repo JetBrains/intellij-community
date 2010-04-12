@@ -21,7 +21,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -75,7 +74,6 @@ class XmlZenCodingInterpreter {
   private void gotoChild(Object templateBoundsKey) {
     int startOfTemplate = myCallback.getStartOfTemplate(templateBoundsKey);
     int endOfTemplate = myCallback.getEndOfTemplate(templateBoundsKey);
-    Editor editor = myCallback.getEditor();
     int offset = myCallback.getOffset();
 
     PsiFile file = myCallback.parseCurrentText(StdFileTypes.XML);
@@ -97,7 +95,7 @@ class XmlZenCodingInterpreter {
 
     if (newOffset >= 0) {
       myCallback.fixEndOffset();
-      editor.getCaretModel().moveToOffset(newOffset);
+      myCallback.moveToOffset(newOffset);
     }
 
     /*CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
@@ -237,10 +235,8 @@ class XmlZenCodingInterpreter {
   }
 
   private static void insertText(CustomTemplateCallback callback, String text) {
-    Editor editor = callback.getEditor();
-    int offset = editor.getCaretModel().getOffset();
-    editor.getDocument().insertString(offset, text);
-    PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
+    int offset = callback.getOffset();
+    callback.insertString(offset, text);
   }
 
   private void invokeTemplateAndProcessTail(final TemplateToken templateToken,
