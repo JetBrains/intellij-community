@@ -402,6 +402,10 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     }
   }
   private static void invokeDslErrorPopup(Throwable e, final Project project, VirtualFile vfile) {
+    if (!isActivated(vfile)) {
+      return;
+    }
+
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
     final String exceptionText = writer.toString();
