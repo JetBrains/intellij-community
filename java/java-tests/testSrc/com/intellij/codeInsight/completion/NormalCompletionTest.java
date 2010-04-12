@@ -659,4 +659,8 @@ public class NormalCompletionTest extends LightCompletionTestCase {
     assertEquals("azzzfzzz", list.get(0).getLookupString());
     assertEquals("fzazzz", list.get(1).getLookupString());
   }
+
+  public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
+
+
 }

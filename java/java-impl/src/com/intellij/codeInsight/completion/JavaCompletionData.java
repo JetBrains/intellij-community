@@ -21,9 +21,6 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.patterns.*;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
-import static com.intellij.patterns.PsiJavaPatterns.*;
-import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.EnumOrAnnotationTypeFilter;
@@ -38,10 +35,13 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
+import static com.intellij.patterns.PsiJavaPatterns.*;
+import static com.intellij.patterns.StandardPatterns.not;
+
 public class JavaCompletionData extends JavaAwareCompletionData{
 
   private static final @NonNls String[] ourBlockFinalizers = {"{", "}", ";", ":", "else"};
-  private static final PsiElementPattern.Capture<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
+  private static final PsiElementPattern<PsiElement,?> AFTER_DOT = psiElement().afterLeaf(".");
   public static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
       new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
       new TextFilter(PsiKeyword.THIS),
@@ -60,8 +60,10 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       new ParentElementFilter(new ClassFilter(PsiTryStatement.class)))
 )));
   public static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_PARAMETER_LIST =
-    PsiJavaPatterns.psiElement().inside(PsiParameterList.class).and(new FilterPattern(new LeftNeighbour(
-    new OrFilter(new TextFilter("(", ",", PsiKeyword.FINAL), new SuperParentFilter(new ClassFilter(PsiAnnotation.class))))));
+    PsiJavaPatterns.psiElement().withSuperParent(
+      2, 
+      psiElement(PsiJavaCodeReferenceElement.class).withParent(
+        psiElement(PsiTypeElement.class).withParent(PsiParameterList.class)));
 
   private static final AndFilter START_OF_CODE_FRAGMENT = new AndFilter(
     new ScopeFilter(new AndFilter(
@@ -163,7 +165,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         new AndFilter (new TokenTypeFilter(JavaTokenType.GT),
                        new SuperParentFilter(new ClassFilter(PsiTypeParameterList.class)))))
     ),
-    new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@")))));
+    new PatternFilter(not(psiElement().afterLeaf("@", "."))));
 
   private void declareCompletionSpaces() {
     declareFinalScope(PsiFile.class);
