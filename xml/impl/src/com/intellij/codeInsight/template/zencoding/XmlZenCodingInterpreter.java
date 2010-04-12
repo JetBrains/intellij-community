@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -87,7 +88,7 @@ class XmlZenCodingInterpreter {
     Editor editor = myCallback.getEditor();
     int offset = myCallback.getOffset();
 
-    PsiFile file = myCallback.getFile();
+    PsiFile file = myCallback.parseCurrentText(StdFileTypes.XML);
 
     PsiElement element = file.findElementAt(offset);
     if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {
