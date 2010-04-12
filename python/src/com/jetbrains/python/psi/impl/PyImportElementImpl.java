@@ -78,7 +78,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
         return asName;
       }
       final PyQualifiedName importedName = stub.getImportedQName();
-      return importedName.getLastComponent();
+      return importedName != null ? importedName.getLastComponent() : null;
     }
     PyTargetExpression asname = getAsNameElement();
     if (asname != null) return asname.getName();
