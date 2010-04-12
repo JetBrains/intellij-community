@@ -29,14 +29,11 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.*;
-import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenIcons;
@@ -173,7 +170,7 @@ public class MavenDomGutterAnnotator implements Annotator {
   }
 
   private static void annotateMavenDomParent(@NotNull MavenDomParent mavenDomParent, @NotNull AnnotationHolder holder) {
-    MavenDomProjectModel parent = findParent(mavenDomParent, mavenDomParent.getManager().getProject());
+    MavenDomProjectModel parent = MavenDomProjectProcessorUtils.findParent(mavenDomParent, mavenDomParent.getManager().getProject());
 
     if (parent != null) {
       NavigationGutterIconBuilder.create(MavenIcons.PARENT_PROJECT, MAVEN_PROJECT_CONVERTER).
@@ -204,17 +201,6 @@ public class MavenDomGutterAnnotator implements Annotator {
           install(holder, model.getXmlElement());
       }
     }
-  }
-
-  @Nullable
-  public static MavenDomProjectModel findParent(@NotNull MavenDomParent mavenDomParent, Project project) {
-    if (!DomUtil.hasXml(mavenDomParent)) return null;
-
-    MavenId id = new MavenId(mavenDomParent.getGroupId().getStringValue(), mavenDomParent.getArtifactId().getStringValue(),
-                             mavenDomParent.getVersion().getStringValue());
-    MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(id);
-
-    return mavenProject != null ? MavenDomUtil.getMavenDomProjectModel(project, mavenProject.getFile()) : null;
   }
 
   private static boolean isDependencyManagementSection(@NotNull MavenDomDependency dependency) {
