@@ -369,6 +369,18 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
                              String surroundedText) {
     List<Token> tokens = parse(key, callback);
     assert tokens != null;
+    if (surroundedText == null) {
+      if (tokens.size() == 2) {
+        Token token = tokens.get(0);
+        if (token instanceof TemplateToken) {
+          if (key.equals(((TemplateToken)token).myKey) && callback.findApplicableTemplates(key).size() > 1) {
+            callback.startTemplate(key);
+            return;
+          }
+        }
+      }
+      callback.deleteTemplateKey(key);
+    }
     XmlZenCodingInterpreter.interpret(tokens, 0, callback, State.WORD, surroundedText);
   }
 
@@ -447,7 +459,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
         selection = selection.trim();
         doWrap(selection, abbreviation, callback, new TemplateInvokationListener() {
           public void finished() {
-            callback.finish();
+            callback.startAllExpandedTemplates();
           }
         });
       }
@@ -455,10 +467,8 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
         XmlZenCodingTemplate template = new XmlZenCodingTemplate();
         String key = template.computeTemplateKey(callback);
         if (key != null) {
-          int offsetBeforeKey = caretAt - key.length();
-          callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretAt);
           template.expand(key, callback);
-          callback.finish();
+          callback.startAllExpandedTemplates();
           return true;
         }
         // if it is simple live template invokation, we should start it using TemplateManager because template may be ambiguous
