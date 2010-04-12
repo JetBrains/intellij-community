@@ -71,6 +71,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
     return IconDeferrer.getInstance().defer(baseIcon, psiElement, new Function<PsiElement, Icon>() {
       public Icon fun(PsiElement element) {
+        if (!element.isValid()) return null;
+
         final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
         if (providersIcon != null) {
           return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
