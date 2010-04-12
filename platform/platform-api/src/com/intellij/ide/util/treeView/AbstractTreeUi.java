@@ -261,7 +261,7 @@ public class AbstractTreeUi {
         if (isPassthroughMode()) {
           runnable.run();
         } else {
-          UIUtil.invokeAndWaitIfNeeded(runnable);
+          UIUtil.invokeLaterIfNeeded(runnable);
         }
       }
     }
