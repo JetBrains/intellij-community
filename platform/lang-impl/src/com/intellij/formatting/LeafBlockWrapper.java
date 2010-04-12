@@ -93,6 +93,9 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myLastLineIndent = null;
   }
 
+  /**
+   * @return    spacing between current block and its left sibling
+   */
   public SpacingImpl getSpaceProperty() {
     return mySpaceProperty;
   }
