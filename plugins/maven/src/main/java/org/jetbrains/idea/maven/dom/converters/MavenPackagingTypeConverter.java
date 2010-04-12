@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.util.xml.ConvertContext;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class MavenPackagingTypeConverter extends MavenConstantListConverter {
     super(false);
   }
 
-  protected List<String> getValues() {
+  protected List<String> getValues(ConvertContext context) {
     return VALUES;
   }
 }

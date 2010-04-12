@@ -241,8 +241,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, templateSettings);
 
-    if (shortcutChar == templateSettings.getDefaultShortcutChar()) {
-      for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+    for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+      if (shortcutChar == customLiveTemplate.getShortcut()) {
         int caretOffset = editor.getCaretModel().getOffset();
         if (customLiveTemplate.isApplicable(file, caretOffset, false)) {
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
@@ -252,12 +252,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
             CharSequence text = editor.getDocument().getCharsSequence();
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
               callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretOffset);
-              callback.fixInitialState();
-              customLiveTemplate.expand(key, callback, new TemplateInvokationListener() {
-                public void finished(boolean inSeparateEvent) {
-                  callback.finish();
-                }
-              });
+              customLiveTemplate.expand(key, callback);
+              callback.finish();
               return true;
             }
           }

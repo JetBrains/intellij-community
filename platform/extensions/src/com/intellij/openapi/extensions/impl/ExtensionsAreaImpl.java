@@ -18,6 +18,7 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.MultiMap;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.output.Format;
@@ -128,7 +129,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
     ExtensionComponentAdapter adapter;
     if (implClass != null) {
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor, false);
+      adapter = new ExtensionComponentAdapter(implClass, extensionElement, getPluginContainer(pluginId.getIdString()), pluginDescriptor, shouldDeserializeInstance(extensionElement));
     }
     else {
       final ExtensionPoint extensionPoint = getExtensionPoint(epName);
@@ -137,6 +138,19 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer().registerComponent(adapter);
     getExtensionPoint(epName).registerExtensionAdapter(adapter);
+  }
+
+  private static boolean shouldDeserializeInstance(Element extensionElement) {
+    // has content
+    if (!extensionElement.getContent().isEmpty()) return true;
+    // has custom attributes
+    for (Attribute attribute : (List<Attribute>)extensionElement.getAttributes()) {
+      final String name = attribute.getName();
+      if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String extractEPName(final Element extensionElement) {

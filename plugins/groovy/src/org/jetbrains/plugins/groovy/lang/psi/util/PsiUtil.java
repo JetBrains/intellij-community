@@ -304,8 +304,9 @@ public class PsiUtil {
     }
   }
 
-  public static void shortenReference(GrCodeReferenceElement ref) {
-    final GrCodeReferenceElement qualifier = ref.getQualifier();
+
+  public static void shortenReference(GrReferenceElement ref) {
+    final PsiElement qualifier = ref.getQualifier();
     if (qualifier != null &&
         (PsiTreeUtil.getParentOfType(ref, GrDocMemberReference.class) != null ||
          PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null) &&
@@ -313,7 +314,7 @@ public class PsiUtil {
         PsiTreeUtil.getParentOfType(ref, GroovyCodeFragment.class) == null) {
       final PsiElement resolved = ref.resolve();
       if (resolved instanceof PsiClass) {
-        ref.setQualifier(null);
+        setQualifier(ref, null);
         if (ref.isReferenceTo(resolved)) return;
 
         final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
@@ -324,7 +325,7 @@ public class PsiUtil {
             final GrImportStatement added = file.addImportForClass(clazz);
             if (!ref.isReferenceTo(resolved)) {
               file.removeImport(added);
-              ref.setQualifier(qualifier);
+              setQualifier(ref, qualifier);
             }
           }
         }
@@ -332,21 +333,17 @@ public class PsiUtil {
     }
   }
 
-  private static boolean mayInsertImport(GrReferenceElement ref) {
-    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null && !(ref.getContainingFile() instanceof GroovyCodeFragment) && PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null;
+  private static void setQualifier(@NotNull GrReferenceElement ref, @Nullable PsiElement qualifier) {
+    if (ref instanceof GrReferenceExpression) {
+      ((GrReferenceExpression)ref).setQualifierExpression((GrReferenceExpression)qualifier);
+    }
+    else if (ref instanceof GrCodeReferenceElement) {
+      ((GrCodeReferenceElement)ref).setQualifier((GrCodeReferenceElement)qualifier);
+    }
   }
 
-  private static boolean mayShorten(@NotNull GrCodeReferenceElement ref) {
-    GrCodeReferenceElement cur = (GrCodeReferenceElement)ref.copy();
-    final GrCodeReferenceElement qualifier = cur.getQualifier();
-    if (qualifier == null) {
-      return true;
-    }
-    final PsiClass correctResolved = (PsiClass)cur.resolve();
-    cur.setQualifier(null);
-    final GroovyResolveResult[] results = cur.multiResolve(false);
-    return results.length == 0 || (results.length == 1 && cur.getManager().areElementsEquivalent(results[0].getElement(), correctResolved));
-
+  private static boolean mayInsertImport(GrReferenceElement ref) {
+    return PsiTreeUtil.getParentOfType(ref, GrDocComment.class) == null && !(ref.getContainingFile() instanceof GroovyCodeFragment) && PsiTreeUtil.getParentOfType(ref, GrImportStatement.class) == null;
   }
 
   @Nullable

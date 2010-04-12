@@ -18,7 +18,6 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.execution.ui.layout.PlaceInGrid;
-import com.intellij.execution.ui.layout.Tab;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -181,16 +180,6 @@ public class RunnerLayout  {
 
   public ViewImpl getStateFor(Content content) {
     return getOrCreateView(getOrCreateContentId(content));
-  }
-
-  public void clearStateFor(Content content) {
-    final ViewImpl view = myViews.remove(getOrCreateContentId(content));
-    if (view != null) {
-      final Tab tab = view.getTab();
-      if (tab instanceof TabImpl) {
-        myTabs.remove(tab);
-      }
-    }
   }
 
   private static String getOrCreateContentId(final Content content) {

@@ -11,5 +11,11 @@
     <srcroot url="jar://$MODULE_DIR$/../ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/resources/design/src" />
     <srcroot url="jar://$MODULE_DIR$/../ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/resources/walls/testC" />
     <srcroot url="jar://$MODULE_DIR$/../ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/resources/walls/testA" />
+    <relative-module-src project-related="jar://$PROJECT_DIR$/srcPath/ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/src" />
+    <relative-module-src project-related="jar://$PROJECT_DIR$/srcPath/ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/src/java" />
+    <relative-module-src project-related="jar://$PROJECT_DIR$/srcPath/ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/resources/walls/testB" />
+    <relative-module-src project-related="jar://$PROJECT_DIR$/srcPath/ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/resources/design/src" />
+    <relative-module-src project-related="jar://$PROJECT_DIR$/srcPath/ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/resources/walls/testC" />
+    <relative-module-src project-related="jar://$PROJECT_DIR$/srcPath/ws-internals/lib/ant-contrib-1.0/ant-contrib-1.0b3-src.zip!/ant-contrib/test/resources/walls/testA" />
   </lib>
 </component>

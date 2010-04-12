@@ -17,8 +17,8 @@
 
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AddEditRemovePanel;
@@ -31,9 +31,9 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.awt.*;
 
 /**
  * Creates the form for the Maven2 build setup and is responsible for updating the
@@ -41,7 +41,7 @@ import java.awt.*;
  *
  * @author Ralf Quebbemann (ralfq@codehaus.org)
  */
-public abstract class MavenRunnerConfigurable implements Configurable {
+public abstract class MavenRunnerConfigurable implements SearchableConfigurable {
   private JPanel panel;
   private JCheckBox checkBoxRunMavenInBackground;
   private JLabel labelVMParameters;
@@ -114,6 +114,14 @@ public abstract class MavenRunnerConfigurable implements Configurable {
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.project.maven.runner";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public void disposeUIResources() {

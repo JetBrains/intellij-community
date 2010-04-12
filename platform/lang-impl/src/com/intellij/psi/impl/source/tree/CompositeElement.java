@@ -74,19 +74,21 @@ public class CompositeElement extends TreeElement {
   }
 
   public void subtreeChanged() {
-    clearCaches();
-    if (!(this instanceof PsiElement)) {
-      final PsiElement psi = getPsi();
-      if (psi instanceof ASTDelegatePsiElement) {
-        ((ASTDelegatePsiElement)psi).subtreeChanged();
+    CompositeElement compositeElement = this;
+    while(compositeElement != null) {
+      compositeElement.clearCaches();
+      if (!(compositeElement instanceof PsiElement)) {
+        final PsiElement psi = compositeElement.getPsi();
+        if (psi instanceof ASTDelegatePsiElement) {
+          ((ASTDelegatePsiElement)psi).subtreeChanged();
+        }
+        else if (psi instanceof PsiFile) {
+          ((PsiFile)psi).subtreeChanged();
+        }
       }
-      else if (psi instanceof PsiFile) {
-        ((PsiFile)psi).subtreeChanged();
-      }
+  
+      compositeElement = compositeElement.getTreeParent();
     }
-    
-    CompositeElement treeParent = getTreeParent();
-    if (treeParent != null) treeParent.subtreeChanged();
   }
 
   public void clearCaches() {

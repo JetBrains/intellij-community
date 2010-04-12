@@ -21,8 +21,8 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-public class CompilerUIConfigurable implements Configurable {
+public class CompilerUIConfigurable implements SearchableConfigurable {
   private JPanel myPanel;
   private final Project myProject;
 
@@ -141,6 +141,14 @@ public class CompilerUIConfigurable implements Configurable {
   }
 
   public String getHelpTopic() {
+    return null;
+  }
+
+  public String getId() {
+    return "compiler.general";
+  }
+
+  public Runnable enableSearch(String option) {
     return null;
   }
 

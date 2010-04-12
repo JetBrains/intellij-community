@@ -288,7 +288,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitComment(PsiComment comment) {
     super.visitComment(comment);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkUnclosedComment(comment));
-    if (!myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(comment);
+    if (myRefCountHolder != null && !myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(comment);
   }
 
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
@@ -519,7 +519,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitLiteralExpression(expression);
     if (myHolder.hasErrorResults()) return;
     myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression));
-    if (!myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(expression);
+    if (myRefCountHolder != null && !myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(expression);
   }
 
   @Override public void visitMethod(PsiMethod method) {
@@ -578,7 +578,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkEnumSuperConstructorCall(expression));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkSuperQualifierType(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper));
+    // in case of JSP syntethic method call, do not check
+    if (expression.getMethodExpression().isPhysical() && !myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper));
 
     if (!myHolder.hasErrorResults()) visitExpression(expression);
   }

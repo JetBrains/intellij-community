@@ -56,7 +56,7 @@ public class ModulePathMacroManager extends BasePathMacroManager /*ProjectPathMa
   }
 
   private void getExpandModuleHomeReplacements(ExpandMacroToPathMap result) {
-    String moduleDir = getModuleDir(myModule.getModuleFilePath());
+    String moduleDir = myModule.isDisposed() ? null : getModuleDir(myModule.getModuleFilePath());
     if (moduleDir == null) return;
 
     File f = new File(moduleDir.replace('/', File.separatorChar));
@@ -77,7 +77,7 @@ public class ModulePathMacroManager extends BasePathMacroManager /*ProjectPathMa
   }
 
   private void getModuleHomeReplacements(@NonNls ReplacePathToMacroMap result, final boolean addRelativePathMacros) {
-    String moduleDir = getModuleDir(myModule.getModuleFilePath());
+    String moduleDir = myModule.isDisposed() ? null : getModuleDir(myModule.getModuleFilePath());
     if (moduleDir == null) return;
 
     File f = new File(moduleDir.replace('/', File.separatorChar));

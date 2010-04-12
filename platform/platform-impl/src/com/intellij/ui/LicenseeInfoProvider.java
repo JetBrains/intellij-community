@@ -16,6 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Date;
 
 /**
  * @author yole
@@ -28,4 +31,9 @@ public abstract class LicenseeInfoProvider {
   public abstract String getLicensedToMessage();
   public abstract String getLicenseRestrictionsMessage();
   public abstract boolean isEvaluationLicense();
+
+  @Nullable
+  public  Date getMaintenanceDueDate(){
+    return null;
+  }
 }

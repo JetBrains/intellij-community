@@ -5,8 +5,8 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: Oct 5, 2009
  */
-public class AnnotationProcessorsConfigurable implements Configurable{
+public class AnnotationProcessorsConfigurable implements SearchableConfigurable {
   private ProcessedModulesTable myModulesTable;
   private final Project myProject;
   private JRadioButton myRbClasspath;
@@ -66,6 +66,14 @@ public class AnnotationProcessorsConfigurable implements Configurable{
 
   public String getHelpTopic() {
     return "reference.projectsettings.compiler.annotationProcessors";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {

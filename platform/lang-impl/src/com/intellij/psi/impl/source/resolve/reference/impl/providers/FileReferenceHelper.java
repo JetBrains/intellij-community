@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -57,7 +57,7 @@ public abstract class FileReferenceHelper {
   public abstract PsiFileSystemItem findRoot(final Project project, @NotNull final VirtualFile file);
 
   @NotNull
-  public abstract Collection<PsiFileSystemItem> getRoots(@NotNull Module module);
+  public abstract Collection<PsiFileSystemItem>  getRoots(@NotNull Module module);
 
   @NotNull
   public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);

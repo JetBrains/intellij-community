@@ -17,7 +17,7 @@
 
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
@@ -32,7 +32,7 @@ import java.util.Arrays;
 /**
  * @author Ralf Quebbemann (ralfq@codehaus.org)
  */
-public abstract class MavenGeneralConfigurable implements Configurable {
+public abstract class MavenGeneralConfigurable implements SearchableConfigurable {
   private JCheckBox checkboxWorkOffline;
   private JPanel panel;
   private JComboBox outputLevelCombo;
@@ -177,5 +177,13 @@ public abstract class MavenGeneralConfigurable implements Configurable {
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.dialog.project.maven";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

@@ -1,0 +1,16 @@
+<project name="Layout Grape plugin distribution" default="layout">
+  <target name="layout">
+    <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
+      <dir name="Grape">
+        <dir name="lib">
+          <jar name="Grape.jar">
+            <module name="grape"/>
+          </jar>
+          <jar name="grape_rt.jar">
+            <module name="grape-rt"/>
+          </jar>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+</project>

@@ -43,7 +43,10 @@ import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author lex
@@ -82,7 +85,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myFilterThread = filterThread;
   }
 
-  public Set findRequests(Requestor requestor) {
+  public Set<EventRequest> findRequests(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final Set<EventRequest> requestSet = myRequestorToBelongedRequests.get(requestor);
     if (requestSet == null) {
@@ -264,13 +267,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     if(!myDebugProcess.isAttached()) {
       return;
     }
-    final Set<EventRequest> requests = myRequestorToBelongedRequests.get(requestor);
+    final Set<EventRequest> requests = myRequestorToBelongedRequests.remove(requestor);
     if(requests == null) {
       return;
     }
-    for (Iterator<EventRequest> iterator = requests.iterator(); iterator.hasNext();) {
-      final EventRequest request = iterator.next();
-      iterator.remove();
+    for (final EventRequest request : requests) {
       try {
         final Requestor targetRequestor = (Requestor)request.getProperty(REQUESTOR);
         if (targetRequestor != requestor) {
@@ -280,6 +281,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           final Set<EventRequest> allTargetRequestorRequests = myRequestorToBelongedRequests.get(targetRequestor);
           if (allTargetRequestorRequests != null) {
             allTargetRequestorRequests.remove(request);
+            if (allTargetRequestorRequests.size() == 0) {
+              myRequestorToBelongedRequests.remove(targetRequestor);
+            }
           }
         }
         myEventRequestManager.deleteEventRequest(request);
@@ -364,8 +368,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public boolean isVerified(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    //ClassPrepareRequest is added in any case
-    return myRequestorToBelongedRequests.containsKey(requestor);
+    for (EventRequest request : findRequests(requestor)) {
+      /*ClassPrepareRequest is added in any case, so do not count it*/
+      if (!(request instanceof ClassPrepareRequest)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {

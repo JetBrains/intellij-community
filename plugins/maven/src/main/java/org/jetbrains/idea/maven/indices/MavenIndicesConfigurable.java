@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -38,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class MavenIndicesConfigurable extends BaseConfigurable {
+public class MavenIndicesConfigurable extends BaseConfigurable implements SearchableConfigurable{
   private final MavenProjectIndicesManager myManager;
 
   private JPanel myMainPanel;
@@ -129,6 +130,14 @@ public class MavenIndicesConfigurable extends BaseConfigurable {
 
   public String getHelpTopic() {
     return "reference.settings.project.maven.repository.indices";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {

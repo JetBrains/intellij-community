@@ -338,8 +338,8 @@ public class MavenProjectsManager extends SimpleProjectComponent
           }
           scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
                                        null,
-                                       getImportingSettings().shouldDownloadSourcesAutomatically(),
-                                       getImportingSettings().shouldDownloadDocsAutomatically(),
+                                       getImportingSettings().isDownloadSourcesAutomatically(),
+                                       getImportingSettings().isDownloadDocsAutomatically(),
                                        null);
           scheduleForNextImport(projectWithChanges);
         }

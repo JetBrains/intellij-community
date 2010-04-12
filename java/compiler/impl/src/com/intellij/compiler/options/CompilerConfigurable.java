@@ -148,7 +148,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
   }
 
   private static Configurable createExcludesWrapper(final ExcludedEntriesConfigurable excludes) {
-    return new Configurable(){
+    return new SearchableConfigurable(){
         @Nls
         public String getDisplayName() {
           return "Excludes";
@@ -181,6 +181,14 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent {
         public void disposeUIResources() {
           excludes.disposeUIResources();
         }
-      };
+
+      public String getId() {
+        return getHelpTopic();
+      }
+
+      public Runnable enableSearch(String option) {
+        return null;
+      }
+    };
   }
 }

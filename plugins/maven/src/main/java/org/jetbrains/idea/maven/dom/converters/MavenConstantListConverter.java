@@ -39,7 +39,7 @@ public abstract class MavenConstantListConverter extends ResolvingConverter<Stri
   @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (!myStrict) return s;
-    return getValues().contains(s) ? s : null;
+    return getValues(context).contains(s) ? s : null;
   }
 
   public String toString(@Nullable String s, ConvertContext context) {
@@ -48,13 +48,13 @@ public abstract class MavenConstantListConverter extends ResolvingConverter<Stri
 
   @NotNull
   public Collection<String> getVariants(ConvertContext context) {
-    return getValues();
+    return getValues(context);
   }
 
-  protected abstract List<String> getValues();
+  protected abstract List<String> getValues(ConvertContext context);
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "<html>Specified value is not acceptable here.<br>Acceptable values: " + StringUtil.join(getValues(), ", ") + "</html>";
+    return "<html>Specified value is not acceptable here.<br>Acceptable values: " + StringUtil.join(getValues(context), ", ") + "</html>";
   }
 }

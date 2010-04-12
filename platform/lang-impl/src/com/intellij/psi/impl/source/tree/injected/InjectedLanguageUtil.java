@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -242,8 +243,17 @@ public class InjectedLanguageUtil {
     if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
 
-    PsiElement element = file.getViewProvider().findElementAt(offset, file.getLanguage());
-    return element == null ? null : findInside(element, file, offset, documentManager);
+    FileViewProvider provider = file.getViewProvider();
+    for (Language language : provider.getLanguages()) {
+
+      PsiElement element = provider.findElementAt(offset, language);
+      if (element == null) {
+        continue;
+      }
+      PsiElement injected = findInside(element, file, offset, documentManager);
+      if (injected != null) return injected;
+    }
+    return null;
   }
 
   public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile file, final int offset) {

@@ -393,4 +393,9 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return getInjectedLanguageId()+ "->" +getDisplayName();
+  }
 }

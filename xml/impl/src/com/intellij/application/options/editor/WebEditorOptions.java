@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -43,6 +44,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myEnableZenCoding = true;
+  private char myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
@@ -78,6 +80,14 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setAutomaticallyInsertRequiredAttributes(final boolean automaticallyInsertRequiredAttributes) {
     myAutomaticallyInsertRequiredAttributes = automaticallyInsertRequiredAttributes;
+  }
+
+  public char getZenCodingExpandShortcut() {
+    return myZenCodingExpandShortcut;
+  }
+
+  public void setZenCodingExpandShortcut(char zenCodingExpandShortcut) {
+    myZenCodingExpandShortcut = zenCodingExpandShortcut;
   }
 
   public boolean isAutomaticallyStartAttribute() {

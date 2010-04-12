@@ -15,15 +15,15 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MavenImportingConfigurable implements Configurable {
+public class MavenImportingConfigurable implements SearchableConfigurable {
   private final MavenImportingSettings myImportingSettings;
   private final MavenImportingSettingsForm mySettingsForm = new MavenImportingSettingsForm(false);
 
@@ -64,5 +64,13 @@ public class MavenImportingConfigurable implements Configurable {
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.project.maven.importing";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

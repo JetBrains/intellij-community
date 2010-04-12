@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="execution-impl" />
+    <orderEntry type="module" module-name="openapi" />
   </component>
 </module>
 

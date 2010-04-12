@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -154,11 +155,24 @@ public class EPathUtil {
   public static String collapse2eclipseRelative2OtherModule(final @NotNull Project project, final @NotNull VirtualFile file) {
     final Module module = ModuleUtil.findModuleForFile(file, project);
     if (module != null) {
-      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      for (VirtualFile otherRoot : contentRoots) {
-        if (VfsUtil.isAncestor(otherRoot, file, false)) {
-          return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, otherRoot, '/');
+      return collapse2eclipsePathRelative2Module(file, module);
+    } else if (ProjectRootManager.getInstance(project).getFileIndex().isIgnored(file)) { //should check all modules then
+      for (Module aModule : ModuleManager.getInstance(project).getModules()) {
+        final String path = collapse2eclipsePathRelative2Module(file, aModule);
+        if (path != null) {
+          return path;
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String collapse2eclipsePathRelative2Module(VirtualFile file, Module module) {
+    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    for (VirtualFile otherRoot : contentRoots) {
+      if (VfsUtil.isAncestor(otherRoot, file, false)) {
+        return "/" + module.getName() + "/" + VfsUtil.getRelativePath(file, otherRoot, '/');
       }
     }
     return null;

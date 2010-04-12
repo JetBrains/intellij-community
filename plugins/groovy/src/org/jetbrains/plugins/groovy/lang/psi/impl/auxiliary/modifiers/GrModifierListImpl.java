@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TObjectIntHashMap;
@@ -116,17 +115,24 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
   public boolean hasModifierProperty(@NotNull @NonNls String modifier) {
     final PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration &&
-        parent.getParent() instanceof GrTypeDefinitionBody &&
-        !hasExplicitVisibilityModifiers()) { //properties are backed by private fields
+        parent.getParent() instanceof GrTypeDefinitionBody) {
       PsiElement pParent = parent.getParent().getParent();
-      if (!(pParent instanceof PsiClass) || !((PsiClass)pParent).isInterface()) {
-        if (modifier.equals(GrModifier.PRIVATE)) return true;
-        if (modifier.equals(GrModifier.PROTECTED)) return false;
-        if (modifier.equals(GrModifier.PUBLIC)) return false;
+      if (!hasExplicitVisibilityModifiers()) { //properties are backed by private fields
+        if (!(pParent instanceof PsiClass) || !((PsiClass)pParent).isInterface()) {
+          if (modifier.equals(GrModifier.PRIVATE)) return true;
+          if (modifier.equals(GrModifier.PROTECTED)) return false;
+          if (modifier.equals(GrModifier.PUBLIC)) return false;
+        }
+        else {
+          if (modifier.equals(GrModifier.STATIC)) return true;
+          if (modifier.equals(GrModifier.FINAL)) return true;
+        }
       }
-      else {
-        if (modifier.equals(GrModifier.STATIC)) return true;
-        if (modifier.equals(GrModifier.FINAL)) return true;
+      if (pParent instanceof GrTypeDefinition) {
+        PsiModifierList modifierList = ((GrTypeDefinition)pParent).getModifierList();
+        if (modifierList != null && modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) != null) {
+          if (modifier.equals(GrModifier.FINAL)) return true;
+        }
       }
     }
 
@@ -141,32 +147,6 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
 
     if (parent instanceof GrTypeDefinition && modifier.equals(GrModifier.ABSTRACT)) {
       return ((GrTypeDefinition)parent).isInterface();
-    }
-
-    if (!(parent instanceof GrTypeDefinition)) {
-      //check how type def annotations influence on members annotation
-      ASTNode classDefNode = TreeUtil.findParent(getNode(), GroovyElementTypes.CLASS_DEFINITION);
-      if (classDefNode != null) {
-        PsiElement psiClass = classDefNode.getPsi();
-
-        assert psiClass instanceof GrTypeDefinition;
-        GrTypeDefinition typeDefinition = (GrTypeDefinition)psiClass;
-
-        PsiModifierList psiClassModifierList = typeDefinition.getModifierList();
-
-        if (psiClassModifierList != null) {
-          PsiAnnotation[] psiClassAnnotations = psiClassModifierList.getAnnotations();
-
-          for (PsiAnnotation psiClassAnnotation : psiClassAnnotations) {
-            assert psiClassAnnotation instanceof GrAnnotation;
-
-            if (GroovyImmutableAnnotationInspection.IMMUTABLE.equals(psiClassAnnotation.getQualifiedName())) {
-              if (modifier.equals(GrModifier.FINAL)) return true;
-              if (modifier.equals(GrModifier.PRIVATE)) return true;
-            }
-          }
-        }
-      }
     }
 
     return false;
@@ -206,7 +186,7 @@ public class GrModifierListImpl extends GroovyBaseElementImpl<GrModifierListStub
         setModifierPropertyInternal(GrModifier.PRIVATE, false);
       }
     }
-    if (GrModifier.PACKAGE_LOCAL.equals(name) || GrModifier.PUBLIC.equals(name)) {
+    if (GrModifier.PACKAGE_LOCAL.equals(name) /*|| GrModifier.PUBLIC.equals(name)*/) {
       if (getModifiers().length == 0) {
         setModifierProperty(GrModifier.DEF, true);
       }

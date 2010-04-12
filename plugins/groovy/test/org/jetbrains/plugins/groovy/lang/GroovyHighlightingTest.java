@@ -138,7 +138,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousClassAbstractMethod() throws Throwable {doTest();}
   public void testAnonymousClassStaticMethod() throws Throwable {doTest();}
   public void testAnonymousClassShoudImplementMethods() throws Throwable {doTest();}
-
+  public void testAnonymousClassShouldImplementSubstitutedMethod() throws Exception {doTest();}
 
   public void testDefaultMapConstructorNamedArgs() throws Throwable {doTest();}
   public void testDefaultMapConstructorNamedArgsError() throws Throwable {doTest();}
@@ -224,6 +224,14 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testSuperConstructorInvocation() throws Exception {doTest();}
 
   public void testIndexPropertyAccess() throws Exception {
+    doTest();
+  }
+
+  public void testPropertyAndFieldDeclaration() throws Exception {
+    doTest();
+  }
+  
+  public void testGenericsMethodUsage() throws Exception {
     doTest();
   }
 }

@@ -15,25 +15,37 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomManager;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
 import org.jetbrains.idea.maven.utils.MavenConstants;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class MavenDependencyScopeConverter extends MavenConstantListConverter {
-  private static final List<String> VALUES = Arrays.asList(
-    MavenConstants.SCOPE_COMPILE,
-    MavenConstants.SCOPE_PROVIDEED,
-    MavenConstants.SCOPE_RUNTIME,
-    MavenConstants.SCOPE_TEST,
-    MavenConstants.SCOPE_SYSTEM,
-    MavenConstants.SCOPE_IMPORT);
+  private static final List<String> MANAGING_DEPENDENCY_VALUES = Arrays
+    .asList(MavenConstants.SCOPE_COMPILE,
+            MavenConstants.SCOPE_PROVIDEED,
+            MavenConstants.SCOPE_RUNTIME,
+            MavenConstants.SCOPE_TEST,
+            MavenConstants.SCOPE_SYSTEM,
+            MavenConstants.SCOPE_IMPORT);
+
+  private static final List<String> DEPENDENCY_VALUES = Arrays
+    .asList(MavenConstants.SCOPE_COMPILE,
+            MavenConstants.SCOPE_PROVIDEED,
+            MavenConstants.SCOPE_RUNTIME,
+            MavenConstants.SCOPE_TEST,
+            MavenConstants.SCOPE_SYSTEM);
 
   public MavenDependencyScopeConverter() {
-    super(false);
+    super(true);
   }
 
-  protected List<String> getValues() {
-    return VALUES;
+  protected List<String> getValues(ConvertContext context) {
+    boolean isDependencyManagement = context.getInvocationElement().getParentOfType(MavenDomDependencyManagement.class, false) != null;
+
+   return isDependencyManagement ? MANAGING_DEPENDENCY_VALUES : DEPENDENCY_VALUES;
   }
 }

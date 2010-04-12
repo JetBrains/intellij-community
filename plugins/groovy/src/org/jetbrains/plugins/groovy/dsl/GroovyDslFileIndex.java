@@ -404,6 +404,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static void invokeDslErrorPopup(Throwable e, final Project project, VirtualFile vfile) {
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
+    final String exceptionText = writer.toString();
+    LOG.info(exceptionText);
 
     ApplicationManager.getApplication().getMessageBus().syncPublisher(Notifications.TOPIC).notify(
       new Notification("Groovy DSL parsing", "DSL script execution error",
@@ -411,7 +413,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                        new NotificationListener() {
                          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
                            final UnscrambleDialog dialog = new UnscrambleDialog(project);
-                           dialog.setText(writer.toString());
+
+                           dialog.setText(exceptionText);
                            dialog.show();
                            notification.expire();
                          }

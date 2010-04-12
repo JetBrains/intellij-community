@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -121,7 +120,7 @@ public class NotificationModel {
     }
 
     if (!tbr.isEmpty()) {
-      final Notification[] removed = tbr.toArray((Notification[])Array.newInstance(tbr.get(0).getClass(), tbr.size()));
+      final Notification[] removed = tbr.toArray(new Notification[tbr.size()]);
       for (NotificationModelListener listener : myListeners) {
         listener.notificationsRemoved(removed);
       }

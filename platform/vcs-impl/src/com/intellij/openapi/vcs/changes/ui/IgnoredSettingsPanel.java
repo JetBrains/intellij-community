@@ -22,7 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -36,7 +36,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class IgnoredSettingsPanel implements Configurable {
+public class IgnoredSettingsPanel implements SearchableConfigurable {
   private JList myList;
   private JButton myAddButton;
   private JButton myEditButton;
@@ -160,6 +160,14 @@ public class IgnoredSettingsPanel implements Configurable {
 
   public String getHelpTopic() {
     return "project.propVCSSupport.Ignored.Files";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent getPanel() {

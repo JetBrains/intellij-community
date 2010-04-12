@@ -23,6 +23,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.util.ArrayList;
@@ -89,6 +91,14 @@ public class CollectClassMembersUtil {
       String name = field.getName();
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
+      } else if (hasExplicitVisibilityModifiers(field)) {
+        final CandidateInfo candidateInfo = allFields.get(name);
+        final PsiElement element = candidateInfo.getElement();
+        if (element instanceof GrField &&
+            !(((GrField)element).getModifierList()).hasExplicitVisibilityModifiers() &&
+            aClass == ((GrField)element).getContainingClass()) { //replace property-field with field with explicit visibilityModifier 
+          allFields.put(name, new CandidateInfo(field, substitutor));
+        }
       }
     }
 
@@ -109,6 +119,15 @@ public class CollectClassMembersUtil {
         final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
         processClass(superClass, allFields, allMethods, allInnerClasses, visitedClasses, superSubstitutor, includeSynthetic);
       }
+    }
+  }
+
+  private static boolean hasExplicitVisibilityModifiers(PsiField field) {
+    if (field instanceof GrField) {
+      return ((GrModifierList)field.getModifierList()).hasExplicitVisibilityModifiers();
+    }
+    else {
+      return true;
     }
   }
 

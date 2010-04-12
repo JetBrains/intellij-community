@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes.conflicts;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
@@ -33,7 +33,7 @@ import java.util.Collection;
 /**
  * @author Dmitry Avdeev
  */
-public class ChangelistConflictConfigurable extends BindableConfigurable implements Configurable {
+public class ChangelistConflictConfigurable extends BindableConfigurable implements SearchableConfigurable {
 
   private JPanel myPanel;
   private JPanel myOptionsPanel;
@@ -116,5 +116,13 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
 
   public String getHelpTopic() {
     return "project.propVCSSupport.ChangelistConflict";
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }

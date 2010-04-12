@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
  *
  * @author ilyas
  */
-public interface GroovyTokenTypes extends GroovyDocElementTypes{
+public interface GroovyTokenTypes extends GroovyDocElementTypes {
 
   /**
    * Wrong token. Use for debug needs
@@ -39,7 +39,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
 
   IElementType mWS = new GroovyElementType("white space");
   IElementType mNLS = new GroovyElementType("new line");
-  TokenSet WHITE_SPACES_SET=TokenSet.create(mWS, mNLS, TokenType.WHITE_SPACE);
+  TokenSet WHITE_SPACES_SET = TokenSet.create(mWS, mNLS, TokenType.WHITE_SPACE);
 
   /* **************************************************************************************************
  *  Comments
@@ -154,86 +154,81 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes{
   IElementType mAT = new GroovyElementType("@");
 
   /* **************************************************************************************************
- *  Keywords
+ *  Keywords (in alphabetic order)
  * ****************************************************************************************************/
 
-  IElementType kPACKAGE = new GroovyElementType("package");
-  IElementType kSTRICTFP = new GroovyElementType("strictfp");
-  IElementType kIMPORT = new GroovyElementType("import");
-  IElementType kSTATIC = new GroovyElementType("static");
-  IElementType kDEF = new GroovyElementType("def");
-  IElementType kCLASS = new GroovyElementType("class");
-  IElementType kINTERFACE = new GroovyElementType("interface");
-  IElementType kENUM = new GroovyElementType("enum");
-  IElementType kEXTENDS = new GroovyElementType("extends");
-  IElementType kSUPER = new GroovyElementType("super");
-  IElementType kVOID = new GroovyElementType("void");
-  IElementType kBOOLEAN = new GroovyElementType("boolean");
-  IElementType kBYTE = new GroovyElementType("byte");
-  IElementType kCHAR = new GroovyElementType("char");
-  IElementType kSHORT = new GroovyElementType("short");
-  IElementType kINT = new GroovyElementType("int");
-  IElementType kFLOAT = new GroovyElementType("float");
-  IElementType kLONG = new GroovyElementType("long");
-  IElementType kDOUBLE = new GroovyElementType("double");
-  IElementType kAS = new GroovyElementType("as");
-  IElementType kPRIVATE = new GroovyElementType("private");
-  IElementType kPUBLIC = new GroovyElementType("public");
-  IElementType kPROTECTED = new GroovyElementType("protected");
   IElementType kABSTRACT = new GroovyElementType("abstract");
-  IElementType kTRANSIENT = new GroovyElementType("transient");
-  IElementType kNATIVE = new GroovyElementType("native");
-  IElementType kSYNCHRONIZED = new GroovyElementType("synchronized");
-  IElementType kVOLATILE = new GroovyElementType("volatile");
-  IElementType kDEFAULT = new GroovyElementType("default");
-  IElementType kTHROWS = new GroovyElementType("throws");
-  IElementType kIMPLEMENTS = new GroovyElementType("implements");
-  IElementType kTHIS = new GroovyElementType("this");
-  IElementType kIF = new GroovyElementType("if");
-  IElementType kELSE = new GroovyElementType("else");
-  IElementType kWHILE = new GroovyElementType("while");
-  IElementType kWITH = new GroovyElementType("with");
-  IElementType kSWITCH = new GroovyElementType("switch");
-  IElementType kFOR = new GroovyElementType("for");
-  IElementType kIN = new GroovyElementType("in");
-  IElementType kRETURN = new GroovyElementType("return");
-  IElementType kBREAK = new GroovyElementType("break");
-  IElementType kCONTINUE = new GroovyElementType("continue");
-  IElementType kTHROW = new GroovyElementType("throw");
+  IElementType kAS = new GroovyElementType("as");
   IElementType kASSERT = new GroovyElementType("assert");
+  IElementType kBOOLEAN = new GroovyElementType("boolean");
+  IElementType kBREAK = new GroovyElementType("break");
+  IElementType kBYTE = new GroovyElementType("byte");
   IElementType kCASE = new GroovyElementType("case");
-  IElementType kTRY = new GroovyElementType("try");
-  IElementType kFINALLY = new GroovyElementType("finally");
-  IElementType kFINAL = new GroovyElementType("final");
   IElementType kCATCH = new GroovyElementType("catch");
-  IElementType kINSTANCEOF = new GroovyElementType("instanceof");
-  IElementType kNEW = new GroovyElementType("new");
-  IElementType kTRUE = new GroovyElementType("true");
+  IElementType kCHAR = new GroovyElementType("char");
+  IElementType kCLASS = new GroovyElementType("class");
+  IElementType kCONTINUE = new GroovyElementType("continue");
+  IElementType kDEF = new GroovyElementType("def");
+  IElementType kDEFAULT = new GroovyElementType("default");
+  IElementType kDOUBLE = new GroovyElementType("double");
+  IElementType kELSE = new GroovyElementType("else");
+  IElementType kEXTENDS = new GroovyElementType("extends");
+  IElementType kENUM = new GroovyElementType("enum");
   IElementType kFALSE = new GroovyElementType("false");
+  IElementType kFINAL = new GroovyElementType("final");
+  IElementType kFLOAT = new GroovyElementType("float");
+  IElementType kFOR = new GroovyElementType("for");
+  IElementType kFINALLY = new GroovyElementType("finally");
+  IElementType kIF = new GroovyElementType("if");
+  IElementType kIMPLEMENTS = new GroovyElementType("implements");
+  IElementType kIMPORT = new GroovyElementType("import");
+  IElementType kIN = new GroovyElementType("in");
+  IElementType kINSTANCEOF = new GroovyElementType("instanceof");
+  IElementType kINT = new GroovyElementType("int");
+  IElementType kINTERFACE = new GroovyElementType("interface");
+  IElementType kLONG = new GroovyElementType("long");
+  IElementType kNATIVE = new GroovyElementType("native");
+  IElementType kNEW = new GroovyElementType("new");
   IElementType kNULL = new GroovyElementType("null");
+  IElementType kPACKAGE = new GroovyElementType("package");
+  IElementType kPRIVATE = new GroovyElementType("private");
+  IElementType kPROTECTED = new GroovyElementType("protected");
+  IElementType kPUBLIC = new GroovyElementType("public");
+  IElementType kRETURN = new GroovyElementType("return");
+  IElementType kSHORT = new GroovyElementType("short");
+  IElementType kSTATIC = new GroovyElementType("static");
+  IElementType kSTRICTFP = new GroovyElementType("strictfp");
+  IElementType kSUPER = new GroovyElementType("super");
+  IElementType kSWITCH = new GroovyElementType("switch");
+  IElementType kSYNCHRONIZED = new GroovyElementType("synchronized");
+  IElementType kTHIS = new GroovyElementType("this");
+  IElementType kTHROW = new GroovyElementType("throw");
+  IElementType kTHROWS = new GroovyElementType("throws");
+  IElementType kTRANSIENT = new GroovyElementType("transient");
+  IElementType kTRUE = new GroovyElementType("true");
+  IElementType kTRY = new GroovyElementType("try");
+  IElementType kVOID = new GroovyElementType("void");
+  IElementType kVOLATILE = new GroovyElementType("volatile");
+  IElementType kWHILE = new GroovyElementType("while");
 
-  TokenSet KEYWORDS = TokenSet.create(kPACKAGE, kIMPORT, kSTATIC, kDEF, kCLASS, kINTERFACE, kENUM, kEXTENDS,
-      kSUPER, kVOID, kBOOLEAN, kBYTE, kCHAR, kSHORT, kINT, kFLOAT, kLONG, kDOUBLE, kAS, kPRIVATE, kPUBLIC,
-      kPROTECTED, kTRANSIENT, kNATIVE, kSYNCHRONIZED, kVOLATILE, kDEFAULT, kTHROWS, kIMPLEMENTS, kTHIS, kIF,
-      kELSE, kWHILE, kSWITCH, kFOR, kIN, kRETURN, kBREAK, kCONTINUE, kTHROW, kASSERT, kCASE, kTRY,
-      kFINALLY, kCATCH, kINSTANCEOF, kNEW, kTRUE, kFALSE, kNULL);
+  TokenSet KEYWORDS = TokenSet
+    .create(kABSTRACT, kAS, kASSERT, kBOOLEAN, kBREAK, kBYTE, kCASE, kCATCH, kCHAR, kCLASS, kCONTINUE, kDEF, kDEFAULT, kDOUBLE, kELSE,
+            kEXTENDS, kENUM, kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE, kLONG,
+            kNATIVE, kNEW, kNULL, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC, kRETURN, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
+            kSYNCHRONIZED, kTHIS, kTHROW, kTHROWS, kTRANSIENT, kTRUE, kTRY, kVOID, kVOLATILE, kWHILE);
 
   TokenSet BRACES = TokenSet.create(mLBRACK, mRBRACK, mLPAREN, mRPAREN, mLCURLY, mRCURLY);
 
-  TokenSet ASSIGN_OP_SET = TokenSet.create(mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN, mBXOR_ASSIGN,
-      mDIV_ASSIGN, mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN, mSL_ASSIGN, mSR_ASSIGN, mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
+  TokenSet ASSIGN_OP_SET = TokenSet
+    .create(mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN, mBXOR_ASSIGN, mDIV_ASSIGN, mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN,
+            mSL_ASSIGN, mSR_ASSIGN, mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
 
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
 
-  TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR,
-      mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL);
+  TokenSet BINARY_OP_SET =
+    TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL);
 
-  TokenSet DOTS = TokenSet.create(
-      mSPREAD_DOT,
-      mOPTIONAL_DOT,
-      mMEMBER_POINTER,
-      mDOT
-  );
+  TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
 
-  TokenSet WHITE_SPACES_OR_COMMENTS=TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
+  TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 }

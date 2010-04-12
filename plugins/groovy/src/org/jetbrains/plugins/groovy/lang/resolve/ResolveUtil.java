@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -43,7 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -74,8 +74,11 @@ public class ResolveUtil {
         if (run instanceof GrTypeDefinition) {
           processNonCodeMethods(factory.createType(((GrTypeDefinition)run)), processor, project, place, false);
         }
-        else if ((run instanceof GroovyFile) && ((GroovyFile)run).isScript()) {
-          processNonCodeMethods(factory.createType(((GroovyFile)run).getScriptClass()), processor, project, place, false);
+        else if ((run instanceof GroovyFileBase) && ((GroovyFileBase)run).isScript()) {
+          final PsiClass psiClass = ((GroovyFileBase)run).getScriptClass();
+          if (psiClass != null) {
+            processNonCodeMethods(factory.createType(psiClass), processor, project, place, false);
+          }
         }
       }
       lastParent = run;
@@ -160,9 +163,6 @@ public class ResolveUtil {
           if (!processNonCodeMethods(t, processor, project, visited, place, forCompletion)) return false;
         } else if (type instanceof PsiClassType) {
           PsiClass psiClass = ((PsiClassType)type).resolve();
-          if (psiClass instanceof GroovyScriptClass) {
-            psiClass = psiClass.getSuperClass();
-          }
           if (psiClass != null) {
             if (!GroovyDslFileIndex.processExecutors(psiClass, place, processor)) {
               return false;

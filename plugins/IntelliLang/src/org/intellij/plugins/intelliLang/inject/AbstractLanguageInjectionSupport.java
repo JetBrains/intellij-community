@@ -33,7 +33,7 @@ import org.jdom.Element;
 /**
  * @author Gregory.Shrago
  */
-public abstract class AbstractLanguageInjectionSupport implements LanguageInjectionSupport {
+public abstract class AbstractLanguageInjectionSupport extends LanguageInjectionSupport {
 
   public boolean useDefaultInjector(final PsiElement host) {
     return false;

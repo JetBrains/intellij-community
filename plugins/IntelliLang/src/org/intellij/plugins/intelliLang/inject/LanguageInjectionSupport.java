@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.Consumer;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
@@ -35,36 +36,43 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Gregory.Shrago
  */
-public interface LanguageInjectionSupport {
-  ExtensionPointName<LanguageInjectionSupport> EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.languageSupport");
+public abstract class LanguageInjectionSupport {
+  public static final ExtensionPointName<LanguageInjectionSupport> EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.languageSupport");
 
-  Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
+  public static Key<Boolean> HAS_UNPARSABLE_FRAGMENTS = Key.create("HAS_UNPARSABLE_FRAGMENTS");
 
-  @NonNls String XML_SUPPORT_ID = "xml";
-  @NonNls String JAVA_SUPPORT_ID = "java";
+  @NonNls public static final String XML_SUPPORT_ID = "xml";
+  @NonNls public static final String JAVA_SUPPORT_ID = "java";
+
+  @Attribute("config")
+  public String myConfigUrl;
+
+  public String getDefaultConfigUrl() {
+    return myConfigUrl;
+  }
 
   @NonNls
   @NotNull
-  String getId();
+  public abstract String getId();
 
   @NotNull
-  Class[] getPatternClasses();
+  public abstract Class[] getPatternClasses();
 
-  boolean useDefaultInjector(final PsiElement host);
+  public abstract boolean useDefaultInjector(final PsiElement host);
 
-  boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
+  public abstract boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement);
 
-  boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
+  public abstract boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 
-  boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement);
+  public abstract boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement);
 
-  BaseInjection createInjection(final Element element);
+  public abstract BaseInjection createInjection(final Element element);
 
-  void setupPresentation(final BaseInjection injection, final SimpleColoredText presentation, final boolean isSelected);
+  public abstract void setupPresentation(final BaseInjection injection, final SimpleColoredText presentation, final boolean isSelected);
 
-  Configurable[] createSettings(final Project project, final Configuration configuration);
+  public abstract Configurable[] createSettings(final Project project, final Configuration configuration);
 
-  AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer);
+  public abstract AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer);
 
-  AnAction createEditAction(final Project project, final Factory<BaseInjection> producer);
+  public abstract AnAction createEditAction(final Project project, final Factory<BaseInjection> producer);
 }

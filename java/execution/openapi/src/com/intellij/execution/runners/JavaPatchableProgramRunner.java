@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author spleaner
@@ -30,10 +31,12 @@ public abstract class JavaPatchableProgramRunner<Settings extends JDOMExternaliz
   public abstract void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException;
 
 
-  protected static void runCustomPatchers(JavaParameters javaParameters, RunnerSettings settings, Executor executor) {
-    final RunProfile profile = settings.getRunProfile();
-    for (JavaProgramPatcher patcher : JavaProgramPatcher.EP_NAME.getExtensions()) {
-      patcher.patchJavaParameters(executor, profile, javaParameters);
+  protected static void runCustomPatchers(JavaParameters javaParameters, @Nullable RunnerSettings settings, Executor executor) {
+    if (settings != null) {
+      final RunProfile profile = settings.getRunProfile();
+      for (JavaProgramPatcher patcher : JavaProgramPatcher.EP_NAME.getExtensions()) {
+        patcher.patchJavaParameters(executor, profile, javaParameters);
+      }
     }
   }
 }

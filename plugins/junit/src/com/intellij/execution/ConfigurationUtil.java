@@ -57,7 +57,11 @@ public class ConfigurationUtil {
         }
     );
     for (final PsiMethod method : suiteMethods) {
-      final PsiClass containingClass = method.getContainingClass();
+      final PsiClass containingClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+        public PsiClass compute() {
+          return method.getContainingClass();
+        }
+      });
       if (containingClass == null) continue;
       if (containingClass instanceof PsiAnonymousClass) continue;
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) continue;

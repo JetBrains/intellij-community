@@ -4,12 +4,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.PsiJavaPatterns
+import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClassScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ClosureScope
 import org.jetbrains.plugins.groovy.dsl.toplevel.scopes.ScriptScope
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
@@ -68,7 +69,7 @@ class Context {
 
         // Process unqualified references only
         if (!args.ctype) {
-          addFilter getClassTypeFilter(GroovyFileBase.SCRIPT_BASE_CLASS_NAME)
+          addFilter new ClassContextFilter(PsiJavaPatterns.psiClass().and(StandardPatterns.instanceOf(SyntheticElement)))
         }
 
         break

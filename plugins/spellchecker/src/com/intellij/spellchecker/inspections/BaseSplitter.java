@@ -47,15 +47,6 @@ public abstract class BaseSplitter implements Splitter {
   }
 
 
-  protected static boolean isAllWordsAreUpperCased(String[] words) {
-    if (words == null) return false;
-    for (String word : words) {
-      if (!Strings.isUpperCase(word)) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   protected static boolean isAllWordsAreUpperCased(@NotNull String text, @NotNull List<TextRange> words) {
     for (TextRange word : words) {

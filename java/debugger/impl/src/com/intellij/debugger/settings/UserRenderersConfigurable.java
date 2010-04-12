@@ -21,8 +21,8 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.DocumentAdapter;
@@ -39,7 +39,7 @@ import java.util.ArrayList;
  * @author Eugene Zhuravlev
  *         Date: Feb 19, 2005
  */
-public class UserRenderersConfigurable implements Configurable{
+public class UserRenderersConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.settings.UserRenderersConfigurable");
   private static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
   private static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
@@ -66,6 +66,14 @@ public class UserRenderersConfigurable implements Configurable{
 
   public String getHelpTopic() {
     return "reference.idesettings.debugger.typerenderers"; 
+  }
+
+  public String getId() {
+    return getHelpTopic();
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public JComponent createComponent() {

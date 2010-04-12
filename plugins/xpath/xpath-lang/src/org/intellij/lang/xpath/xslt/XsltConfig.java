@@ -16,7 +16,7 @@
 package org.intellij.lang.xpath.xslt;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.SearchableConfigurable;
 
 public abstract class XsltConfig {
     public static XsltConfig getInstance() {
@@ -25,6 +25,6 @@ public abstract class XsltConfig {
 
   public abstract boolean isShowLinkedFiles();
 
-    public interface UI extends Configurable {
+    public interface UI extends SearchableConfigurable {
     }
 }

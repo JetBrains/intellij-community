@@ -26,8 +26,9 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -39,10 +40,9 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -187,65 +187,75 @@ public class TestPackage extends TestObject {
 
     final THashSet<PsiClass> classes = new THashSet<PsiClass>();
     final boolean[] isJunit4 = new boolean[1];
-    ProgressManager.getInstance().run(new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
-      int myPort = -1;
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          final Socket socket = serverSocket.accept();
-          final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+    final Task.Backgroundable task =
+      new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
+        private Socket mySocket;
+
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
           try {
-            myPort = Integer.parseInt(bufferedReader.readLine());
-          } finally {
-            bufferedReader.close();
-            socket.close();
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-        isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
-      }
-
-      @Override
-      public void onSuccess() {
-        callback.found(classes, isJunit4[0]);
-        connect();
-      }
-
-      @Override
-      public void onCancel() {
-        connect();
-      }
-
-      @Override
-      public DumbModeAction getDumbModeAction() {
-        return DumbModeAction.WAIT;
-      }
-
-      private void connect() {
-        Socket socket = null;
-        try {
-          socket = new Socket(InetAddress.getLocalHost(), myPort);
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
-        finally {
-          try {
-            if (socket != null) socket.close();
+            mySocket = serverSocket.accept();
           }
           catch (IOException e) {
             LOG.info(e);
           }
+          isJunit4[0] = ConfigurationUtil.findAllTestClasses(classFilter, classes);
+        }
 
+        @Override
+        public void onSuccess() {
+          callback.found(classes, isJunit4[0]);
+          connect();
+        }
+
+        @Override
+        public void onCancel() {
+          connect();
+        }
+
+        @Override
+        public DumbModeAction getDumbModeAction() {
+          return DumbModeAction.WAIT;
+        }
+
+        private void connect() {
+          DataOutputStream os = null;
           try {
-            serverSocket.close();
+            os = new DataOutputStream(mySocket.getOutputStream());
+            os.writeBoolean(true);
           }
-          catch (IOException e) {
+          catch (Throwable e) {
             LOG.info(e);
           }
+          finally {
+            try {
+              if (os != null) os.close();
+            }
+            catch (Throwable e) {
+              LOG.info(e);
+            }
+
+            try {
+              serverSocket.close();
+            }
+            catch (Throwable e) {
+              LOG.info(e);
+            }
+          }
         }
+      };
+    ProgressManagerImpl.runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task) {
+      @Override
+      public void cancel() {
+        try {//ensure that serverSocket.accept was interrupted
+          if (!serverSocket.isClosed()) {
+            new Socket(InetAddress.getLocalHost(), serverSocket.getLocalPort());
+          }
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+        super.cancel();
       }
     });
   }
@@ -254,7 +264,7 @@ public class TestPackage extends TestObject {
     return ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  public static interface FindCallback {
+  public interface FindCallback {
     /**
      * Invoked in dispatch thread
      */

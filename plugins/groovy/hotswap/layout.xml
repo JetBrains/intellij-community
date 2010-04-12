@@ -1,0 +1,18 @@
+<project name="Layout GroovyHotswap plugin distribution" default="layout">
+  <target name="layout">
+    <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
+      <dir name="GroovyHotswap">
+        <dir name="lib">
+          <jar name="groovy-hotswap.jar">
+            <module name="groovy-hotswap"/>
+          </jar>
+          <dir name="agent">
+            <fileset dir="${project.home}/community/plugins/groovy/hotswap">
+              <include name="gragent.jar"/>
+            </fileset>
+          </dir>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+</project>

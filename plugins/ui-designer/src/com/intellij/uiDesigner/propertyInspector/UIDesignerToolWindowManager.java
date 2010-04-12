@@ -43,9 +43,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -60,6 +63,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   private ToolWindow myToolWindow;
   private boolean myToolWindowReady = false;
   private boolean myToolWindowDisposed = false;
+  private List<TreeSelectionListener> myPendingListeners = new ArrayList<TreeSelectionListener>();
 
   public UIDesignerToolWindowManager(final Project project, final FileEditorManager fileEditorManager) {
     myProject = project;
@@ -85,6 +89,10 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   private void initToolWindow() {
     myToolWindowPanel = new MyToolWindowPanel();
     myComponentTree = new ComponentTree(myProject);
+    for (TreeSelectionListener listener : myPendingListeners) {
+      myComponentTree.addTreeSelectionListener(listener);
+    }
+    myPendingListeners.clear();
     final JScrollPane scrollPane = new JScrollPane(myComponentTree);
     scrollPane.setPreferredSize(new Dimension(250, -1));
     myComponentTree.initQuickFixManager(scrollPane.getViewport());
@@ -195,6 +203,15 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
 
   public void updateComponentTree() {
     myComponentTreeBuilder.updateFromRoot();
+  }
+
+  public void addComponentSelectionListener(TreeSelectionListener treeSelectionListener) {
+    if (myComponentTree != null) {
+      myComponentTree.addTreeSelectionListener(treeSelectionListener);
+    }
+    else {
+      myPendingListeners.add(treeSelectionListener);
+    }
   }
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
