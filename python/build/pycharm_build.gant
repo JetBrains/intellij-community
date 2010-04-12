@@ -87,6 +87,21 @@ def sandbox = "$home/out/pycharm";
 
 setProperty("buildName", "PY-$buildNumber")
 
+def zipSources() {
+  def sources = "$paths.artifacts/sources.zip"
+  project.stage("zip sources to $sources")
+
+  ant.delete(file: sources)
+  ant.zip (destfile: sources) {
+    fileset (dir: home) {
+      ["java", "ipr", "iml", "form", "xml", "properties"].each {
+        include (name: "**/*.$it")
+      }
+      exclude (name: "**/testData/**")
+    }
+  }
+}
+
 target('default': "Build artifacts") {
 
   def modules = [
@@ -134,6 +149,8 @@ target('default': "Build artifacts") {
     exclude(name: "tips/**/*")
     exclude(name: "tips")
   }
+
+  zipSources()
 
   def usedJars = new HashSet();
 
