@@ -33,13 +33,36 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private SpacingImpl mySpaceProperty;
   private IndentInside myLastLineIndent;
 
+  /**
+   * Shortcut for calling
+   * {@link #LeafBlockWrapper(Block, CompositeBlockWrapper, WhiteSpace, FormattingDocumentModel, LeafBlockWrapper, boolean, TextRange)}
+   * with {@link Block#getTextRange() text range associated with the given block}.
+   *
+   * @param block               block to wrap
+   * @param parent              wrapped parent block
+   * @param whiteSpaceBefore    white space before the target block to wrap
+   * @param model               formatting model to use during current wrapper initialization
+   * @param previousTokenBlock  previous token block
+   * @param isReadOnly          flag that indicates if target block is read-only
+   */
+  public LeafBlockWrapper(final Block block,
+                          CompositeBlockWrapper parent,
+                          WhiteSpace whiteSpaceBefore,
+                          FormattingDocumentModel model,
+                          LeafBlockWrapper previousTokenBlock,
+                          boolean isReadOnly)
+  {
+    this(block, parent, whiteSpaceBefore, model, previousTokenBlock, isReadOnly, block.getTextRange());
+  }
+
   public LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           LeafBlockWrapper previousTokenBlock,
                           boolean isReadOnly,
-                          final TextRange textRange) {
+                          final TextRange textRange)
+  {
     super(block, whiteSpaceBefore, parent, textRange);
     myPreviousBlock = previousTokenBlock;
     final int lastLineNumber = model.getLineNumber(textRange.getEndOffset());
