@@ -161,14 +161,19 @@ public class SemServiceImpl extends SemService{
       return cached;
     }
 
-    final ConcurrentMap<SemKey, List<SemElement>> map = cacheOrGetMap(psi);
+    final Map<SemKey, List<SemElement>> map = new THashMap<SemKey, List<SemElement>>();
     LinkedHashSet<T> result = null;
     for (final SemKey each : myInheritors.get(key)) {
-      List<SemElement> list = ConcurrencyUtil.cacheOrGet(map, each, createSemElements(each, psi));
+      List<SemElement> list = createSemElements(each, psi);
+      map.put(each, list);
       if (!list.isEmpty()) {
         if (result == null) result = new LinkedHashSet<T>();
         result.addAll((List<T>)list);
       }
+    }
+    final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi);
+    for (SemKey semKey : map.keySet()) {
+      persistent.putIfAbsent(semKey, map.get(semKey));
     }
     return result == null ? Collections.<T>emptyList() : new ArrayList<T>(result);
   }
