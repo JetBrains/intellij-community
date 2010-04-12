@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -55,6 +56,9 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    if (PsiTreeUtil.isAncestor(this, place, false)) {
+      return true;
+    }
     if (processor instanceof ResolverProcessor) ((ResolverProcessor)processor).setCurrentFileResolveContext(this);
     try {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
