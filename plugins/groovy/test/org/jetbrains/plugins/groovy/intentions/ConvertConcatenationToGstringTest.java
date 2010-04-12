@@ -52,22 +52,22 @@ public class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   }
 
   public void testSimpleCase() throws Exception {
-    doTest("Convert concatenation to GString", true);
+    doTest("Convert to GString", true);
   }
 
   public void testVeryComplicatedCase() throws Exception {
-    doTest("Convert concatenation to GString", true);
+    doTest("Convert to GString", true);
   }
 
   public void testQuotes() throws Exception {
-    doTest("Convert concatenation to GString", true);
+    doTest("Convert to GString", true);
   }
 
   public void testQuotes2() throws Exception {
-    doTest("Convert concatenation to GString", true);
+    doTest("Convert to GString", true);
   }
 
   public void testQuotesInMultilineString() throws Exception {
-    doTest("Convert concatenation to GString", true);
+    doTest("Convert to GString", true);
   }
 }

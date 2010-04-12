@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.codehaus.plexus.component.repository.ComponentDependency;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
@@ -75,6 +76,25 @@ public class MavenArtifact implements Serializable {
 
     myResolved = artifact.isResolved();
     myStubbed = artifact instanceof CustomArtifact && ((CustomArtifact)artifact).isStub();
+  }
+
+  public MavenArtifact(ComponentDependency dependency, File localRepository) {
+    myGroupId = dependency.getGroupId();
+    myArtifactId = dependency.getArtifactId();
+    myVersion = dependency.getVersion();
+    myBaseVersion = null;
+    myType = dependency.getType();
+    myClassifier = null;
+
+    myScope = MavenConstants.SCOPE_TEST;
+    myOptional = false;
+
+    myExtension = myType;
+
+    myFile = new File(localRepository, getRelativePath());
+
+    myResolved = true;
+    myStubbed = false;
   }
 
   private String getExtension(Artifact artifact) {

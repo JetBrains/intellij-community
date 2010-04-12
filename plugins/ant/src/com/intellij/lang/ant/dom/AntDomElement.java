@@ -15,11 +15,39 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 6, 2010
  */
-public interface AntDomElement extends DomElement {
+@SuppressWarnings({"AbstractClassNeverImplemented"})
+public abstract class AntDomElement implements DomElement {
+
+  public final AntTypeDefinition getAntType() {
+    // todo
+    return null;
+  }
+
+  public final List<AntDomElement> getAntChildren() {
+    return DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
+  }
+
+  public String toString() {
+    final XmlTag tag = getXmlTag();
+    if (tag == null) {
+      return super.toString();
+    }
+    final String name = tag.getName();
+    if ("".equals(name)) {
+      return super.toString();
+    }
+    return name;
+  }
+
 }

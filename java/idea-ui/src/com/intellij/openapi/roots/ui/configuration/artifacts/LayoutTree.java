@@ -62,6 +62,9 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DnDManager.getInstance().registerSource(this);
     }
+
+    //todo[nik,pegov] fix for tooltips in the tree. Otherwise tooltips will be ignored by DnDEnabled   
+    setToolTipText("");
   }
 
   public void addSubtreeToUpdate(DefaultMutableTreeNode newNode) {
