@@ -1,14 +1,17 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.*;
-import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.actions.CloseAction;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
@@ -20,8 +23,8 @@ import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,7 +52,7 @@ public class PydevConsoleRunner extends PyConsoleRunner {
     final String consoleTitle = "TRUE console";
     final int[] ports;
     try {
-      // File "pydev/pydevconsole.py", line 223, in <module>
+      // File "pydev/console/pydevconsole.py", line 223, in <module>
       // port, client_port = sys.argv[1:3]
       ports = NetUtils.findAvailableSocketPorts(2);
     }
@@ -57,7 +60,8 @@ public class PydevConsoleRunner extends PyConsoleRunner {
       ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
       return;
     }
-    final ArrayList<String> args = new ArrayList<String>(Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/pydevconsole.py")));
+    final ArrayList<String> args = new ArrayList<String>(
+      Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
     for (int port : ports) {
       args.add(String.valueOf(port));
     }
@@ -99,21 +103,101 @@ public class PydevConsoleRunner extends PyConsoleRunner {
   @Override
   public void initAndRun() throws ExecutionException {
     super.initAndRun();
+    try {
+      Thread.sleep(100);
+    }
+    catch (InterruptedException e) {
+      // Ignore
+    }
     sendInput("import sys; print('Python %s on %s' % (sys.version, sys.platform))\n");
+  }
+
+  @Override
+  protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
+    final AnAction generalCloseAction = super.createCloseAction(defaultExecutor, myDescriptor);
+    final AnAction closeAction = new AnAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        generalCloseAction.update(e);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myPydevConsoleCommunication != null) {
+          try {
+            myPydevConsoleCommunication.close();
+          }
+          catch (Exception e1) {
+            // Ignore
+          }
+          generalCloseAction.actionPerformed(e);
+        }
+      }
+    };
+    closeAction.copyFrom(generalCloseAction);
+    return closeAction;
+  }
+
+  @Override
+  protected AnAction createStopAction() {
+    final AnAction generalStopAction = super.createStopAction();
+    final AnAction stopAction = new AnAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        generalStopAction.update(e);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myPydevConsoleCommunication != null) {
+          try {
+            myPydevConsoleCommunication.close();
+          }
+          catch (Exception e1) {
+            // Ignore
+          }
+          generalStopAction.actionPerformed(e);
+        }
+      }
+    };
+    stopAction.copyFrom(generalStopAction);
+    return stopAction;
   }
 
   @Override
   protected void sendInput(final String input) {
     if (myPydevConsoleCommunication != null){
+      //if ("comp\n".equals(input)){
+      //  String[] completions = new String[]{};
+      //  try {
+      //    completions = myPydevConsoleCommunication.getCompletions("", 0);
+      //  }
+      //  catch (Exception e) {
+      //    PyConsoleProcessHandler.processOutput(myConsoleView.getConsole(), e.toString()+'\n', ProcessOutputTypes.STDERR);
+      //  }
+      //  for (String completion : completions) {
+      //    PyConsoleProcessHandler.processOutput(myConsoleView.getConsole(), completion + "\n", ProcessOutputTypes.STDOUT);
+      //  }
+      //  return;
+      //}
       myPydevConsoleCommunication.execInterpreter(input, new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
           final LanguageConsoleImpl console = myConsoleView.getConsole();
-          // TODO[oleg] More sophisticated callback required!
-          // At least this one works!
-          if (!StringUtil.isEmpty(interpreterResponse.err)){
-            PyConsoleProcessHandler.processOutput(console, interpreterResponse.err, ProcessOutputTypes.STDERR);
+          // Handle prompt
+          if (interpreterResponse.more){
+            if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())){
+              console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+            }
           } else {
-            PyConsoleProcessHandler.processOutput(console, interpreterResponse.out, ProcessOutputTypes.STDOUT);
+            if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())){
+              console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+            }
+          }
+          // Handle output
+          if (!StringUtil.isEmpty(interpreterResponse.err)){
+            PyConsoleHighlightingUtil.processOutput(console, interpreterResponse.err, ProcessOutputTypes.STDERR);
+          } else {
+            PyConsoleHighlightingUtil.processOutput(console, interpreterResponse.out, ProcessOutputTypes.STDOUT);
           }
           return null;
         }

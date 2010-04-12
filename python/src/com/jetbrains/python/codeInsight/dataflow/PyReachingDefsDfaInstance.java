@@ -31,6 +31,9 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
         return map;
       }
       final String name = rwInstruction.getName();
+      if (name == null){
+        return map;
+      }
       final ScopeVariable variable = map.get(name);
       // Parameter case
       final PsiElement parameterScope = ScopeUtil.getParameterScope(element);

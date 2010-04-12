@@ -6,8 +6,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -16,12 +15,13 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
   private final PyQualifiedName myImportedQName;
   private final String myAsName;
 
-  public PyImportElementStubImpl(PyQualifiedName importedQName, String asName, final StubElement parent) {
+  public PyImportElementStubImpl(@Nullable PyQualifiedName importedQName, String asName, final StubElement parent) {
     super(parent, PyElementTypes.IMPORT_ELEMENT);
     myImportedQName = importedQName;
     myAsName = asName;
   }
 
+  @Nullable
   public PyQualifiedName getImportedQName() {
     return myImportedQName;
   }
