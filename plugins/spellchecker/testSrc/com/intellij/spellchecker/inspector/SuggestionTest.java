@@ -16,17 +16,17 @@
 package com.intellij.spellchecker.inspector;
 
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 import java.util.List;
 
 
-public class SuggestionTest extends JavaCodeInsightFixtureTestCase {
+public class SuggestionTest extends CodeInsightFixtureTestCase {
 
   private SpellCheckerManager spManager;
   private SpellCheckerManager getManager(){
     if (spManager==null){
-      spManager = SpellCheckerManager.getInstance(getProject());
+      spManager = SpellCheckerManager.getInstance(myFixture.getProject());
     }
     assert spManager!=null;
     return spManager;
@@ -44,7 +44,7 @@ public class SuggestionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testCamelCaseSuggestions(){
-    SpellCheckerManager manager = SpellCheckerManager.getInstance(getProject());
+    SpellCheckerManager manager = SpellCheckerManager.getInstance(myFixture.getProject());
     assert manager!=null;
     List<String> result = manager.getSuggestions("TestUpgade");
     assertEquals("TestUpgrade",result.get(0));
