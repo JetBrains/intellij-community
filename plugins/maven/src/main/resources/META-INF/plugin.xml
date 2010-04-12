@@ -73,10 +73,10 @@
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
 
     <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"
-                    serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
+                        serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
 
     <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"
-                    serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
+                        serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
@@ -92,7 +92,8 @@
     <gotoFileContributor implementation="org.jetbrains.idea.maven.utils.MavenGotoSettingsFileContibutor"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory"/>
 
-    <completion.contributor language="XML" implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenGroupIdSmartCompletionContributor"/>
+    <completion.contributor language="XML"
+                            implementationClass="org.jetbrains.idea.maven.dom.model.completion.MavenGroupIdSmartCompletionContributor"/>
     <annotator language="XML" implementationClass="org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotator"/>
   </extensions>
 
@@ -183,7 +184,8 @@
     </action>
 
     <action id="Maven.DownloadSelectedSourcesAndDocs" class="org.jetbrains.idea.maven.project.actions.DownloadSelectedSourcesAndDocsAction"
-            text="Download Sources And Documentation" description="Download sources and documentation for all dependencies for selected projects"
+            text="Download Sources And Documentation"
+            description="Download sources and documentation for all dependencies for selected projects"
             icon="/images/download.png">
     </action>
 
@@ -382,6 +384,15 @@
       <action id="GenerateDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateDependencyAction"/>
       <action id="OverrideDependency" class="org.jetbrains.idea.maven.dom.generate.GenerateAddManagedDependencyAction"/>
       <action id="GenerateParent" text="Parent" class="org.jetbrains.idea.maven.dom.generate.GenerateParentAction"/>
+    </group>
+
+    <group id="Maven.RefactoringsGroup" text="Refactoring">
+      <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
+      <separator/>
+      <action id="refactoring.introduce" text="Introduce Property"
+              class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
+              use-shortcut-of="IntroduceVariable">
+      </action>
     </group>
   </actions>
 </idea-plugin>
