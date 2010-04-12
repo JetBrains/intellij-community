@@ -253,6 +253,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
               callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretOffset);
               customLiveTemplate.expand(key, callback);
+              callback.finish();
               return true;
             }
           }
