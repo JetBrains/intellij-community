@@ -69,10 +69,12 @@ class WhiteSpace {
   @NonNls private static final String CDATA_END = "]]>";
 
   /**
-   * Creates new <code>WhiteSpace</code> object with the given start offset and a flag that shows if current white space is the first white space.
+   * Creates new <code>WhiteSpace</code> object with the given start offset and a flag that shows if current white space is
+   * the first white space.
    * <p/>
-   * <b>Note:</b> {@link #getEndOffset() end offset} value is the same as the {@link #getStartOffset() start offset} for the newly constructed object.
-   * {@link #append(int, FormattingDocumentModel, CodeStyleSettings.IndentOptions)} should be called in order to apply desired end offset.
+   * <b>Note:</b> {@link #getEndOffset() end offset} value is the same as the {@link #getStartOffset() start offset} for
+   * the newly constructed object. {@link #append(int, FormattingDocumentModel, CodeStyleSettings.IndentOptions)} should be
+   * called in order to apply desired end offset.
    *
    * @param startOffset       start offset to use
    * @param isFirst              flag that shows if current white space is the first
@@ -313,10 +315,12 @@ class WhiteSpace {
   }
 
   /**
-   * Tries to ensure that {@link #getSpaces() spaces} property value is within [{@link SpacingImpl#getMinSpaces() min}; {@link SpacingImpl#getMaxSpaces()}]
-   * bounds defined by the given spacing object.
+   * Tries to arrange {@link #getSpaces() spaces} property value to belong to
+   * [{@link SpacingImpl#getMinSpaces() min}; {@link SpacingImpl#getMaxSpaces()}] bounds defined by the given spacing object
+   * if {@link #getTotalSpaces() totalSpaces} property value lays out of the same bounds.
    * <p/>
-   * The action is <b>not</b> performed if there are line feeds configured for the current {@link WhiteSpace} object ({@link #getSpaces()} != 0).
+   * The action is <b>not</b> performed if there are line feeds configured for the
+   * current {@link WhiteSpace} object ({@link #getSpaces()} != 0).
    *
    * @param spaceProperty     spacing settings holder
    */
@@ -338,8 +342,8 @@ class WhiteSpace {
   }
 
   /**
-   * Tries to ensure that number of line feeds managed by the current {@link WhiteSpace} is consistent to the settings defined at the given
-   * spacing property.
+   * Tries to ensure that number of line feeds managed by the current {@link WhiteSpace} is consistent to the settings
+   * defined at the given spacing property.
    *
    * @param spaceProperty       space settings holder
    * @param formatProcessor    format processor to use for space settings state refreshing
@@ -389,6 +393,13 @@ class WhiteSpace {
 
   }
 
+  /**
+   * Allows to get information if target text document continuous 'white space' represented by the current object contained line feed
+   * symbol(s) initially or contains line feed(s) now.
+   *
+   * @return    <code>true</code> if this object contained line feeds initially or contains them now; <code>false</code> otherwise
+   * @see #containsLineFeedsInitially()
+   */
   public boolean containsLineFeeds() {
     return isIsFirstWhiteSpace() || getLineFeeds() > 0;
   }
@@ -446,6 +457,13 @@ class WhiteSpace {
     return isIsFirstWhiteSpace();
   }
 
+  /**
+   * Allows to get information if current object contained line feed(s) initially. It's considered to contain them if
+   * line feeds were found at the target text document fragment after
+   * new {@link #append(int, FormattingDocumentModel, CodeStyleSettings.IndentOptions) end offset appliance}.
+   *
+   * @return    <code>true</code> if current object contained line feeds initially; <code>false</code> otherwise
+   */
   public boolean containsLineFeedsInitially() {
     if (myInitial == null) return false;
     return (myFlags & CONTAINS_LF_INITIALLY) != 0;
