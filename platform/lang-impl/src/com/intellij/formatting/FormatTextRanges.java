@@ -82,14 +82,15 @@ public class FormatTextRanges {
      * <ul>
      *   <li>given range starts after end of the wrapped range;</li>
      *   <li>
-     *          given range ends before start of the wrapped range (there is a special case when given <code>'rootIsRightBlock'</code> flag
-     *          is <code>true</code> - <code>false</code> is returned if given range ends before or at start of the wrapped range);
+     *      given range ends before start of the wrapped range (there is a special case when given <code>'rootIsRightBlock'</code> flag
+     *      is <code>true</code> - <code>false</code> is returned if given range ends before or at start of the wrapped range);
      *   </li>
      * </ul>
      *
-     * @param range                   range to check
+     * @param range               range to check
      * @param rootIsRightBlock    meta-information about given range that is used during final answer calculation
-     * @return                            <code>true</code> if there are no intersections between given and wrapped ranges; <code>false</code> otherwise
+     * @return                    <code>true</code> if there are no intersections between given and wrapped ranges;
+     *                            <code>false</code> otherwise
      */
     public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
       if (myRange.getStartOffset() >= range.getEndOffset() && rootIsRightBlock) {
@@ -155,10 +156,10 @@ public class FormatTextRanges {
    * <p/>
    * I.e. this method allows to check if given range has intersections with any of aggregated ranges.
    *
-   * @param range                     range to check
+   * @param range                 range to check
    * @param rootIsRightBlock      flag to use during {@link FormatTextRange#isReadOnly(TextRange, boolean)} processing
-   * @return                              <code>true</code> if given range doesn't have intersections with all aggregated ranges;
-   *                                            <code>false</code> if given range intersects at least one of aggregated ranges
+   * @return                      <code>true</code> if given range doesn't have intersections with all aggregated ranges;
+   *                              <code>false</code> if given range intersects at least one of aggregated ranges
    */
   public boolean isReadOnly(TextRange range, boolean rootIsRightBlock) {
     for (FormatTextRange formatTextRange : myRanges) {
