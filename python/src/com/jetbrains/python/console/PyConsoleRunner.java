@@ -130,7 +130,7 @@ public class PyConsoleRunner {
     });
 
 // Setup default prompt
-    myConsoleView.getConsole().setPrompt(PyConsoleProcessHandler.ORDINARY_PROMPT.trim());
+    myConsoleView.getConsole().setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT.trim());
 
 // Attach to process
     myConsoleView.attachToProcess(myProcessHandler);
@@ -177,9 +177,9 @@ public class PyConsoleRunner {
     return Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
   }
 
-  protected PyConsoleProcessHandler createProcessHandler(final Process process) {
+  private PyConsoleProcessHandler createProcessHandler(final Process process) {
     final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
-    return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(), outputEncoding);
+    return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(myProvider), outputEncoding);
   }
 
   private void registerActionShortcuts(final AnAction[] actions, final JComponent component) {
@@ -194,11 +194,11 @@ public class PyConsoleRunner {
                                         final Executor defaultExecutor,
                                         final RunContentDescriptor myDescriptor) {
 //stop
-    final AnAction stopAction = ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
+    final AnAction stopAction = createStopAction();
     toolbarActions.add(stopAction);
 
 //close
-    final CloseAction closeAction = new CloseAction(defaultExecutor, myDescriptor, myProject);
+    final AnAction closeAction = createCloseAction(defaultExecutor, myDescriptor);
     toolbarActions.add(closeAction);
 
 // run action
@@ -241,6 +241,14 @@ public class PyConsoleRunner {
     return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
   }
 
+  protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
+    return new CloseAction(defaultExecutor, myDescriptor, myProject);
+  }
+
+  protected AnAction createStopAction() {
+    return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
+  }
+
   protected void sendInput(final String input) {
     final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
@@ -259,6 +267,7 @@ public class PyConsoleRunner {
   }
 
   private void runExecuteActionInner(final boolean erase) {
+    // Process input and add to history
     final Document document = getLanguageConsole().getCurrentEditor().getDocument();
     final String documentText = document.getText();
     final TextRange range = new TextRange(0, document.getTextLength());
@@ -271,14 +280,15 @@ public class PyConsoleRunner {
     if (!StringUtil.isEmptyOrSpaces(line)){
       myHistory.addToHistory(line);          
     }
+    // Send to interpreter / server
     final String text2send = line.length() == 0 ? "\n\n" : line + "\n";
     sendInput(text2send);
     myConsoleView.inputSent(text2send);
   }
 
-  protected String getProviderCommandLine() {
+  private static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {
     final StringBuilder builder = new StringBuilder();
-    for (String s : myProvider.getArguments()) {
+    for (String s : provider.getArguments()) {
       if (builder.length() > 0){
         builder.append(' ');
       }
