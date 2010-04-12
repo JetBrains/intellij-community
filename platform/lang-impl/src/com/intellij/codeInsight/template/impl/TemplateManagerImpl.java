@@ -284,9 +284,9 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return templateStart;
   }
 
-  private Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
+  public Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
                                                           Editor editor,
-                                                          char shortcutChar,
+                                                          Character shortcutChar,
                                                           TemplateSettings templateSettings) {
     final Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
