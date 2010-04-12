@@ -30,6 +30,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -157,7 +158,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
       // binary file? see IDEADEV-2809
       return Collections.emptyList();
     }
-    collectInformationWithProgress(null);
+    collectInformationWithProgress(new EmptyProgressIndicator());
     return myMarkers;
   }
 
