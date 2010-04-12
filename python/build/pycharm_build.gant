@@ -91,6 +91,7 @@ def zipSources() {
   def sources = "$paths.artifacts/sources.zip"
   project.stage("zip sources to $sources")
 
+  ant.mkdir(dir: paths.artifacts)
   ant.delete(file: sources)
   ant.zip (destfile: sources) {
     fileset (dir: home) {
@@ -201,7 +202,6 @@ target('default': "Build artifacts") {
 
   def root = "${buildName}.app"
 
-  ant.mkdir(dir: paths.artifacts)
   ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
     tarfileset(dir: paths.distAll, prefix: root)
     tarfileset(dir: paths.distMac, prefix: root) {
