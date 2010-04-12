@@ -138,7 +138,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     } else if (parent instanceof GrImportStatement) {
       final GrImportStatement importStatement = (GrImportStatement) parent;
       if (importStatement.isStatic()) {
-        return importStatement.isOnDemand() ? CLASS_FQ : STATIC_MEMBER_FQ;
+        return importStatement.isOnDemand() ? CLASS : STATIC_MEMBER_FQ;
       }
       else {
         return forCompletion || importStatement.isOnDemand() ? CLASS_OR_PACKAGE_FQ : CLASS_FQ;

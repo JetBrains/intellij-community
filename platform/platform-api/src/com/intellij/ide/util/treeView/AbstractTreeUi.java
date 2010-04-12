@@ -3731,7 +3731,15 @@ public class AbstractTreeUi {
 
       TreePath path = event.getPath();
 
-      if (myRequestedExpand != null && !myRequestedExpand.equals(path)) return;
+      if (myRequestedExpand != null && !myRequestedExpand.equals(path)) {
+        final Object element = getElementFor(event.getPath().getLastPathComponent());
+        getReady(AbstractTreeUi.this).doWhenDone(new Runnable() {
+          public void run() {
+            expand(element, null);
+          }
+        });
+        return;
+      }
 
       //myRequestedExpand = null;
 
