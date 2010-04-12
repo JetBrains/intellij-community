@@ -53,8 +53,9 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
 
           final Editor editor = context.getEditor();
-          editor.getDocument().insertString(editor.getCaretModel().getOffset(), " {}");
-          editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 2);
+          final int offset = context.getTailOffset();
+          editor.getDocument().insertString(offset, " {}");
+          editor.getCaretModel().moveToOffset(offset + 2);
           context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
         }
         else {
