@@ -226,23 +226,15 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testDuplicateMapKeys() throws Exception {doTest();}
 
-  public void testIndexPropertyAccess() throws Exception {
-    doTest();
-  }
+  public void testIndexPropertyAccess() throws Exception {doTest();}
 
-  public void testPropertyAndFieldDeclaration() throws Exception {
-    doTest();
-  }
+  public void testPropertyAndFieldDeclaration() throws Exception {doTest();}
   
-  public void testGenericsMethodUsage() throws Exception {
-    doTest();
-  }
+  public void testGenericsMethodUsage() throws Exception {doTest();}
 
-  public void testWildcardInExtendsList() throws Exception {
-    doTest();
-  }
+  public void testWildcardInExtendsList() throws Exception {doTest();}
 
-  public void testOverrideAnnotation() throws Exception {
-    doTest();
-  }
+  public void testOverrideAnnotation() throws Exception {doTest();}
+
+  public void testClosureCallWithTupleTypeArgument() throws Exception {doTest();}
 }

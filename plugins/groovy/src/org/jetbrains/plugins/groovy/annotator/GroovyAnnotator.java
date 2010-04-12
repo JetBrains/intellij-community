@@ -1364,13 +1364,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
     if (argumentTypes == null) return;
 
-    if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) {
-      final String typesString = buildArgTypesList(argumentTypes);
-      String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
-      PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
-      if (elementToHighlight == null) elementToHighlight = place;
-      holder.createWarningAnnotation(elementToHighlight, message);
-    }
+    if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) return;
+
+    final String typesString = buildArgTypesList(argumentTypes);
+    String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    if (elementToHighlight == null) elementToHighlight = place;
+    holder.createWarningAnnotation(elementToHighlight, message);
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
