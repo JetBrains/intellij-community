@@ -32,6 +32,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,17 +70,31 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       baseIcon = IconLoader.getIcon("/nodes/class.png");
     }
 
-    return IconDeferrer.getInstance().defer(baseIcon, psiElement, new Function<PsiElement, Icon>() {
-      public Icon fun(PsiElement element) {
-        if (!element.isValid()) return null;
+    return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement,flags), new Function<ElementIconRequest, Icon>() {
+      public Icon fun(ElementIconRequest request) {
+        if (!request.getElement().isValid()) return null;
 
-        final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
+        final Icon providersIcon = PsiIconUtil.getProvidersIcon(request.getElement(), request.getFlags());
         if (providersIcon != null) {
-          return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
+          return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, request.getFlags());
         }
-        return getElementIcon(flags);
+        return getElementIcon(request.getFlags());
       }
     });
+  }
+
+  public static class ElementIconRequest extends ComparableObject.Impl {
+    public ElementIconRequest(PsiElement element, int flags) {
+      super(new Object[] {element, flags});
+    }
+
+    public PsiElement getElement() {
+      return (PsiElement)getEqualityObjects()[0];
+    }
+
+    public int getFlags() {
+      return (Integer)getEqualityObjects()[1];
+    }
   }
 
   protected Icon getElementIcon(final int flags) {
