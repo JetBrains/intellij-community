@@ -348,7 +348,7 @@ class FormatProcessor {
     return whiteSpace.getStartOffset() < dependency.getEndOffset();
   }
 
-  private boolean processWrap(Spacing spacing) {
+  private boolean processWrap(SpacingImpl spacing) {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
     boolean wrapWasPresent = whiteSpace.containsLineFeeds();
