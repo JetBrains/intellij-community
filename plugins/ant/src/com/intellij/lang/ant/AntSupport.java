@@ -17,6 +17,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
 import com.intellij.lang.xml.XMLLanguage;
@@ -29,6 +30,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,6 +123,15 @@ public class AntSupport implements ApplicationComponent {
     else {
       return (AntFile)psiFile.getViewProvider().getPsi(getLanguage());
     }
+  }
+
+  @Nullable
+  public static AntDomProject getAntDomProject(PsiFile psiFile) {
+    if (psiFile instanceof XmlFile) {
+      final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
+      return domManager.getFileElement((XmlFile)psiFile, AntDomProject.class).getRootElement();
+    }
+    return null;
   }
 
   @Nullable

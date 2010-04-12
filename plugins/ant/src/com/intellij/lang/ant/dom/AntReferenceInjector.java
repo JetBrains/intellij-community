@@ -15,28 +15,26 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.AntLanguageExtension;
-import com.intellij.openapi.module.Module;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomFileDescription;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomReferenceInjector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
- */
-public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
-  public AntDomFileDescription() {
-    super(AntDomProject.class, "project");
+* @author Eugene Zhuravlev
+*         Date: Apr 9, 2010
+*/
+class AntReferenceInjector implements DomReferenceInjector {
+  public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
+    final DomElement element = context.getInvocationElement();
+    return null;
   }
 
-  protected void initializeFileDescription() {
-    registerReferenceInjector(new AntReferenceInjector());
+  @NotNull
+  public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
+    return PsiReference.EMPTY_ARRAY;
   }
-
-  public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
-    return super.isMyFile(file, module) && AntLanguageExtension.isAntFile(file);
-  }
-
 }

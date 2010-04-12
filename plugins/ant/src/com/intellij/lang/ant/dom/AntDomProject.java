@@ -15,9 +15,16 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
+import com.intellij.lang.ant.config.impl.AntInstallation;
+import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.SubTagList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -25,17 +32,43 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Apr 6, 2010
  */
-public interface AntDomProject extends AntDomElement {
+@SuppressWarnings({"AbstractClassNeverImplemented"})
+public abstract class AntDomProject extends AntDomElement {
+  private ClassLoader myClassLoader;
 
   @Attribute("name")
-  GenericAttributeValue<String> getName();
+  public abstract GenericAttributeValue<String> getName();
 
   @Attribute("default")
-  GenericAttributeValue<String> getDefaultTargetName();
+  public abstract GenericAttributeValue<String> getDefaultTargetName();
 
   @Attribute("basedir")
-  GenericAttributeValue<String> getBasedir();
+  public abstract GenericAttributeValue<String> getBasedir();
 
   @SubTagList("target")
-  List<AntTarget> getTargets();
+  public abstract List<AntTarget> getTargets();
+
+  @NotNull
+  public final ClassLoader getClassLoader() {
+    if (myClassLoader == null) {
+      final XmlTag tag = getXmlTag();
+      final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+      if (buildFile != null) {
+        myClassLoader = buildFile.getClassLoader();
+      }
+      else {
+        final AntConfigurationBase configuration = AntConfigurationBase.getInstance(tag.getProject());
+        AntInstallation antInstallation = null;
+        if (configuration != null) {
+          antInstallation = configuration.getProjectDefaultAnt();
+        }
+        if (antInstallation == null) {
+          antInstallation = GlobalAntConfiguration.getInstance().getBundledAnt();
+        }
+        assert antInstallation != null;
+        myClassLoader = antInstallation.getClassLoader();
+      }
+    }
+    return myClassLoader;
+  }
 }

@@ -17,19 +17,19 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.SubTagList;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 6, 2010
  */
-public interface AntTarget extends AntDomElement{
+@SuppressWarnings({"AbstractClassNeverImplemented"})
+public abstract class AntTarget extends AntDomElement {
   @Attribute("name")
-  GenericAttributeValue<String> getName();
+  public abstract GenericAttributeValue<String> getName();
 
   @Attribute("if")
-  GenericAttributeValue<String> getIfPropertyName();
+  public abstract GenericAttributeValue<String> getIfPropertyName();
 
   @Attribute("unless")
-  GenericAttributeValue<String> getUnlessPropertyName();
+  public abstract GenericAttributeValue<String> getUnlessPropertyName();
 }

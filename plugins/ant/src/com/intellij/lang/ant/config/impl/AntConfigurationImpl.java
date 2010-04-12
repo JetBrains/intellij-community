@@ -26,7 +26,6 @@ import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.psi.AntFile;
-import com.intellij.lang.ant.psi.impl.AntFileImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -546,7 +545,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
     final AntFile antFile = (AntFile)psiFile;
     final AntBuildFileImpl buildFile = new AntBuildFileImpl(antFile, this);
-    antFile.getSourceElement().putCopyableUserData(AntFileImpl.ANT_BUILD_FILE, buildFile);
+    antFile.getSourceElement().putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, buildFile);
     synchronized (myBuildFiles) {
       myBuildFilesArray = null;
       myBuildFiles.add(buildFile);
@@ -609,7 +608,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final AntFile antFile = (AntFile)buildFile.getAntFile();
     if (antFile != null) {
       final XmlFile xmlFile = antFile.getSourceElement();
-      xmlFile.putCopyableUserData(AntFileImpl.ANT_BUILD_FILE, null);
+      xmlFile.putCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY, null);
       AntSupport.markFileAsAntFile(xmlFile.getVirtualFile(), xmlFile.getViewProvider(), false);
     }
     synchronized (myBuildFiles) {
