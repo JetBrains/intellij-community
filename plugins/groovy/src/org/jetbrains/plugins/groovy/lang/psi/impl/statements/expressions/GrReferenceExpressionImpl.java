@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -76,6 +77,8 @@ import java.util.List;
  * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
+  public static final Key<Boolean> IS_RESOLVED_TO_GETTER = new Key<Boolean>("Is resolved to getter");
+
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -410,19 +413,34 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
         resolveImpl(refExpr, methodResolver);
         if (methodResolver.hasApplicableCandidates()) return methodResolver.getCandidates();
 
-        PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, refExpr);
-        resolveImpl(refExpr, propertyResolver);
-        if (propertyResolver.hasCandidates()) return propertyResolver.getCandidates();
-
         final String[] names = GroovyPropertyUtils.suggestGettersName(name);
         List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>();
         for (String getterName : names) {
           AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, refExpr, true);
           resolveImpl(refExpr, getterResolver);
-          list.addAll(Arrays.asList(getterResolver.getCandidates()));
+          final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
+          if (candidates.length == 1 && candidates[0].isStaticsOK()) {
+            refExpr.putUserData(IS_RESOLVED_TO_GETTER, true);
+            return candidates;
+          }
+          else {
+            list.addAll(Arrays.asList(candidates));
+          }
         }
-        if (list.size() > 0) return list.toArray(new GroovyResolveResult[list.size()]);
-        return methodResolver.getCandidates();
+
+        PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(name, refExpr);
+        resolveImpl(refExpr, propertyResolver);
+        if (propertyResolver.hasCandidates()) return propertyResolver.getCandidates();
+
+        if (methodResolver.hasCandidates()) {
+          return methodResolver.getCandidates();
+        }
+        else if (list.size() > 0) {
+          refExpr.putUserData(IS_RESOLVED_TO_GETTER, true);
+          return list.toArray(new GroovyResolveResult[list.size()]);
+        }
+
+        return GroovyResolveResult.EMPTY_ARRAY;
       }
       else if (kind == Kind.TYPE_OR_PROPERTY) {
         ResolverProcessor processor = new PropertyResolverProcessor(name, refExpr);

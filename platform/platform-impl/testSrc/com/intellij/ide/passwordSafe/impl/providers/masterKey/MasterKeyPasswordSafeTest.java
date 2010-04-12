@@ -32,11 +32,15 @@ public class MasterKeyPasswordSafeTest {
     s1.resetMasterPassword("pass1", false);
     s1.storePassword(null, MasterKeyPasswordSafeTest.class, "TEST", "test");
     assertEquals("test", s1.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
-    s1.changeMasterPassword("pass1", "pass2", false);
+    assertTrue(s1.changeMasterPassword("pass1", "pass2", false));
     assertEquals("test", s1.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
     MasterKeyPasswordSafe s2 = testProvider(db);
     assertFalse(s2.setMasterPassword("pass1"));
     assertTrue(s2.setMasterPassword("pass2"));
+    assertEquals("test", s2.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
+    assertTrue(s2.changeMasterPassword("pass2", "pass3", false));
+    assertTrue(s2.changeMasterPassword("pass3", "pass4", false));
+    assertTrue(s2.setMasterPassword("pass4"));
     assertEquals("test", s2.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));
     s2.resetMasterPassword("fail", false);
     assertNull(s2.getPassword(null, MasterKeyPasswordSafeTest.class, "TEST"));

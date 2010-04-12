@@ -462,38 +462,60 @@ print new Foo().foo""")
   }
 
   public void testReadAccessToStaticallyImportedProperty() {
-    myFixture.configureByText("a.groovy", """class Foo {
-  def bar
+
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
 }""")
     myFixture.configureByText("b.groovy", """import static Foo.bar
 print ba<caret>r
 """)
-    def ref=findReference()
+    def ref = findReference()
     def resolved = ref.resolve()
+    print resolved.class
     assertInstanceOf resolved, GrAccessorMethod.class
   }
 
   public void testWriteAccessToStaticallyImportedProperty() {
-    myFixture.configureByText("a.groovy", """class Foo {
-  def bar
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
 }""")
     myFixture.configureByText("b.groovy", """import static Foo.bar
 ba<caret>r = 2
 """)
-    def ref=findReference()
+    def ref = findReference()
     def resolved = ref.resolve()
+    print resolved.class
     assertInstanceOf resolved, GrAccessorMethod.class
   }
 
   public void testGetterToStaticallyImportedProperty() {
-    myFixture.configureByText("a.groovy", """class Foo {
-  def bar
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
 }""")
     myFixture.configureByText("b.groovy", """import static Foo.bar
 set<caret>Bar(2)
 """)
-    def ref=findReference()
+    def ref = findReference()
     def resolved = ref.resolve()
     assertNull resolved
+  }
+
+  public void resolvePropertyInCallExpression() {
+    myFixture.configureByText("a.groovy", """
+class Foo {
+  def foo = {
+    return {int i -> print i}
+  }
+
+  def foo(String s){
+    print s
+  }
+}
+new Foo().fo<caret>o(2)"""
+    )
+    def ref = findReference()
+    def resolved = ref.resolve()
+
+    assertInstanceOf resolved, GrAccessorMethod
   }
 }

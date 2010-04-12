@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
@@ -110,6 +111,10 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     return GroovyResolveResult.EMPTY_ARRAY;
   }
 
+  public GroovyResolveResult[] multiResolveClass() {
+    return new GroovyResolveResult[]{new GroovyResolveResultImpl(getDelegatedClass(), this, PsiSubstitutor.EMPTY, true, true)};
+  }
+
   public PsiMethod resolveConstructor() {
     return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
@@ -118,6 +123,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
   }
 
+  @Nullable
   public PsiClass getDelegatedClass() {
     GrTypeDefinition typeDefinition = getEnclosingClass();
     if (typeDefinition != null) {

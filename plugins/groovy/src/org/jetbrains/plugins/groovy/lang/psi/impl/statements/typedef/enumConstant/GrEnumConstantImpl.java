@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
@@ -104,6 +105,12 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
     clazz.processDeclarations(processor, ResolveState.initial(), null, this);
     return processor.getCandidates();
+  }
+
+  public GroovyResolveResult[] multiResolveClass() {
+    final PsiClass psiClass = getContainingClass();
+    GroovyResolveResult result = new GroovyResolveResultImpl(psiClass, this, PsiSubstitutor.EMPTY, true, true);
+    return new GroovyResolveResult[]{result};
   }
 
   public PsiMethod resolveConstructor() {

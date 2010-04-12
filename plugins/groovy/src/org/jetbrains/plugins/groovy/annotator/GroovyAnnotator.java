@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -74,12 +75,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
@@ -232,7 +233,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
         minModifier = PsiModifier.PUBLIC;
       }
-      String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
+      String[] modifiers = {PsiModifier.PROTECTED, PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL};
       PsiClass accessObjectClass = PsiTreeUtil.getParentOfType(place, PsiClass.class, false);
       if (accessObjectClass == null) {
         accessObjectClass = ((GroovyFile)place.getContainingFile()).getScriptClass();
@@ -991,7 +992,25 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       checkForExtendingInterface(holder, extendsClause, implementsClause, ((GrTypeDefinition)extendsClause.getParent()));
     }
 
+    checkForWildCards(holder, extendsClause);
+    checkForWildCards(holder, implementsClause);
+
     checkDuplicateClass(typeDefinition, holder);
+  }
+
+  private static void checkForWildCards(AnnotationHolder holder, @Nullable GrReferenceList clause) {
+    if (clause == null) return;
+    final GrCodeReferenceElement[] elements = clause.getReferenceElements();
+    for (GrCodeReferenceElement element : elements) {
+      final GrTypeArgumentList list = element.getTypeArgumentList();
+      if (list != null) {
+        for (GrTypeElement type : list.getTypeArgumentElements()) {
+          if (type instanceof GrWildcardTypeArgument) {
+            holder.createErrorAnnotation(type, GroovyBundle.message("wildcards.are.not.allowed.in.extends.list"));
+          }
+        }
+      }
+    }
   }
 
   private static void checkDuplicateClass(GrTypeDefinition typeDefinition, AnnotationHolder holder) {
@@ -1169,6 +1188,28 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (argumentTypes != null &&
              !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
                                    methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+      
+      //check for implicit use of property getter which returns closure
+      if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
+        if (method instanceof GrMethod || method instanceof GrAccessorMethod) {
+          final PsiType returnType = PsiUtil.getSmartReturnType(method);
+          if (returnType instanceof GrClosureType) {
+            if (PsiUtil.isApplicable(argumentTypes, ((GrClosureType)returnType), element.getManager())) {
+              return;
+            }
+          }
+        }
+
+        PsiType returnType = method.getReturnType();
+        if (returnType != null) {
+          final PsiClassType closureType = JavaPsiFacade.getElementFactory(element.getProject())
+            .createTypeByFQClassName(GrClosableBlock.GROOVY_LANG_CLOSURE, GlobalSearchScope.allScope(element.getProject()));
+          if (TypesUtil.isAssignable(closureType, returnType, place.getManager(), place.getResolveScope())) {
+            return;
+          }
+        }
+      }
+
       highlightInapplicableMethodUsage(methodResolveResult, place, holder, method, argumentTypes);
     }
   }

@@ -17,13 +17,17 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -47,10 +51,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.List;
 
 public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
   private final ProcessPopup myPopup;
@@ -378,11 +381,44 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     removeAll();
     setLayout(new BorderLayout());
     add(myInfoPanel, BorderLayout.CENTER);
+
     myProgressIcon.setBorder(myCompoundBorder);
-    add(myProgressIcon, BorderLayout.EAST);
+
+    long wastedTime = ProgressManagerImpl.getWastedTime();
+    if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 1000) {
+      JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.add(new JLabel(" Your wasted time: " + formatTime(wastedTime) + " "), BorderLayout.CENTER);
+      wrapper.add(myProgressIcon, BorderLayout.EAST);
+
+      long time = System.currentTimeMillis() - ApplicationManagerEx.getApplicationEx().getStartTime();
+      long percentage = wastedTime * 100 / time;
+      String period = new SimpleDateFormat("m 'min' H 'hours'").format(new Date(2000, 0, 1, 0, 0, 0).getTime() + time);
+
+      List<Pair<String, Long>> list = ProgressManagerImpl.getTimeWasters();
+      StringBuilder s = new StringBuilder("<html>Successfully wasted " + percentage +"% of your time in " + period  + ":<br><border>");
+      for (Pair<String, Long> each : list) {
+        s.append("<tr><td>");
+        s.append(each.first);
+        s.append(":</td><td>");
+        s.append(formatTime(each.second));
+        s.append("</td></tr>");
+      }
+      s.append("</border></html>");
+      wrapper.setToolTipText(s.toString());
+      add(wrapper, BorderLayout.EAST);
+    } else {
+      add(myProgressIcon, BorderLayout.EAST);
+    }
+
     myProgressIcon.suspend();
     myInfoPanel.revalidate();
     myInfoPanel.repaint();
+  }
+
+  private String formatTime(long t) {
+    if (t < 1000) return "< 1 sec";
+    if (t < 60 * 1000) return (t / 1000) + " sec";
+    return "~" + (int)Math.ceil(t / (60 * 1000f)) + " min";
   }
 
   public boolean isProcessWindowOpen() {

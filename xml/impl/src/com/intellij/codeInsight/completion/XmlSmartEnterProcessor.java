@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
-import com.intellij.codeInsight.template.zencoding.XmlZenCodingTemplate;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -42,10 +41,11 @@ public class XmlSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.XmlSmartEnterProcessor");
 
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
-    if (!completeEndTag(project, editor, psiFile)) {
+    /*if (!completeEndTag(project, editor, psiFile)) {
       return XmlZenCodingTemplate.startZenCoding(editor, psiFile, null);
     }
-    return true;
+    return true;*/
+    return completeEndTag(project, editor, psiFile);
   }
 
   private boolean completeEndTag(Project project, Editor editor, PsiFile psiFile) {
