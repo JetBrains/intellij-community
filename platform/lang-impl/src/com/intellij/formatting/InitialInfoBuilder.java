@@ -30,6 +30,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
+ * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
+ */
 class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
 
@@ -69,6 +73,22 @@ class InitialInfoBuilder {
     return builder;
   }
 
+  /**
+   * Wraps given root block and all of its descendants and returns root block wrapper.
+   * <p/>
+   * This method performs necessary infrastructure actions and delegates actual processing to
+   * {@link #processCompositeBlock(Block, CompositeBlockWrapper, TextRange, int, WrapImpl, boolean)} and
+   * {@link #processSimpleBlock(Block, CompositeBlockWrapper, boolean, TextRange, int, Block)}.
+   *
+   * @param rootBlock               block to wrap
+   * @param index                   index of the current block at its parent block. <code>-1</code> may be used here if we don't
+   *                                have information about parent block
+   * @param parent                  parent block wrapper. <code>null</code> may be used here we no parent block wrapper exists
+   * @param currentWrapParent       parent wrap if any; <code>null</code> otherwise
+   * @param parentBlock             parent block of the block to wrap
+   * @param rootBlockIsRightBlock   flag that shows if target block is the right-most block
+   * @return                        wrapper for the given <code>'rootBlock'</code>
+   */
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
                                          final CompositeBlockWrapper parent,
