@@ -182,7 +182,7 @@ public class ResolveImportUtil {
    * @return list of possible candidates
    */
   @NotNull
-  private static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
+  public static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
                                                 boolean import_is_absolute, int relative_level) {
     if (qualifiedName == null) return Collections.emptyList();
     String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relative_level);
