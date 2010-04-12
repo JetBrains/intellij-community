@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.TruncatingIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,15 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
 
   @Nullable
   public static Icon getRawIcon(final LookupItem item, boolean real) {
+    final Icon icon = _getRawIcon(item, real);
+    if (icon != null && icon.getIconHeight() > SAMPLE_ICON.getIconHeight()) {
+      return new TruncatingIcon(icon, icon.getIconWidth(), SAMPLE_ICON.getIconHeight());
+    }
+    return icon;
+  }
+
+  @Nullable
+  private static Icon _getRawIcon(LookupItem item, boolean real) {
     Icon icon = (Icon)item.getAttribute(LookupItem.ICON_ATTR);
     if (icon != null) return icon;
 
@@ -73,7 +83,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     }
     return null;
   }
-  
+
 
   @Nullable
   private static String getText3(final LookupItem item) {
