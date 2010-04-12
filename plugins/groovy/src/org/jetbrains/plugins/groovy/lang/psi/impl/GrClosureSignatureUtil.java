@@ -47,7 +47,20 @@ public class GrClosureSignatureUtil {
   }
 
   public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, PsiManager manager, GlobalSearchScope scope) {
-    GrClosureParameter[] params = signature.getParameters();
+    if (isApplicable(signature, args, manager, scope)) return true;
+
+    if (args.length == 1) {
+      PsiType arg = args[0];
+      if (arg instanceof GrTupleType) {
+        args = ((GrTupleType)arg).getComponentTypes();
+        if (isApplicable(signature, args, manager, scope)) return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isApplicable(GrClosureSignature signature, PsiType[] args, PsiManager manager, GlobalSearchScope scope) {
+     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs()) return false;
     int optional = getOptionalParamCount(signature);
     int notOptional = params.length - optional;
@@ -59,7 +72,7 @@ public class GrClosureSignatureUtil {
       PsiType lastType = params[params.length - 1].getType();
       assert lastType instanceof PsiArrayType;
       if (TypesUtil.isAssignableByMethodCallConversion(lastType, args[args.length - 1], manager, scope)) return true;
-      
+
       PsiType varargType = ((PsiArrayType)lastType).getComponentType();
 
       for (int argCount = args.length - 1; argCount >= notOptional; argCount--) {
