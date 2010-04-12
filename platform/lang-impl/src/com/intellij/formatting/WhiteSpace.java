@@ -470,15 +470,16 @@ class WhiteSpace {
   }
 
   /**
-   * Tries to ensure that number of line feeds and white spaces managed by the given {@link WhiteSpace} object is the same as the one defined by the
-   * given <code>'spacing'</code> object.
+   * Tries to ensure that number of line feeds and white spaces managed by the given {@link WhiteSpace} object is the
+   * same as the one defined by the given <code>'spacing'</code> object.
    * <p/>
-   * This method may be considered a shortcut for calling {@link #arrangeLineFeeds(SpacingImpl, FormatProcessor)} and {@link #arrangeSpaces(SpacingImpl)}.
+   * This method may be considered a shortcut for calling {@link #arrangeLineFeeds(SpacingImpl, FormatProcessor)} and
+   * {@link #arrangeSpaces(SpacingImpl)}.
    *
-   * @param spacing                 spacing settings holder
+   * @param spacing             spacing settings holder
    * @param formatProcessor     format processor to use to refresh state of the given <code>'spacing'</code> object
    */
-  public void removeLineFeeds(final Spacing spacing, final FormatProcessor formatProcessor) {
+  public void removeLineFeeds(final SpacingImpl spacing, final FormatProcessor formatProcessor) {
     performModification(new Runnable() {
       public void run() {
         setLineFeeds(0);
@@ -486,8 +487,8 @@ class WhiteSpace {
         myIndentSpaces = 0;
       }
     });
-    arrangeLineFeeds((SpacingImpl)spacing, formatProcessor);
-    arrangeSpaces((SpacingImpl)spacing);
+    arrangeLineFeeds(spacing, formatProcessor);
+    arrangeSpaces(spacing);
   }
 
   public int getIndentOffset() {
