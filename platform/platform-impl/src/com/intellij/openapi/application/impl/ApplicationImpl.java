@@ -1048,8 +1048,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   public void saveSettings() {
-    if (myDoNotSave || isUnitTestMode() || isHeadlessEnvironment()) return;
-    _saveSettings();
+    if (!myDoNotSave && !isUnitTestMode() && !isHeadlessEnvironment()) {
+      _saveSettings();
+    }
   }
 
   public void saveAll() {
