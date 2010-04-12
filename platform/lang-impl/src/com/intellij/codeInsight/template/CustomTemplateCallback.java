@@ -101,8 +101,7 @@ public class CustomTemplateCallback {
    * @param predefinedVarValues
    * @param listener            @return returns if template invokation is finished
    */
-  public void startTemplate(@NotNull String key,
-                            Map<String, String> predefinedVarValues) {
+  public void startTemplate(@NotNull String key, Map<String, String> predefinedVarValues) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
     templates = filterApplicableCandidates(templates);
     if (templates.size() > 0) {
@@ -111,8 +110,7 @@ public class CustomTemplateCallback {
     }
   }
 
-  public void startTemplate(@NotNull TemplateImpl template,
-                            Map<String, String> predefinedVarValues) {
+  public void startTemplate(@NotNull TemplateImpl template, Map<String, String> predefinedVarValues) {
     int offset = myBuilder.insertTemplate(myOffset, template, predefinedVarValues);
     moveToOffset(offset);
   }
@@ -164,7 +162,13 @@ public class CustomTemplateCallback {
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
-    return settings.collectMatchingCandidates(templateKey, settings.getDefaultShortcutChar(), false);
+    List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
+    for (TemplateImpl template : settings.getTemplates(templateKey)) {
+      if (!template.isDeactivated() && !template.isSelectionTemplate()) {
+        candidates.add(template);
+      }
+    }
+    return candidates;
   }
 
   @NotNull
