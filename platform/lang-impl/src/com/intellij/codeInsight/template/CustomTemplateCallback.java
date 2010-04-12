@@ -173,12 +173,9 @@ public class CustomTemplateCallback {
     myCheckpoints.clear();
   }
 
-  public boolean startTemplate(@NotNull String key) {
-    List<TemplateImpl> templates = findApplicableTemplates(key);
-    Map<TemplateImpl, String> template2Argument = new HashMap<TemplateImpl, String>();
-    for (TemplateImpl template : templates) {
-      template2Argument.put(template, null);
-    }
+  public boolean startTemplate() {
+    Map<TemplateImpl, String> template2Argument =
+      ((TemplateManagerImpl)myTemplateManager).findMatchingTemplates(myFile, myEditor, null, TemplateSettings.getInstance());
     return ((TemplateManagerImpl)myTemplateManager).startNonCustomTemplates(template2Argument, myEditor, null);
   }
 

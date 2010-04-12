@@ -297,6 +297,10 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+    return computeKey(callback);
+  }
+
+  static String computeKey(CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     PsiElement element = callback.getContext();
     int line = editor.getCaretModel().getLogicalPosition().line;
@@ -374,7 +378,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
         Token token = tokens.get(0);
         if (token instanceof TemplateToken) {
           if (key.equals(((TemplateToken)token).myKey) && callback.findApplicableTemplates(key).size() > 1) {
-            callback.startTemplate(key);
+            callback.startTemplate();
             return;
           }
         }
