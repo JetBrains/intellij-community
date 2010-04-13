@@ -206,8 +206,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   public void updateFoldRegions(@NotNull Editor editor) {
+    updateFoldRegions(editor, false);
+  }
+
+  public void updateFoldRegions(Editor editor, boolean quick) {
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, false, false);
+    Runnable runnable = updateFoldRegions(editor, false, quick);
     if (runnable != null) {
       runnable.run();
     }
