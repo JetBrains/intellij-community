@@ -18,20 +18,28 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 
+/**
+ * Extends {@link SpacingImpl} in order to add notion of dependency range.
+ * <p/>
+ * <code>'Dependency'</code> here affect {@link #getMinLineFeeds() minLineFieeds} property value. See property contract for more details.
+ */
 public class DependantSpacingImpl extends SpacingImpl {
-  private final TextRange myDependance;
+  private final TextRange myDependency;
   private static final int DEPENDENCE_CONTAINS_LF_MASK = 0x10;
   private static final int LF_WAS_USED_MASK = 0x20;
 
   public DependantSpacingImpl(final int minSpaces,
                               final int maxSpaces,
-                              TextRange dependance,
+                              TextRange dependency,
                               final boolean keepLineBreaks,
                               final int keepBlankLines) {
     super(minSpaces, maxSpaces, 0, false, false, keepLineBreaks, keepBlankLines, false, 0);
-    myDependance = dependance;
+    myDependency = dependency;
   }
 
+  /**
+   * @return    <code>1</code> if dependency has line feeds; <code>0</code> otherwise
+   */
   int getMinLineFeeds() {
     if ((myFlags & DEPENDENCE_CONTAINS_LF_MASK) != 0) {
       return 1;
@@ -42,13 +50,13 @@ public class DependantSpacingImpl extends SpacingImpl {
   }
 
   public void refresh(FormatProcessor formatter) {
-    final boolean value = wasLFUsed() || formatter.containsLineFeeds(myDependance);
+    final boolean value = wasLFUsed() || formatter.containsLineFeeds(myDependency);
     if (value) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
     else myFlags &= ~DEPENDENCE_CONTAINS_LF_MASK;
   }
 
-  public TextRange getDependancy() {
-    return myDependance;
+  public TextRange getDependency() {
+    return myDependency;
   }
 
   public final void setLFWasUsed(final boolean value) {
@@ -62,6 +70,7 @@ public class DependantSpacingImpl extends SpacingImpl {
 
   @Override
   public String toString() {
-    return "<DependantSpacing: minSpaces=" + getMinSpaces() + " maxSpaces=" + getMaxSpaces() + " minLineFeeds=" + getMinLineFeeds() + " dep=" + myDependance + ">";
+    return "<DependantSpacing: minSpaces=" + getMinSpaces() + " maxSpaces=" + getMaxSpaces() + " minLineFeeds=" + getMinLineFeeds() + " dep=" +
+           myDependency + ">";
   }
 }

@@ -550,19 +550,28 @@ public class IdeEventQueue extends EventQueue {
     if (Registry.is("actionSystem.fixNullFocusedComponent")) {
       final Component focusOwner = mgr.getFocusOwner();
       if (focusOwner == null) {
-        Window showingWindow = mgr.getActiveWindow();
-        if (showingWindow != null) {
-          final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-          fm.doWhenFocusSettlesDown(new Runnable() {
-            public void run() {
-              if (mgr.getFocusOwner() == null) {
-                final Application app = ApplicationManager.getApplication();
-                if (app != null && app.isActive()) {
-                  fm.requestDefaultFocus(false);
+
+        IdeEventQueue queue = IdeEventQueue.getInstance();
+        boolean mouseEventsAhead = e instanceof MouseEvent
+                                   || queue.peekEvent(MouseEvent.MOUSE_PRESSED) != null
+                                   || queue.peekEvent(MouseEvent.MOUSE_RELEASED) != null
+                                   || queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
+
+        if (!mouseEventsAhead) {
+          Window showingWindow = mgr.getActiveWindow();
+          if (showingWindow != null) {
+            final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
+            fm.doWhenFocusSettlesDown(new Runnable() {
+              public void run() {
+                if (mgr.getFocusOwner() == null) {
+                  final Application app = ApplicationManager.getApplication();
+                  if (app != null && app.isActive()) {
+                    fm.requestDefaultFocus(false);
+                  }
                 }
               }
-            }
-          });
+            });
+          }
         }
       }
     }

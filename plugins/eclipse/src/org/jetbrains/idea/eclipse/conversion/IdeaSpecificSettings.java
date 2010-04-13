@@ -48,6 +48,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSame;
+
 /**
  * Read/write .eml
  */
@@ -142,7 +144,7 @@ public class IdeaSpecificSettings {
     for (Object r : libElement.getChildren(SRCROOT_ATTR)) {
       final String url = ((Element)r).getAttributeValue("url");
       modifiableModel.addRoot(url, OrderRootType.SOURCES);
-      if (srcUrlsFromClasspath != null && srcUrlsFromClasspath.length == 1 && url.contains(VfsUtil.urlToPath(srcUrlsFromClasspath[0]))) {  //remove compound root
+      if (srcUrlsFromClasspath != null && srcUrlsFromClasspath.length == 1 && areUrlsPointTheSame(url, srcUrlsFromClasspath[0])) {  //remove compound root
         modifiableModel.removeRoot(srcUrlsFromClasspath[0], OrderRootType.SOURCES);
         srcUrlsFromClasspath = null;
       }
@@ -295,8 +297,8 @@ public class IdeaSpecificSettings {
     for (Object r : libElement.getChildren(relativeModuleName)) {
       final String root = PathMacroManager.getInstance(project).expandPath(((Element)r).getAttributeValue(PROJECT_RELATED));
       for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {
-        String url = iterator.next();
-        if (root.contains(VfsUtil.urlToPath(url))) {
+        final String url = iterator.next();
+        if (areUrlsPointTheSame(root, url)) {
           iterator.remove();
           modifiableModel.removeRoot(url, orderRootType);
           modifiableModel.addRoot(root, orderRootType);

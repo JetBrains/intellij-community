@@ -31,10 +31,12 @@ public interface CustomLiveTemplate {
 
   boolean isApplicable(PsiFile file, int offset, boolean selection);
 
-  void expand(String key, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
+  void expand(String key, @NotNull CustomTemplateCallback callback);
 
   void wrap(String selection, @NotNull CustomTemplateCallback callback, @Nullable TemplateInvokationListener listener);
 
   @NotNull
   String getTitle();
+
+  char getShortcut();
 }

@@ -39,10 +39,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
 
 public class AboutAction extends AnAction implements DumbAware {
   @NonNls private static final String COMPANY_URL = "http://www.jetbrains.com/";      // TODO move to ApplicationInfo.xml
@@ -103,7 +101,8 @@ public class AboutAction extends AnAction implements DumbAware {
     final long delta = Patches.APPLE_BUG_ID_3716865 ? 100 : 0;
 
     dialog.addWindowFocusListener(new WindowFocusListener() {
-      public void windowGainedFocus(WindowEvent e) {}
+      public void windowGainedFocus(WindowEvent e) {
+      }
 
       public void windowLostFocus(WindowEvent e) {
         long eventTime = System.currentTimeMillis();
@@ -184,12 +183,17 @@ public class AboutAction extends AnAction implements DumbAware {
       Calendar cal = ideInfo.getBuildDate();
       myLines.add(new AboutBoxLine(ideInfo.getFullApplicationName(), true, false));
       myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.number", ideInfo.getBuild().asString())));
-      myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()))));
+      myLines
+        .add(new AboutBoxLine(IdeBundle.message("aboutbox.build.date", DateFormat.getDateInstance(DateFormat.LONG).format(cal.getTime()))));
       myLines.add(new AboutBoxLine(""));
       LicenseeInfoProvider provider = LicenseeInfoProvider.getInstance();
       if (provider != null) {
         myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, false));
         myLines.add(new AboutBoxLine(provider.getLicenseRestrictionsMessage()));
+        final Date mdd = provider.getMaintenanceDueDate();
+        if (mdd != null) {
+          myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.maintenance.due", mdd)));
+        }
       }
       myLines.add(new AboutBoxLine(""));
 
@@ -198,6 +202,7 @@ public class AboutAction extends AnAction implements DumbAware {
         myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.jdk", properties.getProperty("java.version", "unknown")), true, false));
         myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vm", properties.getProperty("java.vm.name", "unknown"))));
         myLines.add(new AboutBoxLine(IdeBundle.message("aboutbox.vendor", properties.getProperty("java.vendor", "unknown"))));
+
       }
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine("JetBrains s.r.o.", true, false));
@@ -215,7 +220,7 @@ public class AboutAction extends AnAction implements DumbAware {
           if (
             event.getPoint().x > linkX && event.getPoint().y >= linkY &&
             event.getPoint().x < linkX + linkWidth && event.getPoint().y < linkY + 10
-          ) {
+            ) {
             if (!inLink) {
               setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
               inLink = true;
@@ -245,9 +250,9 @@ public class AboutAction extends AnAction implements DumbAware {
         TextRenderer renderer = new TextRenderer(0, 145, 398, 120, g2);
         g2.setComposite(AlphaComposite.Src);
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
-        myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize+1);
+        myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
         try {
-          renderer.render (75, 0, myLines);
+          renderer.render(75, 0, myLines);
           break;
         }
         catch (TextRenderer.OverflowException _) {
@@ -270,7 +275,8 @@ public class AboutAction extends AnAction implements DumbAware {
       private int fontHeight;
       private Font font;
 
-      public class OverflowException extends Exception { }
+      public class OverflowException extends Exception {
+      }
 
       public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
         this.xBase = xBase;
@@ -280,10 +286,9 @@ public class AboutAction extends AnAction implements DumbAware {
         this.g2 = g2;
 
         if (SystemInfo.isWindows) {
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF); 
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
         }
       }
-
 
 
       public void render(int indentX, int indentY, List<AboutBoxLine> lines) throws OverflowException {
@@ -293,20 +298,20 @@ public class AboutAction extends AnAction implements DumbAware {
         for (int i = 0; i < lines.size(); i++) {
           AboutBoxLine line = lines.get(i);
           final String s = line.getText();
-          setFont (line.isBold() ? myBoldFont : myFont);
+          setFont(line.isBold() ? myBoldFont : myFont);
           if (line.isLink()) {
             g2.setColor(linkCol);
             linkX = x;
             linkY = yBase + y - fontAscent;
             FontMetrics metrics = g2.getFontMetrics(font);
-            linkWidth = metrics.stringWidth (s);
+            linkWidth = metrics.stringWidth(s);
           }
           renderString(s, indentX);
-          if (i == lines.size()-2) {
+          if (i == lines.size() - 2) {
             x += 50;
           }
-          else if (i < lines.size()-1) {
-            lineFeed (indentX, s);
+          else if (i < lines.size() - 1) {
+            lineFeed(indentX, s);
           }
         }
       }
@@ -331,7 +336,7 @@ public class AboutAction extends AnAction implements DumbAware {
       }
 
       private void renderWord(final String s, final int indentX) throws OverflowException {
-        for (int j = 0; j != s.length(); ++ j) {
+        for (int j = 0; j != s.length(); ++j) {
           final char c = s.charAt(j);
           final int cW = fontmetrics.charWidth(c);
           if (x + cW >= w) {
@@ -345,19 +350,20 @@ public class AboutAction extends AnAction implements DumbAware {
       private void lineFeed(int indent, final String s) throws OverflowException {
         x = indent;
         if (s.length() == 0) {
-          y += fontHeight/3;
+          y += fontHeight / 3;
         }
         else {
           y += fontHeight;
         }
-        if (y >= h)
+        if (y >= h) {
           throw new OverflowException();
+        }
       }
 
       private void setFont(Font font) {
         this.font = font;
-        fontmetrics =  g2.getFontMetrics(font);
-        g2.setFont (font);
+        fontmetrics = g2.getFontMetrics(font);
+        g2.setFont(font);
         fontAscent = fontmetrics.getAscent();
         fontHeight = fontmetrics.getHeight();
       }

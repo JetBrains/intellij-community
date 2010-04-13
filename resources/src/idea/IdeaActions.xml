@@ -228,12 +228,6 @@
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </action>
 
-    <action id="MaintenanceAction" class="com.intellij.ide.actions.MaintenanceAction"/>
-
-    <group id="MaintenanceGroup">
-      <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
-      <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
-    </group>
 
     <group text="IDEA Internal Actions" internal="true">
       <separator/>
@@ -268,8 +262,6 @@
 
       <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction" text="Dump all comments in the project"/>
       <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction" text="Test Rebuild Performance"/>
-
-      <reference ref="MaintenanceGroup"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
     </group>

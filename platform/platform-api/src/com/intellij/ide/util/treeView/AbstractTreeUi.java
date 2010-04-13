@@ -47,10 +47,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.security.AccessControlException;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class AbstractTreeUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
@@ -142,7 +140,12 @@ public class AbstractTreeUi {
   private final Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
   private TreePath myRequestedExpand;
   private final ActionCallback myInitialized = new ActionCallback();
-  private final Map<Object, ActionCallback> myReadyCallbacks = new WeakHashMap<Object, ActionCallback>();
+  private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
+    @Override
+    protected boolean isReady() {
+      return AbstractTreeUi.this.isReady();
+    }
+  };
 
   private boolean myPassthroughMode = false;
 
@@ -258,7 +261,7 @@ public class AbstractTreeUi {
         if (isPassthroughMode()) {
           runnable.run();
         } else {
-          UIUtil.invokeAndWaitIfNeeded(runnable);
+          UIUtil.invokeLaterIfNeeded(runnable);
         }
       }
     }
@@ -1562,10 +1565,7 @@ public class AbstractTreeUi {
       }
 
       if (myInitialized.isDone()) {
-        ActionCallback[] ready = getReadyCallbacks(true);
-        for (ActionCallback each : ready) {
-          each.setDone();
-        }
+        myBusyObject.onReady();
       }
     }
   }
@@ -1748,12 +1748,7 @@ public class AbstractTreeUi {
   }
 
   public ActionCallback getReady(Object requestor) {
-    if (isReady()) {
-      return new ActionCallback.Done();
-    }
-    else {
-      return addReadyCallback(requestor);
-    }
+    return myBusyObject.getReady(requestor);
   }
 
   private void addToUpdating(DefaultMutableTreeNode node) {
@@ -3729,9 +3724,17 @@ public class AbstractTreeUi {
     public void treeExpanded(TreeExpansionEvent event) {
       dropUpdaterStateIfExternalChange();
 
-      TreePath path = event.getPath();
+      final TreePath path = event.getPath();
 
-      if (myRequestedExpand != null && !myRequestedExpand.equals(path)) return;
+      if (myRequestedExpand != null && !myRequestedExpand.equals(path)) {
+        getReady(AbstractTreeUi.this).doWhenDone(new Runnable() {
+          public void run() {
+            Object element = getElementFor(path.getLastPathComponent());
+            expand(element, null);
+          }
+        });
+        return;
+      }
 
       //myRequestedExpand = null;
 
@@ -3909,28 +3912,6 @@ public class AbstractTreeUi {
 
   UpdaterTreeState getUpdaterState() {
     return myUpdaterState;
-  }
-
-  private ActionCallback addReadyCallback(Object requestor) {
-    synchronized (myReadyCallbacks) {
-      ActionCallback cb = myReadyCallbacks.get(requestor);
-      if (cb == null) {
-        cb = new ActionCallback();
-        myReadyCallbacks.put(requestor, cb);
-      }
-
-      return cb;
-    }
-  }
-
-  private ActionCallback[] getReadyCallbacks(boolean clear) {
-    synchronized (myReadyCallbacks) {
-      ActionCallback[] result = myReadyCallbacks.values().toArray(new ActionCallback[myReadyCallbacks.size()]);
-      if (clear) {
-        myReadyCallbacks.clear();
-      }
-      return result;
-    }
   }
 
   private long getComparatorStamp() {

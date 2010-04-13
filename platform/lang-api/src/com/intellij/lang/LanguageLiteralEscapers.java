@@ -29,6 +29,14 @@ public class LanguageLiteralEscapers extends LanguageExtension<LiteralEscaper> {
       public String getEscapedText(final PsiElement context, final String originalText) {
         return originalText;
       }
+
+      public String escapeText(String originalText) {
+        return originalText;
+      }
+
+      public String unescapeText(String originalText) {
+        return originalText;
+      }
     });
   }
 }

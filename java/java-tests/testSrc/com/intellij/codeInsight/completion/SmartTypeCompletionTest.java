@@ -720,6 +720,13 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testSameMethodArgumentsInIf() throws Throwable {
+    configureByTestName();
+    getLookup().setCurrentItem(getLookup().getItems().get(1));
+    select();
+    checkResultByTestName();
+  }
+
   public void testSuperConstructorArguments() throws Throwable {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(2));
@@ -957,6 +964,10 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testCommonPrefixWithSelection() throws Throwable {
+    doItemTest();
+  }
+
+  public void testNewAbstractClassWithConstructorArgs() throws Throwable {
     doItemTest();
   }
 

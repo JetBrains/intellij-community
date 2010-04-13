@@ -258,8 +258,8 @@ public class SSHMain {
         if (!c.isAuthMethodAvailable(myHost.getUser(), PASSWORD_METHOD)) {
           continue;
         }
-        for (int i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
-          String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), myLastError);
+        for (int i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
+          String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), i != 0, myLastError);
           if (password == null) {
             break;
           }
@@ -303,8 +303,8 @@ public class SSHMain {
         if (isEncryptedKey(text)) {
           // need to ask passphrase from user
           int i;
-          for (i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
-            passphrase = myXmlRpcClient.askPassphrase(myHandlerNo, getUserHostString(), keyPath, myLastError);
+          for (i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
+            passphrase = myXmlRpcClient.askPassphrase(myHandlerNo, getUserHostString(), keyPath, i != 0, myLastError);
             if (passphrase == null) {
               // if no passphrase was entered, just return false and try something other
               return false;
@@ -322,7 +322,7 @@ public class SSHMain {
               break;
             }
           }
-          if (i == 0) {
+          if (i == myHost.getNumberOfPasswordPrompts()) {
             myLastError = SSHMainBundle.message("sshmain.too.mush.passphrase.guesses", keyPath, myHost.getNumberOfPasswordPrompts());
             return false;
           }

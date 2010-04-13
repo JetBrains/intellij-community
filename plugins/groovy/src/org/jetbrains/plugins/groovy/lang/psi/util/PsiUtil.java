@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -123,7 +124,7 @@ public class PsiUtil {
 
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
-      signature.curry(1);
+      signature = signature.curry(1);
     }
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());
   }
@@ -150,7 +151,6 @@ public class PsiUtil {
     return null;
   }
 
-  // Returns arguments types not including Map for named arguments
   @Nullable
   public static PsiType[] getArgumentTypes(PsiElement place, boolean nullAsBottom) {
     PsiElement parent = place.getParent();
@@ -541,7 +541,7 @@ public class PsiUtil {
     if (resolveResults.length == 0) return false;
     final PsiElement element = resolveResults[0].getElement();
     if (element instanceof PsiMethod) {
-      PsiType returnType = ((PsiMethod)element).getReturnType();
+      PsiType returnType = getSmartReturnType((PsiMethod)element);
       return isRawType(returnType, resolveResults[0].getSubstitutor());
     }
     return false;
@@ -599,7 +599,7 @@ public class PsiUtil {
       if (candidates.length == 1) {
         final PsiElement element = candidates[0].getElement();
         if (element instanceof PsiMethod) {
-          type = ((PsiMethod)element).getReturnType();
+          type = getSmartReturnType((PsiMethod)element);
         }
       }
       return isRawType(type, resolveResult.getSubstitutor());
@@ -729,5 +729,18 @@ public class PsiUtil {
       }
     }
     return elem;
+  }
+
+  @Nullable
+  public static PsiType getSmartReturnType(PsiMethod method) {
+    if (method instanceof GrMethod) {
+      return ((GrMethod)method).getInferredReturnType();
+    }
+    else if (method instanceof GrAccessorMethod) {
+      return ((GrAccessorMethod)method).getInferredReturnType();
+    }
+    else {
+      return method.getReturnType();
+    }
   }
 }

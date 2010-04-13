@@ -15,8 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailTypes;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -53,7 +52,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     while (container != null) {
       for (final Pair<PsiMethod, PsiSubstitutor> candidate : candidates) {
         if (container.getParameterList().getParametersCount() > 1 && isSuperMethod(container, candidate.first, candidate.second)) {
-          result.addElement(createParametersLookupElement(container));
+          result.addElement(createParametersLookupElement(container, methodCall));
           return;
         }
       }
@@ -63,7 +62,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     }
   }
 
-  private static LookupElement createParametersLookupElement(PsiMethod method) {
+  private static LookupElement createParametersLookupElement(PsiMethod method, PsiElement call) {
     final String lookupString = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
       public String fun(PsiParameter psiParameter) {
         return psiParameter.getName();
@@ -78,10 +77,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     final LookupElement element = LookupElementBuilder.create(lookupString).setIcon(icon);
     element.putUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS, Boolean.TRUE);
 
-    final TailType tail = method.isConstructor() || method.getReturnType() instanceof PsiPrimitiveType
-                          ? TailTypes.CALL_RPARENTH_SEMICOLON
-                          : TailTypes.CALL_RPARENTH;
-    return TailTypeDecorator.withTail(element, tail);
+    return TailTypeDecorator.withTail(element, ExpectedTypesProvider.getFinalCallParameterTailType(call, method.getReturnType(), method));
   }
 
   private static List<Pair<PsiMethod, PsiSubstitutor>> getSuperMethodCandidates(PsiReferenceExpression expression) {

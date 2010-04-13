@@ -23,6 +23,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -71,23 +72,47 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private final Queue<Document> myChangedDocuments = new ConcurrentLinkedQueue<Document>();
   private final Runnable myEncodingUpdateRunnable = new Runnable() {
     public void run() {
-      Document document = myChangedDocuments.poll();
-      if (document == null) return;
-      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-      if (virtualFile == null) return;
-      Project project = guessProject(virtualFile);
-      if (project != null && project.isDisposed()) return;
-      Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
-      document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
+      for (int i=0; i<50;i++) {
+        if (!pollAndHandleDocument()) return;
+      }
+      // requeue myself to handle the tail of the queue in next request
+      addCacheEncodingAlarm();
     }
   };
 
+  private boolean pollAndHandleDocument() {
+    final Document document = myChangedDocuments.poll();
+    if (document == null) return false;
+    ApplicationManager.getApplication().runReadAction(new Runnable(){
+      public void run() {
+        VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+        if (virtualFile == null) return;
+        Project project = guessProject(virtualFile);
+        if (project != null && project.isDisposed()) return;
+        Charset charset = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getText());
+        document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
+      }
+    });
+    return true;
+  }
+
   public void dispose() {
     updateEncodingFromContent.cancelAllRequests();
+    drainDocumentQueue();
+  }
+
+  public void drainDocumentQueue() {
+    while (pollAndHandleDocument()) {
+      // loop until empty
+    }
   }
 
   public void updateEncodingFromContent(Document document) {
     myChangedDocuments.offer(document);
+    addCacheEncodingAlarm();
+  }
+
+  private void addCacheEncodingAlarm() {
     updateEncodingFromContent.cancelAllRequests();
     updateEncodingFromContent.addRequest(myEncodingUpdateRunnable, 400);
   }

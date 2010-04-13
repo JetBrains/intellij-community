@@ -51,7 +51,7 @@ public abstract class LayoutAttractionPolicy {
     public void attract(final Content content, final RunnerLayoutUi ui) {
       if (!myWasAttracted) {
         myWasAttracted = true;
-        ui.selectAndFocus(content, myRequestFocus, true);
+        ui.selectAndFocus(content, myRequestFocus, true, true);
       } else {
         ui.setBouncing(content, true);
       }

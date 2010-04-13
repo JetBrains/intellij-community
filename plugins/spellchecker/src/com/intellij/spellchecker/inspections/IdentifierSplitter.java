@@ -33,7 +33,7 @@ public class IdentifierSplitter extends BaseSplitter {
   private static final Pattern WORD = Pattern.compile("\\b\\p{L}*'?\\p{L}*");
 
   @NonNls
-  private static final Pattern WORD_EXT = Pattern.compile("(\\p{L}*?)[-_$\\[\\]]");
+  private static final Pattern WORD_EXT = Pattern.compile("(\\p{L}*?)[-_$\\[\\]0-9]");
 
   @NonNls
   private static final Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");

@@ -84,7 +84,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
         if (candidates.length == 1) {
           final PsiElement element = candidates[0].getElement();
           if (element instanceof PsiMethod) {
-            overloadedOperatorType = candidates[0].getSubstitutor().substitute(((PsiMethod)element).getReturnType());
+            overloadedOperatorType = candidates[0].getSubstitutor().substitute(org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType((PsiMethod)element));
             if (overloadedOperatorType != null && !(element instanceof GrGdkMethod)) {   //gdk 'getAt' methods don't have information about type parameters
               return overloadedOperatorType;
             }

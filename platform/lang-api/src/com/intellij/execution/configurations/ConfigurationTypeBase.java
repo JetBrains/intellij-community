@@ -27,6 +27,8 @@ import java.util.List;
  * @author yole
  */
 public abstract class ConfigurationTypeBase implements ConfigurationType {
+  private static final ConfigurationFactory[] EMPTY_FACTORIES = new ConfigurationFactory[0];
+
   private final String myId;
   private final String myDisplayName;
   private final String myDescription;
@@ -38,11 +40,11 @@ public abstract class ConfigurationTypeBase implements ConfigurationType {
     myDisplayName = displayName;
     myDescription = description;
     myIcon = icon;
-    myFactories = new ConfigurationFactory[0];
+    myFactories = EMPTY_FACTORIES;
   }
 
   protected void addFactory(ConfigurationFactory factory) {
-    List<ConfigurationFactory> newFactories = new ArrayList<ConfigurationFactory>();
+    List<ConfigurationFactory> newFactories = new ArrayList<ConfigurationFactory>(myFactories.length + 1);
     Collections.addAll(newFactories, myFactories);
     newFactories.add(factory);
     myFactories = newFactories.toArray(new ConfigurationFactory[newFactories.size()]);

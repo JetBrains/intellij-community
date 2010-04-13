@@ -44,6 +44,7 @@
 
     <renameHandler implementation="com.intellij.xml.refactoring.XmlTagRenameHandler"/>
 
+    <lang.literalEscaper language="XML" implementationClass="com.intellij.lang.xml.XmlLiteralEscaper"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
                             order="first, before basic2ClassName"/>

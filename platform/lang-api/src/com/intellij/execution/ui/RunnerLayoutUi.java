@@ -60,6 +60,7 @@ public interface RunnerLayoutUi  {
   Content findContent(@NotNull String contentId);
 
   ActionCallback selectAndFocus(@Nullable Content content, boolean requestFocus, final boolean forced);
+  ActionCallback selectAndFocus(@Nullable Content content, boolean requestFocus, final boolean forced, final boolean implicit);
 
   RunnerLayoutUi addListener(@NotNull ContentManagerListener listener, @NotNull Disposable parent);
 

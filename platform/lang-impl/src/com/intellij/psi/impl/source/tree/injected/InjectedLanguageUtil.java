@@ -131,11 +131,12 @@ public class InjectedLanguageUtil {
       containingFile = host.getContainingFile();
     }
 
-    Places places = probeElementsUp(host, containingFile, probeUp);
-    if (places == null) return;
-    for (Place place : places) {
-      PsiFile injectedPsi = place.getInjectedPsi();
-      visitor.visit(injectedPsi, place);
+    MultiHostRegistrarImpl registrar = probeElementsUp(host, containingFile, probeUp);
+    if (registrar == null) return;
+    List<Pair<Place, PsiFile>> places = registrar.result;
+    for (Pair<Place, PsiFile> pair : places) {
+      PsiFile injectedPsi = pair.second;
+      visitor.visit(injectedPsi, pair.first);
     }
   }
 
@@ -193,8 +194,8 @@ public class InjectedLanguageUtil {
   }
 
   private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
-  private static final Key<ParameterizedCachedValue<Places, PsiElement>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
-  private static Places probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
+  private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI_KEY = Key.create("INJECTED_PSI");
+  private static MultiHostRegistrarImpl probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
     PsiManager psiManager = hostPsiFile.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
@@ -203,31 +204,32 @@ public class InjectedLanguageUtil {
     for (PsiElement current = element; current != null && current != hostPsiFile; current = current.getParent()) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
-      ParameterizedCachedValue<Places,PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
-      Places places;
+      ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI_KEY);
+      MultiHostRegistrarImpl registrar;
       if (data == null) {
-        places = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
-        if (places != null) {
+        registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
+        if (registrar != null) {
           // pollute user data only if there is injected fragment there
-          ParameterizedCachedValue<Places, PsiElement> cachedValue =
+          ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
             CachedValuesManager.getManager(psiManager.getProject()).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
           Document hostDocument = hostPsiFile.getViewProvider().getDocument();
-          CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(places, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
-          ((PsiParameterizedCachedValue<Places, PsiElement>)cachedValue).setValue(result);
+          CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
+          ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
           current.putUserData(INJECTED_PSI_KEY, cachedValue);
         }
       }
       else {
-        places = data.getValue(current);
+        registrar = data.getValue(current);
       }
-      if (places != null) {
+      if (registrar != null) {
+        List<Pair<Place, PsiFile>> places = registrar.result;
         // check that injections found intersect with queried element
         TextRange elementRange = element.getTextRange();
-        for (Place place : places) {
+        for (Pair<Place, PsiFile> pair : places) {
+          Place place = pair.first;
           for (PsiLanguageInjectionHost.Shred shred : place) {
             if (shred.host.getTextRange().intersects(elementRange)) {
-              if (places.isValid())
-              return places;
+              if (place.isValid()) return registrar;
             }
           }
         }

@@ -28,6 +28,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,39 +69,72 @@ public class CollectHighlightsUtil {
     return list;
   }
 
+  private static final int STARTING_TREE_HEIGHT = 100;
+  
   private static List<PsiElement> getElementsToHighlight(final PsiElement commonParent, final int startOffset, final int endOffset) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
     final int currentOffset = commonParent.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
 
-    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
+    final PsiElementVisitor visitor = new PsiElementVisitor() {
       int offset = currentOffset;
+      
+      final TIntArrayList starts = new TIntArrayList(STARTING_TREE_HEIGHT);
+      final List<PsiElement> elements = new ArrayList<PsiElement>(STARTING_TREE_HEIGHT);
+      final List<PsiElement> children = new ArrayList<PsiElement>(STARTING_TREE_HEIGHT);
+      
       @Override public void visitElement(PsiElement element) {
-        ProgressManager.checkCanceled();
-        for (Condition<PsiElement> filter : filters) {
-          if (!filter.value(element)) return;
-        }
+        children.add(PsiUtilBase.NULL_PSI_ELEMENT);
+        
+        while (true) {
+          ProgressManager.checkCanceled();
+          
+          PsiElement child = children.remove(children.size() - 1);
 
-        PsiElement child = element.getFirstChild();
-        if (child == null) {
-          // leaf element
-          offset += element.getTextLength();
-        }
-        else {
-          // composite element
-          while (child != null) {
-            if (offset > endOffset) break;
+          for (Condition<PsiElement> filter : filters) {
+            if (!filter.value(element)) {
+              assert child == PsiUtilBase.NULL_PSI_ELEMENT;
+              child = null; // do not want to process children
+              break;
+            }
+          }
 
-            int start = offset;
-            child.accept(this);
-            if (startOffset <= start && offset <= endOffset) result.add(child);
+          boolean startChildrenVisiting = false;
 
-            child = child.getNextSibling();
+          if (child == PsiUtilBase.NULL_PSI_ELEMENT) {
+            startChildrenVisiting = true;
+            child = element.getFirstChild();
+          }
+
+          if (child == null) {
+            if (startChildrenVisiting) {
+              // leaf element
+              offset += element.getTextLength();
+            }
+            
+            if (elements.size() == 0) break;
+            int start = starts.remove(starts.size() - 1);
+            if (startOffset <= start && offset <= endOffset) result.add(element);
+            
+            element = elements.remove(elements.size() - 1);
+          }
+          else {
+            // composite element
+            if (offset <= endOffset) {
+              starts.add(offset);
+              children.add(child.getNextSibling());
+              children.add(PsiUtilBase.NULL_PSI_ELEMENT);
+              elements.add(element);
+              element = child;
+            } else {
+              break;
+            }
           }
         }
       }
     };
     commonParent.accept(visitor);
+        
     return result;
   }
 

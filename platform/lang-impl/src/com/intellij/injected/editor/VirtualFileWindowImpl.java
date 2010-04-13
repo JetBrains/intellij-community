@@ -52,4 +52,9 @@ public class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFi
   public boolean isWritable() {
     return getDelegate().isWritable();
   }
+
+  @Override
+  public String toString() {
+    return "VirtualFileWindow in " + myDelegate.getPresentableUrl();
+  }
 }

@@ -22,7 +22,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,9 +29,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenIcons;
 
 import javax.swing.*;
+import java.util.Collections;
 
 public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
   public MavenFrameworkSupportProvider() {
@@ -55,12 +56,19 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
         if (roots.length == 0) {
           root = module.getModuleFile().getParent();
           model.addContentEntry(root);
-        } else {
+        }
+        else {
           root = roots[0];
         }
 
-        new MavenModuleBuilderHelper(new MavenId("groupId", module.getName(), "1.0-SNAPSHOT"), null, null, false, false, null,
-                                     "Add Maven Support").configure(model.getProject(), root, true);
+        VirtualFile existingPom = root.findChild(MavenConstants.POM_XML);
+        if (existingPom != null) {
+          MavenProjectsManager.getInstance(module.getProject()).addManagedFiles(Collections.singletonList(existingPom));
+        }
+        else {
+          new MavenModuleBuilderHelper(new MavenId("groupId", module.getName(), "1.0-SNAPSHOT"), null, null, false, false, null,
+                                       "Add Maven Support").configure(model.getProject(), root, true);
+        }
       }
     };
   }

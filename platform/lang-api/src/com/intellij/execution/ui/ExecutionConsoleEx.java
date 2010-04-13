@@ -18,6 +18,7 @@ package com.intellij.execution.ui;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
@@ -25,6 +26,6 @@ import org.jetbrains.annotations.NonNls;
 public interface ExecutionConsoleEx extends ExecutionConsole {
   void buildUi(final RunnerLayoutUi layoutUi);
 
-  @NonNls @NotNull
+  @NonNls @Nullable
   String getExecutionConsoleId();
 }

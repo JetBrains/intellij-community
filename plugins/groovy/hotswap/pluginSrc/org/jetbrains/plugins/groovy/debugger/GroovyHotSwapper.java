@@ -6,15 +6,20 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.PathUtil;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +28,7 @@ import java.util.List;
  * @author peter
  */
 public class GroovyHotSwapper extends JavaProgramPatcher {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper");
 
   private static boolean endsWithAny(String s, List<String> endings) {
     for (String extension : endings) {
@@ -68,8 +74,23 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     }
 
     if (containsGroovyClasses(project)) {
-      javaParameters.getVMParametersList().add("-javaagent:" + getAgentJarPath());
+      javaParameters.getVMParametersList().add("-javaagent:" + handleSpacesInPath(getAgentJarPath()));
     }
+  }
+
+  private static String handleSpacesInPath(String agentPath) {
+    if (SystemInfo.isUnix && agentPath.contains(" ")) {
+      final File dir = new File(PathManager.getSystemPath(), "groovyHotSwap");
+      final File toFile = new File(dir, "gragent.jar");
+      try {
+        FileUtil.copy(new File(agentPath), toFile);
+        return toFile.getPath();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+    return agentPath;
   }
 
   private static String getAgentJarPath() {

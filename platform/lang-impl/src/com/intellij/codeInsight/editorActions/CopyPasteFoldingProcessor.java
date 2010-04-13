@@ -16,19 +16,20 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.util.ArrayList;
 import java.io.IOException;
+import java.util.ArrayList;
 
 
 public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
@@ -66,8 +67,10 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
       }
     }
     catch (UnsupportedFlavorException e) {
+      // do nothing
     }
     catch (IOException e) {
+      // do nothing
     }
 
     if (foldingData != null) { // copy to prevent changing of original by convertLineSeparators
@@ -77,10 +80,10 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
   }
 
   public void processTransferableData(final Project project, final Editor editor, final RangeMarker bounds, final TextBlockTransferableData value) {
-    final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
-    foldingManager.updateFoldRegions(editor);
+    final CodeFoldingManagerImpl foldingManager = (CodeFoldingManagerImpl)CodeFoldingManager.getInstance(project);
+    foldingManager.updateFoldRegions(editor, true);
 
-    Runnable processor1 = new Runnable() {
+    Runnable operation = new Runnable() {
       public void run() {
         for (FoldingTransferableData.FoldingData data : ((FoldingTransferableData) value).getData()) {
           FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + bounds.getStartOffset(), data.endOffset + bounds.getStartOffset());
@@ -90,6 +93,6 @@ public class CopyPasteFoldingProcessor implements CopyPastePostProcessor {
         }
       }
     };
-    editor.getFoldingModel().runBatchFoldingOperation(processor1);
+    editor.getFoldingModel().runBatchFoldingOperation(operation);
   }
 }

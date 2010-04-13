@@ -15,9 +15,15 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class ReimportAction extends MavenProjectsManagerAction {
+  @Override
+  protected boolean isAvailable(AnActionEvent e) {
+    return true;
+  }
+
   @Override
   protected void perform(MavenProjectsManager manager) {
     manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();

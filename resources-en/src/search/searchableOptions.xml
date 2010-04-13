@@ -8145,6 +8145,8 @@
     <option name="coding" hit="Enable Zen Coding" />
     <option name="enable" hit="Enable Zen Coding" />
     <option name="zen" hit="Enable Zen Coding" />
+    <option name="expand" hit="Expand abbreviation with" />
+    <option name="abbreviation" hit="Expand abbreviation with" />
     <option name="blank" hit="End (on blank line)" />
     <option name="end" hit="End (on blank line)" />
     <option name="line" hit="End (on blank line)" />

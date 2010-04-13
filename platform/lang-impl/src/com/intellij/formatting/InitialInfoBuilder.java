@@ -64,7 +64,7 @@ class InitialInfoBuilder {
                                                final CodeStyleSettings.IndentOptions options,
                                                int interestingOffset) {
     final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset);
-    final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, root.getTextRange(), null, true);
+    final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, null, true);
     wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
     return builder;
   }
@@ -73,7 +73,6 @@ class InitialInfoBuilder {
                                          final int index,
                                          final CompositeBlockWrapper parent,
                                          WrapImpl currentWrapParent,
-                                         final TextRange textRange,
                                          final Block parentBlock,
                                          boolean rootBlockIsRightBlock
                                          ) {
@@ -82,6 +81,7 @@ class InitialInfoBuilder {
       wrap.registerParent(currentWrapParent);
       currentWrapParent = wrap;
     }
+    TextRange textRange = rootBlock.getTextRange();
     final int blockStartOffset = textRange.getStartOffset();
 
     if (parent != null) {
@@ -115,21 +115,20 @@ class InitialInfoBuilder {
       if (isReadOnly) {
         return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
       }
-      else {
-        final List<Block> subBlocks = rootBlock.getSubBlocks();
-        if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null &&
-              myReadOnlyBlockInformationProvider.isReadOnly(rootBlock)) {
-          final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
-          if (!subBlocks.isEmpty()) {
-            wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
-          }
-          return wrapper;
+
+      final List<Block> subBlocks = rootBlock.getSubBlocks();
+      if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null
+                                 && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock))
+      {
+        final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
+        if (!subBlocks.isEmpty()) {
+          wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
         }
-        else {
-          return processCompositeBlock(rootBlock, parent, textRange, index, subBlocks, currentWrapParent, rootBlockIsRightBlock);
-        }
+        return wrapper;
       }
-    } finally {
+      return processCompositeBlock(rootBlock, parent, textRange, index, currentWrapParent, rootBlockIsRightBlock);
+    }
+    finally {
       myReadOnlyBlockInformationProvider = previousProvider;
     }
   }
@@ -138,7 +137,6 @@ class InitialInfoBuilder {
                                                      final CompositeBlockWrapper parent,
                                                      final TextRange textRange,
                                                      final int index,
-                                                     final List<Block> subBlocks,
                                                      final WrapImpl currentWrapParent,
                                                      boolean rootBlockIsRightBlock
                                                      ) {
@@ -156,6 +154,7 @@ class InitialInfoBuilder {
     }
 
     Block previous = null;
+    List<Block> subBlocks = rootBlock.getSubBlocks();
     final int subBlocksCount = subBlocks.size();
     List<AbstractBlockWrapper> list = new ArrayList<AbstractBlockWrapper>(subBlocksCount);
     final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
@@ -166,14 +165,13 @@ class InitialInfoBuilder {
         myCurrentSpaceProperty = (SpacingImpl)rootBlock.getSpacing(previous, block);
       }
 
-      final TextRange blockRange = block.getTextRange();
       boolean childBlockIsRightBlock = false;
 
       if (i == subBlocksCount - 1 && rootBlockIsRightBlock) {
         childBlockIsRightBlock = true;
       }
 
-      final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, blockRange,rootBlock,childBlockIsRightBlock);
+      final AbstractBlockWrapper wrapper = buildFrom(block, i, info, currentWrapParent, rootBlock,childBlockIsRightBlock);
       list.add(wrapper);
 
       if (wrapper.getIndent() == null) {
@@ -251,17 +249,13 @@ class InitialInfoBuilder {
     }
     else {
       if (myAffectedRanges == null) return false;
-      final boolean readOnly = myAffectedRanges.isWhitespaceReadOnly(myCurrentWhiteSpace.getTextRange());
-      //System.out.println("whitespace at " + myCurrentWhiteSpace.getTextRange() + (readOnly ? " is read-only" : " is not read-only"));
-      return readOnly;
+      return myAffectedRanges.isWhitespaceReadOnly(myCurrentWhiteSpace.getTextRange());
     }
   }
 
   private boolean isReadOnly(final TextRange textRange, boolean rootIsRightBlock) {
     if (myAffectedRanges == null) return false;
-    final boolean readOnly = myAffectedRanges.isReadOnly(textRange, rootIsRightBlock);
-    //System.out.println("range at " + textRange + (readOnly ? " is read-only" : " is not read-only"));
-    return readOnly;
+    return myAffectedRanges.isReadOnly(textRange, rootIsRightBlock);
   }
 
   public Map<AbstractBlockWrapper,Block> getBlockToInfoMap() {
@@ -299,7 +293,7 @@ class InitialInfoBuilder {
       buffer.append("in ").append(((FormattingDocumentModelImpl)model).getFile().getLanguage()).append("\n");
     }
 
-    buffer.append("File text:(" + model.getTextLength()+")\n'");
+    buffer.append("File text:(").append(model.getTextLength()).append(")\n'");
     buffer.append(model.getText(new TextRange(0, model.getTextLength())).toString());
     buffer.append("'\n");
 

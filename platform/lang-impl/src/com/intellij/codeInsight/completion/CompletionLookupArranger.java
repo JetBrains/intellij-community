@@ -16,7 +16,10 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupArranger;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.lookup.impl.LookupItemWeightComparable;
 import com.intellij.openapi.util.Key;
@@ -24,18 +27,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import gnu.trove.THashMap;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class CompletionLookupArranger extends LookupArranger {
   public static final Key<LookupItemWeightComparable> RELEVANCE_KEY = Key.create("RELEVANCE_KEY");
-  private static final Key<Comparable> SORTING_KEY = Key.create("SORTING_KEY");
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
   public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
+  private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>();
 
   public CompletionLookupArranger(final CompletionParameters parameters) {
     myLocation = new CompletionLocation(parameters);
@@ -101,11 +106,11 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   public Comparable getSortingWeight(final LookupElement item) {
-    if (item.getUserData(SORTING_KEY) != null) return item.getUserData(SORTING_KEY);
+    final Comparable comparable = mySortingWeights.get(item);
+    if (comparable != null) return comparable;
 
     final Comparable result = WeighingService.weigh(CompletionService.SORTING_KEY, item, myLocation);
-
-    item.putUserData(SORTING_KEY, result);
+    mySortingWeights.put(item, result);
 
     return result;
   }

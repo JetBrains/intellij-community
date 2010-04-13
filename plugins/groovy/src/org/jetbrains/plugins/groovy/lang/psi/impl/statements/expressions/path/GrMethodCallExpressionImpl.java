@@ -35,7 +35,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
@@ -60,9 +62,16 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
           PsiType returnType = null;
           if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
             PsiMethod method = (PsiMethod) resolved;
-            returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
-            if (returnType == null) {
-              returnType = method.getReturnType();
+            if (refExpr.getUserData(GrReferenceExpressionImpl.IS_RESOLVED_TO_GETTER) != null) {
+              final PsiType propertyType = PsiUtil.getSmartReturnType(method);
+              if (propertyType instanceof GrClosureType) {
+                returnType = ((GrClosureType)propertyType).getSignature().getReturnType();
+              }
+            } else {
+              returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
+              if (returnType == null) {
+                returnType = PsiUtil.getSmartReturnType(method);
+              }
             }
           } else if (resolved instanceof GrVariable) {
             PsiType refType = refExpr.getType();

@@ -32,20 +32,14 @@ import gnu.trove.THashSet;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -67,22 +61,10 @@ public class CompleteReferenceExpression {
   }
 
   public static void processVariants(Consumer<Object> consumer, GrReferenceExpressionImpl refExpr) {
-    PsiElement refParent = refExpr.getParent();
-    processArgsVariants(consumer, refParent);
-
     final GrExpression qualifier = refExpr.getQualifierExpression();
     Object[] propertyVariants = getVariantsImpl(refExpr, CompletionProcessor.createPropertyCompletionProcessor(refExpr));
     PsiType type = null;
-    if (qualifier == null) {
-      if (refParent instanceof GrArgumentList) {
-        final PsiElement argList = refParent.getParent();
-        if (argList instanceof GrExpression) {
-          GrExpression call = (GrExpression)argList; //add named argument label variants
-          type = call.getType();
-        }
-      }
-    }
-    else {
+    if (qualifier != null) {
       type = qualifier.getType();
     }
 
@@ -113,47 +95,8 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static void processArgsVariants(Consumer<Object> consumer, PsiElement refParent) {
-    if (refParent instanceof GrArgumentList) {
-      PsiElement refPParent = refParent.getParent();
-      if (refPParent instanceof GrCall) {
-        GroovyResolveResult[] results = new GroovyResolveResult[0];
-        //costructor call
-        if (refPParent instanceof GrConstructorCall) {
-          GrConstructorCall constructorCall = (GrConstructorCall)refPParent;
-          results = ArrayUtil.mergeArrays(results, constructorCall.multiResolveConstructor(), GroovyResolveResult.class);
-        }
-        else
-          //call expression (method or new expression)
-          if (refPParent instanceof GrCallExpression) {
-            GrCallExpression constructorCall = (GrCallExpression)refPParent;
-            results = ArrayUtil.mergeArrays(results, constructorCall.getMethodVariants(), GroovyResolveResult.class);
-          }
-          else if (refPParent instanceof GrApplicationStatementImpl) {
-            final GrExpression element = ((GrApplicationStatementImpl)refPParent).getFunExpression();
-            if (element instanceof GrReferenceElement) {
-              results = ArrayUtil.mergeArrays(results, ((GrReferenceElement)element).multiResolve(true), GroovyResolveResult.class);
-            }
-          }
-
-
-        for (GroovyResolveResult result : results) {
-          PsiElement element = result.getElement();
-          if (element instanceof GrMethod) {
-            Set<String>[] parametersArray = ((GrMethod)element).getNamedParametersArray();
-            for (Set<String> namedParameters : parametersArray) {
-              for (String parameter : namedParameters) {
-                consumer.consume(parameter);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
   private static Set<String> processPropertyVariants(Consumer<Object> consumer, GrReferenceExpression refExpr, PsiClass clazz) {
-    Set<String> accessedPropertyNames=new THashSet<String>();
+    Set<String> accessedPropertyNames = new THashSet<String>();
     final PsiClass eventListener =
       JavaPsiFacade.getInstance(refExpr.getProject()).findClass("java.util.EventListener", refExpr.getResolveScope());
     for (PsiMethod method : clazz.getAllMethods()) {

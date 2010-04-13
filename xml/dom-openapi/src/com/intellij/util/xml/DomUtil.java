@@ -6,6 +6,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -37,6 +38,8 @@ import java.util.*;
 public class DomUtil {
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
   private static final Class<Void> DUMMY = void.class;
+  private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
+
   private static final ConcurrentFactoryMap<Type, Class> ourTypeParameters = new ConcurrentFactoryMap<Type, Class>() {
     @NotNull
     protected Class create(final Type key) {
@@ -394,8 +397,19 @@ public class DomUtil {
   }
 
   public static <T extends DomElement> DomFileElement<T> getFileElement(@NotNull DomElement element) {
-    final DomElement root = getRoot(element);
-    return root instanceof DomFileElement ? (DomFileElement<T>)root : null;
+
+    if (element instanceof DomFileElement) {
+      return (DomFileElement)element;
+    }
+    DomFileElement fileElement = element.getUserData(FILE_ELEMENT_KEY);
+    if (fileElement == null) {
+      DomElement parent = element.getParent();
+      if (parent != null) {
+        fileElement = getFileElement(parent);
+      }
+      element.putUserData(FILE_ELEMENT_KEY, fileElement);
+    }
+    return fileElement;
   }
 
   @NotNull

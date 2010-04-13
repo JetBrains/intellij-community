@@ -15,10 +15,14 @@
  */
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.xml.XmlBundle;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author spleaner
@@ -29,6 +33,22 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
   private JCheckBox myAutomaticallyInsertRequiredAttributesCheckBox;
   private JCheckBox myAutomaticallyStartAttributeAfterCheckBox;
   private JCheckBox myEnableZenCodingCheckBox;
+  private JComboBox myZenCodingExpandShortcutCombo;
+
+  private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
+  private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
+  private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
+
+  {
+    myZenCodingExpandShortcutCombo.addItem(SPACE);
+    myZenCodingExpandShortcutCombo.addItem(TAB);
+    myZenCodingExpandShortcutCombo.addItem(ENTER);
+    myEnableZenCodingCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myZenCodingExpandShortcutCombo.setEnabled(myEnableZenCodingCheckBox.isSelected());
+      }
+    });
+  }
 
   public String getDisplayName() {
     return XmlBundle.message("web.editor.configuration.title");
@@ -46,12 +66,24 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     return myWholePanel;
   }
 
+  private char getSelectedZenCodingExpandShortcut() {
+    Object selectedItem = myZenCodingExpandShortcutCombo.getSelectedItem();
+    if (TAB.equals(selectedItem)) {
+      return TemplateSettings.TAB_CHAR;
+    }
+    else if (ENTER.equals(selectedItem)) {
+      return TemplateSettings.ENTER_CHAR;
+    }
+    return TemplateSettings.SPACE_CHAR;
+  }
+
   public boolean isModified() {
     final WebEditorOptions xmlEditorOptions = WebEditorOptions.getInstance();
     return xmlEditorOptions.isAutomaticallyInsertClosingTag() != myAutomaticallyInsertClosingTagCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyInsertRequiredAttributes() != myAutomaticallyInsertRequiredAttributesCheckBox.isSelected() ||
            xmlEditorOptions.isAutomaticallyStartAttribute() != myAutomaticallyStartAttributeAfterCheckBox.isSelected() ||
-           xmlEditorOptions.isZenCodingEnabled() != myEnableZenCodingCheckBox.isSelected();
+           xmlEditorOptions.isZenCodingEnabled() != myEnableZenCodingCheckBox.isSelected() ||
+           xmlEditorOptions.getZenCodingExpandShortcut() != getSelectedZenCodingExpandShortcut();
   }
 
   public void apply() throws ConfigurationException {
@@ -60,6 +92,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
     xmlEditorOptions.setEnableZenCoding(myEnableZenCodingCheckBox.isSelected());
+    xmlEditorOptions.setZenCodingExpandShortcut(getSelectedZenCodingExpandShortcut());
   }
 
   public void reset() {
@@ -68,6 +101,18 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myAutomaticallyInsertRequiredAttributesCheckBox.setSelected(xmlEditorOptions.isAutomaticallyInsertRequiredAttributes());
     myAutomaticallyStartAttributeAfterCheckBox.setSelected(xmlEditorOptions.isAutomaticallyStartAttribute());
     myEnableZenCodingCheckBox.setSelected(xmlEditorOptions.isZenCodingEnabled());
+    myZenCodingExpandShortcutCombo.setEnabled(xmlEditorOptions.isZenCodingEnabled());
+
+    char shortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+    if (shortcut == TemplateSettings.TAB_CHAR) {
+      myZenCodingExpandShortcutCombo.setSelectedItem(TAB);
+    }
+    else if (shortcut == TemplateSettings.ENTER_CHAR) {
+      myZenCodingExpandShortcutCombo.setSelectedItem(ENTER);
+    }
+    else {
+      myZenCodingExpandShortcutCombo.setSelectedItem(SPACE);
+    }
   }
 
   public void disposeUIResources() {

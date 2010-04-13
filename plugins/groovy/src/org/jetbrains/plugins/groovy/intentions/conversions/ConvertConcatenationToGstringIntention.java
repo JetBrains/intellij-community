@@ -52,10 +52,18 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder(element.getTextLength());
-    performIntention((GrBinaryExpression)element, builder);
+    if (element instanceof GrBinaryExpression) {
+      performIntention((GrBinaryExpression)element, builder);
+    }
+    else if (element instanceof GrLiteral) {
+      getOperandText((GrExpression)element, builder);
+    }
+    else {
+      return;
+    }
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(builder.toString(), true));
-    final GrExpression expression = ((GrBinaryExpression)element).replaceWithExpression(newExpr, true);
+    final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
     if (expression instanceof GrString) {
       GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
     }
@@ -142,6 +150,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
 
     public static boolean satisfiedBy(PsiElement element, boolean checkForParent) {
+      if (element instanceof GrLiteral && element.getText().startsWith("'")) return true;
       if (!(element instanceof GrBinaryExpression)) return false;
       GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
       if (!GroovyTokenTypes.mPLUS.equals(binaryExpression.getOperationTokenType())) return false;

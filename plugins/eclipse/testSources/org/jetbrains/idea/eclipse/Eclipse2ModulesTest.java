@@ -40,6 +40,7 @@ import java.io.IOException;
 public abstract class Eclipse2ModulesTest extends IdeaTestCase {
   @NonNls
   protected static final String DEPEND_MODULE_NAME = "ws-internals";
+  private String myDependantModulePath = "ws-internals";
 
   protected abstract String getTestPath();
 
@@ -76,7 +77,7 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
           public VirtualFile compute() {
             final VirtualFile baseDir = getProject().getBaseDir();
             assert baseDir != null;
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/ws-internals");
+            return LocalFileSystem.getInstance().refreshAndFindFileByPath(baseDir.getPath() + "/" + workspaceRoot + "/" + myDependantModulePath);
           }
         }
       );
@@ -91,5 +92,9 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
         model.commit();
       }
     });
+  }
+
+  public void setDependantModulePath(String dependantModulePath) {
+    myDependantModulePath = dependantModulePath;
   }
 }

@@ -82,7 +82,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   @Nullable private List<LookupElement> mySortedItems;
 
   private RangeMarker myLookupStartMarker;
-  private int myOldLookupStartOffset;
+  private boolean myShouldUpdateBounds;
   private final JList myList;
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
@@ -278,7 +278,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (myMinPrefixLength != minPrefixLength) {
       myLookupStartMarker = null;
-      myOldLookupStartOffset = -1;
     }
     myMinPrefixLength = minPrefixLength;
 
@@ -440,6 +439,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
     layeredPanePoint.x -= myCellRenderer.getIconIndent();
+    layeredPanePoint.x -= getComponent().getInsets().left;
     if (dim.width > layeredPane.getWidth()){
       dim.width = layeredPane.getWidth();
     }
@@ -504,7 +504,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public int getLookupStart() {
-    return myLookupStartMarker != null ? myLookupStartMarker.getStartOffset() : calcLookupStart();
+    if (myLookupStartMarker == null) {
+      final int start = calcLookupStart();
+      myLookupStartMarker = myEditor.getDocument().createRangeMarker(start, start);
+      myLookupStartMarker.setGreedyToLeft(true);
+      myShouldUpdateBounds = true;
+    }
+
+    return myLookupStartMarker.getStartOffset();
   }
 
   @Override
@@ -516,11 +523,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public void show(){
     assert !myDisposed;
-
-    int lookupStart = calcLookupStart();
-    myOldLookupStartOffset = lookupStart;
-    myLookupStartMarker = myEditor.getDocument().createRangeMarker(lookupStart, lookupStart);
-    myLookupStartMarker.setGreedyToLeft(true);
 
     myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
       public void documentChanged(DocumentEvent e) {
@@ -623,7 +625,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
           }
         }
 
-        if (myOldLookupStartOffset != getLookupStart()) {
+        if (myShouldUpdateBounds) {
+          myShouldUpdateBounds = false;
           refreshUi();
         }
       }

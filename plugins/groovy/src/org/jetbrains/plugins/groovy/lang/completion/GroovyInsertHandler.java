@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Arrays;
 
@@ -83,7 +84,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       PsiDocumentManager docManager = PsiDocumentManager.getInstance(method.getProject());
       docManager.commitDocument(document);
       PsiFile psiFile = docManager.getPsiFile(document);
-      if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(method.getReturnType()) && '(' != context.getCompletionChar() && parameters.length > 0) {
+      if (isExpressionStatement(psiFile, context.getStartOffset()) && PsiType.VOID.equals(PsiUtil.getSmartReturnType(method)) && '(' != context.getCompletionChar() && parameters.length > 0) {
         TailType.insertChar(editor, offset, ' ');
         return;
       }

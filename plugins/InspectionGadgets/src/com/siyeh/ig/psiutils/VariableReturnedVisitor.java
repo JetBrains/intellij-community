@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableReturnedVisitor extends JavaRecursiveElementVisitor {
+class VariableReturnedVisitor extends JavaRecursiveElementVisitor {
 
     private boolean returned = false;
     @NotNull private final PsiVariable variable;

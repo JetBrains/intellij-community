@@ -35,8 +35,8 @@ public class NewFolderAction extends FileChooserAction {
 
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    VirtualFile selectedFile = fileSystemTree.getSelectedFile();
-    presentation.setEnabled(selectedFile != null && selectedFile.isDirectory());
+    VirtualFile parent = fileSystemTree.getNewFileParent();
+    presentation.setEnabled(parent != null && parent.isDirectory());
     setEnabledInModalContext(true);
   }
 
@@ -45,7 +45,7 @@ public class NewFolderAction extends FileChooserAction {
   }
 
   private static void createNewFolder(FileSystemTree fileSystemTree) {
-    final VirtualFile file = fileSystemTree.getSelectedFile();
+    final VirtualFile file = fileSystemTree.getNewFileParent();
     if (file == null || !file.isDirectory()) return;
 
     String newFolderName;

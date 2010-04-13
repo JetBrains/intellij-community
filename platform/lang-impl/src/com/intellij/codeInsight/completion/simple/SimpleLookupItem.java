@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
+ * @deprecated
+ * @see com.intellij.codeInsight.lookup.LookupElementBuilder
  */
 @Deprecated
 public class SimpleLookupItem<T> extends LookupItem<T> {

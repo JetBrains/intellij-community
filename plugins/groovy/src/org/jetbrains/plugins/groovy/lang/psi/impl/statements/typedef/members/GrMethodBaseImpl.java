@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -26,9 +27,10 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.NamedStub;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -123,11 +125,12 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return findChildByClass(GrTypeElement.class);
   }
 
-  @Nullable
-  public PsiType getDeclaredReturnType() {
-    final GrTypeElement typeElement = getReturnTypeElementGroovy();
-    if (typeElement != null) return typeElement.getType();
-    return null;
+  public PsiType getInferredReturnType() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      //todo uncomment when EAP is on
+      //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); //this is a potentially long action
+    }
+    return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
@@ -153,8 +156,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   private static final Function<GrMethod, PsiType> ourTypesCalculator = new NullableFunction<GrMethod, PsiType>() {
     public PsiType fun(GrMethod method) {
-      PsiType nominal = getNominalType(method);
-      if (PsiType.VOID.equals(nominal)) return nominal;
+      PsiType nominal = method.getReturnType();
+      if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
       PsiType inferred = getInferredType(method);
       if (nominal == null) {
         if (inferred == null) {
@@ -166,12 +169,6 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
         if (nominal.isAssignableFrom(inferred)) return inferred;
       }
       return nominal;
-    }
-
-    @Nullable
-    private PsiType getNominalType(GrMethod method) {
-      GrTypeElement element = method.getReturnTypeElementGroovy();
-      return element != null ? element.getType() : null;
     }
 
     @Nullable
@@ -187,10 +184,57 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     }
   };
 
-  //PsiMethod implementation
+  private ThreadLocal<Boolean> myTakingReturnTypeFromSupers = new ThreadLocal<Boolean>();
   @Nullable
   public PsiType getReturnType() {
-    return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
+    if (isConstructor()) {
+      return null;
+    }
+
+    final GrTypeElement element = getReturnTypeElementGroovy();
+    if (element != null) {
+      return element.getType();
+    }
+
+    if (myTakingReturnTypeFromSupers.get() == Boolean.TRUE) {
+      return PsiType.getJavaLangObject(getManager(), getResolveScope());
+    }
+
+    myTakingReturnTypeFromSupers.set(Boolean.TRUE);
+
+    try {
+      final PsiMethod[] superMethods = findSuperMethods();
+      if (superMethods.length == 0) {
+        return PsiType.getJavaLangObject(getManager(), getResolveScope());
+      }
+
+      PsiType best = null;
+      for (PsiMethod method : superMethods) {
+        PsiType type = method.getReturnType();
+        final PsiClass superClass = method.getContainingClass();
+        if (type != null && superClass != null && InheritanceUtil.isInheritorOrSelf(getContainingClass(), superClass, true)) {
+          type = TypeConversionUtil.getSuperClassSubstitutor(superClass, getContainingClass(), PsiSubstitutor.EMPTY).substitute(type);
+          if (type != null) {
+            if (!(type instanceof PsiClassType && ((PsiClassType)type).resolve() instanceof PsiTypeVariable ||
+                  type instanceof PsiWildcardType ||
+                  type instanceof PsiCapturedWildcardType)) {
+              if (best == null || best.isAssignableFrom(type)) {
+                best = type;
+              }
+            }
+          }
+        }
+      }
+
+      if (best == null) {
+        return PsiType.getJavaLangObject(getManager(), getResolveScope());
+      }
+
+      return best;
+    }
+    finally {
+      myTakingReturnTypeFromSupers.set(null);
+    }
   }
 
   @Override
@@ -245,48 +289,6 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   @Nullable
   public PsiIdentifier getNameIdentifier() {
     return PsiUtil.getJavaNameIdentifier(this);
-  }
-
-  private static void findSuperMethodRecursively(Set<PsiMethod> methods,
-                                           PsiClass psiClass,
-                                           boolean allowStatic,
-                                           Set<PsiClass> visited,
-                                           MethodSignature signature,
-                                           @NotNull Set<MethodSignature> discoveredSupers) {
-    if (psiClass == null) return;
-    if (visited.contains(psiClass)) return;
-    visited.add(psiClass);
-    PsiClassType[] superClassTypes = psiClass.getSuperTypes();
-
-    for (PsiClassType superClassType : superClassTypes) {
-      PsiClass resolvedSuperClass = superClassType.resolve();
-
-      if (resolvedSuperClass == null) continue;
-      PsiMethod[] superClassMethods = resolvedSuperClass.getMethods();
-      final HashSet<MethodSignature> supers = new HashSet<MethodSignature>(3);
-
-      for (PsiMethod superClassMethod : superClassMethods) {
-        MethodSignature superMethodSignature = createMethodSignature(superClassMethod);
-
-        if (PsiImplUtil.isExtendsSignature(superMethodSignature, signature) && !dominated(superMethodSignature, discoveredSupers)) {
-          if (allowStatic || !superClassMethod.getModifierList().hasExplicitModifier(PsiModifier.STATIC)) {
-            methods.add(superClassMethod);
-            supers.add(superMethodSignature);
-            discoveredSupers.add(superMethodSignature);
-          }
-        }
-      }
-
-      findSuperMethodRecursively(methods, resolvedSuperClass, allowStatic, visited, signature, discoveredSupers);
-      discoveredSupers.removeAll(supers);
-    }
-  }
-
-  private static boolean dominated(MethodSignature signature, Iterable<MethodSignature> supersInInheritor) {
-    for (MethodSignature sig1 : supersInInheritor) {
-      if (PsiImplUtil.isExtendsSignature(signature, sig1)) return true;
-    }
-    return false;
   }
 
   @NotNull
@@ -348,54 +350,17 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   @NotNull
   public PsiMethod[] findSuperMethods(PsiClass parentClass) {
     return PsiSuperMethodImplUtil.findSuperMethods(this, parentClass);
-    /*Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursively(methods, parentClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
-                                new HashSet<MethodSignature>());
-    return methods.toArray(new PsiMethod[methods.size()]);*/
   }
 
   @NotNull
   public List<MethodSignatureBackedByPsiMethod> findSuperMethodSignaturesIncludingStatic(boolean checkAccess) {
     return PsiSuperMethodImplUtil.findSuperMethodSignaturesIncludingStatic(this, checkAccess);
-    /*PsiClass containingClass = getContainingClass();
-
-    Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    final MethodSignature signature = createMethodSignature(this);
-    findSuperMethodRecursively(methods, containingClass, true, new HashSet<PsiClass>(), signature, new HashSet<MethodSignature>());
-
-    List<MethodSignatureBackedByPsiMethod> result = new ArrayList<MethodSignatureBackedByPsiMethod>();
-    for (PsiMethod method : methods) {
-      result.add(method.getHierarchicalMethodSignature());
-    }
-
-    return result;*/
-  }
-
-  public static MethodSignature createMethodSignature(PsiMethod method) {
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiType[] types = new PsiType[parameters.length];
-    for (int i = 0; i < types.length; i++) {
-      types[i] = parameters[i].getType();
-    }
-    return MethodSignatureUtil.createMethodSignature(method.getName(), types, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
   }
 
   @NotNull
   public PsiMethod[] findSuperMethods() {
     return PsiSuperMethodImplUtil.findSuperMethods(this);
-    /*PsiClass containingClass = getContainingClass();
-    if (containingClass == null) return PsiMethod.EMPTY_ARRAY;
-
-    Set<PsiMethod> methods = new HashSet<PsiMethod>();
-    findSuperMethodRecursively(methods, containingClass, false, new HashSet<PsiClass>(), createMethodSignature(this),
-                                new HashSet<MethodSignature>());
-
-    return methods.toArray(new PsiMethod[methods.size()]);*/
   }
-
-  /*
-  * @deprecated use {@link #findDeepestSuperMethods()} instead
-  */
 
   @Nullable
   public PsiMethod findDeepestSuperMethod() {
@@ -533,7 +498,7 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     return null;
   }
   public PsiType getReturnTypeNoResolve() {
-    return getReturnType();
+    throw new UnsupportedOperationException();
   }
 
   @Override

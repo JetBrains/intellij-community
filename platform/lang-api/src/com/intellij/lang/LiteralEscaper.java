@@ -23,4 +23,6 @@ import com.intellij.psi.PsiElement;
  */
 public interface LiteralEscaper {
   String getEscapedText(PsiElement context, String originalText);
+  String escapeText(String originalText);
+  String unescapeText(String originalText);
 }

@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.UIUtil;
@@ -103,6 +104,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                            DataManager dataManager,
                            ActionManagerEx actionManager,
                            KeymapManagerEx keymapManager) {
+    this(place, actionGroup, horizontal, dataManager, actionManager, keymapManager, false);
+  }
+
+  public ActionToolbarImpl(final String place,
+                           final ActionGroup actionGroup,
+                           final boolean horizontal,
+                           DataManager dataManager,
+                           ActionManagerEx actionManager,
+                           KeymapManagerEx keymapManager,
+                           boolean updateActionsNow) {
     super(null);
     myActionManager = actionManager;
     myKeymapManager = keymapManager;
@@ -124,7 +135,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     mySecondaryActions.getTemplatePresentation().setIcon(mySecondaryGroupIcon);
     mySecondaryActions.setPopup(true);
 
-    updateActions();
+    updateActions(updateActionsNow);
 
     //
     keymapManager.addKeymapManagerListener(new WeakKeymapManagerListener(keymapManager, myKeymapManagerListener));
@@ -133,21 +144,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     // It means that if the panel is in slidindg mode then the focus goes to the editor
     // and panel will be automatically hidden.
     enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
-  }
-
-  private void updateActions() {
-    final Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
-      if (app.isDispatchThread()) {
-        updateActionsImmediately();
-      } else {
-        UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
-          public void run() {
-            updateActionsImmediately();
-          }
-        });
-      }
-    }
   }
 
   public JComponent getComponent() {
@@ -683,7 +679,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
 
-      updateActionsImmediately();
+      updateActions(false);
     }
   }
 
@@ -716,37 +712,63 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void updateActionsImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    updateActions(false);
+  }
 
-    myNewVisibleActions.clear();
-    final DataContext dataContext = getDataContext();
+  private void updateActions(boolean now) {
+    final Runnable updateRunnable = new Runnable() {
+      public void run() {
+        myNewVisibleActions.clear();
+        final DataContext dataContext = getDataContext();
 
-    Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager);
+        Utils.expandActionGroup(myActionGroup, myNewVisibleActions, myPresentationFactory, dataContext, myPlace, myActionManager);
 
-    if (!myNewVisibleActions.equals(myVisibleActions)) {
-      // should rebuild UI
+        if (!myNewVisibleActions.equals(myVisibleActions)) {
+          // should rebuild UI
 
-      final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
+          final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
-      final ArrayList<AnAction> temp = myVisibleActions;
-      myVisibleActions = myNewVisibleActions;
-      myNewVisibleActions = temp;
+          final ArrayList<AnAction> temp = myVisibleActions;
+          myVisibleActions = myNewVisibleActions;
+          myNewVisibleActions = temp;
 
-      removeAll();
-      mySecondaryActions.removeAll();
-      mySecondaryActionsButton = null;
-      fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
+          removeAll();
+          mySecondaryActions.removeAll();
+          mySecondaryActionsButton = null;
+          fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
 
-      if (changeBarVisibility) {
-        revalidate();
-      }
-      else {
-        final Container parent = getParent();
-        if (parent != null) {
-          parent.invalidate();
-          parent.validate();
+          if (changeBarVisibility) {
+            revalidate();
+          }
+          else {
+            final Container parent = getParent();
+            if (parent != null) {
+              parent.invalidate();
+              parent.validate();
+            }
+          }
+          repaint();
         }
       }
-      repaint();
+    };
+
+    if (now) {
+      updateRunnable.run();
+    } else {
+      final Application app = ApplicationManager.getApplication();
+      final IdeFocusManager fm = IdeFocusManager.getInstance(null);
+
+      if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+        if (app.isDispatchThread()) {
+          fm.doWhenFocusSettlesDown(updateRunnable);
+        } else {
+          UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
+            public void run() {
+              fm.doWhenFocusSettlesDown(updateRunnable);
+            }
+          });
+        }
+      }
     }
   }
 
@@ -756,7 +778,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (myTargetComponent != null && myTargetComponent.isVisible()) {
       ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
         public void run() {
-          updateActions();
+          updateActions(false);
         }
       }, ModalityState.stateForComponent(myTargetComponent));
     }
@@ -777,7 +799,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       return;
     }
     if (myAutoPopupRec != null && myAutoPopupRec.contains(e.getPoint())) {
-      showAutoPopup();
+      IdeFocusManager.getInstance(null).doWhenFocusSettlesDown(new Runnable() {
+        public void run() {
+          showAutoPopup();
+        }
+      });
     }
   }
 
@@ -897,7 +923,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     Disposer.dispose(myPopup);
     myPopup = null;
-    updateActionsImmediately();
+
+    updateActions(false);
   }
 
   abstract static class PopupToolbar extends ActionToolbarImpl implements AnActionListener, Disposable {
@@ -907,7 +934,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
                         final DataManager dataManager,
                         final ActionManagerEx actionManager,
                         final KeymapManagerEx keymapManager) {
-      super(place, actionGroup, horizontal, dataManager, actionManager, keymapManager);
+      super(place, actionGroup, horizontal, dataManager, actionManager, keymapManager, true);
       myActionManager.addAnActionListener(this);
     }
 

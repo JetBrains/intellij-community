@@ -34,14 +34,14 @@ import java.io.OutputStream;
 import java.util.Collections;
 
 class VirtualFileImpl extends HttpVirtualFile {
-  private final HttpFileSystemImpl myFileSystem;
+  private final HttpFileSystemBase myFileSystem;
   private final @Nullable RemoteFileInfo myFileInfo;
   private FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
 
-  VirtualFileImpl(HttpFileSystemImpl fileSystem, String path, final @Nullable RemoteFileInfo fileInfo) {
+  VirtualFileImpl(HttpFileSystemBase fileSystem, String path, final @Nullable RemoteFileInfo fileInfo) {
     myFileSystem = fileSystem;
     myPath = path;
     myFileInfo = fileInfo;

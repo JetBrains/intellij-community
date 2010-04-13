@@ -107,9 +107,9 @@ public class StartupManagerImpl extends StartupManagerEx {
           runActivities(myStartupActivities);
 
           myStartupActivitiesRunning = false;
-          myStartupActivitiesPassed = true;
 
           startCacheUpdate();
+          myStartupActivitiesPassed = true;
         }
         finally {
           HeavyProcessLatch.INSTANCE.processFinished();

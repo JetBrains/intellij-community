@@ -46,4 +46,30 @@ public class NetUtils {
     serverSocket.close();
     return port;
   }
+
+  public static int[] findAvailableSocketPorts(int capacity) throws IOException {
+    final int[] ports = new int[capacity];
+    final ServerSocket[] sockets = new ServerSocket[capacity];
+
+    for (int i = 0; i < capacity; i++) {
+      final ServerSocket serverSocket = new ServerSocket(0);
+      sockets[i] = serverSocket;
+      ports[i] = serverSocket.getLocalPort();
+    }
+    //workaround for linux : calling close() immediately after opening socket
+    //may result that socket is not closed
+    synchronized(sockets) {
+      try {
+        sockets.wait(1);
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+    }
+
+    for (ServerSocket socket : sockets) {
+      socket.close();
+    }
+    return ports;
+  }
 }

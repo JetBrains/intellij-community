@@ -231,10 +231,15 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
 
   public static void processWsdlSchemas(final XmlTag rootTag, Processor<XmlTag> processor) {
     if ("definitions".equals(rootTag.getLocalName())) {
-      final XmlTag subTag = rootTag.findFirstSubTag(rootTag.getNamespacePrefix() + ":" + "types");
+      final String nsPrefix = rootTag.getNamespacePrefix();
+      final String types = nsPrefix.length() == 0 ? "types" : nsPrefix  + ":types";
+      final XmlTag subTag = rootTag.findFirstSubTag(types);
 
       if (subTag != null) {
-        final XmlTag[] tags = subTag.findSubTags("xsd:schema");
+        XmlTag[] tags = subTag.findSubTags("xsd:schema");
+        if (tags.length == 0) {
+          tags = subTag.findSubTags("schema");
+        }
         for(XmlTag t:tags) {
           if (!processor.process(t)) return;
         }

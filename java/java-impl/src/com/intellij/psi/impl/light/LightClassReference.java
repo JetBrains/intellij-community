@@ -35,7 +35,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
 
   private LightReferenceParameterList myParameterList;
 
-  private LightClassReference(PsiManager manager, @NonNls String text, @NonNls String className, PsiSubstitutor substitutor, GlobalSearchScope resolveScope) {
+  private LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull @NonNls String className, PsiSubstitutor substitutor, @NotNull GlobalSearchScope resolveScope) {
     super(manager, StdFileTypes.JAVA.getLanguage());
     myText = text;
     myClassName = className;
@@ -46,11 +46,11 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     mySubstitutor = substitutor;
   }
 
-  public LightClassReference(PsiManager manager, @NonNls String text, @NonNls String className, GlobalSearchScope resolveScope) {
+  public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull @NonNls String className, @NotNull GlobalSearchScope resolveScope) {
     this (manager, text, className, null, resolveScope);
   }
 
-  public LightClassReference(PsiManager manager, @NonNls String text, @NonNls String className, PsiSubstitutor substitutor, PsiElement context) {
+  public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull @NonNls String className, PsiSubstitutor substitutor, PsiElement context) {
     super(manager, StdFileTypes.JAVA.getLanguage());
     myText = text;
     myClassName = className;
@@ -61,11 +61,11 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     myRefClass = null;
   }
 
-  public LightClassReference(PsiManager manager, @NonNls String text, PsiClass refClass) {
+  public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull PsiClass refClass) {
     this(manager, text, refClass, null);
   }
 
-  public LightClassReference(PsiManager manager, @NonNls String text, PsiClass refClass, PsiSubstitutor substitutor) {
+  public LightClassReference(@NotNull PsiManager manager, @NotNull @NonNls String text, @NotNull PsiClass refClass, PsiSubstitutor substitutor) {
     super(manager, StdFileTypes.JAVA.getLanguage());
     myText = text;
     myRefClass = refClass;
@@ -224,8 +224,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    if (!(element instanceof PsiClass)) return false;
-    return getManager().areElementsEquivalent(resolve(), element);
+    return element instanceof PsiClass && getManager().areElementsEquivalent(resolve(), element);
   }
 
   @NotNull
