@@ -78,7 +78,7 @@ public class EclipseClasspathReader {
         createEPathVariable(usedVariables, path, 0);
         final String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
         if (srcPath != null) {
-          createEPathVariable(usedVariables, srcPath, 1);
+          createEPathVariable(usedVariables, srcPath, srcVarStart(srcPath));
         }
       } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND)) {
         if (EclipseProjectFinder.isExternalResource(rootPath, path)) {
@@ -86,6 +86,10 @@ public class EclipseClasspathReader {
         }
       }
     }
+  }
+
+  private static int srcVarStart(String srcPath) {
+    return srcPath.startsWith("/") ? 1 : 0;
   }
 
   public void readClasspath(ModifiableRootModel model,
@@ -197,7 +201,7 @@ public class EclipseClasspathReader {
 
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (srcPathAttr != null) {
-        final String srcUrl = eclipseVariabledPath2Url(rootModel, usedVariables, srcPathAttr, 1/*srcPathAttr.startsWith("/") ? 1 : 0*/);
+        final String srcUrl = eclipseVariabledPath2Url(rootModel, usedVariables, srcPathAttr, srcVarStart(srcPathAttr));
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
         EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
       }
