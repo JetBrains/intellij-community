@@ -30,7 +30,7 @@ import javax.swing.*;
  * @author Gregory.Shrago
  */
 public class LanguageConsoleViewImpl extends ConsoleViewImpl {
-  private LanguageConsoleImpl myConsole;
+  protected LanguageConsoleImpl myConsole;
 
   public LanguageConsoleViewImpl(final Project project, String title, final Language language) {
     this(project, new LanguageConsoleImpl(project, title, language));
