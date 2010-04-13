@@ -778,11 +778,42 @@ class ModuleRedeclarator(object):
       spec.append("**" + kwarg)
     return flatten(spec)
 
+  def restoreParametersForOverloads(self, methods):
+    param_index = 0
+    star_args = False
+    optional = False
+    params = []
+    while True:
+      methods_copy = [m for m in methods]
+      for m in methods_copy:
+        if param_index >= len(m.GetParameters()):
+          methods.remove(m)
+          optional = True
+      if not methods:
+        methods = methods_copy
+        break
+      name = methods[0].GetParameters() [param_index].Name
+      for m in methods[1:]:
+        if m.GetParameters()[param_index].Name != name:
+          star_args = True
+          break
+      if star_args: break
+      if optional:
+        params.append(name + '=None')
+      else:
+        params.append(name)
+      param_index += 1
+    if star_args:
+      params.append("*__args")
+    if not methods[0].IsStatic:
+      params = ['self'] + params
+    return params
+
   def restoreClr(self, p_name, p_class):
     """Restore the function signature by the CLR type signature"""
     clr_type = clr.GetClrType(p_class)
     if p_name == '__new__':
-      methods = clr_type.GetConstructors()
+      methods = [c for c in clr_type.GetConstructors()]
       if not methods:
         return p_name + '(*args)', 'cannot find CLR constructor'
     else:
@@ -793,14 +824,8 @@ class ModuleRedeclarator(object):
           # skip inherited methods
           return None, None
         return p_name + '(*args)', 'cannot find CLR method'
-    method = methods[0]
-    for overload in methods[1:]:
-      if len(overload.GetParameters()) < len(method.GetParameters()): method = overload
-    params = [p.Name for p in method.GetParameters()]
-    if not method.IsStatic:
-      params = ['self'] + params
-    if len(methods) > 1:
-      params.append("*___args")
+
+    params = self.restoreParametersForOverloads(methods)
     return p_name + '(' + ', '.join(params) + ')', None
 
   def redoFunction(self, p_func, p_name, indent, p_class=None, p_modname=None):
