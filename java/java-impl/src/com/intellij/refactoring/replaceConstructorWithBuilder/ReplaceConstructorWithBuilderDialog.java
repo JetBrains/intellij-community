@@ -78,6 +78,11 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     setTitle(ReplaceConstructorWithBuilderProcessor.REFACTORING_NAME);
   }
 
+  @Override
+  protected String getHelpId() {
+    return "replace_constructor_with_builder_dialog";
+  }
+
   protected void doAction() {
     TableUtil.stopEditing(myTable);
 
