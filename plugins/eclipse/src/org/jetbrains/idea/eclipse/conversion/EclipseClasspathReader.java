@@ -344,7 +344,17 @@ public class EclipseClasspathReader {
 
   private static String eclipseVariabledPath2Url(ModifiableRootModel rootModel, Set<String> usedVariables, String path, int varStart) {
     final EPathVariable var = createEPathVariable(usedVariables, path, varStart);
-    return PathMacroManager.getInstance(rootModel.getModule()).expandPath(var.toIdeaVariabledUrl());
+    final String url = PathMacroManager.getInstance(rootModel.getModule()).expandPath(var.toIdeaVariabledUrl());
+
+    final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (localFile != null) {
+      final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+      if (jarFile != null) {
+        return jarFile.getUrl();
+      }
+    }
+
+    return url;
   }
 
   private static EPathVariable createEPathVariable(final Set<String> usedVariables, final String pathAttr, final int varStart) {
