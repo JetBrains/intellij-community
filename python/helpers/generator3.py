@@ -1161,8 +1161,12 @@ if __name__ == "__main__":
         if not os.path.isdir(subdirname):
           action = "creating subdir " + subdirname
           os.makedirs(subdirname)
+        init_py = os.path.join(subdirname, "__init__.py")
         if os.path.isfile(subdirname + ".py"):
-          os.rename(subdirname + ".py", os.path.join(subdirname, "__init__.py"))
+          os.rename(subdirname + ".py", init_py)
+        elif not os.path.isfile(init_py):
+          init = fopen(init_py, "w")
+          init.close()
       target_dir = dirname + os.path.sep.join(quals[0 : len(quals)-1])
       #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
       target_name = target_dir + os.path.sep + quals[-1]
