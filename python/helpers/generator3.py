@@ -177,9 +177,9 @@ def cleanup(value):
 def print_profile():
   data = []
   data.extend(clr.GetProfilerData())
-  data.sort(lambda x, y: -cmp(x.InclusiveTime, y.InclusiveTime))
+  data.sort(lambda x, y: -cmp(x.ExclusiveTime, y.ExclusiveTime))
   for p in data:
-    print '%s\t%d\t%d\t%d' % (p.Name, p.InclusiveTime, p.ExclusiveTime, p.Calls)
+    print('%s\t%d\t%d\t%d' % (p.Name, p.InclusiveTime, p.ExclusiveTime, p.Calls))
 
 def is_clr_type(t):
   if not t: return False
@@ -466,17 +466,19 @@ class ModuleRedeclarator(object):
     self.outfile.write("\n")
 
   def outDocstring(self, docstring, indent):
-    if docstring is not None and isinstance(docstring, str):
-      self.out('"""', indent)
-      for line in docstring.split("\n"):
-        self.out(line, indent)
-      self.out('"""', indent)
+    if isinstance(docstring, str):
+      lines = docstring.strip().split("\n")
+      if lines:
+        self.out('"""', indent)
+        for line in lines:
+          self.out(line, indent)
+        self.out('"""', indent)
 
   def outDocAttr(self, p_object, indent, p_class=None):
-    if hasattr(p_object, "__doc__"):
-      the_doc = p_object.__doc__
+    the_doc = p_object.__doc__
+    if the_doc:
       if p_class and the_doc == object.__init__.__doc__ and p_object is not object.__init__ and p_class.__doc__:
-        the_doc = "%s" % p_class.__doc__ # replace stock init's doc with class's; make it a certain string.
+        the_doc = str(p_class.__doc__) # replace stock init's doc with class's; make it a certain string.
         the_doc += "\n# (copied from class doc)"
       self.outDocstring(the_doc, indent)
     else:
@@ -598,7 +600,10 @@ class ModuleRedeclarator(object):
     if isinstance(p_value, SIMPLEST_TYPES):
       self.out(prefix + repr(p_value) + postfix, indent)
     else:
-      imported_name = self.findImportedName(p_value)
+      if sys.platform == "cli": 
+        imported_name = None
+      else: 
+        imported_name = self.findImportedName(p_value)
       if imported_name:
         self.out(prefix + imported_name + postfix, indent)
       else:
@@ -631,6 +636,9 @@ class ModuleRedeclarator(object):
             self.out("}" + postfix, indent)
         else: # something else, maybe representable
           # look up this value in the module.
+          if sys.platform == "cli":
+            self.out(prefix + "None" + postfix, indent)
+            return
           found_name = ""
           for inner_name in self.module.__dict__:
             if self.module.__dict__[inner_name] is p_value:
@@ -767,7 +775,7 @@ class ModuleRedeclarator(object):
       spec.append("**" + kwarg)
     return flatten(spec)
 
-  def restoreClr(self, p_func, p_name, p_class):
+  def restoreClr(self, p_name, p_class):
     """Restore the function signature by the CLR type signature"""
     clr_type = clr.GetClrType(p_class)
     if p_name == '__new__':
@@ -831,7 +839,7 @@ class ModuleRedeclarator(object):
       self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocAttr(p_func, indent+1, p_class)
     elif sys.platform == 'cli' and is_clr_type(p_class):
-      spec = self.restoreClr(p_func, p_name, p_class)
+      spec = self.restoreClr(p_name, p_class)
       self.out("def " + spec + ":", indent)
       self.outDocAttr(p_func, indent+1, p_class)
     else:
@@ -969,7 +977,11 @@ class ModuleRedeclarator(object):
       except:
         item = self.module.__dict__[item_name] # have it raw
       # check if it has percolated from an imported module
-      imported_name = self.findImportedName(item)
+      if sys.platform == "cli" and p_name != "System":
+        # IronPython has non-trivial reexports in System module, but not in others
+        imported_name = None
+      else:
+        imported_name = self.findImportedName(item)
       if imported_name is not None:
         reexports[item_name] = imported_name
       else:
@@ -1144,17 +1156,20 @@ if __name__ == "__main__":
       dirname = subdir
       if dirname:
         dirname += os.path.sep # "a -> a/"
-      # for pathindex in range(len(quals)-1): # create dirs for all quals but last
-        # subdirname = dirname + os.path.sep.join(quals[0 : pathindex+1])
-        # if not os.path.isdir(subdirname):
-          # action = "creating subdir " + subdirname
-          # os.makedirs(subdirname)
+      for pathindex in range(len(quals)-1): # create dirs for all quals but last
+        subdirname = dirname + os.path.sep.join(quals[0 : pathindex+1])
+        if not os.path.isdir(subdirname):
+          action = "creating subdir " + subdirname
+          os.makedirs(subdirname)
+        if os.path.isfile(subdirname + ".py"):
+          os.rename(subdirname + ".py", os.path.join(subdirname, "__init__.py"))
       target_dir = dirname + os.path.sep.join(quals[0 : len(quals)-1])
       #sys.stderr.write("target dir is " + repr(target_dir) + "\n")
-      if not os.path.isdir(target_dir):
-        action = "creating dir " + target_dir
-        os.makedirs(target_dir)
-      fname = target_dir + os.path.sep + quals[-1] + ".py"
+      target_name = target_dir + os.path.sep + quals[-1]
+      if os.path.isdir(target_name):
+        fname = os.path.join(target_name, "__init__.py")
+      else:
+        fname = target_name + ".py"
       #
       action = "importing"
       try:
@@ -1195,4 +1210,4 @@ if __name__ == "__main__":
         continue
 
   if sys.platform == 'cli':
-    print "Generation completed in " + str((DateTime.Now - start).TotalMilliseconds) + " ms"
+    print("Generation completed in " + str((DateTime.Now - start).TotalMilliseconds) + " ms")
