@@ -23,6 +23,7 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   }
 
   public boolean PREFER_FROM_IMPORT = true;
+  public boolean SHOW_IMPORT_POPUP = true;
 
   public PyCodeInsightSettings getState() {
     return this;

@@ -23,6 +23,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyClassScopeProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -220,6 +221,9 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
   }
 
   public boolean showHint(final Editor editor) {
+    if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
+      return false;
+    }
     final String referenceName = getRefName();
     /*
     final PsiFile[] files = getRefFiles(referenceName);

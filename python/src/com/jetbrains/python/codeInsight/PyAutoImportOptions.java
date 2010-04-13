@@ -12,6 +12,7 @@ public class PyAutoImportOptions implements AutoImportOptionsProvider {
   private JPanel myMainPanel;
   private JRadioButton myRbFromImport;
   private JRadioButton myRbImport;
+  private JCheckBox myShowImportPopupCheckBox;
 
   public JComponent createComponent() {
     return myMainPanel;
@@ -20,16 +21,19 @@ public class PyAutoImportOptions implements AutoImportOptionsProvider {
   public void reset() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     myRbFromImport.setSelected(settings.PREFER_FROM_IMPORT);
+    myShowImportPopupCheckBox.setSelected(settings.SHOW_IMPORT_POPUP);
   }
 
   public boolean isModified() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
-    return settings.PREFER_FROM_IMPORT != myRbFromImport.isSelected();
+    return settings.PREFER_FROM_IMPORT != myRbFromImport.isSelected() ||
+      settings.SHOW_IMPORT_POPUP != myShowImportPopupCheckBox.isSelected();
   }
 
   public void apply() throws ConfigurationException {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     settings.PREFER_FROM_IMPORT = myRbFromImport.isSelected();
+    settings.SHOW_IMPORT_POPUP = myShowImportPopupCheckBox.isSelected();
   }
 
   public void disposeUIResources() {

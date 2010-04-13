@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
@@ -96,6 +97,9 @@ public class ImportFromExistingFix implements HintAction, LocalQuickFix {
   }
 
   public boolean showHint(Editor editor) {
+    if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
+      return false;
+    }
     if (myNode == null || !myNode.isValid() || myNode.getName() == null || myImports.size() <= 0) {
       return false; // TODO: also return false if an on-the-fly unambiguous fix is possible?
     }
