@@ -252,7 +252,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyElement(final PyElement node) {
-      super.visitPyElement(node);    //To change body of overridden methods use File | Settings | File Templates.
+      super.visitPyElement(node);
       for (final PsiReference reference : node.getReferences()) {
         if (reference.isSoft()) continue;
         HighlightSeverity severity = HighlightSeverity.ERROR;

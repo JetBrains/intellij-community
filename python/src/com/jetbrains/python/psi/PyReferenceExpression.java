@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
@@ -29,4 +30,6 @@ public interface PyReferenceExpression extends PyQualifiedExpression {
 
   @NotNull
   PsiPolyVariantReference getReference();
+
+  ASTNode getNameElement();
 }

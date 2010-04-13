@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -52,14 +53,14 @@ import java.util.Arrays;
  * @author oleg
  */
 public class PyConsoleRunner {
-  private final Project myProject;
-  private final String myConsoleTitle;
+  protected final Project myProject;
+  protected final String myConsoleTitle;
 
   private OSProcessHandler myProcessHandler;
   protected final CommandLineArgumentsProvider myProvider;
   protected final String myWorkingDir;
 
-  protected PyLanguageConsoleView myConsoleView;
+  protected LanguageConsoleViewImpl myConsoleView;
   private final ConsoleHistoryModel myHistory = new ConsoleHistoryModel();
   private AnAction myRunAction;
 
@@ -92,7 +93,7 @@ public class PyConsoleRunner {
     final Process process = createProcess();
 
     // Init console view
-    myConsoleView = new PyLanguageConsoleView(myProject, myConsoleTitle);
+    myConsoleView = createConsoleView();
 
     myProcessHandler = createProcessHandler(process);
 
@@ -169,6 +170,10 @@ public class PyConsoleRunner {
     });
 // Run
     myProcessHandler.startNotify();
+  }
+
+  protected LanguageConsoleViewImpl createConsoleView() {
+    return new PyLanguageConsoleView(myProject, myConsoleTitle);
   }
 
 
@@ -283,7 +288,10 @@ public class PyConsoleRunner {
     // Send to interpreter / server
     final String text2send = line.length() == 0 ? "\n\n" : line + "\n";
     sendInput(text2send);
-    myConsoleView.inputSent(text2send);
+
+    if (myConsoleView instanceof ConsoleNotification){
+      ((ConsoleNotification)myConsoleView).inputSent(text2send);
+    }
   }
 
   private static String getProviderCommandLine(final CommandLineArgumentsProvider provider) {

@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
@@ -11,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.ExecutionHelper;
@@ -36,6 +38,7 @@ import java.util.Map;
 public class PydevConsoleRunner extends PyConsoleRunner {
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
+  public static Key<PydevConsoleCommunication> CONSOLE_KEY = new Key<PydevConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -89,6 +92,11 @@ public class PydevConsoleRunner extends PyConsoleRunner {
   }
 
   @Override
+  protected LanguageConsoleViewImpl createConsoleView() {
+    return new PydevLanguageConsoleView(myProject, myConsoleTitle);
+  }
+
+  @Override
   protected Process createProcess() throws ExecutionException {
     final Process server = Runner.createProcess(myWorkingDir, true, myProvider.getAdditionalEnvs(), myProvider.getArguments());
     try {
@@ -103,6 +111,10 @@ public class PydevConsoleRunner extends PyConsoleRunner {
   @Override
   public void initAndRun() throws ExecutionException {
     super.initAndRun();
+
+    // Propagate console communication to language console
+    ((PydevLanguageConsoleView)myConsoleView).setPydevConsoleCommunication(myPydevConsoleCommunication);
+
     try {
       Thread.sleep(100);
     }

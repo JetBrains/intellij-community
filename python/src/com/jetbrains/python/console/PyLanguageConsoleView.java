@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author oleg
  */
-public class PyLanguageConsoleView extends LanguageConsoleViewImpl {
+public class PyLanguageConsoleView extends LanguageConsoleViewImpl implements ConsoleNotification {
 
   public PyLanguageConsoleView(final Project project, String title) {
     super(project, new PyLanguageConsole(project, title));

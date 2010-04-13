@@ -3,12 +3,17 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.console.PydevConsoleReference;
+import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -34,12 +39,25 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @NotNull
   public PsiPolyVariantReference getReference() {
+    final PsiFile file = getContainingFile();
+    final PyExpression qualifier = getQualifier();
+    if (file != null) {
+      // Return special reference
+      final PydevConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
+      if (communication != null){
+        if (qualifier != null) {
+          return new PydevConsoleReference(this, communication, qualifier.getText() + ".");
+        }
+        return new PydevConsoleReference(this, communication, "");
+      }
+    }
+
     // Handle import reference
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
       return new PyImportReferenceImpl(this);
     }
 
-    if (getQualifier() != null) {
+    if (qualifier != null) {
       return new PyQualifiedReferenceImpl(this);
     }
 
@@ -64,7 +82,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  ASTNode getNameElement() {
+  public ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
