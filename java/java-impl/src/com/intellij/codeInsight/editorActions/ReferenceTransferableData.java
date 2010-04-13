@@ -100,6 +100,9 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
       catch (NoClassDefFoundError e) {
         return null;
       }
+      catch (IllegalArgumentException e) {
+        return null;
+      }
       return ourFlavor;
     }
   }

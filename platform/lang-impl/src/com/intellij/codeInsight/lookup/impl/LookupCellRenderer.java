@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.RowIcon;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.PopupIcons;
@@ -280,11 +280,11 @@ public class LookupCellRenderer implements ListCellRenderer {
       return myEmptyIcon;
     }
 
-    if (icon.getIconWidth() < myEmptyIcon.getIconWidth()) {
-      final RowIcon rowIcon = new RowIcon(2);
-      rowIcon.setIcon(icon, 0);
-      rowIcon.setIcon(new EmptyIcon(myEmptyIcon.getIconWidth() - icon.getIconWidth()), 1);
-      return rowIcon;
+    if (icon.getIconHeight() < myEmptyIcon.getIconHeight() || icon.getIconWidth() < myEmptyIcon.getIconWidth()) {
+      final LayeredIcon layeredIcon = new LayeredIcon(2);
+      layeredIcon.setIcon(icon, 0, 0, (myEmptyIcon.getIconHeight() - icon.getIconHeight()) / 2);
+      layeredIcon.setIcon(myEmptyIcon, 1);
+      return layeredIcon;
     }
 
     return icon;
@@ -294,8 +294,8 @@ public class LookupCellRenderer implements ListCellRenderer {
     final LookupElementPresentation p = new LookupElementPresentation();
     item.renderElement(p);
     final Icon icon = p.getIcon();
-    if (icon != null && icon.getIconWidth() > myEmptyIcon.getIconWidth()) {
-      myEmptyIcon = new EmptyIcon(icon.getIconWidth(), 2);
+    if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
+      myEmptyIcon = new EmptyIcon(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()), Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
     }
 
     int maxWidth = Math.min(RealLookupElementPresentation.calculateWidth(p, myNormalMetrics, myBoldMetrics), myMaxWidth);

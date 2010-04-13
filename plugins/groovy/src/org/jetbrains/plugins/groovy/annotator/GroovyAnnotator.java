@@ -24,6 +24,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -753,6 +756,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final GrModifierList modifiersList = method.getModifierList();
     checkAccessModifiers(holder, modifiersList, method);
     checkDuplicateModifiers(holder, modifiersList, method);
+    checkOverrideAnnotation(holder, modifiersList, method);
 
     //script methods
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(GrModifier.ABSTRACT);
@@ -840,6 +844,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           }
         }
       }
+  }
+
+  private static void checkOverrideAnnotation(AnnotationHolder holder, GrModifierList list, GrMethod method) {
+    final PsiAnnotation overrideAnnotation = list.findAnnotation("java.lang.Override");
+    if (overrideAnnotation == null) {
+      return;
+    }
+    try {
+      MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
+      if (superMethod == null) {
+        holder.createWarningAnnotation(overrideAnnotation, GroovyBundle.message("method.doesnot.override.super"));
+      }
+
+    }
+    catch (IndexNotReadyException e) {
+    }
   }
 
   private static void checkTypeDefinitionModifiers(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
@@ -1344,13 +1364,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
     if (argumentTypes == null) return;
 
-    if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) {
-      final String typesString = buildArgTypesList(argumentTypes);
-      String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
-      PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
-      if (elementToHighlight == null) elementToHighlight = place;
-      holder.createWarningAnnotation(elementToHighlight, message);
-    }
+    if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element.getManager())) return;
+
+    final String typesString = buildArgTypesList(argumentTypes);
+    String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    if (elementToHighlight == null) elementToHighlight = place;
+    holder.createWarningAnnotation(elementToHighlight, message);
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {

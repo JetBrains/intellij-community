@@ -4,6 +4,6 @@
     <file>ConstantAssertCondtion.java</file>
     <line>9</line>
     <problem_class>'assert' statement condition is constant</problem_class>
-    <description>assert condition &lt;code&gt;true&lt;/code&gt; is constant</description>
+    <description>Assert condition &lt;code&gt;true&lt;/code&gt; is constant</description>
   </problem>
 </problems>
