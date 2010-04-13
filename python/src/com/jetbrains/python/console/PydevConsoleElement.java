@@ -17,6 +17,7 @@ import java.util.Vector;
 
 /**
  * @author oleg
+ * Light element in completion to provide Quick documentation functionality
  */
 public class PydevConsoleElement extends LightElement implements PsiNamedElement {
   private final Vector myDescription;
@@ -52,6 +53,15 @@ public class PydevConsoleElement extends LightElement implements PsiNamedElement
   }
 
   public static String generateDoc(final PydevConsoleElement pydevConsoleElement) {
-    return StringUtil.replace((String) pydevConsoleElement.myDescription.get(1), "\n", "<br/>");
+    final String description = (String)pydevConsoleElement.myDescription.get(1);
+    // Description contract:
+    // (Signatures\n\n) ? Description
+    final int index = description.indexOf("\n\n");
+    if (index != -1){
+      final StringBuilder builder = new StringBuilder();
+      builder.append("<b>").append(description.subSequence(0, index)).append("</b>").append("<hr/>").append(description.substring(index+2));
+      return StringUtil.replace(builder.toString(), "\n", "<br/>");
+    }
+    return StringUtil.replace(description, "\n", "<br/>");
   }
 }
