@@ -35,4 +35,9 @@ public class EclipseEml2ModulesTest extends Eclipse2ModulesTest{
   public void testSourceRootPaths() throws Exception {
     doTest("srcPath", "sourceRootPaths");
   }
+
+  public void testAnotherSourceRootPaths() throws Exception {
+    setDependantModulePath("anotherPath");
+    doTest("srcPath", "sourceRootPaths");
+  }
 }
