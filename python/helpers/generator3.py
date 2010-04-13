@@ -469,10 +469,13 @@ class ModuleRedeclarator(object):
     if isinstance(docstring, str):
       lines = docstring.strip().split("\n")
       if lines:
-        self.out('"""', indent)
-        for line in lines:
-          self.out(line, indent)
-        self.out('"""', indent)
+        if len(lines) == 1:
+          self.out('""" ' + lines[0] + ' """', indent)
+        else:
+          self.out('"""', indent)
+          for line in lines:
+            self.out(line, indent)
+          self.out('"""', indent)
 
   def outDocAttr(self, p_object, indent, p_class=None):
     the_doc = p_object.__doc__
@@ -781,11 +784,15 @@ class ModuleRedeclarator(object):
     if p_name == '__new__':
       methods = clr_type.GetConstructors()
       if not methods:
-        return p_name + '(*args)   # could not find CLR constructor'
+        return p_name + '(*args)', 'cannot find CLR constructor'
     else:
       methods = [m for m in clr_type.GetMethods() if m.Name == p_name]
       if not methods:
-        return p_name + '(*args)   # could not find CLR method'
+        bases = p_class.__bases__
+        if len(bases) == 1 and p_name in dir(bases[0]):
+          # skip inherited methods
+          return None, None
+        return p_name + '(*args)', 'cannot find CLR method'
     method = methods[0]
     for overload in methods[1:]:
       if len(overload.GetParameters()) < len(method.GetParameters()): method = overload
@@ -794,7 +801,7 @@ class ModuleRedeclarator(object):
       params = ['self'] + params
     if len(methods) > 1:
       params.append("*___args")
-    return p_name + '(' + ', '.join(params) + ')'
+    return p_name + '(' + ', '.join(params) + ')', None
 
   def redoFunction(self, p_func, p_name, indent, p_class=None, p_modname=None):
     """
@@ -839,9 +846,14 @@ class ModuleRedeclarator(object):
       self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocAttr(p_func, indent+1, p_class)
     elif sys.platform == 'cli' and is_clr_type(p_class):
-      spec = self.restoreClr(p_name, p_class)
-      self.out("def " + spec + ":", indent)
-      self.outDocAttr(p_func, indent+1, p_class)
+      spec, sig_note = self.restoreClr(p_name, p_class)
+      if not spec: return
+      if sig_note:
+        self.out("def " + spec + ": #" + sig_note, indent)
+      else:
+        self.out("def " + spec + ":", indent)
+      if not p_name in ['__gt__', '__ge__', '__lt__', '__le__', '__ne__', '__reduce_ex__', '__str__']:
+        self.outDocAttr(p_func, indent+1, p_class)
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
@@ -877,6 +889,7 @@ class ModuleRedeclarator(object):
     self.out("pass", indent+1)
     if deco and not HAS_DECORATORS:
       self.out(p_name + " = " + deco + "(" + p_name + ")" + deco_comment, indent)
+    self.out("", 0) # empty line after each item
 
   def redoClass(self, p_class, p_name, indent, p_modname=None):
     """
@@ -921,8 +934,7 @@ class ModuleRedeclarator(object):
       for item_name in sortedNoCase(methods.keys()):
         item =  methods[item_name]
         self.redoFunction(item, item_name, indent+1, p_class, p_modname)
-        self.out("", 0) # empty line after each item
-      #  
+      #
       for item_name in sortedNoCase(properties.keys()):
         item =  properties[item_name]
         self.out(item_name + " =  property(None, None, None)", indent+1) # TODO: handle docstring
