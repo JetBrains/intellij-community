@@ -169,7 +169,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void dropResolveCaches() {
     myResolveCache.clearCache();
-    ((FileManagerImpl)myFileManager).processQueue();
     physicalChange();
     nonPhysicalChange();
   }

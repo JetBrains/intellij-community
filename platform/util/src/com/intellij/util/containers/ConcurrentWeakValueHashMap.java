@@ -130,7 +130,6 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
   }
 
   public void putAll(Map<? extends K, ? extends V> t) {
-    processQueue();
     for (K k : t.keySet()) {
       V v = t.get(k);
       if (v != null) {
@@ -141,7 +140,6 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
 
   public void clear() {
     myMap.clear();
-    processQueue();
   }
 
   public int size() {
