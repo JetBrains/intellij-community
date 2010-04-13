@@ -64,6 +64,7 @@ class InitialInfoBuilder {
                                                final CodeStyleSettings.IndentOptions options,
                                                int interestingOffset) {
     final InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset);
+    //BlockDebugUtil.dumpBlockTree(System.out, root);
     final AbstractBlockWrapper wrapper = builder.buildFrom(root, 0, null, null, root.getTextRange(), null, true);
     wrapper.setIndent((IndentImpl)Indent.getNoneIndent());
     return builder;
