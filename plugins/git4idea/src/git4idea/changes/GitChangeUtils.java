@@ -314,7 +314,7 @@ public class GitChangeUtils {
     }
     GitRevisionNumber thisRevision = new GitRevisionNumber(revisionNumber, commitDate);
     GitRevisionNumber parentRevision = parents.length > 0 ? loadRevision(project, root, parents[0]) : null;
-    long number = Long.parseLong(revisionNumber.substring(0, 15), 16) << 4 + Integer.parseInt(revisionNumber.substring(15, 16), 16);
+    long number = longForSHAHash(revisionNumber);
     if (parents.length <= 1) {
       // This is the first or normal commit with the single parent.
       // Just parse changes in this commit as returned by the show command.
@@ -349,5 +349,9 @@ public class GitChangeUtils {
     }
     return new CommittedChangeListImpl(commentSubject + "(" + revisionNumber + ")", fullComment, committerName, number, commitDate,
                                        changes);
+  }
+
+  public static long longForSHAHash(String revisionNumber) {
+    return Long.parseLong(revisionNumber.substring(0, 15), 16) << 4 + Integer.parseInt(revisionNumber.substring(15, 16), 16);
   }
 }

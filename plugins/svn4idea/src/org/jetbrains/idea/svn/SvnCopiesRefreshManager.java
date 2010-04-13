@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.RequestsMerger;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 
