@@ -1,12 +1,13 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -58,6 +59,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @Nullable
   public ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+  }
+
+  public PsiElement getNameIdentifier() {
+    final ASTNode nameElement = getNameElement();
+    return nameElement == null ? null : nameElement.getPsi();
   }
 
   public String getReferencedName() {
@@ -170,5 +176,26 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       return new PyQualifiedReferenceImpl(this);
     }
     return new PyTargetReference(this);
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    // find highest level function containing our var
+    PyElement container = this;
+    while(true) {
+      PyElement parentContainer = PsiTreeUtil.getParentOfType(container, PyFunction.class, PyClass.class);
+      if (parentContainer instanceof PyClass) {
+        return super.getUseScope();
+      }
+      if (parentContainer == null) {
+        break;
+      }
+      container = parentContainer;
+    }
+    if (container instanceof PyFunction) {
+      return new LocalSearchScope(container);
+    }
+    return super.getUseScope();
   }
 }

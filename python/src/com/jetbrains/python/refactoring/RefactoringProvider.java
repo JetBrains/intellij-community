@@ -1,7 +1,12 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHandler;
 import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHandler;
 import com.jetbrains.python.refactoring.classes.pushDown.PyPushDownHandler;
@@ -50,5 +55,11 @@ public class RefactoringProvider extends DefaultRefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getExtractMethodHandler() {
     return new PyExtractMethodHandler();
+  }
+
+  @Override
+  public boolean doInplaceRenameFor(PsiElement element, PsiElement context) {
+    return (element instanceof PyTargetExpression && PsiTreeUtil.getParentOfType(element, PyFunction.class) != null) ||
+           element instanceof PyNamedParameter;
   }
 }

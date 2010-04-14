@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a named parameter, as opposed to a tuple parameter.
  */
-public interface PyNamedParameter extends PyParameter, PyElement, PsiNamedElement, PyExpression, StubBasedPsiElement<PyNamedParameterStub> {
+public interface PyNamedParameter extends PyParameter, PsiNamedElement, PsiNameIdentifierOwner, PyExpression, StubBasedPsiElement<PyNamedParameterStub> {
   boolean isPositionalContainer();
 
   boolean isKeywordContainer();

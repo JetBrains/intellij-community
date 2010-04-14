@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, StubBasedPsiElement<PyTargetExpressionStub> {
+public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner, StubBasedPsiElement<PyTargetExpressionStub> {
   PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
 
   /**

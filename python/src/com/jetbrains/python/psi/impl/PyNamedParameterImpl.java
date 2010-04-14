@@ -3,6 +3,9 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
@@ -37,14 +40,27 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       return stub.getName();
     }
     else {
-      ASTNode node = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+      ASTNode node = getNameIdentifierNode();
       return node != null ? node.getText() : null;
     }
   }
 
+  @Nullable
+  private ASTNode getNameIdentifierNode() {
+    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
+  }
+
+  public PsiElement getNameIdentifier() {
+    final ASTNode node = getNameIdentifierNode();
+    return node == null ? null : node.getPsi();
+  }
+
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
-    getNode().replaceChild(getNode().getFirstChildNode(), nameElement);
+    final ASTNode oldNameIdentifier = getNameIdentifierNode();
+    if (oldNameIdentifier != null) {
+      final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
+      getNode().replaceChild(oldNameIdentifier, nameElement);
+    }
     return this;
   }
 
@@ -147,5 +163,13 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   @Override
   public String toString() {
     return super.toString() + "('" + getName() + "')";
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    PyFunction func = PsiTreeUtil.getParentOfType(this, PyFunction.class);
+    assert func != null;
+    return new LocalSearchScope(func);
   }
 }
