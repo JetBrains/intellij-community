@@ -23,7 +23,7 @@ import com.intellij.util.xml.GenericAttributeValue;
  *         Date: Apr 6, 2010
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
-public abstract class AntTarget extends AntDomElement {
+public abstract class AntDomTarget extends AntDomElement {
   @Attribute("name")
   public abstract GenericAttributeValue<String> getName();
 
@@ -32,4 +32,11 @@ public abstract class AntTarget extends AntDomElement {
 
   @Attribute("unless")
   public abstract GenericAttributeValue<String> getUnlessPropertyName();
+
+  @Attribute("depends")
+  public abstract GenericAttributeValue<String> getDependsList();
+
+  public AntDomProject getAntProject() {
+    return getParentOfType(AntDomProject.class, true);
+  }
 }
