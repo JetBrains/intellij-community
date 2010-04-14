@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,11 +43,18 @@ public class TypeUtils {
         return targetType != null && targetType.equalsToText(typeName);
     }
 
-    public static PsiType getJavaLangObjectType(@NotNull PsiElement context) {
+    public static PsiClassType getType(@NotNull String fqName,
+                                  @NotNull PsiElement context) {
         final Project project = context.getProject();
         final PsiElementFactory factory =
                 JavaPsiFacade.getInstance(project).getElementFactory();
-        return factory.createTypeFromText("java.lang.Object", context);
+        final GlobalSearchScope scope = context.getResolveScope();
+        return factory.createTypeByFQClassName(fqName, scope);
+    }
+
+    public static PsiClassType getJavaLangObjectType(
+            @NotNull PsiElement context) {
+        return getType("java.lang.Object", context);
     }
 
     public static boolean isJavaLangObject(@Nullable PsiType targetType) {
