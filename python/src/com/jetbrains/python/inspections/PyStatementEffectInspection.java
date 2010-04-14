@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -54,14 +55,17 @@ public class PyStatementEffectInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitPyExpressionStatement(PyExpressionStatement node) {
-      PyExpression expression = node.getExpression();
+    public void visitPyExpressionStatement(final PyExpressionStatement node) {
+      if (PydevConsoleRunner.isInPydevConsole(node)) {
+        return;
+      }
+      final PyExpression expression = node.getExpression();
       if (expression instanceof PyCallExpression || expression instanceof PyYieldExpression) {
         return;
       }
 
       if (expression instanceof PyStringLiteralExpression) {
-        PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
+        final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
         if (docStringOwner != null) {
           if (docStringOwner.getDocStringExpression() == expression) {
             return;
@@ -69,7 +73,7 @@ public class PyStatementEffectInspection extends LocalInspectionTool {
         }
       }
 
-      PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
+      final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
       if (tryPart != null) {
         final PyStatementList statementList = tryPart.getStatementList();
         if (statementList == null) {
