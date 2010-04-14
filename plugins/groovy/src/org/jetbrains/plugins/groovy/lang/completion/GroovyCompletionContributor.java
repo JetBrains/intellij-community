@@ -323,7 +323,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       if (GroovyPropertyUtils.isSimplePropertySetter(method)) {
         if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK(method, call)) {
           final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
-          if (!writableProperties.containsKey(name)) {
+          if (name != null && !writableProperties.containsKey(name)) {
             writableProperties.put(name, method);
           }
         }

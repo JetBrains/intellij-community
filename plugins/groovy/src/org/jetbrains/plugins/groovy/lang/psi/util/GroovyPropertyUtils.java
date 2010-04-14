@@ -71,7 +71,7 @@ public class GroovyPropertyUtils {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertySetter(method)) {
-        if (getPropertyNameBySetter(method).equals(propertyName)) {
+        if (propertyName.equals(getPropertyNameBySetter(method))) {
           return method;
         }
       }
@@ -95,7 +95,7 @@ public class GroovyPropertyUtils {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertyGetter(method)) {
-        if (getPropertyNameByGetter(method).equals(propertyName)) {
+        if (propertyName.equals(getPropertyNameByGetter(method))) {
           return method;
         }
       }
@@ -135,6 +135,7 @@ public class GroovyPropertyUtils {
     return propertyName == null || propertyName.equals(getPropertyNameBySetter(method));
   }
 
+  @Nullable
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     if (getterMethod instanceof GrAccessorMethod) {
       return ((GrAccessorMethod)getterMethod).getProperty().getName();
@@ -146,6 +147,7 @@ public class GroovyPropertyUtils {
     return getPropertyNameByGetterName(methodName, isPropertyBoolean);
   }
 
+  @Nullable
   public static String getPropertyNameByGetterName(String methodName, boolean canBeBoolean) {
     if (methodName.startsWith(GET_PREFIX) && methodName.length() > 3) {
       return decapitalize(methodName.substring(3));
@@ -153,9 +155,10 @@ public class GroovyPropertyUtils {
     else if (methodName.startsWith(IS_PREFIX) && methodName.length() > 2 && canBeBoolean) {
       return decapitalize(methodName.substring(2));
     }
-    return methodName;
+    return null;
   }
 
+  @Nullable
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
     if (setterMethod instanceof GrAccessorMethod) {
       return ((GrAccessorMethod)setterMethod).getProperty().getName();
@@ -165,13 +168,25 @@ public class GroovyPropertyUtils {
     return getPropertyNameBySetterName(methodName);
   }
 
+  @Nullable
   public static String getPropertyNameBySetterName(String methodName) {
     if (methodName.startsWith("set") && methodName.length() > 3) {
       return StringUtil.decapitalize(methodName.substring(3));
     }
     else {
-      return methodName;
+      return null;
     }
+  }
+
+  @Nullable
+  public static String getPropertyNameByAccessorName(String accessorName) {
+    if (isGetterName(accessorName)) {
+      return getPropertyNameByGetterName(accessorName, true);
+    }
+    else if (isSetterName(accessorName)) {
+      return getPropertyNameBySetterName(accessorName);
+    }
+    return null;
   }
 
   @Nullable
