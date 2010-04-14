@@ -51,7 +51,7 @@ class FormatProcessor {
   private LeafBlockWrapper myFirstTokenBlock;
   private LeafBlockWrapper myLastTokenBlock;
 
-  private SortedMap<TextRange,Pair<AbstractBlockWrapper, Boolean>> myPreviousDependancies =
+  private SortedMap<TextRange,Pair<AbstractBlockWrapper, Boolean>> myPreviousDependencies =
     new TreeMap<TextRange, Pair<AbstractBlockWrapper, Boolean>>(new Comparator<TextRange>() {
       public int compare(final TextRange o1, final TextRange o2) {
         int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
@@ -122,6 +122,7 @@ class FormatProcessor {
     performModifications(model);
   }
 
+  @SuppressWarnings({"WhileLoopSpinsOnField"})
   public void formatWithoutRealModifications() {
     while (true) {
       myAlignAgain.clear();
@@ -136,7 +137,7 @@ class FormatProcessor {
 
   private void reset() {
     myAlignedAlignments.clear();
-    myPreviousDependancies.clear();
+    myPreviousDependencies.clear();
     myWrapCandidate = null;
     if (myRootBlockWrapper != null) {
       myRootBlockWrapper.reset();
@@ -154,7 +155,7 @@ class FormatProcessor {
     myInfos = null;
     myRootBlockWrapper = null;
     myTextRangeToWrapper = null;
-    myPreviousDependancies = null;
+    myPreviousDependencies = null;
     myLastWhiteSpace = null;
     myFirstTokenBlock = null;
     myLastTokenBlock = null;
@@ -200,14 +201,15 @@ class FormatProcessor {
     }
   }
 
+  @Nullable
   private static DocumentEx getAffectedDocument(final FormattingModel model) {
     if (model instanceof DocumentBasedFormattingModel) {
       final Document document = ((DocumentBasedFormattingModel)model).getDocument();
       if (document instanceof DocumentEx) return (DocumentEx)document; 
-    } else if (false) { // till issue with persistent range markers dropped fixed
+    }/* else if (false) { // till issue with persistent range markers dropped fixed
       Document document = model.getDocumentModel().getDocument();
       if (document instanceof DocumentEx) return (DocumentEx)document;
-    }
+    }*/
     return null;
   }
 
@@ -285,17 +287,17 @@ class FormatProcessor {
       whiteSpace.arrangeSpaces(spaceProperty);
     }
 
-    setAlignOffset(myCurrentBlock);
+    defineAlignOffset(myCurrentBlock);
 
     if (myCurrentBlock.containsLineFeeds()) {
       onCurrentLineChanged();
     }
 
-    if (shouldSaveDependancy(spaceProperty, whiteSpace)) {
-      saveDependancy(spaceProperty);
+    if (shouldSaveDependency(spaceProperty, whiteSpace)) {
+      saveDependency(spaceProperty);
     }
 
-    if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependance(whiteSpace.getTextRange())) {
+    if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependency(whiteSpace.getTextRange())) {
       myAlignAgain.add(whiteSpace);
     }
     else if (!myAlignAgain.isEmpty()) {
@@ -305,8 +307,8 @@ class FormatProcessor {
     myCurrentBlock = myCurrentBlock.getNextBlock();
   }
 
-  private boolean shouldReformatBecauseOfBackwardDependance(TextRange changed) {
-    final SortedMap<TextRange, Pair<AbstractBlockWrapper, Boolean>> sortedHeadMap = myPreviousDependancies.tailMap(changed);
+  private boolean shouldReformatBecauseOfBackwardDependency(TextRange changed) {
+    final SortedMap<TextRange, Pair<AbstractBlockWrapper, Boolean>> sortedHeadMap = myPreviousDependencies.tailMap(changed);
 
     for (final Map.Entry<TextRange, Pair<AbstractBlockWrapper, Boolean>> entry : sortedHeadMap.entrySet()) {
       final TextRange textRange = entry.getKey();
@@ -324,22 +326,22 @@ class FormatProcessor {
     return false;
   }
 
-  private void saveDependancy(final SpacingImpl spaceProperty) {
+  private void saveDependency(final SpacingImpl spaceProperty) {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
-    final TextRange dependancy = dependantSpaceProperty.getDependency();
+    final TextRange dependency = dependantSpaceProperty.getDependency();
     if (dependantSpaceProperty.wasLFUsed()) {
-      myPreviousDependancies.put(dependancy,new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
+      myPreviousDependencies.put(dependency,new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, Boolean.TRUE));
     }
     else {
-      final boolean value = containsLineFeeds(dependancy);
+      final boolean value = containsLineFeeds(dependency);
       if (value) {
         dependantSpaceProperty.setLFWasUsed(true);
       }
-      myPreviousDependancies.put(dependancy, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, value));
+      myPreviousDependencies.put(dependency, new Pair<AbstractBlockWrapper, Boolean>(myCurrentBlock, value));
     }
   }
 
-  private static boolean shouldSaveDependancy(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
+  private static boolean shouldSaveDependency(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
     if (!(spaceProperty instanceof DependantSpacingImpl)) return false;
 
     if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return false;
@@ -412,7 +414,6 @@ class FormatProcessor {
         if (wrapCanBeUsedInTheFuture(wrap1)) {
           wrap1.saveFirstEntry(myCurrentBlock);
         }
-
       }
     }
 
@@ -424,6 +425,7 @@ class FormatProcessor {
     return false;
   }
 
+  @Nullable
   private LeafBlockWrapper getFirstBlockOnNewLine() {
     LeafBlockWrapper current = myCurrentBlock;
     while (current != null) {
@@ -435,6 +437,13 @@ class FormatProcessor {
     return null;
   }
 
+  /**
+   * Allows to answer if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap.
+   *
+   * @param wrap    wrap candidate to check
+   * @return        <code>true</code> if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap;
+   *                <code>false</code> otherwise
+   */
   private boolean canReplaceWrapCandidate(WrapImpl wrap) {
     if (myWrapCandidate == null) return true;
     WrapImpl.Type type = wrap.getType();
@@ -454,6 +463,10 @@ class FormatProcessor {
     myWrapCandidate = null;
   }
 
+  /**
+   * Applies indent to the white space of {@link #myCurrentBlock currently processed wrapped block}. Both indentation
+   * and alignment options are took into consideration here.
+   */
   private void adjustLineIndent() {
     IndentData alignOffset = getAlignOffset();
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
@@ -467,6 +480,11 @@ class FormatProcessor {
     }
   }
 
+  /**
+   * Tries to find the closest block that starts before the {@link #myCurrentBlock currently processed block} and contains line feeds.
+   *
+   * @return    closest block to the currently processed block that contains line feeds if any; <code>null</code> otherwise
+   */
   @Nullable
   private AbstractBlockWrapper getPreviousIndentedBlock() {
     AbstractBlockWrapper current = myCurrentBlock.getParent();
@@ -496,40 +514,43 @@ class FormatProcessor {
     }
 
     if (wrap.getType() == WrapImpl.Type.WRAP_AS_NEEDED) {
-      return positionAfterWrappingIsSutable();
+      return positionAfterWrappingIsSuitable();
     }
 
-    return wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && lineOver() && positionAfterWrappingIsSutable();
+    return wrap.getType() == WrapImpl.Type.CHOP_IF_NEEDED && lineOver() && positionAfterWrappingIsSuitable();
   }
 
-  private boolean positionAfterWrappingIsSutable() {
+  /**
+   * Ensures that offset of the {@link #myCurrentBlock currently processed block} is not increased if we make a wrap on it.
+   *
+   * @return    <code>true</code> if it's ok to wrap at the currently processed block; <code>false</code> otherwise
+   */
+  private boolean positionAfterWrappingIsSuitable() {
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
     if (whiteSpace.containsLineFeeds()) return true;
     final int spaces = whiteSpace.getSpaces();
     int indentSpaces = whiteSpace.getIndentSpaces();
-    boolean result = true;
     try {
       final int offsetBefore = getOffsetBefore(myCurrentBlock);
       whiteSpace.ensureLineFeed();
       adjustLineIndent();
       final int offsetAfter = getOffsetBefore(myCurrentBlock);
-      if (offsetBefore <= offsetAfter) {
-        result = false;
-      }
+      return offsetBefore > offsetAfter;
     }
     finally {
       whiteSpace.removeLineFeeds(myCurrentBlock.getSpaceProperty(), this);
       whiteSpace.setSpaces(spaces, indentSpaces);
     }
-    return result;
   }
 
   @Nullable
   private WrapImpl getWrapToBeUsed(final ArrayList<WrapImpl> wraps) {
-    final int wrapsCount = wraps.size();
-    if (wrapsCount == 0) return null;
+    if (wraps.isEmpty()) {
+      return null;
+    }
     if (myWrapCandidate == myCurrentBlock) return wraps.get(0);
 
+    final int wrapsCount = wraps.size();
     for (int i = 0; i < wrapsCount; ++i) {
       final WrapImpl wrap = wraps.get(i);
       if (!isSuitableInTheCurrentPosition(wrap)) continue;
@@ -542,16 +563,36 @@ class FormatProcessor {
           return wrap;
         }
       }
-
     }
     return null;
   }
 
+  /**
+   * @return    <code>true</code> if {@link #myCurrentBlock currently processed wrapped block} doesn't contain line feeds and
+   *            exceeds right margin; <code>false</code> otherwise
+   */
   private boolean lineOver() {
     return !myCurrentBlock.containsLineFeeds() &&
            getOffsetBefore(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
   }
 
+  /**
+   * Calculates number of non-line feed symbols before the given wrapped block.
+   * <p/>
+   * <b>Example:</b>
+   * <pre>
+   *      whitespace<sub>11</sub> block<sub>11</sub> whitespace<sub>12</sub> block<sub>12</sub>
+   *      whitespace<sub>21</sub> block<sub>21</sub> whitespace<sub>22</sub> block<sub>22</sub>
+   * </pre>
+   * <p/>
+   * Suppose this method is called with the wrapped <code>'block<sub>22</sub>'</code> and <code>'whitespace<sub>21</sub>'</code>
+   * contains line feeds but <code>'whitespace<sub>22</sub>'</code> is not. This method returns number of symbols
+   * from <code>'whitespace<sub>21</sub>'</code> after its last line feed symbol plus number of symbols at
+   * <code>block<sub>21</sub></code> plus number of symbols at <code>whitespace<sub>22</sub></code>.
+   *
+   * @param info    target wrapped block to be used at a boundary during counting non-line feed symbols to the left of it
+   * @return        non-line feed symbols to the left of the given wrapped block
+   */
   private static int getOffsetBefore(LeafBlockWrapper info) {
     if (info != null) {
       int result = 0;
@@ -572,7 +613,7 @@ class FormatProcessor {
     }
   }
 
-  private void setAlignOffset(final LeafBlockWrapper block) {
+  private void defineAlignOffset(final LeafBlockWrapper block) {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = current.getAlignment();
@@ -587,19 +628,24 @@ class FormatProcessor {
     }
   }
 
+  /**
+   * Tries to get align-implied indent of the line that contains current block.
+   *
+   * @return    indent of the line that contains current block if any; <code>null</code> otherwise
+   */
   @Nullable
   private IndentData getAlignOffset() {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = current.getAlignment();
-      if (alignment != null && alignment.getOffsetRespBlockBefore(myCurrentBlock) != null) {
-        final LeafBlockWrapper block = alignment.getOffsetRespBlockBefore(myCurrentBlock);
-        final WhiteSpace whiteSpace = block.getWhiteSpace();
+      LeafBlockWrapper offsetResponsibleBlock;
+      if (alignment != null && (offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock)) != null) {
+        final WhiteSpace whiteSpace = offsetResponsibleBlock.getWhiteSpace();
         if (whiteSpace.containsLineFeeds()) {
           return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
         }
         else {
-          final int offsetBeforeBlock = getOffsetBefore(block);
+          final int offsetBeforeBlock = getOffsetBefore(offsetResponsibleBlock);
           final AbstractBlockWrapper prevIndentedBlock = getPreviousIndentedBlock();
           if (prevIndentedBlock == null) {
             return new IndentData(0, offsetBeforeBlock);
@@ -624,11 +670,11 @@ class FormatProcessor {
     }
   }
 
-  public boolean containsLineFeeds(final TextRange dependance) {
-    LeafBlockWrapper child = myTextRangeToWrapper.get(dependance.getStartOffset());
+  public boolean containsLineFeeds(final TextRange dependency) {
+    LeafBlockWrapper child = myTextRangeToWrapper.get(dependency.getStartOffset());
     if (child == null) return false;
     if (child.containsLineFeeds()) return true;
-    final int endOffset = dependance.getEndOffset();
+    final int endOffset = dependency.getEndOffset();
     while (child.getEndOffset() < endOffset) {
       child = child.getNextBlock();
       if (child == null) return false;
@@ -792,7 +838,7 @@ class FormatProcessor {
 
   @Nullable
   private AbstractBlockWrapper getParentFor(final int offset, LeafBlockWrapper block) {
-    AbstractBlockWrapper previous = getPreviousIncompletedBlock(block, offset);
+    AbstractBlockWrapper previous = getPreviousIncompleteBlock(block, offset);
     if (previous != null) {
       return previous;
     }
@@ -802,7 +848,7 @@ class FormatProcessor {
   }
 
   @Nullable
-  private AbstractBlockWrapper getPreviousIncompletedBlock(final LeafBlockWrapper block, final int offset) {
+  private AbstractBlockWrapper getPreviousIncompleteBlock(final LeafBlockWrapper block, final int offset) {
     if (block == null) {
       if (myLastTokenBlock.isIncomplete()) {
         return myLastTokenBlock;
