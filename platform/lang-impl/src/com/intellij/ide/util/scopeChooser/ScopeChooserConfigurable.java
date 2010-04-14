@@ -516,7 +516,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   // but it doesn't have (and doesn't need) a @State annotation. so we get an exception if we load it as a service
   // directly
   public static class Factory {
-    private ScopeChooserConfigurable myConfigurable;
+    private final ScopeChooserConfigurable myConfigurable;
 
     public Factory(Project project) {
       myConfigurable = new ScopeChooserConfigurable(project);

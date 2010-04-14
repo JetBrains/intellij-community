@@ -222,7 +222,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     private abstract class MyConflictWorker implements Runnable {
       private final String groupId;
       protected final List<VirtualFile> myFiles;
-      private LocalFileSystem myLfs;
+      private final LocalFileSystem myLfs;
       private final ProjectLevelVcsManager myPlVcsManager;
 
       protected MyConflictWorker(final String groupId) {

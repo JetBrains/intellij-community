@@ -35,6 +35,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -100,6 +101,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final MessageBusConnection myConnection;
   private final VirtualFileManagerAdapter myVFSListener;
   private final BatchUpdateListener myHandler;
+  private final StartupManager myStartupManager;
 
   class BatchSession {
     int myBatchLevel = 0;
@@ -172,6 +174,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
                                 FileTypeManager fileTypeManager,
                                 DirectoryIndex directoryIndex,
                                 StartupManager startupManager) {
+    myStartupManager = startupManager;
     myProject = (ProjectEx)project;
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(AppTopics.FILE_TYPES, new FileTypeListener() {
@@ -602,8 +605,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private void doUpdateOnRefresh() {
-    if (!myStartupActivityPerformed) return;
-    DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
+    myStartupManager.runWhenProjectIsInitialized(new DumbAwareRunnable() {
+      public void run() {
+        DumbServiceImpl.getInstance(myProject).queueCacheUpdate(myRefreshCacheUpdaters);
+      }
+    });
   }
 
   private void addRootsToWatch() {

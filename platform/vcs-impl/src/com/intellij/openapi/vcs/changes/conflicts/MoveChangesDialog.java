@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class MoveChangesDialog extends DialogWrapper {
-  private ChangesTreeList<Change> myTreeList;
+  private final ChangesTreeList<Change> myTreeList;
 
   public MoveChangesDialog(final Project project, Collection<Change> selected, final Set<ChangeList> changeLists, String title) {
     super(project, true);

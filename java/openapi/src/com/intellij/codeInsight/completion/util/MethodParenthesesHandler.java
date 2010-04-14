@@ -17,10 +17,7 @@ package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 /**
  * @author peter
@@ -30,15 +27,6 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
   private final boolean myOverloadsMatter;
 
   public MethodParenthesesHandler(final PsiMethod method, boolean overloadsMatter) {
-    myMethod = method;
-    myOverloadsMatter = overloadsMatter;
-  }
-
-  public MethodParenthesesHandler(final PsiMethod method,
-                                  final boolean overloadsMatter,
-                                  final boolean spaceBeforeParentheses, final boolean spaceBetweenParentheses,
-                                  final boolean insertRightParenthesis) {
-    super(spaceBeforeParentheses, spaceBetweenParentheses, insertRightParenthesis);
     myMethod = method;
     myOverloadsMatter = overloadsMatter;
   }
@@ -64,18 +52,6 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
       }
     }
     return false;
-  }
-
-  @Override
-  protected PsiElement findNextToken(final InsertionContext context) {
-    PsiElement element = context.getFile().findElementAt(context.getTailOffset());
-    if (element instanceof PsiWhiteSpace &&
-        element.getText().contains("\n") &&
-        !CodeStyleSettingsManager.getSettings(context.getProject()).METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
-      return null;
-    }
-
-    return super.findNextToken(context);
   }
 
 }

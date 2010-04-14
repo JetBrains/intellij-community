@@ -27,7 +27,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
   public static class Parameters {
     private final PsiClass myAnnotationClass;
     private final SearchScope myScope;
-    private Class<? extends PsiModifierListOwner>[] myTypes;
+    private final Class<? extends PsiModifierListOwner>[] myTypes;
 
     public Parameters(final PsiClass annotationClass, final SearchScope scope, Class<? extends PsiModifierListOwner>... types) {
       myAnnotationClass = annotationClass;

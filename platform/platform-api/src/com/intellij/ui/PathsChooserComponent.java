@@ -37,10 +37,10 @@ public class PathsChooserComponent {
   private JList myList;
   private JButton myAddButton;
   private JButton myRemoveButton;
-  private DefaultListModel myListModel;
+  private final DefaultListModel myListModel;
 
   private List<String> myWorkingCollection;
-  private List<String> myInitialCollection;
+  private final List<String> myInitialCollection;
 
   public PathsChooserComponent(@NotNull final List<String> collection, @NotNull final PathProcessor processor) {
     myInitialCollection = collection;

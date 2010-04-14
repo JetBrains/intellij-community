@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class ArtifactProblemsHolderBase implements ArtifactProblemsHolder {
-  private ArtifactEditorContext myContext;
+  private final ArtifactEditorContext myContext;
 
   protected ArtifactProblemsHolderBase(ArtifactEditorContext context) {
     myContext = context;

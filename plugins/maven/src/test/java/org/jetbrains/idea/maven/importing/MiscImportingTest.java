@@ -24,8 +24,10 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.project.MavenProjectProblem;
 
 import java.io.File;
+import java.util.List;
 
 public class MiscImportingTest extends MavenImportingTestCase {
   private int beforeRootsChangedCount;
@@ -189,6 +191,31 @@ public class MiscImportingTest extends MavenImportingTestCase {
     scheduleResolveAll(); // force resolving
     resolveDependenciesAndImport();
     assertTrue(jarFile.exists());
+  }
+
+  public void testClearUnresolvedPluginsAfterPluginResolution() throws Exception {
+    File repo = new File(myDir, "repo");
+    setRepositoryPath(repo.getPath());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-surefire-plugin</artifactId>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    List<MavenProjectProblem> problems = myProjectsTree.getRootProjects().get(0).getProblems();
+    assertEquals(1, problems.size());
+    assertTrue(problems.get(0).getDescription(), problems.get(0).getDescription().contains("Unresolved plugin"));
+
+    resolvePlugins();
+
+    assertEquals(0, myProjectsTree.getRootProjects().get(0).getProblems().size());
   }
 
   public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() throws Exception {

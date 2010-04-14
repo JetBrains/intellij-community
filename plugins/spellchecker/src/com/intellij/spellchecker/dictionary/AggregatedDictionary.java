@@ -26,8 +26,8 @@ import java.util.Set;
 public class AggregatedDictionary implements EditableDictionary {
 
   private static final String DICTIONARY_NAME = "common";
-  private EditableDictionary cachedDictionary;
-  private ProjectDictionary projectDictionary;
+  private final EditableDictionary cachedDictionary;
+  private final ProjectDictionary projectDictionary;
 
   public String getName() {
     return DICTIONARY_NAME;

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.embedder;
 
 import org.apache.maven.project.MavenProject;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenId;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class MavenExecutionResult {
     myExceptions = exceptions;
   }
 
+  @Nullable
   public MavenProject getMavenProject() {
     return myMavenProject;
   }

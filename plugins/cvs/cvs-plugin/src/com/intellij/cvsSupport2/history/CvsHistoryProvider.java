@@ -258,7 +258,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   private static class MyHistoryAsTreeProvider implements HistoryAsTreeProvider {
-    private static MyHistoryAsTreeProvider ourInstance = new MyHistoryAsTreeProvider();
+    private static final MyHistoryAsTreeProvider ourInstance = new MyHistoryAsTreeProvider();
 
     public static MyHistoryAsTreeProvider getInstance() {
       return ourInstance;

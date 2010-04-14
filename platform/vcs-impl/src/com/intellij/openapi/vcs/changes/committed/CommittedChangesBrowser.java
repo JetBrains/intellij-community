@@ -60,7 +60,7 @@ public class CommittedChangesBrowser extends JPanel {
   private final JEditorPane myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
   private final JPanel myLeftPanel;
-  private JPanel myLoadingLabelPanel;
+  private final JPanel myLoadingLabelPanel;
 
   public CommittedChangesBrowser(final Project project, final CommittedChangesTableModel tableModel) {
     super(new BorderLayout());

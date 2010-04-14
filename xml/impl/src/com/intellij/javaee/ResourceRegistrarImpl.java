@@ -32,7 +32,7 @@ import java.util.ArrayList;
 public class ResourceRegistrarImpl implements ResourceRegistrar {
 
   private final Map<String, Map<String, String>> myResources = new HashMap<String, Map<String, String>>();
-  private List<String> myIgnored = new ArrayList<String>();
+  private final List<String> myIgnored = new ArrayList<String>();
 
   public void addStdResource(@NonNls String resource, @NonNls String fileName) {
     addStdResource(resource, null, fileName, getClass());

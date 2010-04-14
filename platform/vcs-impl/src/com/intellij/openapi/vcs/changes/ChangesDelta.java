@@ -28,7 +28,7 @@ import java.util.Set;
 
 public class ChangesDelta {
   private final PlusMinus<Pair<String, AbstractVcs>> myDeltaListener;
-  private ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManager myVcsManager;
   private boolean myInitialized;
 
   public ChangesDelta(final Project project, final PlusMinus<Pair<String, AbstractVcs>> deltaListener) {

@@ -463,7 +463,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
-  public void testNoExecutionParametersIfGoalIsNotSpecified() throws Exception {
+  public void testNoExecutionParametersIfNoGoalNorIdAreSpecified() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -500,6 +500,32 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "          <goals>" +
                      "            <goal>compile</goal>" +
                      "          </goals>" +
+                     "          <configuration>" +
+                     "            <<caret>" +
+                     "          </configuration>" +
+                     "        </execution>" +
+                     "      </executions>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    List<String> variants = getCompletionVariants(myProjectPom);
+    assertTrue(variants.toString(), variants.contains("excludes"));
+    assertFalse(variants.toString(), variants.contains("testExcludes"));
+  }
+
+  public void testExecutionParametersForDefaultGoalExecution() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <executions>" +
+                     "        <execution>" +
+                     "          <id>default-compile</id>" +
                      "          <configuration>" +
                      "            <<caret>" +
                      "          </configuration>" +

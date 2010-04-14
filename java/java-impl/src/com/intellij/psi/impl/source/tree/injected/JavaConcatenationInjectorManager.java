@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
@@ -97,8 +98,8 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
     return myModificationCounter;
   }
 
-  private static class ConcatenationPsiCachedValueProvider implements ParameterizedCachedValueProvider<Places, PsiElement> {
-    public CachedValueProvider.Result<Places> compute(PsiElement context) {
+  private static class ConcatenationPsiCachedValueProvider implements ParameterizedCachedValueProvider<MultiHostRegistrarImpl, PsiElement> {
+    public CachedValueProvider.Result<MultiHostRegistrarImpl> compute(PsiElement context) {
       PsiElement element = context;
       PsiElement parent = context.getParent();
       while (parent instanceof PsiBinaryExpression && ((PsiBinaryExpression)parent).getOperationSign().getTokenType() == JavaTokenType.PLUS
@@ -130,13 +131,13 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
         concatenationInjector.getLanguagesToInject(registrar, operands);
       }
 
-      CachedValueProvider.Result<Places> result = new CachedValueProvider.Result<Places>(registrar.result, PsiModificationTracker.MODIFICATION_COUNT, concatenationInjectorManager);
+      CachedValueProvider.Result<MultiHostRegistrarImpl> result = CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, concatenationInjectorManager);
 
       if (registrar.result != null) {
         // store this everywhere
-        ParameterizedCachedValue<Places, PsiElement> cachedValue =
+        ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
           CachedValuesManager.getManager(context.getProject()).createParameterizedCachedValue(this, false);
-        ((PsiParameterizedCachedValue<Places, PsiElement>)cachedValue).setValue(result);
+        ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
 
         for (PsiElement operand : operands) {
           operand.putUserData(INJECTED_PSI_IN_CONCATENATION, cachedValue);
@@ -149,23 +150,25 @@ public class JavaConcatenationInjectorManager implements ProjectComponent, Modif
     }
   }
 
-  private static final Key<ParameterizedCachedValue<Places, PsiElement>> INJECTED_PSI_IN_CONCATENATION = Key.create("INJECTED_PSI_IN_CONCATENATION");
+  private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI_IN_CONCATENATION = Key.create("INJECTED_PSI_IN_CONCATENATION");
   private final Concatenation2InjectorAdapter myConcatenation2InjectorAdapter = new Concatenation2InjectorAdapter();
   private class Concatenation2InjectorAdapter implements MultiHostInjector {
     public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
       if (myConcatenationInjectors.isEmpty()) return;
 
-      ParameterizedCachedValue<Places, PsiElement> cachedValue = context.getUserData(INJECTED_PSI_IN_CONCATENATION);
-      Places result;
+      ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue = context.getUserData(INJECTED_PSI_IN_CONCATENATION);
+      MultiHostRegistrarImpl result;
       if (cachedValue == null) {
-        CachedValueProvider.Result<Places> res = CONCATENATION_PSI_CACHED_VALUE_PROVIDER.compute(context);
+        CachedValueProvider.Result<MultiHostRegistrarImpl> res = CONCATENATION_PSI_CACHED_VALUE_PROVIDER.compute(context);
         result = res == null ? null : res.getValue();
       }
       else {
         result = cachedValue.getValue(context);
       }
-      if (result != null) {
-        ((MultiHostRegistrarImpl)registrar).addToResults(result);
+      if (result != null && result.result != null) {
+        for (Pair<Place, PsiFile> pair : result.result) {
+          ((MultiHostRegistrarImpl)registrar).addToResults(pair.first, pair.second);
+        }
       }
     }
 

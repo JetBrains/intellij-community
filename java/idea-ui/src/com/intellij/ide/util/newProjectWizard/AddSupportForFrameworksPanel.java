@@ -72,11 +72,11 @@ public class AddSupportForFrameworksPanel {
   private final List<FrameworkSupportProvider> myProviders;
   private final LibraryDownloadingMirrorsMap myMirrorsMap;
   private final FrameworkSupportModelImpl myModel;
-  private JPanel myOptionsPanel;
-  private FrameworksTree myFrameworksTree;
-  private Set<String> myInitializedOptionsPanelIds = new HashSet<String>();
+  private final JPanel myOptionsPanel;
+  private final FrameworksTree myFrameworksTree;
+  private final Set<String> myInitializedOptionsPanelIds = new HashSet<String>();
   private FrameworkSupportNode myLastSelectedNode;
-  private JLabel myTickCheckboxLabel;
+  private final JLabel myTickCheckboxLabel;
 
   public AddSupportForFrameworksPanel(final List<FrameworkSupportProvider> providers, final @NotNull LibrariesContainer librariesContainer,
                                       @Nullable ModuleBuilder builder, Computable<String> baseDirForLibrariesGetter) {

@@ -37,14 +37,14 @@ import java.util.*;
 class UndoableGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
 
-  private String myCommandName;
-  private boolean myGlobal;
-  private int myCommandTimestamp;
-  private boolean myTransparentsOnly;
-  private List<UndoableAction> myActions;
+  private final String myCommandName;
+  private final boolean myGlobal;
+  private final int myCommandTimestamp;
+  private final boolean myTransparentsOnly;
+  private final List<UndoableAction> myActions;
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
-  private Project myProject;
+  private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
   private boolean isValid = true;
 

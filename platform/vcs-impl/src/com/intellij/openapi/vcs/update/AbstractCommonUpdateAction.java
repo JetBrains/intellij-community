@@ -303,7 +303,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     // vcs name, context object
     private final Map<AbstractVcs, SequentialUpdatesContext> myContextInfo;
-    private VcsDirtyScopeManager myDirtyScopeManager;
+    private final VcsDirtyScopeManager myDirtyScopeManager;
 
     private Label myBefore;
     private Label myAfter;

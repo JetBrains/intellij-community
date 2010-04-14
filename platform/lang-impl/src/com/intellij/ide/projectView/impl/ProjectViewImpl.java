@@ -348,6 +348,9 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
       int comp = PANE_WEIGHT_COMPARATOR.compare(pane, newPane);
+      if (comp == 0) {
+        System.out.println("here");
+      }
       LOG.assertTrue(comp != 0);
       if (comp > 0) {
         break;
@@ -545,7 +548,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         }
         myUninitializedPaneState.remove(pane.getId());
       }
-      if (pane.isInitiallyVisible()) {
+      if (pane.isInitiallyVisible() && !myId2Pane.containsKey(pane.getId())) {
         addProjectPane(pane);
       }
       Disposer.register(this, pane);
@@ -688,6 +691,10 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   }
 
   public AbstractProjectViewPane getProjectViewPaneById(String id) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {   // most tests don't need all panes to be loaded
+      ensurePanesLoaded();
+    }
+
     final AbstractProjectViewPane pane = myId2Pane.get(id);
     if (pane != null) {
       return pane;

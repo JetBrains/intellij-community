@@ -64,6 +64,14 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     MavenDomPluginExecution executionElement = config.getParentOfType(MavenDomPluginExecution.class, false);
     if (executionElement != null) {
       selectedGoals = new ArrayList<String>();
+
+      String id = executionElement.getId().getStringValue();
+      String defaultPrefix = "default-";
+      if (id != null && id.startsWith(defaultPrefix)) {
+        String goal = id.substring(defaultPrefix.length());
+        if (!StringUtil.isEmptyOrSpaces(goal)) selectedGoals.add(goal);
+      }
+
       for (GenericDomValue<String> goal : executionElement.getGoals().getGoals()) {
         selectedGoals.add(goal.getStringValue());
       }

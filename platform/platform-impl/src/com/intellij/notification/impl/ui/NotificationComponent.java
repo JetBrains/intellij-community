@@ -47,8 +47,8 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   private WeakReference<JBPopup> myPopupRef;
 
   private BlinkIconWrapper myCurrentIcon;
-  private boolean myBlinkIcon = true;
-  private IdeNotificationArea myArea;
+  private final boolean myBlinkIcon = true;
+  private final IdeNotificationArea myArea;
 
   public NotificationComponent(@NotNull final IdeNotificationArea area) {
     myArea = area;
@@ -186,9 +186,9 @@ public class NotificationComponent extends JLabel implements NotificationModelLi
   }
 
   private class BlinkIconWrapper implements Icon {
-    private Icon myOriginal;
+    private final Icon myOriginal;
     private boolean myPaint;
-    private boolean myBlink;
+    private final boolean myBlink;
     private BufferedImage myGrayscaleImage;
 
     private BlinkIconWrapper(@NotNull final Icon original, final boolean blink) {

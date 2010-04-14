@@ -181,7 +181,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   }
 
   private static class SettingsWrapper extends NotificationSettings {
-    private NotificationSettings myOriginal;
+    private final NotificationSettings myOriginal;
     private boolean myRemoved = false;
 
     private SettingsWrapper(@NotNull final NotificationSettings original) {
@@ -221,7 +221,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   }
 
   private static class NotificationsTableModel extends AbstractTableModel {
-    private List<SettingsWrapper> mySettings;
+    private final List<SettingsWrapper> mySettings;
 
     public NotificationsTableModel() {
       final NotificationSettings[] settings = NotificationsConfiguration.getAllSettings();

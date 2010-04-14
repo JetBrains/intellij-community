@@ -40,7 +40,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
   private final RadComponent myComponent;
   private List<ErrorInfo> myResults = null;
   private final InspectionProfile myProfile;
-  private PsiFile myFormPsiFile;
+  private final PsiFile myFormPsiFile;
 
   public FormEditorErrorCollector(final GuiEditor editor, final RadComponent component) {
     myEditor = editor;

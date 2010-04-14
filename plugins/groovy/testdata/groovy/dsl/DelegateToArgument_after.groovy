@@ -13,5 +13,5 @@ class Runner {
 
 def runner = new Runner()
 runner.boo(new MyDelegate()) {
-  saySomething <caret>
+  saySomething(<caret>)
 }

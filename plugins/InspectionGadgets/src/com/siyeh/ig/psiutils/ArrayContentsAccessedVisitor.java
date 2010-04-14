@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
+class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
+
     private boolean accessed = false;
     private final PsiVariable variable;
 
@@ -27,7 +28,8 @@ public class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement){
+    @Override public void visitForeachStatement(
+            @NotNull PsiForeachStatement statement){
         if(accessed){
             return;
         }
@@ -36,7 +38,9 @@ public class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         if(!(qualifier instanceof PsiReferenceExpression)){
             return;
         }
-        final PsiElement referent = ((PsiReference) qualifier).resolve();
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression)qualifier;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return;
         }
@@ -46,21 +50,29 @@ public class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         accessed = true;
     }
 
-    @Override public void visitArrayAccessExpression(PsiArrayAccessExpression arg){
+    @Override public void visitArrayAccessExpression(
+            PsiArrayAccessExpression arrayAccessExpression){
         if(accessed){
             return;
         }
-        super.visitArrayAccessExpression(arg);
-        if(arg.getParent() instanceof PsiAssignmentExpression &&
-                        ((PsiAssignmentExpression) arg.getParent()).getLExpression()
-                                .equals(arg)){
-            return;
+        super.visitArrayAccessExpression(arrayAccessExpression);
+        final PsiElement parent = arrayAccessExpression.getParent();
+        if(parent instanceof PsiAssignmentExpression) {
+            final PsiAssignmentExpression assignmentExpression =
+                    (PsiAssignmentExpression)parent;
+            final PsiExpression lhs = assignmentExpression.getLExpression();
+            if(lhs.equals(arrayAccessExpression)){
+                return;
+            }
         }
-        final PsiExpression arrayExpression = arg.getArrayExpression();
+        final PsiExpression arrayExpression =
+                arrayAccessExpression.getArrayExpression();
         if(!(arrayExpression instanceof PsiReferenceExpression)){
             return;
         }
-        final PsiElement referent = ((PsiReference) arrayExpression).resolve();
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression)arrayExpression;
+        final PsiElement referent = referenceExpression.resolve();
         if(referent == null){
             return;
         }

@@ -60,7 +60,7 @@ import java.util.Map;
  * @author cdr
 */
 public class MultiHostRegistrarImpl implements MultiHostRegistrar {
-  Places result;
+  List<Pair<Place, PsiFile>> result;
   private Language myLanguage;
   private List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers;
   private List<PsiLanguageInjectionHost.Shred> shreds;
@@ -177,7 +177,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       assert ArrayUtil.indexOf(documentManager.getUncommittedDocuments(), myHostDocument) == -1 : "document is uncommitted: "+myHostDocument;
       assert myHostPsiFile.getText().equals(myHostDocument.getText()) : "host text mismatch";
 
-      Place place = new Place(shreds, null);
+      Place place = new Place(shreds);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);
       VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(myHostVirtualFile, documentWindow, myLanguage, outChars);
       myLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(myLanguage, virtualFile, myProject);
@@ -254,7 +254,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
           throw new RuntimeException(exceptionContext("Obtaining tokens error"), e);
         }
 
-        addToResults(place);
+        addToResults(place, psiFile);
 
         assertEverythingIsAllright(documentManager, documentWindow, psiFile);
       }
@@ -277,7 +277,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     PsiDocumentManagerImpl.cachePsi(documentWindow, psiFile);
 
     keepTreeFromChameleoningBack(psiFile);
-    place.setInjectedPsi(psiFile);
 
     viewProvider.setShreds(place);
   }
@@ -320,11 +319,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
     PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
   }
 
-  private void addToResults(Place place) {
+  void addToResults(Place place, PsiFile psiFile) {
     if (result == null) {
-      result = new Places();
+      result = new SmartList<Pair<Place, PsiFile>>();
     }
-    result.add(place);
+    result.add(Pair.create(place, psiFile));
   }
 
   private static <T extends PsiLanguageInjectionHost> SmartPsiElementPointer<T> createHostSmartPointer(final T host) {
@@ -489,11 +488,5 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar {
       }
     }
     return tokens;
-  }
-
-  void addToResults(Places places) {
-    for (Place place : places) {
-      addToResults(place);
-    }
   }
 }

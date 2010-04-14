@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
 */
 public class PaletteRefactoringListenerProvider implements RefactoringElementListenerProvider {
-  private UIDesignerPaletteProvider myUiDesignerPaletteProvider;
-  private Palette myPalette;
+  private final UIDesignerPaletteProvider myUiDesignerPaletteProvider;
+  private final Palette myPalette;
 
   public PaletteRefactoringListenerProvider(UIDesignerPaletteProvider uiDesignerPaletteProvider, Palette palette) {
     myUiDesignerPaletteProvider = uiDesignerPaletteProvider;

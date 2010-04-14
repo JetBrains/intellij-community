@@ -92,7 +92,7 @@ public class ScanSourceCommentsAction extends AnAction {
     }
   }
 
-  private Map<String, CommentDescriptor> myComments = new HashMap<String, CommentDescriptor>();
+  private final Map<String, CommentDescriptor> myComments = new HashMap<String, CommentDescriptor>();
 
   private void commentFound(VirtualFile file, String text) {
     String reduced = text.replaceAll("\\s", "");

@@ -38,7 +38,7 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
   private final ChangeList myChangeList;
   private final Change myChange;
   private final VirtualFile myFile;
-  private ChangelistConflictTracker myTracker;
+  private final ChangelistConflictTracker myTracker;
 
   public ChangelistConflictNotificationPanel(ChangelistConflictTracker tracker, VirtualFile file) {
 

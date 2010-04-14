@@ -18,19 +18,21 @@ package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
-import com.intellij.util.IconUtil;
-import com.intellij.util.Icons;
-import com.intellij.util.PsiIconUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,14 +49,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!(this instanceof PsiElement)) return null;
 
     try {
-      final PsiElement element = (PsiElement)this;
-
-      final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
-      if (providersIcon != null) {
-        return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, flags);
-      }
-
-      return getElementIcon(flags);
+      return computeIcon(flags);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -67,6 +62,40 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         return null;
       }
     }
+
+  private Icon computeIcon(final int flags) {
+    PsiElement psiElement = (PsiElement)this;
+    Icon baseIcon = psiElement.getUserData(Iconable.LAST_COMPUTED_ICON);
+    if (baseIcon == null) {
+      baseIcon = IconLoader.getIcon("/nodes/class.png");
+    }
+
+    return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement,flags), new Function<ElementIconRequest, Icon>() {
+      public Icon fun(ElementIconRequest request) {
+        if (!request.getElement().isValid()) return null;
+
+        final Icon providersIcon = PsiIconUtil.getProvidersIcon(request.getElement(), request.getFlags());
+        if (providersIcon != null) {
+          return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(providersIcon, request.getFlags());
+        }
+        return getElementIcon(request.getFlags());
+      }
+    });
+  }
+
+  public static class ElementIconRequest extends ComparableObject.Impl {
+    public ElementIconRequest(PsiElement element, int flags) {
+      super(new Object[] {element, flags});
+    }
+
+    public PsiElement getElement() {
+      return (PsiElement)getEqualityObjects()[0];
+    }
+
+    public int getFlags() {
+      return (Integer)getEqualityObjects()[1];
+    }
+  }
 
   protected Icon getElementIcon(final int flags) {
     final PsiElement element = (PsiElement)this;

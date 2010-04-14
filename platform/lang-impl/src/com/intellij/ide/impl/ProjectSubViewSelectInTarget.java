@@ -23,7 +23,7 @@ import com.intellij.ide.SelectInTarget;
  * @author yole
  */
 public class ProjectSubViewSelectInTarget implements SelectInTarget {
-  private ProjectViewSelectInTarget myBaseTarget;
+  private final ProjectViewSelectInTarget myBaseTarget;
   private final String mySubId;
   private final int myWeight;
 

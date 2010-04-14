@@ -52,8 +52,18 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @Nullable
   GrTypeElement getReturnTypeElementGroovy();
 
+  /**
+   * @return The inferred return type, which may be much more precise then the getReturnType() result, but takes longer to calculate.
+   * To be used only in the Groovy code insight
+   */
   @Nullable
-  PsiType getDeclaredReturnType();
+  PsiType getInferredReturnType();
+
+  /**
+   * @return the static return type, which will appear in the compiled Groovy class
+   */
+  @Nullable
+  PsiType getReturnType();
 
   @NotNull
   @NonNls

@@ -174,8 +174,8 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   }
 
   class FocusElement {
-    private SimpleColoredText myText;
-    private Throwable myAllocation;
+    private final SimpleColoredText myText;
+    private final Throwable myAllocation;
 
     FocusElement(SimpleColoredText text, Throwable allocation) {
       myText = text;

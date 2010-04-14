@@ -27,7 +27,7 @@ import java.util.EnumSet;
  * @author Maxim.Medvedev
  */
 public class AccessorResolverProcessor extends ResolverProcessor {
-  private boolean mySearchForGetter;
+  private final boolean mySearchForGetter;
 
   public AccessorResolverProcessor(String name, PsiElement place, boolean searchForGetter) {
     super(name, EnumSet.of(ResolveKind.METHOD), place, PsiType.EMPTY_ARRAY);

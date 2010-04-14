@@ -38,8 +38,8 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
   private final boolean myForced;
   private final ActionCallback myDoneCallback;
 
-  private IdeFocusManager myFocusManager;
-  private Expirable myTimestamp;
+  private final IdeFocusManager myFocusManager;
+  private final Expirable myTimestamp;
 
   public RequestFocusInEditorComponentCmd(@NotNull final FileEditorManagerEx editorManager, IdeFocusManager
                                           focusManager, final Runnable finishCallBack, boolean forced){

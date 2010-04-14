@@ -59,7 +59,7 @@ class CopyClassDialog extends DialogWrapper{
   private PsiDirectory myTargetDirectory;
   private final boolean myDoClone;
   private final PsiDirectory myDefaultTargetDirectory;
-  private JCheckBox myCbMoveToAnotherSourceFolder = new JCheckBox(RefactoringBundle.message("move.classes.move.to.another.source.folder"));
+  private final JCheckBox myCbMoveToAnotherSourceFolder = new JCheckBox(RefactoringBundle.message("move.classes.move.to.another.source.folder"));
 
   public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);

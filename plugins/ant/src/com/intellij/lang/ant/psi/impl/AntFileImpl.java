@@ -19,6 +19,7 @@ import com.intellij.extapi.psi.LightPsiFileBase;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.AntSupport;
+import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
@@ -31,15 +32,12 @@ import com.intellij.lang.ant.psi.introspection.AntAttributeType;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.lang.ant.psi.introspection.impl.AntTypeDefinitionImpl;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,7 +47,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Alarm;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -64,8 +61,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.SoftReference;
-import java.lang.reflect.Method;
 import java.util.*;
 
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
@@ -125,7 +120,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
    */
   private volatile HashMap<AntTypeId, String> myProjectElements;
   private long myModificationCount = 0;
-  public static final Key ANT_BUILD_FILE = Key.create("ANT_BUILD_FILE");
 
   public AntFileImpl(final FileViewProvider viewProvider) {
     super(viewProvider, AntSupport.getLanguage());
@@ -307,7 +301,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   @NotNull
   public ClassLoader getClassLoader() {
     if (myClassLoader == null) {
-      final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(ANT_BUILD_FILE);
+      final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
       if (buildFile != null) {
         myClassLoader = buildFile.getClassLoader();
       }
@@ -329,7 +323,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @NotNull
   public AntInstallation getAntInstallation() {
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(ANT_BUILD_FILE);
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
     if (buildFile != null) {
       final AntInstallation assignedInstallation = AntBuildFileImpl.ANT_INSTALLATION.get(buildFile.getAllOptions());
       if (assignedInstallation != null) {
@@ -350,7 +344,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
 
   @Nullable
   public Sdk getTargetJdk() {
-    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(ANT_BUILD_FILE);
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
     if (buildFile == null) {
       return ProjectRootManager.getInstance(getProject()).getProjectJdk();
     }
@@ -766,12 +760,12 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       myTypeDefinitions = new HashMap<String, AntTypeDefinition>();
       myProjectElements = new HashMap<AntTypeId, String>();
       final ReflectedProject reflectedProject = ReflectedProject.getProject(getClassLoader());
-      if (reflectedProject.myProject != null) {
+      if (reflectedProject.getProject() != null) {
         //first, create task definitons
-       updateTypeDefinitions(reflectedProject.myTaskDefinitions, true);
+       updateTypeDefinitions(reflectedProject.getTaskDefinitions(), true);
        // second, create definitions of data types
-       updateTypeDefinitions(reflectedProject.myDataTypeDefinitions, false);
-       myProjectProperties = reflectedProject.myProperties;
+       updateTypeDefinitions(reflectedProject.getDataTypeDefinitions(), false);
+       myProjectProperties = reflectedProject.getProperties();
       }
     }
   }
@@ -781,7 +775,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     synchronized (PsiLock.LOCK) {
       buildTypeDefinitions();
       if (myTargetDefinition == null) {
-        final Class targetClass = ReflectedProject.getProject(getClassLoader()).myTargetClass;
+        final Class targetClass = ReflectedProject.getProject(getClassLoader()).getTargetClass();
         final AntTypeDefinition targetDef = createTypeDefinition(new AntTypeId(TARGET_TAG), targetClass, false);
         if (targetDef != null) {
           for (final AntTypeDefinition def : getBaseTypeDefinitions()) {
@@ -993,93 +987,6 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
     return getRole().getIcon();
   }
 
-  private static final class ReflectedProject {
-
-    @NonNls private static final String INIT_METHOD_NAME = "init";
-    @NonNls private static final String GET_TASK_DEFINITIONS_METHOD_NAME = "getTaskDefinitions";
-    @NonNls private static final String GET_DATA_TYPE_DEFINITIONS_METHOD_NAME = "getDataTypeDefinitions";
-    @NonNls private static final String GET_PROPERTIES_METHOD_NAME = "getProperties";
-
-
-    private static final List<SoftReference<Pair<ReflectedProject, ClassLoader>>> ourProjects =
-      new ArrayList<SoftReference<Pair<ReflectedProject, ClassLoader>>>();
-    private static final Alarm ourAlarm = new Alarm();
-
-    private final Object myProject;
-    private Hashtable myTaskDefinitions;
-    private Hashtable myDataTypeDefinitions;
-    private Hashtable myProperties;
-    private Class myTargetClass;
-
-    private static ReflectedProject getProject(final ClassLoader classLoader) {
-      try {
-        synchronized (ourProjects) {
-          for (final SoftReference<Pair<ReflectedProject, ClassLoader>> ref : ourProjects) {
-            final Pair<ReflectedProject, ClassLoader> pair = ref.get();
-            if (pair != null && pair.second == classLoader) {
-              return pair.first;
-            }
-          }
-          ReflectedProject project = new ReflectedProject(classLoader);
-          final SoftReference<Pair<ReflectedProject, ClassLoader>> ref =
-            new SoftReference<Pair<ReflectedProject, ClassLoader>>(new Pair<ReflectedProject, ClassLoader>(project, classLoader));
-          for (int i = 0; i < ourProjects.size(); ++i) {
-            final Pair<ReflectedProject, ClassLoader> pair = ourProjects.get(i).get();
-            if (pair == null) {
-              ourProjects.set(i, ref);
-              return project;
-            }
-          }
-          ourProjects.add(ref);
-          return project;
-        }
-      }
-      finally {
-        ourAlarm.cancelAllRequests();
-        ourAlarm.addRequest(new Runnable() {
-          public void run() {
-            synchronized (ourProjects) {
-              ourProjects.clear();
-            }
-          }
-        }, 30000, ModalityState.NON_MODAL);
-      }
-    }
-
-    private ReflectedProject(final ClassLoader classLoader) {
-      Object myProject = null;
-      try {
-        final Class projectClass = classLoader.loadClass("org.apache.tools.ant.Project");
-        if (projectClass != null) {
-          myProject = projectClass.newInstance();
-          Method method = projectClass.getMethod(INIT_METHOD_NAME);
-          method.invoke(myProject);
-          method = getMethod(projectClass, GET_TASK_DEFINITIONS_METHOD_NAME);
-          myTaskDefinitions = (Hashtable)method.invoke(myProject);
-          method = getMethod(projectClass, GET_DATA_TYPE_DEFINITIONS_METHOD_NAME);
-          myDataTypeDefinitions = (Hashtable)method.invoke(myProject);
-          method = getMethod(projectClass, GET_PROPERTIES_METHOD_NAME);
-          myProperties = (Hashtable)method.invoke(myProject);
-          myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
-        }
-      }
-      catch (Exception e) {
-        LOG.info(e);
-        myProject = null;
-      }
-      this.myProject = myProject;
-    }
-
-    private static Method getMethod(final Class introspectionHelperClass, final String name) throws NoSuchMethodException {
-      final Method method;
-      method = introspectionHelperClass.getMethod(name);
-      if (!method.isAccessible()) {
-        method.setAccessible(true);
-      }
-      return method;
-    }
-  }
-  
   private static class PropertiesWatcher {
     private final List<PsiFile> myDependentFiles;
     private final long[] myStamps;

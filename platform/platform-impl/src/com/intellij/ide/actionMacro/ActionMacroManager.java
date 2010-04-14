@@ -62,7 +62,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   private boolean myIsPlaying = false;
   @NonNls
   private static final String ELEMENT_MACRO = "macro";
-  private IdeEventQueue.EventDispatcher myKeyProcessor;
+  private final IdeEventQueue.EventDispatcher myKeyProcessor;
 
   private InputEvent myLastActionInputEvent;
 

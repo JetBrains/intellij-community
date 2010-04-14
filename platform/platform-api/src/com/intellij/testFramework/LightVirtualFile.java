@@ -254,4 +254,9 @@ public class LightVirtualFile extends DeprecatedVirtualFile {
   public CharSequence getContent() {
     return myContent;
   }
+
+  @Override
+  public String toString() {
+    return "LightVirtualFile: " + getPresentableUrl();
+  }
 }

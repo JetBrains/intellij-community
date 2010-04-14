@@ -78,7 +78,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private final FavoritesTreeStructure myFavoritesTreeStructure;
   private FavoritesViewTreeBuilder myBuilder;
   private final CopyPasteDelegator myCopyPasteDelegator;
-  private MouseListener myTreePopupHandler;
+  private final MouseListener myTreePopupHandler;
 
   public static final DataKey<FavoritesTreeNodeDescriptor[]> CONTEXT_FAVORITES_ROOTS_DATA_KEY = DataKey.create("FavoritesRoot");
   @Deprecated public static final String CONTEXT_FAVORITES_ROOTS = CONTEXT_FAVORITES_ROOTS_DATA_KEY.getName();

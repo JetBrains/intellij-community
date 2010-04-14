@@ -42,7 +42,7 @@ class ChangeCollector {
   /**
    * The dirty scope used in the collector
    */
-  private VcsDirtyScope myDirtyScope;
+  private final VcsDirtyScope myDirtyScope;
   /**
    * a vcs root for changes
    */

@@ -40,7 +40,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.http.RemoteFileInfo");
   private final Object myLock = new Object();
   private final String myUrl;
-  private final RemoteFileManager myManager;
+  private final RemoteFileManagerImpl myManager;
   private @Nullable RemoteContentProvider myContentProvider;
   private File myLocalFile;
   private VirtualFile myLocalVirtualFile;
@@ -50,7 +50,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
   private final AtomicBoolean myCancelled = new AtomicBoolean();
   private final List<FileDownloadingListener> myListeners = new SmartList<FileDownloadingListener>();
 
-  public RemoteFileInfo(final @NotNull String url, final @NotNull RemoteFileManager manager) {
+  public RemoteFileInfo(final @NotNull String url, final @NotNull RemoteFileManagerImpl manager) {
     myUrl = url;
     myManager = manager;
   }
@@ -112,7 +112,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     }
 
     if (myContentProvider == null) {
-      myContentProvider = HttpFileSystemImpl.getInstanceImpl().findContentProvider(myUrl);
+      myContentProvider = myManager.findContentProvider(myUrl);
     }
     myContentProvider.saveContent(myUrl, localFile, this);
   }
@@ -249,7 +249,7 @@ public class RemoteFileInfo implements RemoteContentProvider.DownloadingCallback
     synchronized (myLock) {
       localVirtualFile = myLocalVirtualFile;
     }
-    final RemoteContentProvider contentProvider = HttpFileSystemImpl.getInstanceImpl().findContentProvider(myUrl);
+    final RemoteContentProvider contentProvider = myManager.findContentProvider(myUrl);
     if ((localVirtualFile == null || !contentProvider.equals(myContentProvider) || !contentProvider.isUpToDate(myUrl, localVirtualFile))) {
       myContentProvider = contentProvider;
       addDownloadingListener(new MyRefreshingDownloadingListener(postRunnable));

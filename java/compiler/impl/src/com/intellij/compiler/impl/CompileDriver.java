@@ -124,12 +124,12 @@ public class CompileDriver {
     }
   };
   private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
-  private static CompilerFilter SOURCE_PROCESSING_ONLY = new CompilerFilter() {
+  private static final CompilerFilter SOURCE_PROCESSING_ONLY = new CompilerFilter() {
     public boolean acceptCompiler(Compiler compiler) {
       return compiler instanceof SourceProcessingCompiler;
     }
   };
-  private static CompilerFilter ALL_EXCEPT_SOURCE_PROCESSING = new CompilerFilter() {
+  private static final CompilerFilter ALL_EXCEPT_SOURCE_PROCESSING = new CompilerFilter() {
     public boolean acceptCompiler(Compiler compiler) {
       return !SOURCE_PROCESSING_ONLY.acceptCompiler(compiler);
     }
@@ -1591,7 +1591,6 @@ public class CompileDriver {
   }
 
   private static boolean syncOutputDir(final CompileContextEx context, final Collection<Trinity<File, String, Boolean>> toDelete) throws CacheCorruptedException {
-    final int total = toDelete.size();
     final DependencyCache dependencyCache = context.getDependencyCache();
     final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -1601,11 +1600,9 @@ public class CompileDriver {
       public void run() throws CacheCorruptedException {
         final long start = System.currentTimeMillis();
         try {
-          int current = 0;
           for (final Trinity<File, String, Boolean> trinity : toDelete) {
             final File outputPath = trinity.getFirst();
             context.getProgressIndicator().checkCanceled();
-            context.getProgressIndicator().setFraction((double)++current / total);
             context.getProgressIndicator().setText2(outputPath.getPath());
             filesToRefresh.add(outputPath);
             if (isTestMode) {

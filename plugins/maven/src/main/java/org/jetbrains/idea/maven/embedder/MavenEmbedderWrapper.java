@@ -37,6 +37,7 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.DefaultArtifactRepository;
 import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.apache.maven.artifact.resolver.*;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.ReactorManager;
@@ -64,6 +65,8 @@ import org.apache.maven.settings.Mirror;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
+import org.apache.maven.shared.dependency.tree.DependencyNode;
+import org.apache.maven.shared.dependency.tree.DependencyTreeResolutionListener;
 import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
@@ -176,10 +179,10 @@ public class MavenEmbedderWrapper {
     return localRepository;
   }
 
-  public MavenExecutionResult resolveProject(@NotNull final VirtualFile file,
+  public MavenResolutionResult resolveProject(@NotNull final VirtualFile file,
                                              @NotNull final Collection<String> activeProfiles) throws MavenProcessCanceledException {
-    return doExecute(new Executor<MavenExecutionResult>() {
-      public MavenExecutionResult execute() throws Exception {
+    return doExecute(new Executor<MavenResolutionResult>() {
+      public MavenResolutionResult execute() throws Exception {
         //loadSettings();
 
         MavenExecutionRequest request = createRequest(file, activeProfiles, Collections.EMPTY_LIST);
@@ -192,6 +195,8 @@ public class MavenEmbedderWrapper {
 
         List<Exception> exceptions = new ArrayList<Exception>();
         MavenProject project = null;
+        Collection<DependencyNode> originalDependencyTree = Collections.emptyList();
+
         try {
           // copied from DefaultMavenProjectBuilder.buildWithDependencies
           MavenProjectBuilder builder = getComponent(MavenProjectBuilder.class);
@@ -207,14 +212,21 @@ public class MavenEmbedderWrapper {
           ArtifactMetadataSource metadataSource = getComponent(ArtifactMetadataSource.class);
           project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
 
+          DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myLogger);
+
           ArtifactResolver resolver = getComponent(ArtifactResolver.class);
           ArtifactResolutionResult result = resolver.resolveTransitively(project.getDependencyArtifacts(),
                                                                          projectArtifact, managedVersions,
                                                                          myLocalRepository,
                                                                          project.getRemoteArtifactRepositories(),
-                                                                         metadataSource);
+                                                                         metadataSource,
+                                                                         null,
+                                                                         Arrays.asList(listener));
           project.setArtifacts(result.getArtifacts());
           // end copied from DefaultMavenProjectBuilder.buildWithDependencies
+
+          DependencyNode rootDependenyNode = listener.getRootNode();
+          if (rootDependenyNode != null)  originalDependencyTree = rootDependenyNode.getChildren();
         }
         catch (ProjectBuildingException e) {
           exceptions.add(e);
@@ -226,7 +238,7 @@ public class MavenEmbedderWrapper {
           exceptions.add(e);
         }
 
-        return new MavenExecutionResult(project, retrieveUnresolvedArtifactIds(), exceptions);
+        return new MavenResolutionResult(project, originalDependencyTree, retrieveUnresolvedArtifactIds(), exceptions);
       }
     });
   }

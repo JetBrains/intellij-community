@@ -50,8 +50,8 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel panelForDictionaryChooser;
   private JPanel panelForAcceptedWords;
   private JPanel panelForFolderChooser;
-  private OptionalChooserComponent optionalChooserComponent;
-  private PathsChooserComponent pathsChooserComponent;
+  private final OptionalChooserComponent optionalChooserComponent;
+  private final PathsChooserComponent pathsChooserComponent;
   private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<Pair<String, Boolean>>();
   private final List<String> dictionariesFolders = new ArrayList<String>();
   private final WordsPanel wordsPanel;
@@ -240,7 +240,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public static final class WordDescriber {
-    private EditableDictionary dictionary;
+    private final EditableDictionary dictionary;
 
     public WordDescriber(EditableDictionary dictionary) {
       this.dictionary = dictionary;
@@ -265,7 +265,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   private static final class WordsPanel extends AddDeleteListPanel implements Disposable {
-    private SpellCheckerManager manager;
+    private final SpellCheckerManager manager;
 
     private WordsPanel(SpellCheckerManager manager) {
       super(null, new WordDescriber(manager.getUserDictionary()).process());

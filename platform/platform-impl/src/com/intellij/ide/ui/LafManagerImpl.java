@@ -303,6 +303,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       popupWeight = HEAVY_WEIGHT_POPUP;
     }
 
+    popupWeight = popupWeight.trim();
+
     PopupFactory popupFactory;
 
     if(HEAVY_WEIGHT_POPUP.equals(popupWeight)){

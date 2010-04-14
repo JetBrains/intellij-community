@@ -34,7 +34,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -112,30 +113,35 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     for (PsiLiteralExpression target : targets) {
       final Object value = target.getValue();
-      if (value instanceof String) {
-        final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById(((String)value), target);
-        if (toolById instanceof LocalInspectionToolWrapper) {
-          final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
-          final InspectionManagerEx managerEx = ((InspectionManagerEx)InspectionManagerEx.getInstance(project));
-          final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-          tool.initialize(context);
-          ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-          ProgressManager.getInstance().run(new Task.Modal(project, "Collecting information...", true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool), false);
-            }
+      if (!(value instanceof String)) {
+        continue;
+      }
+      final InspectionProfileEntry toolById = ((InspectionProfileImpl)inspectionProfile).getToolById((String)value, target);
+      if (!(toolById instanceof LocalInspectionToolWrapper)) {
+        continue;
+      }
+      final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(((LocalInspectionToolWrapper)toolById).getTool());
+      final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
+      final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
+      tool.initialize(context);
+      ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      Runnable inspect = new Runnable() {
+        public void run() {
+          pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool), false);
+        }
+      };
+      if (indicator == null) {
+        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
+      }
+      else {
+        inspect.run();
+      }
 
-            @Override
-            public void onSuccess() {
-              for (HighlightInfo info : pass.getInfos()) {
-                final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
-                if (element != null) {
-                  addOccurrence(element);
-                }
-              }
-            }
-          });
+      for (HighlightInfo info : pass.getInfos()) {
+        final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
+        if (element != null) {
+          addOccurrence(element);
         }
       }
     }

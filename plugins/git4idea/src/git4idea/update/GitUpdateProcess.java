@@ -39,11 +39,11 @@ public class GitUpdateProcess extends GitBaseRebaseProcess {
   /**
    * The settings to use
    */
-  private GitVcsSettings mySettings;
+  private final GitVcsSettings mySettings;
   /**
    * The updated files
    */
-  private UpdatedFiles myUpdatedFiles;
+  private final UpdatedFiles myUpdatedFiles;
   /**
    * The revision that was before update
    */

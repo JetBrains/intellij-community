@@ -57,14 +57,18 @@ public class CodeBlockUtil {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(guide.endLine, guide.indentLevel));
     }
     else {
-      editor.getCaretModel().moveToOffset(calcBlockEndOffset(editor, file));
+      int endOffset = calcBlockEndOffset(editor, file);
+      if (endOffset != -1) {
+        editor.getCaretModel().moveToOffset(endOffset);
+      }
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
     if (isWithSelection) {
       editor.getSelectionModel().setSelection(selectionStart, editor.getCaretModel().getOffset());
-    } else {
+    }
+    else {
       editor.getSelectionModel().removeSelection();
     }
   }
@@ -146,8 +150,7 @@ public class CodeBlockUtil {
       iterator.advance();
     }
 
-    int end = isBeforeLBrace? iterator.getEnd() : iterator.getStart();
-    return end;
+    return isBeforeLBrace? iterator.getEnd() : iterator.getStart();
   }
 
   private static int calcBlockStartOffset(Editor editor, PsiFile file) {

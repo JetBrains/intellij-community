@@ -127,7 +127,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private final AbstractVcs myVcs;
     private final Runnable myRefresher;
     private VcsAbstractHistorySession mySession;
-    private BufferedListConsumer<VcsFileRevision> myBuffer;
+    private final BufferedListConsumer<VcsFileRevision> myBuffer;
 
     private MyVcsAppendableHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
                                                  final FilePath path,
@@ -200,7 +200,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   private static class MyRefresher implements Runnable {
-    private MyVcsAppendableHistorySessionPartner mySessionPartner;
+    private final MyVcsAppendableHistorySessionPartner mySessionPartner;
     private final VcsHistoryProvider myVcsHistoryProvider;
     private final FilePath myPath;
     private final AbstractVcs myVcs;

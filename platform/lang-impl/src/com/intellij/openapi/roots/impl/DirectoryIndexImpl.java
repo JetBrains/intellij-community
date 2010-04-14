@@ -61,7 +61,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private Set<VirtualFile> myProjectExcludeRoots;
   private Map<VirtualFile, DirectoryInfo> myDirToInfoMap = new ConcurrentHashMap<VirtualFile, DirectoryInfo>();
   private Map<String, List<VirtualFile>> myPackageNameToDirsMap = new ConcurrentHashMap<String, List<VirtualFile>>();
-  private Map<VirtualFile, String> myDirToPackageName = new ConcurrentHashMap<VirtualFile, String>();
+  private final Map<VirtualFile, String> myDirToPackageName = new ConcurrentHashMap<VirtualFile, String>();
 
   private final DirectoryIndexExcludePolicy[] myExcludePolicies;
   private final MessageBusConnection myConnection;

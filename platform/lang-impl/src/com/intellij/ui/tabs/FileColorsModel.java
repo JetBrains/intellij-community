@@ -38,7 +38,7 @@ public class FileColorsModel implements Cloneable {
   private final List<FileColorConfiguration> myConfigurations;
   private final List<FileColorConfiguration> mySharedConfigurations;
 
-  private Project myProject;
+  private final Project myProject;
 
   FileColorsModel(@NotNull final Project project) {
     myProject = project;

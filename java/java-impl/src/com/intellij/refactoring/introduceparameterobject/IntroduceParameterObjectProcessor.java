@@ -416,7 +416,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
   }
 
   public static class ParameterChunk {
-    private ParameterTablePanel.VariableData parameter;
+    private final ParameterTablePanel.VariableData parameter;
     private PsiField field;
     private String getter;
     private String setter;

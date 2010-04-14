@@ -45,7 +45,7 @@ import java.util.List;
 * @author yole
 */
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
-  private List<String> myFileNames;
+  private final List<String> myFileNames;
 
   public TestDataNavigationHandler(List<String> fileNames) {
     myFileNames = fileNames;

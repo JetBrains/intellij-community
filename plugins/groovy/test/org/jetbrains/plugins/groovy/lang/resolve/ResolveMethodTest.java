@@ -482,7 +482,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testNominalTypeIsBetterThanNull() throws Exception {
     GrReferenceExpression ref = (GrReferenceExpression) configureByFile("nominalTypeIsBetterThanNull/A.groovy").getElement();
-    final PsiType type = assertInstanceOf(ref.resolve(), GrMethod.class).getReturnType();
+    final PsiType type = assertInstanceOf(ref.resolve(), GrMethod.class).getInferredReturnType();
     assertNotNull(type);
     assertTrue(type.equalsToText(CommonClassNames.JAVA_LANG_STRING));
   }

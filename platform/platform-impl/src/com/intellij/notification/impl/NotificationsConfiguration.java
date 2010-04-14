@@ -41,8 +41,8 @@ import java.util.*;
 public class NotificationsConfiguration implements ApplicationComponent, Notifications, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsConfiguration");
 
-  private Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
-  private MessageBus myMessageBus;
+  private final Map<String, NotificationSettings> myIdToSettingsMap = new LinkedHashMap<String, NotificationSettings>();
+  private final MessageBus myMessageBus;
 
   public NotificationsConfiguration(@NotNull final MessageBus bus) {
     myMessageBus = bus;

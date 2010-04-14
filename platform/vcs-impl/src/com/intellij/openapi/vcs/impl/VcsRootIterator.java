@@ -26,7 +26,7 @@ import java.util.*;
 public class VcsRootIterator {
   // folder path to files to be excluded
   private final Map<String, MyRootFilter> myOtherVcsFolders;
-  private ExcludedFileIndex myExcludedFileIndex;
+  private final ExcludedFileIndex myExcludedFileIndex;
 
   public VcsRootIterator(final Project project, final AbstractVcs vcs) {
     final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);

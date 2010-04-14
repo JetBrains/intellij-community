@@ -54,7 +54,7 @@ import java.util.Set;
 public class BuildArtifactsBeforeRunTaskProvider extends BeforeRunTaskProvider<BuildArtifactsBeforeRunTask> {
   @NonNls public static final String BUILD_ARTIFACTS_ID = "BuildArtifacts";
   public static final Key<BuildArtifactsBeforeRunTask> ID = Key.create(BUILD_ARTIFACTS_ID);
-  private Project myProject;
+  private final Project myProject;
 
   public BuildArtifactsBeforeRunTaskProvider(Project project) {
     myProject = project;

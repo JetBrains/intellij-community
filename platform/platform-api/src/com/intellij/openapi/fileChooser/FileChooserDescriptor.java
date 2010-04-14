@@ -273,4 +273,9 @@ public class FileChooserDescriptor implements Cloneable{
   public <T> void putUserData(DataKey<T> key, T data) {
     myUserData.put(key.getName(), data);
   }
+
+  @Override
+  public String toString() {
+    return "FileChooserDescriptor [" + myTitle + "]";
+  }
 }

@@ -58,6 +58,9 @@ public class RawText implements Cloneable, Serializable {
     catch (NoClassDefFoundError e) {
       return null;
     }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
     return ourFlavor;
   }
 

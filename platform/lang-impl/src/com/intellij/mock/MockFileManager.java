@@ -37,7 +37,8 @@ public class MockFileManager implements FileManager {
     }
   };
 
-  public FileViewProvider createFileViewProvider(final VirtualFile file, final boolean physical) {
+  @NotNull
+  public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final boolean physical) {
     return new SingleRootFileViewProvider(myManager, file, physical);
   }
 
@@ -88,15 +89,15 @@ public class MockFileManager implements FileManager {
     myViewProviders.clear();
   }
 
-  public FileViewProvider findViewProvider(VirtualFile file) {
+  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException("Method findViewProvider is not yet implemented in " + getClass().getName());
   }
 
-  public FileViewProvider findCachedViewProvider(VirtualFile file) {
+  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
     return myViewProviders.get(file);
   }
 
-  public void setViewProvider(VirtualFile virtualFile, FileViewProvider fileViewProvider) {
+  public void setViewProvider(@NotNull VirtualFile virtualFile, FileViewProvider fileViewProvider) {
     myViewProviders.put(virtualFile, fileViewProvider);
   }
 

@@ -201,7 +201,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
   }
 
   private abstract static class IncludedFilesProvider implements ParameterizedCachedValueProvider<VirtualFile[], PsiFile> {
-    private boolean myRuntimeOnly;
+    private final boolean myRuntimeOnly;
 
     public IncludedFilesProvider(boolean runtimeOnly) {
       myRuntimeOnly = runtimeOnly;

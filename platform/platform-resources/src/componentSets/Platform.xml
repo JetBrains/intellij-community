@@ -48,6 +48,9 @@
       <interface-class>com.intellij.openapi.vfs.ex.http.HttpFileSystem</interface-class>
       <implementation-class>com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.vfs.impl.http.HttpsFileSystem</implementation-class>
+    </component>
 
 
     <component>

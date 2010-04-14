@@ -40,7 +40,7 @@ import javax.swing.*;
 public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> implements Place.Navigator {
   private final ProjectJdkImpl myProjectJdk;
   private final SdkEditor mySdkEditor;
-  private SdkProjectStructureElement myProjectStructureElement;
+  private final SdkProjectStructureElement myProjectStructureElement;
 
   public JdkConfigurable(final ProjectJdkImpl projectJdk,
                          final ProjectJdksModel configurable,

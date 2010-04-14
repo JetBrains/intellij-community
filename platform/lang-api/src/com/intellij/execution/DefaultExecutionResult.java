@@ -33,7 +33,7 @@ public class DefaultExecutionResult implements ExecutionResult {
   private final ProcessHandler myProcessHandler;
   private AnAction[] myActions;
   private AnAction[] myRestartActions;
-  private List<AnAction> myStopActions = new ArrayList<AnAction>();
+  private final List<AnAction> myStopActions = new ArrayList<AnAction>();
 
   public DefaultExecutionResult(final ExecutionConsole console, final ProcessHandler processHandler) {
     this(console, processHandler, AnAction.EMPTY_ARRAY);

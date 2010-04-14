@@ -37,7 +37,7 @@ import java.util.List;
 public class FormFileErrorCollector extends FormErrorCollector {
   private final InspectionManager myManager;
   private final PsiFile myFile;
-  private boolean myOnTheFly;
+  private final boolean myOnTheFly;
   private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
 
   public FormFileErrorCollector(final PsiFile file, final InspectionManager manager, boolean onTheFly) {

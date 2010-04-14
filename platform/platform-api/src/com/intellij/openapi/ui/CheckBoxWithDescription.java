@@ -23,7 +23,7 @@ import java.awt.*;
 
 public class CheckBoxWithDescription extends JPanel {
 
-  private JCheckBox myCheckBox;
+  private final JCheckBox myCheckBox;
 
   public CheckBoxWithDescription(JCheckBox box, @Nullable String description) {
     myCheckBox = box;

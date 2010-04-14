@@ -46,7 +46,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor");
   private final PsiType myThisType;
   @Nullable
-  private PsiType[] myArgumentTypes;
+  private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
 
   private final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
@@ -154,7 +154,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       PsiSubstitutor substitutor = helper.inferTypeArguments(typeParameters, parameterTypes, argumentTypes, LanguageLevel.HIGHEST);
       for (PsiTypeParameter typeParameter : typeParameters) {
         if (!substitutor.getSubstitutionMap().containsKey(typeParameter)) {
-          substitutor = inferFromContext(typeParameter, method.getReturnType(), substitutor, helper);
+          substitutor = inferFromContext(typeParameter, PsiUtil.getSmartReturnType(method), substitutor, helper);
         }
       }
 
@@ -180,7 +180,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiType rType = null;
     if (parent instanceof GrReturnStatement) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class);
-      if (method != null) rType = method.getDeclaredReturnType();
+      if (method != null) rType = method.getReturnType();
     }
     else if (parent instanceof GrAssignmentExpression && myPlace.equals(((GrAssignmentExpression)parent).getRValue())) {
       rType = ((GrAssignmentExpression)parent).getLValue().getType();

@@ -35,10 +35,10 @@ import java.util.List;
 * @author nik
 */
 public class ArtifactValidationManagerImpl implements Disposable {
-  private ArtifactErrorPanel myErrorPanel;
+  private final ArtifactErrorPanel myErrorPanel;
   private final ArtifactEditorImpl myArtifactEditor;
-  private MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription> myProblemsForNodes = new MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription>(true);
-  private List<ArtifactProblemDescription> myProblems = new ArrayList<ArtifactProblemDescription>();
+  private final MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription> myProblemsForNodes = new MultiValuesMap<PackagingElementNode<?>, ArtifactProblemDescription>(true);
+  private final List<ArtifactProblemDescription> myProblems = new ArrayList<ArtifactProblemDescription>();
 
   ArtifactValidationManagerImpl(ArtifactEditorImpl artifactEditor) {
     Disposer.register(artifactEditor, this);

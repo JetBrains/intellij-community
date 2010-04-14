@@ -23,8 +23,8 @@ import java.util.List;
  * @author yole
  */
 public class ProcessOutput {
-  private StringBuilder myStdoutBuilder = new StringBuilder();
-  private StringBuilder myStderrBuilder = new StringBuilder();
+  private final StringBuilder myStdoutBuilder = new StringBuilder();
+  private final StringBuilder myStderrBuilder = new StringBuilder();
   private int myExitCode;
   private boolean myTimeout;
 

@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -64,7 +65,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   }
 
   public GrClosureSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    this(method.getParameterList().getParameters(), method.getReturnType(), substitutor);
+    this(method.getParameterList().getParameters(), PsiUtil.getSmartReturnType(method), substitutor);
   }
 
   private GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {

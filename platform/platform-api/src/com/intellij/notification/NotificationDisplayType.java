@@ -24,7 +24,7 @@ public enum NotificationDisplayType {
   BALLOON("Balloon"),
   STICKY_BALLOON("Sticky balloon");
 
-  private String myTitle;
+  private final String myTitle;
 
   private NotificationDisplayType(final String humanTitle) {
     myTitle = humanTitle;

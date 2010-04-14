@@ -41,8 +41,8 @@ public class PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater");
 
   private final Project myProject;
-  private FilePropertyPusher[] myPushers;
-  private FilePropertyPusher[] myFilePushers;
+  private final FilePropertyPusher[] myPushers;
+  private final FilePropertyPusher[] myFilePushers;
 
   public static PushedFilePropertiesUpdater getInstance(Project project) {
     return project.getComponent(PushedFilePropertiesUpdater.class);

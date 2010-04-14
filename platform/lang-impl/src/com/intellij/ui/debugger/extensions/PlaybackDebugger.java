@@ -62,15 +62,15 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private PlaybackRunner myRunner;
 
-  private DefaultListModel myMessage = new DefaultListModel();
+  private final DefaultListModel myMessage = new DefaultListModel();
 
-  private JTextField myScriptsPath = new JTextField();
+  private final JTextField myScriptsPath = new JTextField();
 
   private static final String EXT = "ijs";
 
   private static final String DOT_EXT = "." + EXT;
 
-  private JTextField myCurrentScript = new JTextField();
+  private final JTextField myCurrentScript = new JTextField();
 
   private VirtualFileAdapter myVfsListener;
 
@@ -516,10 +516,10 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   }
 
   private class ListElement {
-    private String myText;
-    private boolean myError;
+    private final String myText;
+    private final boolean myError;
 
-    private int myLine;
+    private final int myLine;
 
     public ListElement(String text, boolean isError, int line) {
       myText = text;

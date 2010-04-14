@@ -653,7 +653,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     importProjects(m1, m2);
     resolveDependenciesAndImport();
 
-    assertDependenciesNodes(myProjectsTree.getRootProjects().get(0).getDependenciesNodes(),
+    assertDependenciesNodes(myProjectsTree.getRootProjects().get(0).getDependencyTree(),
                             "test:m2:jar:1->(junit:junit:jar:4.0->(),test:lib2:jar:1->()),test:lib1:jar:1->()");
   }
 
@@ -689,11 +689,54 @@ public class MavenProjectTest extends MavenImportingTestCase {
     importProjects(m1, m2);
     resolveDependenciesAndImport();
 
-    assertDependenciesNodes(myProjectsTree.getRootProjects().get(0).getDependenciesNodes(),
+    assertDependenciesNodes(myProjectsTree.getRootProjects().get(0).getDependencyTree(),
                             "test:m2:pom:test:1->(test:lib:jar:1->())");
   }
 
-  public void testDependencyTreeDiamondType() throws Exception {
+  public void testDependenciesTreeWithConflict() throws Exception {
+    VirtualFile m1 = createModulePom("p1",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m1</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>m2</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>lib</artifactId>" +
+                                     "    <version>1</version>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+
+    VirtualFile m2 = createModulePom("p2",
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId>m2</artifactId>" +
+                                     "<version>1</version>" +
+
+                                     "<dependencies>" +
+                                     "  <dependency>" +
+                                     "    <groupId>test</groupId>" +
+                                     "    <artifactId>lib</artifactId>" +
+                                     "    <version>2</version>" +
+                                     "  </dependency>" +
+                                     "</dependencies>");
+
+    importProjects(m1, m2);
+    resolveDependenciesAndImport();
+
+    List<MavenArtifactNode> nodes = myProjectsTree.getRootProjects().get(0).getDependencyTree();
+    assertDependenciesNodes(nodes,
+                            "test:m2:jar:1->(test:lib:jar:2[CONFLICT:test:lib:jar:1]->())," +
+                            "test:lib:jar:1->()");
+    assertSame(nodes.get(0).getDependencies().get(0).getRelatedArtifact(),
+               nodes.get(1).getArtifact());
+  }
+
+  public void testDependencyTreeDuplicates() throws Exception {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -725,7 +768,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                                      "  </dependency>" +
                                      "</dependencies>");
 
-    VirtualFile m3 = createModulePom("p2",
+    VirtualFile m3 = createModulePom("p3",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m3</artifactId>" +
                                      "<version>1</version>" +
@@ -741,11 +784,11 @@ public class MavenProjectTest extends MavenImportingTestCase {
     importProjects(m1, m2, m3);
     resolveDependenciesAndImport();
 
-    List<MavenArtifactNode> nodes = myProjectsTree.findProject(m1).getDependenciesNodes();
-    assertDependenciesNodes(nodes, "test:m2:jar:1->(),test:m3:jar:1->(test:lib:jar:1->())");
+    List<MavenArtifactNode> nodes = myProjectsTree.findProject(m1).getDependencyTree();
+    assertDependenciesNodes(nodes, "test:m2:jar:1->(test:lib:jar:1->()),test:m3:jar:1->(test:lib:jar:1[DUPLICATE:test:lib:jar:1]->())");
 
-    //assertSame(nodes.get(0).getDependencies().get(0).getDependencies().get(0),
-    //           nodes.get(0).getDependencies().get(1).getDependencies().get(0));
+    assertSame(nodes.get(0).getDependencies().get(0).getArtifact(),
+               nodes.get(1).getDependencies().get(0).getRelatedArtifact());
   }
 
   protected void assertDependenciesNodes(List<MavenArtifactNode> nodes, String expected) {

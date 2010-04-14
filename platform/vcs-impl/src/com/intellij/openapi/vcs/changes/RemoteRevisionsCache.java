@@ -50,7 +50,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
   private final Project myProject;
   private final Object myLock;
   private final Map<String, RemoteDifferenceStrategy> myKinds;
-  private ControlledCycle myControlledCycle;
+  private final ControlledCycle myControlledCycle;
 
   public static RemoteRevisionsCache getInstance(final Project project) {
     return ServiceManager.getService(project, RemoteRevisionsCache.class);

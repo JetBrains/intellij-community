@@ -31,7 +31,7 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
-  private ProjectStructureProblemsHolder myProblemsHolder;
+  private final ProjectStructureProblemsHolder myProblemsHolder;
 
   public ArtifactProblemsHolderImpl(ArtifactEditorContext context, ProjectStructureProblemsHolder problemsHolder) {
     super(context);

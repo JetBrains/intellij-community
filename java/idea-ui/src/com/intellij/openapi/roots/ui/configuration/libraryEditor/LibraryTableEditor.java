@@ -94,7 +94,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
   private Tree myTree;
   private final Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
 
-  private LibraryTableModifiableModelProvider myLibraryTableProvider;
+  private final LibraryTableModifiableModelProvider myLibraryTableProvider;
   private final boolean myEditingModuleLibraries;
   private LibraryTableTreeBuilder myTreeBuilder;
   private LibraryTable.ModifiableModel myTableModifiableModel;

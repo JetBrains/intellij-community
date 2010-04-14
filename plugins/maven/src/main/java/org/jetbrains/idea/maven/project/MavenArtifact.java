@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.codehaus.plexus.component.repository.ComponentDependency;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.embedder.CustomArtifact;
@@ -52,8 +53,6 @@ public class MavenArtifact implements Serializable {
   private boolean myResolved;
   private boolean myStubbed;
 
-  private List<String> myTrail;
-
   protected MavenArtifact() {
   }
 
@@ -77,11 +76,25 @@ public class MavenArtifact implements Serializable {
 
     myResolved = artifact.isResolved();
     myStubbed = artifact instanceof CustomArtifact && ((CustomArtifact)artifact).isStub();
+  }
 
-    List<String> originalTrail = artifact.getDependencyTrail();
-    myTrail = originalTrail == null || originalTrail.isEmpty()
-              ? new ArrayList<String>()
-              : new ArrayList<String>(originalTrail.subList(1, originalTrail.size()));
+  public MavenArtifact(ComponentDependency dependency, File localRepository) {
+    myGroupId = dependency.getGroupId();
+    myArtifactId = dependency.getArtifactId();
+    myVersion = dependency.getVersion();
+    myBaseVersion = null;
+    myType = dependency.getType();
+    myClassifier = null;
+
+    myScope = MavenConstants.SCOPE_TEST;
+    myOptional = false;
+
+    myExtension = myType;
+
+    myFile = new File(localRepository, getRelativePath());
+
+    myResolved = true;
+    myStubbed = false;
   }
 
   private String getExtension(Artifact artifact) {
@@ -209,10 +222,6 @@ public class MavenArtifact implements Serializable {
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, path) + JarFileSystem.JAR_SEPARATOR;
   }
 
-  public List<String> getTrail() {
-    return myTrail;
-  }
-
   public String getDisplayStringSimple() {
     StringBuilder builder = new StringBuilder();
 
@@ -295,7 +304,6 @@ public class MavenArtifact implements Serializable {
     if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
     if (myExtension != null ? !myExtension.equals(that.myExtension) : that.myExtension != null) return false;
     if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
-    if (myTrail != null ? !myTrail.equals(that.myTrail) : that.myTrail != null) return false;
 
     return true;
   }
@@ -311,7 +319,6 @@ public class MavenArtifact implements Serializable {
     result = 31 * result + (myScope != null ? myScope.hashCode() : 0);
     result = 31 * result + (myExtension != null ? myExtension.hashCode() : 0);
     result = 31 * result + (myFile != null ? myFile.hashCode() : 0);
-    result = 31 * result + (myTrail != null ? myTrail.hashCode() : 0);
     return result;
   }
 }

@@ -44,7 +44,7 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Compi
   private JPanel myMainPanel;
   private JPanel myExcludesPanel;
   private JCheckBox myUseGroovycStubs;
-  private ExcludedEntriesConfigurable myExcludes;
+  private final ExcludedEntriesConfigurable myExcludes;
   private final GroovyCompilerConfiguration myConfig;
 
 

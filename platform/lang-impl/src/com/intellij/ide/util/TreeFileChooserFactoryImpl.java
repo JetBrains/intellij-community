@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class TreeFileChooserFactoryImpl extends TreeFileChooserFactory {
-  private Project myProject;
+  private final Project myProject;
 
   public TreeFileChooserFactoryImpl(Project project) {
     myProject = project;

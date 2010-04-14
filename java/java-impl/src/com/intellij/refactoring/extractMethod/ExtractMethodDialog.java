@@ -67,7 +67,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   private boolean myDefaultVisibility = true;
   private boolean myChangingVisibility;
 
-  private JCheckBox myFoldCb = new NonFocusableCheckBox(RefactoringBundle.message("declare.folded.parameters"));
+  private final JCheckBox myFoldCb = new NonFocusableCheckBox(RefactoringBundle.message("declare.folded.parameters"));
   public JPanel myCenterPanel;
   public JPanel myParamTabel;
   private ParameterTablePanel.VariableData[] myInputVariables;

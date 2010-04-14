@@ -68,8 +68,8 @@ public class InjectionsSettingsUI implements Configurable {
 
   private final Project myProject;
   private final Configuration myConfiguration;
-  private List<BaseInjection> myInjections;
-  private List<BaseInjection> myOriginalInjections;
+  private final List<BaseInjection> myInjections;
+  private final List<BaseInjection> myOriginalInjections;
 
 
   private final JPanel myRoot;
@@ -77,8 +77,8 @@ public class InjectionsSettingsUI implements Configurable {
   private final Map<String, LanguageInjectionSupport> mySupports = new THashMap<String, LanguageInjectionSupport>();
   private final Map<String, AnAction> myEditActions = new THashMap<String, AnAction>();
   private final List<AnAction> myAddActions = new ArrayList<AnAction>();
-  private ActionToolbar myToolbar;
-  private JLabel myCountLabel;
+  private final ActionToolbar myToolbar;
+  private final JLabel myCountLabel;
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;

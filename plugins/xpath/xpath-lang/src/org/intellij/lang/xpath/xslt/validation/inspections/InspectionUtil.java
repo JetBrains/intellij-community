@@ -114,16 +114,14 @@ public class InspectionUtil {
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Stylesheet") {
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);
-                assert document != null;
-                return document.getRootTag();
+                return document != null ? document.getRootTag() : null;
             }
         });
 
         actions.add(new SuppressInspectionAction(ALL_ID, "Suppress all for Stylesheet") {
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);
-                assert document != null;
-                return document.getRootTag();
+                return document != null ? document.getRootTag() : null;
             }
         });
 

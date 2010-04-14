@@ -504,7 +504,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static class FakeProcessingItem implements ProcessingItem {
-    private LightVirtualFile myFile;
+    private final LightVirtualFile myFile;
 
     private FakeProcessingItem() {
       myFile = new LightVirtualFile(this.getClass().getName());

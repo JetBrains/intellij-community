@@ -43,7 +43,7 @@ class PatternDialog extends DialogWrapper{
   private final JTextField myPatternStringField;
   private final ColorAndFontDescriptionPanel myColorAndFontDescriptionPanel;
   private final ColorAndFontDescription myColorAndFontDescription;
-  private JCheckBox myUsedDefaultColorsCeckBox;
+  private final JCheckBox myUsedDefaultColorsCeckBox;
 
   public PatternDialog(Component parent, TodoPattern pattern){
     super(parent, true);

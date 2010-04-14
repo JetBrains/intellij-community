@@ -128,7 +128,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     if (parent instanceof GrCodeReferenceElement) {
       ReferenceKind parentKind = ((GrCodeReferenceElementImpl) parent).getKind(forCompletion);
       if (parentKind == CLASS) return CLASS_OR_PACKAGE;
-      else if (parentKind == STATIC_MEMBER_FQ) return CLASS_FQ;
+      else if (parentKind == STATIC_MEMBER_FQ) return CLASS;
       else if (parentKind == CLASS_FQ) return CLASS_OR_PACKAGE_FQ;
       return parentKind;
     } else if (parent instanceof GrPackageDefinition) {
@@ -138,7 +138,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     } else if (parent instanceof GrImportStatement) {
       final GrImportStatement importStatement = (GrImportStatement) parent;
       if (importStatement.isStatic()) {
-        return importStatement.isOnDemand() ? CLASS_FQ : STATIC_MEMBER_FQ;
+        return importStatement.isOnDemand() ? CLASS : STATIC_MEMBER_FQ;
       }
       else {
         return forCompletion || importStatement.isOnDemand() ? CLASS_OR_PACKAGE_FQ : CLASS_FQ;
@@ -311,9 +311,11 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
 
   private static class OurResolver implements ResolveCache.PolyVariantResolver<GrCodeReferenceElementImpl> {
 
+    @Nullable
     public GroovyResolveResult[] resolve(GrCodeReferenceElementImpl reference, boolean incompleteCode) {
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = _resolve(reference, reference.getManager(), reference.getKind(false));
+      if (results == null) return results;
       final PsiType[] args = reference.getTypeArguments();
       for (int i = 0; i < results.length; i++) {
         GroovyResolveResult result = results[i];

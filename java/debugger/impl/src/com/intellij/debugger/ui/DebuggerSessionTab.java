@@ -99,7 +99,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   public static final String BREAKPOINT_CONDITION = "breakpoint";
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
-  private Icon myIcon;
+  private final Icon myIcon;
 
   public DebuggerSessionTab(final Project project, final String sessionName, @Nullable final Icon icon) {
     super(project);
@@ -528,6 +528,7 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     content.setCloseable(true);
     content.setDescription("Thread Dump");
     myUi.addContent(content);
+    myUi.selectAndFocus(content, true, true);
     myThreadDumpsCount += 1;
     myCurrentThreadDumpId += 1;
     Disposer.register(this, new Disposable() {

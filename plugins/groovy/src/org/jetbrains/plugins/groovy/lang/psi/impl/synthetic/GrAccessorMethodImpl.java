@@ -51,9 +51,9 @@ public class GrAccessorMethodImpl extends GrSyntheticMethod implements GrAccesso
   }
 
   @Nullable
-  public PsiType getReturnTypeGroovy() {
+  public PsiType getInferredReturnType() {
     if (myIsSetter) return PsiType.VOID;
-    return myProperty.getDeclaredType();
+    return myProperty.getTypeGroovy();
   }
 
 

@@ -132,8 +132,10 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
         if (calleeMethod == null) return;
         PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
 
-        if (patternMethods.isEmpty()) {
-          setupPatternMethods(methodCall.getManager(), methodCall.getResolveScope(), patternMethods, indices);
+        synchronized (patternMethods) {
+          if (patternMethods.isEmpty()) {
+            setupPatternMethods(methodCall.getManager(), methodCall.getResolveScope(), patternMethods, indices);
+          }
         }
 
         for (int i = 0; i < patternMethods.size(); i++) {

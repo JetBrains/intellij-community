@@ -188,10 +188,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final CompositeFilter myPredefinedMessageFilter;
   private final CompositeFilter myCustomFilter;
 
-  private ArrayList<String> myHistory = new ArrayList<String>();
+  private final ArrayList<String> myHistory = new ArrayList<String>();
   private int myHistorySize = 20;
 
-  private ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
+  private final ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
+
+  private final Alarm myFoldingAlarm;
+  private final List<FoldRegion> myPendingFoldRegions = new ArrayList<FoldRegion>();
 
   public void addConsoleUserInputLestener(ConsoleInputListener consoleInputListener) {
     myConsoleInputListeners.add(consoleInputListener);
@@ -261,6 +264,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     Disposer.register(project, this);
+    myFoldingAlarm = new Alarm(this);
   }
 
   public void attachToProcess(final ProcessHandler processHandler){
@@ -286,6 +290,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (myEditor == null) return;
       myEditor.getMarkupModel().removeAllHighlighters();
       document = myEditor.getDocument();
+      myFoldingAlarm.cancelAllRequests();
     }
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -842,15 +847,31 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void doUpdateFolding(final List<FoldRegion> toAdd) {
-    final FoldingModel model = myEditor.getFoldingModel();
-    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+    assertIsDispatchThread();
+    myPendingFoldRegions.addAll(toAdd);
+
+    myFoldingAlarm.cancelAllRequests();
+    final Runnable runnable = new Runnable() {
       public void run() {
-        for (FoldRegion region : toAdd) {
-          region.setExpanded(false);
-          model.addFoldRegion(region);
-        }
+        assertIsDispatchThread();
+        final FoldingModel model = myEditor.getFoldingModel();
+        model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+          public void run() {
+            assertIsDispatchThread();
+            for (FoldRegion region : myPendingFoldRegions) {
+              region.setExpanded(false);
+              model.addFoldRegion(region);
+            }
+            myPendingFoldRegions.clear();
+          }
+        });
       }
-    });
+    };
+    if (myPendingFoldRegions.size() > 100) {
+      runnable.run();
+    } else {
+      myFoldingAlarm.addRequest(runnable, 50);
+    }
   }
 
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
@@ -888,14 +909,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
   }
 
+  @Nullable
   private static ConsoleFolding foldingForLine(String lineText) {
-    ConsoleFolding current = null;
     for (ConsoleFolding folding : ConsoleFolding.EP_NAME.getExtensions()) {
       if (folding.shouldFoldLine(lineText)) {
-        current = folding;
+        return folding;
       }
     }
-    return current;
+    return null;
   }
 
   private void addHyperlink(final int highlightStartOffset,

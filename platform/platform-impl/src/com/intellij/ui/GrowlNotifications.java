@@ -17,7 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.growl.Growl;
+import com.intellij.ui.mac.growl.Growl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 

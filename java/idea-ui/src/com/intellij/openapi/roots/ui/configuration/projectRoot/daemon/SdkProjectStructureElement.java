@@ -10,7 +10,7 @@ import java.util.List;
  * @author nik
  */
 public class SdkProjectStructureElement extends ProjectStructureElement {
-  private Sdk mySdk;
+  private final Sdk mySdk;
 
   public SdkProjectStructureElement(StructureConfigurableContext context, Sdk sdk) {
     super(context);

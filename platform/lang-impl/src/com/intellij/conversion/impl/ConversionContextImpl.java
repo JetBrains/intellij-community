@@ -49,17 +49,17 @@ import java.util.*;
  */
 public class ConversionContextImpl implements ConversionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.conversion.impl.ConversionContextImpl");
-  private Map<File, SettingsXmlFile> mySettingsFiles = new HashMap<File, SettingsXmlFile>();
-  private StorageScheme myStorageScheme;
-  private File myProjectBaseDir;
-  private File myProjectFile;
-  private File myWorkspaceFile;
-  private File[] myModuleFiles;
+  private final Map<File, SettingsXmlFile> mySettingsFiles = new HashMap<File, SettingsXmlFile>();
+  private final StorageScheme myStorageScheme;
+  private final File myProjectBaseDir;
+  private final File myProjectFile;
+  private final File myWorkspaceFile;
+  private final File[] myModuleFiles;
   private ProjectSettingsImpl myProjectSettings;
   private WorkspaceSettingsImpl myWorkspaceSettings;
-  private List<File> myNonExistingModuleFiles = new ArrayList<File>();
-  private Map<File, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<File, ModuleSettingsImpl>();
-  private Map<String, ModuleSettingsImpl> myName2ModuleSettings = new HashMap<String, ModuleSettingsImpl>();
+  private final List<File> myNonExistingModuleFiles = new ArrayList<File>();
+  private final Map<File, ModuleSettingsImpl> myFile2ModuleSettings = new HashMap<File, ModuleSettingsImpl>();
+  private final Map<String, ModuleSettingsImpl> myName2ModuleSettings = new HashMap<String, ModuleSettingsImpl>();
   private RunManagerSettingsImpl myRunManagerSettings;
   private File mySettingsBaseDir;
   private ComponentManagerSettings myCompilerManagerSettings;

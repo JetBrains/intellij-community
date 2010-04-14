@@ -40,7 +40,7 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.CatchBodyVisitor");
 
   Collection<ProblemDescriptor> myProblemDescriptors;
-  private boolean myOnTheFly;
+  private final boolean myOnTheFly;
   private final InspectionManager myManager;
 
   public CatchBodyVisitor(InspectionManager manager, Collection<ProblemDescriptor> descriptors, boolean onTheFly) {

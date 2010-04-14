@@ -132,7 +132,7 @@ public class EclipseXMLOutputter implements Cloneable {
     /** Whether output escaping is enabled for the being processed
       * Element - default is <code>true</code> */
     private boolean escapeOutput = true;
-    private String lineSeparator;
+    private final String lineSeparator;
 
   // * * * * * * * * * * Constructors * * * * * * * * * *
     // * * * * * * * * * * Constructors * * * * * * * * * *

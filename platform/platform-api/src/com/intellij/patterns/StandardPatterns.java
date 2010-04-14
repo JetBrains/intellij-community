@@ -127,7 +127,7 @@ public class StandardPatterns {
     });
   }
 
-  public static <E> ElementPattern<E> not(final ElementPattern<E> pattern) {
+  public static <E> ObjectPattern.Capture<E> not(final ElementPattern<E> pattern) {
     return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return !pattern.getCondition().accepts(o, context);

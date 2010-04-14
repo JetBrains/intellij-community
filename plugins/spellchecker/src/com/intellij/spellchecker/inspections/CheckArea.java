@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class CheckArea {
 
-  private String text;
-  private TextRange textRange;
+  private final String text;
+  private final TextRange textRange;
   private boolean ignored;
 
   public CheckArea(String text, TextRange range) {

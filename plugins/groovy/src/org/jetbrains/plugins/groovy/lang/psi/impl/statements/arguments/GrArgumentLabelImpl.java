@@ -200,8 +200,9 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     final PsiElement resolved = resolve();
     if (resolved instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod) resolved;
-      if (PropertyUtil.isSimplePropertyGetter(method))
-        return method.getReturnType();
+      if (PropertyUtil.isSimplePropertyGetter(method)) {
+        return PsiUtil.getSmartReturnType(method);
+      }
       if (PropertyUtil.isSimplePropertySetter(method))
         return method.getParameterList().getParameters()[0].getType();
 

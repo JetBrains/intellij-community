@@ -31,7 +31,7 @@ import java.util.Collections;
 @State(name = "ProjectResources", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
 public class ProjectResources extends ExternalResourceManagerImpl implements PersistentStateComponent<Element> {
 
-  private JDOMExternalizableAdapter myAdapter;
+  private final JDOMExternalizableAdapter myAdapter;
 
   public ProjectResources(PathMacrosImpl pathMacros) {
     super(pathMacros);

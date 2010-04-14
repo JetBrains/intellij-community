@@ -624,7 +624,7 @@ public class NewMappings {
   }
 
   private static class MySetMappingsPreProcessor {
-    private List<VcsDirectoryMapping> myItems;
+    private final List<VcsDirectoryMapping> myItems;
     private List<VcsDirectoryMapping> myItemsCopy;
     private Map<VcsDirectoryMapping, LocalFileSystem.WatchRequest> myRequests;
 

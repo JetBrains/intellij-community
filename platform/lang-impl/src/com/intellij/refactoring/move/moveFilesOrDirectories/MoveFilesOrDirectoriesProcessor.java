@@ -50,7 +50,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private final PsiDirectory myNewParent;
   private final MoveCallback myMoveCallback;
   private NonCodeUsageInfo[] myNonCodeUsages;
-  private Map<PsiFile, List<UsageInfo>> myFoundUsages = new HashMap<PsiFile, List<UsageInfo>>();
+  private final Map<PsiFile, List<UsageInfo>> myFoundUsages = new HashMap<PsiFile, List<UsageInfo>>();
 
   public MoveFilesOrDirectoriesProcessor(
     Project project,

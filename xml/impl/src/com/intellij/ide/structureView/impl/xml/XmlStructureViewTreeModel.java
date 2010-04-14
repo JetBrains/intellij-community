@@ -31,7 +31,7 @@ import java.util.Collection;
 public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel{
   private final XmlFile myFile;
   private static final Class[] myClasses = new Class[]{XmlTag.class, XmlFile.class, XmlEntityDecl.class, XmlElementDecl.class, XmlAttlistDecl.class, XmlConditionalSection.class};
-  private static Sorter[] mySorters = {Sorter.ALPHA_SORTER};
+  private static final Sorter[] mySorters = {Sorter.ALPHA_SORTER};
 
   public XmlStructureViewTreeModel(XmlFile file) {
     super(file);

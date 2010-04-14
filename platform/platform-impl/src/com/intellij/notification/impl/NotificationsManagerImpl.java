@@ -49,7 +49,7 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager implements Notifications, ApplicationComponent {
-  private NotificationModel myModel = new NotificationModel();
+  private final NotificationModel myModel = new NotificationModel();
 
   @NotNull
   public String getComponentName() {
@@ -286,8 +286,8 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
   }
 
   private static class ProjectFilter implements PairFunction<Notification, Project, Boolean> {
-    private Project myProject;
-    private boolean myStrict;
+    private final Project myProject;
+    private final boolean myStrict;
 
     private ProjectFilter(@NotNull final Project project, final boolean strict) {
       myProject = project;

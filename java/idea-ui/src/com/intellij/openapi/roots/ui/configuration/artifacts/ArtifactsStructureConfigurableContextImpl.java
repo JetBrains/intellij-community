@@ -49,13 +49,13 @@ import java.util.Map;
 public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureConfigurableContext {
   private ModifiableArtifactModel myModifiableModel;
   private final ManifestFilesInfo myManifestFilesInfo = new ManifestFilesInfo();
-  private ArtifactAdapter myModifiableModelListener;
-  private StructureConfigurableContext myContext;
-  private Project myProject;
-  private Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
-  private Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
-  private Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
-  private Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<Artifact, ArtifactProjectStructureElement>();
+  private final ArtifactAdapter myModifiableModelListener;
+  private final StructureConfigurableContext myContext;
+  private final Project myProject;
+  private final Map<Artifact, CompositePackagingElement<?>> myModifiableRoots = new HashMap<Artifact, CompositePackagingElement<?>>();
+  private final Map<Artifact, ArtifactEditorImpl> myArtifactEditors = new HashMap<Artifact, ArtifactEditorImpl>();
+  private final Map<ArtifactPointer, ArtifactEditorSettings> myEditorSettings = new HashMap<ArtifactPointer, ArtifactEditorSettings>();
+  private final Map<Artifact, ArtifactProjectStructureElement> myArtifactElements = new HashMap<Artifact, ArtifactProjectStructureElement>();
   private final ArtifactEditorSettings myDefaultSettings;
 
   public ArtifactsStructureConfigurableContextImpl(StructureConfigurableContext context, Project project,

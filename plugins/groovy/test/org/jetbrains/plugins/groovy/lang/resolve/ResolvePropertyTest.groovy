@@ -441,7 +441,7 @@ print new Foo().fo<caret>o""")
     def resolved = ref.resolve();
     assertInstanceOf resolved, GrAccessorMethod.class
   }
-  
+
   public void testPropertyAndFieldDeclarationWithSuperClass4() {
     myFixture.configureByText("a.groovy", """
 class Bar{
@@ -459,5 +459,74 @@ print new Foo().foo""")
     def resolved = ref.resolve();
     assertInstanceOf resolved, GrField.class
     assertTrue !resolved.getModifierList().hasExplicitVisibilityModifiers()
+  }
+
+  public void testReadAccessToStaticallyImportedProperty() {
+
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar
+print ba<caret>r
+""")
+    def ref = findReference()
+    def resolved = ref.resolve()
+    print resolved.class
+    assertInstanceOf resolved, GrAccessorMethod.class
+  }
+
+  public void testWriteAccessToStaticallyImportedProperty() {
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar
+ba<caret>r = 2
+""")
+    def ref = findReference()
+    def resolved = ref.resolve()
+    print resolved.class
+    assertInstanceOf resolved, GrAccessorMethod.class
+  }
+
+  public void testGetterToStaticallyImportedProperty() {
+    myFixture.addFileToProject("a.groovy", """class Foo {
+  static def bar
+}""")
+    myFixture.configureByText("b.groovy", """import static Foo.bar
+set<caret>Bar(2)
+""")
+    def ref = findReference()
+    def resolved = ref.resolve()
+    assertNull resolved
+  }
+
+  public void testPropertyInCallExpression() {
+    myFixture.configureByText("a.groovy", """
+class Foo {
+  def foo = {
+    return {int i -> print i}
+  }
+
+  def foo(String s){
+    print s
+  }
+}
+new Foo().fo<caret>o(2)"""
+    )
+    def ref = findReference()
+    def resolved = ref.resolve()
+
+    assertInstanceOf resolved, GrAccessorMethod
+  }
+
+  public void testPropertyImportedOnDemand() {
+    myFixture.addFileToProject("foo/A.groovy", 'package foo; class Foo {static def foo}')
+    myFixture.configureByText("B.groovy", """package foo
+import static Foo.*
+print fo<caret>o""")
+
+    def ref = findReference()
+    def resolved = ref.resolve()
+    assertInstanceOf(resolved, GrAccessorMethod)
   }
 }

@@ -42,8 +42,8 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private final FocusWatcher myFocusWatcher;
 
   private final boolean myForced;
-  private IdeFocusManager myFocusManager;
-  private Expirable myTimestamp;
+  private final IdeFocusManager myFocusManager;
+  private final Expirable myTimestamp;
 
   public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
     super(finishCallBack);

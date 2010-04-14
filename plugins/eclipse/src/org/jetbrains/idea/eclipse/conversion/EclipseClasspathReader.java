@@ -78,7 +78,7 @@ public class EclipseClasspathReader {
         createEPathVariable(usedVariables, path, 0);
         final String srcPath = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
         if (srcPath != null) {
-          createEPathVariable(usedVariables, srcPath, 1);
+          createEPathVariable(usedVariables, srcPath, srcVarStart(srcPath));
         }
       } else if (Comparing.strEqual(kind, EclipseXml.SRC_KIND)) {
         if (EclipseProjectFinder.isExternalResource(rootPath, path)) {
@@ -86,6 +86,10 @@ public class EclipseClasspathReader {
         }
       }
     }
+  }
+
+  private static int srcVarStart(String srcPath) {
+    return srcPath.startsWith("/") ? 1 : 0;
   }
 
   public void readClasspath(ModifiableRootModel model,
@@ -197,7 +201,7 @@ public class EclipseClasspathReader {
 
       final String srcPathAttr = element.getAttributeValue(EclipseXml.SOURCEPATH_ATTR);
       if (srcPathAttr != null) {
-        final String srcUrl = eclipseVariabledPath2Url(rootModel, usedVariables, srcPathAttr, 1/*srcPathAttr.startsWith("/") ? 1 : 0*/);
+        final String srcUrl = eclipseVariabledPath2Url(rootModel, usedVariables, srcPathAttr, srcVarStart(srcPathAttr));
         modifiableModel.addRoot(srcUrl, OrderRootType.SOURCES);
         EclipseModuleManager.getInstance(rootModel.getModule()).registerEclipseSrcVariablePath(srcUrl, srcPathAttr);
       }
@@ -344,7 +348,17 @@ public class EclipseClasspathReader {
 
   private static String eclipseVariabledPath2Url(ModifiableRootModel rootModel, Set<String> usedVariables, String path, int varStart) {
     final EPathVariable var = createEPathVariable(usedVariables, path, varStart);
-    return PathMacroManager.getInstance(rootModel.getModule()).expandPath(var.toIdeaVariabledUrl());
+    final String url = PathMacroManager.getInstance(rootModel.getModule()).expandPath(var.toIdeaVariabledUrl());
+
+    final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (localFile != null) {
+      final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+      if (jarFile != null) {
+        return jarFile.getUrl();
+      }
+    }
+
+    return url;
   }
 
   private static EPathVariable createEPathVariable(final Set<String> usedVariables, final String pathAttr, final int varStart) {
@@ -360,8 +374,8 @@ public class EclipseClasspathReader {
   }
 
   private static class EPathVariable {
-    private String myVariable;
-    private String myRelatedPath;
+    private final String myVariable;
+    private final String myRelatedPath;
 
     private EPathVariable(final Set<String> usedVariables, final String variable, final String relatedPath) {
       myVariable = variable;

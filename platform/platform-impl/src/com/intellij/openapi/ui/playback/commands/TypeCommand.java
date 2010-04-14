@@ -24,7 +24,7 @@ import java.awt.event.KeyEvent;
 
 public abstract class TypeCommand extends AbstractCommand {
 
-  private static KeyStokeMap ourMap = new KeyStokeMap();
+  private static final KeyStokeMap ourMap = new KeyStokeMap();
 
   public TypeCommand(String text, int line) {
     super(text, line);

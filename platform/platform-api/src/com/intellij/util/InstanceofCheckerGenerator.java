@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class InstanceofCheckerGenerator {
-  private static InstanceofCheckerGenerator ourInstance;
+  private static final InstanceofCheckerGenerator ourInstance;
 
   static {
     try {

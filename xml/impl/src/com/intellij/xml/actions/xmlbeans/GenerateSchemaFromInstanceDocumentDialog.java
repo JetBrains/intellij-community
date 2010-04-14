@@ -57,7 +57,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   static final String LOCAL_ELEMENTS_TYPES = XmlBundle.message("local.elements.types.option.name");
   static final String GLOBAL_ELEMENTS_LOCAL_TYPES = XmlBundle.message("global.elements.local.types.option.name");
 
-  private static List<String> designTypes = Arrays.asList(
+  private static final List<String> designTypes = Arrays.asList(
     LOCAL_ELEMENTS_GLOBAL_COMPLEX_TYPES,
     LOCAL_ELEMENTS_TYPES,
     GLOBAL_ELEMENTS_LOCAL_TYPES
@@ -65,7 +65,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
 
   static final String STRING_TYPE = "string";
   static final String SMART_TYPE = "smart";
-  private static List<String> simpleContentTypes = Arrays.asList(STRING_TYPE, SMART_TYPE);
+  private static final List<String> simpleContentTypes = Arrays.asList(STRING_TYPE, SMART_TYPE);
   private Runnable myOkAction;
 
   public GenerateSchemaFromInstanceDocumentDialog(Project project, VirtualFile file) {

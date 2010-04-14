@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -152,6 +153,39 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected Disposable getTestRootDisposable() {
     return myTestRootDisposable;
+  }
+
+  protected void runTest() throws Throwable {
+    final Throwable[] throwables = new Throwable[1];
+
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          UsefulTestCase.super.runTest();
+        }
+        catch (InvocationTargetException e) {
+          e.fillInStackTrace();
+          throwables[0] = e.getTargetException();
+        }
+        catch (IllegalAccessException e) {
+          e.fillInStackTrace();
+          throwables[0] = e;
+        }
+        catch (Throwable e) {
+          throwables[0] = e;
+        }
+      }
+    };
+
+    invokeTestRunnable(runnable);
+
+    if (throwables[0] != null) {
+      throw throwables[0];
+    }
+  }
+
+  protected void invokeTestRunnable(Runnable runnable) throws Exception {
+    runnable.run();
   }
 
   @NonNls
@@ -344,6 +378,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertEmpty(final String errorMsg, final Collection<?> collection) {
     assertOrderedEquals(errorMsg, collection);
+  }
+
+  public static void assertSize(int expectedSize, final Object[] array) {
+    assertEquals(expectedSize, array.length);
+  }
+
+  public static void assertSize(int expectedSize, final Collection<?> c) {
+    assertEquals(expectedSize, c.size());
   }
 
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {

@@ -35,7 +35,7 @@ import java.util.List;
  * @author nik
  */
 public class LibrarySourceItem extends PackagingSourceItem {
-  private Library myLibrary;
+  private final Library myLibrary;
 
   public LibrarySourceItem(@NotNull Library library) {
     myLibrary = library;

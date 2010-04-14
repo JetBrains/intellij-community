@@ -146,7 +146,7 @@ public class DomSemContributor extends SemContributor {
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
-      private ThreadLocal<Set<XmlTag>> myCalculating = new ThreadLocal<Set<XmlTag>>() {
+      private final ThreadLocal<Set<XmlTag>> myCalculating = new ThreadLocal<Set<XmlTag>>() {
         @Override
         protected Set<XmlTag> initialValue() {
           return new THashSet<XmlTag>();

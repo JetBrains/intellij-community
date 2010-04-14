@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class DelegatedSourceItemPresentation extends SourceItemPresentation {
-  private TreeNodePresentation myPresentation;
+  private final TreeNodePresentation myPresentation;
 
   public DelegatedSourceItemPresentation(TreeNodePresentation presentation) {
     myPresentation = presentation;

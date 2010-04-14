@@ -27,7 +27,7 @@ import javax.swing.*;
 /**
  * @author Gregory.Shrago
  */
-public class ConsoleViewWrapper implements ConsoleView {
+public class ConsoleViewWrapper implements ConsoleView, ExecutionConsoleEx {
   private final ConsoleView myDelegate;
 
   public ConsoleViewWrapper(final ConsoleView delegate) {
@@ -100,6 +100,20 @@ public class ConsoleViewWrapper implements ConsoleView {
 
   public boolean canPause() {
     return myDelegate.canPause();
+  }
+
+  public void buildUi(RunnerLayoutUi layoutUi) {
+    if (myDelegate instanceof ExecutionConsoleEx) {
+      ((ExecutionConsoleEx)myDelegate).buildUi(layoutUi);
+    }
+  }
+
+
+  public String getExecutionConsoleId() {
+    if (myDelegate instanceof ExecutionConsoleEx) {
+      return ((ExecutionConsoleEx)myDelegate).getExecutionConsoleId();
+    }
+    return null;
   }
 
   @NotNull

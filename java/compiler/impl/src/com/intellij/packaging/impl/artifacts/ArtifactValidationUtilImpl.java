@@ -33,7 +33,7 @@ import java.util.Set;
  * @author nik
  */
 public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
-  private Project myProject;
+  private final Project myProject;
   private CachedValue<Set<Artifact>> mySelfIncludingArtifacts;
 
   public ArtifactValidationUtilImpl(Project project) {

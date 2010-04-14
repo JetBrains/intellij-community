@@ -223,7 +223,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
-  private IndentsModel myIndentsModel;
+  private final IndentsModel myIndentsModel;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();

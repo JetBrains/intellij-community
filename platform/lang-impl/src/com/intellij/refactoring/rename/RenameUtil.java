@@ -69,7 +69,7 @@ public class RenameUtil {
       PsiElement referenceElement = ref.getElement();
       result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                          ref.getRangeInElement().getEndOffset(), element,
-                                         false));
+                                         !ref.isReferenceTo(element)));
     }
 
     processor.findCollisions(element, newName, allRenames, result);

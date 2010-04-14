@@ -461,9 +461,9 @@ public class AdvancedEnhancer extends AbstractClassGenerator
       }
       methods.addAll(interfaceMethods);
     }
+    CollectionUtils.filter(methods, new DuplicatesPredicate());
     CollectionUtils.filter(methods, new RejectModifierPredicate(Constants.ACC_STATIC | Constants.ACC_FINAL));
     CollectionUtils.filter(methods, new VisibilityPredicate(superclass, true));
-    CollectionUtils.filter(methods, new DuplicatesPredicate());
   }
 
   public void generateClass(ClassVisitor v) throws Exception {

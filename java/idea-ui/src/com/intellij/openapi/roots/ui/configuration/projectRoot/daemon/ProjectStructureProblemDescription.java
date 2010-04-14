@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ProjectStructureProblemDescription {
-  private String myMessage;
+  private final String myMessage;
   private final Severity mySeverity;
 
   public ProjectStructureProblemDescription(@NotNull String message, @NotNull Severity severity) {

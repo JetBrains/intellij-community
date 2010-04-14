@@ -75,7 +75,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Gregory.Shrago
  */
 public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
-  private static int SEPARATOR_THICKNESS = 1;
+  private static final int SEPARATOR_THICKNESS = 1;
 
   private final Project myProject;
 
@@ -88,7 +88,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private String myTitle;
   private String myPrompt = "> ";
-  private LightVirtualFile myHistoryFile;
+  private final LightVirtualFile myHistoryFile;
 
   private Editor myCurrentEditor;
 
@@ -259,7 +259,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this.myTitle = title;
   }
 
-  public void addToHistory(final String text, final TextAttributes attributes) {
+  public void printToHistory(final String text, final TextAttributes attributes) {
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);

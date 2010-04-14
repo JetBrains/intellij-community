@@ -26,7 +26,7 @@ import java.awt.event.MouseEvent;
 
 public class ContentComboLabel extends BaseLabel {
 
-  private ComboIcon myComboIcon = new ComboIcon() {
+  private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
       return new Rectangle(getWidth() - getIconWidth(), 0, getIconWidth(), getHeight());
@@ -37,7 +37,7 @@ public class ContentComboLabel extends BaseLabel {
       return myUi.myWindow.isActive();
     }
   };
-  private ComboContentLayout myLayout;
+  private final ComboContentLayout myLayout;
 
   public ContentComboLabel(ComboContentLayout layout) {
     super(layout.myUi, true);

@@ -218,6 +218,10 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     }
   }
 
+  public boolean isMinimized(Content content) {
+    return getCellFor(content).isMinimized(content);
+  }
+
   static class Placeholder extends Wrapper implements NullableComponent {
 
     private JComponent myContent;

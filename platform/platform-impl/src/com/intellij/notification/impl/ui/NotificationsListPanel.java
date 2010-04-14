@@ -54,11 +54,11 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   private static final String REMOVE_KEY = "REMOVE";
 
   private Project myProject;
-  private Wrapper myWrapper;
+  private final Wrapper myWrapper;
   private JComponent myActiveComponent;
 
-  private JComponent myEmptyComponent;
-  private JComponent myListComponent;
+  private final JComponent myEmptyComponent;
+  private final JComponent myListComponent;
 
   public NotificationsListPanel(@Nullable final Project project) {
     setLayout(new BorderLayout());
@@ -156,10 +156,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   }
 
   private static class NotificationsListRenderer extends JComponent implements ListCellRenderer {
-    private JTextPane myText;
+    private final JTextPane myText;
     private boolean mySelected;
     private boolean myHasFocus;
-    private JLabel myIconLabel;
+    private final JLabel myIconLabel;
     private Processor<Cursor> myProc;
     private boolean myWasRead;
 
@@ -267,10 +267,10 @@ public class NotificationsListPanel extends JPanel implements NotificationModelL
   }
 
   private static class NotificationsListModel extends AbstractListModel implements NotificationModelListener, Disposable {
-    private List<Notification> myNotifications = new ArrayList<Notification>();
+    private final List<Notification> myNotifications = new ArrayList<Notification>();
     private NotificationType myType;
     private Project myProject;
-    private NotNullFunction<Project, Collection<Notification>> myRebuildFunction;
+    private final NotNullFunction<Project, Collection<Notification>> myRebuildFunction;
     private boolean myArchive;
 
     private NotificationsListModel(@Nullable Project project) {

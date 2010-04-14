@@ -30,7 +30,7 @@ public abstract class WindowAction extends AnAction {
   public static final String NO_WINDOW_ACTIONS = "no.window.actions";
 
   protected Window myWindow;
-  private static JLabel mySizeHelper = new JLabel("W");
+  private static final JLabel mySizeHelper = new JLabel("W");
 
   {
     setEnabledInModalContext(true);
@@ -61,8 +61,8 @@ public abstract class WindowAction extends AnAction {
 
   public abstract static class BaseSizeAction extends WindowAction {
 
-    private boolean myHorizontal;
-    private boolean myPositive;
+    private final boolean myHorizontal;
+    private final boolean myPositive;
 
     protected BaseSizeAction(boolean horizontal, boolean positive) {
       myHorizontal = horizontal;

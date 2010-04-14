@@ -37,7 +37,7 @@ import java.util.Collection;
  * @author nik
  */
 public class ArtifactVirtualFileListener extends VirtualFileAdapter {
-  private CachedValue<MultiValuesMap<String, Artifact>> myParentPathsToArtifacts;
+  private final CachedValue<MultiValuesMap<String, Artifact>> myParentPathsToArtifacts;
   private final ArtifactManagerImpl myArtifactManager;
 
   public ArtifactVirtualFileListener(Project project, final ArtifactManagerImpl artifactManager) {

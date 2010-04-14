@@ -103,7 +103,7 @@ public class RenameHandlerRegistry {
   private static class HandlersChooser extends DialogWrapper {
     private final String[] myRenamers;
     private String mySelection;
-    private JRadioButton[] myRButtons;
+    private final JRadioButton[] myRButtons;
 
     protected HandlersChooser(Project project, String [] renamers) {
       super(project);

@@ -22,13 +22,14 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import static com.intellij.util.containers.ContainerUtil.*;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public class PathsList  {
   private final List<String>  myPath = new ArrayList<String>();
@@ -61,6 +62,11 @@ public class PathsList  {
 
   public void add(@NonNls String path) {
     addAllLast(chooseFirstTimeItems(path), myPath);
+  }
+
+  public void remove(String path) {
+    myPath.remove(path);
+    myPathSet.remove(path);
   }
 
   public void add(VirtualFile file) {

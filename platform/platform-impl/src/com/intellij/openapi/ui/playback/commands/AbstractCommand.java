@@ -25,8 +25,8 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   public static String CMD_PREFIX = "%";
 
-  private String myText;
-  private int myLine;
+  private final String myText;
+  private final int myLine;
 
   public AbstractCommand(String text, int line) {
     myText = text != null ? text : null;

@@ -1076,7 +1076,7 @@ public class PluginManager {
   }
 
   private static class ClassCounter {
-    private String myPluginId;
+    private final String myPluginId;
     private int myCount;
 
     private ClassCounter(String pluginId) {

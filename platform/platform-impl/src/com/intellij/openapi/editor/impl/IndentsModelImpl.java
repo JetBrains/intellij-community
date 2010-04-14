@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IndentsModelImpl implements IndentsModel {
-  private EditorImpl myEditor;
+  private final EditorImpl myEditor;
   private List<IndentGuideDescriptor> myIndents = new ArrayList<IndentGuideDescriptor>();
 
   public IndentsModelImpl(EditorImpl editor) {

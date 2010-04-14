@@ -22,7 +22,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import org.jetbrains.annotations.NotNull;
 
 public class RegExpSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
-  private ParserDefinition myParserDefinition;
+  private final ParserDefinition myParserDefinition;
 
   public RegExpSyntaxHighlighterFactory() {
     myParserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(RegExpLanguage.INSTANCE);

@@ -267,7 +267,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     private final String myInfo;
     private final Icon myIcon;
     private final PsiFile myFile;
-    private FileReferenceHelper myReferenceHelper;
+    private final FileReferenceHelper myReferenceHelper;
 
     public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final FileReferenceHelper referenceHelper) {
       myName = file.getName();

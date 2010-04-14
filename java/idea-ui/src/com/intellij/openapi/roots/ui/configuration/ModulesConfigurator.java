@@ -89,7 +89,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private ProjectFacetsConfigurator myFacetsConfigurator;
 
   private StructureConfigurableContext myContext;
-  private List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<ModuleEditor.ChangeListener>();
+  private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<ModuleEditor.ChangeListener>();
 
   public ModulesConfigurator(Project project, ProjectJdksModel projectJdksModel) {
     myProject = project;

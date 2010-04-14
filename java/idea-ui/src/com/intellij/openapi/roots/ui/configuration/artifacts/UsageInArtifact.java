@@ -12,10 +12,10 @@ import javax.swing.*;
  * @author nik
  */
 public class UsageInArtifact extends ProjectStructureElementUsage {
-  private Artifact myOriginalArtifact;
+  private final Artifact myOriginalArtifact;
   private final ArtifactsStructureConfigurableContext myContext;
-  private ProjectStructureElement mySourceElement;
-  private ProjectStructureElement myContainingElement;
+  private final ProjectStructureElement mySourceElement;
+  private final ProjectStructureElement myContainingElement;
   private final String myParentPath;
   private final PackagingElement<?> myPackagingElement;
 

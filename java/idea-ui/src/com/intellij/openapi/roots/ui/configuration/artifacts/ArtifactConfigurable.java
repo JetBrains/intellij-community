@@ -38,7 +38,7 @@ public class ArtifactConfigurable extends ProjectStructureElementConfigurable<Ar
   private final ArtifactsStructureConfigurableContext myArtifactsStructureContext;
   private final ArtifactEditorImpl myEditor;
   private boolean myIsInUpdateName;
-  private ProjectStructureElement myProjectStructureElement;
+  private final ProjectStructureElement myProjectStructureElement;
 
   public ArtifactConfigurable(Artifact originalArtifact, ArtifactsStructureConfigurableContextImpl artifactsStructureContext, final Runnable updateTree) {
     super(true, updateTree);

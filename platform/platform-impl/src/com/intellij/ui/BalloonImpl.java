@@ -51,7 +51,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
   private JLayeredPane myLayeredPane;
   private Position myPosition;
   private Point myTargetPoint;
-  private boolean myHideOnFrameResize;
+  private final boolean myHideOnFrameResize;
 
   private final Color myBorderColor;
   private final Color myFillColor;
@@ -103,12 +103,12 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
       }
     }
   };
-  private long myFadeoutTime;
+  private final long myFadeoutTime;
   private Dimension myDefaultPrefSize;
-  private ActionListener myClickHandler;
-  private boolean myCloseOnClick;
+  private final ActionListener myClickHandler;
+  private final boolean myCloseOnClick;
 
-  private CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
+  private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<JBPopupListener>();
   private boolean myVisible;
 
   private boolean isInsideBalloon(MouseEvent me) {
@@ -140,8 +140,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
   private final JComponent myContent;
   private final boolean myHideOnMouse;
   private final boolean myHideOnKey;
-  private boolean myEnableCloseButton;
-  private Icon myCloseButton = IconLoader.getIcon("/general/balloonClose.png");
+  private final boolean myEnableCloseButton;
+  private final Icon myCloseButton = IconLoader.getIcon("/general/balloonClose.png");
 
   public BalloonImpl(JComponent content,
                      Color borderColor,
@@ -591,8 +591,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow {
     private BufferedImage myImage;
     private float myAlpha;
     private final BalloonImpl myBalloon;
-    private CloseButton myCloseRec = new CloseButton();
-    private BaseButtonBehavior myButton;
+    private final CloseButton myCloseRec = new CloseButton();
+    private final BaseButtonBehavior myButton;
 
     private final Wrapper myContent;
 

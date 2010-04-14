@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 public class ProjectFileVersionImpl extends ProjectFileVersion implements ProjectComponent, PersistentStateComponent<ProjectFileVersionImpl.ProjectFileVersionState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.convert.ProjectFileVersionImpl");
   @NonNls public static final String COMPONENT_NAME = "ProjectFileVersion";
-  private Project myProject;
+  private final Project myProject;
 
   public ProjectFileVersionImpl(Project project) {
     myProject = project;

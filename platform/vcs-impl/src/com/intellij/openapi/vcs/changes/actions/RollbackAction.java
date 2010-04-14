@@ -126,7 +126,7 @@ public class RollbackAction extends AnAction implements DumbAware {
 
   private static class ChangesCheckHelper {
     private Change[] myChanges;
-    private boolean myChangesSet;
+    private final boolean myChangesSet;
 
     public ChangesCheckHelper(final Project project, final AnActionEvent e) {
       Change[] changes = e.getData(VcsDataKeys.CHANGES);

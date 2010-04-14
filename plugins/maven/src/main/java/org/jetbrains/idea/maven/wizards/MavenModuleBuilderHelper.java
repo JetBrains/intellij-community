@@ -48,17 +48,17 @@ import java.util.Collections;
 import java.util.Map;
 
 public class MavenModuleBuilderHelper {
-  private MavenId myProjectId;
+  private final MavenId myProjectId;
 
-  private MavenProject myAggregatorProject;
-  private MavenProject myParentProject;
+  private final MavenProject myAggregatorProject;
+  private final MavenProject myParentProject;
 
-  private boolean myInheritGroupId;
-  private boolean myInheritVersion;
+  private final boolean myInheritGroupId;
+  private final boolean myInheritVersion;
 
-  private ArchetypeInfo myArchetype;
+  private final ArchetypeInfo myArchetype;
 
-  private String myCommandName;
+  private final String myCommandName;
 
   public MavenModuleBuilderHelper(MavenId projectId,
                                   MavenProject aggregatorProject,

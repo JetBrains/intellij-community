@@ -392,11 +392,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myTextFieldAction.update();
     myNorthPanel.remove(myPathTextFieldWrapper);
     if (ourToShowTextField) {
+      final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
       if (myFileSystemTree.getSelectedFile() != null) {
-        final ArrayList<VirtualFile> selection = new ArrayList<VirtualFile>();
         selection.add(myFileSystemTree.getSelectedFile());
-        updatePathFromTree(selection, true);
       }
+      updatePathFromTree(selection, true);
       myNorthPanel.add(myPathTextFieldWrapper, BorderLayout.CENTER);
     } else {
       setErrorText(null);
@@ -445,6 +445,16 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         text = vFile.getPresentableUrl();
       } else {
         text = vFile.getUrl();
+      }
+    } else {
+      List<VirtualFile> roots = myChooserDescriptor.getRoots();
+      if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
+        VirtualFile vFile = roots.get(0);
+        if (vFile.isInLocalFileSystem()) {
+          text = vFile.getPresentableUrl();
+        } else {
+          text = vFile.getUrl();
+        }
       }
     }
 

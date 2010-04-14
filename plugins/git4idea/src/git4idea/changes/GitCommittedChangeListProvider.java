@@ -59,7 +59,7 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
   /**
    * The project for the service
    */
-  private Project myProject;
+  private final Project myProject;
 
   /**
    * The constructor
@@ -200,7 +200,7 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
           h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
         }
       }
-    }, consumer);
+    }, consumer, false);
   }
 
   /**

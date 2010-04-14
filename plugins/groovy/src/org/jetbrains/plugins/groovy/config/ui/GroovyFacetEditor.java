@@ -65,6 +65,7 @@ public class GroovyFacetEditor {
   private JComboBox myComboBox;
   private JRadioButton myExistingSdk;
   private JRadioButton myNewSdk;
+  private JLabel myNewSdkLabel;
   private final Class<? extends LibraryManager> myAcceptableManager;
 
   public GroovyFacetEditor(@Nullable Project project) {
@@ -87,10 +88,12 @@ public class GroovyFacetEditor {
     if (hasVersions) {
       myExistingSdk.setSelected(true);
       mySdkPath.setEnabled(false);
+      myNewSdkLabel.setVisible(false);
     } else {
       myExistingSdk.setVisible(false);
       myNewSdk.setVisible(false);
       myNewSdk.setSelected(true);
+      myNewSdkLabel.setVisible(true);
 
       mySdkPath.setEnabled(true);
 

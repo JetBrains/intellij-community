@@ -39,11 +39,11 @@ public class GitConfigTracker implements GitRootsListener {
   /**
    * The context project
    */
-  private Project myProject;
+  private final Project myProject;
   /**
    * The vcs object
    */
-  private GitVcs myVcs;
+  private final GitVcs myVcs;
   /**
    * The vcs manager that tracks content roots
    */
@@ -51,7 +51,7 @@ public class GitConfigTracker implements GitRootsListener {
   /**
    * The listener collection (managed by GitVcs object since lifetime of this object is less than lifetime of GitVcs)
    */
-  private GitConfigListener myMulticaster;
+  private final GitConfigListener myMulticaster;
   /**
    * The appeared roots that has been already reported as changed
    */
@@ -59,11 +59,11 @@ public class GitConfigTracker implements GitRootsListener {
   /**
    * Local file system service
    */
-  private LocalFileSystem myLocalFileSystem;
+  private final LocalFileSystem myLocalFileSystem;
   /**
    * The file listener
    */
-  private MyFileListener myFileListener;
+  private final MyFileListener myFileListener;
 
   /**
    * The constructor

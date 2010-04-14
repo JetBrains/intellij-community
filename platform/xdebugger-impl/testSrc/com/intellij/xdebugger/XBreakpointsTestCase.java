@@ -16,9 +16,11 @@
 package com.intellij.xdebugger;
 
 import com.intellij.mock.MockProject;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.openapi.vfs.impl.http.RemoteFileManager;
+import com.intellij.openapi.vfs.impl.http.RemoteFileManagerImpl;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
 
 /**
@@ -30,6 +32,7 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     MockProject project = disposeOnTearDown(new MockProject());
+    getApplication().registerService(RemoteFileManager.class, RemoteFileManagerImpl.class);
     myBreakpointManager = new XBreakpointManagerImpl(project, null, null);
   }
 

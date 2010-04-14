@@ -16,6 +16,7 @@
 package com.intellij.xml;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -232,7 +233,8 @@ public class DefaultXmlExtension extends XmlExtension {
         final XmlAttributeValue value = xmlAttribute.getValueElement();
         assert value != null;
         final int startOffset = value.getTextOffset();
-        editor.getCaretModel().moveToOffset(startOffset);        
+        editor.getCaretModel().moveToOffset(startOffset);
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }
     if (runAfter != null) {

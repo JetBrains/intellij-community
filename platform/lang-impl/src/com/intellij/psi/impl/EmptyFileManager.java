@@ -70,19 +70,20 @@ class EmptyFileManager implements FileManager {
   public void cleanupForNextTest() {
   }
 
-  public FileViewProvider findViewProvider(VirtualFile file) {
+  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     return null;
   }
 
-  public FileViewProvider findCachedViewProvider(VirtualFile file) {
+  public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
     return null;
   }
 
-  public FileViewProvider createFileViewProvider(final VirtualFile file, final boolean physical) {
+  @NotNull
+  public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final boolean physical) {
     return new SingleRootFileViewProvider(myManager, file, physical);
   }
 
-  public void setViewProvider(final VirtualFile virtualFile, final FileViewProvider singleRootFileViewProvider) {
+  public void setViewProvider(@NotNull final VirtualFile virtualFile, final FileViewProvider singleRootFileViewProvider) {
 
   }
 

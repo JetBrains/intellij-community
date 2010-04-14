@@ -28,7 +28,7 @@ import java.util.Collection;
  * @author nik
  */
 public class HideContentAction extends DumbAwareAction {
-  private ArtifactEditorEx myArtifactEditor;
+  private final ArtifactEditorEx myArtifactEditor;
 
   public HideContentAction(ArtifactEditorEx artifactEditor) {
     super("Hide Content");

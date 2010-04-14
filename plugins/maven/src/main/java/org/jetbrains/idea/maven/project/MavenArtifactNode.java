@@ -17,34 +17,94 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.List;
 
 public class MavenArtifactNode implements Serializable {
+  public enum State { ADDED, EXCLUDED, CONFLICT, DUPLICATE, CYCLE}
+
+  private MavenArtifactNode myParent;
+
   private MavenArtifact myArtifact;
+  private State myState;
+  private MavenArtifact myRelatedArtifact;
+
+  private String myOriginalScope;
+
+  private String myPremanagedVersion;
+  private String myPremanagedScope;
+
   private List<MavenArtifactNode> myDependencies;
 
   protected MavenArtifactNode() {
   }
 
-  public MavenArtifactNode(MavenArtifact artifact, List<MavenArtifactNode> dependencies) {
+  public MavenArtifactNode(MavenArtifactNode parent,
+                           MavenArtifact artifact,
+                           State state,
+                           MavenArtifact relatedArtifact,
+                           String originalScope,
+                           String premanagedVersion,
+                           String premanagedScope) {
+    myParent = parent;
     myArtifact = artifact;
-    myDependencies = dependencies;
+    myState = state;
+    myRelatedArtifact = relatedArtifact;
+    myOriginalScope = originalScope;
+    myPremanagedVersion = premanagedVersion;
+    myPremanagedScope = premanagedScope;
   }
+
+  @Nullable
+  public MavenArtifactNode getParent() {
+    return myParent;
+  }
+
+
 
   public MavenArtifact getArtifact() {
     return myArtifact;
+  }
+
+  public State getState() {
+    return myState;
+  }
+
+  @Nullable
+  public MavenArtifact getRelatedArtifact() {
+    return myRelatedArtifact;
+  }
+
+  @Nullable
+  public String getOriginalScope() {
+    return myOriginalScope;
+  }
+
+  @Nullable
+  public String getPremanagedVersion() {
+    return myPremanagedVersion;
+  }
+
+  @Nullable
+  public String getPremanagedScope() {
+    return myPremanagedScope;
   }
 
   public List<MavenArtifactNode> getDependencies() {
     return myDependencies;
   }
 
+  public void setDependencies(List<MavenArtifactNode> dependencies) {
+    myDependencies = dependencies;
+  }
+
   @Override
   public String toString() {
-    return myArtifact.getDisplayStringWithTypeAndClassifier()
-           + "->(" + formatNodesList(myDependencies) + ")";
+    String result =myArtifact.getDisplayStringWithTypeAndClassifier();
+    if (myState != State.ADDED) result += "[" + myState + ":" + myRelatedArtifact.getDisplayStringWithTypeAndClassifier() + "]";
+    return result += "->(" + formatNodesList(myDependencies) + ")";
   }
 
   public static String formatNodesList(List<MavenArtifactNode> nodes) {
@@ -62,16 +122,11 @@ public class MavenArtifactNode implements Serializable {
 
     MavenArtifactNode that = (MavenArtifactNode)o;
 
-    if (!myArtifact.equals(that.myArtifact)) return false;
-    if (!myDependencies.equals(that.myDependencies)) return false;
-
-    return true;
+    return myArtifact.equals(that.myArtifact);
   }
 
   @Override
   public int hashCode() {
-    int result = myArtifact.hashCode();
-    result = 31 * result + myDependencies.hashCode();
-    return result;
+    return myArtifact.hashCode();
   }
 }

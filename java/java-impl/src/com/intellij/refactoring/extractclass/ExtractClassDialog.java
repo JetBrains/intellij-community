@@ -52,7 +52,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final ReferenceEditorComboWithBrowseButton packageTextField;
   private final JTextField sourceClassTextField;
   private JCheckBox myGenerateAccessorsCb;
-  private VisibilityPanel myVisibilityPanel;
+  private final VisibilityPanel myVisibilityPanel;
 
   ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
     super(sourceClass.getProject(), true);

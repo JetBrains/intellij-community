@@ -31,7 +31,7 @@ import javax.swing.*;
  * @author spleaner
  */
 public class IdeNotificationArea implements StatusBarPatch {
-  private NotificationComponent myNotificationComponent;
+  private final NotificationComponent myNotificationComponent;
 
   public IdeNotificationArea(final StatusBarImpl statusBar) {
     myNotificationComponent = new NotificationComponent(this);

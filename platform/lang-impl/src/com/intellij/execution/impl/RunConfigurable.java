@@ -83,7 +83,7 @@ class RunConfigurable extends BaseConfigurable {
   private StorageAccessors myConfig;
   private SingleConfigurationConfigurable<RunConfiguration> mySelectedConfigurable = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
-  private JTextField myRecentsLimit = new JTextField("5");
+  private final JTextField myRecentsLimit = new JTextField("5");
 
   public RunConfigurable(final Project project) {
     this(project, null);

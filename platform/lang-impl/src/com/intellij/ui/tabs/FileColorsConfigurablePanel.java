@@ -35,10 +35,10 @@ import java.util.List;
  */
 public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private FileColorManagerImpl myManager;
-  private JCheckBox myEnabledCheckBox;
-  private JCheckBox myTabsEnabledCheckBox;
-  private FileColorSettingsTable myLocalTable;
-  private FileColorSettingsTable mySharedTable;
+  private final JCheckBox myEnabledCheckBox;
+  private final JCheckBox myTabsEnabledCheckBox;
+  private final FileColorSettingsTable myLocalTable;
+  private final FileColorSettingsTable mySharedTable;
 
   public FileColorsConfigurablePanel(@NotNull final FileColorManagerImpl manager) {
     setLayout(new BorderLayout());

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PhysicalDomParentStrategy implements DomParentStrategy {
   private XmlElement myElement;
-  private DomManagerImpl myDomManager;
+  private final DomManagerImpl myDomManager;
 
   public PhysicalDomParentStrategy(@NotNull final XmlElement element, DomManagerImpl domManager) {
     myElement = element;

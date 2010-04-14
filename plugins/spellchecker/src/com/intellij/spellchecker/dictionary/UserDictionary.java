@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class UserDictionary implements EditableDictionary {
 
-  private String name;
+  private final String name;
 
   @NotNull
   private final THashSet<String> words = new THashSet<String>();

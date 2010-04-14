@@ -28,10 +28,10 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class RegistryValue {
 
-  private Registry myRegistry;
-  private String myKey;
+  private final Registry myRegistry;
+  private final String myKey;
 
-  private CopyOnWriteArraySet<RegistryValueListener> myListeners = new CopyOnWriteArraySet<RegistryValueListener>();
+  private final CopyOnWriteArraySet<RegistryValueListener> myListeners = new CopyOnWriteArraySet<RegistryValueListener>();
 
   private boolean myChangedSinceStart;
 

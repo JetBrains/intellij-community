@@ -53,7 +53,22 @@ public class PsiTypeLookupItem extends LookupItem {
       dim++;
     }
 
-    LookupItem item;
+    LookupItem item = doCreateItem(type, context);
+
+    if (dim > 0) {
+      final StringBuilder tail = new StringBuilder();
+      for (int i = 0; i < dim; i++) {
+        tail.append("[]");
+      }
+      item.setAttribute(TAIL_TEXT_ATTR, " " + tail.toString());
+      item.setAttribute(TAIL_TEXT_SMALL_ATTR, "");
+      item.putUserData(BRACKETS_COUNT_ATTR, dim);
+    }
+    item.setAttribute(TYPE, original);
+    return item;
+  }
+
+  private static LookupItem doCreateItem(PsiType type, PsiElement context) {
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
@@ -80,25 +95,12 @@ public class PsiTypeLookupItem extends LookupItem {
           }
           lookupString += typeParams;
         }
+        LookupItem item = new PsiTypeLookupItem(psiClass, lookupString);
+        item.setAttribute(SUBSTITUTOR, substitutor);
+        return item;
       }
 
-      item = new PsiTypeLookupItem(psiClass == null ? text : psiClass, lookupString);
-      item.setAttribute(SUBSTITUTOR, substitutor);
     }
-    else {
-      item = new LookupItem(type, type.getPresentableText());
-    }
-
-    if (dim > 0) {
-      final StringBuilder tail = new StringBuilder();
-      for (int i = 0; i < dim; i++) {
-        tail.append("[]");
-      }
-      item.setAttribute(TAIL_TEXT_ATTR, " " + tail.toString());
-      item.setAttribute(TAIL_TEXT_SMALL_ATTR, "");
-      item.putUserData(BRACKETS_COUNT_ATTR, dim);
-    }
-    item.setAttribute(TYPE, original);
-    return item;
+    return new LookupItem(type, type.getPresentableText());
   }
 }

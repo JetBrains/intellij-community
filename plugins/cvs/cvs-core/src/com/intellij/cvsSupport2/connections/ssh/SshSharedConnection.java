@@ -39,7 +39,7 @@ public class SshSharedConnection {
   private final ConnectionSettings myConnectionSettings;
 
   private final Object myLock;
-  private AtomicBoolean myValid;
+  private final AtomicBoolean myValid;
 
   private final ThrowableComputable<Connection, AuthenticationException> myConnectionFactory;
   private final List<Cell> myQueue;

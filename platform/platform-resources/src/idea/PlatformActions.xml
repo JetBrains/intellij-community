@@ -387,6 +387,13 @@
       <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
     </group>
 
+    <action id="MaintenanceAction" class="com.intellij.ide.actions.MaintenanceAction"/>
+
+    <group id="MaintenanceGroup">
+      <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
+      <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
+    </group>
+
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
       <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
       <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
@@ -400,6 +407,10 @@
       <separator/>
       <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
               text="Add Test Notification"/>
+
+      <separator/>
+      <reference ref="MaintenanceGroup"/>
+      
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 

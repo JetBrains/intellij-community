@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VariablePassedAsArgumentVisitor
-        extends JavaRecursiveElementVisitor{
+class VariablePassedAsArgumentVisitor extends JavaRecursiveElementVisitor{
 
     @NotNull
     private final PsiVariable variable;

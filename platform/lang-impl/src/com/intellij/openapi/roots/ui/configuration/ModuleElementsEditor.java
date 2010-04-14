@@ -39,7 +39,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   protected History myHistory;
-  private ModuleConfigurationState myState;
+  private final ModuleConfigurationState myState;
 
   protected ModuleElementsEditor(ModuleConfigurationState state) {
     myProject = state.getProject();

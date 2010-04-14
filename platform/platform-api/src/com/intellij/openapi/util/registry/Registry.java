@@ -33,10 +33,10 @@ public class Registry  {
   @NonNls
   private static final String REGISTRY_BUNDLE = "misc.registry";
 
-  private LinkedHashMap<String, String> myUserProperties = new LinkedHashMap<String, String>();
-  private Map<String, String> myLoadedUserProperties = new HashMap<String, String>();
+  private final LinkedHashMap<String, String> myUserProperties = new LinkedHashMap<String, String>();
+  private final Map<String, String> myLoadedUserProperties = new HashMap<String, String>();
 
-  private Map<String, RegistryValue> myValues = new HashMap<String, RegistryValue>();
+  private final Map<String, RegistryValue> myValues = new HashMap<String, RegistryValue>();
 
   private static final Registry ourInstance = new Registry();
 

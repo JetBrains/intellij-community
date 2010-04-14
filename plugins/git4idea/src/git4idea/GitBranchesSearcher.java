@@ -26,7 +26,7 @@ import java.util.Set;
 
 public class GitBranchesSearcher {
   private final static Logger LOG = Logger.getInstance("#git4idea.GitBranchesSearcher");
-  private GitBranch myLocal;
+  private final GitBranch myLocal;
   private GitBranch myRemote;
 
   public GitBranchesSearcher(final Project project, final VirtualFile root, final boolean findRemote) throws VcsException {

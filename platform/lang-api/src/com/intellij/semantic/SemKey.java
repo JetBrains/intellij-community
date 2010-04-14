@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class SemKey<T extends SemElement> {
-  private static AtomicInteger counter = new AtomicInteger(0);
+  private static final AtomicInteger counter = new AtomicInteger(0);
   private final String myDebugName;
   private final SemKey<? super T>[] mySupers;
   private final int myUniqueId;

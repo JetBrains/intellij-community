@@ -34,6 +34,7 @@ private List platformImplementationModules() {
           "smRunner",
           "xdebugger-impl",
           "testFramework",
+          "tests_bootstrap",
           "xml",
           "lvcs-impl",
           "images",
@@ -155,7 +156,17 @@ def layoutFull(String home, String targetDirectory) {
 
       layoutPlugin("ant", "ant", "antIntegration")
       layoutPlugin("InspectionGadgets", "InspectionGadgetsPlugin")
-      layoutPlugin("IntelliLang", "IntelliLangJava")
+      dir("IntelliLang") {
+        dir("lib") {
+          jar("IntelliLang.jar") {
+            module("IntelliLangJava")
+            module("IntelliLang-java")
+            module("IntelliLang-xml")
+            module("IntelliLang-javaee")
+          }
+        }
+      }
+
       layoutPlugin("IntentionPowerPack", "IntentionPowerPackPlugin")
       layoutPlugin("ToString", "generate-tostring", "toString")
 

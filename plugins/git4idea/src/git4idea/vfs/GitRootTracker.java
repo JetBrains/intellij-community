@@ -105,23 +105,23 @@ public class GitRootTracker implements VcsListener {
   /**
    * The command listener
    */
-  private CommandListener myCommandListener;
+  private final CommandListener myCommandListener;
   /**
    * The file listener
    */
-  private MyFileListener myFileListener;
+  private final MyFileListener myFileListener;
   /**
    * Listener for refresh events
    */
-  private VirtualFileManagerAdapter myVirtualFileManagerListener;
+  private final VirtualFileManagerAdapter myVirtualFileManagerListener;
   /**
    * Local file system service
    */
-  private LocalFileSystem myLocalFileSystem;
+  private final LocalFileSystem myLocalFileSystem;
   /**
    * The multicaster for root events
    */
-  private GitRootsListener myMulticaster;
+  private final GitRootsListener myMulticaster;
 
   private final MessageBusConnection myMessageBusConnection;
 

@@ -36,7 +36,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    if (stackFrame == null || editorsProvider == null) return;
+    if (stackFrame == null) return;
     final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator == null) return;
 
@@ -63,6 +63,6 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     }
 
     XStackFrame stackFrame = session.getCurrentStackFrame();
-    return stackFrame != null && stackFrame.getEvaluator() != null && session.getDebugProcess().getEditorsProvider() != null;
+    return stackFrame != null && stackFrame.getEvaluator() != null;
   }
 }

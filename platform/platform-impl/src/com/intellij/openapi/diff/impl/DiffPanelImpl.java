@@ -366,7 +366,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   private class MyGenericDataProvider extends GenericDataProvider {
-    private DiffPanelImpl myDiffPanel;
+    private final DiffPanelImpl myDiffPanel;
 
     private MyGenericDataProvider(DiffPanelImpl diffPanel) {
       myDiffPanel = diffPanel;

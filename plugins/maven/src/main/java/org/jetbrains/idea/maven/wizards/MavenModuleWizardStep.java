@@ -91,7 +91,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private JTextArea myArchetypeDescriptionField;
 
   private AtomicBoolean myLoadingCancelled = new AtomicBoolean();
-  private AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
+  private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
 
   public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder) {
     myProjectOrNull = project;

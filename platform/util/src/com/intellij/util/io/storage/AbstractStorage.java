@@ -60,7 +60,7 @@ public abstract class AbstractStorage implements Forceable, Disposable {
   public abstract int ensureCapacity(int attAddress, int capacity);
 
   public class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
-    private int myRecordId;
+    private final int myRecordId;
 
     public StorageDataOutput(int recordId) {
       super(new ByteArrayOutputStream());

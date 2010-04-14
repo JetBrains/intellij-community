@@ -24,7 +24,7 @@ public class ToolWindowContentUiType {
   public static ToolWindowContentUiType TABBED = new ToolWindowContentUiType("tabs");
   public static ToolWindowContentUiType COMBO = new ToolWindowContentUiType("combo");
 
-  private String myName;
+  private final String myName;
 
   private ToolWindowContentUiType(String name) {
     myName = name;

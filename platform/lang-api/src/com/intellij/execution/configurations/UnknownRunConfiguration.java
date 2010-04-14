@@ -39,10 +39,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author spleaner
  */
 public class UnknownRunConfiguration implements RunConfiguration {
-  private ConfigurationFactory myFactory;
+  private final ConfigurationFactory myFactory;
   private Element myStoredElement;
   private String myName;
-  private Project myProject;
+  private final Project myProject;
 
   private static final AtomicInteger myUniqueName = new AtomicInteger(1);
   private boolean myDoNotStore;
@@ -145,7 +145,7 @@ public class UnknownRunConfiguration implements RunConfiguration {
   }
 
   private static class UnknownSettingsEditor extends SettingsEditor<UnknownRunConfiguration> {
-    private JPanel myPanel;
+    private final JPanel myPanel;
 
     private UnknownSettingsEditor() {
       myPanel = new JPanel();

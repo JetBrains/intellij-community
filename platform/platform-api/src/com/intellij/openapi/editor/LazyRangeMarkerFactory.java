@@ -84,7 +84,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
 
   private static abstract class LazyMarker extends UserDataHolderBase implements RangeMarker{
     private RangeMarker myDelegate = null;
-    private VirtualFile myFile;
+    private final VirtualFile myFile;
     protected final int myInitialOffset;
 
     private LazyMarker(VirtualFile file, int offset) {

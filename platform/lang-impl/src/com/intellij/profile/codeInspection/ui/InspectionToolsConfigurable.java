@@ -64,14 +64,14 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable implements ErrorsConfigurable, SearchableConfigurable {
-  private CardLayout myLayout = new CardLayout();
+  private final CardLayout myLayout = new CardLayout();
   private JPanel myPanel;
 
   public static final String ID = "Errors";
   public static final String DISPLAY_NAME = "Inspections";
 
   protected JComboBox myProfiles;
-  private Map<String, SingleInspectionProfilePanel> myPanels = new HashMap<String, SingleInspectionProfilePanel>();
+  private final Map<String, SingleInspectionProfilePanel> myPanels = new HashMap<String, SingleInspectionProfilePanel>();
 
   private JPanel myWholePanel;
   private JButton myAddButton;
@@ -81,7 +81,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   private JCheckBox myShareProfileCheckBox;
   private JButton myCopyButton;
 
-  private ArrayList<String> myDeletedProfiles = new ArrayList<String>();
+  private final ArrayList<String> myDeletedProfiles = new ArrayList<String>();
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());

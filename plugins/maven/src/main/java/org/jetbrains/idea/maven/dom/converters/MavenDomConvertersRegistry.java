@@ -11,7 +11,7 @@ import java.util.Set;
 public class MavenDomConvertersRegistry {
   protected GenericDomValueConvertersRegistry myConvertersRegistry;
 
-  private Set<String> mySoftConverterTypes = new HashSet<String>();
+  private final Set<String> mySoftConverterTypes = new HashSet<String>();
 
   public static MavenDomConvertersRegistry getInstance() {
     return ServiceManager.getService(MavenDomConvertersRegistry.class);

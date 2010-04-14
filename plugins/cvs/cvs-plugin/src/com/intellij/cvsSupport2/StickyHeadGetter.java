@@ -87,7 +87,7 @@ public abstract class StickyHeadGetter {
 
   public static class MyStickyDateGetter extends StickyHeadGetter {
     private final Date myStickyDate;
-    private String myTagStart;
+    private final String myTagStart;
 
     public MyStickyDateGetter(String stickyData, final Date stickyDate, final String currentRevision) {
       super(stickyData);

@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
   private static final Icon ARROW_ICON = IconLoader.getIcon("/general/comboArrow.png");
-  private T[] myValues;
+  private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
 
@@ -238,8 +238,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   private abstract static class ListStep<T> implements ListPopupStep<T> {
-    private List<T> myValues;
-    private T mySelected;
+    private final List<T> myValues;
+    private final T mySelected;
 
     protected ListStep(final T[] values, final T selected) {
       myValues = new ArrayList<T>(Arrays.asList(values));

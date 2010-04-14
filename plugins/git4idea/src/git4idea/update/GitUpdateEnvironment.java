@@ -44,7 +44,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   /**
    * The vcs instance
    */
-  private GitVcs myVcs;
+  private final GitVcs myVcs;
   /**
    * The context project
    */

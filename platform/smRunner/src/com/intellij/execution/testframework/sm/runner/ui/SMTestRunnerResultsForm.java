@@ -83,7 +83,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
 
   // custom progress
   private String myCurrentCustomProgressCategory;
-  private Set<String> myMentionedCategories = new LinkedHashSet<String>();
+  private final Set<String> myMentionedCategories = new LinkedHashSet<String>();
 
   public SMTestRunnerResultsForm(final RunConfigurationBase runConfiguration,
                                  @NotNull final JComponent console,

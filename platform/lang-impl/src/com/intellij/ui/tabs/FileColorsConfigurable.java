@@ -31,7 +31,7 @@ import javax.swing.*;
  * @author spleaner
  */
 public class FileColorsConfigurable implements Configurable, NonDefaultProjectConfigurable {
-  private Project myProject;
+  private final Project myProject;
   private FileColorsConfigurablePanel myPanel;
 
   public FileColorsConfigurable(@NotNull final Project project) {

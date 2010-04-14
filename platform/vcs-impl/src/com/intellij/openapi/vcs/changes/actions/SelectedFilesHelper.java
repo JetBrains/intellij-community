@@ -26,9 +26,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SelectedFilesHelper implements Runnable {
-  private List<MyChecker> myCheckers;
-  private FileStatusManager myStatusManager;
-  private VirtualFile[] myData;
+  private final List<MyChecker> myCheckers;
+  private final FileStatusManager myStatusManager;
+  private final VirtualFile[] myData;
   private int myCnt;
 
   private SelectedFilesHelper(final Project project, final AnActionEvent e) {

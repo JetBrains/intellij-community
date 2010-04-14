@@ -27,7 +27,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class IdeFocusManagerImpl extends IdeFocusManager {
-  private ToolWindowManagerImpl myToolWindowManager;
+  private final ToolWindowManagerImpl myToolWindowManager;
 
   public IdeFocusManagerImpl(ToolWindowManagerImpl twManager) {
     myToolWindowManager = twManager;

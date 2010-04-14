@@ -53,7 +53,7 @@ public class DnDEnabler implements Activatable, Disposable {
   private final DnDAware myDnDSource;
   private MouseListener myOriginalDragGestureRecognizer;
 
-  private LafManagerListener myLafManagerListener = new LafManagerListener() {
+  private final LafManagerListener myLafManagerListener = new LafManagerListener() {
     public void lookAndFeelChanged(LafManager source) {
       // todo[spleaner]: does default listeners are recreated onSetUI() and what 'bout custom listeners??
       onSetUI();

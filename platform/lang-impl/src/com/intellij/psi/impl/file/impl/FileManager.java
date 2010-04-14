@@ -50,11 +50,12 @@ public interface FileManager {
   @TestOnly
   void cleanupForNextTest();
 
-  FileViewProvider findViewProvider(VirtualFile file);
-  FileViewProvider findCachedViewProvider(VirtualFile file);
-  void setViewProvider(VirtualFile virtualFile, FileViewProvider fileViewProvider);
+  FileViewProvider findViewProvider(@NotNull VirtualFile file);
+  FileViewProvider findCachedViewProvider(@NotNull VirtualFile file);
+  void setViewProvider(@NotNull VirtualFile virtualFile, FileViewProvider fileViewProvider);
 
   List<PsiFile> getAllCachedFiles();
 
-  FileViewProvider createFileViewProvider(VirtualFile file, boolean physical);
+  @NotNull
+  FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean physical);
 }

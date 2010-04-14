@@ -37,7 +37,7 @@ public class UpdaterTreeState {
 
   private boolean myCanRunRestore = true;
 
-  private WeakHashMap<Object, Object> myAdjustmentCause2Adjustment = new WeakHashMap<Object, Object>();
+  private final WeakHashMap<Object, Object> myAdjustmentCause2Adjustment = new WeakHashMap<Object, Object>();
 
   public UpdaterTreeState(AbstractTreeUi ui) {
     this(ui, false);

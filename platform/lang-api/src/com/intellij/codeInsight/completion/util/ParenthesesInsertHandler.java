@@ -45,16 +45,36 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     return hasParameters ? WITH_PARAMETERS : NO_PARAMETERS;
   }
 
+  public static ParenthesesInsertHandler<LookupElement> getInstance(final boolean hasParameters, final boolean spaceBeforeParentheses,
+                                                                    final boolean spaceBetweenParentheses,
+                                                                    final boolean insertRightParenthesis, boolean allowParametersOnNextLine) {
+    return new ParenthesesInsertHandler<LookupElement>(spaceBeforeParentheses, spaceBetweenParentheses, insertRightParenthesis, allowParametersOnNextLine) {
+      @Override
+      protected boolean placeCaretInsideParentheses(InsertionContext context, LookupElement item) {
+        return hasParameters;
+      }
+    };
+  }
+
   private final boolean mySpaceBeforeParentheses;
   private final boolean mySpaceBetweenParentheses;
   private final boolean myInsertRightParenthesis;
+  private final boolean myAllowParametersOnNextLine;
 
   protected ParenthesesInsertHandler(final boolean spaceBeforeParentheses,
                                      final boolean spaceBetweenParentheses,
                                      final boolean insertRightParenthesis) {
+    this(spaceBeforeParentheses, spaceBetweenParentheses, insertRightParenthesis, false);
+  }
+
+  protected ParenthesesInsertHandler(boolean spaceBeforeParentheses,
+                                     boolean spaceBetweenParentheses,
+                                     boolean insertRightParenthesis,
+                                     boolean allowParametersOnNextLine) {
     mySpaceBeforeParentheses = spaceBeforeParentheses;
     mySpaceBetweenParentheses = spaceBetweenParentheses;
     myInsertRightParenthesis = insertRightParenthesis;
+    myAllowParametersOnNextLine = allowParametersOnNextLine;
   }
 
   protected ParenthesesInsertHandler() {
@@ -140,6 +160,9 @@ public abstract class ParenthesesInsertHandler<T extends LookupElement> implemen
     final PsiFile file = context.getFile();
     PsiElement element = file.findElementAt(context.getTailOffset());
     if (element instanceof PsiWhiteSpace) {
+      if (!myAllowParametersOnNextLine && element.getText().contains("\n")) {
+        return null;
+      }
       element = file.findElementAt(element.getTextRange().getEndOffset());
     }
     return element;

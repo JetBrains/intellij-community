@@ -38,7 +38,7 @@ public abstract class FileColorSettingsTable extends StripeTable {
   private static final int NAME_COLUMN = 0;
   private static final int COLOR_COLUMN = 1;
 
-  private List<FileColorConfiguration> myOriginal;
+  private final List<FileColorConfiguration> myOriginal;
 
   public FileColorSettingsTable(@NotNull final FileColorManager manager, @NotNull final List<FileColorConfiguration> configurations) {
     super(new ModelAdapter(copy(configurations)));
@@ -250,7 +250,7 @@ public abstract class FileColorSettingsTable extends StripeTable {
 
   private static class ColorCellRenderer extends ScopeNameRenderer {
     private Color myColor;
-    private FileColorManager myManager;
+    private final FileColorManager myManager;
 
     private ColorCellRenderer(final FileColorManager manager) {
       setOpaque(true);

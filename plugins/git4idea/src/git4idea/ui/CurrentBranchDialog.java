@@ -68,7 +68,7 @@ public class CurrentBranchDialog extends DialogWrapper {
   /**
    * The branches to merge
    */
-  private List<GitBranch> myBranches = new LinkedList<GitBranch>();
+  private final List<GitBranch> myBranches = new LinkedList<GitBranch>();
   /**
    * The repository tracked for the current branch
    */
@@ -80,7 +80,7 @@ public class CurrentBranchDialog extends DialogWrapper {
   /**
    * The current project for the dialog
    */
-  private Project myProject;
+  private final Project myProject;
 
   /**
    * A constructor

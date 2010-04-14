@@ -53,7 +53,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
 
   private final InputVariables myVariableData;
   private final PsiClass myTargetClass;
-  private boolean myWasStatic;
+  private final boolean myWasStatic;
 
 
   private JRadioButton myCreateInnerClassRb;

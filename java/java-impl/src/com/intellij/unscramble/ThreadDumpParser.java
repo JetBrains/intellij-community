@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,11 @@ public class ThreadDumpParser {
   private static ThreadState tryParseThreadStart(final String line) {
     Matcher m = ourThreadStartPattern.matcher(line);
     if (m.find()) {
-      return new ThreadState(m.group(1), m.group(2));
+      final ThreadState state = new ThreadState(m.group(1), m.group(2));
+      if (line.contains(" daemon ")) {
+        state.setDaemon(true);
+      }
+      return state;
     }
     return null;
   }

@@ -53,7 +53,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private List<InstructionImpl> myInstructions;
 
   private Stack<InstructionImpl> myProcessingStack;
-  private PsiConstantEvaluationHelper myConstantEvaluator;
+  private final PsiConstantEvaluationHelper myConstantEvaluator;
 
   public ControlFlowBuilder(Project project) {
     myConstantEvaluator = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,63 +15,28 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashMap;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * @author nik
  */
-public class RemoteFileManager {
-  private final LocalFileStorage myStorage;
-  private final HttpFileSystemImpl myHttpFileSystem;
-  private final Map<Pair<Boolean, String>, VirtualFileImpl> myRemoteFiles;
-
-  public RemoteFileManager(final HttpFileSystemImpl httpFileSystem) {
-    myHttpFileSystem = httpFileSystem;
-    myStorage = new LocalFileStorage();
-    myRemoteFiles = new THashMap<Pair<Boolean, String>, VirtualFileImpl>();
+public abstract class RemoteFileManager {
+  public static RemoteFileManager getInstance() {
+    return ServiceManager.getService(RemoteFileManager.class);
   }
 
+  public abstract void addRemoteContentProvider(@NotNull RemoteContentProvider provider, @NotNull Disposable parentDisposable);
 
-  public synchronized VirtualFileImpl getOrCreateFile(final @NotNull String url, final @NotNull String path, final boolean directory) throws IOException {
-    Pair<Boolean, String> key = Pair.create(directory, url);
-    VirtualFileImpl file = myRemoteFiles.get(key);
+  public abstract void addRemoteContentProvider(@NotNull RemoteContentProvider provider);
 
-    if (file == null) {
-      if (!directory) {
-        RemoteFileInfo fileInfo = new RemoteFileInfo(url, this);
-        file = new VirtualFileImpl(myHttpFileSystem, path, fileInfo);
-        fileInfo.addDownloadingListener(new MyDownloadingListener(myHttpFileSystem, file));
-      }
-      else {
-        file = new VirtualFileImpl(myHttpFileSystem, path, null);
-      }
-      myRemoteFiles.put(key, file);
-    }
-    return file;
-  }
+  public abstract void removeRemoteContentProvider(@NotNull RemoteContentProvider provider);
 
-  public LocalFileStorage getStorage() {
-    return myStorage;
-  }
+  public abstract void addFileListener(@NotNull HttpVirtualFileListener listener);
 
+  public abstract void addFileListener(@NotNull HttpVirtualFileListener listener, @NotNull Disposable parentDisposable);
 
-  private static class MyDownloadingListener extends FileDownloadingAdapter {
-    private final HttpFileSystemImpl myHttpFileSystem;
-    private final VirtualFileImpl myFile;
-
-    public MyDownloadingListener(final HttpFileSystemImpl httpFileSystem, final VirtualFileImpl file) {
-      myHttpFileSystem = httpFileSystem;
-      myFile = file;
-    }
-
-    public void fileDownloaded(final VirtualFile localFile) {
-      myHttpFileSystem.fireFileDownloaded(myFile);
-    }
-  }
+  public abstract void removeFileListener(@NotNull HttpVirtualFileListener listener);
 }

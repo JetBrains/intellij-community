@@ -77,8 +77,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   private final java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
   private Project myProject;
 
-  private ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
-  private ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
+  private final ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
+  private final ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -940,8 +940,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private class MyFocusCommand extends FocusCommand implements KeyEventProcessor {
 
       private Context myContextOnFinish;
-      private ArrayList<KeyEvent> myEvents = new ArrayList<KeyEvent>();
-      private DialogWrapper myWrapper;
+      private final ArrayList<KeyEvent> myEvents = new ArrayList<KeyEvent>();
+      private final DialogWrapper myWrapper;
 
       private MyFocusCommand(DialogWrapper wrapper) {
         myWrapper = getDialogWrapper();

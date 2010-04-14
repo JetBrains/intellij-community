@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -29,8 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,9 +42,7 @@ import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -536,7 +531,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public class RootNode extends ProjectsGroupNode {
-    private ProfilesNode myProfilesNode;
+    private final ProfilesNode myProfilesNode;
 
     public RootNode() {
       super(null);
@@ -1070,7 +1065,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     public void updateDependencies() {
-      updateChildren(myMavenProject.getDependenciesNodes(), myMavenProject);
+      updateChildren(myMavenProject.getDependencyTree(), myMavenProject);
     }
   }
 

@@ -32,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author cdr
  */
 @SuppressWarnings({"Since15"})
-public class CompAPIDriver {
+class CompAPIDriver {
   private final BlockingQueue<CompilationEvent> myCompilationResults = new LinkedBlockingQueue<CompilationEvent>();
   private static final CompilationEvent GUARD = new CompilationEvent() {
     @Override
@@ -49,7 +49,7 @@ public class CompAPIDriver {
   private volatile boolean compiling;
   private static final PrintWriter COMPILER_ERRORS = new PrintWriter(System.err);
 
-  public CompAPIDriver() {
+  CompAPIDriver() {
   }
 
   public void compile(List<String> commandLine, List<File> paths, final String outputDir) {

@@ -35,7 +35,7 @@ import java.util.*;
  * @author yole
  */
 public class NativeFileIconProvider implements FileIconProvider {
-  private JFileChooser myFileChooser = new JFileChooser();
+  private final JFileChooser myFileChooser = new JFileChooser();
   private final Map<Ext, Icon> myIconCache = new HashMap<Ext, Icon>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
   private final Set<Ext> myCustomIconExtensions =

@@ -110,8 +110,8 @@ public abstract class LoginPerformer<T extends CvsEnvironment> {
   }
 
   public static class MyForRootProvider extends LoginPerformer<CvsRootProvider> {
-    private ProjectLocator myProjectLocator;
-    private LocalFileSystem myLfs;
+    private final ProjectLocator myProjectLocator;
+    private final LocalFileSystem myLfs;
 
     public MyForRootProvider(Collection<CvsRootProvider> roots, Consumer<VcsException> exceptionConsumer) {
       super(roots, exceptionConsumer);

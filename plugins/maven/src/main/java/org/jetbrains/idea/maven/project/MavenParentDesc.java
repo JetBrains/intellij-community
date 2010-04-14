@@ -18,8 +18,8 @@ package org.jetbrains.idea.maven.project;
 import org.jetbrains.annotations.NotNull;
 
 public class MavenParentDesc {
-  private MavenId myParentId;
-  private String myParentRelativePath;
+  private final MavenId myParentId;
+  private final String myParentRelativePath;
 
   public MavenParentDesc(@NotNull MavenId parentId, @NotNull String parentRelativePath) {
     myParentId = parentId;

@@ -49,7 +49,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
-  private static LanguageFileType myFileType = StdFileTypes.JSP; //TODO: Replace hardcoded value
+  private static final LanguageFileType myFileType = StdFileTypes.JSP; //TODO: Replace hardcoded value
 
   public CodeStyleBlankLinesPanel(CodeStyleSettings settings) {
     super(settings);

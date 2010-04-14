@@ -43,7 +43,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   private ContentRootPanel myContentRootPanel;
   private JPanel myMainPanel;
   protected EventDispatcher<ContentEntryEditorListener> myEventDispatcher;
-  private String myContentEntryUrl;
+  private final String myContentEntryUrl;
   protected final boolean myCanMarkSources;
   protected final boolean myCanMarkTestSources;
 

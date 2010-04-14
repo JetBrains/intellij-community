@@ -1019,9 +1019,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private static class MyChangesDeltaForwarder implements PlusMinus<Pair<String, AbstractVcs>> {
     //private SlowlyClosingAlarm myAlarm;
-    private RemoteRevisionsCache myRevisionsCache;
+    private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
-    private ExecutorWrapper myExecutorWrapper;
+    private final ExecutorWrapper myExecutorWrapper;
     private final ExecutorService myService;
 
 

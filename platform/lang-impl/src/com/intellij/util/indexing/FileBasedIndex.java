@@ -123,8 +123,8 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<Document, PsiFile> myTransactionMap = new HashMap<Document, PsiFile>();
 
   private static final int ALREADY_PROCESSED = 0x02;
-  private @Nullable String myConfigPath;
-  private @Nullable String mySystemPath;
+  private @Nullable final String myConfigPath;
+  private @Nullable final String mySystemPath;
   private final boolean myIsUnitTestMode;
   private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
@@ -533,7 +533,7 @@ public class FileBasedIndex implements ApplicationComponent {
     performShutdown();
   }
 
-  private AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
+  private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
 
   private void performShutdown() {
     if (!myShutdownPerformed.compareAndSet(false, true)) {
