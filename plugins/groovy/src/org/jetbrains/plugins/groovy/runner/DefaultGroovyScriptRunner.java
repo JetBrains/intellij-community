@@ -20,6 +20,8 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,16 +48,13 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(@Nullable Module module, String confName, final Project project) throws ExecutionException {
+  public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) throws ExecutionException {
     if (module == null) {
       throw new ExecutionException("Module is not specified");
     }
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
-      Messages.showErrorDialog(module.getProject(),
-                               ExecutionBundle.message("error.running.configuration.with.error.error.message", confName,
-                                                       "Groovy is not configured"), ExecutionBundle.message("run.error.message.title"));
-
+      ExecutionUtil.handleExecutionError(project, profile, new ExecutionException("Groovy is not configured"));
       ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.NAME, false);
       return false;
     }

@@ -92,7 +92,7 @@ public class ChooseRunConfigurationAction extends AnAction {
   }
 
   protected static boolean canRun(@NotNull final Executor executor, final RunnerAndConfigurationSettingsImpl settings) {
-    return ExecutionUtil.getRunner(executor.getId(), settings) != null;
+    return ProgramRunnerUtil.getRunner(executor.getId(), settings) != null;
   }
 
   @Nullable
@@ -219,7 +219,7 @@ public class ChooseRunConfigurationAction extends AnAction {
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor.getActionName(), executor.getIcon())) {
       RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-      ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
+      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
     }
   }
 
@@ -364,7 +364,7 @@ public class ChooseRunConfigurationAction extends AnAction {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunManagerEx.getInstanceEx(project).setSelectedConfiguration(getValue());
-          ExecutionUtil.executeConfiguration(project, getValue(), executor, DataManager.getInstance().getDataContext());
+          ProgramRunnerUtil.executeConfiguration(project, getValue(), executor, DataManager.getInstance().getDataContext());
         }
 
         @Override
@@ -374,7 +374,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
         @Override
         public Icon getIcon() {
-          return ExecutionUtil.getConfigurationIcon(project, getValue());
+          return ProgramRunnerUtil.getConfigurationIcon(project, getValue());
         }
 
         @Override
@@ -393,7 +393,7 @@ public class ChooseRunConfigurationAction extends AnAction {
 
         @Override
         public boolean available(Executor executor) {
-          return null != ExecutionUtil.getRunner(executor.getId(), getValue());
+          return null != ProgramRunnerUtil.getRunner(executor.getId(), getValue());
         }
 
         @Override
@@ -497,7 +497,7 @@ public class ChooseRunConfigurationAction extends AnAction {
                 final RunnerAndConfigurationSettings configuration = RunManager.getInstance(project).getSelectedConfiguration();
                 if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
                   if (canRun(executor, (RunnerAndConfigurationSettingsImpl) configuration)) {
-                    ExecutionUtil.executeConfiguration(project, (RunnerAndConfigurationSettingsImpl) configuration, executor, DataManager.getInstance().getDataContext());
+                    ProgramRunnerUtil.executeConfiguration(project, (RunnerAndConfigurationSettingsImpl) configuration, executor, DataManager.getInstance().getDataContext());
                   }
                 }
               }
@@ -560,7 +560,7 @@ public class ChooseRunConfigurationAction extends AnAction {
             final ItemWrapper wrapper = new ItemWrapper(configuration) {
               @Override
               public Icon getIcon() {
-                return IconLoader.getTransparentIcon(ExecutionUtil.getConfigurationIcon(project, configuration), 0.3f);
+                return IconLoader.getTransparentIcon(ProgramRunnerUtil.getConfigurationIcon(project, configuration), 0.3f);
               }
 
               @Override
@@ -577,7 +577,7 @@ public class ChooseRunConfigurationAction extends AnAction {
               public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
                 manager.setTemporaryConfiguration(configuration);
                 RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-                ExecutionUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
+                ProgramRunnerUtil.executeConfiguration(project, configuration, executor, DataManager.getInstance().getDataContext());
               }
 
               @Override
@@ -710,7 +710,7 @@ public class ChooseRunConfigurationAction extends AnAction {
               final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
               if (dynamic) manager.setTemporaryConfiguration(settings);
               manager.setSelectedConfiguration(settings);
-              ExecutionUtil.executeConfiguration(project, settings, executor, DataManager.getInstance().getDataContext());
+              ProgramRunnerUtil.executeConfiguration(project, settings, executor, DataManager.getInstance().getDataContext());
             }
           });
         }

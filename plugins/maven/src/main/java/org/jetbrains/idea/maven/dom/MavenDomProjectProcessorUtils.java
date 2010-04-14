@@ -37,21 +37,26 @@ public class MavenDomProjectProcessorUtils {
   }
 
   @NotNull
-  public static List<MavenDomProjectModel> collectChildrenProjects(@NotNull final MavenDomProjectModel model) {
+  public static Set<MavenDomProjectModel> getChildrenProjects(@NotNull final MavenDomProjectModel model) {
+    Set<MavenDomProjectModel> models = new HashSet<MavenDomProjectModel>();
 
+    collectChildrenProjects(model, models);
+
+    return models;
+  }
+
+  private static void collectChildrenProjects(@NotNull final MavenDomProjectModel model, @NotNull Set<MavenDomProjectModel> models) {
     MavenProject mavenProject = MavenDomUtil.findProject(model);
     if (mavenProject != null) {
       final Project project = model.getManager().getProject();
-      Set<MavenProject> inheritors = MavenProjectsManager.getInstance(project).findInheritors(mavenProject);
-
-
-      return ContainerUtil.mapNotNull(inheritors, new Function<MavenProject, MavenDomProjectModel>() {
-        public MavenDomProjectModel fun(MavenProject childProject) {
-          return MavenDomUtil.getMavenDomProjectModel(project, childProject.getFile());
+      for (MavenProject inheritor : MavenProjectsManager.getInstance(project).findInheritors(mavenProject)) {
+        MavenDomProjectModel inheritorProjectModel = MavenDomUtil.getMavenDomProjectModel(project, inheritor.getFile());
+        if (inheritorProjectModel != null && !models.contains(inheritorProjectModel)) {
+           models.add(inheritorProjectModel);
+           collectChildrenProjects(inheritorProjectModel, models);
         }
-      });
+      }
     }
-    return Collections.emptyList();
   }
   @NotNull
   public static Set<MavenDomProjectModel> collectParentProjects(@NotNull final MavenDomProjectModel projectDom,

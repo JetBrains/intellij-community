@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,29 @@ public class OpenSourceUtil {
   }
 
   public static void openSourcesFrom(DataContext context, boolean requestFocus) {
-    navigate(PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context), requestFocus);
+    navigate(requestFocus, PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context));
   }
 
   public static void openSourcesFrom(DataProvider context, boolean requestFocus) {
-    navigate(PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context), requestFocus);
+    navigate(requestFocus, PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context));
   }
 
-  public static void navigate(final Navigatable[] navigatables, final boolean requestFocus) {
-    if (navigatables != null) {
-      for (Navigatable navigatable : navigatables) {
-        if (navigatable.canNavigate()) {
-          navigatable.navigate(requestFocus);
-        }
+  /**
+   * Equivalent to navigate(true, navigatables)
+   *
+   * @param navigatables elements navigate to
+   * 
+   * @see OpenSourceUtil#navigate(boolean, com.intellij.pom.Navigatable...)  
+   */
+  public static void navigate(final Navigatable...navigatables) {
+    navigate(true, navigatables);
+  }
+
+  public static void navigate(final boolean requestFocus, final Navigatable...navigatables) {
+    if (navigatables == null) return;
+    for (Navigatable navigatable : navigatables) {
+      if (navigatable.canNavigate()) {
+        navigatable.navigate(requestFocus);
       }
     }
   }

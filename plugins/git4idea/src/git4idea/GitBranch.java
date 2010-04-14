@@ -119,13 +119,14 @@ public class GitBranch extends GitReference {
    * @param remote   if true remote branches are listed
    * @param local    if true local branches are listed
    * @param branches the collection used to store branches
+   * @param containingCommit
    * @throws VcsException if there is a problem with running git
    */
   public static void listAsStrings(final Project project,
                                    final VirtualFile root,
                                    final boolean remote,
                                    final boolean local,
-                                   final Collection<String> branches) throws VcsException {
+                                   final Collection<String> branches, @Nullable final String containingCommit) throws VcsException {
     if (!local && !remote) {
       // no need to run handler
       return;
@@ -139,6 +140,10 @@ public class GitBranch extends GitReference {
     }
     else if (remote) {
       handler.addParameters("-r");
+    }
+    if (containingCommit != null) {
+      handler.addParameters("--contains");
+      handler.addParameters(containingCommit);
     }
     StringScanner s = new StringScanner(handler.run());
     while (s.hasMoreData()) {
@@ -208,14 +213,14 @@ public class GitBranch extends GitReference {
                           final Collection<GitBranch> branches) throws VcsException {
     ArrayList<String> temp = new ArrayList<String>();
     if (local) {
-      listAsStrings(project, root, false, true, temp);
+      listAsStrings(project, root, false, true, temp, null);
       for (String b : temp) {
         branches.add(new GitBranch(b, false, false));
       }
       temp.clear();
     }
     if (remote) {
-      listAsStrings(project, root, true, false, temp);
+      listAsStrings(project, root, true, false, temp, null);
       for (String b : temp) {
         branches.add(new GitBranch(b, false, true));
       }

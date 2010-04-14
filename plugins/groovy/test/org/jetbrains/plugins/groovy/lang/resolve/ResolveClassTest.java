@@ -113,6 +113,13 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertEquals("java.util.ArrayList", ((PsiClass)resolved).getQualifiedName());
   }
 
+  public void testNotQualifiedStaticImport() throws Exception {
+    myFixture.addFileToProject("foo/A.groovy", "package foo \nclass Foo{ }");
+    PsiReference ref = configureByFile("notQualifiedStaticImport/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiClass.class);
+  }
+
   private void doTest() throws Exception {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }

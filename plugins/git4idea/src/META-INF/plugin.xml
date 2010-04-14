@@ -108,4 +108,9 @@
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>
   </extensions>
 
+  <project-components>
+    <component>
+      <implementation-class>git4idea.history.browser.GitProjectLogManager</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>

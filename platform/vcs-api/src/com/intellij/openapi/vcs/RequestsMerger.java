@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn;
+package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
@@ -39,7 +39,7 @@ import java.util.Map;
  */
 @SomeQueue
 public class RequestsMerger {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.RequestsMerger");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.RequestsMerger");
   private static final int ourDelay = 300;
 
   private final MyWorker myWorker;

@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -33,6 +34,7 @@ import java.util.List;
  * @author jeka
  */
 public class PersistentEnumerator<Data> implements Forceable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PersistentEnumerator");
   protected static final int NULL_ID = 0;
   protected static final int DATA_OFFSET = 8;
   private static final int META_DATA_OFFSET = 4;
@@ -142,6 +144,7 @@ public class PersistentEnumerator<Data> implements Forceable {
           sign = myStorage.getInt(0);
         }
         catch(Exception e) {
+          LOG.info(e);
           sign = DIRTY_MAGIC;
         }
         if (sign != CORRECTLY_CLOSED_MAGIC) {

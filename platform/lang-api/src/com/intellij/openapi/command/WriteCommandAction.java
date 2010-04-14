@@ -113,7 +113,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
     //this is needed to prevent memory leak, since command
     // is put into undo queue
-    final RunResult[] results = new RunResult[] {result};
+    final RunResult[] results = {result};
 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
@@ -138,7 +138,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   protected <T> RunResult<T> executeCommand(RunResult<T> result) {
     //this is needed to prevent memory leak, since command
     // is put into undo queue
-    final RunResult[] results = new RunResult[] {result};
+    final RunResult[] results = {result};
 
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {

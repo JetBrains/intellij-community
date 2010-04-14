@@ -50,7 +50,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -576,7 +575,6 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       super(project, MESSAGE, ProjectBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
       myProject = project;
       init();
-      Disposer.register(myProject, myDisposable);
     }
 
     protected String getOkActionName() {
