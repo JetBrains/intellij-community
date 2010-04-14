@@ -4,10 +4,9 @@ import com.intellij.execution.LocatableConfigurationType;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.*;
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -18,9 +17,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +30,7 @@ import static com.jetbrains.python.testing.PythonUnitTestRunConfiguration.TestTy
 /**
  * @author Leonid Shalupov
  */
-public class PythonUnitTestConfigurationType implements LocatableConfigurationType {
+public class PythonUnitTestConfigurationType extends ConfigurationTypeBase implements LocatableConfigurationType {
   private final PythonUnitTestConfigurationFactory myConfigurationFactory = new PythonUnitTestConfigurationFactory(this);
 
   public static PythonUnitTestConfigurationType getInstance() {
@@ -42,6 +41,14 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
     }
     assert false;
     return null;
+  }
+
+  public PythonUnitTestConfigurationType() {
+    super("PythonUnitTestConfigurationType",
+          PyBundle.message("runcfg.unittest.display_name"),
+          PyBundle.message("runcfg.unittest.description"),
+          ICON);
+    addFactory(myConfigurationFactory);
   }
 
   private final static Icon ICON = IconLoader.getIcon("/com/jetbrains/python/python.png");
@@ -115,6 +122,9 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
 
     if (!(element instanceof PsiDirectory)) return null;
 
+    final Module module = location.getModule();
+    if (!isPythonModule(module)) return null;
+
     PsiDirectory dir = (PsiDirectory)element;
     final VirtualFile file = dir.getVirtualFile();
     final String path = file.getPath();
@@ -129,6 +139,19 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
     configuration.setName(configuration.suggestedName());
 
     return settings;
+  }
+
+  private static boolean isPythonModule(Module module) {
+    if (module.getModuleType() instanceof PythonModuleTypeBase) {
+      return true;
+    }
+    final Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
+    for (Facet facet : allFacets) {
+      if (facet.getConfiguration() instanceof PythonFacetSettings) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -166,7 +189,7 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
     settings = createConfigurationFromFolder(location);
     if (settings != null) return settings;
 
-    final PyElement pyElement = PyUtil.getCoveringPyElement(location.getPsiElement());
+    final PyElement pyElement = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyElement.class);
     if (pyElement == null) return null;
 
     settings = createConfigurationFromFunction(location, pyElement);
@@ -196,27 +219,5 @@ public class PythonUnitTestConfigurationType implements LocatableConfigurationTy
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonUnitTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
-  }
-
-  public String getDisplayName() {
-    return PyBundle.message("runcfg.unittest.display_name");
-  }
-
-  public String getConfigurationTypeDescription() {
-    return PyBundle.message("runcfg.unittest.description");
-  }
-
-  public Icon getIcon() {
-    return ICON;
-  }
-
-  public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[]{myConfigurationFactory};
-  }
-
-  @NotNull
-  @NonNls
-  public String getId() {
-    return "PythonUnitTestConfigurationType";
   }
 }
