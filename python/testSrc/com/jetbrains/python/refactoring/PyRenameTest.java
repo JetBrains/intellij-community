@@ -28,4 +28,10 @@ public class PyRenameTest extends PyLightFixtureTestCase {
     myFixture.renameElementAtCaret("qu");
     myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
   }
+
+  public void testRenameMultipleDefinitionsLocal() throws Exception {  // PY-727
+    myFixture.configureByFile("refactoring/rename/" + getTestName(true) + ".py");
+    myFixture.renameElementAtCaret("qu");
+    myFixture.checkResultByFile("refactoring/rename/" + getTestName(true) + "_after.py");
+  }
 }
