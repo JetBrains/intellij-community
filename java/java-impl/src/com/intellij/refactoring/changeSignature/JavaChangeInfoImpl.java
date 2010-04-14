@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.util.Set;
 class JavaChangeInfoImpl implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeInfoImpl");
 
+  @Modifier
   final String newVisibility;
   private PsiMethod method;
   final String oldName;
@@ -62,7 +63,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
   final boolean obtainsVarags;
   final boolean arrayToVarargs;
   PsiIdentifier newNameIdentifier;
-  PsiType newTypeElement;
+//  PsiType newTypeElement;
   final PsiExpression[] defaultValues;
 
   final boolean isGenerateDelegate;
@@ -189,6 +190,11 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
         arrayToVarargs = false;
       }
     }
+
+    if (isNameChanged) {
+      newNameIdentifier = factory.createIdentifier(newName);
+    }
+
   }
 
   @NotNull
@@ -196,6 +202,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     return newParms;
   }
 
+  @Modifier
   public String getNewVisibility() {
     return newVisibility;
   }
@@ -320,5 +327,47 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
 
   public boolean isGenerateDelegate() {
     return isGenerateDelegate;
+  }
+
+  @NotNull
+  public String[] getOldParameterNames() {
+    return oldParameterNames;
+  }
+
+  @NotNull
+  public String[] getOldParameterTypes() {
+    return oldParameterTypes;
+  }
+
+  public ThrownExceptionInfo[] getNewExceptions() {
+    return newExceptions;
+  }
+
+  public boolean isRetainsVarargs() {
+    return retainsVarargs;
+  }
+
+  public boolean isObtainsVarags() {
+    return obtainsVarags;
+  }
+
+  public boolean isArrayToVarargs() {
+    return arrayToVarargs;
+  }
+
+  public PsiIdentifier getNewNameIdentifier() {
+    return newNameIdentifier;
+  }
+
+  public String getOldName() {
+    return oldName;
+  }
+
+  public boolean wasVararg() {
+    return wasVararg;
+  }
+
+  public boolean[] toRemoveParm() {
+    return toRemoveParm;
   }
 }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
@@ -104,4 +105,16 @@ public class GrParameterInfo implements JavaParameterInfo {
     }
   }
 
+
+  public String getTypeText() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  public CanonicalTypes.Type getTypeWrapper() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  public PsiExpression getValue(PsiCallExpression callExpression) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
 }

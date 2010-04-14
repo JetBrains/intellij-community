@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -26,6 +27,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
 import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
+import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -205,6 +207,48 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     public String getVisibilityModifier() {
       return visibilityModifier;
+    }
+
+    @NotNull
+    public String[] getOldParameterNames() {
+      return new String[0];  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @NotNull
+    public String[] getOldParameterTypes() {
+      return new String[0];  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public ThrownExceptionInfo[] getNewExceptions() {
+      return new ThrownExceptionInfo[0];  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public boolean isRetainsVarargs() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public boolean isObtainsVarags() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public boolean isArrayToVarargs() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public PsiIdentifier getNewNameIdentifier() {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public String getOldName() {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public boolean wasVararg() {
+      return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public boolean[] toRemoveParm() {
+      return new boolean[0];  //To change body of implemented methods use File | Settings | File Templates.
     }
   }
 }

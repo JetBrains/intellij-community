@@ -32,5 +32,7 @@ public interface ChangeSignatureUsageProcessor {
 
   MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages);
 
-  boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo);
+  boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages);
+
+  boolean processPrimaryMethod(ChangeInfo changeInfo);
 }
