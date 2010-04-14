@@ -179,7 +179,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
           }
           PsiClass source = findByName(sources, destination.getName());
           if (source != null) {
-            final PsiClass copy = copy(destination, copyClassName);
+            final PsiClass copy = copy(source, copyClassName);
             newElement = destination.replace(copy);
             oldToNewMap.put(source, newElement);
           }
