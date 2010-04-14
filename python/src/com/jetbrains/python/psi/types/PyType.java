@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public interface PyType {
    * @param context to share state between nested invocations
    * @return completion variants good for {@link com.intellij.psi.PsiReference#getVariants} return value.
    */
-  Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context);
+  Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context);
 
   /**
    * Context key for access to a set of names already found by variant search.

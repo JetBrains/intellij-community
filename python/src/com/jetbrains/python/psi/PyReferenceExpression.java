@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
@@ -11,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyReferenceExpression extends PyQualifiedExpression {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
-
-  @Nullable
-  String getReferencedName();
 
   /**
    * Goes through a chain of assignment statements until a non-assignment expression is encountered.
@@ -30,6 +26,4 @@ public interface PyReferenceExpression extends PyQualifiedExpression {
 
   @NotNull
   PsiPolyVariantReference getReference();
-
-  ASTNode getNameElement();
 }

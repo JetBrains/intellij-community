@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,4 +11,20 @@ import org.jetbrains.annotations.Nullable;
 public interface PyQualifiedExpression extends PyExpression {
   @Nullable
   PyExpression getQualifier();
+
+  /**
+   * Returns the name to the right of the qualifier.
+   *
+   * @return the name referenced by the expression.
+   */
+  @Nullable
+  String getReferencedName();
+
+  /**
+   * Returns the element representing the name (to the right of the qualifier).
+   *
+   * @return the name element.
+   */
+  @Nullable
+  ASTNode getNameElement();
 }
