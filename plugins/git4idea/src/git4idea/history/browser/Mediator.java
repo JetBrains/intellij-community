@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.lang.ant.dom;
+package git4idea.history.browser;
 
-import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.GenericAttributeValue;
+import java.util.Collection;
 
-/**
- * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
- */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
-public abstract class AntTarget extends AntDomElement {
-  @Attribute("name")
-  public abstract GenericAttributeValue<String> getName();
-
-  @Attribute("if")
-  public abstract GenericAttributeValue<String> getIfPropertyName();
-
-  @Attribute("unless")
-  public abstract GenericAttributeValue<String> getUnlessPropertyName();
+public interface Mediator {
+  Collection<GitCommit> getOrLoadParents(final GitCommit commit);
 }

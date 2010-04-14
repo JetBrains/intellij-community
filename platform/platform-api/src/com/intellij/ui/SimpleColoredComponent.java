@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -71,8 +73,7 @@ public class SimpleColoredComponent extends JComponent {
 
   private int myMainTextLastIndex = -1;
 
-  private int myAlignIndex;
-  private int myAlignWidth;
+  private final Map<Integer, Integer> myAligns;
 
   private boolean myIconOpaque = true;
 
@@ -84,6 +85,7 @@ public class SimpleColoredComponent extends JComponent {
     myIpad = new Insets(1, 2, 1, 2);
     myIconTextGap = 2;
     myBorder = new MyBorder();
+    myAligns = new HashMap<Integer, Integer>(10);
     setOpaque(true);
   }
 
@@ -137,8 +139,8 @@ public class SimpleColoredComponent extends JComponent {
   }
 
   public synchronized void appendAlign(int alignWidth) {
-    myAlignIndex = myFragments.size()-1;
-    myAlignWidth = alignWidth;
+    final int alignIndex = myFragments.size()-1;
+    myAligns.put(alignIndex, alignWidth);
   }
 
   /**
@@ -153,8 +155,7 @@ public class SimpleColoredComponent extends JComponent {
       myAttributes.clear();
       myFragmentTags = null;
       myMainTextLastIndex = -1;
-      myAlignIndex = -1;
-      myAlignWidth = -1;
+      myAligns.clear();
     }
     revalidateAndRepaint();
   }
@@ -280,8 +281,10 @@ public class SimpleColoredComponent extends JComponent {
       }
       final FontMetrics metrics = getFontMetrics(font);
       width += metrics.stringWidth(myFragments.get(i));
-      if (i == myAlignIndex && width < myAlignWidth) {
-        width = myAlignWidth;
+
+      final Integer fixedWidth = myAligns.get(i);
+      if (fixedWidth != null && width < fixedWidth.intValue()) {
+        width = fixedWidth.intValue();
       }
 
       if (mainTextOnly && myMainTextLastIndex >= 0 && i == myMainTextLastIndex) break;
@@ -330,8 +333,9 @@ public class SimpleColoredComponent extends JComponent {
         return i;
       }
       curX += curWidth;
-      if (i == myAlignIndex && curX < myAlignWidth) {
-        curX = myAlignWidth;
+      final Integer fixedWidth = myAligns.get(i);
+      if (fixedWidth != null && curX < fixedWidth.intValue()) {
+        curX = fixedWidth.intValue();
       }
     }
     return -1;
@@ -444,8 +448,9 @@ public class SimpleColoredComponent extends JComponent {
 
 
       xOffset += fragmentWidth;
-      if (i == myAlignIndex && xOffset < myAlignWidth) {
-        xOffset = myAlignWidth;
+      final Integer fixedWidth = myAligns.get(i);
+      if (fixedWidth != null && xOffset < fixedWidth.intValue()) {
+        xOffset = fixedWidth.intValue();
       }
     }
 

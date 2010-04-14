@@ -17,7 +17,7 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
@@ -202,7 +202,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   public static String suggestRunActionName(final LocatableConfiguration configuration) {
     if (!configuration.isGeneratedName()) {
-      return "\"" + ExecutionUtil.shortenName(configuration.getName(), 0) + "\"";
+      return "\"" + ProgramRunnerUtil.shortenName(configuration.getName(), 0) + "\"";
     } else return "\"" + configuration.suggestedName() + "\"";
   }
 

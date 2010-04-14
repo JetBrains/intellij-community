@@ -389,9 +389,12 @@
     <group id="Maven.RefactoringsGroup" text="Refactoring">
       <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
       <separator/>
-      <action id="refactoring.introduce" text="Introduce Property"
+      <action id="refactoring.introduce.property" text="Introduce Property"
               class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
-              use-shortcut-of="IntroduceVariable">
+              use-shortcut-of="IntroduceVariable" />
+
+      <action id="refactoring.extract.dependency" text="Extract Dependency"
+              class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractDependenciesAction" >
       </action>
     </group>
   </actions>

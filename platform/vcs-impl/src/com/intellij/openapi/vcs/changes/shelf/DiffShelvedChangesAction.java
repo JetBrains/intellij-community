@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -78,7 +79,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       final Change change = shelvedChange.getChange(project);
       final String beforePath = shelvedChange.getBeforePath();
       try {
-        final VirtualFile f = ApplyTextFilePatch.findPatchTarget(context, beforePath, shelvedChange.getAfterPath(), beforePath == null);
+        final VirtualFile f = ApplyTextFilePatch.findPatchTarget(context, beforePath, shelvedChange.getAfterPath(), FileStatus.ADDED.equals(shelvedChange.getFileStatus()));
         if ((f == null) || (! f.exists())) {
           if (beforePath != null) {
             missing.add(beforePath);

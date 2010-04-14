@@ -710,6 +710,6 @@ public class GitVcs extends AbstractVcs {
   public CommittedChangeList getRevisionChanges(final VcsFileRevision revision, final VirtualFile file) throws VcsException {
     final Project project = getProject();
     final VirtualFile vcsRoot = GitUtil.getGitRoot(file);
-    return GitChangeUtils.getRevisionChanges(project, vcsRoot, revision.getRevisionNumber().asString());
+    return GitChangeUtils.getRevisionChanges(project, vcsRoot, revision.getRevisionNumber().asString(), false);
   }
 }

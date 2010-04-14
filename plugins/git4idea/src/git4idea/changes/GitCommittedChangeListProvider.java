@@ -200,7 +200,7 @@ public class GitCommittedChangeListProvider implements CachingCommittedChangesPr
           h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
         }
       }
-    }, consumer);
+    }, consumer, false);
   }
 
   /**

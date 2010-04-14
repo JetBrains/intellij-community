@@ -108,7 +108,7 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
           }
         }
         catch (ExecutionException e) {
-          ProgramRunnerUtil.handleExecutionError(project, profile, e);
+          ExecutionUtil.handleExecutionError(project, profile, e);
         }
       }
     };

@@ -12,8 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -21,6 +19,7 @@ import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
 import org.intellij.lang.xpath.xslt.psi.XsltNamedElement;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
+import org.jetbrains.annotations.NotNull;
 
 /*
 * Created by IntelliJ IDEA.
@@ -28,8 +27,8 @@ import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
 * Date: 24.01.2008
 */
 public class XsltDeclarationInspection extends XsltInspection {
-    private final XsltElementFactory myXsltElementFactory = XsltElementFactory.getInstance();
-    private final NamesValidator myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage());
+    private XsltElementFactory myXsltElementFactory;
+    private NamesValidator myNamesValidator;
 
     @NotNull
     public String getDisplayName() {
@@ -55,10 +54,10 @@ public class XsltDeclarationInspection extends XsltInspection {
                 if (nameAttr == null || PsiTreeUtil.hasErrorElements(nameAttr)) return;
 
                 if (XsltSupport.isVariableOrParam(tag)) {
-                    final XsltNamedElement instance = myXsltElementFactory.wrapElement(tag, XsltNamedElement.class);
+                    final XsltNamedElement instance = getXsltElementFactory().wrapElement(tag, XsltNamedElement.class);
                     checkDeclaration(instance, nameAttr.getValue(), true, holder);
                 } else if (XsltSupport.isTemplate(tag)) {
-                    final XsltTemplate tmpl = myXsltElementFactory.wrapElement(tag, XsltTemplate.class);
+                    final XsltTemplate tmpl = getXsltElementFactory().wrapElement(tag, XsltTemplate.class);
                     checkDeclaration(tmpl, nameAttr.getValue(), false, holder);
                 }
             }
@@ -89,8 +88,22 @@ public class XsltDeclarationInspection extends XsltInspection {
             }
 
             private boolean isLegalName(String value, Project project) {
-                return myNamesValidator.isIdentifier(value, project);
+                return getNamesValidator().isIdentifier(value, project);
             }
         };
+    }
+
+    public XsltElementFactory getXsltElementFactory() {
+        if (myXsltElementFactory == null) {
+            myXsltElementFactory = XsltElementFactory.getInstance();
+        }
+        return myXsltElementFactory;
+    }
+
+    public NamesValidator getNamesValidator() {
+        if (myNamesValidator == null) {
+            myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(XPathFileType.XPATH.getLanguage());
+        }
+        return myNamesValidator;
     }
 }

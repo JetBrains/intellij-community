@@ -69,6 +69,25 @@ public class EPathUtil {
     return secondSlIdx != -1 && secondSlIdx + 1 < path.length() ? path.substring(secondSlIdx + 1) : null;
   }
 
+  public static boolean areUrlsPointTheSame(String ideaUrl, String eclipseUrl) {
+    final String path = VfsUtil.urlToPath(eclipseUrl);
+    if (ideaUrl.contains(path)) {
+      return true;
+    }
+    else {
+      final String relativeToModulePath = getRelativeToModulePath(path);
+      final int relativeIdx = ideaUrl.indexOf(relativeToModulePath);
+      if (relativeIdx != -1) {
+        final String pathToProjectFile = VfsUtil.urlToPath(ideaUrl.substring(0, relativeIdx));
+        if (Comparing.strEqual(getRelativeModuleName(path),
+                               EclipseProjectFinder.findProjectName(pathToProjectFile))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @Nullable
   static String expandEclipseRelative2ContentRoots(final @NotNull List<String> currentRoots,
                                               final @NotNull String rootPath,
