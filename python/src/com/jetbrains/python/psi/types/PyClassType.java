@@ -9,7 +9,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.patterns.ParentMatcher;
@@ -117,7 +117,7 @@ public class PyClassType implements PyType {
     return null;
   }
 
-  public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
+  public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {
     List<? extends PsiElement> class_list = new ParentMatcher(PyClass.class).search(referenceExpression);
     boolean within_our_class = class_list != null && class_list.get(0) == this;
     Set<String> names_already = context.get(PyType.CTX_NAMES);

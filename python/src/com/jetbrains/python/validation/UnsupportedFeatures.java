@@ -116,18 +116,18 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyCallExpression(PyCallExpression node) {
     if (isPy2(node)) {
-      PsiElement firstChild = node.getFirstChild();
+      final PsiElement firstChild = node.getFirstChild();
       if (firstChild != null) {
-        String name = firstChild.getText();
+        final String name = firstChild.getText();
         if ("super".equals(name)) {
-          PyArgumentList argumentList = node.getArgumentList();
+          final PyArgumentList argumentList = node.getArgumentList();
           if (argumentList != null && argumentList.getArguments().length == 0) {
             getHolder().createWarningAnnotation(node, "super() should have arguments in Python 2");
           }
         }
       }
     } else {
-      String name = node.getCallee().getName();
+      final String name = node.getCallee().getName();
       if ("raw_input".equals(name)) {
         getHolder().createWarningAnnotation(node.getCallee(), PyBundle.message("ANN.method.$0.removed.use.$1", name, "input")).
                         registerFix(new ReplaceMethodIntention("input"));
@@ -148,21 +148,24 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyBinaryExpression(PyBinaryExpression node) {
     if (node.isOperator("<>")) {
-      String message = isPy3K(node) ? "<> is not supported in Python 3, use != instead" : "<> is deprecated, use != instead";
+      final String message = isPy3K(node) ? "<> is not supported in Python 3, use != instead" : "<> is deprecated, use != instead";
       getHolder().createWarningAnnotation(node, message).registerFix(new ReplaceNotEqOperatorIntention());
     }
   }
 
   @Override
-  public void visitPyNumericLiteralExpression(PyNumericLiteralExpression node) {
+  public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     if (isPy3K(node)) {
-      String text = node.getText();
+      if (!"int".equals(node.getType().getName())) {
+        return;
+      }
+      final String text = node.getText();
       if (text.endsWith("l") || text.endsWith("L")) {
         getHolder().createWarningAnnotation(node,
                                             "Integer literals do not support a trailing \'l\' or \'L\' in Python 3").registerFix(new RemoveTrailingLIntention());
       }
       if (text.length() > 1 && text.charAt(0) == '0') {
-        char c = Character.toLowerCase(text.charAt(1));
+        final char c = Character.toLowerCase(text.charAt(1));
         if (c != 'o' && c != 'b' && c != 'x') {
           getHolder().createWarningAnnotation(node,
                                               "Python 3 requires '0o' prefix for octal literals").registerFix(new ReplaceOctalNumericLiteralIntention());
@@ -172,9 +175,9 @@ public class UnsupportedFeatures extends PyAnnotator {
   }
 
   @Override
-  public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+  public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     if (isPy3K(node)) {
-      String text = node.getText();
+      final String text = node.getText();
       if (text.startsWith("u") || text.startsWith("U")) {
         getHolder().createWarningAnnotation(node,
                                             "String literals do not support a leading \'u\' or \'U\' in Python 3").registerFix(new RemoveLeadingUIntention());
@@ -183,10 +186,10 @@ public class UnsupportedFeatures extends PyAnnotator {
   }
 
   @Override
-  public void visitPyListCompExpression(PyListCompExpression node) {
-    List<ComprhForComponent> forComponents = node.getForComponents();
+  public void visitPyListCompExpression(final PyListCompExpression node) {
+    final List<ComprhForComponent> forComponents = node.getForComponents();
     for (ComprhForComponent forComponent : forComponents) {
-      PyExpression iteratedList = forComponent.getIteratedList();
+      final PyExpression iteratedList = forComponent.getIteratedList();
       if (iteratedList instanceof PyTupleExpression) {
         getHolder().createWarningAnnotation(iteratedList,
                                             "List comprehensions do not support this syntax in Python 3").registerFix(new ReplaceListComprehensionsIntention());
@@ -196,7 +199,7 @@ public class UnsupportedFeatures extends PyAnnotator {
 
   @Override
   public void visitPyRaiseStatement(PyRaiseStatement node) {
-    PyExpression[] expressions = node.getExpressions();
+    final PyExpression[] expressions = node.getExpressions();
     if (expressions != null) {
       if (expressions.length < 2) {
         return;

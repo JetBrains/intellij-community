@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ public class PyModuleType implements PyType { // Maybe make it a PyClassType ref
     return result;
   }
 
-  public Object[] getCompletionVariants(final PyReferenceExpression referenceExpression, ProcessingContext context) {
+  public Object[] getCompletionVariants(final PyQualifiedExpression referenceExpression, ProcessingContext context) {
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
     ResolveImportUtil.ROLE_IN_IMPORT role = ResolveImportUtil.getRoleInImport(referenceExpression.getReference());

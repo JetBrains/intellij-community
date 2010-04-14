@@ -1,12 +1,13 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CommandLineArgumentsProvider;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
@@ -14,10 +15,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.net.NetUtils;
-import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.django.util.DjangoUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -25,7 +27,6 @@ import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +53,7 @@ public class PydevConsoleRunner extends PyConsoleRunner {
   public static void run(@NotNull final Project project,
                          @NotNull final Module module,
                          @NotNull final Sdk sdk) {
-    final String consoleTitle = "TRUE console";
+    final String consoleTitle = PyBundle.message("python.console");
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -116,7 +117,7 @@ public class PydevConsoleRunner extends PyConsoleRunner {
     ((PydevLanguageConsoleView)myConsoleView).setPydevConsoleCommunication(myPydevConsoleCommunication);
 
     try {
-      Thread.sleep(100);
+      Thread.sleep(200);
     }
     catch (InterruptedException e) {
       // Ignore
@@ -179,19 +180,6 @@ public class PydevConsoleRunner extends PyConsoleRunner {
   @Override
   protected void sendInput(final String input) {
     if (myPydevConsoleCommunication != null){
-      //if ("comp\n".equals(input)){
-      //  String[] completions = new String[]{};
-      //  try {
-      //    completions = myPydevConsoleCommunication.getCompletions("", 0);
-      //  }
-      //  catch (Exception e) {
-      //    PyConsoleProcessHandler.processOutput(myConsoleView.getConsole(), e.toString()+'\n', ProcessOutputTypes.STDERR);
-      //  }
-      //  for (String completion : completions) {
-      //    PyConsoleProcessHandler.processOutput(myConsoleView.getConsole(), completion + "\n", ProcessOutputTypes.STDOUT);
-      //  }
-      //  return;
-      //}
       myPydevConsoleCommunication.execInterpreter(input, new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
           final LanguageConsoleImpl console = myConsoleView.getConsole();
@@ -215,5 +203,9 @@ public class PydevConsoleRunner extends PyConsoleRunner {
         }
       });
     }
+  }
+
+  public static boolean isInPydevConsole(final PsiElement element){
+    return element.getContainingFile().getCopyableUserData(CONSOLE_KEY) != null;
   }
 }

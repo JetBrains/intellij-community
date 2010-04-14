@@ -58,10 +58,9 @@ public class PyStringExceptionInspection extends LocalInspectionTool {
     public void visitPyRaiseStatement(PyRaiseStatement node) {
       PyExpression[] expressions = node.getExpressions();
       if (expressions != null) {
-        for (PyExpression expression : expressions) {
-          if (expression instanceof PyStringLiteralExpression) {
-            registerProblem(expression, "Raising a string exception");
-          }
+        PyExpression expression = expressions[0];
+        if (expression instanceof PyStringLiteralExpression) {
+          registerProblem(expression, "Raising a string exception");
         }
       }
     }
