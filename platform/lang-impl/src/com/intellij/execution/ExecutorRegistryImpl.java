@@ -190,7 +190,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      ExecutionUtil.executeConfiguration(project, getConfiguration(project), myExecutor, dataContext);
+      ProgramRunnerUtil.executeConfiguration(project, getConfiguration(project), myExecutor, dataContext);
     }
   }
 }

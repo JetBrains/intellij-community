@@ -69,7 +69,7 @@ class TestMethod extends TestObject {
   }
 
   public String suggestActionName() {
-    return ExecutionUtil.shortenName(myConfiguration.getPersistentData().METHOD_NAME, 2) + "()";
+    return ProgramRunnerUtil.shortenName(myConfiguration.getPersistentData().METHOD_NAME, 2) + "()";
   }
 
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
