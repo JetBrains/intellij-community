@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.dom.converters;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -99,8 +101,17 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
           vFile = LocalFileSystem.getInstance().findFileByPath("/");
         }
 
+        if(ApplicationManager.getApplication().isUnitTestMode()) {
+            assert vFile != null : ""; //
+        }
+
         if (vFile != null) {
           final PsiDirectory directory = getElement().getManager().findDirectory(vFile);
+
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            assert directory != null : "for element: " + getElement().getText(); //
+          }
+
           if (directory != null) {
             systemItemCollection.add(directory);
           }

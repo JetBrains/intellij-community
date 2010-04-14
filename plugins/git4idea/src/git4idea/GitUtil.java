@@ -674,8 +674,6 @@ public class GitUtil {
                                               final VirtualFile root,
                                               final Consumer<GitSimpleHandler> parametersSpecifier,
                                               final Consumer<CommittedChangeList> consumer) throws VcsException {
-    final List<CommittedChangeList> rc = new ArrayList<CommittedChangeList>();
-
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.setNoSSH(true);

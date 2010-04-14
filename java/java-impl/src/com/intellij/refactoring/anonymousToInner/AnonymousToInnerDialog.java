@@ -86,6 +86,9 @@ class AnonymousToInnerDialog extends DialogWrapper{
     if (typeParameters.length > 0) {
       names = new String[]{StringUtil.join(typeParameters, new Function<PsiType, String>() {
         public String fun(PsiType psiType) {
+          if (psiType instanceof PsiClassType) {
+            return ((PsiClassType)psiType).rawType().getPresentableText();
+          }
           return psiType.getPresentableText();
         }
       }, "") + name, "My" + name};

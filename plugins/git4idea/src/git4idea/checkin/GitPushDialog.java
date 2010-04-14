@@ -369,8 +369,8 @@ public class GitPushDialog extends DialogWrapper {
         myBranchNames.clear();
         myTagNames.clear();
         try {
-          GitBranch.listAsStrings(myProject, getGitRoot(), false, true, myBranchNames);
-          GitTag.listAsStrings(myProject, getGitRoot(), myTagNames);
+          GitBranch.listAsStrings(myProject, getGitRoot(), false, true, myBranchNames, null);
+          GitTag.listAsStrings(myProject, getGitRoot(), myTagNames, null);
         }
         catch (VcsException ex) {
           LOG.warn("Exception in branch list: \n" + StringUtil.getThrowableText(ex));
