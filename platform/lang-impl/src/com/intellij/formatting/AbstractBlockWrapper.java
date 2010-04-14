@@ -18,6 +18,7 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -101,6 +102,7 @@ public abstract class AbstractBlockWrapper {
     return myParent;
   }
 
+  @Nullable
   public WrapImpl getWrap() {
     final ArrayList<WrapImpl> wraps = getWraps();
     if (wraps.size() == 0) return null;
@@ -120,9 +122,16 @@ public abstract class AbstractBlockWrapper {
     if (alignment != null) alignment.reset();
     final WrapImpl wrap = myWrap;
     if (wrap != null) wrap.reset();
-
   }
 
+  /**
+   * Calculates indent for the given block and target start offset according to the given idnent options.
+   *
+   * @param options                 indent options to use
+   * @param block                   target wrapped block
+   * @param tokenBlockStartOffset   target wrapped block offset
+   * @return                        indent to use for the given parameters
+   */
   private static IndentData getIndent(CodeStyleSettings.IndentOptions options,
                                       AbstractBlockWrapper block,
                                       final int tokenBlockStartOffset) {
@@ -149,12 +158,16 @@ public abstract class AbstractBlockWrapper {
     final boolean childOnNewLine = child.getWhiteSpace().containsLineFeeds();
     final IndentData childIndent;
 
+    // Calculate child indent.
     if (childOnNewLine) {
       childIndent = getIndent(options, child, tokenBlockStartOffset);
     }
     else {
       IndentImpl.Type type = child.getIndent().getType();
-      if (!getWhiteSpace().containsLineFeeds() && (type == IndentImpl.Type.NORMAL || type == IndentImpl.Type.CONTINUATION || type == IndentImpl.Type.CONTINUATION_WITHOUT_FIRST) && indentAlreadyUsedBefore(child)) {
+      if (!getWhiteSpace().containsLineFeeds()
+          && (type == IndentImpl.Type.NORMAL || type == IndentImpl.Type.CONTINUATION || type == IndentImpl.Type.CONTINUATION_WITHOUT_FIRST)
+          && indentAlreadyUsedBefore(child))
+      {
         childIndent = getIndent(options, child, tokenBlockStartOffset);
       }
       else {
@@ -162,6 +175,7 @@ public abstract class AbstractBlockWrapper {
       }
     }
 
+    // Use child indent if it's absolute and the child is contained on new line.
     if (childOnNewLine && child.getIndent().isAbsolute()) {
       myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
       AbstractBlockWrapper current = this;
@@ -206,6 +220,13 @@ public abstract class AbstractBlockWrapper {
     }
   }
 
+  /**
+   * Allows to answer if current wrapped block has a child block that is located before given block and has line feed.
+   *
+   * @param child   target child block to process
+   * @return        <code>true</code> if current block has a child that is located before the given block and contains line feed;
+   *                <code>false</code> otherwise
+   */
   protected abstract boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child);
 
   protected final void setCanUseFirstChildIndentAsBlockIndent(final boolean newValue) {
@@ -264,6 +285,17 @@ public abstract class AbstractBlockWrapper {
 
   }
 
+  /**
+   * Applies given indent value to '<code>indentFromParent'</code> property of the current wrapped block.
+   * <p/>
+   * Given value is also applied to '<code>indentFromParent'</code> properties of all parents of the current wrapped block if the
+   * value is defined (not <code>null</code>).
+   * <p/>
+   * This property is used later during
+   * {@link LeafBlockWrapper#calculateOffset(CodeStyleSettings.IndentOptions) leaf block offset calculation}.
+   *
+   * @param indentFromParent    indent value to apply
+   */
   public void setIndentFromParent(final IndentInfo indentFromParent) {
     myIndentFromParent = indentFromParent;
     if (myIndentFromParent != null) {
@@ -273,7 +305,15 @@ public abstract class AbstractBlockWrapper {
       }
     }    
   }
-  
+
+  /**
+   * Tries to find first parent block of the current block that starts before the current block and which
+   * {@link WhiteSpace white space} contains line feeds.
+   *
+   * @return    first parent block that starts before the current block and which white space contains line feeds if any;
+   *            <code>null</code> otherwise
+   */
+  @Nullable
   protected AbstractBlockWrapper findFirstIndentedParent() {
     if (myParent == null) return null;
     if (myStart != myParent.getStartOffset() && myParent.getWhiteSpace().containsLineFeeds()) return myParent;
