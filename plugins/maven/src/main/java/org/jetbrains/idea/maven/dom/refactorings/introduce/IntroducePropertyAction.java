@@ -205,16 +205,16 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 collectUsages(myModel);
-                for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.collectChildrenProjects(myModel)) {
+                for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                   collectUsages(model);
                 }
               }
 
               private void collectUsages(@NotNull MavenDomProjectModel model) {
                 if (model.isValid()) {
-                  XmlElement root = model.getXmlElement();
+                  final XmlElement root = model.getXmlElement();
                   if (root != null) {
-                    root.accept(new XmlElementVisitor() {
+                    root.acceptChildren(new XmlElementVisitor() {
 
                       @Override
                       public void visitXmlText(XmlText text) {
@@ -226,7 +226,10 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
                       @Override
                       public void visitXmlAttributeValue(XmlAttributeValue value) {
-                        usages.addAll(getUsages(value));
+                        XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
+                        if (xmlTag != null && !xmlTag.equals(root)) {
+                          usages.addAll(getUsages(value));
+                        }
                       }
 
                       @Override
