@@ -664,5 +664,7 @@ public class NormalCompletionTest extends LightCompletionTestCase {
 
   public void testEnumConstantFromEnumMember() throws Throwable { doTest(); }
 
+  public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
+
 
 }
