@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -53,13 +54,21 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return nameElement != null ? nameElement.getStartOffset() : getTextRange().getStartOffset();
   }
 
-  private ASTNode getNameElement() {
+  @Nullable
+  public ASTNode getNameElement() {
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
+  public String getReferencedName() {
+    return getName();
+  }
+
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
-    getNode().replaceChild(getNameElement(), nameElement);
+    final ASTNode oldNameElement = getNameElement();
+    if (oldNameElement != null) {
+      final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
+      getNode().replaceChild(oldNameElement, nameElement);
+    }
     return this;
   }
 
@@ -152,5 +161,13 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     }
     final PyExpression value = findAssignedValue();
     return value instanceof PyReferenceExpression ? ((PyReferenceExpression) value).asQualifiedName() : null;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    if (getQualifier() != null) {
+      return new PyQualifiedReferenceImpl(this);
+    }
+    return null;
   }
 }

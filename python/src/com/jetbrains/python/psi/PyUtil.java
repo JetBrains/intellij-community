@@ -334,23 +334,6 @@ public class PyUtil {
   }
 
   /**
-   * Does the same as {@code PsiTreeUtil.getParentOfType(element, PyElement.class);}
-   * Please eschew.
-   * @param element where to start.
-   * @return first PyElement up the tree.
-   */
-  @Nullable
-  @Deprecated
-  public static PyElement getCoveringPyElement(PsiElement element) {
-    while (element != null) {
-      if (element instanceof PyElement) return (PyElement)element;
-      element = element.getParent();
-    }
-    return null;
-  }
-
-
-  /**
    * @param element             which to process
    * @param requiredElementType which type of container element is required
    * @return closest containing element of given type, or element itself, it it is of required type.
