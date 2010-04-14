@@ -36,10 +36,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
@@ -109,6 +106,9 @@ public class PullUpHelper extends BaseRefactoringProcessor{
     final HashSet<PsiMember> movedMembers = new HashSet<PsiMember>();
     myMembersAfterMove = new HashSet<PsiMember>();
 
+    RefactoringUtil.replaceMovedMemberTypeParameters(myMembersToMove, PsiUtil.typeParametersIterable(mySourceClass),
+                                                     upDownSuperClassSubstitutor(),
+                                                     JavaPsiFacade.getElementFactory(myProject));
     // build aux sets
     for (MemberInfo info : myMembersToMove) {
       movedMembers.add(info.getMember());
@@ -233,6 +233,23 @@ public class PullUpHelper extends BaseRefactoringProcessor{
       final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(movedMember.getProject());
       ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, movedMember);
     }
+  }
+
+  private PsiSubstitutor upDownSuperClassSubstitutor() {
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(mySourceClass)) {
+      substitutor = substitutor.put(parameter, null);
+    }
+    final Map<PsiTypeParameter, PsiType> substitutionMap =
+      TypeConversionUtil.getSuperClassSubstitutor(myTargetSuperClass, mySourceClass, PsiSubstitutor.EMPTY).getSubstitutionMap();
+    for (PsiTypeParameter parameter : substitutionMap.keySet()) {
+      final PsiType type = substitutionMap.get(parameter);
+      final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
+      if (resolvedClass instanceof PsiTypeParameter) {
+        substitutor = substitutor.put((PsiTypeParameter)resolvedClass, JavaPsiFacade.getElementFactory(myProject).createType(parameter));
+      }
+    }
+    return substitutor;
   }
 
   private static void deleteOverrideAnnotationIfFound(PsiMethod oMethod) {

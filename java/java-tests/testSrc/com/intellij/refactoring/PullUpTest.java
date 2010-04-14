@@ -67,6 +67,18 @@ public class PullUpTest extends LightCodeInsightTestCase {
     doTest(new MemberDescriptor ("get", PsiMethod.class));
   }
 
+  public void testTypeParamErasure() throws Exception {
+    doTest(new MemberDescriptor("f", PsiField.class));
+  }
+
+  public void testTypeParamSubst() throws Exception {
+    doTest(new MemberDescriptor("f", PsiField.class));
+  }
+
+  public void testTypeArgument() throws Exception {
+    doTest(new MemberDescriptor("f", PsiField.class));
+  }
+
   private void doTest(MemberDescriptor... membersToFind) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
