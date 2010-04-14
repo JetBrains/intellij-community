@@ -18,7 +18,7 @@ import java.util.*;
  * @author yole
  */
 public class PyQualifiedReferenceImpl extends PyReferenceImpl {
-  public PyQualifiedReferenceImpl(PyReferenceExpressionImpl element) {
+  public PyQualifiedReferenceImpl(PyQualifiedExpression element) {
     super(element);
   }
 

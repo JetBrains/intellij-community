@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference {
   protected final PyQualifiedExpression myElement;
 
-  public PyReferenceImpl(PyReferenceExpressionImpl element) {
+  public PyReferenceImpl(PyQualifiedExpression element) {
     myElement = element;
   }
 
