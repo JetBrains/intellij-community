@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import com.jetbrains.python.toolbox.ArrayIterable;
 import org.jetbrains.annotations.NotNull;
@@ -60,22 +59,83 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
 
   public boolean isCompatibleTo(@NotNull PyParameterList another) {
     PyParameter[] parameters = getParameters();
-    boolean we_have_starred = hasPositionalContainer();
-    boolean we_have_double_starred = hasKeywordContainer();
-    final PyParameter[] another_parameters = another.getParameters();
-    boolean another_has_starred = another.hasPositionalContainer();
-    boolean another_has_double_starred = another.hasKeywordContainer();
-    if (parameters.length == another_parameters.length) {
-      if (we_have_starred == another_has_starred && we_have_double_starred == another_has_double_starred) {
+    final PyParameter[] anotherParameters = another.getParameters();
+    final int parametersLength = parameters.length;
+    final int anotherParametersLength = anotherParameters.length;
+    if (parametersLength == anotherParametersLength) {
+      if (hasPositionalContainer() == another.hasPositionalContainer() && hasKeywordContainer() == another.hasKeywordContainer()) {
         return true;
       }
     }
-    if (we_have_starred && parameters.length - 1 <= another_parameters.length) {
-      if (we_have_double_starred == another_has_double_starred) {
-        return true;
+
+    int i = 0;
+    int j = 0;
+    while (i < parametersLength && j < anotherParametersLength) {
+      PyParameter parameter = parameters[i];
+      PyParameter anotherParameter = anotherParameters[j];
+      if (parameter instanceof PyNamedParameter && anotherParameter instanceof PyNamedParameter) {
+        PyNamedParameter namedParameter = (PyNamedParameter)parameter;
+        PyNamedParameter anotherNamedParameter = (PyNamedParameter)anotherParameter;
+
+        if (namedParameter.isPositionalContainer()) {
+          while (j < anotherParametersLength
+                 && !anotherNamedParameter.isPositionalContainer()
+                 && !anotherNamedParameter.isKeywordContainer()) {
+            anotherParameter = anotherParameters[j++];
+            anotherNamedParameter = (PyNamedParameter) anotherParameter;
+          }
+          ++i;
+          continue;
+        }
+
+        if (anotherNamedParameter.isPositionalContainer()) {
+          while (i < parametersLength
+                 && !namedParameter.isPositionalContainer()
+                 && !namedParameter.isKeywordContainer()) {
+            parameter = parameters[i++];
+            namedParameter = (PyNamedParameter) parameter;
+          }
+          ++j;
+          continue;
+        }
+
+        if (namedParameter.isKeywordContainer() || anotherNamedParameter.isKeywordContainer()) {
+          break;
+        }
+      }
+
+      // both are simple parameters
+      ++i;
+      ++j;
+    }
+
+    if (i < parametersLength) {
+      if (parameters[i] instanceof PyNamedParameter) {
+        if (((PyNamedParameter) parameters[i]).isKeywordContainer()) {
+          ++i;
+        }
       }
     }
-    return false;
+
+    if (j < anotherParametersLength) {
+      if (anotherParameters[j] instanceof PyNamedParameter) {
+        if (((PyNamedParameter) anotherParameters[j]).isKeywordContainer()) {
+          ++j;
+        }
+      }
+    }
+    return (i >= parametersLength) && (j >= anotherParametersLength);
+    //
+    //if (weHaveStarred && parameters.length - 1 <= anotherParameters.length) {
+    //  if (weHaveDoubleStarred == anotherHasDoubleStarred) {
+    //    return true;
+    //  }
+    //}
+    //if ((anotherHasDoubleStarred && parameters.length == anotherParameters.length - 1)
+    //  || (weHaveDoubleStarred && parameters.length == anotherParameters.length + 1)) {
+    //  return true;
+    //}
+    //return false;
   }
 
   @NotNull
