@@ -364,7 +364,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   public boolean isSoft() {
-    return false;
+    return myElement instanceof PyTargetExpression;
   }
 
   public HighlightSeverity getUnresolvedHighlightSeverity() {

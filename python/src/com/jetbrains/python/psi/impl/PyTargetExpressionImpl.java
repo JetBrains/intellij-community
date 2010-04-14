@@ -176,12 +176,25 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   public boolean isRedefiningAssignment() {
-    PyFunction containingFunction = PsiTreeUtil.getParentOfType(this, PyFunction.class);
-    final PyRedefinitionVisitor visitor = new PyRedefinitionVisitor();
-    if (containingFunction != null) {
-      containingFunction.acceptChildren(visitor);
+    PsiElement redefinitionScope = getRedefinitionScope();
+    if (redefinitionScope != null) {
+      final PyRedefinitionVisitor visitor = new PyRedefinitionVisitor();
+      redefinitionScope.acceptChildren(visitor);
+      return visitor.myResult != null;
     }
-    return visitor.myResult != null;
+    return false;
+  }
+
+  @Nullable
+  public PsiElement getRedefinitionScope() {
+    PyFunction containingFunction = PsiTreeUtil.getParentOfType(this, PyFunction.class);
+    if (containingFunction != null) {
+      return containingFunction;
+    }
+    if (PsiTreeUtil.getParentOfType(this, PyClass.class) == null) {
+      return getContainingFile();
+    }
+    return null;
   }
 
   private class PyRedefinitionVisitor extends PyRecursiveElementVisitor {
@@ -203,6 +216,16 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (!myFoundSelf && Comparing.equal(node.getName(), getName())) {
         myResult = node;
       }
+    }
+
+    @Override
+    public void visitPyClass(PyClass node) {
+      // don't go into classes
+    }
+
+    @Override
+    public void visitPyFunction(PyFunction node) {
+      // don't go into functions
     }
   }
 }
