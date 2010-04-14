@@ -20,6 +20,8 @@ import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.patterns.Matcher;
+import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -274,12 +276,14 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       }
     }
 
+    private static final Matcher IN_GLOBAL = new ParentMatcher(PyGlobalStatement.class).limitBy(PyStatement.class);
+
     private void registerUnresolvedReferenceProblem(PyElement node, PsiReference reference, HighlightSeverity severity) {
       final StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
       final String text = reference.getElement().getText();
       final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
       final PsiElement ref_element = reference.getElement();
-      final boolean ref_in_import = SyntaxMatchers.IN_IMPORT.search(ref_element) != null;
+      final boolean ref_is_importable = SyntaxMatchers.IN_IMPORT.search(ref_element) == null && IN_GLOBAL.search(ref_element) == null;
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       HintAction hint_action = null;
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
@@ -306,7 +310,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
         }
         // look in other imported modules for this whole name
-        if (! ref_in_import) {
+        if (ref_is_importable) {
           Collection<LocalQuickFix> import_fixes = proposeImportFixes(node, ref_text);
           if (import_fixes.size() > 0) {
             actions.addAll(import_fixes);
@@ -355,8 +359,8 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         }
         if (! marked_qualified) {
           description_buf.append(PyBundle.message("INSP.unresolved.ref.$0", ref_text));
-          // add import hint unless we're an import ourselves; the rest of action will fend for itself.
-          if (ref_element != null && !ref_in_import && hint_action == null) {
+          // add import hint; the rest of action will fend for itself.
+          if (ref_element != null && ref_is_importable && hint_action == null) {
             actions.add(new AddImportAction(reference));
           }
         }
