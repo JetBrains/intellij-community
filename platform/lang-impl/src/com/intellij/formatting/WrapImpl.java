@@ -145,7 +145,7 @@ class WrapImpl extends Wrap {
    * Performs the following changes at wrap object state:
    * <ul>
    *   <li>'{@link #getFirstEntry() firstEntry}' property value is dropped (set to <code>null</code>)</li>
-   *   <li>'{@link #isIsActive() isActive}' property value is dropped (set to <code>false</code>)</li>
+   *   <li>'{@link #isIsActive() isActive}' property value is set (to <code>true</code>)</li>
    * </ul>
    */
   void markAsUsed() {
