@@ -174,7 +174,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                   JavaCompletionUtil.setShowFQN((LookupItem)item);
                 } else {
                 }
-                ((LookupItem) item).setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
+                ((LookupItem) item).setInsertHandler(DefaultInsertHandler.NO_TAIL_PARENS_HANDLER);
                 result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.INSTANCE), infos));
               }
             }
@@ -578,7 +578,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
 
-    item.setInsertHandler(DefaultInsertHandler.NO_TAIL_HANDLER);
+    item.setInsertHandler(DefaultInsertHandler.NO_TAIL_PARENS_HANDLER);
     result.addElement(decorate(type instanceof PsiClassType ? LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.INSTANCE) : item, infos));
   }
 
@@ -621,13 +621,19 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       PsiElement element = file.findElementAt(context.getStartOffset());
       if (element instanceof PsiIdentifier) {
         element = element.getParent();
-        while (element instanceof PsiJavaCodeReferenceElement || element instanceof PsiMethodCallExpression ||
+        while (element instanceof PsiJavaCodeReferenceElement || element instanceof PsiCall ||
                element instanceof PsiThisExpression || element instanceof PsiSuperExpression ||
                element instanceof PsiTypeElement ||
                element instanceof PsiClassObjectAccessExpression) {
           int newEnd = element.getTextRange().getEndOffset();
           if (element instanceof PsiMethodCallExpression) {
-            newEnd = ((PsiMethodCallExpression)element).getMethodExpression().getElement().getTextRange().getEndOffset();
+            newEnd = ((PsiMethodCallExpression)element).getMethodExpression().getTextRange().getEndOffset();
+          }
+          else if (element instanceof PsiNewExpression) {
+            final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)element).getClassReference();
+            if (classReference != null) {
+              newEnd = classReference.getTextRange().getEndOffset();
+            }
           }
           context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, newEnd);
           element = element.getParent();

@@ -55,6 +55,16 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       return TailType.NONE;
     }
   };
+  public static final DefaultInsertHandler NO_TAIL_PARENS_HANDLER = new DefaultInsertHandler(){
+    @Override
+    protected TailType getTailType(char completionChar) {
+      return TailType.NONE;
+    }
+
+    @Override
+    protected void removeEndOfIdentifier(boolean needParenth) {
+    }
+  };
 
   public void handleInsert(final InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);
@@ -80,10 +90,12 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     final boolean needLeftParenth = isToInsertParenth();
     final boolean hasParams = needLeftParenth && hasParams();
 
-    if (CompletionUtil.isOverwrite(item, completionChar))
+    if (CompletionUtil.isOverwrite(item, completionChar)) {
       removeEndOfIdentifier(needLeftParenth && hasParams);
-    else if(myContext.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContext.getSelectionEndOffset())
+    }
+    else if(myContext.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myContext.getSelectionEndOffset()) {
       JavaCompletionUtil.resetParensInfo(context.getOffsetMap());
+    }
 
     handleParenses(hasParams, needLeftParenth, tailType);
     handleBrackets();
@@ -253,7 +265,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
   }
 
-  private boolean isToInsertParenth(){
+  protected boolean isToInsertParenth(){
     return insertingAnnotationWithParameters();
   }
 

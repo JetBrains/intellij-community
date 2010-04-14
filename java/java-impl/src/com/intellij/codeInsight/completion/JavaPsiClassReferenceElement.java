@@ -31,7 +31,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   public static final InsertHandler<JavaPsiClassReferenceElement> JAVA_CLASS_INSERT_HANDLER = new InsertHandler<JavaPsiClassReferenceElement>() {
     public void handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       if (completingRawConstructor(context, item)) {
-        DefaultInsertHandler.NO_TAIL_HANDLER.handleInsert(context, item);
+        DefaultInsertHandler.NO_TAIL_PARENS_HANDLER.handleInsert(context, item);
         ConstructorInsertHandler.insertParentheses(context, item, item.getObject());
       } else {
         new DefaultInsertHandler().handleInsert(context, item);
