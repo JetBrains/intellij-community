@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,10 @@ public class PyDocstringInspection extends LocalInspectionTool {
     }
 
     private void checkDocString(PyDocStringOwner node) {
-      PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
+      if (PydevConsoleRunner.isInPydevConsole(node)) {
+        return;
+      }
+      final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
       if (docStringExpression == null) {
         registerProblem(node, "Missing docstring"); // node?
       } else if ("".equals(docStringExpression.getStringValue().trim())) {
