@@ -55,16 +55,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
       return TailType.NONE;
     }
   };
-  public static final DefaultInsertHandler NO_TAIL_PARENS_HANDLER = new DefaultInsertHandler(){
-    @Override
-    protected TailType getTailType(char completionChar) {
-      return TailType.NONE;
-    }
-
-    @Override
-    protected void removeEndOfIdentifier(boolean needParenth) {
-    }
-  };
 
   public void handleInsert(final InsertionContext context, LookupElement item) {
     super.handleInsert(context, item);

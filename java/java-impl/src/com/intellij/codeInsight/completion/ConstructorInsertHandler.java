@@ -36,9 +36,10 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
 
   public void handleInsert(InsertionContext context, LookupElementDecorator<LookupItem> item) {
     @SuppressWarnings({"unchecked"}) final LookupItem<PsiClass> delegate = item.getDelegate();
-    delegate.handleInsert(context);
 
     insertParentheses(context, delegate, delegate.getObject());
+
+    DefaultInsertHandler.addImportForItem(context.getFile(), context.getStartOffset(), delegate);
 
     final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
 
@@ -66,8 +67,6 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
   }
 
   public static void insertParentheses(InsertionContext context, LookupItem delegate, final PsiClass psiClass) {
-    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getEditor().getDocument());
-
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     assert place != null;

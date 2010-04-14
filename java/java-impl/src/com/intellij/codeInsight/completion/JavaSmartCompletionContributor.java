@@ -174,7 +174,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
                   JavaCompletionUtil.setShowFQN((LookupItem)item);
                 } else {
                 }
-                ((LookupItem) item).setInsertHandler(DefaultInsertHandler.NO_TAIL_PARENS_HANDLER);
                 result.addElement(decorate(LookupElementDecorator.withInsertHandler((LookupItem)item, ConstructorInsertHandler.INSTANCE), infos));
               }
             }
@@ -578,7 +577,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       item.setAttribute(LookupItem.INDICATE_ANONYMOUS, "");
     }
 
-    item.setInsertHandler(DefaultInsertHandler.NO_TAIL_PARENS_HANDLER);
     result.addElement(decorate(type instanceof PsiClassType ? LookupElementDecorator.withInsertHandler(item, ConstructorInsertHandler.INSTANCE) : item, infos));
   }
 
