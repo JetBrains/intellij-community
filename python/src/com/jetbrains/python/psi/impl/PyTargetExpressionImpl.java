@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -168,6 +169,40 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     if (getQualifier() != null) {
       return new PyQualifiedReferenceImpl(this);
     }
+    if (isRedefiningAssignment()) {  // TODO this check is pretty slow, do we always need it?
+      return new PyReferenceImpl(this);
+    }
     return null;
+  }
+
+  public boolean isRedefiningAssignment() {
+    PyFunction containingFunction = PsiTreeUtil.getParentOfType(this, PyFunction.class);
+    final PyRedefinitionVisitor visitor = new PyRedefinitionVisitor();
+    if (containingFunction != null) {
+      containingFunction.acceptChildren(visitor);
+    }
+    return visitor.myResult != null;
+  }
+
+  private class PyRedefinitionVisitor extends PyRecursiveElementVisitor {
+    private PsiElement myResult;
+    private boolean myFoundSelf = false;
+
+    @Override
+    public void visitPyNamedParameter(PyNamedParameter node) {
+      if (Comparing.equal(node.getName(), getName())) {
+        myResult = node;
+      }
+    }
+
+    @Override
+    public void visitPyTargetExpression(PyTargetExpression node) {
+      if (node == PyTargetExpressionImpl.this) {
+        myFoundSelf = true;
+      }
+      if (!myFoundSelf && Comparing.equal(node.getName(), getName())) {
+        myResult = node;
+      }
+    }
   }
 }

@@ -264,6 +264,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
       if (Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) {
+        if (element instanceof PyParameter || element instanceof PyTargetExpression) {
+          PyFunction functionContainingUs = PsiTreeUtil.getParentOfType(getElement(), PyFunction.class);
+          PyFunction functionContainingThem = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+          if (functionContainingUs == functionContainingThem) {
+            return true;
+          }
+        }
         return resolve() == element; // TODO: handle multi-resolve
       }
     }
