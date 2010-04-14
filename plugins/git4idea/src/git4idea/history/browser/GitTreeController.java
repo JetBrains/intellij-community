@@ -66,7 +66,7 @@ class GitTreeController implements ManageGitTreeView {
     @Override
     public CommittedChangeList createValue(SHAHash key) {
       try {
-        return GitChangeUtils.getRevisionChanges(myProject, myRoot, key.getValue());
+        return GitChangeUtils.getRevisionChanges(myProject, myRoot, key.getValue(), true);
       }
       catch (VcsException e) {
         return new CommittedChangeListImpl(e.getMessage(), "", "", -1, null, Collections.<Change>emptyList());
