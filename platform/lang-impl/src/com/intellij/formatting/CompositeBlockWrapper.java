@@ -69,6 +69,14 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     myChildren = null;
   }
 
+  /**
+   * Tries to find child block of the current composite block that contains line feeds and starts before the given block
+   * (i.e. its {@link AbstractBlockWrapper#getStartOffset() start offset} is less than start offset of the given block).
+   *
+   * @param current   block that defines right boundary for child blocks processing
+   * @return          last child block that contains line feeds and starts before the given block if any;
+   *                  <code>null</code> otherwise
+   */
   public AbstractBlockWrapper getPrevIndentedSibling(final AbstractBlockWrapper current) {
     AbstractBlockWrapper candidate = null;
     for (AbstractBlockWrapper child : myChildren) {
