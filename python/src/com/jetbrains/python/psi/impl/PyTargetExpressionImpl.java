@@ -169,63 +169,6 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     if (getQualifier() != null) {
       return new PyQualifiedReferenceImpl(this);
     }
-    if (isRedefiningAssignment()) {  // TODO this check is pretty slow, do we always need it?
-      return new PyReferenceImpl(this);
-    }
-    return null;
-  }
-
-  public boolean isRedefiningAssignment() {
-    PsiElement redefinitionScope = getRedefinitionScope();
-    if (redefinitionScope != null) {
-      final PyRedefinitionVisitor visitor = new PyRedefinitionVisitor();
-      redefinitionScope.acceptChildren(visitor);
-      return visitor.myResult != null;
-    }
-    return false;
-  }
-
-  @Nullable
-  public PsiElement getRedefinitionScope() {
-    PyFunction containingFunction = PsiTreeUtil.getParentOfType(this, PyFunction.class);
-    if (containingFunction != null) {
-      return containingFunction;
-    }
-    if (PsiTreeUtil.getParentOfType(this, PyClass.class) == null) {
-      return getContainingFile();
-    }
-    return null;
-  }
-
-  private class PyRedefinitionVisitor extends PyRecursiveElementVisitor {
-    private PsiElement myResult;
-    private boolean myFoundSelf = false;
-
-    @Override
-    public void visitPyNamedParameter(PyNamedParameter node) {
-      if (Comparing.equal(node.getName(), getName())) {
-        myResult = node;
-      }
-    }
-
-    @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
-      if (node == PyTargetExpressionImpl.this) {
-        myFoundSelf = true;
-      }
-      if (!myFoundSelf && Comparing.equal(node.getName(), getName())) {
-        myResult = node;
-      }
-    }
-
-    @Override
-    public void visitPyClass(PyClass node) {
-      // don't go into classes
-    }
-
-    @Override
-    public void visitPyFunction(PyFunction node) {
-      // don't go into functions
-    }
+    return new PyTargetReference(this);
   }
 }
