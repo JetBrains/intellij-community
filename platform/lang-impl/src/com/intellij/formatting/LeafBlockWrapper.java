@@ -124,7 +124,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   }
 
   public IndentData calculateOffset(final CodeStyleSettings.IndentOptions options) {
-
+    // Calculate result as an indent of current block from parent plus parent block indent.
     if (myIndentFromParent != null) {
       final AbstractBlockWrapper firstIndentedParent = findFirstIndentedParent();
       final IndentData indentData = new IndentData(myIndentFromParent.getIndentSpaces(), myIndentFromParent.getSpaces());
@@ -136,7 +136,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
       }
     }
 
+    // Consider that current block is not indented if it doesn't have a parent block.
     if (myParent == null) return new IndentData(0);
+
+    // Define that current block and all its parents that start at the same offset can't use first child indent as block indent.
     if (getIndent().isAbsolute()) {
       setCanUseFirstChildIndentAsBlockIndent(false);
       AbstractBlockWrapper current = this;
