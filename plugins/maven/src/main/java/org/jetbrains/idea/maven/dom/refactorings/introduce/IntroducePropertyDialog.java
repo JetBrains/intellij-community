@@ -26,7 +26,6 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.util.Function;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.xml.DomBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
@@ -212,7 +211,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
 
     if (isPropertyExist(text, project)) return true;
 
-    for (MavenDomProjectModel child : MavenDomProjectProcessorUtils.collectChildrenProjects(project)) {
+    for (MavenDomProjectModel child : MavenDomProjectProcessorUtils.getChildrenProjects(project)) {
       if (isPropertyExist(text, child)) return true;
     }
 
