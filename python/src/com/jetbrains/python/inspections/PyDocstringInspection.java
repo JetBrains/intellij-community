@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -70,7 +71,7 @@ public class PyDocstringInspection extends LocalInspectionTool {
       final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
       if (docStringExpression == null) {
         registerProblem(node, "Missing docstring"); // node?
-      } else if ("".equals(docStringExpression.getStringValue().trim())) {
+      } else if (StringUtil.isEmptyOrSpaces(docStringExpression.getStringValue())) {
         registerProblem(docStringExpression, "Empty docstring");
       }
     }
