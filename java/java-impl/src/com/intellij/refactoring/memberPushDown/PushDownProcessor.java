@@ -327,9 +327,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, targetClass, PsiSubstitutor.EMPTY);
-    RefactoringUtil.replaceMovedMemberTypeParameters(myMemberInfos, PsiUtil.typeParametersIterable(myClass), substitutor, factory);
     for (MemberInfo memberInfo : myMemberInfos) {
-      final PsiMember member = memberInfo.getMember();
+      PsiMember member = memberInfo.getMember();
       final List<PsiReference> refsToRebind = new ArrayList<PsiReference>();
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
@@ -345,7 +344,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           refsToRebind.add(reference);
         }
       }
-
+      member = (PsiMember)member.copy();
+      RefactoringUtil.replaceMovedMemberTypeParameters(member, PsiUtil.typeParametersIterable(myClass), substitutor, factory);
       PsiMember newMember = null;
       if (member instanceof PsiField) {
         ((PsiField)member).normalizeDeclaration();

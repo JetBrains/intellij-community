@@ -52,7 +52,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -857,23 +856,18 @@ public class RefactoringUtil {
     return null;
   }
 
-  public static void replaceMovedMemberTypeParameters(final MemberInfo[] memberInfos,
+  public static void replaceMovedMemberTypeParameters(final PsiElement member,
                                                       final Iterable<PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final PsiElementFactory factory) {
     for (PsiTypeParameter parameter : parametersIterable) {
-      for (PsiReference reference : ReferencesSearch.search(parameter)) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member))) {
         final PsiElement element = reference.getElement();
-        for (MemberInfo memberInfo : memberInfos) {
-          if (PsiTreeUtil.isAncestor(memberInfo.getMember(), element, false)) {
-            PsiType substitutedType = substitutor.substitute(parameter);
-            if (substitutedType == null) {
-              substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
-            }
-            element.getParent().replace(factory.createTypeElement(substitutedType));
-            break;
-          }
+        PsiType substitutedType = substitutor.substitute(parameter);
+        if (substitutedType == null) {
+          substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
         }
+        element.getParent().replace(factory.createTypeElement(substitutedType));
       }
     }
   }

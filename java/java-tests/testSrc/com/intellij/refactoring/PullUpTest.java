@@ -79,7 +79,19 @@ public class PullUpTest extends LightCodeInsightTestCase {
     doTest(new MemberDescriptor("f", PsiField.class));
   }
 
+  public void testGenericsInAbstractMethod() throws Exception {
+    doTest(new MemberDescriptor("method", PsiMethod.class, true));
+  }
+
+  public void testGenericsInImplements() throws Exception {
+    doTest(false, new MemberDescriptor("I", PsiClass.class));
+  }
+
   private void doTest(MemberDescriptor... membersToFind) throws Exception {
+    doTest(true, membersToFind);
+  }
+
+  private void doTest(final boolean checkMemebersMovedCount, MemberDescriptor... membersToFind) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement elementAt = getFile().findElementAt(getEditor().getCaretModel().getOffset());
     final PsiClass sourceClass = PsiTreeUtil.getParentOfType(elementAt, PsiClass.class);
@@ -105,7 +117,9 @@ public class PullUpTest extends LightCodeInsightTestCase {
     final PullUpHelper helper = new PullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
-    assertEquals(countMoved[0], membersToFind.length);
+    if (checkMemebersMovedCount) {
+      assertEquals(countMoved[0], membersToFind.length);
+    }
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
