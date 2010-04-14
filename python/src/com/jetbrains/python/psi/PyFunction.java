@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author yole
  */
-public interface PyFunction extends PsiNamedElement, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyFunctionStub>,
+public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyFunctionStub>,
                                     ScopeOwner {
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   

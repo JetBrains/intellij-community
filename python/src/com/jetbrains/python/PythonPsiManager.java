@@ -88,7 +88,8 @@ public class PythonPsiManager extends AbstractProjectComponent implements PsiTre
       }
       PsiElement pparent = element.getParent();
       if (pparent instanceof PyFunction) {
-        return true;
+        final PyFunction pyFunction = (PyFunction)pparent;
+        return !(element == pyFunction.getParameterList() || element == pyFunction.getNameIdentifier());
       }
       element = pparent;
     }
