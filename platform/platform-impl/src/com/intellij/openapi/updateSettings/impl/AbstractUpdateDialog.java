@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.util.List;
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
   protected final List<PluginDownloader> myUploadedPlugins;
+  protected boolean myShowConfirmation = true;
 
   protected AbstractUpdateDialog(boolean canBeParent, boolean enableLink, final List<PluginDownloader> updatePlugins) {
     super(canBeParent);
@@ -95,7 +96,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    if (doDownloadAndPrepare()) {
+    if (doDownloadAndPrepare() && isShowConfirmation()) {
       final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if (app.isRestartCapable()) {
         app.restart();
@@ -120,5 +121,13 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     UpdateChecker.saveDisabledToUpdatePlugins();
     if (myUploadedPlugins != null) UpdateChecker.install(myUploadedPlugins); //update on restart
     super.doCancelAction();
+  }
+
+  public void setShowConfirmation(boolean showConfirmation) {
+    myShowConfirmation = showConfirmation;
+  }
+
+  public boolean isShowConfirmation() {
+    return myShowConfirmation;
   }
 }
