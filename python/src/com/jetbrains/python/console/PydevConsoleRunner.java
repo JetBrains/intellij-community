@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
@@ -215,5 +216,9 @@ public class PydevConsoleRunner extends PyConsoleRunner {
         }
       });
     }
+  }
+
+  public static boolean isInPydevConsole(final PsiElement element){
+    return element.getContainingFile().getCopyableUserData(CONSOLE_KEY) != null;
   }
 }
