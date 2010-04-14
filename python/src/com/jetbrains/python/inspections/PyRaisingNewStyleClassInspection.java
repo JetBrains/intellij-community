@@ -56,26 +56,25 @@ public class PyRaisingNewStyleClassInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyRaiseStatement(PyRaiseStatement node) {
-      VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
+      final VirtualFile virtualFile = node.getContainingFile().getVirtualFile();
       if (virtualFile == null) {
         return;
       }
       if (LanguageLevel.forFile(virtualFile).isPy3K()) {
         return;
       }
-      PyExpression[] expressions = node.getExpressions();
-      if (expressions == null) {
+      final PyExpression[] expressions = node.getExpressions();
+      if (expressions == null || expressions.length == 0) {
         return;
       }
-      for (PyExpression expression: expressions) {
-        if (expression instanceof PyCallExpression) {
-          PyExpression callee = ((PyCallExpression)expression).getCallee();
-          if (callee instanceof PyReferenceExpression) {
-            PsiElement psiElement = ((PyReferenceExpression)callee).getReference().resolve();
-            if (psiElement instanceof PyClass) {
-              if (((PyClass)psiElement).isNewStyleClass()) {
-                registerProblem(expression, "Raising a new style class");
-              }
+      final PyExpression expression = expressions[0];
+      if (expression instanceof PyCallExpression) {
+        final PyExpression callee = ((PyCallExpression)expression).getCallee();
+        if (callee instanceof PyReferenceExpression) {
+          final PsiElement psiElement = ((PyReferenceExpression)callee).getReference().resolve();
+          if (psiElement instanceof PyClass) {
+            if (((PyClass)psiElement).isNewStyleClass()) {
+              registerProblem(expression, "Raising a new style class");
             }
           }
         }

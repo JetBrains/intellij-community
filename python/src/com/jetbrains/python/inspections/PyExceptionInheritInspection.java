@@ -59,20 +59,18 @@ public class PyExceptionInheritInspection extends LocalInspectionTool {
       if (expressions == null) {
         return;
       }
-expr:
-      for (PyExpression expression: expressions) {
-        if (expression instanceof PyCallExpression) {
-          PyExpression callee = ((PyCallExpression)expression).getCallee();
-          if (callee instanceof PyReferenceExpression) {
-            PsiElement psiElement = ((PyReferenceExpression)callee).getReference().resolve();
-            if (psiElement instanceof PyClass) {
-              for (PyClass pyClass : PyUtil.getAllSuperClasses((PyClass)psiElement)) {
-                if ("Exception".equals(pyClass.getName())) {
-                  continue expr;
-                }
+      PyExpression expression = expressions[0];
+      if (expression instanceof PyCallExpression) {
+        PyExpression callee = ((PyCallExpression)expression).getCallee();
+        if (callee instanceof PyReferenceExpression) {
+          PsiElement psiElement = ((PyReferenceExpression)callee).getReference().resolve();
+          if (psiElement instanceof PyClass) {
+            for (PyClass pyClass : PyUtil.getAllSuperClasses((PyClass)psiElement)) {
+              if ("Exception".equals(pyClass.getName())) {
+                return;
               }
-              registerProblem(expression, "Exception doesn't inherit from base \'Exception\' class");
             }
+            registerProblem(expression, "Exception doesn't inherit from base \'Exception\' class");
           }
         }
       }
