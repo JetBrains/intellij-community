@@ -117,12 +117,6 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     return false;
   }
 
-  public void doCancelAction() {
-    UpdateChecker.saveDisabledToUpdatePlugins();
-    if (myUploadedPlugins != null) UpdateChecker.install(myUploadedPlugins); //update on restart
-    super.doCancelAction();
-  }
-
   public void setShowConfirmation(boolean showConfirmation) {
     myShowConfirmation = showConfirmation;
   }
