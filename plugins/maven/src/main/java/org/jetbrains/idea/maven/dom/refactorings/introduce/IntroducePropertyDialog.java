@@ -196,14 +196,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private static boolean isContainWrongSymbols(@NotNull String text) {
-    return text.length() == 0 ||
-           text.contains("\"") ||
-           text.contains("'") ||
-           text.contains(">") ||
-           text.contains("<") ||
-           text.contains("/") ||
-           text.contains("\\") || 
-           Character.isDigit(text.charAt(0));
+    return text.length() == 0 || StringUtil.containsAnyChar(text, "\t ;*'\"\\/,()^&<>={}[]") ;
   }
 
   private boolean isPropertyExist(@NotNull String text) {
