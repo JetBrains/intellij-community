@@ -402,7 +402,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       myIsAfterClassKeyword = true;
     }
     if (childType == JavaElementType.METHOD_CALL_EXPRESSION) {
-      result.add(createMethodCallExpressiobBlock(child,
+      result.add(createMethodCallExpressionBlock(child,
                                                  arrangeChildWrap(child, defaultWrap),
                                                  arrangeChildAlignment(child, defaultAlignment)));
     }
@@ -598,23 +598,53 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return role == ChildRole.OPERATION_SIGN || role == ChildRole.COLON;
   }
 
-  private Block createMethodCallExpressiobBlock(final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
+  private Block createMethodCallExpressionBlock(final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
     final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     collectNodes(nodes, node);
 
     final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.METHOD_CALL_CHAIN_WRAP), false);
 
+    // We use this alignment object to align chained method calls to the first method invocation place if necessary (see IDEA-30369)
+    Alignment chainedCallsAlignment = createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null);
+
+    // We want to align chained method calls only if method target is explicitly specified, i.e. we don't want to align methods
+    // chain like 'recursive().recursive().recursive()' but want to align calls like 'foo.recursive().recursive().recursive()'
+    boolean callPointDefined = false;
+
     while (!nodes.isEmpty()) {
       ArrayList<ASTNode> subNodes = readToNextDot(nodes);
-      subBlocks.add(createSynthBlock(subNodes, wrap));
+      Alignment alignmentToUseForSubBlock = null;
+
+      // Just create a no-aligned sub-block if we don't need to bother with it's alignment (either due to end-user
+      // setup or sub-block state).
+      if (chainedCallsAlignment == null || subNodes.isEmpty()) {
+        subBlocks.add(createSynthBlock(subNodes, wrap, alignmentToUseForSubBlock));
+        continue;
+      }
+
+      IElementType lastNodeType = subNodes.get(subNodes.size() - 1).getElementType();
+      boolean currentSubBlockIsMethodCall = lastNodeType == JavaElementType.EXPRESSION_LIST;
+
+      // Update information about chained method alignment point if necessary. I.e. we want to align only continuous method calls
+      // like 'foo.bar().bar().bar()' but not 'foo.bar().foo.bar()'
+      if (callPointDefined && !currentSubBlockIsMethodCall) {
+        chainedCallsAlignment = createAlignment(mySettings.ALIGN_MULTILINE_CHAINED_METHODS, null);
+      }
+      callPointDefined |= !currentSubBlockIsMethodCall;
+
+      // We want to align method call only if call target is defined for the first chained method and current block is a method call.
+      if (callPointDefined && currentSubBlockIsMethodCall) {
+        alignmentToUseForSubBlock = chainedCallsAlignment;
+      }
+      subBlocks.add(createSynthBlock(subNodes, wrap, alignmentToUseForSubBlock));
     }
 
     return new SyntheticCodeBlock(subBlocks, alignment, mySettings, Indent.getContinuationWithoutFirstIndent(),
                                   blockWrap);
   }
 
-  private Block createSynthBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap) {
+  private Block createSynthBlock(final ArrayList<ASTNode> subNodes, final Wrap wrap, final Alignment alignment) {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     final ASTNode firstNode = subNodes.get(0);
     if (firstNode.getElementType() == JavaTokenType.DOT) {
@@ -623,12 +653,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                     null));
       subNodes.remove(0);
       if (!subNodes.isEmpty()) {
-        subBlocks.add(createSynthBlock(subNodes, wrap));
+        subBlocks.add(createSynthBlock(subNodes, wrap, null));
       }
-      return new SyntheticCodeBlock(subBlocks, null, mySettings, Indent.getContinuationIndent(), wrap);
+      return new SyntheticCodeBlock(subBlocks, alignment, mySettings, Indent.getContinuationIndent(), wrap);
     }
     else {
-      return new SyntheticCodeBlock(createJavaBlocks(subNodes), null, mySettings,
+      return new SyntheticCodeBlock(createJavaBlocks(subNodes), alignment, mySettings,
                                     Indent.getContinuationWithoutFirstIndent(), null);
     }
   }
