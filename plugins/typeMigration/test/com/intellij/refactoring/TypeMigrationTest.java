@@ -550,4 +550,23 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("T", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
   }
+
+  //foreach && whildcards: 108-110
+  public void testT108() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<? extends java.lang.Number>", null));
+  }
+
+  public void testT109() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<? super java.lang.Number>", null));
+  }
+
+  public void testT110() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<? extends java.lang.String>", null));
+  }
 }

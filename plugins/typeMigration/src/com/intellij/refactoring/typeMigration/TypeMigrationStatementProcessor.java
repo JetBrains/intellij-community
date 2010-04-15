@@ -225,6 +225,9 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
         LOG.assertTrue(typeParameters.length == 1);
         psiType = resolveResult.getSubstitutor().substitute(iterableParamSubstitutor.substitute(typeParameters[0]));
+        if (psiType instanceof PsiWildcardType) {
+          psiType = ((PsiWildcardType)psiType).getExtendsBound();
+        }
       }
       else {
         return;
