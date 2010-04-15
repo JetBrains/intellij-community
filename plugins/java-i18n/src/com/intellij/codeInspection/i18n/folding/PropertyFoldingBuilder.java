@@ -28,6 +28,7 @@ import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lang.properties.psi.impl.PropertyStubImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -163,7 +164,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static Property getI18nProperty(PsiLiteralExpression literal) {
     final Property property = literal.getUserData(CACHE);
     if (property == NULL) return null;
-    if (property != null && property.isValid()) return property;
+    if (property != null && isValid(property, literal)) return property;
     if (isI18nProperty(literal)) {
       final PsiReference[] references = literal.getReferences();
       for (PsiReference reference : references) {
@@ -188,6 +189,11 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
       }
     }
     return null;
+  }
+
+  private static boolean isValid(Property property, PsiLiteralExpression literal) {
+    if (literal == null || property == null || !property.isValid()) return false;
+    return StringUtil.unquoteString(literal.getText()).equals(property.getKey());    
   }
 
   private static String formatI18nProperty(PsiLiteralExpression literal, Property property) {

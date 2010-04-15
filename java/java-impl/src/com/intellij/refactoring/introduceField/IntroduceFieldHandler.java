@@ -127,8 +127,17 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     return new ExpressionOccurenceManager(selectedExpr, parentClass, occurenceFilter, true);
   }
 
-  protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
-    LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false);
+  protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
+    LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false){
+      @Override
+      protected Settings showRefactoringDialog(PsiClass aClass,
+                                               PsiLocalVariable local,
+                                               PsiExpression[] occurences,
+                                               boolean isStatic) {
+        final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
+        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, statement, statement);
+      }
+    };
     return localToFieldHandler.convertLocalToField(localVariable, editor);
   }
 

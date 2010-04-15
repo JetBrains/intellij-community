@@ -15,9 +15,7 @@
  */
 package org.intellij.plugins.xpathView.util;
 
-import java.util.Map;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 public final class Namespace implements Cloneable, Copyable<Namespace> {
     public String prefix;
@@ -63,6 +61,14 @@ public final class Namespace implements Cloneable, Copyable<Namespace> {
 
     public Namespace copy() {
         return clone();
+    }
+
+    public static Collection<Namespace> fromMap(Map<String, String> namespaces) {
+        final List<Namespace> list = new ArrayList<Namespace>(namespaces.size());
+        for (Map.Entry<String, String> e : namespaces.entrySet()) {
+            list.add(new Namespace(e.getKey(), e.getValue()));
+        }
+        return list;
     }
 
     public static Map<String, String> makeMap(Collection<Namespace> namespaces) {

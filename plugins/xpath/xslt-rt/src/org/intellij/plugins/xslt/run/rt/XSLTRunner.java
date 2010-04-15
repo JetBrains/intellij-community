@@ -20,10 +20,7 @@ import org.xml.sax.SAXParseException;
 import javax.xml.transform.*;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -32,6 +29,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
+/** @noinspection CallToPrintStackTrace,UseOfSystemOutOrSystemErr,IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed,UseOfArchaicSystemPropertyAccessors */
 public class XSLTRunner implements XSLTMain {
 
     private XSLTRunner() {
@@ -86,15 +84,28 @@ public class XSLTRunner implements XSLTMain {
                     // block until IDEA connects
                     try {
                         final ServerSocket serverSocket = new ServerSocket(port, 1, InetAddress.getByName("127.0.0.1"));
-                        serverSocket.setSoTimeout(5000);
+                        serverSocket.setSoTimeout(Integer.getInteger("xslt.listen-timeout", 5000).intValue());
                         final Socket socket = serverSocket.accept();
+                        final BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), 16);
 
-                        result = new StreamResult(new OutputStreamWriter(new BufferedOutputStream(socket.getOutputStream(), 16), "UTF-8"));
+                        if (out != null) {
+                            final File output = new File(out);
+                            result = new StreamResult(new ForkedOutputStream(new OutputStream[]{ stream, new FileOutputStream(output) }));
+                        } else {
+                            result = new StreamResult(new OutputStreamWriter(stream, "UTF-8"));
+                        }
+
                         Runtime.getRuntime().addShutdownHook(new Thread() {
                             public void run() {
                                 try {
-                                    result.getWriter().flush();
-                                    result.getWriter().close();
+                                    final Writer out = result.getWriter();
+                                    if (out != null) {
+                                        out.flush();
+                                        out.close();
+                                    } else if (result.getOutputStream() != null) {
+                                        result.getOutputStream().flush();
+                                        result.getOutputStream().close();
+                                    }
                                 } catch (IOException e) {
                                     // no chance to fix...
                                 }
@@ -105,18 +116,13 @@ public class XSLTRunner implements XSLTMain {
                         return;
                     }
                 } else {
-                    if (out != null) {
-                        final File output = new File(out);
-                        result = new StreamResult(output);
+                    final String encoding = System.getProperty("file.encoding");
+                    if (encoding != null) {
+                        // ensure proper encoding in xml declaration
+                        transformer.setOutputProperty("encoding", encoding);
+                        result = new StreamResult(new OutputStreamWriter(System.out, encoding));
                     } else {
-                        final String encoding = System.getProperty("file.encoding");
-                        if (encoding != null) {
-                            // ensure proper encoding in xml declaration
-                            transformer.setOutputProperty("encoding", encoding);
-                            result = new StreamResult(new OutputStreamWriter(System.out, encoding));
-                        } else {
-                            result = new StreamResult(System.out);
-                        }
+                        result = new StreamResult(System.out);
                     }
                 }
 
@@ -168,6 +174,7 @@ public class XSLTRunner implements XSLTMain {
         }
     }
 
+    /** @noinspection UseOfSystemOutOrSystemErr*/
     private static class MyErrorListener implements ErrorListener {
         private final Set myMessages = new HashSet();
         private final boolean[] myTrouble;
@@ -198,7 +205,7 @@ public class XSLTRunner implements XSLTMain {
             }
         }
 
-        private String getMessage(TransformerException exception) {
+        private static String getMessage(TransformerException exception) {
             final SourceLocator[] locators = new SourceLocator[]{ exception.getLocator() };
             final String[] messages = new String[1];
             findLocator(exception, locators, messages);
@@ -222,7 +229,7 @@ public class XSLTRunner implements XSLTMain {
             return messages[0] != null ? messages[0] : exception.getMessage();
         }
 
-        private void findLocator(Throwable exception, SourceLocator[] locators, String[] messages) {
+        private static void findLocator(Throwable exception, SourceLocator[] locators, String[] messages) {
             if (exception instanceof TransformerException) {
                 final TransformerException t = (TransformerException)exception;
 
@@ -266,6 +273,38 @@ public class XSLTRunner implements XSLTMain {
             } catch (Exception e) {
                 //
             }
+        }
+    }
+
+    static class ForkedOutputStream extends OutputStream {
+        OutputStream[] outs;
+
+        ForkedOutputStream(OutputStream[] out) {
+            outs = out;
+        }
+
+        public void write(byte[] b, int off, int len) throws IOException {
+          for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
+            outs[i].write(b, off, len);
+          }
+        }
+
+        public void write(int b) throws IOException {
+          for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
+            outs[i].write(b);
+          }
+        }
+
+        public void flush() throws IOException {
+          for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
+            outs[i].flush();
+          }
+        }
+
+        public void close() throws IOException {
+          for (int i = 0, outsLength = outs.length; i < outsLength; i++) {
+            outs[i].close();
+          }
         }
     }
 }
