@@ -1,0 +1,8 @@
+Types:
+PsiParameter:p : java.lang.Integer...
+
+Conversions:
+p.get(2) -> $
+
+New expression type changes:
+Fails:
