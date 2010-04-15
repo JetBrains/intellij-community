@@ -639,10 +639,12 @@ public class TypeMigrationLabeler {
             markFailedConversion(new Pair<PsiType, PsiType>(param.getType(), migrationType), (PsiCallExpression)parent);
           }
           if (index > -1 && index < expressions.length) {
-            final PsiExpression actual = expressions[index];
-            final PsiType type = getTypeEvaluator().evaluateType(actual);
-            if (type != null) {
-              migrateExpressionType(actual, migrationType, parent, TypeConversionUtil.isAssignable(migrationType, type), true);
+            for (int idx = index; idx < (param.isVarArgs() ? expressions.length : index + 1); idx++) {
+              final PsiExpression actual = expressions[idx];
+              final PsiType type = getTypeEvaluator().evaluateType(actual);
+              if (type != null) {
+                migrateExpressionType(actual, migrationType, parent, TypeConversionUtil.isAssignable(migrationType, type), true);
+              }
             }
           }
         }

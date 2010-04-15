@@ -320,6 +320,12 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFirstParamType("foo", new PsiEllipsisType(PsiType.INT), myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
   }
 
+  public void testT115() throws Exception {
+    doTestFirstParamType("foo",
+                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Object", null)),
+                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
+  }
+
   public void testT66() throws Exception {
     doTestFirstParamType("foo", new PsiEllipsisType(PsiType.INT), PsiType.INT);
   }
