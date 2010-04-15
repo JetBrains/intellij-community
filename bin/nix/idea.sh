@@ -11,6 +11,19 @@
 # ---------------------------------------------------------------------
 if [ -z "$IDEA_JDK" ]; then
   IDEA_JDK=$JDK_HOME
+  if [ -z "$IDEA_JDK" -a -e "$JAVA_HOME/lib/tools.jar" ]; then
+    IDEA_JDK=$JAVA_HOME
+  fi
+  if [ -z "$IDEA_JDK" ]; then
+    # Try to get the jdk path from java binary path
+    JAVA_BIN_PATH=`which java`
+    if [ -n "$JAVA_BIN_PATH" ]; then
+      JAVA_LOCATION=`readlink -f $JAVA_BIN_PATH | xargs dirname | xargs dirname | xargs dirname`
+      if [ -x "$JAVA_LOCATION/bin/java" -a -e "$JAVA_LOCATION/lib/tools.jar" ]; then
+        IDEA_JDK=$JAVA_LOCATION
+      fi
+    fi
+  fi
   if [ -z "$IDEA_JDK" ]; then
     echo ERROR: cannot start IntelliJ IDEA.
     echo No JDK found to run IDEA. Please validate either IDEA_JDK or JDK_HOME points to valid JDK installation
