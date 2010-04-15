@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="sass" scope="RUNTIME" />
+    <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
   </component>
 </module>
 
