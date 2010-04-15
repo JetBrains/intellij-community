@@ -576,4 +576,24 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
   }
+
+  public void testT112() throws Exception {
+    doTestMethodType("method",
+                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
+                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
+  }
+
+  //varargs
+  public void testT113() throws Exception {
+    doTestFirstParamType("method",
+                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)),
+                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null)));
+  }
+
+  public void testT114() throws Exception {
+      doTestFirstParamType("method",
+                           new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)),
+                           new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
+    }
+
 }

@@ -57,7 +57,12 @@ public class TypeMigrationRules {
     final TypeConversionDescriptor conversion = findConversion(from, to, member, context, labeler);
     if (conversion != null) return conversion;
 
-    if (isCovariantPosition && TypeConversionUtil.isAssignable(to, from)) return new TypeConversionDescriptor();
+    if (isCovariantPosition) {
+      if (to instanceof PsiEllipsisType) {
+        if (TypeConversionUtil.isAssignable(((PsiEllipsisType)to).getComponentType(), from)) return new TypeConversionDescriptor();
+      }
+      if (TypeConversionUtil.isAssignable(to, from)) return new TypeConversionDescriptor();
+    }
     if (!isCovariantPosition && TypeConversionUtil.isAssignable(from, to)) return new TypeConversionDescriptor();
     return null;
   }

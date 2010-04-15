@@ -1,0 +1,8 @@
+Types:
+PsiMethod:method : java.lang.Integer[]
+
+Conversions:
+112 -> new java.lang.Integer[]{$qualifier$} $qualifier$ 112
+
+New expression type changes:
+Fails:
