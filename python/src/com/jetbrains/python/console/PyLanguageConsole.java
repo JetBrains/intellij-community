@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author oleg
  */
-public class PyLanguageConsole extends LanguageConsoleImpl implements ConsoleNotification {
+public class PyLanguageConsole extends LanguageConsoleImpl {
   private final LightVirtualFile myNewVFile;
   private final StringBuilder myStringBuilder;
 
