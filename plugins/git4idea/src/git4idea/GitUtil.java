@@ -673,7 +673,7 @@ public class GitUtil {
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
                                               final Consumer<GitSimpleHandler> parametersSpecifier,
-                                              final Consumer<CommittedChangeList> consumer) throws VcsException {
+                                              final Consumer<CommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.setNoSSH(true);
@@ -685,7 +685,7 @@ public class GitUtil {
     StringScanner s = new StringScanner(output);
     while (s.hasMoreData() && s.startsWith('\u000C')) {
       s.nextLine();
-      consumer.consume(GitChangeUtils.parseChangeList(project, root, s));
+      consumer.consume(GitChangeUtils.parseChangeList(project, root, s, skipDiffsForMerge));
     }
     if (s.hasMoreData()) {
       throw new IllegalStateException("More input is avaialble: " + s.line());
@@ -702,7 +702,7 @@ public class GitUtil {
       public void consume(CommittedChangeList committedChangeList) {
         rc.add(committedChangeList);
       }
-    });
+    }, false);
 
     return rc;
   }

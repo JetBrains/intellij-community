@@ -36,10 +36,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
@@ -129,6 +126,9 @@ public class PullUpHelper extends BaseRefactoringProcessor{
       ChangeContextUtil.encodeContextInfo(info.getMember(), true);
     }
 
+    final PsiSubstitutor substitutor = upDownSuperClassSubstitutor();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+
     // do actual move
     for (MemberInfo info : myMembersToMove) {
       if (info.getMember() instanceof PsiMethod) {
@@ -138,7 +138,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
           PsiMethod methodCopy = (PsiMethod)method.copy();
           ChangeContextUtil.clearContextInfo(method);
           RefactoringUtil.abstractizeMethod(myTargetSuperClass, methodCopy);
-
+          RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
           if (method.findDeepestSuperMethods().length == 0 || (myTargetSuperClass.isInterface() && !PsiUtil.isLanguageLevel6OrHigher(mySourceClass))) {
             deleteOverrideAnnotationIfFound(methodCopy);
           }
@@ -169,6 +169,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
           if (isOriginalMethodAbstract) {
             PsiUtil.setModifierProperty(myTargetSuperClass, PsiModifier.ABSTRACT, true);
           }
+          RefactoringUtil.replaceMovedMemberTypeParameters(method, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
           fixReferencesToStatic(method, movedMembers);
           final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(method, false);
           if (superClassMethod != null && superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -184,6 +185,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
       else if (info.getMember() instanceof PsiField) {
         PsiField field = (PsiField)info.getMember();
         field.normalizeDeclaration();
+        RefactoringUtil.replaceMovedMemberTypeParameters(field, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
         fixReferencesToStatic(field, movedMembers);
         if (myIsTargetInterface) {
           PsiUtil.setModifierProperty(field, PsiModifier.PUBLIC, true);
@@ -201,6 +203,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
                                             RefactoringUtil.removeFromReferenceList(sourceReferenceList, aClass) :
                                             RefactoringUtil.findReferenceToClass(sourceReferenceList, aClass);
           if (ref != null) {
+            RefactoringUtil.replaceMovedMemberTypeParameters(ref, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
             final PsiReferenceList referenceList =
               myTargetSuperClass.isInterface() ? myTargetSuperClass.getExtendsList() : myTargetSuperClass.getImplementsList();
             assert referenceList != null;
@@ -208,6 +211,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
           }
         }
         else {
+          RefactoringUtil.replaceMovedMemberTypeParameters(aClass, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
           fixReferencesToStatic(aClass, movedMembers);
           final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(aClass);
           myMembersAfterMove.add(movedElement);
@@ -233,6 +237,23 @@ public class PullUpHelper extends BaseRefactoringProcessor{
       final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(movedMember.getProject());
       ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, movedMember);
     }
+  }
+
+  private PsiSubstitutor upDownSuperClassSubstitutor() {
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(mySourceClass)) {
+      substitutor = substitutor.put(parameter, null);
+    }
+    final Map<PsiTypeParameter, PsiType> substitutionMap =
+      TypeConversionUtil.getSuperClassSubstitutor(myTargetSuperClass, mySourceClass, PsiSubstitutor.EMPTY).getSubstitutionMap();
+    for (PsiTypeParameter parameter : substitutionMap.keySet()) {
+      final PsiType type = substitutionMap.get(parameter);
+      final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
+      if (resolvedClass instanceof PsiTypeParameter) {
+        substitutor = substitutor.put((PsiTypeParameter)resolvedClass, JavaPsiFacade.getElementFactory(myProject).createType(parameter));
+      }
+    }
+    return substitutor;
   }
 
   private static void deleteOverrideAnnotationIfFound(PsiMethod oMethod) {

@@ -145,7 +145,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public String suggestedName() {
     if (TestType.CLASS.getType().equals(data.TEST_OBJECT)) {
       String shortName = JavaExecutionUtil.getShortClassName(data.MAIN_CLASS_NAME);
-      return ExecutionUtil.shortenName(shortName, 0);
+      return ProgramRunnerUtil.shortenName(shortName, 0);
     }
     if (TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) {
       String s = getName();

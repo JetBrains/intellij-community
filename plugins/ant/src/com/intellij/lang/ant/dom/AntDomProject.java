@@ -25,6 +25,7 @@ import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.SubTagList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -46,7 +47,17 @@ public abstract class AntDomProject extends AntDomElement {
   public abstract GenericAttributeValue<String> getBasedir();
 
   @SubTagList("target")
-  public abstract List<AntTarget> getTargets();
+  public abstract List<AntDomTarget> getTargets();
+
+  @Nullable
+  public final AntDomTarget getTarget(String name) {
+    for (AntDomTarget target : getTargets()) {
+      if (name.equals(target.getName().getValue())) {
+        return target;
+      }
+    }
+    return null;
+  }
 
   @NotNull
   public final ClassLoader getClassLoader() {

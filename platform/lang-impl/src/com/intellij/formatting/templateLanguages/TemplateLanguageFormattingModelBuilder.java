@@ -59,14 +59,14 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
       return createDummyBlock(node);
     }
     if (builder == null) {
-      return createTemplateLanguageBlock(node, Collections.<DataLanguageBlockWrapper>emptyList(), settings);
+      return createTemplateLanguageBlock(node,  Wrap.createWrap(WrapType.NONE, false), Collections.<DataLanguageBlockWrapper>emptyList(), settings);
     }
     final FormattingModel model = builder.createModel(viewProvider.getPsi(dataLanguage), settings);
     List<DataLanguageBlockWrapper> childWrappers = buildChildWrappers(model.getRootBlock());
     if (childWrappers.size() == 1) {
       childWrappers = buildChildWrappers(childWrappers.get(0).getOriginal());
     }
-    return createTemplateLanguageBlock(node, filterBlocksByRange(childWrappers, node.getTextRange()), settings);
+    return createTemplateLanguageBlock(node,  Wrap.createWrap(WrapType.NONE, false), filterBlocksByRange(childWrappers, node.getTextRange()), settings);
   }
 
   protected AbstractBlock createDummyBlock(final ASTNode node) {

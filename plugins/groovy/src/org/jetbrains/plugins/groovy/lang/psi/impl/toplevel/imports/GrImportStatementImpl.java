@@ -65,18 +65,21 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
       if (isOnDemand()) {
         GrCodeReferenceElement ref = getImportReference();
         if (ref != null) {
-          String qName = PsiUtil.getQualifiedReferenceText(ref);
-          if (qName != null) {
-            if (!isStatic()) {
+          if (isStatic()) {
+            final PsiElement resolved = ref.resolve();
+            if (resolved instanceof PsiClass) {
+              final PsiClass clazz = (PsiClass)resolved;
+              if (clazz != null) {
+                if (!processAllMembers(processor, clazz)) return false;
+              }
+            }
+          }
+          else {
+            String qName = PsiUtil.getQualifiedReferenceText(ref);
+            if (qName != null) {
               PsiPackage aPackage = facade.findPackage(qName);
               if (aPackage != null) {
                 if (!aPackage.processDeclarations(processor, state, lastParent, place)) return false;
-              }
-            }
-            else {
-              final PsiClass clazz = facade.findClass(qName, getResolveScope());
-              if (clazz != null) {
-                if (!processAllMembers(processor, clazz)) return false;
               }
             }
           }
@@ -120,13 +123,13 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
                       final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
                       if (getter != null &&
                           (nameHint == null ||
-                           GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true).equals(name))) {
+                           name.equals(GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true)))) {
                         processor.execute(getter, state);
                       }
 
                       final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(clazz, refName, true, true);
                       if (setter != null &&
-                          (nameHint == null || GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state)).equals(name))) {
+                          (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state))))) {
                         processor.execute(setter, state);
                       }
                     }

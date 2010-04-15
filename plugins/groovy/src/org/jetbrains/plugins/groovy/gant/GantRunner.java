@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -45,7 +46,7 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   @Override
-  public boolean ensureRunnerConfigured(@Nullable Module module, final String confName, final Project project) {
+  public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) {
     if (!(GantUtils.getSDKInstallPath(module, project).length() > 0)) {
       int result = Messages
         .showOkCancelDialog("Gant is not configured. Do you want to configure it?", "Configure Gant SDK",

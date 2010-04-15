@@ -42,7 +42,7 @@ import java.util.*;
  */
 public class GitChangeUtils {
   /**
-   * the pattern for committed changelist assumed by {@link #parseChangeList(Project, VirtualFile, StringScanner)}
+   * the pattern for committed changelist assumed by {@link #parseChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,git4idea.commands.StringScanner,boolean)}
    */
   public static final String COMMITTED_CHANGELIST_FORMAT = "%ct%n%H%n%P%n%an%x20%x3C%ae%x3E%n%cn%x20%x3C%ce%x3E%n%s%n%x00%n%b%n%x00";
 
@@ -253,10 +253,11 @@ public class GitChangeUtils {
    * @param project      the project file
    * @param root         the git root
    * @param revisionName the name of revision (might be tag)
+   * @param skipDiffsForMerge
    * @return change list for the respective revision
    * @throws VcsException in case of problem with running git
    */
-  public static CommittedChangeList getRevisionChanges(Project project, VirtualFile root, String revisionName) throws VcsException {
+  public static CommittedChangeList getRevisionChanges(Project project, VirtualFile root, String revisionName, boolean skipDiffsForMerge) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     h.setNoSSH(true);
     h.setSilent(true);
@@ -265,7 +266,7 @@ public class GitChangeUtils {
     String output = h.run();
     StringScanner s = new StringScanner(output);
     try {
-      return parseChangeList(project, root, s);
+      return parseChangeList(project, root, s, skipDiffsForMerge);
     }
     catch (RuntimeException e) {
       throw e;
@@ -285,10 +286,11 @@ public class GitChangeUtils {
    * @param project the project
    * @param root    the git root
    * @param s       the scanner for log or show command output
+   * @param skipDiffsForMerge
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
    */
-  public static CommittedChangeList parseChangeList(Project project, VirtualFile root, StringScanner s) throws VcsException {
+  public static CommittedChangeList parseChangeList(Project project, VirtualFile root, StringScanner s, boolean skipDiffsForMerge) throws VcsException {
     ArrayList<Change> changes = new ArrayList<Change>();
     // parse commit information
     final Date commitDate = GitUtil.parseTimestamp(s.line());
@@ -315,7 +317,7 @@ public class GitChangeUtils {
     GitRevisionNumber thisRevision = new GitRevisionNumber(revisionNumber, commitDate);
     GitRevisionNumber parentRevision = parents.length > 0 ? loadRevision(project, root, parents[0]) : null;
     long number = longForSHAHash(revisionNumber);
-    if (parents.length <= 1) {
+    if (skipDiffsForMerge || (parents.length <= 1)) {
       // This is the first or normal commit with the single parent.
       // Just parse changes in this commit as returned by the show command.
       parseChanges(project, root, thisRevision, parentRevision, s, changes, null);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.StringUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -163,10 +164,9 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             }
             final CodeStyleSettings codeStyleSettings =
                     CodeStyleSettingsManager.getSettings(project);
-            @NonNls final String finalString;
-            finalString =
+            final @NonNls String finalString =
                     codeStyleSettings.GENERATE_FINAL_PARAMETERS ? "final " : "";
-            @NonNls final StringBuilder out = new StringBuilder(64);
+            @NonNls final StringBuilder out = new StringBuilder();
             out.append("for(");
             out.append(finalString);
             out.append(contentType.getCanonicalText());
@@ -413,9 +413,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 PsiWhileStatement whileStatement) {
             final PsiStatement initialization =
                     getPreviousStatement(whileStatement);
-            if (initialization == null) {
-                return false;
-            }
             if (!(initialization instanceof PsiDeclarationStatement)) {
                 return false;
             }
@@ -427,24 +424,20 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 return false;
             }
             final PsiElement declaredElement = declaredElements[0];
-            if (!(declaredElement instanceof PsiLocalVariable)) {
+            if (!(declaredElement instanceof PsiVariable)) {
                 return false;
             }
-            final PsiLocalVariable declaredVariable =
-                    (PsiLocalVariable) declaredElement;
-            final PsiType declaredVariableType = declaredVariable.getType();
-            if (!(declaredVariableType instanceof PsiClassType)) {
+            final PsiVariable variable = (PsiVariable)declaredElement;
+            final PsiType variableType = variable.getType();
+            final PsiType iteratorType =
+                    TypeUtils.getType("java.util.Iterator", whileStatement);
+            if (iteratorType == null) {
                 return false;
             }
-            final PsiClassType classType = (PsiClassType)declaredVariableType;
-            final PsiClass declaredClass = classType.resolve();
-            if (declaredClass == null) {
+            if (!iteratorType.isAssignableFrom(variableType)) {
                 return false;
             }
-            if (!ClassUtils.isSubclass(declaredClass, "java.util.Iterator")) {
-                return false;
-            }
-            final PsiExpression initialValue = declaredVariable.getInitializer();
+            final PsiExpression initialValue = variable.getInitializer();
             if (initialValue == null) {
                 return false;
             }
@@ -480,30 +473,34 @@ public class WhileCanBeForeachInspection extends BaseInspection {
                 return false;
             }
             final PsiExpression condition = whileStatement.getCondition();
-            if (!isHasNextCalled(declaredVariable, condition)) {
+            if (!isHasNextCalled(variable, condition)) {
                 return false;
             }
             final PsiStatement body = whileStatement.getBody();
             if (body == null) {
                 return false;
             }
-            if (calculateCallsToIteratorNext(declaredVariable, body) != 1) {
+            if (calculateCallsToIteratorNext(variable, body) != 1) {
                 return false;
             }
-            if (isIteratorRemoveCalled(declaredVariable, body)) {
+            if (isIteratorRemoveCalled(variable, body)) {
                 return false;
             }
             //noinspection SimplifiableIfStatement
-            if (isIteratorHasNextCalled(declaredVariable, body)) {
+            if (isIteratorHasNextCalled(variable, body)) {
                 return false;
             }
-            if (VariableAccessUtils.variableIsAssigned(declaredVariable,
+            if (VariableAccessUtils.variableIsAssigned(variable,
+                    body)) {
+                return false;
+            }
+            if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
                     body)) {
                 return false;
             }
             PsiElement nextSibling = whileStatement.getNextSibling();
             while (nextSibling != null) {
-                if (VariableAccessUtils.variableValueIsUsed(declaredVariable,
+                if (VariableAccessUtils.variableValueIsUsed(variable,
                         nextSibling)) {
                     return false;
                 }
@@ -546,35 +543,34 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         }
 
         private static int calculateCallsToIteratorNext(PsiVariable iterator,
-                                                        PsiStatement body) {
+                                                        PsiElement context) {
             final NumCallsToIteratorNextVisitor visitor =
                     new NumCallsToIteratorNextVisitor(iterator);
-            body.accept(visitor);
+            context.accept(visitor);
             return visitor.getNumCallsToIteratorNext();
         }
 
         private static boolean isIteratorRemoveCalled(PsiVariable iterator,
-                                                      PsiStatement body) {
+                                                      PsiElement context) {
             final IteratorRemoveVisitor visitor =
                     new IteratorRemoveVisitor(iterator);
-            body.accept(visitor);
+            context.accept(visitor);
             return visitor.isRemoveCalled();
         }
 
         private static boolean isIteratorHasNextCalled(PsiVariable iterator,
-                                                       PsiStatement body) {
+                                                       PsiElement context) {
             final IteratorHasNextVisitor visitor =
                     new IteratorHasNextVisitor(iterator);
-            body.accept(visitor);
+            context.accept(visitor);
             return visitor.isHasNextCalled();
         }
     }
 
     @Nullable
-    public static PsiStatement getPreviousStatement(
-            PsiWhileStatement statement) {
+    public static PsiStatement getPreviousStatement(PsiElement context) {
         final PsiElement prevStatement =
-                PsiTreeUtil.skipSiblingsBackward(statement,
+                PsiTreeUtil.skipSiblingsBackward(context,
                     PsiWhiteSpace.class, PsiComment.class);
         if (prevStatement == null || !(prevStatement instanceof PsiStatement)) {
             return null;

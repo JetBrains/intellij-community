@@ -327,26 +327,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
   private void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(myClass, targetClass, PsiSubstitutor.EMPTY);
-    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(myClass)) {
-      for (PsiReference reference : ReferencesSearch.search(parameter)) {
-        final PsiElement element = reference.getElement();
-        final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
-        if (member != null) {
-          for (MemberInfo memberInfo : myMemberInfos) {
-            if (PsiTreeUtil.isAncestor(memberInfo.getMember(), member, false)) {
-              PsiType substitutedType = substitutor.substitute(parameter);
-              if (substitutedType == null) {
-                substitutedType = TypeConversionUtil.erasure(factory.createType(parameter));
-              }
-              element.getParent().replace(factory.createTypeElement(substitutedType));
-              break;
-            }
-          }
-        }
-      }
-    }
     for (MemberInfo memberInfo : myMemberInfos) {
-      final PsiMember member = memberInfo.getMember();
+      PsiMember member = memberInfo.getMember();
       final List<PsiReference> refsToRebind = new ArrayList<PsiReference>();
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
@@ -362,7 +344,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           refsToRebind.add(reference);
         }
       }
-
+      member = (PsiMember)member.copy();
+      RefactoringUtil.replaceMovedMemberTypeParameters(member, PsiUtil.typeParametersIterable(myClass), substitutor, factory);
       PsiMember newMember = null;
       if (member instanceof PsiField) {
         ((PsiField)member).normalizeDeclaration();

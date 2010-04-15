@@ -130,11 +130,28 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       final String oldName = getReferenceName();
       if (!method.getName().equals(oldName)) { //was property reference to accessor
         if (GroovyPropertyUtils.isSimplePropertyAccessor(method)) {
-          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
-          if (newPropertyName != null) {
+          final String newPropertyName = GroovyPropertyUtils.getPropertyNameByAccessorName(newElementName);
+          if (newPropertyName != null && newPropertyName.length() > 0) {
             return doHandleElementRename(newPropertyName);
           } else {
-            //todo encapsulate fields:)
+            if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {
+              final PsiElement qualifier = getQualifier();
+              String qualifierText = qualifier != null ? qualifier.getText() + '.' : "";
+              return replace(
+                GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(qualifierText + newElementName + "()"));
+            }
+            else {
+              final PsiElement parent = getParent();
+              if (parent instanceof GrAssignmentExpression) {
+                final PsiElement qualifier = getQualifier();
+                String qualifierText = qualifier != null ? qualifier.getText() + '.' : "";
+                final GrExpression rValue = ((GrAssignmentExpression)parent).getRValue();
+                String rValueText = rValue != null ? rValue.getText() : "";
+                return parent.replace(
+                  GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText(
+                    qualifierText + newElementName + "(" + rValueText + ")"));
+              }
+            }
           }
         }
       }

@@ -154,40 +154,41 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
 
 
   @Nullable
-  public static PsiElement doCopyClasses(final Map<PsiFile, PsiClass[]> classes,
+  public static PsiElement doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
                                          final String copyClassName,
                                          final PsiDirectory targetDirectory,
                                          final Project project)
       throws IncorrectOperationException {
     PsiElement newElement = null;
     final Map<PsiClass, PsiElement> oldToNewMap = new HashMap<PsiClass, PsiElement>();
-    for (PsiClass[] psiClasses : classes.values()) {
+    for (final PsiClass[] psiClasses : fileToClasses.values()) {
       for (PsiClass aClass : psiClasses) {
         oldToNewMap.put(aClass, null);
       }
     }
-    final PsiFile[] createdFiles = new PsiFile[classes.size()];
+    final PsiFile[] createdFiles = new PsiFile[fileToClasses.size()];
     int foIdx = 0;
-    for (PsiFile file : classes.keySet()) {
-      final String fileName = copyClassName != null ? (copyClassName +  "." + file.getViewProvider().getVirtualFile().getExtension()) : file.getName();
-      final PsiFile createdFile = targetDirectory.copyFileFrom(fileName, file);
+    for (final Map.Entry<PsiFile, PsiClass[]> entry : fileToClasses.entrySet()) {
+      final PsiFile createdFile = copy(entry.getKey(), targetDirectory, copyClassName);
+      final PsiClass[] sources = entry.getValue();
+
       if (createdFile instanceof PsiClassOwner) {
-        for (final PsiClass psiClass : ((PsiClassOwner)createdFile).getClasses()) {
-          if (!(psiClass instanceof SyntheticElement)) {
-            psiClass.getParent().deleteChildRange(psiClass, psiClass);
+        for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
+          if (destination instanceof SyntheticElement) {
+            continue;
+          }
+          PsiClass source = findByName(sources, destination.getName());
+          if (source != null) {
+            final PsiClass copy = copy(source, copyClassName);
+            newElement = destination.replace(copy);
+            oldToNewMap.put(source, newElement);
+          }
+          else {
+            destination.delete();
           }
         }
       }
 
-      for (PsiClass aClass : classes.get(file)) {
-        final PsiClass classNavigationElement = (PsiClass)aClass.getNavigationElement();
-        final PsiClass classCopy = (PsiClass)classNavigationElement.copy();
-        if (copyClassName != null) {
-          classCopy.setName(copyClassName);
-        }
-        newElement = createdFile.add(classCopy);
-        oldToNewMap.put(aClass, newElement);
-      }
       createdFiles[foIdx++] = createdFile;
     }
 
@@ -207,6 +208,32 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     }
     new OptimizeImportsProcessor(project, createdFiles, null).run();
     return newElement;
+  }
+
+  private static PsiFile copy(PsiFile file, PsiDirectory directory, String name) {
+    final String fileName = name != null ? (name +  "." + file.getViewProvider().getVirtualFile().getExtension()) : file.getName();
+    return directory.copyFileFrom(fileName, file);
+  }
+
+  private static PsiClass copy(PsiClass aClass, String name) {
+    final PsiClass classNavigationElement = (PsiClass)aClass.getNavigationElement();
+    final PsiClass classCopy = (PsiClass)classNavigationElement.copy();
+    if (name != null) {
+      classCopy.setName(name);
+    }
+    return classCopy;
+  }
+
+  @Nullable
+  private static PsiClass findByName(PsiClass[] classes, String name) {
+    if (name != null) {
+      for (PsiClass aClass : classes) {
+        if (name.equals(aClass.getName())) {
+          return aClass;
+        }
+      }
+    }
+    return null;
   }
 
   private static void rebindExternalReferences(PsiElement element,
@@ -267,8 +294,8 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
   private static PsiClass[] getTopLevelClasses(PsiElement element) {
     while (true) {
       if (element == null || element instanceof PsiFile) break;
-      if (element instanceof PsiClass && element.getParent() instanceof PsiFile) break;
-      element = element.getParent();
+      if (element instanceof PsiClass && (((PsiClass)element).getContainingClass() == null)) break;
+      element = element.getContext();
     }
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();

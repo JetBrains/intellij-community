@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import java.util.List;
  * @author pti
  */
 class NoUpdatesDialog extends AbstractUpdateDialog {
-
   protected NoUpdatesDialog(final boolean canBeParent, final List<PluginDownloader> updatePlugins, boolean enableLink) {
     super(canBeParent, enableLink, updatePlugins);
     setTitle(IdeBundle.message("updates.info.dialog.title"));
@@ -54,14 +53,14 @@ class NoUpdatesDialog extends AbstractUpdateDialog {
   @Override
   protected boolean doDownloadAndPrepare() {
     boolean hasSmthToUpdate = super.doDownloadAndPrepare();
-    if (hasSmthToUpdate &&
+    if (hasSmthToUpdate && isShowConfirmation() &&
         Messages.showYesNoDialog(IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getProductName()),
                                  IdeBundle.message("title.plugins"), Messages.getQuestionIcon()) != 0) {
       hasSmthToUpdate = false;
     }
     return hasSmthToUpdate;
   }
-
+  
   private class NoUpdatesPanel {
     private JPanel myPanel;
     private JPanel myPluginsPanel;

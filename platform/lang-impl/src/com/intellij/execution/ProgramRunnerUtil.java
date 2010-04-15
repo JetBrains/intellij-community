@@ -22,6 +22,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,12 +38,11 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class ExecutionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutionUtil");
-
+public class ProgramRunnerUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ProgramRunnerUtil");
   private static final Icon INVALID_CONFIGURATION = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png");
 
-  private ExecutionUtil() {
+  private ProgramRunnerUtil() {
   }
 
   @Nullable
@@ -75,13 +75,8 @@ public class ExecutionUtil {
     try {
       runner.execute(executor, new ExecutionEnvironment(runner, configuration, dataContext));
     }
-    catch (RunCanceledByUserException e) {
-      // nothing
-    }
-    catch (ExecutionException e1) {
-      Messages.showErrorDialog(project, ExecutionBundle.message("error.running.configuration.with.error.error.message",
-                                                                configuration.getName(), e1.getMessage()),
-                                        ExecutionBundle.message("run.error.message.title"));
+    catch (ExecutionException e) {
+      ExecutionUtil.handleExecutionError(project, configuration.getConfiguration(), e);
     }
   }
 
@@ -115,5 +110,4 @@ public class ExecutionUtil {
     if (name.length() < symbols) return name;
     else return name.substring(0, symbols) + "...";
   }
-
 }

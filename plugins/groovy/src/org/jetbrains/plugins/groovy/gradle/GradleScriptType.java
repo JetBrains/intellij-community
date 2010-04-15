@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -146,7 +147,7 @@ public class GradleScriptType extends GroovyScriptType {
       }
 
       @Override
-      public boolean ensureRunnerConfigured(@Nullable Module module, String confName, final Project project) throws ExecutionException {
+      public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, final Project project) throws ExecutionException {
         if (GradleLibraryManager.getSdkHome(module, project) == null) {
           int result = Messages
             .showOkCancelDialog("Gradle is not configured. Do you want to configure it?", "Configure Gradle SDK",

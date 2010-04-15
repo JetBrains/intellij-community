@@ -161,6 +161,14 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   }
 
   public void testMultipleSubclasses() throws Exception {
+    doTestMultipleSubclasses();
+  }
+
+  public void testMultipleSubstitutions() throws Exception {
+    doTestMultipleSubclasses();
+  }
+
+  private void doTestMultipleSubclasses() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass superClass = myJavaFacade.findClass("Super", GlobalSearchScope.allScope(myProject));

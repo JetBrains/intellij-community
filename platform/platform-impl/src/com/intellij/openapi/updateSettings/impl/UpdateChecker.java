@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,9 @@ public final class UpdateChecker {
 
   public static String ADDITIONAL_REQUEST_OPTIONS = "";
 
+  private UpdateChecker() {
+  }
+
   public static enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
   }
@@ -117,11 +120,13 @@ public final class UpdateChecker {
   }
 
   public static boolean checkNeeded() {
-
     final UpdateSettings settings = UpdateSettings.getInstance();
     if (settings == null || getUpdateUrl() == null) return false;
 
     final String checkPeriod = settings.CHECK_PERIOD;
+    if (checkPeriod.equals(UpdateSettingsConfigurable.ON_EXIT)) {
+     return false;
+    }
     if (checkPeriod.equals(UpdateSettingsConfigurable.ON_START_UP)) {
       checkInterval = 0;
     }
@@ -375,8 +380,9 @@ public final class UpdateChecker {
     return document[0];
   }
 
-  public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins) {
+  public static void showNoUpdatesDialog(boolean enableLink, final List<PluginDownloader> updatePlugins, boolean showConfirmation) {
     NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatePlugins, enableLink);
+    dialog.setShowConfirmation(showConfirmation);
     dialog.show();
   }
 

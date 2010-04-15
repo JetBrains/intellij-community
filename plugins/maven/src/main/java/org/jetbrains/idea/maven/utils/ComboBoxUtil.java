@@ -20,6 +20,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 
 public class ComboBoxUtil {
@@ -46,7 +47,7 @@ public class ComboBoxUtil {
     model.addElement(new Item(value, label));
   }
 
-  public static <T> void setModel(JComboBox comboBox, DefaultComboBoxModel model, List<T> values, Function<T, Pair<String, ?>> func) {
+  public static <T> void setModel(JComboBox comboBox, DefaultComboBoxModel model, Collection<T> values, Function<T, Pair<String, ?>> func) {
     model.removeAllElements();
     for (T each : values) {
       Pair<String, ?> pair = func.fun(each);
