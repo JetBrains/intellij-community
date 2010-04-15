@@ -602,4 +602,16 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                            new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
     }
 
+  //change parameter type in foreach statement: 116 - array, 117 - list
+  public void testT116() throws Exception {
+    doTestFieldType("str",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  }
+
+  public void testT117() throws Exception {
+    doTestFieldType("str",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  }
 }

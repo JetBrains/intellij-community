@@ -12,9 +12,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.Map;
 
 class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private final PsiElement myStatement;
@@ -232,7 +236,25 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       else {
         return;
       }
-      processVariable(psiParameter, value, psiType, null, null, false);
+      final TypeView left = new TypeView(psiParameter, null, null);
+      if (TypeInfection.getInfection(left, typeView) == TypeInfection.LEFT_INFECTED) {
+        PsiType iterableType;
+        final PsiType typeViewType = typeView.getType();
+        if (typeViewType instanceof PsiArrayType) {
+          iterableType = left.getType().createArrayType();
+        } else {
+          final PsiClass iterableClass = PsiUtil.resolveClassInType(typeViewType);
+          LOG.assertTrue(iterableClass != null);
+          final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
+          LOG.assertTrue(typeParameters.length == 1);
+          final Map<PsiTypeParameter, PsiType> substMap = Collections.singletonMap(typeParameters[0], left.getType());
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterableClass.getProject());
+          iterableType = factory.createType(iterableClass, factory.createSubstitutor(substMap));
+        }
+        myLabeler.addMigrationRoot(value, iterableType, myStatement, TypeConversionUtil.isAssignable(iterableType, typeViewType), true);
+      } else {
+        processVariable(psiParameter, value, psiType, null, null, false);
+      }
     }
   }
 
