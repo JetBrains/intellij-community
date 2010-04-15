@@ -609,6 +609,19 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)));
   }
 
+  //varargs && arrays
+  public void testT119() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
+                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null)));
+  }
+
+  public void testT120() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
+                         new PsiEllipsisType(myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null)));
+  }
+
   //change parameter type in foreach statement: 116 - array, 117 - list
   public void testT116() throws Exception {
     doTestFieldType("str",

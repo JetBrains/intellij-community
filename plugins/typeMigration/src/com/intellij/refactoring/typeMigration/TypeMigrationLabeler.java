@@ -620,9 +620,11 @@ public class TypeMigrationLabeler {
 
   void migrateMethodCallExpressions(final PsiType migrationType, final PsiParameter param, final PsiClass psiClass) {
     boolean checkNumberOfArguments = false;
-    if (param.getType() instanceof PsiEllipsisType && !(getTypeEvaluator().getType(param) instanceof PsiEllipsisType)) {
+    if (param.getType() instanceof PsiEllipsisType && !(migrationType instanceof PsiEllipsisType)) {
       checkNumberOfArguments = true;
     }
+    final PsiType strippedType =
+                  migrationType instanceof PsiEllipsisType ? ((PsiEllipsisType)migrationType).getComponentType() : migrationType;
     final PsiMethod method = (PsiMethod)param.getDeclarationScope();
     final PsiParameterList parameterList = method.getParameterList();
     final int parametersCount = parameterList.getParametersCount();
@@ -643,7 +645,7 @@ public class TypeMigrationLabeler {
               final PsiExpression actual = expressions[idx];
               final PsiType type = getTypeEvaluator().evaluateType(actual);
               if (type != null) {
-                migrateExpressionType(actual, migrationType, parent, TypeConversionUtil.isAssignable(migrationType, type), true);
+                migrateExpressionType(actual, strippedType, parent, TypeConversionUtil.isAssignable(strippedType, type), true);
               }
             }
           }
