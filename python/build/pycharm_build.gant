@@ -41,12 +41,13 @@ private List platformImplementationModules() {
           "xml",
           "lvcs-impl",
           "images",
-          "yaml"
+          "yaml",
+          "dom-impl"
   ]
 }
 
 private List<String> platformApiModules() {
-  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi"]
+  return ["platform-api", "lvcs-api", "lang-api", "vcs-api", "usageView", "xdebugger-api", "xml-openapi", "dom-openapi"]
 }
 
 def includeFile(String filepath) {
