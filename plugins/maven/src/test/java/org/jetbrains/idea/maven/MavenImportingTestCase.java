@@ -458,29 +458,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected Sdk createJdk(String versionName) {
-    File file;
-    try {
-      file = FileUtil.createTempFile(myDir, "mockJdk", null, false);
-      file.mkdirs();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    String oldValue = System.setProperty("idea.testingFramework.mockJDK", file.getPath());
-    Sdk sdk;
-    try {
-      sdk = JavaSdkImpl.getMockJdk(versionName);
-    }
-    finally {
-      if (oldValue == null) {
-        System.clearProperty("idea.testingFramework.mockJDK");
-      }
-      else {
-        System.setProperty("idea.testingFramework.mockJDK", oldValue);
-      }
-    }
-    return sdk;
+    return JavaSdkImpl.getMockJdk15(versionName);
   }
 
   protected void compileModules(String... moduleNames) {

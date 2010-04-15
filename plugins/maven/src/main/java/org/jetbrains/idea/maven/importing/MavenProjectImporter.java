@@ -453,7 +453,7 @@ public class MavenProjectImporter {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
         try {
-          VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+          VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
           if (file != null) file.delete(this);
         }
         catch (IOException e) {

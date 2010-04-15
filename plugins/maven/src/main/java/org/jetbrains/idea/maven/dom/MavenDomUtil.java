@@ -264,8 +264,7 @@ public class MavenDomUtil {
 
   @Nullable
   public static PropertiesFile getPropertiesFile(@NotNull Project project, @NotNull String fileName) {
-    VirtualFileSystem fs = MavenPropertiesVirtualFileSystem.getInstance();
-    VirtualFile file = fs.findFileByPath(fileName);
+    VirtualFile file = MavenPropertiesVirtualFileSystem.getInstance().findFileByPath(fileName);
     if (file == null) return null;
     return getPropertiesFile(project, file);
   }
@@ -295,7 +294,7 @@ public class MavenDomUtil {
     return prop == null ? null : prop.getFirstChild().getNextSibling().getNextSibling();
   }
 
-  public static boolean isFiltererResourceFile(PsiElement element) {
+  public static boolean isFilteredResourceFile(PsiElement element) {
     MavenProject project = findContainingProject(element);
     if (project == null) return false;
 

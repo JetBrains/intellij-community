@@ -130,8 +130,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   }
 
   private static String getMavenProjectName(final Project project, final MavenRunnerParameters runnerParameters) {
-    LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final VirtualFile virtualFile = localFileSystem.findFileByPath(runnerParameters.getPomFilePath());
+    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(runnerParameters.getPomFilePath());
     if (virtualFile != null) {
       MavenProject mavenProject = MavenProjectsManager.getInstance(project).findProject(virtualFile);
       if (mavenProject != null) {
