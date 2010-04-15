@@ -23,7 +23,7 @@
             <properties/>
             <border type="none" title="Output"/>
             <children>
-              <component id="d9a22" class="javax.swing.JRadioButton" binding="mySaveToFile">
+              <component id="22af" class="javax.swing.JCheckBox" binding="mySaveToFile">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>

@@ -111,7 +111,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
         private ButtonGroup myOutputOptions;
         private JRadioButton myShowInConsole;
-        private JRadioButton mySaveToFile;
+        private JCheckBox mySaveToFile;
         private JRadioButton myShowInStdout;
 
         private RawCommandLineEditor myVmArguments;
@@ -400,6 +400,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             mySmartErrorHandling.setSelected(s.mySmartErrorHandling);
             setSelectedIndex(myOutputOptions, s.getOutputType().ordinal());
             setSelectedIndex(myJdkOptions, s.getJdkChoice().ordinal());
+            mySaveToFile.setSelected(s.isSaveToFile());
         }
 
         public void applyTo(XsltRunConfiguration s) {
@@ -417,24 +418,17 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
             s.setJdkChoice(XsltRunConfiguration.JdkChoice.values()[getSelectedIndex(myJdkOptions)]);
             s.mySmartErrorHandling = mySmartErrorHandling.isSelected();
             s.setOutputType(XsltRunConfiguration.OutputType.values()[getSelectedIndex(myOutputOptions)]);
+            s.setSaveToFile(mySaveToFile.isSelected());
         }
 
         private void updateOutputState() {
-            final int selectedIndex = getSelectedIndex(myOutputOptions);
-            if (selectedIndex == XsltRunConfiguration.OutputType.FILE.ordinal()) {
-                myOutputFile.setEnabled(true);
-                myOpenOutputFile.setEnabled(true);
-                myOpenInBrowser.setEnabled(true);
+          myOutputFile.setEnabled(mySaveToFile.isSelected());
+          myOpenOutputFile.setEnabled(mySaveToFile.isEnabled() && mySaveToFile.isSelected());
+          myOpenInBrowser.setEnabled(mySaveToFile.isEnabled() && mySaveToFile.isSelected());
 
-                myFileType.setEnabled(false);
-            } else {
-                myOutputFile.setEnabled(false);
-                myOpenOutputFile.setEnabled(false);
-                myOpenInBrowser.setEnabled(false);
-
-                final boolean b = selectedIndex == XsltRunConfiguration.OutputType.CONSOLE.ordinal();
-                myFileType.setEnabled(b);
-            }
+          final int selectedIndex = getSelectedIndex(myOutputOptions);
+          final boolean b = selectedIndex == XsltRunConfiguration.OutputType.CONSOLE.ordinal();
+          myFileType.setEnabled(b);
         }
 
         private void updateJdkState() {
