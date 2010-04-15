@@ -181,7 +181,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository());
       if (file == null) return null;
 
-      VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);

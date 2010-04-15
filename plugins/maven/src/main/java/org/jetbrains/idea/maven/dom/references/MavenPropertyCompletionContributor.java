@@ -35,7 +35,7 @@ public class MavenPropertyCompletionContributor extends CompletionContributor {
     MavenProject projectFile = MavenDomUtil.findContainingProject(psiFile);
     if (projectFile == null) return;
 
-    if (!MavenDomUtil.isMavenFile(psiFile) && !MavenDomUtil.isFiltererResourceFile(psiFile)) return;
+    if (!MavenDomUtil.isMavenFile(psiFile) && !MavenDomUtil.isFilteredResourceFile(psiFile)) return;
 
     CharSequence text = context.getEditor().getDocument().getCharsSequence();
     int offset = context.getStartOffset();
