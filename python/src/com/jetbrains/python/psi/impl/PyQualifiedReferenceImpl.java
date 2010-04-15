@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
@@ -136,4 +137,19 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     }
   }
 
+  @Override
+  public boolean isReferenceTo(PsiElement element) {
+    if (super.isReferenceTo(element)) {
+      return true;
+    }
+    final String referencedName = myElement.getReferencedName();
+    if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
+        ((PyFunction)element).getContainingClass() != null) {
+      final PyExpression qualifier = myElement.getQualifier();
+      if (qualifier != null && qualifier.getType() == null) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

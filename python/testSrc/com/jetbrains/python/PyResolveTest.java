@@ -242,7 +242,8 @@ public class PyResolveTest extends PyResolveTestCase {
   }
   
   public void testTextBasedResolve() {
-    PsiElement targetElement = resolve();
-    assertTrue(targetElement instanceof PyFunction);
+    ResolveResult[] resolveResults = multiResolve();
+    assertEquals(1, resolveResults.length);
+    assertTrue(resolveResults [0].getElement() instanceof PyFunction);
   }
 }
