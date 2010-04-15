@@ -1,6 +1,5 @@
 package com.jetbrains.python.console;
 
-import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -9,17 +8,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkType;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * @author oleg
@@ -62,6 +54,8 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       assert module != null : "Module is null";
       assert sdk != null : "Sdk is null";
 
-      PydevConsoleRunner.run(project, module, sdk);
+      PydevConsoleRunner.run(project, sdk, PyBundle.message("python.console"), DjangoUtil.getProjectRoot(module),
+                             PydevConsoleRunner.createExtendPathCommand(module));
     }
+
 }
