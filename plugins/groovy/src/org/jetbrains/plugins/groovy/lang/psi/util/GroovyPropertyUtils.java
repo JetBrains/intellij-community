@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.beans.Introspector;
 
@@ -116,9 +115,7 @@ public class GroovyPropertyUtils {
     if (method == null || method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 0) return false;
     if (!isGetterName(method.getName())) return false;
-    if (method.getName().startsWith(IS_PREFIX) &&
-        !CommonClassNames.JAVA_LANG_BOOLEAN
-          .equals(TypesUtil.boxPrimitiveType(method.getReturnType(), method.getManager(), method.getResolveScope()).getCanonicalText())) {
+    if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
       return false;
     }
     return (propertyName == null || propertyName.equals(getPropertyNameByGetter(method))) && method.getReturnType() != PsiType.VOID;
@@ -142,8 +139,7 @@ public class GroovyPropertyUtils {
     }
 
     @NonNls String methodName = getterMethod.getName();
-    final boolean isPropertyBoolean = CommonClassNames.JAVA_LANG_BOOLEAN.equals(TypesUtil
-      .boxPrimitiveType(getterMethod.getReturnType(), getterMethod.getManager(), getterMethod.getResolveScope()).getCanonicalText());
+    final boolean isPropertyBoolean = PsiType.BOOLEAN.equals(getterMethod.getReturnType());
     return getPropertyNameByGetterName(methodName, isPropertyBoolean);
   }
 
