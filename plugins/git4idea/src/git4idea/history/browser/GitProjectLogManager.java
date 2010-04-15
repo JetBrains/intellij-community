@@ -32,6 +32,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.CalculateContinuation;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.HashMap;
+import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
@@ -148,9 +149,12 @@ public class GitProjectLogManager implements ProjectComponent {
     }
 
     if (searcher != null) {
-      result += " (" + searcher.getLocal().getName() + ")";
+      final GitBranch branch = searcher.getLocal();
+      if (branch != null) {
+        result += " (" + branch.getName() + ")";
+      }
     }
-    return "Log for: " + result;
+    return "Log: " + result;
   }
 
   @NotNull
