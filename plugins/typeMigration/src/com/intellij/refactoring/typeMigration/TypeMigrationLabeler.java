@@ -361,13 +361,15 @@ public class TypeMigrationLabeler {
 
     type = userDefinedType ? type : TypeEvaluator.substituteType(type, originalType, isContraVariantPosition);
 
-    if (originalType instanceof PsiClassType) {
-      final PsiClassType psiClassType = (PsiClassType)originalType;
-      if (psiClassType.resolve() instanceof PsiTypeParameter) {
-        return false;
-      }
-      for (PsiType paramType : psiClassType.getParameters()) {
-        if (paramType instanceof PsiClassType && ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter) return false;
+    if (!userDefinedType) {
+      if (originalType instanceof PsiClassType) {
+        final PsiClassType psiClassType = (PsiClassType)originalType;
+        if (psiClassType.resolve() instanceof PsiTypeParameter) {
+          return false;
+        }
+        for (PsiType paramType : psiClassType.getParameters()) {
+          if (paramType instanceof PsiClassType && ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter) return false;
+        }
       }
     }
 

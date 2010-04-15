@@ -531,4 +531,23 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null).createArrayType());
   }
 
+  //implicit type parameter change 105-107
+  public void testT105() throws Exception {
+    doTestFieldType("t",
+                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  }
+
+
+  public void testT106() throws Exception {
+    doTestFieldType("t",
+                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
+  }
+
+  public void testT107() throws Exception {
+    doTestFieldType("t",
+                    myJavaFacade.getElementFactory().createTypeFromText("T", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+  }
 }
