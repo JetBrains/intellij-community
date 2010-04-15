@@ -41,6 +41,9 @@ public abstract class FrameworkSupportConfigurable {
     return null;
   }
 
+  public void onFrameworkSelectionChanged(boolean selected) {
+  }
+
   public void addListener(@NotNull FrameworkSupportConfigurableListener listener) {
     myDispatcher.addListener(listener);
   }
