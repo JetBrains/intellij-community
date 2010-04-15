@@ -13,7 +13,10 @@ public class ElementToArrayConversionRule extends TypeConversionRule{
   public TypeConversionDescriptor findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
                                                  final TypeMigrationLabeler labeler) {
     if (member == null && to instanceof PsiArrayType && TypeConversionUtil.isAssignable(((PsiArrayType)to).getComponentType(), from)) {
-      return new TypeConversionDescriptor("$qualifier$", "new " + from.getCanonicalText() + "[]{$qualifier$}", (PsiExpression)context);
+      final PsiElement parent = context.getParent();
+      if ((context instanceof PsiLiteralExpression || context instanceof PsiReferenceExpression) && parent instanceof PsiStatement) {
+        return new TypeConversionDescriptor("$qualifier$", "new " + from.getCanonicalText() + "[]{$qualifier$}", context);
+      }
     }
     return null;
   }

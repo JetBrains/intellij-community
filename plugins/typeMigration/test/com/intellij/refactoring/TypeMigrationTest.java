@@ -569,4 +569,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.List<? extends java.lang.String>", null));
   }
+
+  //wrap with array creation only literals and refs outside of binary/unary expressions 
+  public void testT111() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null).createArrayType());
+  }
 }
