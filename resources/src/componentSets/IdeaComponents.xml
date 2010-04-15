@@ -42,7 +42,6 @@
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Dom.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>
     <component>

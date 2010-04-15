@@ -1,4 +1,10 @@
 <idea-plugin>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
+    </component>
+  </application-components>
+
   <extensionPoints>
     <extensionPoint name="dom.fileDescription"
                     interface="com.intellij.util.xml.DomFileDescription"/>
