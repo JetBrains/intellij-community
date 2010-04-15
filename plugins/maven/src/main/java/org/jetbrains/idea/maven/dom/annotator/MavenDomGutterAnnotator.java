@@ -53,6 +53,9 @@ public class MavenDomGutterAnnotator implements Annotator {
       if (domElement != null) {
         MavenDomProjectModel model = domElement.getParentOfType(MavenDomProjectModel.class, false);
         if (model != null) {
+          MavenProject mavenProject = MavenDomUtil.findProject(model);
+          if (mavenProject != null) return mavenProject.getDisplayName();
+
           String name = model.getName().getStringValue();
           if (!StringUtil.isEmptyOrSpaces(name)) {
             return name;
