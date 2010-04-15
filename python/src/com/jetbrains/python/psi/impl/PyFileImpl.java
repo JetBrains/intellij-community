@@ -38,6 +38,12 @@ import java.util.List;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
+  private ThreadLocal<List<String>> myNameResolveStack = new ThreadLocal<List<String>>() {
+    @Override
+    protected List<String> initialValue() {
+      return new ArrayList<String>();
+    }
+  };
 
   public PyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PythonLanguage.getInstance());
@@ -185,70 +191,80 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PsiElement findExportedName(String name) {
-    final StubElement stub = getStub();
-    if (stub != null) {
-      final List children = stub.getChildrenStubs();
-      for (Object child : children) {
-        if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
-          return ((NamedStub) child).getPsi();
-        }
-        else if (child instanceof PyFromImportStatementStub) {
-          if (((PyFromImportStatementStub)child).isStarImport()) {
-            final PyFromImportStatement statement = ((PyFromImportStatementStub)child).getPsi();
-            PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
-            if (starImportSource != null) {
-              starImportSource = PyUtil.turnDirIntoInit(starImportSource);
-              if (starImportSource instanceof PyFile) {
-                final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
-                if (result != null) {
-                  return result;
-                }
-              }
-            }
+    final List<String> stack = myNameResolveStack.get();
+    if (stack.contains(name)) {
+      return null;
+    }
+    stack.add(name);
+    try {
+      final StubElement stub = getStub();
+      if (stub != null) {
+        final List children = stub.getChildrenStubs();
+        for (Object child : children) {
+          if (child instanceof NamedStub && name.equals(((NamedStub)child).getName())) {
+            return ((NamedStub) child).getPsi();
           }
-          else {
-            final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
-            for (StubElement importElement : importElements) {
-              final PsiElement psi = importElement.getPsi();
-              if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
-                return psi;
-              }
-            }
-          }
-        }
-        else if (child instanceof PyImportStatementStub) {
-          final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
-          for (StubElement importElementStub : importElements) {
-            final PsiElement psi = importElementStub.getPsi();
-            if (psi instanceof PyImportElement) {
-              final PyImportElement importElement = (PyImportElement)psi;
-              final String asName = importElement.getAsName();
-              if (asName != null && asName.equals(name)) {
-                return psi;
-              }
-              final PyQualifiedName qName = importElement.getImportedQName();
-              if (qName != null && qName.getComponentCount() > 0) {
-                if (qName.getComponents().get(0).equals(name)) {
-                  if (qName.getComponentCount() == 1) {
-                    return psi;
+          else if (child instanceof PyFromImportStatementStub) {
+            if (((PyFromImportStatementStub)child).isStarImport()) {
+              final PyFromImportStatement statement = ((PyFromImportStatementStub)child).getPsi();
+              PsiElement starImportSource = ResolveImportUtil.resolveFromImportStatementSource(statement);
+              if (starImportSource != null) {
+                starImportSource = PyUtil.turnDirIntoInit(starImportSource);
+                if (starImportSource instanceof PyFile) {
+                  final PsiElement result = ((PyFile)starImportSource).getElementNamed(name);
+                  if (result != null) {
+                    return result;
                   }
-                  return new PyImportedModule(this, PyQualifiedName.fromComponents(name));
                 }
-                if (name.equals(((PyImportElement)psi).getVisibleName())) {
+              }
+            }
+            else {
+              final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
+              for (StubElement importElement : importElements) {
+                final PsiElement psi = importElement.getPsi();
+                if (psi instanceof PyImportElement && name.equals(((PyImportElement)psi).getVisibleName())) {
                   return psi;
                 }
               }
             }
           }
+          else if (child instanceof PyImportStatementStub) {
+            final List<StubElement> importElements = ((StubElement)child).getChildrenStubs();
+            for (StubElement importElementStub : importElements) {
+              final PsiElement psi = importElementStub.getPsi();
+              if (psi instanceof PyImportElement) {
+                final PyImportElement importElement = (PyImportElement)psi;
+                final String asName = importElement.getAsName();
+                if (asName != null && asName.equals(name)) {
+                  return psi;
+                }
+                final PyQualifiedName qName = importElement.getImportedQName();
+                if (qName != null && qName.getComponentCount() > 0) {
+                  if (qName.getComponents().get(0).equals(name)) {
+                    if (qName.getComponentCount() == 1) {
+                      return psi;
+                    }
+                    return new PyImportedModule(this, PyQualifiedName.fromComponents(name));
+                  }
+                  if (name.equals(((PyImportElement)psi).getVisibleName())) {
+                    return psi;
+                  }
+                }
+              }
+            }
+          }
         }
+        return null;
       }
-      return null;
+      else {
+        // dull plain resolve, as fast as stub index or better
+        ResolveProcessor proc = new ResolveProcessor(name);
+        PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
+        return proc.getResult();
+      }
     }
-    else {
-      // dull plain resolve, as fast as stub index or better
-      ResolveProcessor proc = new ResolveProcessor(name);
-      PyResolveUtil.treeCrawlUp(proc, true, getLastChild());
-      return proc.getResult();
+    finally {
+      stack.remove(name);
     }
   }
 
