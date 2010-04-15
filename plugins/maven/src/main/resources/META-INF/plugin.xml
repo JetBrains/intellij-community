@@ -393,7 +393,7 @@
               class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
               use-shortcut-of="IntroduceVariable" />
 
-      <action id="refactoring.extract.dependency" text="Extract Dependency"
+      <action id="refactoring.extract.dependency" text="Extract Dependency (dependencyManagement)"
               class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractDependenciesAction" >
       </action>
     </group>

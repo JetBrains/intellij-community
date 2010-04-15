@@ -22,13 +22,17 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
+import com.intellij.util.Function;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
@@ -68,26 +72,92 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
-      MavenDomDependency dependency =
+      final MavenDomDependency dependency =
         DomUtil.findDomElement(file.findElementAt(editor.getCaretModel().getOffset()), MavenDomDependency.class);
 
       if (dependency != null && !isManagedDependency(dependency)) {
-        Set<MavenDomProjectModel> models = getParentProjects(project, file);
-        if (models.size() == 0) return;
+        Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences = getOccurencesFunction(dependency);
 
-        SelectMavenProjectDialog dialog = new SelectMavenProjectDialog(project, models);
-        dialog.show();
+        final Pair<MavenDomProjectModel, Set<MavenDomDependency>> processData =
+          getProcessData(project, getParentProjects(project, file), funOccurrences);
 
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          final MavenDomProjectModel selectedProject = dialog.getSelectedProject();
+        if (processData != null) {
+          final MavenDomProjectModel model = processData.first;
+          final Set<MavenDomDependency> usages = processData.getSecond();
 
-          new WriteCommandAction(project) {
+          assert model != null;
+          assert usages != null;
+
+          new WriteCommandAction(project, getFiles(file, model, usages)) {
             @Override
             protected void run(Result result) throws Throwable {
+              MavenDomDependency addedDependency = model.getDependencyManagement().getDependencies().addDependency();
+              addedDependency.getGroupId().setStringValue(dependency.getGroupId().getStringValue());
+              addedDependency.getArtifactId().setStringValue(dependency.getArtifactId().getStringValue());
+              addedDependency.getVersion().setStringValue(dependency.getVersion().getStringValue());
+
+              dependency.getVersion().undefine();
+
+              for (MavenDomDependency usage : usages) {
+                 usage.getVersion().undefine();
+              }
             }
           }.execute();
         }
       }
+    }
+
+    private static PsiFile[] getFiles(@NotNull PsiFile file, @NotNull MavenDomProjectModel model, @NotNull Set<MavenDomDependency> usages) {
+      Set<PsiFile> files = new HashSet<PsiFile>();
+
+      files.add(file);
+      XmlElement xmlElement = model.getXmlElement();
+      if (xmlElement != null) files.add(xmlElement.getContainingFile());
+      for (MavenDomDependency usage : usages) {
+        XmlElement element = usage.getXmlElement();
+        if (element != null) {
+          files.add(element.getContainingFile());
+        }
+      }
+
+      return files.toArray(new PsiFile[files.size()]);
+    }
+
+    @Nullable
+    private static Pair<MavenDomProjectModel, Set<MavenDomDependency>> getProcessData(@NotNull Project project,
+                                                                                      @NotNull Set<MavenDomProjectModel> models,
+                                                                                      @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences) {
+      if (models.size() == 0) return null;
+
+      if (models.size() == 1) {
+        MavenDomProjectModel model = models.iterator().next();
+        if (funOccurrences.fun(model).size() == 0) {
+          return Pair.create(model, Collections.<MavenDomDependency>emptySet());
+        }
+      }
+      else {
+        SelectMavenProjectDialog dialog = new SelectMavenProjectDialog(project, models, funOccurrences);
+        dialog.show();
+
+        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+          MavenDomProjectModel model = dialog.getSelectedProject();
+          return Pair
+            .create(model, dialog.isReplaceAllOccurrences() ? funOccurrences.fun(model) : Collections.<MavenDomDependency>emptySet());
+        }
+      }
+      return null;
+    }
+
+    private static Function<MavenDomProjectModel, Set<MavenDomDependency>> getOccurencesFunction(final MavenDomDependency dependency) {
+
+      return new Function<MavenDomProjectModel, Set<MavenDomDependency>>() {
+        public Set<MavenDomDependency> fun(MavenDomProjectModel model) {
+          String groupId = dependency.getGroupId().getStringValue();
+          String artifactId = dependency.getArtifactId().getStringValue();
+
+          return MavenDomProjectProcessorUtils.searchDependencyUsages(model, groupId, artifactId, Collections.singleton(dependency));
+        }
+      };
     }
 
     @NotNull
@@ -98,8 +168,8 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
       return MavenDomProjectProcessorUtils.collectParentProjects(model, project);
     }
 
-    private boolean isManagedDependency(@NotNull MavenDomDependency dependency) {
-      return false; //todo
+    private static boolean isManagedDependency(@NotNull MavenDomDependency dependency) {
+      return MavenDomProjectProcessorUtils.searchManagingDependency(dependency) != null;
     }
 
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
