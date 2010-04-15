@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -165,6 +167,10 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
   // provides ctrl+Q doc
   public String generateDoc(PsiElement element, final PsiElement originalElement) {
+    if (element != null && PydevConsoleRunner.isInPydevConsole(element) ||
+      originalElement != null && PydevConsoleRunner.isInPydevConsole(originalElement)){
+      return PydevDocumentationProvider.createDoc(element, originalElement);
+    }
     ChainIterable<String> cat = new ChainIterable<String>(); // our main output sequence
     final ChainIterable<String> prolog_cat = new ChainIterable<String>(); // sequence for reassignment info, etc
     final ChainIterable<String> doc_cat = new ChainIterable<String>(); // sequence for doc string

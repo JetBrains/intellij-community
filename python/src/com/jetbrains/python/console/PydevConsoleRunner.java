@@ -224,7 +224,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   public static boolean isInPydevConsole(final PsiElement element){
-    return element.getContainingFile().getCopyableUserData(CONSOLE_KEY) != null;
+    return getConsoleCommunication(element) != null;
+  }
+
+  @Nullable
+  public static PydevConsoleCommunication getConsoleCommunication(final PsiElement element) {
+    return element.getContainingFile().getCopyableUserData(CONSOLE_KEY);
   }
 
   public static String createExtendPathCommand(Module module) {
