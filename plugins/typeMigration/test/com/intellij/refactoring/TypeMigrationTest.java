@@ -634,4 +634,11 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
                     myJavaFacade.getElementFactory().createTypeFromText("java.lang.String", null));
   }
+
+
+  public void testT121() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Number>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Float>", null));
+  }
 }

@@ -437,8 +437,10 @@ public class TypeEvaluator {
       myCall = call;
     }
 
-    private void update(final PsiTypeParameter p, final PsiType t) {
-      if (t instanceof PsiPrimitiveType) return;
+    private void update(final PsiTypeParameter p, PsiType t) {
+      if (t instanceof PsiPrimitiveType) {
+        t = ((PsiPrimitiveType)t).getBoxedType(myMethod);
+      }
       final PsiType binding = myMapping.get(p);
 
       if (binding == null) {

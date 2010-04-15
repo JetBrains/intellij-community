@@ -1,8 +1,12 @@
 Types:
+PsiField:f : java.util.Map<java.lang.Boolean,java.lang.String>
 PsiParameter:b : boolean
 PsiReferenceExpression:b : boolean
+PsiReferenceExpression:f : java.util.Map<java.lang.Boolean,java.lang.String>
 
 Conversions:
+b -> $
+f -> $
 
 New expression type changes:
 Fails:
