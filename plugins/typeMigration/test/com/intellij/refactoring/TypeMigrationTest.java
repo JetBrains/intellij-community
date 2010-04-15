@@ -641,4 +641,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Number>", null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.ArrayList<java.lang.Float>", null));
   }
+
+  public void testT122() throws Exception {
+    doTestFirstParamType("method",
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
+                         myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null).createArrayType());
+  }
 }
