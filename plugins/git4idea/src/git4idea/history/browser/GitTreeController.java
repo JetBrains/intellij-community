@@ -314,6 +314,7 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   public void refresh() {
+    myFilterHolder.setDirty(true);
     myFilterRequestsMerger.request();
     myAlarm.addRequest(new Runnable() {
       public void run() {
