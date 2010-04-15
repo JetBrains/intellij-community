@@ -1,4 +1,4 @@
-package com.jetbrains.python.psi;
+package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.ResolveResult;
 

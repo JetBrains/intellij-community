@@ -2,9 +2,13 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,8 +62,8 @@ public class PySuperArgumentsInspection extends LocalInspectionTool {
         PyExpression[] arguments = node.getArguments();
         if (arguments.length == 2) {
           if (arguments[0] instanceof PyReferenceExpression && arguments[1] instanceof PyReferenceExpression) {
-            PyElement firstElement = ((PyReferenceExpression) arguments[0]).followAssignmentsChain();
-            PyElement secondElement = ((PyReferenceExpression) arguments[1]).followAssignmentsChain();
+            PsiElement firstElement = ((PyReferenceExpression) arguments[0]).followAssignmentsChain().getElement();
+            PsiElement secondElement = ((PyReferenceExpression) arguments[1]).followAssignmentsChain().getElement();
             if (firstElement instanceof PyClass && secondElement instanceof PyClass) {
               PyClass firstClass = (PyClass) firstElement;
               PyClass secondClass = (PyClass) secondElement;

@@ -3,9 +3,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,8 @@ public class PyCallExpressionHelper {
     boolean is_constructor_call = false;
     if (callee instanceof PyReferenceExpression) {
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      PsiElement resolved = ref.followAssignmentsChain();
+      ResolveResult resolveResult = ref.followAssignmentsChain();
+      PsiElement resolved = resolveResult.getElement();
       if (resolved instanceof PyClass) {
         resolved = ((PyClass)resolved).findInitOrNew(true); // class to constructor call
         is_constructor_call = true;
@@ -98,7 +100,8 @@ public class PyCallExpressionHelper {
         if (! is_constructor_call && PyNames.NEW.equals(((PyFunction)resolved).getName())) {
           implicit_offset = Math.min(implicit_offset-1, 0); // case of Class.__new__  
         }
-        return new PyCallExpression.PyMarkedFunction((PyFunction)resolved, flags, implicit_offset);
+        return new PyCallExpression.PyMarkedFunction((PyFunction)resolved, flags, implicit_offset,
+                                                     resolveResult instanceof ImplicitResolveResult);
       }
     }
     return null;

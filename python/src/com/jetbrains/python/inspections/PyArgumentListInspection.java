@@ -105,7 +105,7 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
 
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder) {
     PyArgumentList.AnalysisResult result = node.analyzeCall();
-    if (result != null) {
+    if (result != null && !result.isImplicitlyResolved()) {
       for (Map.Entry<PyExpression, EnumSet<PyArgumentList.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
         EnumSet<PyArgumentList.ArgFlag> flags = arg_entry.getValue();
         if (!flags.isEmpty()) { // something's wrong
@@ -138,9 +138,11 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
         }
       }
     }
+    /*
     else if (! node.getTextRange().isEmpty()) {
       holder.registerProblem(node, PyBundle.message("INSP.cannot.analyze"), ProblemHighlightType.INFO);
     }
+    */
   }
 
 }

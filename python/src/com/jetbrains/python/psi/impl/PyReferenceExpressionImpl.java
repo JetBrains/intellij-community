@@ -3,11 +3,9 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -93,10 +91,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
 
-  @Nullable
-  public PyElement followAssignmentsChain() {
+  @NotNull
+  public ResolveResult followAssignmentsChain() {
     PyReferenceExpression seeker = this;
-    PyElement ret = null;
+    ResolveResult ret = null;
     SEARCH:
     while (ret == null) {
       ResolveResult[] targets = seeker.getReference().multiResolve(false);
@@ -108,14 +106,25 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             seeker = (PyReferenceExpression)assigned_from;
             continue SEARCH;
           }
-          else if (assigned_from != null) ret = assigned_from;
+          else if (assigned_from != null) ret = new PsiElementResolveResult(assigned_from);
         }
         else if (ret == null && elt instanceof PyElement) { // remember this result, but a further reference may be the next resolve result
-          ret = (PyElement)elt;
+          ret = target;
         }
       }
       // all resolve results checked, reassignment not detected, nothing more to do
       break;
+    }
+    if (ret == null) {
+      ret = new ResolveResult() {
+        public PsiElement getElement() {
+          return null;
+        }
+
+        public boolean isValidResult() {
+          return false;
+        }
+      };
     }
     return ret;
   }

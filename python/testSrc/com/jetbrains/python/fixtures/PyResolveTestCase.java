@@ -18,12 +18,18 @@ import java.io.IOException;
 public abstract class PyResolveTestCase extends PyLightFixtureTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
-  protected PsiReference configureByFile(@TestDataFile final String filePath) throws Exception {
+  protected PsiReference configureByFile(@TestDataFile final String filePath) {
     VirtualFile testDataRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTestDataPath()));
     final VirtualFile file = testDataRoot.findFileByRelativePath(filePath);
     assertNotNull(file);
 
-    String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(file));
+    String fileText;
+    try {
+      fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(file));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     int offset = fileText.indexOf(MARKER);
     assertTrue(offset >= 0);
     fileText = fileText.substring(0, offset) + fileText.substring(offset + MARKER.length());

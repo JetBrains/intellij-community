@@ -47,10 +47,11 @@ public interface PyArgumentList extends PyElement {
 
   /**
    * Result of analysis of argument list application to the callee.
-   * Contains neatly arranged lists and mappinga between arguments and parameters,
+   * Contains neatly arranged lists and mappings between arguments and parameters,
    * including error diagnostics.
    */
   interface AnalysisResult {
+    boolean isImplicitlyResolved();
 
     /**
      * @return A mapping parameter->argument for non-starred parameters (but includes starred argument).

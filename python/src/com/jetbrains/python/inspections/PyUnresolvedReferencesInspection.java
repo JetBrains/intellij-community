@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyBundle;
@@ -170,7 +169,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       GlobalSearchScope scope = ProjectScope.getAllScope(project);
       List<PsiElement> symbols = new ArrayList<PsiElement>();
       symbols.addAll(PyClassNameIndex.find(ref_text, project, scope));
-      symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, ref_text, project, scope));
+      symbols.addAll(PyFunctionNameIndex.find(ref_text, project));
       // NOTE: possible CPU hog 
       if (symbols.size() > 0) {
         if (fix == null) { // it might have been created in the previous scan, or not.

@@ -629,6 +629,10 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
       my_marked_func = null;
     }
 
+    public boolean isImplicitlyResolved() {
+      return my_marked_func == null ? false : my_marked_func.isImplicitlyResolved();
+    }
+
     /**
      * @return A mapping argument->parameter for non-starred arguments (but includes starred parameters).
      */

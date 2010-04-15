@@ -15,10 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.CollectProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveProcessor;
-import com.jetbrains.python.psi.resolve.VariantsProcessor;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +54,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Nullable
   public PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
-    return results.length >= 1 ? results[0].getElement() : null;
+   return results.length >= 1 && !(results [0] instanceof ImplicitResolveResult) ? results[0].getElement() : null;
   }
 
   private static final boolean USE_CACHE = true; // change to false in debug time to switch off caching

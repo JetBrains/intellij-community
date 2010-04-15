@@ -53,11 +53,13 @@ public interface PyCallExpression extends PyExpression {
     PyFunction myFunction;
     EnumSet<PyFunction.Flag> myFlags;
     int myImplicitOffset;
+    boolean myImplicitlyResolved;
 
-    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<PyFunction.Flag> flags, int offset) {
+    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<PyFunction.Flag> flags, int offset, boolean implicitlyResolved) {
       myFunction = function;
       myFlags = flags;
       myImplicitOffset = offset;
+      myImplicitlyResolved = implicitlyResolved;
     }
 
     public PyFunction getFunction() {
@@ -77,6 +79,8 @@ public interface PyCallExpression extends PyExpression {
       return myImplicitOffset;
     }
 
+    public boolean isImplicitlyResolved() {
+      return myImplicitlyResolved;
+    }
   }
-
 }

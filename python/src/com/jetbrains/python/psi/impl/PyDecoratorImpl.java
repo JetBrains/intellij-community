@@ -97,7 +97,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     PyMarkedFunction callee = PyCallExpressionHelper.resolveCallee(this);
     if (callee == null) return null;
     if (! hasArgumentList()) {
-      callee = new PyMarkedFunction(callee.getFunction(), callee.getFlags(), callee.getImplicitOffset() + 1);
+      callee = new PyMarkedFunction(callee.getFunction(), callee.getFlags(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
     }
     return callee;
   }

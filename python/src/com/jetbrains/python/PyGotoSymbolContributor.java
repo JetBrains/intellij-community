@@ -10,10 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -33,8 +30,9 @@ public class PyGotoSymbolContributor implements ChooseByNameContributor {
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();
     symbols.addAll(PyClassNameIndex.find(name, project, scope));
-    symbols.addAll(StubIndex.getInstance().get(PyFunctionNameIndex.KEY, name, project, scope));
+    symbols.addAll(PyFunctionNameIndex.find(name, project, scope));
 
     return symbols.toArray(new NavigationItem[symbols.size()]);
   }
+
 }

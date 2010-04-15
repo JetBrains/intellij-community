@@ -12,7 +12,9 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.SdkRootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.toolbox.*;
+import com.jetbrains.python.toolbox.ChainIterable;
+import com.jetbrains.python.toolbox.FP;
+import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -259,7 +261,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
         prolog_cat.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", element.getText())).add(BR));
         reassignment_marked = true;
       }
-      element = ((PyReferenceExpression)element).followAssignmentsChain();
+      element = ((PyReferenceExpression)element).followAssignmentsChain().getElement();
     }
     // it may be a call to a standard wrapper
     if (element instanceof PyCallExpression) {

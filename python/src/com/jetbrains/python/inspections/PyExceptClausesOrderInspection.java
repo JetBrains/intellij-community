@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
@@ -63,7 +64,7 @@ public class PyExceptClausesOrderInspection extends LocalInspectionTool{
         for (PyExceptPart exceptPart : exceptParts) {
           PyExpression exceptClass = exceptPart.getExceptClass();
           if (exceptClass instanceof PyReferenceExpression) {
-            PyElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain();
+            PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain().getElement();
             if (element instanceof PyClass) {
               PyClass pyClass = (PyClass)element;
               if (exceptClasses.contains(pyClass)) {

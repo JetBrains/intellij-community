@@ -6,7 +6,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.AssignmentCollectProcessor;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -51,6 +54,14 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       // resolve within the type proper
       PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
       if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
+    }
+    else {
+      final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
+      for (PyFunction function : functions) {
+        if (function.getContainingClass() != null) {
+          ret.add(new ImplicitResolveResult(function));
+        }
+      }
     }
     // special case of __doc__
     if ("__doc__".equals(referencedName)) {

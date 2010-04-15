@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -60,7 +61,7 @@ public class PyTupleItemAssignmentInspection extends LocalInspectionTool {
         PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targets[0];
         if (subscriptionExpression.getOperand() instanceof PyReferenceExpression) {
           PyReferenceExpression referenceExpression = (PyReferenceExpression)subscriptionExpression.getOperand();
-          PyElement element = referenceExpression.followAssignmentsChain();
+          PsiElement element = referenceExpression.followAssignmentsChain().getElement();
           if (element instanceof PyExpression) {
             PyExpression expression = (PyExpression)element;
             PyType type = expression.getType();

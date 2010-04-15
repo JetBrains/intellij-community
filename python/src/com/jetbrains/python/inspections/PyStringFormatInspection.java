@@ -103,7 +103,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
-          PyElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain();
+          PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain().getElement();
           if (pyElement == null) {
             return -1;
           }
