@@ -72,7 +72,6 @@ public class EventDispatcher extends VirtualFileAdapter implements VirtualFileMa
   }
 
   public void updatingDone() {
-    assert isRefreshing();
 
     if (myRefreshDepth == 0) {
       // the listener may may be attached during a refresh.
