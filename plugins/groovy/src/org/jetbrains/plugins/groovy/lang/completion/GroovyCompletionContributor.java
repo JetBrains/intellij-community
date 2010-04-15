@@ -269,8 +269,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
           }
         }
 
-
-
         Set<PsiClass> usedClasses = new HashSet<PsiClass>();
         Set<String> usedNames = new HashSet<String>();
         for (GrNamedArgument argument : argumentList.getNamedArguments()) {
@@ -288,7 +286,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
           if (element instanceof PsiMethod) {
             final PsiMethod method = (PsiMethod)element;
             final PsiClass containingClass = method.getContainingClass();
-            addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
+            if (containingClass != null) {
+              addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
+            }
             if (method instanceof GrMethod) {
               Set<String>[] parametersArray = ((GrMethod)method).getNamedParametersArray();
               for (Set<String> namedParameters : parametersArray) {
@@ -312,8 +312,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                             Set<PsiClass> usedClasses,
                                             Set<String> usedNames,
                                             PsiClass containingClass,
-                                            GrCall call
-  ) {
+                                            GrCall call) {
     if (usedClasses.contains(containingClass)) return;
     usedClasses.add(containingClass);
     final PsiClass eventListener =
