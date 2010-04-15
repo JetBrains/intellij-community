@@ -66,7 +66,11 @@ public class PyIndentTest extends PyLightFixtureTestCase {
   }
 
   public void testAlignInListMiddle() {
-    doTest("__all__ = [a,<caret>\n" + "           c]", "__all__ = [a,\n" + "           <caret>\n" + "           c]");
+    doTest("__all__ = [a,<caret>\n" +
+           "           c]",
+           "__all__ = [a,\n" +
+           "           <caret>\n" +
+           "           c]");
   }
 
   public void testAlignInListMiddle2() {
@@ -76,6 +80,12 @@ public class PyIndentTest extends PyLightFixtureTestCase {
 
   public void testAlignInListComp() {
     doTest("__all__ = [a for<caret>", "__all__ = [a for\n" + "           <caret>");
+  }
+
+  public void testAlignInDict() {
+    doTest("some_call({'aaa': 'v1',<caret>})",
+           "some_call({'aaa': 'v1',\n" +
+           "           <caret>})");
   }
 
   public void testClass() {

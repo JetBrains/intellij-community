@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * @author yole
  */
 public class PyBlock implements ASTBlock {
-  private final PythonLanguage _language;
   private final Alignment _alignment;
   private final Indent _indent;
   private final ASTNode _node;
@@ -38,13 +37,11 @@ public class PyBlock implements ASTBlock {
   private final TokenSet _listElementTypes;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
 
-  public PyBlock(PythonLanguage language,
-                 final ASTNode node,
+  public PyBlock(final ASTNode node,
                  final Alignment alignment,
                  final Indent indent,
                  final Wrap wrap,
                  final CodeStyleSettings settings) {
-    _language = language;
     _alignment = alignment;
     _indent = indent;
     _node = node;
@@ -116,7 +113,7 @@ public class PyBlock implements ASTBlock {
     }
     if (_listElementTypes.contains(parentType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
-      if (!PyTokenTypes.OPEN_BRACES.contains(childType) && !PyTokenTypes.CLOSE_BRACES.contains(childType)) {
+      if (!PyTokenTypes.OPEN_BRACES.contains(childType)) {
         childAlignment = _childListAlignment;
       }
     }
@@ -147,7 +144,7 @@ public class PyBlock implements ASTBlock {
       // not our cup of tea
     }
 
-    return new PyBlock(_language, child, childAlignment, childIndent, wrap, mySettings);
+    return new PyBlock(child, childAlignment, childIndent, wrap, mySettings);
   }
 
   private static boolean hasLineBreakBefore(ASTNode child) {
@@ -302,7 +299,7 @@ public class PyBlock implements ASTBlock {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      int indent = mySettings.getIndentSize(_language.getAssociatedFileType());
+      int indent = mySettings.getIndentSize(PythonFileType.INSTANCE);
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
 
