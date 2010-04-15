@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
@@ -22,5 +23,10 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public String getVersionString(String sdkHome) {
     return getVersionFromOutput(sdkHome, "--version", "(Jython \\S+) on .*", false);
+  }
+
+  @Override
+  public void addToPythonPath(GeneralCommandLine cmd, String path) {
+    cmd.getParametersList().add("-Dpython.path=" + path);
   }
 }

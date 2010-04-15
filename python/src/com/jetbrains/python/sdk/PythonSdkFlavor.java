@@ -1,15 +1,13 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -75,4 +73,23 @@ public abstract class PythonSdkFlavor {
   public Collection<String> getExtraDebugOptions() {
     return Collections.emptyList();
   }
+
+  public void addToPythonPath(GeneralCommandLine cmd, String path) {
+    addToEnv(cmd, path, PYTHONPATH);
+  }
+
+  protected static void addToEnv(GeneralCommandLine cmd, String path, final String envName) {
+    Map<String,String> envs = cmd.getEnvParams();
+    if (envs == null) {
+      envs = new HashMap<String, String>();
+      cmd.setEnvParams(envs);
+    }
+    if (envs.containsKey(envName)) {
+      envs.put(envName, path + File.pathSeparatorChar + envs.get(envName));
+    } else {
+      envs.put(envName, path);
+    }
+  }
+
+  private static final String PYTHONPATH = "PYTHONPATH";
 }

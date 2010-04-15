@@ -18,6 +18,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -33,7 +34,6 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   protected final AbstractPythonRunConfiguration myConfiguration;
 
   private static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
-  private static final String PYTHONPATH = "PYTHONPATH";
 
   public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
     super(configuration, env, Collections.<Filter>emptyList());
@@ -62,20 +62,18 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
       envs = new HashMap<String, String>(envs);
 
     envs.put(PYTHONUNBUFFERED, "1");
+    cmd.setEnvParams(envs);
 
     List<String> pythonPathList = buildPythonPath();
     String pythonPath = StringUtil.join(pythonPathList, File.pathSeparator);
-    if (new File(myConfiguration.getInterpreterPath()).getName().toLowerCase().startsWith("jython")) {  // HACK rewrite with cleaner API
-      cmd.getParametersList().add("-Dpython.path=" + pythonPath);
-    }
-    else {
-      insertToPythonPath(envs, pythonPath);
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfiguration.getInterpreterPath());
+    if (flavor != null) {
+      flavor.addToPythonPath(cmd, pythonPath);
     }
 
     cmd.getParametersList().addParametersString(myConfiguration.getInterpreterOptions());
     addTestRunnerParameters(cmd);
 
-    cmd.setEnvParams(envs);
     cmd.setPassParentEnvs(myConfiguration.isPassParentEnvs());
 
     return cmd;
@@ -95,13 +93,4 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected abstract void addTestRunnerParameters(GeneralCommandLine cmd);
-
-  private static void insertToPythonPath(Map<String, String> envs, String path) {
-    if (envs.containsKey(PYTHONPATH)) {
-      envs.put(PYTHONPATH, path + File.pathSeparatorChar + envs.get(PYTHONPATH));
-    } else {
-      envs.put(PYTHONPATH, path);
-    }
-  }
-
 }

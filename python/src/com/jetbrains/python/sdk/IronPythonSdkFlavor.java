@@ -1,5 +1,7 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,5 +29,10 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public Collection<String> getExtraDebugOptions() {
     return Collections.singletonList("-X:Frames");
+  }
+
+  @Override
+  public void addToPythonPath(GeneralCommandLine cmd, String path) {
+    addToEnv(cmd, path, "IRONPYTHONPATH");
   }
 }
