@@ -126,9 +126,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                            methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod(), usages);
         return true;
       }
-      else if (usage instanceof MyParameterUsageInfo) {
-        String newName = ((MyParameterUsageInfo)usage).newParameterName;
-        String oldName = ((MyParameterUsageInfo)usage).oldParameterName;
+      else if (usage instanceof ChangeSignatureParameterUsageInfo) {
+        String newName = ((ChangeSignatureParameterUsageInfo)usage).newParameterName;
+        String oldName = ((ChangeSignatureParameterUsageInfo)usage).oldParameterName;
         processParameterUsage((PsiReferenceExpression)element, oldName, newName);
         return true;
       }
@@ -495,7 +495,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     processPrimaryMethod((JavaChangeInfo)changeInfo, (PsiMethod)element, null, true);
     return true;
   }
-  private void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
+
+  private static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)changeInfo.getMethod().copy();
     final PsiClass targetClass = changeInfo.getMethod().getContainingClass();
     LOG.assertTrue(!targetClass.isInterface());
@@ -852,17 +853,6 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }
-  }
-
-  static class MyParameterUsageInfo extends UsageInfo {
-    final String oldParameterName;
-    final String newParameterName;
-
-    public MyParameterUsageInfo(PsiElement element, String oldParameterName, String newParameterName) {
-      super(element);
-      this.oldParameterName = oldParameterName;
-      this.newParameterName = newParameterName;
     }
   }
 

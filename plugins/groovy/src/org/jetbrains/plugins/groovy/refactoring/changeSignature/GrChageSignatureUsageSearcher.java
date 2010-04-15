@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.changeSignature;
+package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
+import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -36,6 +32,13 @@ import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,11 +47,12 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-class UsageSearcher {
+class GrChageSignatureUsageSearcher {
   private final JavaChangeInfo myChangeInfo;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.UsageSearcher");
+  private static final Logger LOG =
+    Logger.getInstance("org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChageSignatureUsageSearcher");
 
-  UsageSearcher(JavaChangeInfo changeInfo) {
+  GrChageSignatureUsageSearcher(JavaChangeInfo changeInfo) {
     this.myChangeInfo = changeInfo;
   }
 
@@ -69,12 +73,13 @@ class UsageSearcher {
 
   private void findSimpleUsages(final PsiMethod method, final ArrayList<UsageInfo> result) {
     PsiMethod[] overridingMethods = findSimpleUsagesWithoutParameters(method, result, true, true, true);
-    findUsagesInCallers(result);
+    //findUsagesInCallers(result); todo
 
     //Parameter name changes are not propagated
     findParametersUsage(method, result, overridingMethods);
   }
 
+  /* todo
   private void findUsagesInCallers(final ArrayList<UsageInfo> usages) {
     if (myChangeInfo instanceof JavaChangeInfoImpl) {
       JavaChangeInfoImpl changeInfo = (JavaChangeInfoImpl)myChangeInfo;
@@ -94,10 +99,11 @@ class UsageSearcher {
       }
     }
   }
+  */
 
-  private void detectLocalsCollisionsInMethod(final PsiMethod method, final ArrayList<UsageInfo> result, boolean isOriginal) {
-    if (!StdLanguages.JAVA.equals(method.getLanguage())) return;
-    
+  private void detectLocalsCollisionsInMethod(final GrMethod method, final ArrayList<UsageInfo> result, boolean isOriginal) {
+    if (!GroovyFileType.GROOVY_LANGUAGE.equals(method.getLanguage())) return;
+
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
     if (isOriginal) {
@@ -119,66 +125,52 @@ class UsageSearcher {
         if (isOriginal) {   //Name changes take place only in primary method
           final PsiParameter parameter = parameters[oldParameterIndex];
           if (!newName.equals(parameter.getName())) {
-            JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, method.getBody(), null,
-                                                                         new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
-                                                                           public void visitCollidingElement(final PsiVariable collidingVariable) {
-                                                                             if (!deletedOrRenamedParameters
-                                                                               .contains(collidingVariable)) {
-                                                                               result.add(
-                                                                                 new RenamedParameterCollidesWithLocalUsageInfo(
-                                                                                   parameter, collidingVariable, method));
-                                                                             }
-                                                                           }
-                                                                         });
+            final GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor collidingVariableVisitor =
+              new GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+                public void visitCollidingVariable(final PsiVariable collidingVariable) {
+                  if (!deletedOrRenamedParameters.contains(collidingVariable)) {
+                    result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
+                  }
+                }
+              };
+            GrUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, method.getBlock(), collidingVariableVisitor);
           }
         }
       }
       else {
-        JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, method.getBody(), null,
-                                                                     new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
-                                                                       public void visitCollidingElement(PsiVariable collidingVariable) {
-                                                                         if (!deletedOrRenamedParameters.contains(collidingVariable)) {
-                                                                           result.add(new NewParameterCollidesWithLocalUsageInfo(
-                                                                             collidingVariable, collidingVariable, method));
-                                                                         }
-                                                                       }
-                                                                     });
+        final GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor variableVisitor =
+          new GrUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+            public void visitCollidingVariable(PsiVariable collidingVariable) {
+              if (!deletedOrRenamedParameters.contains(collidingVariable)) {
+                result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
+              }
+            }
+          };
+        GrUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, method.getBlock(), variableVisitor);
       }
     }
   }
 
   private void findParametersUsage(final PsiMethod method, ArrayList<UsageInfo> result, PsiMethod[] overriders) {
-    if (StdLanguages.JAVA.equals(myChangeInfo.getLanguage())) {
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (ParameterInfo info : myChangeInfo.getNewParameters()) {
-        if (info.getOldIndex() >= 0) {
-          PsiParameter parameter = parameters[info.getOldIndex()];
-          if (!info.getName().equals(parameter.getName())) {
-            addParameterUsages(parameter, result, info);
+    if (!GroovyFileType.GROOVY_LANGUAGE.equals(method.getLanguage())) return;
 
-            for (PsiMethod overrider : overriders) {
-              PsiParameter parameter1 = overrider.getParameterList().getParameters()[info.getOldIndex()];
-              if (parameter.getName().equals(parameter1.getName())) {
-                addParameterUsages(parameter1, result, info);
-              }
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (ParameterInfo info : myChangeInfo.getNewParameters()) {
+      if (info.getOldIndex() >= 0) {
+        PsiParameter parameter = parameters[info.getOldIndex()];
+        if (!info.getName().equals(parameter.getName())) {
+          addParameterUsages(parameter, result, info);
+
+          for (PsiMethod overrider : overriders) {
+            if (!GroovyFileType.GROOVY_LANGUAGE.equals(overrider.getLanguage())) continue;
+            PsiParameter parameter1 = overrider.getParameterList().getParameters()[info.getOldIndex()];
+            if (parameter.getName().equals(parameter1.getName())) {
+              addParameterUsages(parameter1, result, info);
             }
           }
         }
       }
     }
-  }
-
-  private static boolean shouldPropagateToNonPhysicalMethod(PsiMethod method,
-                                                            ArrayList<UsageInfo> result,
-                                                            PsiClass containingClass,
-                                                            final Set<PsiMethod> propagateMethods) {
-    for (PsiMethod psiMethod : propagateMethods) {
-      if (!psiMethod.isPhysical() && Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
-        result.add(new DefaultConstructorImplicitUsageInfo(psiMethod, containingClass, method));
-        return true;
-      }
-    }
-    return false;
   }
 
   private PsiMethod[] findSimpleUsagesWithoutParameters(final PsiMethod method,
@@ -191,7 +183,9 @@ class UsageSearcher {
     PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (PsiMethod overridingMethod : overridingMethods) {
-      result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
+      if (GroovyFileType.GROOVY_LANGUAGE.equals(overridingMethod.getLanguage())) {
+        result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
+      }
     }
 
     boolean needToChangeCalls =
@@ -200,36 +194,29 @@ class UsageSearcher {
                                              myChangeInfo.isExceptionSetOrOrderChanged() ||
                                              myChangeInfo.isVisibilityChanged()/*for checking inaccessible*/);
     if (needToChangeCalls) {
-      int parameterCount = method.getParameterList().getParametersCount();
-
       PsiReference[] refs = MethodReferencesSearch.search(method, projectScope, true).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference ref : refs) {
         PsiElement element = ref.getElement();
 
-        if (!StdLanguages.JAVA.equals(element.getLanguage())) continue;
+        if (!GroovyFileType.GROOVY_LANGUAGE.equals(element.getLanguage())) continue;
 
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
-        if (!isToCatchExceptions) {
-          if (RefactoringUtil.isMethodUsage(element)) {
-            PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(element);
-            if (!method.isVarArgs() && list.getExpressions().length != parameterCount) continue;
-          }
+        //todo check for applicability of arguments to method
+        if (isMethodUsage(element)) {
+          result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
         }
-        if (RefactoringUtil.isMethodUsage(element)) {
-          result.add(new MethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
-        }
-        else if (element instanceof PsiDocTagValue) {
+        else if (element instanceof GrDocTagValueToken) {
           result.add(new UsageInfo(ref.getElement()));
         }
-        else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
+        else if (element instanceof GrMethod && ((GrMethod)element).isConstructor()) {
           DefaultConstructorImplicitUsageInfo implicitUsageInfo =
-            new DefaultConstructorImplicitUsageInfo((PsiMethod)element, ((PsiMethod)element).getContainingClass(), method);
+            new DefaultConstructorImplicitUsageInfo((GrMethod)element, ((GrMethod)element).getContainingClass(), method);
           result.add(implicitUsageInfo);
         }
         else if (element instanceof PsiClass) {
           LOG.assertTrue(method.isConstructor());
           final PsiClass psiClass = (PsiClass)element;
-          if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue;
+          /*if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue; todo propagate methods
           if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
                                                  ((JavaChangeInfoImpl)myChangeInfo).propagateParametersMethods)) {
             continue;
@@ -237,7 +224,7 @@ class UsageSearcher {
           if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
                                                  ((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods)) {
             continue;
-          }
+          }*/
           result.add(new NoConstructorClassUsageInfo(psiClass));
         }
         else if (ref instanceof PsiCallReference) {
@@ -247,34 +234,29 @@ class UsageSearcher {
           result.add(new MoveRenameUsageInfo(element, ref, method));
         }
       }
-
-      //if (method.isConstructor() && parameterCount == 0) {
-      //    RefactoringUtil.visitImplicitConstructorUsages(method.getContainingClass(),
-      //                                                   new DefaultConstructorUsageCollector(result));
-      //}
     }
     else if (myChangeInfo.isParameterTypesChanged()) {
       PsiReference[] refs = MethodReferencesSearch.search(method, projectScope, true).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference reference : refs) {
         final PsiElement element = reference.getElement();
-        if (element instanceof PsiDocTagValue) {
+        if (element instanceof GrDocTagValueToken) {
           result.add(new UsageInfo(reference));
-        }
-        else if (element instanceof XmlElement) {
-          result.add(new MoveRenameUsageInfo(reference, method));
         }
       }
     }
 
     // Conflicts
-    detectLocalsCollisionsInMethod(method, result, isOriginal);
+    if (method instanceof GrMethod) {
+      detectLocalsCollisionsInMethod((GrMethod)method, result, isOriginal);
+    }
     for (final PsiMethod overridingMethod : overridingMethods) {
-      detectLocalsCollisionsInMethod(overridingMethod, result, isOriginal);
+      if (overridingMethod instanceof GrMethod) {
+        detectLocalsCollisionsInMethod((GrMethod)overridingMethod, result, isOriginal);
+      }
     }
 
     return overridingMethods;
   }
-
 
   private static void addParameterUsages(PsiParameter parameter, ArrayList<UsageInfo> results, ParameterInfo info) {
     PsiManager manager = parameter.getManager();
@@ -287,13 +269,12 @@ class UsageSearcher {
   }
 
   private boolean needToCatchExceptions(PsiMethod caller) {
-    if (myChangeInfo instanceof JavaChangeInfoImpl) {
+    /*if (myChangeInfo instanceof JavaChangeInfoImpl) { //todo propagate methods
       return myChangeInfo.isExceptionSetOrOrderChanged() &&
              !((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods.contains(caller);
     }
-    else {
-      return myChangeInfo.isExceptionSetOrOrderChanged();
-    }
+    else {*/
+    return myChangeInfo.isExceptionSetOrOrderChanged();
   }
 
   private static class RenamedParameterCollidesWithLocalUsageInfo extends UnresolvableCollisionUsageInfo {
@@ -311,5 +292,18 @@ class UsageSearcher {
                                        RefactoringUIUtil.getDescription(myCollidingElement, true),
                                        RefactoringUIUtil.getDescription(myMethod, true));
     }
+  }
+
+  static boolean isMethodUsage(PsiElement element) {
+    if (element instanceof GrEnumConstant) return true;
+    if (!(element instanceof GrCodeReferenceElement)) return false;
+    PsiElement parent = element.getParent();
+    if (parent instanceof GrCall) {
+      return true;
+    }
+    else if (parent instanceof GrAnonymousClassDefinition) {
+      return element.equals(((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy());
+    }
+    return false;
   }
 }

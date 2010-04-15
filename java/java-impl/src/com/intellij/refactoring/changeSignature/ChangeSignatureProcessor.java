@@ -131,6 +131,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(myChangeInfo, refUsages);
       for (PsiElement key : conflicts.keySet()) {
         Collection<String> collection = conflictDescriptions.get(key);
+        if (collection.size() == 0) collection = new HashSet<String>();
         collection.addAll(conflicts.get(key));
         conflictDescriptions.put(key, collection);
       }

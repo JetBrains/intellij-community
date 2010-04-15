@@ -16,12 +16,10 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
@@ -42,24 +40,25 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
-  private final GrChangeInfoImpl myInfo;
+  public static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureProcessor");
+  private final GrChangeInfoImpl myChangeInfo;
 
   //private
 
   public GrChangeSignatureProcessor(Project project, GrChangeInfoImpl changeInfo) {
     super(project);
-    myInfo = changeInfo;
+    myChangeInfo = changeInfo;
   }
 
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new ChangeSignatureViewDescriptor(myInfo.getMethod());
+    return new ChangeSignatureViewDescriptor(myChangeInfo.getMethod());
   }
 
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
-    final PsiReference[] refs = MethodReferencesSearch.search(myInfo.getMethod()).toArray(PsiReference.EMPTY_ARRAY);
+    final PsiReference[] refs = MethodReferencesSearch.search(myChangeInfo.getMethod()).toArray(PsiReference.EMPTY_ARRAY);
     for (PsiReference ref : refs) {
 
     }
@@ -69,7 +68,9 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void refreshElements(PsiElement[] elements) {
-    //To change body of implemented methods use File | Settings | File Templates.
+    boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
+    LOG.assertTrue(condition);
+    myChangeInfo.updateMethod((PsiMethod) elements[0]);
   }
 
   @Override
@@ -78,20 +79,20 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   private void changeMethod() {
-    final PsiMethod method = myInfo.getMethod();
-    if (myInfo.isChangeName()) {
-      method.setName(myInfo.getNewName());
+    final PsiMethod method = myChangeInfo.getMethod();
+    if (myChangeInfo.isChangeName()) {
+      method.setName(myChangeInfo.getNewName());
     }
 
-    if (myInfo.isChangeVisibility()) {
-      method.getModifierList().setModifierProperty(myInfo.getVisibilityModifier(), true);
+    if (myChangeInfo.isChangeVisibility()) {
+      method.getModifierList().setModifierProperty(myChangeInfo.getVisibilityModifier(), true);
     }
   }
 
   @Override
   protected String getCommandName() {
     return "";
-    //return RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myInfo.getMethod()));
+    //return RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 
 
@@ -105,7 +106,7 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   static class GrChangeInfoImpl implements JavaChangeInfo {
-    final GrMethod method;
+    GrMethod method;
     final String newName;
     final CanonicalTypes.Type returnType;
     final String visibilityModifier;
@@ -249,6 +250,16 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     public boolean[] toRemoveParm() {
       return new boolean[0];  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public PsiExpression getValue(int i, PsiCallExpression callExpression) {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void updateMethod(PsiMethod psiMethod) {
+      if (psiMethod instanceof GrMethod) {
+        method = (GrMethod)psiMethod;
+      }
     }
   }
 }
