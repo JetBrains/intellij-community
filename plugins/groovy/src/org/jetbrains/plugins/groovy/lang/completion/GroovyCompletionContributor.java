@@ -82,7 +82,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         psiElement(PsiElement.class).withParent(GrParameter.class));
 
   private static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL =
-    psiElement().withParent(psiElement().withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
+    psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
 
   private static final String[] THIS_SUPER = {"this", "super"};
 
@@ -244,7 +244,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
-        final GrArgumentList argumentList = (GrArgumentList)parameters.getPosition().getParent().getParent();
+        final GrReferenceExpression refExpr = ((GrReferenceExpression)parameters.getPosition().getParent());
+        if (refExpr.getQualifier() != null) return;
+        final GrArgumentList argumentList = (GrArgumentList)refExpr.getParent();
         final GrCall call = (GrCall)argumentList.getParent();
         List<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
         //costructor call
