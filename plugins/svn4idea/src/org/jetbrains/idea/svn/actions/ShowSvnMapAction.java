@@ -22,8 +22,16 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ContentsUtil;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
+import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 
 public class ShowSvnMapAction extends AnAction implements DumbAware {
   public ShowSvnMapAction() {
@@ -49,7 +57,22 @@ public class ShowSvnMapAction extends AnAction implements DumbAware {
       return;
     }
 
-    final SvnMapDialog dialog = new SvnMapDialog(project);
-    dialog.show();
+    final CopiesPanel copiesPanel = new CopiesPanel(project);
+    //final SvnMapDialog dialog = new SvnMapDialog(project);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
+    final ContentManager contentManager = toolWindow.getContentManager();
+
+    Content content = ContentFactory.SERVICE.getInstance().createContent(copiesPanel.getComponent(), SvnBundle.message("dialog.show.svn.map.title"), true);
+    ContentsUtil.addOrReplaceContent(contentManager, content, true);
+    toolWindow.activate(new Runnable() {
+      public void run() {
+        IdeFocusManager.getInstance(project).requestFocus(copiesPanel.getPrefferedFocusComponent(), true);
+      }
+    });
+    /*SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        IdeFocusManager.getInstance(project).requestFocus(copiesPanel.getPrefferedFocusComponent(), true);
+      }
+    });*/
   }
 }

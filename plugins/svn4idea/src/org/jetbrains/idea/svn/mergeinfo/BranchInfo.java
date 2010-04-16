@@ -46,7 +46,6 @@ public class BranchInfo {
   private final String myBranchUrl;
   private final String myTrunkUrl;
   private final String myTrunkCorrected;
-  private final String myRelativeTrunk;
   private final SVNWCClient myClient;
   private final SvnVcs myVcs;
 
@@ -60,7 +59,6 @@ public class BranchInfo {
     myTrunkUrl = trunkUrl;
     myTrunkCorrected = trunkCorrected;
     myClient = client;
-    myRelativeTrunk = myTrunkUrl.substring(myRepositoryRoot.length());
 
     myPathMergedMap = new HashMap<String, Set<Long>>();
     myNonInheritablePathMergedMap = new HashMap<String, Set<Long>>();

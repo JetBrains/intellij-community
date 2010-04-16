@@ -179,7 +179,7 @@ public class SvnMapDialog extends DialogWrapper {
 
   public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);
 
-  protected JComponent createCenterPanel() {
+  public JComponent createCenterPanel() {
     return myContentPane;
   }
 
