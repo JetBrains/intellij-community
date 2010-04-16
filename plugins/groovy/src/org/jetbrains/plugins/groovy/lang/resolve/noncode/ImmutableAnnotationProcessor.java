@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticConstructor;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 
@@ -38,11 +38,9 @@ import java.util.List;
  * Date: 27.04.2009
  */
 public class ImmutableAnnotationProcessor implements NonCodeMembersProcessor {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.noncode.ImmutableAnnotationProcessor");
 
-  public boolean processNonCodeMembers(PsiType type,
-                                       PsiScopeProcessor processor,
-                                       PsiElement place,
-                                       boolean forCompletion) {
+  public boolean processNonCodeMembers(PsiType type, PsiScopeProcessor processor, PsiElement place, boolean forCompletion) {
     if (!(type instanceof PsiClassType)) return true;
 
     PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -53,7 +51,7 @@ public class ImmutableAnnotationProcessor implements NonCodeMembersProcessor {
     GrTypeDefinition grClass = (GrTypeDefinition)psiClass;
 
     PsiModifierList modifierList = grClass.getModifierList();
-    if (modifierList==null) return true;
+    if (modifierList == null) return true;
     assert modifierList instanceof GrModifierList;
 
     GrAnnotation[] annotations = ((GrModifierList)modifierList).getAnnotations();
@@ -68,14 +66,22 @@ public class ImmutableAnnotationProcessor implements NonCodeMembersProcessor {
 
     for (GrAnnotation annotation : annotations) {
       if (!GroovyImmutableAnnotationInspection.IMMUTABLE.equals(annotation.getQualifiedName())) continue;
-      
+
       String name = grClass.getName();
       if (name == null) return true;
-      GrMethod constructor = GroovyPsiElementFactory.getInstance(annotation.getProject())
-          .createConstructorFromText(name, ArrayUtil.toStringArray(paramTypes), ArrayUtil.toStringArray(paramNames), "{}");
-        GroovyResolveResultImpl result = new GroovyResolveResultImpl(new GrSyntheticConstructor(constructor, grClass), true);
-        return processor.execute(result.getElement(), ResolveState.initial());
+      try {
+        final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(annotation.getProject());
+        GrMethod constructor =
+          factory.createConstructorFromText(name, ArrayUtil.toStringArray(paramTypes), ArrayUtil.toStringArray(paramNames), "{}");
+        if (!processor.execute(new GrSyntheticConstructor(constructor, grClass), ResolveState.initial())) return false;
+
+        constructor = factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}");
+        return processor.execute(new GrSyntheticConstructor(constructor, grClass), ResolveState.initial());
       }
+      catch (AssertionError error) {
+        LOG.debug(error.getMessage());
+      }
+    }
 
     return true;
   }
