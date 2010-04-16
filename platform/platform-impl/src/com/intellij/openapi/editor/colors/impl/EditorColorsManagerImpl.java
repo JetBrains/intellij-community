@@ -25,10 +25,9 @@ import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import org.jdom.Document;
@@ -37,13 +36,11 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class EditorColorsManagerImpl extends EditorColorsManager
     implements NamedJDOMExternalizable, ExportableApplicationComponent {
@@ -113,38 +110,73 @@ public class EditorColorsManagerImpl extends EditorColorsManager
 
 
     addDefaultSchemes();
+
+    // Change some attributes of default schema using special extension
+    extendDefaultScheme();
+
     // Load default schemes from providers
     loadAdditionalDefaultSchemes();
+
     loadAllSchemes();
 
     setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
+  }
+
+  private void extendDefaultScheme() {
+    final EditorColorsScheme defaultColorsScheme = mySchemesManager.findSchemeByName("Default");
+
+    //Get color scheme from EPs
+    for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
+      final String extensionPath = provider.getDefaultSchemaExtensionPath();
+      if (extensionPath == null) {
+        continue;
+      }
+      try {
+        final EditorColorsSchemeImpl extScheme = loadScheme(extensionPath, provider);
+        if (extScheme != null) {
+          // copy text attrs from extension to default scheme
+          for (Map.Entry<TextAttributesKey, TextAttributes> keyTextAttributesEntry : extScheme.myAttributesMap.entrySet()) {
+            final TextAttributesKey key = keyTextAttributesEntry.getKey();
+            final TextAttributes attrs = keyTextAttributesEntry.getValue();
+            ((AbstractColorsScheme)defaultColorsScheme).myAttributesMap.put(key, attrs);
+          }
+
+          // copy colors
+          for (Map.Entry<ColorKey, Color> keyColorEntry : extScheme.myColorsMap.entrySet()) {
+            final ColorKey key = keyColorEntry.getKey();
+            final Color color = keyColorEntry.getValue();
+            ((AbstractColorsScheme)defaultColorsScheme).myColorsMap.put(key, color);
+          }
+        }
+      }
+      catch (final Exception e) {
+        ApplicationManager.getApplication().invokeLater(
+          new Runnable(){
+            public void run() {
+              // Error shouldn't occur during this operation
+              // thus we report error instead of info
+              LOG.error("Cannot read scheme from " + extensionPath + ": " + e.getLocalizedMessage(), e);
+            }
+          }
+        );
+      }
+    }
   }
 
   private void loadAdditionalDefaultSchemes() {
     //Get color schemes from EPs
     for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
       final String[] schemesPaths = provider.getBundledSchemesRelativePaths();
+      if (schemesPaths == null) {
+        continue;
+      }
 
       for (final String schemePath : schemesPaths) {
         try {
-          final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
-          if (inputStream == null) {
-            // Error shouldn't occur during this operation
-            // thus we report error instead of info
-            LOG.error("Cannot read scheme from " +  schemePath);
-            continue;
+          final EditorColorsSchemeImpl scheme = loadScheme(schemePath, provider);
+          if (scheme != null) {
+            mySchemesManager.addNewScheme(scheme, false);
           }
-
-          final Document document;
-          try {
-            document = JDOMUtil.loadDocument(inputStream);
-          }
-          catch (JDOMException e) {
-            LOG.info("Error reading scheme from  " + schemePath + ": " + e.getLocalizedMessage());
-            throw e;
-          }
-          final EditorColorsSchemeImpl scheme = loadSchemeFromDocument(document, false);
-          mySchemesManager.addNewScheme(scheme, false);
         }
         catch (final Exception e) {
           ApplicationManager.getApplication().invokeLater(
@@ -159,6 +191,28 @@ public class EditorColorsManagerImpl extends EditorColorsManager
         }
       }
     }
+  }
+
+  private EditorColorsSchemeImpl loadScheme(@NotNull final String schemePath,
+                                            final BundledColorSchemesProvider provider)
+    throws IOException, JDOMException, InvalidDataException {
+    final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
+    if (inputStream == null) {
+      // Error shouldn't occur during this operation
+      // thus we report error instead of info
+      LOG.error("Cannot read scheme from " +  schemePath);
+      return null;
+    }
+
+    final Document document;
+    try {
+      document = JDOMUtil.loadDocument(inputStream);
+    }
+    catch (JDOMException e) {
+      LOG.info("Error reading scheme from  " + schemePath + ": " + e.getLocalizedMessage());
+      throw e;
+    }
+    return loadSchemeFromDocument(document, false);
   }
 
   private EditorColorsSchemeImpl loadSchemeFromDocument(final Document document,
