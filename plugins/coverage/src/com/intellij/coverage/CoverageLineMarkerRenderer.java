@@ -173,7 +173,7 @@ public class  CoverageLineMarkerRenderer implements ActiveGutterRenderer {
       } else if (parent instanceof PsiAssertStatement) {
         condition = ((PsiAssertStatement)parent).getAssertCondition();
       }
-      if (condition != null) {
+      if (condition != null && PsiTreeUtil.isAncestor(condition, psiFile.findElementAt(offset), false)) {
         try {
           final ControlFlow controlFlow = ControlFlowFactory.getInstance(project).getControlFlow(
               parent, AllVariablesControlFlowPolicy.getInstance());
