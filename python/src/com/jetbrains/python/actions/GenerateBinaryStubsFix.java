@@ -98,7 +98,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk.getHomePath());
     if (flavor instanceof IronPythonSdkFlavor) {
-      return getReferenceText(ref).contains("System");
+      return getReferenceText(ref).matches("[A-Z][A-Za-z0-9]+(\\.[A-Z][A-Za-z0-9]+)*");
     }
     return false;
   }
