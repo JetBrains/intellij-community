@@ -499,25 +499,6 @@ set<caret>Bar(2)
     assertNull resolved
   }
 
-  public void testPropertyInCallExpression() {
-    myFixture.configureByText("a.groovy", """
-class Foo {
-  def foo = {
-    return {int i -> print i}
-  }
-
-  def foo(String s){
-    print s
-  }
-}
-new Foo().fo<caret>o(2)"""
-    )
-    def ref = findReference()
-    def resolved = ref.resolve()
-
-    assertInstanceOf resolved, GrAccessorMethod
-  }
-
   public void testPropertyImportedOnDemand() {
     myFixture.addFileToProject("foo/A.groovy", 'package foo; class Foo {static def foo}')
     myFixture.configureByText("B.groovy", """package foo
