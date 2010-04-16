@@ -1016,7 +1016,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
         synchronized (ourProjects) {
           for (final SoftReference<Pair<ReflectedProject, ClassLoader>> ref : ourProjects) {
             final Pair<ReflectedProject, ClassLoader> pair = ref.get();
-            if (pair != null && pair.second == classLoader) {
+            if (pair != null && pair.first != null && pair.first.myProject != null && pair.second == classLoader) {
               return pair.first;
             }
           }
