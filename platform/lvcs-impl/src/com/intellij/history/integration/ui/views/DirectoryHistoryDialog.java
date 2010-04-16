@@ -42,6 +42,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -76,11 +77,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     JPanel p = new JPanel(new BorderLayout());
 
-    p.add(new DiffStatusBar(DiffStatusBar.DEFAULT_TYPES), BorderLayout.SOUTH);
-    p.add(myChangesTree, BorderLayout.CENTER);
-
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(), true);
     p.add(myToolBar.getComponent(), BorderLayout.NORTH);
+
+    p.add(myChangesTree, BorderLayout.CENTER);
+    p.add(new DiffStatusBar(DiffStatusBar.DEFAULT_TYPES), BorderLayout.SOUTH);
 
     return p;
   }
@@ -105,6 +106,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
         });
       }
     });
+    
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        mySearchField.requestFocusInWindow();
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getFind(), mySplitter, this); // a little hack
+    
     return mySearchField;
   }
 

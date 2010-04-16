@@ -44,13 +44,12 @@ import java.util.List;
 import java.util.Locale;
 
 public abstract class IntegrationTestCase extends PlatformTestCase {
+  public static final int TIMESTAMP_INCREMENT = 3000;
   protected static final String FILTERED_DIR_NAME = "CVS";
 
   private Locale myDefaultLocale;
-
   protected VirtualFile myRoot;
   protected IdeaGateway myGateway;
-  public static final int TIMESTAMP_INCREMENT = 3000;
 
   @Override
   public void setUp() throws Exception {

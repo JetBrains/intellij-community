@@ -20,6 +20,7 @@ import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class RootEntryDirectoriesTest extends LocalHistoryTestCase {
@@ -95,6 +96,7 @@ public class RootEntryDirectoriesTest extends LocalHistoryTestCase {
   }
 
   @Test
+  @Ignore
   public void testRenamingFilesUnderDirectoryToExistingNameThrowsException() {
     createDirectory(root, "dir");
     createFile(root, "dir/file1");
@@ -134,6 +136,7 @@ public class RootEntryDirectoriesTest extends LocalHistoryTestCase {
   }
 
   @Test
+  @Ignore
   public void testRenamingDirectoryToExistingFileNameThrowsException() {
     createDirectory(root, "dir1");
     createDirectory(root, "dir1/dir2");

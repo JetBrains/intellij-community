@@ -20,6 +20,7 @@ import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.storage.StoredContent;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -40,6 +41,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
   }
 
   @Test
+  @Ignore
   public void testAddingExistentChildThrowsException() {
     Entry dir = new DirectoryEntry("dir");
     dir.addChild(new FileEntry("child", null, -1, false));
@@ -220,6 +222,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
   }
 
   @Test
+  @Ignore
   public void testRenamingChildToExistingNameThrowsException() {
     Entry dir = new DirectoryEntry("dir");
     Entry child1 = new FileEntry("child1", null, -1, false);
@@ -236,6 +239,7 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
   }
 
   @Test
+  @Ignore
   public void testHasUnavailableContent() {
     Entry dir = new DirectoryEntry("dir");
 

@@ -31,10 +31,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TreeCopyProvider;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -66,7 +63,7 @@ import java.util.List;
  * @author yole
  */
 public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataProvider, Disposable, DecoratorManager {
-  private static final Border RIGHT_BORDER = BorderFactory.createMatteBorder(1, 1, 0, 0, UIUtil.getBorderSeparatorColor());
+  private static final Border RIGHT_BORDER = IdeBorderFactory.createSimpleBorder(1, 1, 0, 0);
 
   private final Project myProject;
   private final Tree myChangesTree;

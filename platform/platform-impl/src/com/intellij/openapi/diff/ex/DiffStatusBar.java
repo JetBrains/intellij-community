@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class DiffStatusBar extends JPanel {
       addDiffType(differenceType);
     }
     initGui();
-    setBorder(BorderFactory.createLineBorder(Color.GRAY));
+    setBorder(IdeBorderFactory.createSimpleBorder());
   }
 
   private void addDiffType(final LegendTypeDescriptor diffType){
@@ -60,7 +61,7 @@ public class DiffStatusBar extends JPanel {
   private void addComponent(final LegendTypeDescriptor diffType) {
     JComponent component = new JPanel() {
       public void paint(Graphics g) {
-        setBackground(UIUtil.getTableHeaderBackground());
+        setBackground(UIUtil.getPanelBackgound());
         super.paint(g);
         FontMetrics metrics = getFontMetrics(getFont());
 
@@ -111,22 +112,29 @@ public class DiffStatusBar extends JPanel {
   }
 
   private void initGui() {
-    setLayout(new BorderLayout());
-    Border emptyBorder = BorderFactory.createEmptyBorder(3, 2, 5, 2);
+    setLayout(new GridBagLayout());
+    Border emptyBorder = BorderFactory.createEmptyBorder(3, 20, 5, 20);
     setBorder(emptyBorder);
 
-    add(myTextLabel, BorderLayout.WEST);
-    Box box = Box.createHorizontalBox();
-    box.add(Box.createHorizontalGlue());
+    GridBagConstraints c = new GridBagConstraints();
+    c.gridy = 0;
+    c.gridx = 0;
+    c.gridwidth = 0;
+
+    add(myTextLabel, c);
     JPanel panel = new JPanel(new GridLayout(1, myLabels.size(), 0, 0));
     for (final JComponent myLabel : myLabels) {
       panel.add(myLabel);
     }
     panel.setMaximumSize(panel.getPreferredSize());
-    box.add(panel);
-    box.add(Box.createHorizontalGlue());
 
-    add(box, BorderLayout.CENTER);
+    c.gridx = 1;
+    c.gridwidth = 1;
+    add(panel, c);
+
+    c.gridx = 2;
+    c.gridwidth = 0;
+    add(Box.createHorizontalGlue(), c);
   }
 
   public void setColorScheme(EditorColorsScheme colorScheme) {

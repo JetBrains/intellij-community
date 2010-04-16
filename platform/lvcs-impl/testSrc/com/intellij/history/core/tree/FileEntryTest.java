@@ -20,6 +20,7 @@ import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.storage.StoredContent;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 
 public class FileEntryTest extends LocalHistoryTestCase {
   @Test
+  @Ignore
   public void testHasUnavailableContent() {
     Entry e1 = new FileEntry(null, c("abc"), -1, false);
     Entry e2 = new FileEntry(null, new StoredContent(-1), -1, false);

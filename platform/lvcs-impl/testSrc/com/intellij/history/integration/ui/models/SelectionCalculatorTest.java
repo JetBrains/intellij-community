@@ -117,9 +117,9 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   private List<Revision> createRevisions(String... contents) {
     RootEntry r = new RootEntry();
-    createFile(r, "f", contents[0], -1, false);
+    vcs.addChangeInTests(createFile(r, "f", contents[0], -1, false));
     for (int i = 1; i < contents.length; i++) {
-      changeContent(r, "f", contents[i], -1);
+      vcs.addChangeInTests(changeContent(r, "f", contents[i], i));
     }
     return collectRevisions(vcs, r, "f", null, null);
   }
