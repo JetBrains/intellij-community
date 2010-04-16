@@ -529,14 +529,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private static class AncestorsIterator implements Iterator<PyClass> {
-    List<PyClass> pending = new LinkedList<PyClass>();
-    Set<PyClass> seen = new HashSet<PyClass>();
+    List<PyClassImpl> pending = new LinkedList<PyClassImpl>();
+    Set<PyClass> seen;
     Iterator<PyClass> percolator;
     PyClass prefetch = null;
     private final PyClassImpl myAClass;
 
     public AncestorsIterator(PyClassImpl aClass) {
       myAClass = aClass;
+      percolator = myAClass.getSuperClassesList().iterator();
+      seen = new HashSet<PyClass>();
+    }
+
+    private AncestorsIterator(PyClassImpl AClass, Set<PyClass> seen) {
+      myAClass = AClass;
+      this.seen = seen;
       percolator = myAClass.getSuperClassesList().iterator();
     }
 
@@ -563,7 +570,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           return ret;
         }
         if (percolator.hasNext()) {
-          PyClass it = percolator.next();
+          PyClassImpl it = (PyClassImpl)percolator.next();
           if (seen.contains(it)) {
             continue iterations; // loop back is equivalent to return next();
           }
@@ -572,9 +579,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           return it;
         }
         else if (pending.size() > 0) {
-          PyClass it = pending.get(0);
+          PyClassImpl it = pending.get(0);
           pending.remove(0); // t, ts* = pending
-          percolator = it.iterateAncestors().iterator();
+          percolator = new AncestorsIterator(it, new HashSet<PyClass>(seen));
           // loop back is equivalent to return next();
         }
         else return null;

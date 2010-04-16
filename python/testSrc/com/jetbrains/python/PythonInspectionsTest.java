@@ -16,7 +16,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     doTest(getTestName(true), inspection);
   }
 
-  private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
+  private void doTest(String testName, LocalInspectionTool localInspectionTool) throws Exception {
     myFixture.testInspection("inspections/" + testName, new LocalInspectionToolWrapper(localInspectionTool));
   }
 
@@ -178,6 +178,11 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testPyTupleItemAssignmentInspection() throws Throwable {
     LocalInspectionTool inspection = new PyTupleItemAssignmentInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyInitNewSignatureInspection() throws Exception {
+    LocalInspectionTool inspection = new PyInitNewSignatureInspection();
     doTest(getTestName(false), inspection);
   }
 }
