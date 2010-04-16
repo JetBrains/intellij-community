@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
@@ -29,6 +29,9 @@ public interface BundledColorSchemesProvider {
    * @return Array of relative paths without extensions for schemes.
    * E.g. : ["/colorSchemes/colbalt", "myscheme"] for colorSchemes/colbalt.xml, myscheme.xml
    */
-  @NotNull
+  @Nullable
   String[] getBundledSchemesRelativePaths();
+
+  @Nullable
+  String getDefaultSchemaExtensionPath();
 }
