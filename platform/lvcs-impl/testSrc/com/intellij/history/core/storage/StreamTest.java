@@ -16,9 +16,7 @@
 
 package com.intellij.history.core.storage;
 
-import com.intellij.history.core.IdPath;
-import com.intellij.history.core.InMemoryStorage;
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
@@ -27,389 +25,244 @@ import com.intellij.history.core.tree.RootEntry;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.util.List;
 
-public class StreamTest extends LocalVcsTestCase {
-  private Stream is;
-  private Stream os;
-  private Storage s;
+public class StreamTest extends LocalHistoryTestCase {
+  private DataInputStream is;
+  private DataOutputStream os;
 
   @Before
   public void setUpStreams() throws IOException {
     PipedOutputStream pos = new PipedOutputStream();
-    PipedInputStream pis = new PipedInputStream(pos);
-
-    s = new InMemoryStorage();
-    os = new Stream(pos);
-    is = new Stream(pis, s);
+    os = new DataOutputStream(pos);
+    is = new DataInputStream(new PipedInputStream(pos));
   }
 
   @Test
   public void testString() throws Exception {
-    os.writeString("hello");
-    assertEquals("hello", is.readString());
+    StreamUtil.writeString(os, "hello");
+    assertEquals("hello", StreamUtil.readString(is));
   }
 
   @Test
   public void testStringOrNull() throws Exception {
-    os.writeStringOrNull("hello");
-    os.writeStringOrNull(null);
-    assertEquals("hello", is.readStringOrNull());
-    assertNull(is.readStringOrNull());
-  }
-
-  @Test
-  public void testInteger() throws Exception {
-    os.writeInteger(1);
-    assertEquals(1, is.readInteger());
-  }
-
-  @Test
-  public void testLong() throws Exception {
-    os.writeLong(1);
-    assertEquals(1L, is.readLong());
-  }
-
-  @Test
-  public void testBoolean() throws Exception {
-    os.writeBoolean(true);
-    assertTrue(is.readBoolean());
-  }
-
-  @Test
-  public void testContent() throws Exception {
-    Content c = s.storeContent(b("abc"));
-    os.writeContent(c);
-
-    assertArrayEquals("abc".getBytes(), is.readContent().getBytes());
-  }
-
-  @Test
-  public void testUnavailableContent() throws Exception {
-    os.writeContent(new UnavailableContent());
-    assertEquals(UnavailableContent.class, is.readContent().getClass());
-  }
-
-  @Test
-  public void testDataAfterUnavailableContent() throws IOException {
-    os.writeContent(new UnavailableContent());
-    os.writeInteger(777);
-
-    is.readContent();
-    assertEquals(777, is.readInteger());
-  }
-
-  @Test
-  public void testIdPath() throws Exception {
-    IdPath p = new IdPath(1, 2, 3);
-    os.writeIdPath(p);
-    assertEquals(p, is.readIdPath());
+    StreamUtil.writeStringOrNull(os, "hello");
+    StreamUtil.writeStringOrNull(os, null);
+    assertEquals("hello", StreamUtil.readStringOrNull(is));
+    assertNull(StreamUtil.readStringOrNull(is));
   }
 
   @Test
   public void testFileEntry() throws Exception {
-    Content c = s.storeContent(b("content"));
-    Entry e = new FileEntry(42, "file", c, 123L, true);
+    Entry e = new FileEntry("file", new StoredContent(333), 123L, true);
 
-    os.writeEntry(e);
-    Entry result = is.readEntry();
+    StreamUtil.writeEntry(os, e);
+    Entry result = StreamUtil.readEntry(is);
 
     assertEquals(FileEntry.class, result.getClass());
 
-    assertEquals(42, result.getId());
     assertEquals("file", result.getName());
-    assertArrayEquals("content".getBytes(), result.getContent().getBytes());
+    assertEquals(333, ((StoredContent)result.getContent()).getContentId());
     assertEquals(123L, result.getTimestamp());
     assertTrue(result.isReadOnly());
   }
 
   @Test
   public void testDoesNotWriteEntryParent() throws IOException {
-    Entry parent = new DirectoryEntry(-1, "");
-    Entry e = new FileEntry(42, "", new UnavailableContent(), -1, false);
+    Entry parent = new DirectoryEntry("");
+    Entry e = new FileEntry("", new StoredContent(333), -1, false);
 
     parent.addChild(e);
-    os.writeEntry(e);
+    StreamUtil.writeEntry(os, e);
 
-    assertNull(is.readEntry().getParent());
+    assertNull(StreamUtil.readEntry(is).getParent());
   }
 
   @Test
   public void testEmptyDirectoryEntry() throws IOException {
-    Entry e = new DirectoryEntry(13, "name");
+    Entry e = new DirectoryEntry("name");
 
-    os.writeEntry(e);
-    Entry result = is.readEntry();
+    StreamUtil.writeEntry(os, e);
+    Entry result = StreamUtil.readEntry(is);
 
     assertEquals(DirectoryEntry.class, result.getClass());
 
-    assertEquals(13, result.getId());
     assertEquals("name", result.getName());
   }
 
   @Test
   public void testDirectoryEntryWithChildren() throws IOException {
-    Entry dir = new DirectoryEntry(1, "");
-    Entry subDir = new DirectoryEntry(2, "");
+    Entry dir = new DirectoryEntry("");
+    Entry subDir = new DirectoryEntry("");
     dir.addChild(subDir);
-    subDir.addChild(new FileEntry(3, "a", new UnavailableContent(), -1, false));
-    subDir.addChild(new FileEntry(4, "b", new UnavailableContent(), -1, false));
+    subDir.addChild(new FileEntry("a", new StoredContent(333), -1, false));
+    subDir.addChild(new FileEntry("b", new StoredContent(333), -1, false));
 
-    os.writeEntry(dir);
-    Entry result = is.readEntry();
+    StreamUtil.writeEntry(os, dir);
+    Entry result = StreamUtil.readEntry(is);
 
     List<Entry> children = result.getChildren();
     assertEquals(1, children.size());
 
     Entry e = children.get(0);
     assertEquals(DirectoryEntry.class, e.getClass());
-    assertEquals(2, e.getId());
     assertSame(result, e.getParent());
 
     children = e.getChildren();
     assertEquals(2, children.size());
 
     assertEquals(FileEntry.class, children.get(0).getClass());
-    assertEquals(3, children.get(0).getId());
     assertSame(e, children.get(0).getParent());
 
     assertEquals(FileEntry.class, children.get(1).getClass());
-    assertEquals(4, children.get(1).getId());
     assertSame(e, children.get(1).getParent());
   }
 
   @Test
-  public void testRootEntry() throws IOException {
-    Entry r = new RootEntry();
-
-    os.writeEntry(r);
-    Entry read = is.readEntry();
-
-    assertEquals(RootEntry.class, read.getClass());
-
-    assertEquals(-1, read.getId());
-    assertEquals("", read.getName());
-  }
-
-  @Test
-  public void testRootEntryWithRootWithChildren() throws IOException {
-    Entry r = new RootEntry();
-
-    createDirectory(r, 1, "c:/root");
-    createFile(r, 2, "c:/root/file", new UnavailableContent(), -1);
-
-    os.writeEntry(r);
-    Entry read = is.readEntry();
-
-    List<Entry> children = read.getChildren();
-    assertEquals(1, children.size());
-
-    Entry e = read.findEntry("c:/root");
-    assertNotNull(e);
-    assertEquals(DirectoryEntry.class, e.getClass());
-
-    e = read.findEntry("c:/root/file");
-    assertNotNull(e);
-    assertEquals(FileEntry.class, e.getClass());
-  }
-
-  @Test
   public void testCreateFileChange() throws IOException {
-    Change c = new CreateFileChange(1, "file", s.storeContent(b("content")), 777L, false);
-    c.applyTo(new RootEntry());
+    Change c = new CreateFileChange(nextId(), "file");
 
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(CreateFileChange.class, read.getClass());
     CreateFileChange result = (CreateFileChange)read;
 
-    assertArrayEquals(array(idp(-1, 1)), result.getAffectedIdPaths());
+    assertEquals("file", result.getPath());
   }
 
   @Test
   public void testCreateDirectoryChange() throws IOException {
-    Change c = new CreateDirectoryChange(2, "dir");
-    c.applyTo(new RootEntry());
+    Change c = new CreateDirectoryChange(nextId(), "dir");
 
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(CreateDirectoryChange.class, read.getClass());
     CreateDirectoryChange result = (CreateDirectoryChange)read;
 
-    assertArrayEquals(array(idp(-1, 2)), result.getAffectedIdPaths());
+    assertEquals("dir", result.getPath());
   }
 
   @Test
   public void testContentChange() throws IOException {
-    Entry root = new RootEntry();
-    createFile(root, 1, "file", s.storeContent(b("old content")), 1L);
+    Change c = new ContentChange(nextId(), "file", new StoredContent(333), 2L);
 
-    Change c = new ContentChange("file", s.storeContent(b("new content")), 2L);
-    c.applyTo(root);
-
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(ContentChange.class, read.getClass());
     ContentChange result = (ContentChange)read;
 
-    assertArrayEquals(array(idp(-1, 1)), result.getAffectedIdPaths());
-    assertEquals(c("old content"), result.getOldContent());
-    assertEquals(1L, result.getOldTimestamp());
+    assertEquals("file", result.getPath());
+    assertEquals(333, ((StoredContent)result.getOldContent()).getContentId());
+    assertEquals(2L, result.getOldTimestamp());
   }
 
   @Test
   public void testDeleteChange() throws IOException {
-    Entry root = new RootEntry();
+    DirectoryEntry  dir = new DirectoryEntry("dir");
+    dir.addChild(new FileEntry("file", new StoredContent(333), -1, false));
+    dir.addChild(new DirectoryEntry("subDir"));
 
-    createDirectory(root, 1, "entry");
-    createFile(root, 2, "entry/file", new UnavailableContent(), -1);
-    createDirectory(root, 3, "entry/dir");
+    Change c = new DeleteChange(nextId(), "entry", dir);
 
-    Change c = new DeleteChange("entry");
-    c.applyTo(root);
-
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(DeleteChange.class, read.getClass());
     DeleteChange result = (DeleteChange)read;
 
-    assertArrayEquals(array(idp(-1, 1)), result.getAffectedIdPaths());
+    assertEquals("entry", result.getPath());
 
-    Entry e = result.getAffectedEntry();
+    Entry e = result.getDeletedEntry();
 
     assertEquals(DirectoryEntry.class, e.getClass());
-    assertEquals("entry", e.getName());
+    assertEquals("dir", e.getName());
 
     assertEquals(2, e.getChildren().size());
-    assertEquals("entry/file", e.getChildren().get(0).getPath());
-    assertEquals("entry/dir", e.getChildren().get(1).getPath());
+    assertEquals("dir/file", e.getChildren().get(0).getPath());
+    assertEquals("dir/subDir", e.getChildren().get(1).getPath());
   }
 
   @Test
   public void testRenameChange() throws IOException {
-    Entry root = new RootEntry();
-    createFile(root, 1, "old name", null, -1);
+    Change c = new RenameChange(nextId(), "new name", "old name");
 
-    Change c = new RenameChange("old name", "new name");
-    c.applyTo(root);
-
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(RenameChange.class, read.getClass());
     RenameChange result = ((RenameChange)read);
 
-    assertArrayEquals(array(idp(-1, 1)), result.getAffectedIdPaths());
+    assertEquals("new name", result.getPath());
     assertEquals("old name", result.getOldName());
   }
 
   @Test
   public void testROStatusChange() throws IOException {
     Entry root = new RootEntry();
-    createFile(root, 1, "f", null, -1);
 
-    Change c = new ROStatusChange("f", true);
-    c.applyTo(root);
+    Change c = new ROStatusChange(nextId(), "f", true);
 
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(ROStatusChange.class, read.getClass());
     ROStatusChange result = ((ROStatusChange)read);
 
-    assertArrayEquals(array(idp(-1, 1)), result.getAffectedIdPaths());
-    assertEquals(false, result.getOldStatus());
+    assertEquals("f", result.getPath());
+    assertEquals(true, result.getOldStatus());
   }
 
   @Test
   public void testMoveChange() throws IOException {
-    Entry root = new RootEntry();
-    createDirectory(root, 1, "dir1");
-    createDirectory(root, 2, "dir2");
-    createFile(root, 3, "dir1/file", null, -1);
+    Change c = new MoveChange(nextId(), "dir2/file", "dir1");
 
-    Change c = new MoveChange("dir1/file", "dir2");
-    c.applyTo(root);
-
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(MoveChange.class, read.getClass());
     MoveChange result = ((MoveChange)read);
 
-    assertArrayEquals(array(idp(-1, 1, 3), idp(-1, 2, 3)), result.getAffectedIdPaths());
+    assertEquals("dir1/file", result.getOldPath());
+    assertEquals("dir2/file", result.getPath());
   }
 
   @Test
   public void testPutLabelChange() throws IOException {
-    Entry r = new RootEntry();
-    createDirectory(r, 1, "dir");
+    Change c = new PutLabelChange(nextId(), "name", "projectId");
 
-    Change c = new PutLabelChange("name", 123);
-    c.applyTo(r);
-
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(PutLabelChange.class, read.getClass());
-    assertEquals(123, read.getTimestamp());
-    assertEquals("name", read.getName());
-    assertTrue(read.affects(r.getEntry("dir")));
-  }
-
-  @Test
-  public void testPutEntryLabelChange() throws IOException {
-    Entry r = new RootEntry();
-    createDirectory(r, 1, "dir");
-
-    Change c = new PutEntryLabelChange("dir", "name", 123);
-    c.applyTo(r);
-
-    os.writeChange(c);
-    Change read = is.readChange();
-
-    assertEquals(PutEntryLabelChange.class, read.getClass());
-    assertEquals(123, read.getTimestamp());
-    assertEquals("name", read.getName());
-    assertTrue(read.affects(r.getEntry("dir")));
+    assertEquals("name", ((PutLabelChange)read).getName());
+    assertEquals("projectId", ((PutLabelChange)read).getProjectId());
   }
 
   @Test
   public void testPutSystemLabelChange() throws IOException {
-    Entry r = new RootEntry();
-    createDirectory(r, 1, "dir");
+    Change c = new PutSystemLabelChange(nextId(), "name", "projectId", 123);
 
-    Change c = new PutSystemLabelChange("name", 123, 456);
-    c.applyTo(r);
-
-    os.writeChange(c);
-    Change read = is.readChange();
+    StreamUtil.writeChange(os, c);
+    Change read = StreamUtil.readChange(is);
 
     assertEquals(PutSystemLabelChange.class, read.getClass());
-    assertEquals("name", read.getName());
+    assertEquals("name", ((PutSystemLabelChange)read).getName());
+    assertEquals("projectId", ((PutSystemLabelChange)read).getProjectId());
     assertEquals(123, ((PutSystemLabelChange)read).getColor());
-    assertEquals(456, read.getTimestamp());
-    assertTrue(read.affects(r.getEntry("dir")));
   }
 
   @Test
   public void testChangeSet() throws IOException {
-    ChangeSet cs = cs(123, "name", new CreateFileChange(1, "file", new UnavailableContent(), -1, false));
+    ChangeSet cs = cs(123, "name", new CreateFileChange(nextId(), "file"));
 
-    cs.applyTo(new RootEntry());
+    cs.write(os);
+    ChangeSet read = new ChangeSet(is);
 
-    os.writeChange(cs);
-    Change read = is.readChange();
-    assertTrue(read.getClass().equals(ChangeSet.class));
-
-    ChangeSet result = (ChangeSet)read;
+    ChangeSet result = read;
 
     assertEquals("name", read.getName());
     assertEquals(123L, read.getTimestamp());
@@ -421,33 +274,9 @@ public class StreamTest extends LocalVcsTestCase {
   public void testChangeSetWithoutName() throws IOException {
     ChangeSet cs = cs((String)null);
 
-    os.writeChange(cs);
-    Change result = is.readChange();
+    cs.write(os);
+    ChangeSet read = new ChangeSet(is);
 
-    assertNull(result.getName());
-  }
-
-  @Test
-  public void testEmptyChangeList() throws IOException {
-    ChangeList c = new ChangeList();
-
-    os.writeChangeList(c);
-    ChangeList result = is.readChangeList();
-
-    assertTrue(result.getChanges().isEmpty());
-  }
-
-  @Test
-  public void testChangeList() throws IOException {
-    ChangeList c = new ChangeList();
-    ChangeSet cs = cs(new CreateFileChange(1, "file", new UnavailableContent(), -1, false));
-    cs.applyTo(new RootEntry());
-    c.addChange(cs);
-
-    os.writeChangeList(c);
-    ChangeList result = is.readChangeList();
-
-    assertEquals(1, result.getChanges().size());
-    assertEquals(1, result.getChanges().get(0).getChanges().size());
+    assertNull(read.getName());
   }
 }

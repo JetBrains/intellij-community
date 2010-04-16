@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.psi.impl.AntIntrospector;
+import com.intellij.lang.ant.psi.impl.ReflectedProject;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.XmlName;
@@ -36,13 +37,13 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
   public void registerExtensions(@NotNull AntDomElement antDomElement, @NotNull DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = antDomElement.getXmlElement();
     if (xmlElement instanceof XmlTag) {
+      final XmlTag xmlTag = (XmlTag)xmlElement;
+      final String tagName = xmlTag.getName(); // todo: support namespace
 
-      //final AntDomProject antProject = antDomElement.getParentOfType(AntDomProject.class, false);
-      //assert antProject != null;
-      //final ReflectedProject reflected = ReflectedProject.getProject(antProject.getClassLoader());
+      final ReflectedProject reflected = ReflectedProject.getProject(antDomElement.getAntProject().getClassLoader());
 
       final Set<String> names = new HashSet<String>();
-      for (XmlTag tag : ((XmlTag)xmlElement).getSubTags()) {
+      for (XmlTag tag : xmlTag.getSubTags()) {
         names.add(tag.getName());
       }
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();

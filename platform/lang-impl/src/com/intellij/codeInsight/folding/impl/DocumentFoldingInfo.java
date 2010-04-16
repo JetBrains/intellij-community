@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
 import com.intellij.openapi.project.Project;
@@ -126,7 +126,8 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         FoldRegion region = FoldingUtil.findFoldRegion(editor, marker.getStartOffset(), marker.getEndOffset());
         if (region == null) {
           String placeHolderText = myPlaceholderTexts.get(marker);
-          region = new FoldRegionImpl(editor, marker.getStartOffset(), marker.getEndOffset(), placeHolderText, null);  //may fail to add in case intersecting region exists
+          region = ((FoldingModelEx)editor.getFoldingModel()).createFoldRegion(marker.getStartOffset(), marker.getEndOffset(), placeHolderText, null);  
+          //may fail to add in case intersecting region exists
           if (!editor.getFoldingModel().addFoldRegion(region)) return;
         }
 

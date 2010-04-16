@@ -16,21 +16,18 @@
 
 package com.intellij.openapi.command.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.ContentChange;
+import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryComponent;
+import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 
 import java.io.IOException;
 
@@ -42,52 +39,30 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   private final Project myProject;
   private boolean myIsInsideCommand;
 
-  private LocalVcs myLocalHistory;
+  private LocalHistoryFacade myLocalHistory;
   private IdeaGateway myGateway;
 
   private Change myLastChange;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public FileUndoProvider() {
-    this(null, null);
+    this(null);
   }
 
-  public FileUndoProvider(Project project, MessageBus bus) {
+  public FileUndoProvider(Project project) {
     myProject = project;
     if (myProject == null) return;
 
-    myLocalHistory = LocalHistoryComponent.getLocalVcsFor(myProject);
-    myGateway = LocalHistoryComponent.getGatewayFor(myProject);
+    myLocalHistory = LocalHistoryImpl.getInstanceImpl().getFacade();
+    myGateway = LocalHistoryImpl.getInstanceImpl().getGateway();
 
     getFileManager().addVirtualFileListener(this, project);
-    listenForModuleChanges(bus.connect(project));
-    listenForLocalHistory();
-  }
-
-  private void listenForLocalHistory() {
-    myLocalHistory.addListener(new LocalVcs.Listener() {
-      public void onChange(Change c) {
+    myLocalHistory.addListener(new LocalHistoryFacade.Listener() {
+      public void changeAdded(Change c) {
+        if (!(c instanceof StructuralChange) || c instanceof ContentChange) return;
         myLastChange = c;
       }
-    });
-  }
-
-  private void listenForModuleChanges(MessageBusConnection bus) {
-    // We have to invalidate all complex commands, that affect file system, in order to
-    // prevent deletion and recreation changed roots during undo.
-    //
-    // The point is that local history does not distinguish creation of file from addition of
-    // content root, thereby, if already existed content root was just added to module, it will
-    // be physically removed from dist during revert.
-
-    bus.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      public void beforeRootsChange(final ModuleRootEvent event) {
-      }
-
-      public void rootsChanged(final ModuleRootEvent event) {
-        ((UndoManagerImpl)UndoManager.getInstance(myProject)).invalidateAllGlobalActions();
-      }
-    });
+    }, myProject);
   }
 
   private static VirtualFileManager getFileManager() {
@@ -136,20 +111,12 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   public void beforeFileDeletion(VirtualFileEvent e) {
     if (shouldNotProcess(e)) return;
     if (isUndoable(e)) {
-      // only check if the action is undoable to prevent unnecessary
-      // content reading during refresh.
-      if (nonUndoableDeletion(e)) return;
       VirtualFile file = e.getFile();
       file.putUserData(DELETION_WAS_UNDOABLE, createDocumentReference(e));
-      LocalHistoryComponent.getComponentInstance(myProject).registerUnsavedDocuments(file);
     }
     else {
       registerNonUndoableAction(e);
     }
-  }
-
-  private boolean nonUndoableDeletion(VirtualFileEvent e) {
-    return LocalHistory.hasUnavailableContent(myProject, e.getFile());
   }
 
   public void fileDeleted(VirtualFileEvent e) {
@@ -163,7 +130,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   }
 
   private boolean shouldNotProcess(VirtualFileEvent e) {
-    return isProjectClosed() || !LocalHistory.isUnderControl(myProject, e.getFile()) || !myIsInsideCommand;
+    return isProjectClosed() || !LocalHistory.getInstance().isUnderControl(e.getFile()) || !myIsInsideCommand;
   }
 
   private boolean isProjectClosed() {

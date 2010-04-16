@@ -16,8 +16,6 @@
 
 package com.intellij.history.core.revisions;
 
-import com.intellij.history.core.changes.Change;
-
 public class RecentChange {
   private final Revision myBefore;
   private final Revision myAfter;
@@ -35,11 +33,11 @@ public class RecentChange {
     return myAfter;
   }
 
-  public Change getChange() {
-    return myAfter.getCauseChange();
+  public String getChangeName() {
+    return myAfter.getChangeSetName();
   }
 
-  public String getChangeName() {
-    return getChange().getName();
+  public long getTimestamp() {
+    return myAfter.getTimestamp();
   }
 }

@@ -83,7 +83,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
     try {
       doRefactoring(usages);
     }

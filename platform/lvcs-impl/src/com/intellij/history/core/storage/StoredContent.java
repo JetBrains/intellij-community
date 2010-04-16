@@ -16,68 +16,97 @@
 
 package com.intellij.history.core.storage;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.TestOnly;
+
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 
 public class StoredContent extends Content {
-  private final Storage myStorage;
-  private final int myId;
+  private static final int UNAVAILABLE = 0;
 
-  public StoredContent(Storage s, int id) {
-    myStorage = s;
-    myId = id;
+  private int myContentId;
+
+  public static StoredContent acquireContent(byte[] bytes) {
+    return new StoredContent(getFS().storeUnlinkedContent(bytes));
   }
 
-  public StoredContent(Stream s) throws IOException {
-    myId = s.readInteger();
-    myStorage = s.getStorage();
+  public static StoredContent acquireContent(VirtualFile f) {
+    return new StoredContent(getFS().acquireContent(f));
+  }
+
+  public static StoredContent transientContent(VirtualFile f) {
+    return new StoredContent(getFS().getCurrentContentId(f)) {
+      @Override
+      public void release() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void write(DataOutput out) throws IOException {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+
+  @TestOnly
+  public StoredContent(int contentId) {
+    myContentId = contentId;
+  }
+
+  public StoredContent(DataInput in) throws IOException {
+    myContentId = in.readInt();
   }
 
   @Override
-  public void write(Stream s) throws IOException {
-    s.writeInteger(myId);
+  public void write(DataOutput out) throws IOException {
+    out.writeInt(myContentId);
   }
 
   @Override
   public byte[] getBytes() {
+    //todo handle unavailable content 
+    //if (!isAvailable()) throw new RuntimeException("content is not available");
     try {
-      return getBytesUnsafe();
+      if (myContentId ==UNAVAILABLE) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      return getFS().contentsToByteArray(myContentId);
     }
-    catch (BrokenStorageException e) {
-      throw new RuntimeException(e);
+    catch (IOException e) {
+      throw new RuntimeException("cannot get stored content", e);
     }
-  }
-
-  private byte[] getBytesUnsafe() throws BrokenStorageException {
-    return myStorage.loadContentData(myId);
   }
 
   @Override
   public boolean isAvailable() {
-    try {
-      getBytesUnsafe();
-      return true;
-    }
-    catch (BrokenStorageException e) {
-      return false;
-    }
+    //return myContentId != UNAVAILABLE;
+    return true;
   }
 
-  public int getId() {
-    return myId;
+  private static PersistentFS getFS() {
+    return ((PersistentFS)PersistentFS.getInstance());
+  }
+
+  public int getContentId() {
+    return myContentId;
   }
 
   @Override
-  public void purge() {
-    myStorage.purgeContent(this);
+  public void release() {
+    if (myContentId == UNAVAILABLE) return;
+    getFS().releaseContent(myContentId);
+    myContentId = UNAVAILABLE;
   }
 
   @Override
   public boolean equals(Object o) {
-    return super.equals(o) && myId == ((StoredContent)o).myId;
+    return myContentId == ((StoredContent)o).myContentId;
   }
 
   @Override
   public int hashCode() {
-    return myId;
+    return myContentId;
   }
 }

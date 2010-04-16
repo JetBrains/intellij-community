@@ -46,8 +46,6 @@ public class FileAttribute {
 
   @Nullable
   public DataInputStream readAttribute(VirtualFile file) {
-    ensureFileIsValid(file);
-
     final DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
     if (stream != null) {
       try {
@@ -64,16 +62,7 @@ public class FileAttribute {
     return stream;
   }
 
-  private static void ensureFileIsValid(final VirtualFile file) {
-    int id = ((VirtualFileWithId)file).getId();
-    if (id <= 0) {
-      throw new InvalidVirtualFileAccessException(file);
-    }
-  }
-
   public DataOutputStream writeAttribute(VirtualFile file) {
-    ensureFileIsValid(file);
-
     final DataOutputStream stream = ManagingFS.getInstance().writeAttribute(file, this);
     try {
       stream.writeInt(myVersion);

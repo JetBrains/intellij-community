@@ -48,7 +48,6 @@ import java.util.*;
 
 public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
-  static final FileAttribute FILE_CONTENT = new FileAttribute("PersistentFS.File.Contents", 1);
 
   private static final int CHILDREN_CACHED_FLAG = 0x01;
   static final int IS_DIRECTORY_FLAG = 0x02;
@@ -106,12 +105,16 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     myRecords.connect();
   }
 
-  private static NewVirtualFileSystem getDelegate(VirtualFile file) {
-    return (NewVirtualFileSystem)file.getFileSystem();
-  }
-
   public boolean areChildrenLoaded(final VirtualFile dir) {
     return areChildrenLoaded(getFileId(dir));
+  }
+
+  public long getCreationTimestamp() {
+    return myRecords.getCreationTimestamp();
+  }
+
+  private static NewVirtualFileSystem getDelegate(VirtualFile file) {
+    return (NewVirtualFileSystem)file.getFileSystem();
   }
 
   public boolean wereChildrenAccessed(final VirtualFile dir) {
@@ -206,6 +209,24 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public DataOutputStream writeAttribute(final VirtualFile file, final FileAttribute att) {
     return myRecords.writeAttribute(getFileId(file), att.getId());
+  }
+
+  @Nullable
+  private DataInputStream readContent(VirtualFile file) {
+    return myRecords.readContent(getFileId(file));
+  }
+
+  @Nullable
+  private DataInputStream readContentById(int contentId) {
+    return myRecords.readContentById(contentId);
+  }
+
+  private DataOutputStream writeContent(VirtualFile file) {
+    return myRecords.writeContent(getFileId(file));
+  }
+
+  public int storeUnlinkedContent(byte[] bytes) {
+    return myRecords.storeUnlinkedContent(bytes);
   }
 
   public int getModificationCount(final VirtualFile file) {
@@ -333,7 +354,8 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return len;
   }
 
-  public VirtualFile copyFile(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String copyName) throws IOException {
+  public VirtualFile copyFile(final Object requestor, final VirtualFile file, final VirtualFile newParent, final String copyName)
+    throws IOException {
     getDelegate(file).copyFile(requestor, file, newParent, copyName);
     processEvent(new VFileCopyEvent(requestor, file, newParent, copyName));
 
@@ -385,7 +407,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     InputStream contentStream = null;
     boolean reloadFromDelegate;
     synchronized (INPUT_LOCK) {
-      reloadFromDelegate = mustReloadContent(file) || (contentStream = FILE_CONTENT.readAttribute(file)) == null;
+      reloadFromDelegate = mustReloadContent(file) || (contentStream = readContent(file)) == null;
     }
 
     if (reloadFromDelegate) {
@@ -394,7 +416,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
       if (content.length <= FILE_LENGTH_TO_CACHE_THRESHOLD) {
         synchronized (INPUT_LOCK) {
-          DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
+          DataOutputStream sink = writeContent(file);
           try {
             FileUtil.copy(new ByteArrayInputStream(content), sink);
           }
@@ -412,7 +434,29 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     else {
       return FileUtil.loadBytes(contentStream, (int)file.getLength());
     }
+  }
 
+  public byte[] contentsToByteArray(int contentId) throws IOException {
+    return FileUtil.loadBytes(readContentById(contentId));
+  }
+
+  @NotNull
+  public InputStream getInputStream(final VirtualFile file) throws IOException {
+    synchronized (INPUT_LOCK) {
+      InputStream contentStream;
+      if (mustReloadContent(file) || (contentStream = readContent(file)) == null) {
+        final NewVirtualFileSystem delegate = getDelegate(file);
+        final long len = delegate.getLength(file);
+        final InputStream nativeStream = delegate.getInputStream(file);
+
+        if (len > FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
+
+        return createReplicator(file, nativeStream, len);
+      }
+      else {
+        return contentStream;
+      }
+    }
   }
 
   private ReplicatorInputStream createReplicator(final VirtualFile file, final InputStream nativeStream, final long len) {
@@ -423,7 +467,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
         synchronized (INPUT_LOCK) {
           if (getBytesRead() == len) {
-            DataOutputStream sink = FILE_CONTENT.writeAttribute(file);
+            DataOutputStream sink = writeContent(file);
             try {
               FileUtil.copy(new ByteArrayInputStream(cache.toByteArray()), sink);
             }
@@ -442,31 +486,13 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     };
   }
 
-  @NotNull
-  public InputStream getInputStream(final VirtualFile file) throws IOException {
-    synchronized (INPUT_LOCK) {
-      InputStream contentStream;
-      if (mustReloadContent(file) || (contentStream = FILE_CONTENT.readAttribute(file)) == null) {
-        final NewVirtualFileSystem delegate = getDelegate(file);
-        final long len = delegate.getLength(file);
-        final InputStream nativeStream = delegate.getInputStream(file);
-
-        if (len > FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
-
-        return createReplicator(file, nativeStream, len);
-      }
-      else {
-        return contentStream;
-      }
-    }
-  }
-
   private static boolean mustReloadContent(final VirtualFile file) {
     return checkFlag(file, MUST_RELOAD_CONTENT) || FSRecords.getLength(getFileId(file)) == -1L;
   }
 
   @NotNull
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
+    throws IOException {
     final VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
 
     final List<VFileContentChangeEvent> events = Collections.singletonList(event);
@@ -481,7 +507,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
         final OutputStream delegate = getDelegate(file).getOutputStream(file, requestor, modStamp, timeStamp);
 
         //noinspection IOResourceOpenedButNotSafelyClosed
-        final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(FILE_CONTENT.writeAttribute(file)), delegate) {
+        final DupOutputStream sink = new DupOutputStream(new BufferedOutputStream(writeContent(file)), delegate) {
           public void close() throws IOException {
             try {
               super.close();
@@ -506,8 +532,24 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     if (bom != null) {
       stream.write(bom);
     }
-    
+
     return stream;
+  }
+
+  public void restoreContent(VirtualFile file, Object requestor, final long modStamp, final long timeStamp) {
+    
+  }
+
+  public int acquireContent(VirtualFile file) {
+    return myRecords.acquireFileContent(getFileId(file));
+  }
+
+  public void releaseContent(int contentId) {
+    myRecords.releaseContent(contentId);
+  }
+
+  public int getCurrentContentId(VirtualFile file) {
+    return myRecords.getContentId(getFileId(file));
   }
 
   public void moveFile(final Object requestor, final VirtualFile file, final VirtualFile newParent) throws IOException {
@@ -565,7 +607,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   public void processEvents(List<? extends VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    
+
     events = validateEvents(events);
 
     myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events);
@@ -645,6 +687,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   private final TIntObjectHashMap<NewVirtualFile> myIdToDirCache = new TIntObjectHashMap<NewVirtualFile>();
   private final JBLock dirCacheReadLock;
   private final JBLock dirCacheWriteLock;
+
   {
     JBReentrantReadWriteLock lock = LockFactory.createReadWriteLock();
     dirCacheReadLock = lock.readLock();

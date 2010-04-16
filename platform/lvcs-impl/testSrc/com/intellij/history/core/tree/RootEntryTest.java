@@ -16,24 +16,19 @@
 
 package com.intellij.history.core.tree;
 
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.LocalHistoryTestCase;
 import org.junit.Before;
 import org.junit.Test;
 
-public class RootEntryTest extends LocalVcsTestCase {
+public class RootEntryTest extends LocalHistoryTestCase {
   private Entry root;
   private Entry child;
 
   @Before
   public void setUp() {
     root = new RootEntry();
-    child = new DirectoryEntry(1, "child");
+    child = new DirectoryEntry("child");
     root.addChild(child);
-  }
-
-  @Test
-  public void testIdPathToChildren() {
-    assertEquals(idp(-1, 1), child.getIdPath());
   }
 
   @Test

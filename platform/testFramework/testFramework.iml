@@ -14,7 +14,8 @@
     <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="library" exported="" name="Log4J" level="project" />
     <orderEntry type="module" module-name="vcs-api" exported="" />
-    <orderEntry type="module" module-name="tests_bootstrap" exported="" />
+    <orderEntry type="module" module-name="lvcs-impl" />
+    <orderEntry type="module" module-name="tests_bootstrap" />
   </component>
 </module>
 

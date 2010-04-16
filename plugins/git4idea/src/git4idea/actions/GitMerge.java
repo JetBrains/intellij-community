@@ -59,7 +59,7 @@ public class GitMerge extends GitRepositoryAction {
     if (!dialog.isOK()) {
       return;
     }
-    Label beforeLabel = LocalHistory.putSystemLabel(project, "Before update");
+    Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
     GitLineHandler h = dialog.handler();
     final VirtualFile root = dialog.getSelectedRoot();
     affectedRoots.add(root);

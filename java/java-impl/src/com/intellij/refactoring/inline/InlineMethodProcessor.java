@@ -243,7 +243,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       myEditor.getCaretModel().moveToLogicalPosition(pos);
     }
 
-    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
     try {
       doRefactoring(usages);
     }

@@ -117,7 +117,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     final PsiMigration psiMigration = JavaPsiFacade.getInstance(psiManager.getProject()).startMigration();
-    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
 
     try {
       for (int i = 0; i < myMigrationMap.getEntryCount(); i++) {

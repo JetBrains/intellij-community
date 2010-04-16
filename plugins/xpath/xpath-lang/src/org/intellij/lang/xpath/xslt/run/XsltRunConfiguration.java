@@ -59,7 +59,6 @@ import java.util.List;
 
 public final class XsltRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunConfiguration {
     private static final String NAME = "XSLT Configuration";
-    static final String XSLT_TAB_NAME = "XSLT Output";
 
     private static final String STRICT_FILE_PATH_EXPR = "(file\\://?(?:/?\\p{Alpha}\\:)?(?:/\\p{Alpha}\\:)?[^:]+)";
     private static final String RELAXED_FILE_PATH_EXPR = "((?:file\\://?)?(?:/?\\p{Alpha}\\:)?(?:/\\p{Alpha}\\:)?[^:]+)";
@@ -68,7 +67,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     private static final VirtualFilePointerManager FILE_POINTER_MANAGER = VirtualFilePointerManager.getInstance();
 
     public enum OutputType {
-        CONSOLE, STDOUT, FILE
+        CONSOLE, STDOUT, @Deprecated FILE
     }
 
     public enum JdkChoice {
@@ -79,6 +78,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     @Nullable private VirtualFilePointer myXsltFile = null;
     @Nullable private VirtualFilePointer myXmlInputFile = null;
     @NotNull private OutputType myOutputType = OutputType.CONSOLE;
+    private boolean mySaveToFile = false;
     @NotNull private JdkChoice myJdkChoice = JdkChoice.FROM_MODULE;
     @Nullable private FileType myFileType = StdFileTypes.XML;
 
@@ -193,7 +193,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (myXmlInputFile.getFile() == null) {
             throw new RuntimeConfigurationError("Selected XML Input File not found");
         }
-        if (myOutputType == OutputType.FILE) {
+        if (mySaveToFile) {
             if (isEmpty(myOutputFile)) {
                 throw new RuntimeConfigurationError("No output file selected");
             }
@@ -250,7 +250,14 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
 
         final Element outputType = element.getChild("OutputType");
         if (outputType != null) {
-            myOutputType = OutputType.valueOf(outputType.getAttributeValue("value"));
+            final String value = outputType.getAttributeValue("value");
+            if (OutputType.FILE.name().equals(value)) {
+                myOutputType = OutputType.STDOUT;
+                mySaveToFile = true;
+            } else {
+                myOutputType = OutputType.valueOf(value);
+                mySaveToFile = Boolean.valueOf(outputType.getAttributeValue("save-to-file"));
+            }
         }
         final Element fileType = element.getChild("FileType");
         if (fileType != null) {
@@ -303,6 +310,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
 
         final Element type = new Element("OutputType");
         type.setAttribute("value", myOutputType.name());
+        type.setAttribute("save-to-file", String.valueOf(mySaveToFile));
         element.addContent(type);
 
         if (myFileType != null) {
@@ -412,6 +420,14 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
 
     public void setOutputType(@NotNull OutputType outputType) {
         myOutputType = outputType;
+    }
+
+    public boolean isSaveToFile() {
+        return mySaveToFile;
+    }
+
+    public void setSaveToFile(boolean saveToFile) {
+        mySaveToFile = saveToFile;
     }
 
     @NotNull

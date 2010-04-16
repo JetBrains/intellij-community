@@ -55,31 +55,26 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
 
     @Nullable
     public JComponent getSearchComponent() {
-        // TODO
         return null;
     }
 
     @Nullable
     public ActionGroup getToolbarActions() {
-        // TODO
         return null;
     }
 
     @Nullable
     public JComponent getToolbarContextComponent() {
-        // TODO
         return null;
     }
 
     @Nullable
     public String getToolbarPlace() {
-        // TODO
         return null;
     }
 
     public boolean isContentBuiltIn() {
-        // TODO
-        return false;
+        return true;
     }
 
     @Nullable

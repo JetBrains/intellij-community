@@ -39,8 +39,8 @@
     <refactoring.elementListenerProvider implementation="com.intellij.lang.ant.refactoring.AntTargetRenameListenerProvider"/>
     <inspectionToolProvider implementation="com.intellij.lang.ant.AntInspectionToolProvider"/>
 
-    <dom.fileDescription implementation="com.intellij.lang.ant.dom.AntDomFileDescription"/>
-    <dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>
+    <!--<dom.fileDescription implementation="com.intellij.lang.ant.dom.AntDomFileDescription"/>-->
+    <!--<dom.extender domClass="com.intellij.lang.ant.dom.AntDomElement" extenderClass="com.intellij.lang.ant.dom.AntDomExtender"/>-->
 
   </extensions>
 

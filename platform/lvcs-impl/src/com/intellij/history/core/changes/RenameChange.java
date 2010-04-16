@@ -16,76 +16,61 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.storage.StreamUtil;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 
-public class RenameChange extends StructuralChange<RenameChangeNonAppliedState, RenameChangeAppliedState> {
-  public RenameChange(String path, String newName) {
-    super(path);
-    getNonAppliedState().myNewName = newName;
+public class RenameChange extends StructuralChange {
+  private final String myOldName;
+
+  public RenameChange(long id, String path, String oldName) {
+    super(id, path);
+    myOldName = oldName;
   }
 
-  public RenameChange(Stream s) throws IOException {
-    super(s);
-    getAppliedState().myOldName = s.readString();
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeString(getAppliedState().myOldName);
+  public RenameChange(DataInput in) throws IOException {
+    super(in);
+    myOldName = StreamUtil.readString(in);
   }
 
   @Override
-  protected RenameChangeAppliedState createAppliedState() {
-    return new RenameChangeAppliedState();
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    StreamUtil.writeString(out, myOldName);
   }
 
   @Override
-  protected RenameChangeNonAppliedState createNonAppliedState() {
-    return new RenameChangeNonAppliedState();
+  public String getOldPath() {
+    return Paths.renamed(myPath, myOldName);
   }
 
   public String getOldName() {
-    return getAppliedState().myOldName;
+    return myOldName;
   }
 
   @Override
-  protected IdPath doApplyTo(Entry r, RenameChangeAppliedState newState) {
-    Entry e = r.getEntry(getPath());
-
-    // todo one more hack to support roots...
-    // todo i defitilety have to do something with it...
-    newState.myOldName = Paths.getNameOf(e.getName());
-    rename(e, getNonAppliedState().myNewName);
-
-    return e.getIdPath();
+  public void revertOn(RootEntry root) {
+    Entry e = root.findEntry(myPath);
+    if (e == null) {
+      cannotRevert(myPath);
+      return;
+    }
+    e.setName(myOldName);
   }
 
   @Override
-  public void doRevertOn(Entry root) {
-    rename(getEntry(root), getAppliedState().myOldName);
+  protected String[] getAffectedPaths() {
+    return new String[]{myPath, getOldPath()};
   }
+
 
   @Override
-  public boolean canRevertOn(Entry r) {
-    return hasNoSuchEntry(getEntry(r).getParent(), getAppliedState().myOldName);
-  }
-
-  private Entry getEntry(Entry r) {
-    return r.getEntry(getAffectedIdPath());
-  }
-
-  private void rename(Entry e, String newName) {
-    e.changeName(Paths.renamed(e.getName(), newName));
-  }
-
-  @Override
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+  public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {
     v.visit(this);
   }
 }

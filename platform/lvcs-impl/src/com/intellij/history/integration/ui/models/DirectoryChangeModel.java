@@ -19,14 +19,17 @@ package com.intellij.history.integration.ui.models;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 
 public class DirectoryChangeModel {
+  private final Project myProject;
   private final Difference myDiff;
   private final IdeaGateway myGateway;
   private final boolean isRightContentEditable;
 
-  public DirectoryChangeModel(Difference d, IdeaGateway gw, boolean editableRightContent) {
+  public DirectoryChangeModel(Project p, Difference d, IdeaGateway gw, boolean editableRightContent) {
+    myProject = p;
     myDiff = d;
     myGateway = gw;
     isRightContentEditable = editableRightContent;
@@ -50,11 +53,17 @@ public class DirectoryChangeModel {
   }
 
   public FileDifferenceModel getFileDifferenceModel() {
-    return new EntireFileDifferenceModel(myGateway, myDiff.getLeft(), myDiff.getRight(), isRightContentEditable);
+    return new EntireFileDifferenceModel(myProject, myGateway, myDiff.getLeft(), myDiff.getRight(), isRightContentEditable);
   }
 
   public boolean canShowFileDifference() {
-    return isFile();
+    return isFile() && isContentVersioned();
+  }
+
+  private boolean isContentVersioned() {
+    Entry e = getEntry(0);
+    if (e == null) e = getEntry(1);
+    return myGateway.areContentChangesVersioned(e.getName());
   }
 
   public ContentRevision getContentRevision(int i) {

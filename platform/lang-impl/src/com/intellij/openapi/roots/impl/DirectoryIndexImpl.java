@@ -35,6 +35,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -124,7 +125,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     assert myPackageNameToDirsMap.keySet().size() == oldPackageNameToDirsMap.keySet().size();
-    for (Map.Entry<String,List<VirtualFile>> entry : myPackageNameToDirsMap.entrySet()) {
+    for (Map.Entry<String, List<VirtualFile>> entry : myPackageNameToDirsMap.entrySet()) {
       String packageName = entry.getKey();
       List<VirtualFile> dirs = entry.getValue();
       List<VirtualFile> dirs1 = oldPackageNameToDirsMap.get(packageName);
@@ -242,7 +243,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         for (ExcludeFolder excludeRoot : excludeRoots) {
           // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
           if (excludeRoot.getFile() != null) {
-            if (!contentRoot.getUrl().startsWith(excludeRoot.getUrl())) {
+            if (!FileUtil.startsWith(contentRoot.getUrl(), excludeRoot.getUrl())) {
               if (isExcludeRootForModule(module, excludeRoot.getFile())) {
                 putForFileAndAllAncestors(result, excludeRoot.getFile(), excludeRoot.getUrl());
               }
@@ -610,7 +611,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     public Query<VirtualFile> search(@NotNull String packageName, boolean includeLibrarySources) {
       List<VirtualFile> allDirs = doGetDirectoriesByPackageName(packageName);
-      return new FilteredQuery<VirtualFile>(includeLibrarySources ? new CollectionQuery<VirtualFile>(allDirs) : createQuery(allDirs), IS_VALID);
+      return new FilteredQuery<VirtualFile>(includeLibrarySources ? new CollectionQuery<VirtualFile>(allDirs) : createQuery(allDirs),
+                                            IS_VALID);
     }
   }
 
@@ -702,9 +704,23 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       VirtualFile parent = file.getParent();
       if (parent == null) return;
 
-      if (isIgnored(file)) return;
-
       DirectoryInfo parentInfo = myDirToInfoMap.get(parent);
+
+      // fill info for all nested roots
+      for (Module eachModule : ModuleManager.getInstance(myProject).getModules()) {
+        for (ContentEntry eachRoot : getContentEntries(eachModule)) {
+          if (parentInfo != null && eachRoot == parentInfo.contentRoot) continue;
+
+          if (FileUtil.startsWith(eachRoot.getUrl(), file.getUrl())) {
+            String rel = FileUtil.getRelativePath(file.getUrl(), eachRoot.getUrl(), '/');
+            if (rel != null) {
+              VirtualFile f = file.findFileByRelativePath(rel);
+              fillMapWithModuleContent(f, eachModule, f);
+            }
+          }
+        }
+      }
+
       if (parentInfo == null) return;
 
       Module module = parentInfo.module;

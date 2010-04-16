@@ -3,7 +3,6 @@
             xsi:schemaLocation="http://www.w3.org/2001/XInclude
    http://www.w3.org/2001/XInclude.xsd">
 
-  <xi:include href="/componentSets/LocalHistory.xml"/>
   <xi:include href="Core.xml"/>
 
   <application-components>

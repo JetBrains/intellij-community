@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -271,6 +272,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (IOException e) {
       // ignore
     }
+
+    LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
+
     VirtualFilePointerManagerImpl virtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     if (virtualFilePointerManager != null) {
       virtualFilePointerManager.cleanupForNextTest();

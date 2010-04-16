@@ -106,7 +106,7 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
 
 
   private void doRefactoring() throws IncorrectOperationException {
-    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
     PsiClass anInterface = null;
     try {
       anInterface = extractInterface(myTargetDir, myClass, myInterfaceName, mySelectedMembers, myJavaDocPolicy);

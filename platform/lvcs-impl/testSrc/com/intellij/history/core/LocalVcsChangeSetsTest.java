@@ -17,96 +17,67 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.util.List;
 
-public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
-  LocalVcs vcs = new InMemoryLocalVcs();
-
-  @Test
-  public void testApplyingChangesRightAfterChange() {
-    long timestamp = -1;
-    vcs.createFile("file", cf("content"), timestamp, false);
-    assertEquals(c("content"), vcs.getEntry("file").getContent());
-
-    vcs.changeFileContent("file", cf("new content"), -1);
-    assertEquals(c("new content"), vcs.getEntry("file").getContent());
-  }
-
-  @Test
-  public void testAskingForNewFileContentDuringChangeSet() {
-    vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("file", cf("content"), timestamp, false);
-
-    Entry e = vcs.findEntry("file");
-
-    assertNotNull(e);
-    assertEquals(c("content"), e.getContent());
-  }
+public class LocalVcsChangeSetsTest extends LocalHistoryTestCase {
+  LocalHistoryFacade vcs = new InMemoryLocalHistoryFacade();
 
   @Test
   public void testTreatingSeveralChangesDuringChangeSetAsOne() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/one", null, timestamp, false);
-    long timestamp1 = -1;
-    vcs.createFile("dir/two", null, timestamp1, false);
+    vcs.created("dir", true);
+    vcs.created("dir/one", false);
+    vcs.created("dir/two", false);
     vcs.endChangeSet(null);
 
-    assertEquals(1, vcs.getRevisionsFor("dir").size());
+    assertEquals(1, collectRevisions(vcs, null, "dir", null, null).size());
   }
 
   @Test
   public void testTreatingSeveralChangesOutsideOfChangeSetAsSeparate() {
-    vcs.createDirectory("dir");
-    long timestamp3 = -1;
-    vcs.createFile("dir/one", null, timestamp3, false);
-    long timestamp = -1;
-    vcs.createFile("dir/two", null, timestamp, false);
+    vcs.created("dir", true);
+    vcs.created("dir/one", false);
+    vcs.created("dir/two", false);
 
     vcs.beginChangeSet();
     vcs.endChangeSet(null);
 
-    long timestamp1 = -1;
-    vcs.createFile("dir/three", null, timestamp1, false);
-    long timestamp2 = -1;
-    vcs.createFile("dir/four", null, timestamp2, false);
+    vcs.created("dir/three", false);
+    vcs.created("dir/four", false);
 
-    assertEquals(5, vcs.getRevisionsFor("dir").size());
+    assertEquals(5, collectRevisions(vcs, null, "dir", null, null).size());
   }
 
   @Test
   public void testIgnoringInnerChangeSets() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir");
+    vcs.created("dir", true);
     vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.createFile("dir/one", null, timestamp1, false);
+    vcs.created("dir/one", false);
     vcs.endChangeSet("inner");
-    long timestamp = -1;
-    vcs.createFile("dir/two", null, timestamp, false);
+    vcs.created("dir/two", false);
     vcs.endChangeSet("outer");
 
-    List<Revision> rr = vcs.getRevisionsFor("dir");
+    List<Revision> rr = collectRevisions(vcs, null, "dir", null, null);
     assertEquals(1, rr.size());
-    assertEquals("outer", rr.get(0).getCauseChangeName());
+    assertEquals("outer", rr.get(0).getChangeSetName());
   }
 
   @Test
   public void testIgnoringEmptyChangeSets() {
     vcs.beginChangeSet();
-    vcs.createDirectory("dir");
+    vcs.created("dir", true);
     vcs.endChangeSet(null);
 
-    assertEquals(1, vcs.getChangeList().getChanges().size());
+    assertEquals(1, vcs.getChangeListInTests().getChangesInTests().size());
 
     vcs.beginChangeSet();
     vcs.endChangeSet(null);
 
-    assertEquals(1, vcs.getChangeList().getChanges().size());
+    assertEquals(1, vcs.getChangeListInTests().getChangesInTests().size());
   }
 }

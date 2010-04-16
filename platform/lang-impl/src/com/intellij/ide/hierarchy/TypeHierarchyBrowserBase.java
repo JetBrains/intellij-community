@@ -100,7 +100,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     public final void deleteElement(final DataContext dataContext) {
       final PsiElement aClass = getSelectedElement();
       if (!canBeDeleted(aClass)) return;
-      LocalHistoryAction a = LocalHistory.startAction(myProject, IdeBundle.message("progress.deleting.class", getQualifiedName(aClass)));
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting.class", getQualifiedName(aClass)));
       try {
         final PsiElement[] elements = new PsiElement[]{aClass};
         DeleteHandler.deletePsiElement(elements, myProject);

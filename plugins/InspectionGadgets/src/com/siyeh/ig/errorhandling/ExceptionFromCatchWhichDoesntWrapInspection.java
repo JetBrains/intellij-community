@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,41 +92,48 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
 
         private boolean argumentsContainsCatchParameter(
                 PsiExpression[] arguments) {
-            for (final PsiExpression argument : arguments) {
-                final PsiReferenceExpression referenceExpression;
-                if (!(argument instanceof PsiReferenceExpression)) {
-                    if (!ignoreGetMessage ||
-                            !(argument instanceof PsiMethodCallExpression)) {
-                        continue;
-                    }
-                    final PsiMethodCallExpression methodCallExpression =
-                            (PsiMethodCallExpression)argument;
-                    final PsiReferenceExpression methodExpression =
-                            methodCallExpression.getMethodExpression();
-                    final PsiExpression expression =
-                            methodExpression.getQualifierExpression();
-                    if (expression == null) {
-                        continue;
-                    }
-                    if (!(expression instanceof PsiReferenceExpression)) {
-                        continue;
-                    }
-                    referenceExpression = (PsiReferenceExpression)expression;
-                } else {
-                    referenceExpression = (PsiReferenceExpression)argument;
-                }
-                final PsiElement referent = referenceExpression.resolve();
-                if (!(referent instanceof PsiParameter)) {
-                    continue;
-                }
-                final PsiParameter parameter = (PsiParameter)referent;
-                final PsiElement declarationScope =
-                        parameter.getDeclarationScope();
-                if (declarationScope instanceof PsiCatchSection) {
+            final ReferenceFinder visitor = new ReferenceFinder();
+            for (PsiExpression argument : arguments) {
+                argument.accept(visitor);
+                if (visitor.doArgumentsContainCatchParameter()) {
                     return true;
                 }
             }
             return false;
+        }
+    }
+
+    private class ReferenceFinder extends JavaRecursiveElementVisitor {
+
+        private boolean argumentsContainCatchParameter = false;
+
+        @Override
+        public void visitReferenceExpression(
+                PsiReferenceExpression expression) {
+            super.visitReferenceExpression(expression);
+            final PsiElement referent = expression.resolve();
+            if (!(referent instanceof PsiParameter)) {
+                return;
+            }
+            final PsiParameter parameter = (PsiParameter)referent;
+            final PsiElement declarationScope =
+                    parameter.getDeclarationScope();
+            if (!(declarationScope instanceof PsiCatchSection)) {
+                return;
+            }
+            if (ignoreGetMessage) {
+                argumentsContainCatchParameter = true;
+            } else {
+                final PsiElement parent = expression.getParent();
+                final PsiElement grandParent = parent.getParent();
+                if (!(grandParent instanceof PsiMethodCallExpression)) {
+                    argumentsContainCatchParameter = true;
+                }
+            }
+        }
+
+        public boolean doArgumentsContainCatchParameter() {
+            return argumentsContainCatchParameter;
         }
     }
 }

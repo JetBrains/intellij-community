@@ -20,6 +20,8 @@ import com.intellij.openapi.util.Condition;
 
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
+
 public class ContainerUtilTest extends junit.framework.TestCase {
   public void testFindInstanceOf() {
     Iterator<Object> iterator = Arrays.asList(new Object[]{new Integer(1), new ArrayList(), "1"}).iterator();
@@ -71,5 +73,23 @@ public class ContainerUtilTest extends junit.framework.TestCase {
       actual.add(each);
     }
     assertEquals(Arrays.asList(expected), actual);
+  }
+
+  public void testIteratingBackward() throws Exception {
+    List<String> ss = new ArrayList<String>();
+    ss.add("a");
+    ss.add("b");
+    ss.add("c");
+
+    String log = "";
+    for (String s : ss) {
+      log += s;
+    }
+
+    for (String s : ContainerUtil.iterateBackward(ss)) {
+      log += s;
+    }
+
+    assertEquals("abccba", log);
   }
 }

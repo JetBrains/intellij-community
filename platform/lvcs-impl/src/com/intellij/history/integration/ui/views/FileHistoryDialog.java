@@ -16,14 +16,16 @@
 
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
+import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
@@ -32,23 +34,23 @@ import java.awt.*;
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffPanel myDiffPanel;
 
-  public FileHistoryDialog(IdeaGateway gw, VirtualFile f) {
-    this(gw, f, true);
+  public FileHistoryDialog(Project p, IdeaGateway gw, VirtualFile f) {
+    this(p, gw, f, true);
   }
 
-  protected FileHistoryDialog(IdeaGateway gw, VirtualFile f, boolean doInit) {
-    super(gw, f, doInit);
+  protected FileHistoryDialog(Project p, IdeaGateway gw, VirtualFile f, boolean doInit) {
+    super(p, gw, f, doInit);
   }
 
   @Override
-  protected void dispose() {
+  public void dispose() {
     myDiffPanel.dispose();
     super.dispose();
   }
 
   @Override
-  protected FileHistoryDialogModel createModel(LocalVcs vcs) {
-    return new EntireFileHistoryDialogModel(myGateway, vcs, myFile);
+  protected FileHistoryDialogModel createModel(LocalHistoryFacade vcs) {
+    return new EntireFileHistoryDialogModel(myProject, myGateway, vcs, myFile);
   }
 
   @Override
@@ -59,18 +61,21 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected JComponent createDiffPanel() {
-    myDiffPanel = DiffManager.getInstance().createDiffPanel(getWindow(), getProject());
+    myDiffPanel = DiffManager.getInstance().createDiffPanel(getFrame(), myProject);
     DiffPanelOptions o = ((DiffPanelEx)myDiffPanel).getOptions();
     o.setRequestFocusOnNewContent(false);
-
-    updateDiffs();
 
     return myDiffPanel.getComponent();
   }
 
   @Override
-  protected void updateDiffs() {
-    myDiffPanel.setDiffRequest(createDifference(myModel.getDifferenceModel()));
+  protected Runnable doUpdateDiffs(final FileHistoryDialogModel model) {
+    final FileDifferenceModel diffModel = model.getDifferenceModel();
+    return new Runnable() {
+      public void run() {
+        myDiffPanel.setDiffRequest(createDifference(diffModel));
+      }
+    };
   }
 
   @Override

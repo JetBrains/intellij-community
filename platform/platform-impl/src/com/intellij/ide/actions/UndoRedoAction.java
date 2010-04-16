@@ -40,13 +40,6 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     UndoManager undoManager = getUndoManager(editor, dataContext);
     Project project = getProject(editor, dataContext);
 
-    if (editor == null && project != null) {
-      if (DumbService.getInstance(project).isDumb()) {
-        DumbService.getInstance(project).showDumbModeNotification("Global Undo and Redo are not available while indices are being built");
-        return;
-      }
-    }
-    
     perform(editor, undoManager);
   }
 

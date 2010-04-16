@@ -153,13 +153,22 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     private String calcClassName(File scriptFile) {
       final ClassLoader loader = getGradleClassLoader(myModule);
       if (loader != null) {
+        Class<?> fileScriptSource;
         try {
-          final Class<?> fileScriptSource = Class.forName("org.gradle.groovy.scripts.FileScriptSource", true, loader);
-          final Object source = fileScriptSource.getConstructor(String.class, File.class).newInstance("script", scriptFile);
-          return (String)fileScriptSource.getMethod("getClassName").invoke(source);
+          fileScriptSource = Class.forName("org.gradle.groovy.scripts.UriScriptSource", true, loader);
         }
         catch (ClassNotFoundException e) {
-          return null; // old distribution
+          try {
+            fileScriptSource = Class.forName("org.gradle.groovy.scripts.FileScriptSource", true, loader); //before 0.9
+          }
+          catch (ClassNotFoundException e1) {
+            return null;
+          }
+        }
+
+        try {
+          final Object source = fileScriptSource.getConstructor(String.class, File.class).newInstance("script", scriptFile);
+          return (String)fileScriptSource.getMethod("getClassName").invoke(source);
         }
         catch (Exception e) {
           LOG.error(e);

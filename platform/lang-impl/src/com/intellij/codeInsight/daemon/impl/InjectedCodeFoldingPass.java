@@ -23,10 +23,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 class InjectedCodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
+  private static final Key<Boolean> THE_FIRST_TIME_KEY = Key.create("FirstInjectedFoldingPass");
   private Runnable myRunnable;
   private final Editor myEditor;
   private final PsiFile myFile;
@@ -38,7 +40,8 @@ class InjectedCodeFoldingPass extends TextEditorHighlightingPass implements Dumb
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    Runnable runnable = FoldingUpdate.updateInjectedFoldRegions(myEditor, myFile);
+    boolean firstTime = CodeFoldingPass.isFirstTime(myFile, myEditor, THE_FIRST_TIME_KEY);
+    Runnable runnable = FoldingUpdate.updateInjectedFoldRegions(myEditor, myFile, firstTime);
     synchronized (this) {
       myRunnable = runnable;
     }
@@ -53,8 +56,9 @@ class InjectedCodeFoldingPass extends TextEditorHighlightingPass implements Dumb
       try {
         runnable.run();
       }
-      catch (IndexNotReadyException e) {
+      catch (IndexNotReadyException ignored) {
       }
+      CodeFoldingPass.clearFirstTimeFlag(myFile, myEditor, THE_FIRST_TIME_KEY);
     }
   }
 }
