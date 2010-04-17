@@ -67,24 +67,13 @@ public class GrClosureSignatureUtil {
     if (signature.isVarargs()) notOptional--;
     if (notOptional > args.length) return false;
 
+    if (isApplicable(params, args, params.length, args.length, manager, scope)) {
+      return true;
+    }
     if (signature.isVarargs()) {
-      if (isApplicable(params, args, params.length - 1, args.length, manager, scope)) return true;
-      PsiType lastType = params[params.length - 1].getType();
-      assert lastType instanceof PsiArrayType;
-      if (TypesUtil.isAssignableByMethodCallConversion(lastType, args[args.length - 1], manager, scope)) return true;
-
-      PsiType varargType = ((PsiArrayType)lastType).getComponentType();
-
-      for (int argCount = args.length - 1; argCount >= notOptional; argCount--) {
-        if (!isApplicable(params, args, params.length - 1, argCount, manager, scope)) continue;
-        if (!TypesUtil.isAssignableByMethodCallConversion(varargType, args[argCount], manager, scope)) continue;
-        return true;
-      }
-      return false;
+      return new ApplicabilityVerifierForVararg(manager, scope, params, args).isApplicable();
     }
-    else {
-      return isApplicable(params, args, params.length, args.length, manager, scope);
-    }
+    return false;
   }
 
   private static boolean isApplicable(GrClosureParameter[] params,
@@ -106,6 +95,64 @@ public class GrClosureSignatureUtil {
       if (!TypesUtil.isAssignableByMethodCallConversion(params[cur].getType(), args[i], manager, scope)) return false;
     }
     return true;
+  }
+
+  private static class ApplicabilityVerifierForVararg {
+    private PsiManager manager;
+    GlobalSearchScope scope;
+    GrClosureParameter[] params;
+    PsiType[] args;
+    PsiType vararg;
+    private int paramLength;
+
+    private ApplicabilityVerifierForVararg(PsiManager manager, GlobalSearchScope scope, GrClosureParameter[] params, PsiType[] args) {
+      this.manager = manager;
+      this.scope = scope;
+      this.params = params;
+      this.args = args;
+      paramLength = params.length - 1;
+      vararg = ((PsiArrayType)params[paramLength].getType()).getComponentType();
+    }
+
+    public boolean isApplicable() {
+      int notOptionals = 0;
+      for (int i = 0; i < paramLength; i++) {
+        if (!params[i].isOptional()) notOptionals++;
+      }
+      return isApplicableInternal(0, 0, false, notOptionals);
+    }
+
+    private boolean isApplicableInternal(int curParam, int curArg, boolean skipOptionals, int notOptional) {
+      if (notOptional > args.length - curArg) return false;
+      if (notOptional == args.length - curArg) skipOptionals = true;
+
+      while (curArg < args.length) {
+        if (skipOptionals) {
+          while (params[curParam].isOptional()) curParam++;
+        }
+
+        if (curParam >= paramLength) break;
+
+        if (params[curParam].isOptional()) {
+          if (TypesUtil.isAssignable(params[curParam].getType(), args[curArg], manager, scope) &&
+              isApplicableInternal(curParam + 1, curArg + 1, false, notOptional)) {
+            return true;
+          }
+          skipOptionals = true;
+        }
+        else {
+          if (!TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), args[curArg], manager, scope)) return false;
+          notOptional--;
+          curArg++;
+          curParam++;
+        }
+      }
+
+      for (; curArg < args.length; curArg++) {
+        if (!TypesUtil.isAssignableByMethodCallConversion(vararg, args[curArg], manager, scope)) return false;
+      }
+      return true;
+    }
   }
 
 
