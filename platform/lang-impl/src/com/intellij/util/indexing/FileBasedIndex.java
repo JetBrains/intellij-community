@@ -1487,11 +1487,9 @@ public class FileBasedIndex implements ApplicationComponent {
       }
       if (file.isDirectory()) {
         if (isMock(file) || myManagingFS.wereChildrenAccessed(file)) {
-          final Collection<VirtualFile> children = (file instanceof NewVirtualFile)? ((NewVirtualFile)file).getInDbChildren() : Arrays.asList(file.getChildren());
+          final Iterable<VirtualFile> children = (file instanceof NewVirtualFile)? ((NewVirtualFile)file).iterInDbChildren() : Arrays.asList(file.getChildren());
           for (VirtualFile child : children) {
-            if (NullVirtualFile.INSTANCE != child) {
-              invalidateIndices(child, markForReindex);
-            }
+            invalidateIndices(child, markForReindex);
           }
         }
       }

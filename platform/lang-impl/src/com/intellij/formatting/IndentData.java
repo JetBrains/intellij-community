@@ -16,8 +16,6 @@
 
 package com.intellij.formatting;
 
-import com.intellij.formatting.IndentInfo;
-
 public class IndentData {
   private int myIndentSpaces = 0;
   private int mySpaces = 0;

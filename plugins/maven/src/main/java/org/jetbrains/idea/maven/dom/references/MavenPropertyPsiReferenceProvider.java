@@ -42,7 +42,7 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (myFiltered) {
-      if (!MavenDomUtil.isFiltererResourceFile(element)) return PsiReference.EMPTY_ARRAY;
+      if (!MavenDomUtil.isFilteredResourceFile(element)) return PsiReference.EMPTY_ARRAY;
       return getReferences(element, element.getText(), 0, true, false);
     }
     return getReferences(element, false);

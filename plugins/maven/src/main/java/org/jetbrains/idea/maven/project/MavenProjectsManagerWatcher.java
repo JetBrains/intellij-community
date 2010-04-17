@@ -408,13 +408,11 @@ public class MavenProjectsManagerWatcher {
       if (isRelevant(f.getPath())) deleteFile(f);
       if (f.isDirectory()) {
         // prevent reading directories content if not already cached.
-        Collection<VirtualFile> children = f instanceof NewVirtualFile
-                                           ? ((NewVirtualFile)f).getInDbChildren()
+        Iterable<VirtualFile> children = f instanceof NewVirtualFile
+                                           ? ((NewVirtualFile)f).iterInDbChildren()
                                            : Arrays.asList(f.getChildren());
         for (VirtualFile each : children) {
-          if (each != NullVirtualFile.INSTANCE) {
-            deleteRecursively(each);
-          }
+          deleteRecursively(each);
         }
       }
     }

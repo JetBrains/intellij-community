@@ -375,6 +375,19 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
   public boolean SPECIAL_ELSE_IF_TREATMENT = true;
 
+  /**
+   * Indicates if long sequence of chained method calls should be aligned.
+   * <p/>
+   * E.g. if statement like <code>'foo.bar().bar().bar();'</code> should be reformatted to the one below if,
+   * say, last <code>'bar()'</code> call exceeds right margin. The code looks as follows after reformatting
+   * if this property is <code>true</code>:
+   * <p/>
+   * <pre>
+   *     foo.bar().bar()
+   *        .bar();
+   * </pre>
+   */
+  public boolean ALIGN_MULTILINE_CHAINED_METHODS = false;
   public boolean ALIGN_MULTILINE_PARAMETERS = true;
   public boolean ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
   public boolean ALIGN_MULTILINE_FOR = true;

@@ -82,7 +82,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         psiElement(PsiElement.class).withParent(GrParameter.class));
 
   private static final ElementPattern<PsiElement> IN_ARGUMENT_LIST_OF_CALL =
-    psiElement().withParent(psiElement().withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
+    psiElement().withParent(psiElement(GrReferenceExpression.class).withParent(psiElement(GrArgumentList.class).withParent(GrCall.class)));
 
   private static final String[] THIS_SUPER = {"this", "super"};
 
@@ -244,7 +244,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
-        final GrArgumentList argumentList = (GrArgumentList)parameters.getPosition().getParent().getParent();
+        final GrReferenceExpression refExpr = ((GrReferenceExpression)parameters.getPosition().getParent());
+        if (refExpr.getQualifier() != null) return;
+        final GrArgumentList argumentList = (GrArgumentList)refExpr.getParent();
         final GrCall call = (GrCall)argumentList.getParent();
         List<GroovyResolveResult> results = new ArrayList<GroovyResolveResult>();
         //costructor call
@@ -269,8 +271,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
           }
         }
 
-
-
         Set<PsiClass> usedClasses = new HashSet<PsiClass>();
         Set<String> usedNames = new HashSet<String>();
         for (GrNamedArgument argument : argumentList.getNamedArguments()) {
@@ -288,7 +288,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
           if (element instanceof PsiMethod) {
             final PsiMethod method = (PsiMethod)element;
             final PsiClass containingClass = method.getContainingClass();
-            addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
+            if (containingClass != null) {
+              addPropertiesForClass(result, usedClasses, usedNames, containingClass, call);
+            }
             if (method instanceof GrMethod) {
               Set<String>[] parametersArray = ((GrMethod)method).getNamedParametersArray();
               for (Set<String> namedParameters : parametersArray) {
@@ -312,8 +314,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                             Set<PsiClass> usedClasses,
                                             Set<String> usedNames,
                                             PsiClass containingClass,
-                                            GrCall call
-  ) {
+                                            GrCall call) {
     if (usedClasses.contains(containingClass)) return;
     usedClasses.add(containingClass);
     final PsiClass eventListener =
@@ -323,7 +324,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       if (GroovyPropertyUtils.isSimplePropertySetter(method)) {
         if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK(method, call)) {
           final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
-          if (!writableProperties.containsKey(name)) {
+          if (name != null && !writableProperties.containsKey(name)) {
             writableProperties.put(name, method);
           }
         }

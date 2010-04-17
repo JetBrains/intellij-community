@@ -16,34 +16,27 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
-import com.intellij.history.core.storage.Stream;
-import com.intellij.history.core.tree.Entry;
-
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 
 public class PutSystemLabelChange extends PutLabelChange {
   private final int myColor;
 
-  public PutSystemLabelChange(String name, int color, long timestamp) {
-    super(name, timestamp);
+  public PutSystemLabelChange(long id, String name, String projectId, int color) {
+    super(id, name, projectId);
     myColor = color;
   }
 
-  public PutSystemLabelChange(Stream s) throws IOException {
-    super(s);
-    myColor = s.readInteger();
+  public PutSystemLabelChange(DataInput in) throws IOException {
+    super(in);
+    myColor = in.readInt();
   }
 
   @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeInteger(myColor);
-  }
-
-  @Override
-  public boolean isSystemLabel() {
-    return true;
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    out.writeInt(myColor);
   }
 
   public int getColor() {

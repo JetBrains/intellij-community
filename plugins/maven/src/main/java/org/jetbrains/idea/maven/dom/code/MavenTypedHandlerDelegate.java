@@ -54,6 +54,6 @@ public class MavenTypedHandlerDelegate extends TypedHandlerDelegate {
   }
 
   public static boolean shouldProcess(PsiFile file) {
-    return MavenDomUtil.isMavenFile(file) || MavenDomUtil.isFiltererResourceFile(file);
+    return MavenDomUtil.isMavenFile(file) || MavenDomUtil.isFilteredResourceFile(file);
   }
 }

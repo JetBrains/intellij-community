@@ -37,7 +37,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private final String myPlaceholderText;
   private final FoldingGroup myGroup;
 
-  public FoldRegionImpl(Editor editor, int startOffset, int endOffset, String placeholder, FoldingGroup group) {
+  FoldRegionImpl(@NotNull Editor editor, int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {
     super((DocumentEx)editor.getDocument(), startOffset, endOffset);
     myGroup = group;
     myIsExpanded = true;

@@ -123,13 +123,13 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
                       final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
                       if (getter != null &&
                           (nameHint == null ||
-                           GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true).equals(name))) {
+                           name.equals(GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true)))) {
                         processor.execute(getter, state);
                       }
 
                       final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(clazz, refName, true, true);
                       if (setter != null &&
-                          (nameHint == null || GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state)).equals(name))) {
+                          (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state))))) {
                         processor.execute(setter, state);
                       }
                     }

@@ -22,13 +22,14 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 
 public class EntireFileDifferenceModel extends FileDifferenceModel {
   private final Entry myLeft;
   private final Entry myRight;
 
-  public EntireFileDifferenceModel(IdeaGateway gw, Entry left, Entry right, boolean editableRightContent) {
-    super(gw, editableRightContent);
+  public EntireFileDifferenceModel(Project p, IdeaGateway gw, Entry left, Entry right, boolean editableRightContent) {
+    super(p, gw, editableRightContent);
     myLeft = left;
     myRight = right;
   }
@@ -66,7 +67,7 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
   @Override
   protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
     Document d = getDocument();
-    return DocumentContent.fromDocument(getProject(), d);
+    return DocumentContent.fromDocument(myProject, d);
   }
 
   private SimpleContent getDiffContent(Entry e) {

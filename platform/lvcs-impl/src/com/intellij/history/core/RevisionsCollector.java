@@ -16,25 +16,29 @@
 
 package com.intellij.history.core;
 
-import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ChangeList;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.*;
-import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
+import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RevisionsCollector extends ChangeSetsProcessor {
-  private final Entry myRoot;
-  private final ChangeList myChangeList;
+  private final LocalHistoryFacade myFacade;
+  private final RootEntry myRoot;
+  private final String myProjectId;
+  private final String myPattern;
 
   private final List<Revision> myResult = new ArrayList<Revision>();
 
-  public RevisionsCollector(LocalVcs vcs, String path, Entry rootEntry, ChangeList cl) {
-    super(vcs, path);
-
+  public RevisionsCollector(LocalHistoryFacade facade, RootEntry rootEntry, String path, String projectId, @Nullable String pattern) {
+    super(path);
+    myFacade = facade;
     myRoot = rootEntry;
-    myChangeList = cl;
+    myProjectId = projectId;
+    myPattern = pattern;
   }
 
   public List<Revision> getResult() {
@@ -43,27 +47,25 @@ public class RevisionsCollector extends ChangeSetsProcessor {
   }
 
   @Override
-  protected List<Change> collectChanges() {
-    return myChangeList.getChangesFor(myRoot, myPath);
+  protected Pair<String, List<ChangeSet>> collectChanges() {
+    // todo optimize to not collect all change sets + do not process changes twice
+    ChangeCollectingVisitor v = new ChangeCollectingVisitor(myPath, myProjectId, myPattern);
+    myFacade.accept(v);
+    return Pair.create(v.getPath(), v.getChanges());
   }
 
   @Override
   protected void nothingToVisit() {
-    myResult.add(new CurrentRevision(myEntry));
+    myResult.add(new CurrentRevision(myRoot, myPath));
   }
 
   @Override
-  protected void visitLabel(Change c) {
-    myResult.add(new LabeledRevision(myEntry, myRoot, myChangeList, c));
+  protected void visit(ChangeSet changeSet) {
+    myResult.add(new RevisionAfterChange(myFacade, myRoot, myPath, changeSet));
   }
 
   @Override
-  protected void visitRegular(Change c) {
-    myResult.add(new RevisionAfterChange(myEntry, myRoot, myChangeList, c));
-  }
-
-  @Override
-  protected void visitFirstAvailableNonCreational(Change c) {
-    myResult.add(new RevisionBeforeChange(myEntry, myRoot, myChangeList, c));
+  protected void visitFirstAvailableNonCreational(ChangeSet changeSet) {
+    myResult.add(new RevisionBeforeChange(myFacade, myRoot, myPath, changeSet));
   }
 }

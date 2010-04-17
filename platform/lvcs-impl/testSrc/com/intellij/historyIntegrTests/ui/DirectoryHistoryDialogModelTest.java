@@ -16,33 +16,27 @@
 
 package com.intellij.historyIntegrTests.ui;
 
-import com.intellij.history.core.InMemoryLocalVcs;
-import com.intellij.history.core.LocalVcs;
-import com.intellij.history.integration.TestIdeaGateway;
-import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.views.DirectoryChange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 
+import java.io.IOException;
 import java.util.List;
 
 public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
-  private final LocalVcs vcs = new InMemoryLocalVcs();
   private DirectoryHistoryDialogModel m;
 
-  public void testTitle() {
-    TestVirtualFile parent = new TestVirtualFile("parent", null, -1);
-    TestVirtualFile file = new TestVirtualFile("file", null, -1);
-    parent.addChild(file);
-
-    m = new DirectoryHistoryDialogModel(null, vcs, file);
-
-    assertEquals("parent/file", m.getTitle());
+  public void testTitle() throws IOException {
+    VirtualFile dir = createDirectory("dir");
+    initModelFor(dir);
+    assertEquals(FileUtil.toSystemDependentName(dir.getPath()), m.getTitle());
   }
 
-  public void testNoDifference() {
-    vcs.createDirectory("dir");
-    initModelFor("dir");
+  public void testNoDifference() throws IOException {
+    VirtualFile dir = createDirectory("dir");
+    initModelFor(dir);
 
     assertEquals(1, m.getRevisions().size());
 
@@ -50,22 +44,21 @@ public class DirectoryHistoryDialogModelTest extends LocalHistoryUITestCase {
     assertTrue(m.getChanges().isEmpty());
   }
 
-  public void testDifference() {
-    vcs.createDirectory("dir");
-    long timestamp = -1;
-    vcs.createFile("dir/file", null, timestamp, false);
+  public void testDifference() throws IOException {
+    VirtualFile dir = createDirectory("dir");
+    createFile("dir/file.txt");
 
-    initModelFor("dir");
+    initModelFor(dir);
 
     assertEquals(2, m.getRevisions().size());
 
     m.selectRevisions(0, 1);
     List<Change> cc = m.getChanges();
     assertEquals(1, cc.size());
-    assertEquals("file", ((DirectoryChange)cc.get(0)).getModel().getEntryName(1));
+    assertEquals("file.txt", ((DirectoryChange)cc.get(0)).getModel().getEntryName(1));
   }
 
-  private void initModelFor(String path) {
-    m = new DirectoryHistoryDialogModel(new TestIdeaGateway(), vcs, new TestVirtualFile(path));
+  private void initModelFor(VirtualFile dir) {
+    m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), dir);
   }
 }

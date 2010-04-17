@@ -86,7 +86,7 @@ public class DeleteHandler {
       if (elements == null) return;
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
-      LocalHistoryAction a = LocalHistory.startAction(project, IdeBundle.message("progress.deleting"));
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
         deletePsiElement(elements, project);
       }

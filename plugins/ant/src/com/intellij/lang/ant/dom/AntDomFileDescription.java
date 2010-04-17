@@ -15,9 +15,12 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.AntLanguageExtension;
+import com.intellij.lang.ant.ForcedAntFileAttribute;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +30,11 @@ import org.jetbrains.annotations.Nullable;
  *         Date: Apr 6, 2010
  */
 public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
+  private static final String PROJECT_TAG_NAME = "project";
+  private static final String DEFAULT_ATTRIB_NAME = "default";
+
   public AntDomFileDescription() {
-    super(AntDomProject.class, "project");
+    super(AntDomProject.class, PROJECT_TAG_NAME);
   }
 
   protected void initializeFileDescription() {
@@ -36,7 +42,24 @@ public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
   }
 
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
-    return super.isMyFile(file, module) && AntLanguageExtension.isAntFile(file);
+    return super.isMyFile(file, module) && isAntFile(file);
+  }
+
+  public static boolean isAntFile(final XmlFile xmlFile) {
+    final XmlDocument document = xmlFile.getDocument();
+    if (document != null) {
+      final XmlTag tag = document.getRootTag();
+      if (tag != null && PROJECT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
+        if (tag.getAttributeValue(DEFAULT_ATTRIB_NAME) != null) {
+          return true;
+        }
+        final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
+        if (vFile != null && ForcedAntFileAttribute.isAntFile(vFile)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 }

@@ -25,8 +25,6 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaPatchableProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -46,16 +44,16 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
   protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
-
-    if (LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING) {
-      final String name = env.getRunProfile().getName();
-      final String label = state instanceof RemoteState
-                           ? DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", name)
-                           : DebuggerBundle.message("debugger.runner.vcs.label.debugging", name);
-      LocalHistory.putSystemLabel(project, label);
-    }
-
     return createContentDescriptor(project, executor, state, contentToReuse, env);
+  }
+
+  @Override
+  protected String getLocalHistoryLabel(RunProfile profile, RunProfileState state) {
+    final String name = profile.getName();
+    return state instanceof RemoteState
+                         ? DebuggerBundle.message("debugger.runner.vcs.label.remote.debug", name)
+                         : DebuggerBundle.message("debugger.runner.vcs.label.debugging", name);
+
   }
 
   @Nullable

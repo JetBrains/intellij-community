@@ -36,6 +36,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,7 +56,11 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   private PatchedSoftReference<PsiType> myCachedType = null;
 
   public PsiMethodImpl(final PsiMethodStub stub) {
-    super(stub, JavaStubElementTypes.METHOD);
+    this(stub, JavaStubElementTypes.METHOD);
+  }
+
+  protected PsiMethodImpl(final PsiMethodStub stub, final IStubElementType type) {
+    super(stub, type);
   }
 
   public PsiMethodImpl(final ASTNode node) {

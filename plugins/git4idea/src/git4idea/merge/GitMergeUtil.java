@@ -166,7 +166,7 @@ public class GitMergeUtil {
         ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
         UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo);
         tree.setBefore(beforeLabel);
-        tree.setAfter(LocalHistory.putSystemLabel(project, "After update"));
+        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
       }
     });
     final Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();

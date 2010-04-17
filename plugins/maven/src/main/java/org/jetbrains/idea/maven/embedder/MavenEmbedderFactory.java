@@ -128,7 +128,7 @@ public class MavenEmbedderFactory {
     File lib = resolveMavenLib(overrideMavenHome);
     if (lib == null) return null;
 
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(lib);
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(lib);
     if (file == null) return null;
 
     VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(file);

@@ -136,7 +136,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
         ((ExecutionConsoleEx)console).buildUi(myUi);
       }
       else {
-        buildConsoleUiDefault(console);
+        buildConsoleUiDefault(myUi, console);
       }
       if (profile instanceof RunConfigurationBase) {
         myManager.initLogConsoles((RunConfigurationBase)profile, myExecutionResult.getProcessHandler());
@@ -148,7 +148,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     return contentDescriptor;
   }
 
-  private void buildConsoleUiDefault(final ExecutionConsole console) {
+  public static void buildConsoleUiDefault(RunnerLayoutUi ui, final ExecutionConsole console) {
     DefaultActionGroup consoleActions = new DefaultActionGroup();
     if (console instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)console).createConsoleActions();
@@ -157,12 +157,12 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       }
     }
 
-    final Content consoleContent = myUi.createContent("Console", console.getComponent(), "Console",
+    final Content consoleContent = ui.createContent("Console", console.getComponent(), "Console",
                                                       IconLoader.getIcon("/debugger/console.png"),
                                                       console.getPreferredFocusableComponent());
 
     consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
-    myUi.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
+    ui.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
   }
 
   public void addLogConsole(final String name, final String path, final long skippedContent) {

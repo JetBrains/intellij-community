@@ -16,68 +16,39 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.storage.Stream;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 
+import java.io.DataInput;
 import java.io.IOException;
 
-public abstract class CreateEntryChange<NON_APPLIED_STATE_TYPE extends CreateEntryChangeNonAppliedState>
-    extends StructuralChange<NON_APPLIED_STATE_TYPE, StructuralChangeAppliedState> {
-
-  public CreateEntryChange(int id, String path) {
-    super(path);
-    getNonAppliedState().myId = id;
+public abstract class CreateEntryChange extends StructuralChange {
+  public CreateEntryChange(long id, String path) {
+    super(id, path);
   }
 
-  public CreateEntryChange(Stream s) throws IOException {
-    super(s);
+  public CreateEntryChange(DataInput in) throws IOException {
+    super(in);
   }
 
   @Override
-  protected NON_APPLIED_STATE_TYPE createNonAppliedState() {
-    return (NON_APPLIED_STATE_TYPE)new CreateEntryChangeNonAppliedState();
-  }
-
-  @Override
-  protected StructuralChangeAppliedState createAppliedState() {
-    return new StructuralChangeAppliedState();
-  }
-
-  protected String getEntryParentPath() {
-    return Paths.getParentOf(getPath());
-  }
-
-  protected String getEntryName() {
-    // new String() is for trimming rest part of path to
-    // minimaze memory usage after bulk updates and refreshes.
-    return new String(Paths.getNameOf(getPath()));
-  }
-
-  protected IdPath addEntry(Entry r, String parentPath, Entry e) {
-    Entry parent = parentPath == null ? r : r.getEntry(parentPath);
-    parent.addChild(e);
-    return e.getIdPath();
-  }
-
-  @Override
-  public void doRevertOn(Entry root) {
-    Entry e = root.getEntry(getAffectedIdPath());
+  public void revertOn(RootEntry root) {
+    Entry e = root.findEntry(myPath);
+    if (e == null) {
+      cannotRevert(myPath);
+      return;
+    }
     removeEntry(e);
   }
 
   @Override
-  public boolean isCreationalFor(Entry e) {
-    return isCreationalFor(e.getIdPath());
-  }
-
-  public boolean isCreationalFor(IdPath p) {
-    return p.getId() == getAffectedIdPath().getId();
+  public boolean isCreationalFor(String path) {
+    return Paths.equals(myPath, path);
   }
 
   @Override
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+  public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {
     v.visit(this);
   }
 }

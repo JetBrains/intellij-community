@@ -164,7 +164,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     }
 
     final Module module = getModule();
-    if (!scriptRunner.ensureRunnerConfigured(module, getName(), getProject())) {
+    if (!scriptRunner.ensureRunnerConfigured(module, this, getProject())) {
       return null;
     }
 

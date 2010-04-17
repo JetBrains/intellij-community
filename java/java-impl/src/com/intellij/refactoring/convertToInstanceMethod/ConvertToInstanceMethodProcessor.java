@@ -211,7 +211,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myTargetClass)) return;
-    LocalHistoryAction a = LocalHistory.startAction(myProject, getCommandName());
+    LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
     try {
       doRefactoring(usages);
     }

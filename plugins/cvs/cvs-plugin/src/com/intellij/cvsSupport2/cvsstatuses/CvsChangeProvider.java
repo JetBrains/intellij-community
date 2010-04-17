@@ -433,7 +433,7 @@ public class CvsChangeProvider implements ChangeProvider {
         return CvsStatusProvider.timeStampsAreEqual(upToDateTimestamp, revisionTimestamp);
       }
     };
-    byte[] localHistoryContent = LocalHistory.getByteContent(myVcs.getProject(), f, c);
+    byte[] localHistoryContent = LocalHistory.getInstance().getByteContent(f, c);
     if (localHistoryContent == null) {
       if (entry != null && CvsUtil.haveCachedContent(f, entry.getRevision())) {
         return CvsUtil.getCachedStoredContent(f, entry.getRevision());

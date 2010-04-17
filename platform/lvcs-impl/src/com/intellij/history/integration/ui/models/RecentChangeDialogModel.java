@@ -16,10 +16,11 @@
 
 package com.intellij.history.integration.ui.models;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,14 +28,14 @@ import java.util.List;
 public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   private final RecentChange myChange;
 
-  public RecentChangeDialogModel(IdeaGateway gw, LocalVcs vcs, RecentChange c) {
-    super(gw, vcs, null);
+  public RecentChangeDialogModel(Project p, IdeaGateway gw, LocalHistoryFacade vcs, RecentChange c) {
+    super(p, gw, vcs, null);
     myChange = c;
     resetSelection();
   }
 
   @Override
-  protected List<Revision> getRevisionsCache() {
+  protected List<Revision> calcRevisionsCache() {
     final List<Revision> result = new ArrayList<Revision>();
     result.add(myChange.getRevisionAfter());
     result.add(myChange.getRevisionBefore());
@@ -47,7 +48,7 @@ public class RecentChangeDialogModel extends DirectoryHistoryDialogModel {
   }
 
   @Override
-  protected void resetSelection() {
-    selectChanges(0, 0);
+  public void resetSelection() {
+    selectRevisions(0, 1);
   }
 }

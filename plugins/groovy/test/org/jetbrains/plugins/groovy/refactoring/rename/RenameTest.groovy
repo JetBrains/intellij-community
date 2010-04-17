@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
+
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -59,6 +60,23 @@ import foo.bar.Zoo
 NewClass c = new NewClass()
 """
   }
+
+  public void testRenameGetter() throws Exception {
+    def clazz = myFixture.addClass("class Foo { def getFoo(){}}")
+    def methods = clazz.findMethodsByName("getFoo", false)
+    myFixture.configureByText("a.groovy", "print new Foo().foo")
+    myFixture.renameElement methods[0], "get"
+    myFixture.checkResult "print new Foo().get()"
+  }
+
+  public void testRenameSetter() throws Exception {
+    def clazz = myFixture.addClass("class Foo { def setFoo(def foo){}}")
+    def methods = clazz.findMethodsByName("setFoo", false)
+    myFixture.configureByText("a.groovy", "print new Foo().foo = 2")
+    myFixture.renameElement methods[0], "set"
+    myFixture.checkResult "print new Foo().set(2)"
+  }
+
 
   public void doTest() throws Throwable {
     final String testFile = getTestName(true).replace('$', '/') + ".test";

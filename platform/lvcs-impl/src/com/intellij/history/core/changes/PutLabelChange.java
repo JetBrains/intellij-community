@@ -16,64 +16,64 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.Stream;
-import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.storage.StreamUtil;
+import com.intellij.openapi.util.Comparing;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class PutLabelChange extends Change {
   private final String myName;
-  private final long myTimestamp;
+  private final String myProjectId;
 
-  public PutLabelChange(String name, long timestamp) {
+  public PutLabelChange(long id, String name, String projectId) {
+    super(id);
     myName = name;
-    myTimestamp = timestamp;
+    myProjectId = projectId;
   }
 
-  public PutLabelChange(Stream s) throws IOException {
-    myName = s.readString();
-    myTimestamp = s.readLong();
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    s.writeString(myName);
-    s.writeLong(myTimestamp);
+  public PutLabelChange(DataInput in) throws IOException {
+    super(in);
+    myName = StreamUtil.readString(in);
+    myProjectId = StreamUtil.readString(in);
   }
 
   @Override
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    StreamUtil.writeString(out, myName);
+    StreamUtil.writeString(out, myProjectId);
+  }
+
   public String getName() {
     return myName;
   }
 
-  @Override
-  public long getTimestamp() {
-    return myTimestamp;
+  public String getProjectId() {
+    return myProjectId;
   }
 
   @Override
-  public void applyTo(Entry r) {
+  public boolean affectsPath(String paths) {
+    return false;
   }
 
   @Override
-  public void doRevertOn(Entry root) {
+  public boolean affectsProject(String projectId) {
+    return myProjectId.equals(projectId);
   }
 
   @Override
-  public boolean affects(IdPath... pp) {
-    return true;
+  public boolean affectsMatching(Pattern pattern) {
+    return false;
   }
 
-  @Override
-  public boolean affectsOnlyInside(Entry e) {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean isCreationalFor(Entry e) {
+  public boolean isCreationalFor(String path) {
     return false;
   }
 
@@ -82,12 +82,7 @@ public class PutLabelChange extends Change {
   }
 
   @Override
-  public boolean isLabel() {
-    return true;
-  }
-
-  @Override
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+  public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {
     v.visit(this);
   }
 }

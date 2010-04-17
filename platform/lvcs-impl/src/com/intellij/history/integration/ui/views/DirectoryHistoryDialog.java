@@ -16,15 +16,15 @@
 
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.integration.IdeaGateway;
-import static com.intellij.history.integration.LocalHistoryBundle.message;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
@@ -32,34 +32,38 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SearchTextFieldWithStoredHistory;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.history.integration.LocalHistoryBundle.message;
+
 public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialogModel> {
   private ChangesTreeList<Change> myChangesTree;
+  private ActionToolbar myToolBar;
+  private SearchTextField mySearchField;
 
-  public DirectoryHistoryDialog(IdeaGateway gw, VirtualFile f) {
-    this(gw, f, true);
+  public DirectoryHistoryDialog(Project p, IdeaGateway gw, VirtualFile f) {
+    this(p, gw, f, true);
   }
 
-  protected DirectoryHistoryDialog(IdeaGateway gw, VirtualFile f, boolean doInit) {
-    super(gw, f, doInit);
-  }
-
-  @Override
-  protected void init() {
-    super.init();
-    setTitle(myModel.getTitle());
+  protected DirectoryHistoryDialog(Project p, IdeaGateway gw, VirtualFile f, boolean doInit) {
+    super(p, gw, f, doInit);
   }
 
   @Override
-  protected DirectoryHistoryDialogModel createModel(LocalVcs vcs) {
-    return new DirectoryHistoryDialogModel(myGateway, vcs, myFile);
+  protected DirectoryHistoryDialogModel createModel(LocalHistoryFacade vcs) {
+    return new DirectoryHistoryDialogModel(myProject, myGateway, vcs, myFile);
   }
 
   @Override
@@ -73,26 +77,61 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
 
     JPanel p = new JPanel(new BorderLayout());
 
-    p.add(new DiffStatusBar(DiffStatusBar.DEFAULT_TYPES), BorderLayout.SOUTH);
-    p.add(myChangesTree, BorderLayout.CENTER);
+    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(), true);
+    p.add(myToolBar.getComponent(), BorderLayout.NORTH);
 
-    ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createChangesTreeActions(), true);
-    p.add(tb.getComponent(), BorderLayout.NORTH);
+    p.add(myChangesTree, BorderLayout.CENTER);
+    p.add(new DiffStatusBar(DiffStatusBar.DEFAULT_TYPES), BorderLayout.SOUTH);
 
     return p;
   }
 
+  @Override
+  protected JComponent createRevisionsList() {
+    JPanel result = new JPanel(new BorderLayout());
+    result.add(createSearchBox(), BorderLayout.NORTH);
+    result.add(super.createRevisionsList(), BorderLayout.CENTER);
+    return result;
+  }
+
+  private JComponent createSearchBox() {
+    mySearchField = new SearchTextFieldWithStoredHistory(getPropertiesKey() + ".searchHistory");
+    mySearchField.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        scheduleRevisionsUpdate(new Consumer<DirectoryHistoryDialogModel>() {
+          public void consume(DirectoryHistoryDialogModel m) {
+            m.setFilter(mySearchField.getText());
+          }
+        });
+      }
+    });
+    
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        mySearchField.requestFocusInWindow();
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getFind(), mySplitter, this); // a little hack
+    
+    return mySearchField;
+  }
+
   private void initChangesTree() {
     myChangesTree = createChangesTree();
-    registerChangesTreeActions();
-    updateDiffs();
+    myChangesTree.setDoubleClickHandler(new Runnable() {
+      public void run() {
+        new ShowDifferenceAction().performIfEnabled();
+      }
+    });
+    myChangesTree.installPopupHandler(createChangesTreeActions());
   }
 
   private ChangesTreeList<Change> createChangesTree() {
-    return new ChangesTreeList<Change>(getProject(), Collections.<Change>emptyList(), false, false, null, null) {
+    return new ChangesTreeList<Change>(myProject, Collections.<Change>emptyList(), false, false, null, null) {
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> cc, ChangeNodeDecorator changeNodeDecorator) {
-        return new TreeModelBuilder(getProject(), false).buildModel(cc, changeNodeDecorator);
+        return new TreeModelBuilder(myProject, false).buildModel(cc, changeNodeDecorator);
       }
 
       @Override
@@ -103,21 +142,11 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       protected Change getLeadSelectedObject(final ChangesBrowserNode node) {
         final Object o = node.getUserObject();
         if (o instanceof Change) {
-          return (Change) o;
+          return (Change)o;
         }
         return null;
       }
     };
-  }
-
-  private void registerChangesTreeActions() {
-    myChangesTree.setDoubleClickHandler(new Runnable() {
-      public void run() {
-        ShowDifferenceAction a = new ShowDifferenceAction();
-        if (a.isEnabled()) a.perform();
-      }
-    });
-    myChangesTree.installPopupHandler(createChangesTreeActions());
   }
 
   private ActionGroup createChangesTreeActions() {
@@ -130,8 +159,19 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   @Override
-  protected void updateDiffs() {
-    myChangesTree.setChangesToDisplay(myModel.getChanges());
+  protected void updateActions() {
+    super.updateActions();
+    myToolBar.updateActionsImmediately();
+  }
+
+  @Override
+  protected Runnable doUpdateDiffs(DirectoryHistoryDialogModel model) {
+    final List<Change> changes = model.getChanges();
+    return new Runnable() {
+      public void run() {
+        myChangesTree.setChangesToDisplay(changes);
+      }
+    };
   }
 
   @Override
@@ -149,13 +189,13 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(List<DirectoryChange> changes) {
+    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
       DiffRequest r = createDifference(getFirstChange(changes).getFileDifferenceModel());
       DiffManager.getInstance().getDiffTool().show(r);
     }
 
     @Override
-    protected boolean isEnabledFor(List<DirectoryChange> changes) {
+    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
       DirectoryChange c = getFirstChange(changes);
       return c != null && c.canShowFileDifference();
     }
@@ -171,47 +211,41 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     }
 
     @Override
-    protected void performOn(List<DirectoryChange> changes) {
+    protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
       List<Difference> diffs = new ArrayList<Difference>();
       for (DirectoryChange each : changes) {
         diffs.add(each.getModel().getDifference());
       }
-      revert(myModel.createRevisionReverter(diffs));
+      revert(model.createRevisionReverter(diffs));
     }
 
     @Override
-    protected boolean isEnabledFor(List<DirectoryChange> changes) {
-      return myModel.isRevertEnabled();
+    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
+      return model.isRevertEnabled();
     }
   }
 
-  private abstract class ActionOnSelection extends AnAction {
+  private abstract class ActionOnSelection extends MyAction {
     public ActionOnSelection(String name, String iconName) {
       super(name, null, IconLoader.getIcon(iconName));
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      perform();
+    protected void doPerform(DirectoryHistoryDialogModel model) {
+      doPerform(model, getSelectedChanges());
     }
 
-    public void perform() {
-      performOn(getSelectedChanges());
-    }
+    protected abstract void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> changes);
 
-    protected abstract void performOn(List<DirectoryChange> changes);
 
     @Override
-    public void update(AnActionEvent e) {
-      Presentation p = e.getPresentation();
-      p.setEnabled(isEnabled());
+    protected boolean isEnabled(DirectoryHistoryDialogModel model) {
+      final List<DirectoryChange> changes = getSelectedChanges();
+      if (changes.isEmpty()) return false;
+      return isEnabledFor(model, changes);
     }
 
-    public boolean isEnabled() {
-      return isEnabledFor(getSelectedChanges());
-    }
-
-    protected boolean isEnabledFor(List<DirectoryChange> changes) {
+    protected boolean isEnabledFor(DirectoryHistoryDialogModel model, List<DirectoryChange> changes) {
       return true;
     }
   }

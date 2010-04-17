@@ -16,29 +16,25 @@
 
 package com.intellij.history.core.revisions;
 
-import com.intellij.history.core.LocalVcsTestCase;
-import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ChangeList;
+import com.intellij.history.core.InMemoryLocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryTestCase;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.CreateFileChange;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import org.junit.Test;
 
-public class RevisionsAfterChangeTest extends LocalVcsTestCase {
+public class RevisionsAfterChangeTest extends LocalHistoryTestCase {
   @Test
   public void testForRootEntry() {
-    Entry root = new RootEntry();
-    ChangeList list = new ChangeList();
-    Change c1 = new CreateFileChange(1, "f1", null, -1, false);
-    Change c2 = new CreateFileChange(2, "f2", null, -1, false);
+    RootEntry root = new RootEntry();
+    LocalHistoryFacade facade = new InMemoryLocalHistoryFacade();
 
-    c1.applyTo(root);
-    c2.applyTo(root);
-    list.addChange(c1);
-    list.addChange(c2);
+    ChangeSet cs = addChangeSet(facade, createFile(root, "f1"));
+    addChangeSet(facade, createFile(root, "f2"));
 
-    Revision r = new RevisionAfterChange(root, root, list, c1);
-    Entry e = r.getEntry();
+    Revision r = new RevisionAfterChange(facade, root, "", cs);
+    RootEntry e = (RootEntry)r.getEntry();
 
     assertEquals(e.getClass(), RootEntry.class);
     assertNotNull(e.findEntry("f1"));

@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+// todo get rid of!!!!!!!!!!!!!
 public class TestVirtualFile extends DeprecatedVirtualFile {
   private String myName;
   private String myContent;
@@ -46,6 +47,7 @@ public class TestVirtualFile extends DeprecatedVirtualFile {
   }
 
   public TestVirtualFile(@NotNull String name, String content, long timestamp, boolean isReadOnly) {
+    assert !name.contains("/");
     myName = name;
     myContent = content;
     this.isReadOnly = isReadOnly;

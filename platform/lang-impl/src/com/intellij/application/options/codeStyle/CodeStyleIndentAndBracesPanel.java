@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
 
 import javax.swing.*;
@@ -71,6 +70,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
   private JComboBox myWhileForceCombo;
   private JComboBox myDoWhileForceCombo;
 
+  private JCheckBox myAlignChainedMethods;
   private JCheckBox myAlignDeclarationParameters;
   private JCheckBox myAlignCallParameters;
   private JCheckBox myAlignExtendsList;
@@ -92,7 +92,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
   public CodeStyleIndentAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
 
-    myPanel.add(createKeepWhenReformatingPanel(),
+    myPanel.add(createKeepWhenReformattingPanel(),
                 new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
                                        new Insets(0, 4, 0, 4), 0, 0));
 
@@ -131,7 +131,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     return LanguageCodeStyleSettingsProvider.SettingsType.INDENT_AND_BRACES_SETTINGS;
   }
 
-  private Component createKeepWhenReformatingPanel() {
+  private Component createKeepWhenReformattingPanel() {
     OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.keep.when.reformatting"));
 
     myKeepLineBreaks = createCheckBox(ApplicationBundle.message("checkbox.keep.when.reformatting.line.breaks"));
@@ -195,6 +195,9 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
 
   private JPanel createAlignmentsPanel() {
     OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.align.when.multiline"));
+
+    myAlignChainedMethods = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.chained.methods"));
+    optionGroup.add(myAlignChainedMethods);
 
     myAlignDeclarationParameters = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.method.parameters"));
     optionGroup.add(myAlignDeclarationParameters);
@@ -314,6 +317,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     isModified |= settings.CLASS_BRACE_STYLE != getBraceComboValue(myClassDeclarationCombo);
     isModified |= settings.METHOD_BRACE_STYLE != getBraceComboValue(myMethodDeclarationCombo);
 
+    isModified |= isModified(myAlignChainedMethods, settings.ALIGN_MULTILINE_CHAINED_METHODS);
     isModified |= isModified(myAlignAssignment, settings.ALIGN_MULTILINE_ASSIGNMENT);
     isModified |= isModified(myAlignBinaryExpression, settings.ALIGN_MULTILINE_BINARY_OPERATION);
     isModified |= isModified(myAlignCallParameters, settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
@@ -361,6 +365,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     myAlignAssignment.setSelected(settings.ALIGN_MULTILINE_ASSIGNMENT);
     myAlignBinaryExpression.setSelected(settings.ALIGN_MULTILINE_BINARY_OPERATION);
     myAlignCallParameters.setSelected(settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+    myAlignChainedMethods.setSelected(settings.ALIGN_MULTILINE_CHAINED_METHODS);
     myAlignDeclarationParameters.setSelected(settings.ALIGN_MULTILINE_PARAMETERS);
     myAlignExtendsList.setSelected(settings.ALIGN_MULTILINE_EXTENDS_LIST);
     myAlignForStatement.setSelected(settings.ALIGN_MULTILINE_FOR);
@@ -399,6 +404,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     settings.ALIGN_MULTILINE_ASSIGNMENT = myAlignAssignment.isSelected();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = myAlignBinaryExpression.isSelected();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignCallParameters.isSelected();
+    settings.ALIGN_MULTILINE_CHAINED_METHODS = myAlignChainedMethods.isSelected();
     settings.ALIGN_MULTILINE_PARAMETERS = myAlignDeclarationParameters.isSelected();
     settings.ALIGN_MULTILINE_EXTENDS_LIST = myAlignExtendsList.isSelected();
     settings.ALIGN_MULTILINE_FOR = myAlignForStatement.isSelected();

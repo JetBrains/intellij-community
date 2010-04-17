@@ -33,13 +33,36 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   private SpacingImpl mySpaceProperty;
   private IndentInside myLastLineIndent;
 
+  /**
+   * Shortcut for calling
+   * {@link #LeafBlockWrapper(Block, CompositeBlockWrapper, WhiteSpace, FormattingDocumentModel, LeafBlockWrapper, boolean, TextRange)}
+   * with {@link Block#getTextRange() text range associated with the given block}.
+   *
+   * @param block               block to wrap
+   * @param parent              wrapped parent block
+   * @param whiteSpaceBefore    white space before the target block to wrap
+   * @param model               formatting model to use during current wrapper initialization
+   * @param previousTokenBlock  previous token block
+   * @param isReadOnly          flag that indicates if target block is read-only
+   */
+  public LeafBlockWrapper(final Block block,
+                          CompositeBlockWrapper parent,
+                          WhiteSpace whiteSpaceBefore,
+                          FormattingDocumentModel model,
+                          LeafBlockWrapper previousTokenBlock,
+                          boolean isReadOnly)
+  {
+    this(block, parent, whiteSpaceBefore, model, previousTokenBlock, isReadOnly, block.getTextRange());
+  }
+
   public LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           LeafBlockWrapper previousTokenBlock,
                           boolean isReadOnly,
-                          final TextRange textRange) {
+                          final TextRange textRange)
+  {
     super(block, whiteSpaceBefore, parent, textRange);
     myPreviousBlock = previousTokenBlock;
     final int lastLineNumber = model.getLineNumber(textRange.getEndOffset());
@@ -93,12 +116,15 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myLastLineIndent = null;
   }
 
+  /**
+   * @return    spacing between current block and its left sibling
+   */
   public SpacingImpl getSpaceProperty() {
     return mySpaceProperty;
   }
 
   public IndentData calculateOffset(final CodeStyleSettings.IndentOptions options) {
-
+    // Calculate result as an indent of current block from parent plus parent block indent.
     if (myIndentFromParent != null) {
       final AbstractBlockWrapper firstIndentedParent = findFirstIndentedParent();
       final IndentData indentData = new IndentData(myIndentFromParent.getIndentSpaces(), myIndentFromParent.getSpaces());
@@ -110,7 +136,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
       }
     }
 
+    // Consider that current block is not indented if it doesn't have a parent block.
     if (myParent == null) return new IndentData(0);
+
+    // Define that current block and all its parents that start at the same offset can't use first child indent as block indent.
     if (getIndent().isAbsolute()) {
       setCanUseFirstChildIndentAsBlockIndent(false);
       AbstractBlockWrapper current = this;

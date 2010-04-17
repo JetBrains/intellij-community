@@ -26,10 +26,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -60,11 +57,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   private int mySavedCaretShift;
   private boolean myCaretPositionSaved;
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<FoldingGroup, FoldRegion>();
-  private static final Comparator<? super FoldRegion> OUR_COMPARATOR = new Comparator<FoldRegion>() {
-    public int compare(final FoldRegion o1, final FoldRegion o2) {
-      return o1.getStartOffset() - o2.getStartOffset();
-    }
-  };
   private static final Comparator<FoldRegion> BY_END_OFFSET = new Comparator<FoldRegion>() {
     public int compare(FoldRegion r1, FoldRegion r2) {
       int end1 = r1.getEndOffset();
@@ -141,7 +133,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
   }
 
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
-    final FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholderText, null);
+    FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null);
     return addFoldRegion(region) ? region : null;
   }
 
@@ -507,7 +499,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     boolean addRegion(FoldRegion range) {
       // During batchProcessing elements are inserted in ascending order, 
       // binary search find acceptable insertion place first time
-      int fastIndex = myCachedLastIndex != -1 && myIsBatchFoldingProcessing? myCachedLastIndex + 1:Collections.binarySearch(myRegions, range, OUR_COMPARATOR);
+      int fastIndex = myCachedLastIndex != -1 && myIsBatchFoldingProcessing? myCachedLastIndex + 1:Collections.binarySearch(myRegions, range, RangeMarker.BY_START_OFFSET);
       if (fastIndex < 0) fastIndex = -fastIndex - 1;
 
       for (int i = fastIndex - 1; i >=0; --i) {
@@ -683,5 +675,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
 
   public int getPriority() {
     return 1;
+  }
+
+  public FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group) {
+    return new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group);
   }
 }

@@ -16,59 +16,44 @@
 
 package com.intellij.history.core;
 
-import com.intellij.history.core.changes.PutLabelChange;
-import com.intellij.history.core.changes.PutSystemLabelChange;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.Label;
+import com.intellij.history.core.tree.RootEntry;
 import org.junit.Test;
 
 import java.util.List;
 
-public class LocalVcsLabelsTest extends LocalVcsTestCase {
-  LocalVcs vcs = new InMemoryLocalVcs();
+public class LocalVcsLabelsTest extends LocalHistoryTestCase {
+  LocalHistoryFacade myVcs = new InMemoryLocalHistoryFacade();
+  RootEntry myRoot = new RootEntry();
 
   @Test
   public void testUserLabels() {
-    vcs.createFile("file", null, -1, false);
-    vcs.putUserLabel("file", "1");
-    vcs.changeFileContent("file", null, -1);
-    vcs.putUserLabel("file", "2");
+    add(myVcs, createFile(myRoot, "file"));
+    myVcs.putUserLabel("1", "project");
+    add(myVcs, changeContent(myRoot, "file", null));
+    myVcs.putUserLabel("2", "project");
 
-    List<Revision> rr = vcs.getRevisionsFor("file");
+    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
     assertEquals(4, rr.size());
 
-    assertEquals("2", rr.get(0).getName());
-    assertNull(rr.get(1).getName());
-    assertEquals("1", rr.get(2).getName());
-    assertNull(rr.get(3).getName());
-  }
-
-  @Test
-  public void testDoesNotIncludeLabelsForAnotherEntry() {
-    vcs.createFile("one", null, -1, false);
-    vcs.createFile("two", null, -1, false);
-    vcs.putUserLabel("one", "one");
-    vcs.putUserLabel("two", "two");
-
-    List<Revision> rr = vcs.getRevisionsFor("one");
-    assertEquals(2, rr.size());
-    assertEquals("one", rr.get(0).getName());
-
-    rr = vcs.getRevisionsFor("two");
-    assertEquals(2, rr.size());
-    assertEquals("two", rr.get(0).getName());
+    assertEquals("2", rr.get(0).getLabel());
+    assertNull(rr.get(1).getLabel());
+    assertEquals("1", rr.get(2).getLabel());
+    assertNull(rr.get(3).getLabel());
   }
 
   @Test
   public void testLabelTimestamps() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, -1, false);
-    setCurrentTimestamp(20);
-    vcs.putUserLabel("file", "1");
-    setCurrentTimestamp(30);
-    vcs.putUserLabel("file", "1");
+    add(myVcs, createFile(myRoot, "file"));
 
-    List<Revision> rr = vcs.getRevisionsFor("file");
+    setCurrentTimestamp(20);
+    myVcs.putUserLabel("", "project");
+
+    setCurrentTimestamp(30);
+    myVcs.putUserLabel("", "project");
+
+    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
     assertEquals(30, rr.get(0).getTimestamp());
     assertEquals(20, rr.get(1).getTimestamp());
     assertEquals(10, rr.get(2).getTimestamp());
@@ -76,123 +61,112 @@ public class LocalVcsLabelsTest extends LocalVcsTestCase {
 
   @Test
   public void testContent() {
-    vcs.createFile("file", cf("old"), -1, false);
-    vcs.putUserLabel("file", "");
-    vcs.changeFileContent("file", cf("new"), -1);
-    vcs.putUserLabel("file", "");
+    add(myVcs, createFile(myRoot, "file", "one"));
+    myVcs.putUserLabel("", "project");
+    add(myVcs, changeContent(myRoot, "file", "two"));
+    myVcs.putUserLabel("", "project");
 
-    List<Revision> rr = vcs.getRevisionsFor("file");
+    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
 
-    assertEquals(c("new"), rr.get(0).getEntry().getContent());
-    assertEquals(c("old"), rr.get(2).getEntry().getContent());
-  }
-
-  @Test
-  public void testLabelsAfterPurge() {
-    setCurrentTimestamp(10);
-    vcs.createFile("file", null, -1, false);
-    setCurrentTimestamp(20);
-    vcs.putUserLabel("file", "l");
-
-    vcs.purgeObsoleteAndSave(5);
-
-    List<Revision> rr = vcs.getRevisionsFor("file");
-    assertEquals(1, rr.size());
-    assertEquals("l", rr.get(0).getName());
+    assertContent("two", rr.get(1).getEntry());
+    assertContent("one", rr.get(3).getEntry());
   }
 
   @Test
   public void testGlobalUserLabels() {
-    vcs.createFile("one", null, -1, false);
-    vcs.putUserLabel("1");
-    vcs.createFile("two", null, -1, false);
-    vcs.putUserLabel("2");
+    add(myVcs, createFile(myRoot, "one"));
+    myVcs.putUserLabel("1", "project");
+    add(myVcs, createFile(myRoot, "two"));
+    myVcs.putUserLabel("2", "project");
 
-    List<Revision> rr = vcs.getRevisionsFor("one");
+    List<Revision> rr = collectRevisions(myVcs, myRoot, "one", "project", null);
     assertEquals(3, rr.size());
-    assertEquals("2", rr.get(0).getName());
-    assertEquals("1", rr.get(1).getName());
+    assertEquals("2", rr.get(0).getLabel());
+    assertEquals("1", rr.get(1).getLabel());
 
-    rr = vcs.getRevisionsFor("two");
+    rr = collectRevisions(myVcs, myRoot, "two", "project", null);
     assertEquals(2, rr.size());
-    assertEquals("2", rr.get(0).getName());
+    assertEquals("2", rr.get(0).getLabel());
   }
 
   @Test
   public void testGlobalLabelTimestamps() {
     setCurrentTimestamp(10);
-    vcs.createFile("file", null, -1, false);
+    add(myVcs, createFile(myRoot, "file"));
     setCurrentTimestamp(20);
-    vcs.putUserLabel("");
+    myVcs.putUserLabel("", "project");
 
-    List<Revision> rr = vcs.getRevisionsFor("file");
+    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
     assertEquals(20, rr.get(0).getTimestamp());
     assertEquals(10, rr.get(1).getTimestamp());
   }
 
   @Test
   public void testLabelsDuringChangeSet() {
-    vcs.createFile("f", null, -1, false);
-    vcs.beginChangeSet();
-    vcs.changeFileContent("f", null, -1);
-    vcs.putUserLabel("label");
-    vcs.endChangeSet("changeSet");
+    add(myVcs, createFile(myRoot, "file"));
+    myVcs.beginChangeSet();
+    add(myVcs, changeContent(myRoot, "file", null));
+    myVcs.putUserLabel("label", "project");
+    myVcs.endChangeSet("changeSet");
 
-    List<Revision> rr = vcs.getRevisionsFor("f");
+    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
     assertEquals(2, rr.size());
-    assertEquals("changeSet", rr.get(0).getCauseChangeName());
-    assertEquals(null, rr.get(1).getCauseChangeName());
+    assertEquals("changeSet", rr.get(0).getChangeSetName());
+    assertEquals(null, rr.get(1).getChangeSetName());
   }
 
   @Test
   public void testSystemLabels() {
-    vcs.createFile("f1", null, -1, false);
-    vcs.createFile("f2", null, -1, false);
+    myVcs.created("f1", false);
+    myVcs.created("f2", false);
 
     setCurrentTimestamp(123);
-    vcs.putSystemLabel("label", 456);
+    myVcs.putSystemLabel("label", "project", 456);
 
-    List<Revision> rr1 = vcs.getRevisionsFor("f1");
-    List<Revision> rr2 = vcs.getRevisionsFor("f2");
+    List<Revision> rr1 = collectRevisions(myVcs, myRoot, "f1", "project", null);
+    List<Revision> rr2 = collectRevisions(myVcs, myRoot, "f2", "project", null);
     assertEquals(2, rr1.size());
     assertEquals(2, rr2.size());
 
-    assertEquals("label", rr1.get(0).getName());
-    assertEquals("label", rr2.get(0).getName());
+    assertEquals("label", rr1.get(0).getLabel());
+    assertEquals("label", rr2.get(0).getLabel());
 
-    PutLabelChange l = (PutLabelChange)rr1.get(0).getCauseChange();
-    assertTrue(l.isSystemLabel());
-    assertEquals(123, l.getTimestamp());
-    assertEquals(456, ((PutSystemLabelChange)l).getColor());
+    Revision r = rr1.get(0);
+    assertEquals(123, r.getTimestamp());
+    assertEquals(456, r.getLabelColor());
   }
 
   @Test
   public void testGettingByteContent() throws Exception {
-    Label l1 = vcs.putSystemLabel("label", -1);
-    vcs.createFile("f1", cf("one"), -1, false);
-    Label l2 = vcs.putSystemLabel("label", -1);
-    vcs.changeFileContent("f1", cf("two"), -1);
-    vcs.createDirectory("dir");
-    Label l3 = vcs.putSystemLabel("label", -1);
+    LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
+    add(myVcs, createFile(myRoot, "f", "one"));
 
-    assertNull(l1.getByteContent("f1").getBytes());
-    assertEquals("one", new String(l2.getByteContent("f1").getBytes()));
-    assertEquals("two", new String(l3.getByteContent("f1").getBytes()));
+    LabelImpl l2 = myVcs.putSystemLabel("label", "project", -1);
+    add(myVcs, changeContent(myRoot, "f", "two"));
 
-    assertTrue(l3.getByteContent("dir").isDirectory());
-    assertNull(l3.getByteContent("dir").getBytes());
+    LabelImpl l3 = myVcs.putSystemLabel("label", "project", -1);
+
+    assertNull(l1.getByteContent(myRoot, "f").getBytes());
+    assertEquals("one", new String(l2.getByteContent(myRoot, "f").getBytes()));
+    assertEquals("two", new String(l3.getByteContent(myRoot, "f").getBytes()));
+
+    add(myVcs, createDirectory(myRoot, "dir"));
+    LabelImpl l4 = myVcs.putSystemLabel("label", "project", -1);
+
+    assertTrue(l4.getByteContent(myRoot, "dir").isDirectory());
+    assertNull(l4.getByteContent(myRoot, "dir").getBytes());
   }
   
   @Test
   public void testGettingByteContentInsideChangeSet() throws Exception {
-    vcs.beginChangeSet();
-    vcs.createFile("f1", cf("one"), -1, false);
-    Label l1 = vcs.putSystemLabel("label", -1);
-    vcs.changeFileContent("f1", cf("two"), -1);
-    Label l2 = vcs.putSystemLabel("label", -1);
-    vcs.endChangeSet(null);
+    myVcs.beginChangeSet();
+    add(myVcs, createFile(myRoot, "f", "one"));
+    LabelImpl l1 = myVcs.putSystemLabel("label", "project", -1);
+    add(myVcs, changeContent(myRoot, "f", "two"));
+    LabelImpl l2 = myVcs.putSystemLabel("label", "project", -1);
+    myVcs.endChangeSet(null);
 
-    assertEquals("one", new String(l1.getByteContent("f1").getBytes()));
-    assertEquals("two", new String(l2.getByteContent("f1").getBytes()));
+    assertEquals("one", new String(l1.getByteContent(myRoot, "f").getBytes()));
+    assertEquals("two", new String(l2.getByteContent(myRoot, "f").getBytes()));
   }
 }

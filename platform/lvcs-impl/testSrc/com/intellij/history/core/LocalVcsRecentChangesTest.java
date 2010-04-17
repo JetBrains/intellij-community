@@ -18,26 +18,26 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 import org.junit.Test;
 
 import java.util.List;
 
-public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
-  LocalVcs vcs = new InMemoryLocalVcs();
+public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
+  LocalHistoryFacade vcs = new InMemoryLocalHistoryFacade();
+  RootEntry root = new RootEntry();
 
   @Test
   public void testRecentChanges() {
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("f1", null, timestamp, false);
+    add(vcs, createFile(root, "f1"));
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.createFile("f2", null, timestamp1, false);
+    add(vcs, createFile(root, "f2"));
     vcs.endChangeSet("b");
 
-    List<RecentChange> cc = vcs.getRecentChanges();
+    List<RecentChange> cc = vcs.getRecentChanges(root);
     assertRecentChanges(cc, "b", "a");
 
     RecentChange c0 = cc.get(0);
@@ -57,19 +57,16 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeUnnamedChanges() {
     vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.createFile("f1", null, timestamp1, false);
+    add(vcs, createFile(root, "f1"));
     vcs.endChangeSet("a");
 
-    long timestamp2 = -1;
-    vcs.createFile("f2", null, timestamp2, false);
+    add(vcs, createFile(root, "f2"));
 
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("f3", null, timestamp, false);
+    add(vcs, createFile(root, "f3"));
     vcs.endChangeSet("b");
 
-    List<RecentChange> cc = vcs.getRecentChanges();
+    List<RecentChange> cc = vcs.getRecentChanges(root);
     assertRecentChanges(cc, "b", "a");
 
     RecentChange c0 = cc.get(0);
@@ -93,21 +90,19 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeLocalFileChanges() {
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("f1", null, timestamp, false);
+    add(vcs, createFile(root, "f1"));
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.createFile("f2", null, timestamp1, false);
-    vcs.changeFileContent("f1", null, -1);
+    add(vcs, createFile(root, "f2"));
+    add(vcs, changeContent(root, "f1", null));
     vcs.endChangeSet("b");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f2", null, -1);
+    add(vcs, changeContent(root, "f2", null));
     vcs.endChangeSet("c");
 
-    List<RecentChange> cc = vcs.getRecentChanges();
+    List<RecentChange> cc = vcs.getRecentChanges(root);
     assertEquals(2, cc.size());
     assertEquals("b", cc.get(0).getChangeName());
     assertEquals("a", cc.get(1).getChangeName());
@@ -116,18 +111,16 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testIncludeChangeSetsWithFileContentChangesOnly() {
     vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.createFile("f1", null, timestamp1, false);
-    long timestamp = -1;
-    vcs.createFile("f2", null, timestamp, false);
+    add(vcs, createFile(root, "f1"));
+    add(vcs, createFile(root, "f2"));
     vcs.endChangeSet("a");
 
     vcs.beginChangeSet();
-    vcs.changeFileContent("f1", null, -1);
-    vcs.changeFileContent("f2", null, -1);
+    add(vcs, changeContent(root, "f1", null));
+    add(vcs, changeContent(root, "f2", null));
     vcs.endChangeSet("b");
 
-    List<RecentChange> cc = vcs.getRecentChanges();
+    List<RecentChange> cc = vcs.getRecentChanges(root);
     assertEquals(2, cc.size());
     assertEquals("b", cc.get(0).getChangeName());
     assertEquals("a", cc.get(1).getChangeName());
@@ -136,64 +129,28 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   @Test
   public void testDoesNotIncludeLabels() {
     vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("f", null, timestamp, false);
+    add(vcs, createFile(root, "f"));
     vcs.endChangeSet("change");
-    vcs.putUserLabel("label");
+    vcs.putUserLabel("label", "project");
 
-    List<RecentChange> cc = vcs.getRecentChanges();
+    List<RecentChange> cc = vcs.getRecentChanges(root);
     assertEquals(1, cc.size());
     assertEquals("change", cc.get(0).getChangeName());
-  }
-
-  @Test
-  public void testRecentChangesForSeveralRoots() {
-    vcs.beginChangeSet();
-    vcs.createDirectory("root/dir");
-    vcs.createDirectory("anotherRoot/anotherDir");
-    vcs.endChangeSet("a");
-
-    vcs.beginChangeSet();
-    long timestamp1 = -1;
-    vcs.createFile("root/dir/f1", null, timestamp1, false);
-    vcs.endChangeSet("b");
-
-    vcs.beginChangeSet();
-    long timestamp = -1;
-    vcs.createFile("anotherRoot/anotherDir/f2", null, timestamp, false);
-    vcs.endChangeSet("c");
-
-    List<RecentChange> cc = vcs.getRecentChanges();
-    assertRecentChanges(cc, "c", "b", "a");
-
-    RecentChange c0 = cc.get(0);
-    RecentChange c1 = cc.get(1);
-
-    assertNotNull(findEntryAfter(c0, "root/dir/f1"));
-    assertNotNull(findEntryAfter(c0, "anotherRoot/anotherDir/f2"));
-    assertNotNull(findEntryBefore(c0, "root/dir/f1"));
-    assertNull(findEntryBefore(c0, "anotherRoot/anotherDir/f2"));
-
-    assertNotNull(findEntryAfter(c1, "root/dir/f1"));
-    assertNull(findEntryAfter(c1, "anotherRoot/anotherDir/f2"));
-    assertNull(findEntryBefore(c1, "root/dir/f1"));
-    assertNull(findEntryBefore(c1, "anotherRoot/anotherDir/f2"));
   }
 
   @Test
   public void testIncludeOnlyLastValuable20Changes() {
     for (int i = 0; i < 40; i++) {
       vcs.beginChangeSet();
-      long timestamp = -1;
-      vcs.createFile("f" + String.valueOf(i), null, timestamp, false);
+      add(vcs, createFile(root, "f" + i));
       vcs.endChangeSet(String.valueOf(i));
 
       vcs.beginChangeSet();
-      vcs.changeFileContent("f" + String.valueOf(i), null, -1);
-      vcs.endChangeSet(String.valueOf(i) + "_");
+      add(vcs, changeContent(root, "f" + i, null));
+      vcs.endChangeSet(i + "_");
     }
 
-    List<RecentChange> cc = vcs.getRecentChanges();
+    List<RecentChange> cc = vcs.getRecentChanges(root);
     assertEquals(20, cc.size());
 
     for (int i = 0; i < 20; i++) {
@@ -209,10 +166,10 @@ public class LocalVcsRecentChangesTest extends LocalVcsTestCase {
   }
 
   private Entry findEntryAfter(RecentChange c, String path) {
-    return c.getRevisionAfter().getEntry().findEntry(path);
+    return ((RootEntry)c.getRevisionAfter().getEntry()).findEntry(path);
   }
 
   private Entry findEntryBefore(RecentChange c, String path) {
-    return c.getRevisionBefore().getEntry().findEntry(path);
+    return ((RootEntry)c.getRevisionBefore().getEntry()).findEntry(path);
   }
 }

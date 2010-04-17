@@ -46,7 +46,10 @@ public class AntChangeVisitor implements XmlChangeVisitor {
   public void visitXmlAttributeSet(final XmlAttributeSet xmlAttributeSet) {
     final XmlTag tag = xmlAttributeSet.getTag();
     if (AntFileImpl.BASEDIR_ATTR.equals(xmlAttributeSet.getName())) {
-      getAntFile(tag).clearCaches();
+      final AntFile antFile = getAntFile(tag);
+      if (antFile != null) {
+        antFile.clearCaches();
+      }
     }
     else {
       clearParentCaches(tag);

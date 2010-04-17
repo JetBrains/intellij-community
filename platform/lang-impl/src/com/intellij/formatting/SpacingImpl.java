@@ -47,10 +47,9 @@ class SpacingImpl extends Spacing {
     init(minSpaces, maxSpaces, minLineFeeds, isReadOnly, safe, shouldKeepLineBreaks, keepBlankLines, keepFirstColumn, prefLineFeeds);
   }
 
-  void init(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean isReadOnly, final boolean safe, final boolean shouldKeepLineBreaks,
-            final int keepBlankLines,
-            final boolean keepFirstColumn,
-            final int prefLineFeeds) {
+  void init(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean isReadOnly, final boolean safe,
+            final boolean shouldKeepLineBreaks, final int keepBlankLines, final boolean keepFirstColumn, final int prefLineFeeds)
+  {
     myMinSpaces = minSpaces;
 
     myMaxSpaces = Math.max(minSpaces, maxSpaces);
@@ -110,11 +109,12 @@ class SpacingImpl extends Spacing {
   }
 
   /**
-   * <b>Note:</b> current implementation uses soft type check, i.e. it checks that instance of the given object IS-A {@link SpacingImpl} and compares
-   * state defined at this class only. That means that sub-classes are assumed not to override this method in order to preserve <code>'symmetric'</code> property.
+   * <b>Note:</b> current implementation uses soft type check, i.e. it checks that instance of the given object
+   * IS-A {@link SpacingImpl} and compares state defined at this class only. That means that sub-classes are assumed
+   * not to override this method in order to preserve <code>'symmetric'</code> property.
    *
    * @param o   {@inheritDoc}
-   * @return      {@inheritDoc}
+   * @return    {@inheritDoc}
    */
   @Override
   public boolean equals(Object o) {

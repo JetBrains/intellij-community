@@ -38,28 +38,28 @@ public class ContainerUtil {
 
     int index1 = 0;
     int index2 = 0;
-    while(index1 < list1.size() || index2 < list2.size()){
-      if (index1 >= list1.size()){
+    while (index1 < list1.size() || index2 < list2.size()) {
+      if (index1 >= list1.size()) {
         result.add(list2.get(index2++));
       }
-      else if (index2 >= list2.size()){
+      else if (index2 >= list2.size()) {
         result.add(list1.get(index1++));
       }
-      else{
+      else {
         Object element1 = list1.get(index1);
         Object element2 = list2.get(index2);
-        int c = comparator.compare(element1,  element2);
-        if (c < 0){
+        int c = comparator.compare(element1, element2);
+        if (c < 0) {
           result.add(element1);
           index1++;
         }
-        else if (c > 0){
+        else if (c > 0) {
           result.add(element2);
           index2++;
         }
-        else{
+        else {
           result.add(element1);
-          if (!mergeEqualItems){
+          if (!mergeEqualItems) {
             result.add(element2);
           }
           index1++;
@@ -90,7 +90,7 @@ public class ContainerUtil {
     return hashSet;
   }
 
-  public static <K,V> HashMap<K, V> assignKeys(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
+  public static <K, V> HashMap<K, V> assignKeys(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
     HashMap<K, V> hashMap = new HashMap<K, V>();
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -99,7 +99,7 @@ public class ContainerUtil {
     return hashMap;
   }
 
-  public static <K,V> HashMap<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
+  public static <K, V> HashMap<K, Set<V>> classify(Iterator<V> iterator, Convertor<V, K> keyConvertor) {
     HashMap<K, Set<V>> hashMap = new HashMap<K, Set<V>>();
     while (iterator.hasNext()) {
       V value = iterator.next();
@@ -157,7 +157,7 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T,V extends T> V find(Iterable<V> iterable, Condition<T> condition) {
+  public static <T, V extends T> V find(Iterable<V> iterable, Condition<T> condition) {
     return find(iterable.iterator(), condition);
   }
 
@@ -171,7 +171,7 @@ public class ContainerUtil {
   }
 
   @Nullable
-  public static <T,V extends T> V find(Iterator<V> iterator, Condition<T> condition) {
+  public static <T, V extends T> V find(Iterator<V> iterator, Condition<T> condition) {
     while (iterator.hasNext()) {
       V value = iterator.next();
       if (condition.value(value)) return value;
@@ -179,11 +179,11 @@ public class ContainerUtil {
     return null;
   }
 
-  public static <T,V> List<V> map2List(T[] array, Function<T,V> mapper) {
+  public static <T, V> List<V> map2List(T[] array, Function<T, V> mapper) {
     return map2List(Arrays.asList(array), mapper);
   }
 
-  public static <T,V> List<V> map2List(Collection<? extends T> collection, Function<T,V> mapper) {
+  public static <T, V> List<V> map2List(Collection<? extends T> collection, Function<T, V> mapper) {
     final ArrayList<V> list = new ArrayList<V>(collection.size());
     for (final T t : collection) {
       list.add(mapper.fun(t));
@@ -191,11 +191,11 @@ public class ContainerUtil {
     return list;
   }
 
-  public static <T,V> Set<V> map2Set(T[] collection, Function<T,V> mapper) {
+  public static <T, V> Set<V> map2Set(T[] collection, Function<T, V> mapper) {
     return map2Set(Arrays.asList(collection), mapper);
   }
 
-  public static <T,V> Set<V> map2Set(Collection<? extends T> collection, Function<T,V> mapper) {
+  public static <T, V> Set<V> map2Set(Collection<? extends T> collection, Function<T, V> mapper) {
     final HashSet<V> set = new HashSet<V>(collection.size());
     for (final T t : collection) {
       set.add(mapper.fun(t));
@@ -203,24 +203,24 @@ public class ContainerUtil {
     return set;
   }
 
-  public static <T> Object[] map2Array(T[] array, Function<T,Object> mapper) {
+  public static <T> Object[] map2Array(T[] array, Function<T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
 
-  public static <T> Object[] map2Array(Collection<T> array, Function<T,Object> mapper) {
+  public static <T> Object[] map2Array(Collection<T> array, Function<T, Object> mapper) {
     return map2Array(array, Object.class, mapper);
   }
 
-  public static <T,V> V[] map2Array(T[] array, Class<? extends V> aClass, Function<T,V> mapper) {
+  public static <T, V> V[] map2Array(T[] array, Class<? extends V> aClass, Function<T, V> mapper) {
     return map2Array(Arrays.asList(array), aClass, mapper);
   }
 
-  public static <T,V> V[] map2Array(Collection<? extends T> collection, Class<? extends V> aClass, Function<T,V> mapper) {
+  public static <T, V> V[] map2Array(Collection<? extends T> collection, Class<? extends V> aClass, Function<T, V> mapper) {
     final List<V> list = map2List(collection, mapper);
     return list.toArray((V[])Array.newInstance(aClass, list.size()));
   }
 
-  public static <T,V> V[] map2Array(Collection<? extends T> collection, V[] to, Function<T,V> mapper) {
+  public static <T, V> V[] map2Array(Collection<? extends T> collection, V[] to, Function<T, V> mapper) {
     return map2List(collection, mapper).toArray(to);
   }
 
@@ -238,20 +238,20 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T> List<T> skipNulls (Collection<? extends T> collection) {
+  public static <T> List<T> skipNulls(Collection<? extends T> collection) {
     return findAll(collection, Condition.NOT_NULL);
   }
 
-  public static <T,V> List<V> findAll(T[] collection, Class<V> instanceOf) {
+  public static <T, V> List<V> findAll(T[] collection, Class<V> instanceOf) {
     return findAll(Arrays.asList(collection), instanceOf);
   }
 
-  public static <T,V> V[] findAllAsArray(T[] collection, Class<V> instanceOf) {
+  public static <T, V> V[] findAllAsArray(T[] collection, Class<V> instanceOf) {
     List<V> list = findAll(Arrays.asList(collection), instanceOf);
     return list.toArray((V[])Array.newInstance(instanceOf, list.size()));
   }
 
-  public static <T,V> V[] findAllAsArray(Collection<? extends T> collection, Class<V> instanceOf) {
+  public static <T, V> V[] findAllAsArray(Collection<? extends T> collection, Class<V> instanceOf) {
     List<V> list = findAll(collection, instanceOf);
     return list.toArray((V[])Array.newInstance(instanceOf, list.size()));
   }
@@ -261,7 +261,7 @@ public class ContainerUtil {
     return list.toArray((T[])Array.newInstance(collection.getClass().getComponentType(), list.size()));
   }
 
-  public static <T,V> List<V> findAll(Collection<? extends T> collection, Class<V> instanceOf) {
+  public static <T, V> List<V> findAll(Collection<? extends T> collection, Class<V> instanceOf) {
     final ArrayList<V> result = new ArrayList<V>();
     for (final T t : collection) {
       if (instanceOf.isInstance(t)) {
@@ -344,6 +344,28 @@ public class ContainerUtil {
     };
   }
 
+  public static <T> Iterable<T> iterateBackward(final List<? extends T> list) {
+    return new Iterable<T>() {
+      public Iterator<T> iterator() {
+        return new Iterator<T>() {
+          ListIterator<? extends T> it = list.listIterator(list.size());
+
+          public boolean hasNext() {
+            return it.hasPrevious();
+          }
+
+          public T next() {
+            return it.previous();
+          }
+
+          public void remove() {
+            it.remove();
+          }
+        };
+      }
+    };
+  }
+
   public static <E> void swapElements(final List<E> list, final int index1, final int index2) {
     E e1 = list.get(index1);
     E e2 = list.get(index2);
@@ -377,7 +399,7 @@ public class ContainerUtil {
     return findInstance(Arrays.asList(array), aClass);
   }
 
-  public static <T,V> List<T> concat(V[] array, Function<V,Collection<? extends T>> fun) {
+  public static <T, V> List<T> concat(V[] array, Function<V, Collection<? extends T>> fun) {
     return concat(Arrays.asList(array), fun);
   }
 
@@ -430,7 +452,7 @@ public class ContainerUtil {
     };
   }
 
-  public static <T,V> List<T> concat(Iterable<? extends V> list, Function<V,Collection<? extends T>> fun) {
+  public static <T, V> List<T> concat(Iterable<? extends V> list, Function<V, Collection<? extends T>> fun) {
     final ArrayList<T> result = new ArrayList<T>();
     for (final V v : list) {
       result.addAll(fun.fun(v));
@@ -449,7 +471,7 @@ public class ContainerUtil {
   }
 
   public static <T> T getFirstItem(final Collection<T> items, final T def) {
-    return items == null || items.isEmpty()? def : items.iterator().next();
+    return items == null || items.isEmpty() ? def : items.iterator().next();
   }
 
   public static <T> Collection<T> subtract(Collection<T> from, Collection<T> what) {
@@ -458,7 +480,7 @@ public class ContainerUtil {
     return set;
   }
 
-  public static <T> T[] toArray(List<T> collection, T[] array){
+  public static <T> T[] toArray(List<T> collection, T[] array) {
     final int length = array.length;
     if (length < 20) {
       for (int i = 0; i < collection.size(); i++) {
@@ -620,11 +642,11 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T,V> List<V> mapNotNull(T[] array, Function<T, V> mapping) {
+  public static <T, V> List<V> mapNotNull(T[] array, Function<T, V> mapping) {
     return mapNotNull(Arrays.asList(array), mapping);
   }
 
-  public static <T,V> List<V> mapNotNull(Iterable<? extends T> iterable, Function<T, V> mapping) {
+  public static <T, V> List<V> mapNotNull(Iterable<? extends T> iterable, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : iterable) {
       final V o = mapping.fun(t);
@@ -643,7 +665,7 @@ public class ContainerUtil {
     return list;
   }
 
-  public static <T,V> List<V> map(T[] arr, Function<T, V> mapping) {
+  public static <T, V> List<V> map(T[] arr, Function<T, V> mapping) {
     List<V> result = new ArrayList<V>();
     for (T t : arr) {
       result.add(mapping.fun(t));
@@ -651,7 +673,7 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T,V> V[] map(T[] arr, Function<T, V> mapping, V[] emptyArray) {
+  public static <T, V> V[] map(T[] arr, Function<T, V> mapping, V[] emptyArray) {
     List<V> result = new ArrayList<V>();
     for (T t : arr) {
       result.add(mapping.fun(t));
@@ -685,7 +707,7 @@ public class ContainerUtil {
     return element == null ? Collections.<T>emptyList() : Arrays.asList(element);
   }
 
-  public static <T,V> V getOrCreate(final Map<T, V> result, final T key, final V defaultValue) {
+  public static <T, V> V getOrCreate(final Map<T, V> result, final T key, final V defaultValue) {
     V value = result.get(key);
     if (value == null) {
       result.put(key, value = defaultValue);
@@ -693,7 +715,7 @@ public class ContainerUtil {
     return value;
   }
 
-  public static <T,V> V getOrCreate(final Map<T, V> result, final T key, final Factory<V> factory) {
+  public static <T, V> V getOrCreate(final Map<T, V> result, final T key, final Factory<V> factory) {
     V value = result.get(key);
     if (value == null) {
       result.put(key, value = factory.create());
@@ -723,7 +745,7 @@ public class ContainerUtil {
     return false;
   }
 
-  public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<T,T> next) {
+  public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<T, T> next) {
     if (t == null) return Collections.emptyList();
 
     final ArrayList<T> list = new ArrayList<T>();
@@ -735,7 +757,7 @@ public class ContainerUtil {
   }
 
   public static <T> List<T> dropTail(List<T> items) {
-    return items.subList(0, items.size()-1);
+    return items.subList(0, items.size() - 1);
   }
 
   public static <T> List<T> list(T... items) {
@@ -743,6 +765,7 @@ public class ContainerUtil {
   }
 
   // Generalized Quick Sort. Does neither array.clone() nor list.toArray()
+
   public static <T> void quickSort(List<T> list, Comparator<? super T> comparator) {
     quickSort(list, comparator, 0, list.size());
   }
@@ -839,6 +862,7 @@ public class ContainerUtil {
 
   private static class EmptyList extends AbstractList<Object> implements RandomAccess, Serializable {
     private static final EmptyList INSTANCE = new EmptyList();
+
     public int size() {
       return 0;
     }
@@ -880,6 +904,7 @@ public class ContainerUtil {
       public Iterator<T> iterator() {
         return new Iterator<T>() {
           boolean atEnd;
+
           public boolean hasNext() {
             return !atEnd;
           }

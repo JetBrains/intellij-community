@@ -27,7 +27,6 @@
   </project-components>
 
   <xi:include href="/componentSets/Platform.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="/componentSets/LocalHistory.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/UICore.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/WindowManagement.xml" xpointer="xpointer(/components/*)"/>
@@ -42,7 +41,6 @@
   <xi:include href="Compiler.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/Execution.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="/componentSets/VCS.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Dom.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>
     <component>

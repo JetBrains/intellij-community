@@ -178,22 +178,14 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
-  @Deprecated
   @NotNull
   public String getProjectFilePath() {
-    LOG.warn(
-      MessageFormat.format(DEPRECATED_MESSAGE, "ProjectImpl.getProjectFilePath()"),
-      new Throwable());
     return getStateStore().getProjectFilePath();
   }
 
 
-  @Deprecated
   @Nullable
   public VirtualFile getProjectFile() {
-    LOG.warn(
-      MessageFormat.format(DEPRECATED_MESSAGE, "ProjectImpl.getProjectFile()"),
-      new Throwable());
     return getStateStore().getProjectFile();
   }
 
@@ -228,12 +220,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return isDisposed() ? null : getStateStore().getLocation();
   }
 
-  @Deprecated
   @Nullable
   public VirtualFile getWorkspaceFile() {
-    LOG.warn(
-      MessageFormat.format(DEPRECATED_MESSAGE, "ProjectImpl.getWorkspaceFile()"),
-      new Throwable());
     return getStateStore().getWorkspaceFile();
   }
 

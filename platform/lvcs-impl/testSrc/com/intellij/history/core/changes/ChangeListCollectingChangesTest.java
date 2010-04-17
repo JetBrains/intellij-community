@@ -23,10 +23,10 @@ import java.util.List;
 public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   @Test
   public void tesChangesForFile() {
-    applyAndAdd(cs("1", new CreateFileChange(1, "file", null, -1, false)));
-    applyAndAdd(cs("2", new ContentChange("file", null, -1)));
+    addChangeSet(facade, "1", createFile(r, "file"));
+    addChangeSet(facade, "2", changeContent(r, "file", null));
 
-    List<Change> result = getChangesFor("file");
+    List<ChangeSet> result = getChangesFor("file");
 
     assertEquals(2, result.size());
 
@@ -36,25 +36,25 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testSeveralChangesForSameFileInOneChangeSet() {
-    applyAndAdd(cs(new CreateFileChange(1, "file", null, -1, false), new ContentChange("file", null, -1)));
+    addChangeSet(facade, createFile(r, "file"), changeContent(r, "file", null));
 
     assertEquals(1, getChangesFor("file").size());
   }
 
   @Test
   public void testChangeSetsWithChangesForAnotherFile() {
-    applyAndAdd(cs(new CreateFileChange(1, "file1", null, -1, false), new CreateFileChange(2, "file2", null, -1, false)));
+    addChangeSet(facade, createFile(r, "file1"), createFile(r, "file2"));
 
     assertEquals(1, getChangesFor("file1").size());
   }
 
   @Test
   public void testDoesNotIncludeNonrelativeChangeSet() {
-    applyAndAdd(cs("1", new CreateFileChange(1, "file1", null, -1, false)));
-    applyAndAdd(cs("2", new CreateFileChange(2, "file2", null, -1, false)));
-    applyAndAdd(cs("3", new ContentChange("file1", null, -1)));
+    addChangeSet(facade, "1", createFile(r, "file1"));
+    addChangeSet(facade, "2", createFile(r, "file2"));
+    addChangeSet(facade, "3", changeContent(r, "file1", null));
 
-    List<Change> result = getChangesFor("file1");
+    List<ChangeSet> result = getChangesFor("file1");
     assertEquals(2, result.size());
 
     assertEquals("3", result.get(0).getName());
@@ -63,20 +63,20 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testChangeSetsForDirectories() {
-    applyAndAdd(cs(new CreateDirectoryChange(1, "dir")));
-    applyAndAdd(cs(new CreateFileChange(2, "dir/file", null, -1, false)));
+    add(facade, createDirectory(r, "dir"));
+    add(facade, createFile(r, "dir/file"));
 
     assertEquals(2, getChangesFor("dir").size());
   }
 
   @Test
   public void testChangeSetsForDirectoriesWithFilesMovedAround() {
-    applyAndAdd(cs("1", new CreateDirectoryChange(1, "dir1"), new CreateDirectoryChange(2, "dir2")));
-    applyAndAdd(cs("2", new CreateFileChange(3, "dir1/file", null, -1, false)));
-    applyAndAdd(cs("3", new MoveChange("dir1/file", "dir2")));
+    addChangeSet(facade, "1", createDirectory(r, "dir1"), createDirectory(r, "dir2"));
+    addChangeSet(facade, "2", createFile(r, "dir1/file"));
+    addChangeSet(facade, "3", move(r, "dir1/file", "dir2"));
 
-    List<Change> cc1 = getChangesFor("dir1");
-    List<Change> cc2 = getChangesFor("dir2");
+    List<ChangeSet> cc1 = getChangesFor("dir1");
+    List<ChangeSet> cc2 = getChangesFor("dir2");
 
     assertEquals(3, cc1.size());
     assertEquals("3", cc1.get(0).getName());
@@ -90,71 +90,75 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testChangeSetsForMovedFiles() {
-    applyAndAdd(cs(new CreateDirectoryChange(1, "dir1"), new CreateDirectoryChange(2, "dir2")));
+    addChangeSet(facade, createDirectory(r, "dir1"), createDirectory(r, "dir2"));
 
-    applyAndAdd(cs(new CreateFileChange(3, "dir1/file", null, -1, false)));
-    applyAndAdd(cs(new MoveChange("dir1/file", "dir2")));
+    add(facade, createFile(r, "dir1/file"));
+    add(facade, move(r, "dir1/file", "dir2"));
 
     assertEquals(2, getChangesFor("dir2/file").size());
   }
 
   @Test
   public void testChangingParentChangesItsChildren() {
-    applyAndAdd(cs(new CreateDirectoryChange(1, "d")));
-    applyAndAdd(cs(new CreateFileChange(2, "d/file", null, -1, false)));
+    add(facade, createDirectory(r, "d"));
+    add(facade, createFile(r, "d/file"));
 
     assertEquals(1, getChangesFor("d/file").size());
 
-    applyAndAdd(cs(new RenameChange("d", "dd")));
+    add(facade, rename(r, "d", "dd"));
 
     assertEquals(2, getChangesFor("dd/file").size());
   }
 
   @Test
   public void testChangingPreviousParentDoesNotChangeItsChildren() {
-    applyAndAdd(cs(new CreateDirectoryChange(1, "d1")));
-    applyAndAdd(cs(new CreateDirectoryChange(2, "d2")));
-    applyAndAdd(cs(new CreateFileChange(3, "d1/file", null, -1, false)));
+    add(facade, createDirectory(r, "d1"));
+    add(facade, createDirectory(r, "d2"));
+    add(facade, createFile(r, "d1/file"));
 
-    applyAndAdd(cs(new MoveChange("d1/file", "d2")));
+    add(facade, move(r, "d1/file", "d2"));
     assertEquals(2, getChangesFor("d2/file").size());
 
-    applyAndAdd(cs(new RenameChange("d1", "d11")));
+    add(facade, rename(r, "d1", "d11"));
     assertEquals(2, getChangesFor("d2/file").size());
   }
 
   @Test
   public void testDoesNotIncludePreviousParentChanges() {
-    applyAndAdd(cs(new CreateDirectoryChange(1, "d")));
-    applyAndAdd(cs(new RenameChange("d", "dd")));
-    applyAndAdd(cs(new CreateFileChange(2, "dd/f", null, -1, false)));
+    add(facade, createDirectory(r, "dir"));
+    add(facade, rename(r, "dir", "dir2"));
+    add(facade, createFile(r, "dir2/file"));
 
-    assertEquals(1, getChangesFor("dd/f").size());
+    assertEquals(1, getChangesFor("dir2/file").size());
   }
 
   @Test
   public void testDoesNotIncludePreviousChangesForNewParent() {
-    applyAndAdd(cs(new CreateFileChange(1, "file", null, -1, false)));
-    applyAndAdd(cs(new CreateDirectoryChange(2, "dir")));
-    applyAndAdd(cs(new MoveChange("file", "dir")));
+    add(facade, createDirectory(r, "dir1"));
+    add(facade, createFile(r, "dir1/file"));
+    add(facade, createDirectory(r, "dir2"));
+    add(facade, rename(r, "dir2", "dir3"));
+    add(facade, move(r, "dir1/file", "dir3"));
 
-    assertEquals(2, getChangesFor("dir/file").size());
+    assertEquals(2, getChangesFor("dir3/file").size());
   }
 
   @Test
   public void testDoesNotIncludePreviousLabels() {
-    applyAndAdd(cs(new PutLabelChange(null, -1)));
-    applyAndAdd(cs(new CreateFileChange(1, "file", null, -1, false)));
+    facade.putUserLabel(null, null);
+    add(facade, createFile(r, "file"));
     assertEquals(1, getChangesFor("file").size());
   }
 
   @Test
   public void testChangesForComplexMovingCase() {
-    applyAndAdd(cs(new CreateDirectoryChange(1, "d1"), new CreateFileChange(2, "d1/file", null, -1, false), new CreateDirectoryChange(3, "d1/d11"),
-                   new CreateDirectoryChange(4, "d1/d12"), new CreateDirectoryChange(5, "d2")));
-
-    applyAndAdd(cs(new MoveChange("d1/file", "d1/d11")));
-    applyAndAdd(cs(new MoveChange("d1/d11/file", "d1/d12")));
+    addChangeSet(facade, createDirectory(r, "d1"),
+                 createFile(r, "d1/file"),
+                 createDirectory(r, "d1/d11"),
+                 createDirectory(r, "d1/d12"),
+                 createDirectory(r, "d2"));
+    add(facade, move(r, "d1/file", "d1/d11"));
+    add(facade, move(r, "d1/d11/file", "d1/d12"));
 
     assertEquals(3, getChangesFor("d1").size());
     assertEquals(3, getChangesFor("d1/d12/file").size());
@@ -162,7 +166,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     assertEquals(2, getChangesFor("d1/d12").size());
     assertEquals(1, getChangesFor("d2").size());
 
-    applyAndAdd(cs(new MoveChange("d1/d12", "d2")));
+    add(facade, new MoveChange(nextId(), "d2/d12", "d1"));
 
     assertEquals(4, getChangesFor("d1").size());
     assertEquals(4, getChangesFor("d2/d12/file").size());
@@ -172,61 +176,54 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testChangesForFileMovedIntoCreatedDir() {
-    Change cs1 = cs(new CreateFileChange(1, "file", null, -1, false));
-    Change cs2 = cs(new CreateDirectoryChange(2, "dir"));
-    Change cs3 = cs(new MoveChange("file", "dir"));
-    applyAndAdd(cs1, cs2, cs3);
+    add(facade, createDirectory(r, "dir1"));
 
-    assertEquals(array(cs3, cs1), getChangesFor("dir/file"));
-    assertEquals(array(cs3, cs2), getChangesFor("dir"));
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "dir1/file"));
+    ChangeSet cs2 = addChangeSet(facade, createDirectory(r, "dir2"));
+    ChangeSet cs3 = addChangeSet(facade, new MoveChange(nextId(), "dir2/file", "dir1"));
+
+    assertEquals(array(cs3, cs1), getChangesFor("dir2/file"));
+    assertEquals(array(cs3, cs2), getChangesFor("dir2"));
   }
 
   @Test
   public void testChangesForRestoreFile() {
-    Change cs1 = cs(new CreateFileChange(1, "file", null, -1, false));
-    Change cs2 = cs(new ContentChange("file", null, -1));
-    Change cs3 = cs(new DeleteChange("file"));
-    Change cs4 = cs(new CreateFileChange(1, "file", null, -1, false));
-    Change cs5 = cs(new ContentChange("file", null, -1));
-
-    applyAndAdd(cs1, cs2, cs3, cs4, cs5);
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "file"));
+    ChangeSet cs2 = addChangeSet(facade, changeContent(r, "file", ""));
+    ChangeSet cs3 = addChangeSet(facade, delete(r, "file"));
+    ChangeSet cs4 = addChangeSet(facade, createFile(r, "file"));
+    ChangeSet cs5 = addChangeSet(facade, changeContent(r, "file", "aaa"));
 
     assertEquals(array(cs5, cs4, cs2, cs1), getChangesFor("file"));
   }
 
   @Test
   public void testChangesForFileRestoredSeveralTimes() {
-    Change cs1 = cs(new CreateFileChange(1, "file", null, -1, false));
-    Change cs2 = cs(new DeleteChange("file"));
-    Change cs3 = cs(new CreateFileChange(1, "file", null, -1, false));
-    Change cs4 = cs(new DeleteChange("file"));
-    Change cs5 = cs(new CreateFileChange(1, "file", null, -1, false));
-
-    applyAndAdd(cs1, cs2, cs3, cs4, cs5);
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "file"));
+    ChangeSet cs2 = addChangeSet(facade, delete(r, "file"));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, "file"));
+    ChangeSet cs4 = addChangeSet(facade, delete(r, "file"));
+    ChangeSet cs5 = addChangeSet(facade, createFile(r, "file"));
 
     assertEquals(array(cs5, cs3, cs1), getChangesFor("file"));
   }
 
   @Test
   public void testChangesForRestoredDirectory() {
-    Change cs1 = cs(new CreateDirectoryChange(1, "dir"));
-    Change cs2 = cs(new DeleteChange("dir"));
-    Change cs3 = cs(new CreateDirectoryChange(1, "dir"));
-
-    applyAndAdd(cs1, cs2, cs3);
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
+    ChangeSet cs2 = addChangeSet(facade, delete(r, "dir"));
+    ChangeSet cs3 = addChangeSet(facade, createDirectory(r, "dir"));
 
     assertEquals(array(cs3, cs1), getChangesFor("dir"));
   }
 
   @Test
   public void testChangesForRestoredDirectoryWithRestoredChildren() {
-    Change cs1 = cs(new CreateDirectoryChange(1, "dir"));
-    Change cs2 = cs(new CreateFileChange(2, "dir/file", null, -1, false));
-    Change cs3 = cs(new DeleteChange("dir"));
-    Change cs4 = cs(new CreateDirectoryChange(1, "dir"));
-    Change cs5 = cs(new CreateFileChange(2, "dir/file", null, -1, false));
-
-    applyAndAdd(cs1, cs2, cs3, cs4, cs5);
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
+    ChangeSet cs2 = addChangeSet(facade, createFile(r, "dir/file"));
+    ChangeSet cs3 = addChangeSet(facade, delete(r, "dir"));
+    ChangeSet cs4 = addChangeSet(facade, createDirectory(r, "dir"));
+    ChangeSet cs5 = addChangeSet(facade, createFile(r, "dir/file"));
 
     assertEquals(array(cs5, cs4, cs2, cs1), getChangesFor("dir"));
     assertEquals(array(cs5, cs2), getChangesFor("dir/file"));
@@ -234,97 +231,72 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testChangesForFileIfThereWereSomeDeletedFilesBeforeItsCreation() {
-    Change cs1 = cs(new CreateFileChange(1, "f1", null, -1, false));
-    Change cs2 = cs(new DeleteChange("f1"));
-    Change cs3 = cs(new CreateFileChange(2, "f2", null, -1, false));
-
-    applyAndAdd(cs1, cs2, cs3);
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "f1"));
+    ChangeSet cs2 = addChangeSet(facade, delete(r, "f1"));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, "f2"));
 
     assertEquals(array(cs3), getChangesFor("f2"));
   }
 
   @Test
   public void testDoesNotIncludeChangeSetIfFileWasRestoredAndDeletedInOneChangeSet() {
-    Change cs1 = cs(new CreateFileChange(1, "f", null, -1, false));
-    Change cs2 = cs(new DeleteChange("f"));
-    Change cs3 = cs(new CreateFileChange(1, "f", null, -1, false), new DeleteChange("f"));
-    Change cs4 = cs(new CreateFileChange(1, "f", null, -1, false));
-
-    applyAndAdd(cs1, cs2, cs3, cs4);
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "f"));
+    ChangeSet cs2 = addChangeSet(facade, delete(r, "f"));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, "f"), delete(r, "f"));
+    ChangeSet cs4 = addChangeSet(facade, createFile(r, "f"));
 
     assertEquals(array(cs4, cs1), getChangesFor("f"));
   }
 
   @Test
-  public void testIncludingLabelsChanges() {
-    Change cs1 = cs(new CreateFileChange(1, "f1", null, -1, false));
-    Change cs2 = cs(new CreateFileChange(2, "f2", null, -1, false));
-    Change cs3 = new PutEntryLabelChange("f1", "label", -1);
-    Change cs4 = new PutLabelChange("label", -1);
-
-    applyAndAdd(cs1, cs2, cs3, cs4);
-
-    assertEquals(array(cs4, cs3, cs1), getChangesFor("f1"));
-    assertEquals(array(cs4, cs2), getChangesFor("f2"));
-  }
-
-  @Test
   public void testIncludingChangeSetsWithLabelsInside() {
-    Change cs1 = cs(new CreateFileChange(1, "f", null, -1, false));
-    Change cs2 = cs(new PutLabelChange("label", -1));
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "f"));
+    ChangeSet cs2 = addChangeSet(facade, new PutLabelChange(nextId(), "label", "project"));
 
-    applyAndAdd(cs1, cs2);
     assertEquals(array(cs2, cs1), getChangesFor("f"));
   }
 
   @Test
   public void testDoesNotSplitChangeSetsWithLabelsInside() {
-    Change cs1 = cs(new CreateFileChange(1, "f", null, -1, false));
-    Change cs2 =
-      cs(new ContentChange("f", null, -1), new PutLabelChange("label", -1), new ContentChange("f", null, -1));
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "f"));
+    ChangeSet cs2 =
+      addChangeSet(facade, changeContent(r, "f", null, -1), new PutLabelChange(nextId(), "label", "project"), changeContent(r, "f", null, -1));
 
-    applyAndAdd(cs1, cs2);
     assertEquals(array(cs2, cs1), getChangesFor("f"));
   }
 
   @Test
   public void testDoesNotIncludeChangesMadeBetweenDeletionAndRestore() {
-    Change cs1 = cs(new CreateFileChange(1, "file", null, -1, false));
-    Change cs2 = cs(new DeleteChange("file"));
-    Change cs3 = cs(new PutLabelChange(null, -1));
-    Change cs4 = cs(new CreateFileChange(1, "file", null, -1, false));
-
-    applyAndAdd(cs1, cs2, cs3, cs4);
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, "file"));
+    ChangeSet cs2 = addChangeSet(facade, delete(r, "file"));
+    ChangeSet cs3 = addChangeSet(facade, new PutLabelChange(nextId(), "", "project"));
+    ChangeSet cs4 = addChangeSet(facade, createFile(r, "file"));
 
     assertEquals(array(cs4, cs1), getChangesFor("file"));
   }
 
   @Test
   public void testDoesNotIgnoreDeletionOfChildren() {
-    Change cs1 = cs(new CreateDirectoryChange(1, "dir"));
-    Change cs2 = cs(new CreateFileChange(2, "dir/file", null, -1, false));
-    Change cs3 = cs(new DeleteChange("dir/file"));
-
-    applyAndAdd(cs1, cs2, cs3);
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
+    ChangeSet cs2 = addChangeSet(facade, createFile(r, "dir/file"));
+    ChangeSet cs3 = addChangeSet(facade, delete(r, "dir/file"));
 
     assertEquals(array(cs3, cs2, cs1), getChangesFor("dir"));
   }
 
   @Test
-  public void testChangesForRestoredFileWhenTHereWereDeletionOfParentAfterDeletionOfTheFile() {
-    Change cs1 = cs(new CreateDirectoryChange(1, "dir1"));
-    Change cs2 = cs(new CreateDirectoryChange(2, "dir1/dir2"));
-    Change cs3 = cs(new CreateFileChange(3, "dir1/dir2/file", null, -1, false));
+  public void testChangesForRestoredFileWhenParentWasDeletedAfterDeletionOfTheFile() {
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir1"));
+    ChangeSet cs2 = addChangeSet(facade, createDirectory(r, "dir1/dir2"));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, "dir1/dir2/file"));
 
-    Change cs4 = cs(new DeleteChange("dir1/dir2/file"));
-    Change cs5 = cs(new DeleteChange("dir1/dir2"));
-    Change cs6 = cs(new DeleteChange("dir1"));
+    ChangeSet cs4 = addChangeSet(facade, delete(r, "dir1/dir2/file"));
+    ChangeSet cs5 = addChangeSet(facade, delete(r, "dir1/dir2"));
+    ChangeSet cs6 = addChangeSet(facade, delete(r, "dir1"));
 
-    Change cs7 = cs(new CreateDirectoryChange(1, "dir1"),
-                    new CreateDirectoryChange(2, "dir1/dir2"),
-                    new CreateFileChange(3, "dir1/dir2/file", null, -1, false));
-
-    applyAndAdd(cs1, cs2, cs3, cs4, cs5, cs6, cs7);
+    ChangeSet cs7 = addChangeSet(facade, createDirectory(r, "dir1"),
+                                 createDirectory(r, "dir1/dir2"),
+                                 createFile(r, "dir1/dir2/file"));
 
     assertEquals(array(cs7, cs3), getChangesFor("dir1/dir2/file"));
     assertEquals(array(cs7, cs4, cs3, cs2), getChangesFor("dir1/dir2"));
@@ -332,28 +304,58 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   }
 
   @Test
-  public void testDoesNotIncludeChangesIfFileAndItsParentWasDeletedAndRestoredInOneChangeset() {
-    Change cs1 = cs(new CreateDirectoryChange(1, "dir"),
-                    new CreateFileChange(2, "dir/file", null, -1, false));
+  public void testDoesNotIncludeChangesIfFileAndItsParentWasDeletedAndRestoredInOneChangeSet() {
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"),
+                                 createFile(r, "dir/file"));
 
-    Change cs2 = cs(new DeleteChange("dir/file"),
-                    new DeleteChange("dir"));
+    ChangeSet cs2 = addChangeSet(facade, delete(r, "dir/file"),
+                                 delete(r, "dir"));
 
-    Change cs3 = cs(new CreateDirectoryChange(1, "dir"),
-                    new CreateFileChange(2, "dir/file", null, -1, false),
-                    new DeleteChange("dir/file"),
-                    new DeleteChange("dir"));
+    ChangeSet cs3 = addChangeSet(facade, createDirectory(r, "dir"),
+                                 createFile(r, "dir/file"),
+                                 delete(r, "dir/file"),
+                                 delete(r, "dir"));
 
-    Change cs4 = cs(new CreateDirectoryChange(1, "dir"),
-                    new CreateFileChange(2, "dir/file", null, -1, false));
-
-    applyAndAdd(cs1, cs2, cs3, cs4);
+    ChangeSet cs4 = addChangeSet(facade, createDirectory(r, "dir"),
+                                 createFile(r, "dir/file"));
 
     assertEquals(array(cs4, cs1), getChangesFor("dir/file"));
     assertEquals(array(cs4, cs1), getChangesFor("dir"));
   }
 
-  private List<Change> getChangesFor(String path) {
-    return cl.getChangesFor(r, path);
+  @Test
+  public void testFilteredChanges() throws Exception {
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
+    ChangeSet cs2 = addChangeSet(facade, createFile(r, "dir/FooBar"));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, "dir/BarBaz"));
+
+    assertEquals(array(cs2), getChangesFor("dir", "f"));
+    assertEquals(array(cs2), getChangesFor("dir", "foo"));
+    assertEquals(array(cs2), getChangesFor("dir", "FB"));
+    assertEquals(array(cs3), getChangesFor("dir", "bar"));
+    assertEquals(array(), getChangesFor("dir", "Baz"));
+    assertEquals(array(cs3, cs2), getChangesFor("dir", "*Bar*"));
+  }
+
+  @Test
+  public void testFilteredChangesDoesnTIncludeChanges() throws Exception {
+    ChangeSet cs1 = addChangeSet(facade, createDirectory(r, "dir"));
+    ChangeSet cs2 = addChangeSet(facade, createFile(r, "dir/FooBar"));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, "dir/BarBaz"));
+
+    assertEquals(array(cs2), getChangesFor("dir", "f"));
+    assertEquals(array(cs2), getChangesFor("dir", "foo"));
+    assertEquals(array(cs2), getChangesFor("dir", "FB"));
+    assertEquals(array(cs3), getChangesFor("dir", "bar"));
+    assertEquals(array(), getChangesFor("dir", "Baz"));
+    assertEquals(array(cs3, cs2), getChangesFor("dir", "*Bar*"));
+  }
+
+  private List<ChangeSet> getChangesFor(String path) {
+    return getChangesFor(path, null);
+  }
+
+  private List<ChangeSet> getChangesFor(String path, String pattern) {
+    return collectChanges(facade, path, "project", pattern);
   }
 }

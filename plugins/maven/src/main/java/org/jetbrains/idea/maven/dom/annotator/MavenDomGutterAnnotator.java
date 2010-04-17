@@ -53,6 +53,9 @@ public class MavenDomGutterAnnotator implements Annotator {
       if (domElement != null) {
         MavenDomProjectModel model = domElement.getParentOfType(MavenDomProjectModel.class, false);
         if (model != null) {
+          MavenProject mavenProject = MavenDomUtil.findProject(model);
+          if (mavenProject != null) return mavenProject.getDisplayName();
+
           String name = model.getName().getStringValue();
           if (!StringUtil.isEmptyOrSpaces(name)) {
             return name;
@@ -183,15 +186,8 @@ public class MavenDomGutterAnnotator implements Annotator {
   private static void annotateMavenDomProjectChildren(MavenDomProjectModel model, AnnotationHolder holder) {
     MavenProject mavenProject = MavenDomUtil.findProject(model);
     if (mavenProject != null) {
-      final Project project = model.getManager().getProject();
-      Set<MavenProject> inheritors = MavenProjectsManager.getInstance(project).findInheritors(mavenProject);
+      Set<MavenDomProjectModel> children = MavenDomProjectProcessorUtils.getChildrenProjects(model);
 
-
-      List<MavenDomProjectModel> children = ContainerUtil.mapNotNull(inheritors, new Function<MavenProject, MavenDomProjectModel>() {
-        public MavenDomProjectModel fun(MavenProject childProject) {
-          return MavenDomUtil.getMavenDomProjectModel(project, childProject.getFile());
-        }
-      });
       if (children.size() > 0) {
         NavigationGutterIconBuilder.create(MavenIcons.CHILDREN_PROJECTS, MAVEN_PROJECT_CONVERTER).
           setTargets(children).

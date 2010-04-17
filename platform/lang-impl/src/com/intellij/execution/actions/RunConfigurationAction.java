@@ -103,7 +103,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
 
   private static void setConfigurationIcon(final Presentation presentation, final RunnerAndConfigurationSettings settings, final Project project) {
     try {
-      presentation.setIcon(ExecutionUtil.getConfigurationIcon(project, settings));
+      presentation.setIcon(ProgramRunnerUtil.getConfigurationIcon(project, settings));
     }
     catch (IndexNotReadyException ignored) {
     }

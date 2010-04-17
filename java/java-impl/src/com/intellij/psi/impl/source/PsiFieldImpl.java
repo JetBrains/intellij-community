@@ -33,6 +33,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
@@ -54,7 +55,11 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   private volatile Object myCachedInitializerValue = null; // PsiExpression on constant value for literal
 
   public PsiFieldImpl(final PsiFieldStub stub) {
-    super(stub, JavaStubElementTypes.FIELD);
+    this(stub, JavaStubElementTypes.FIELD);
+  }
+
+  protected PsiFieldImpl(final PsiFieldStub stub, final IStubElementType type) {
+    super(stub, type);
   }
 
   public PsiFieldImpl(final ASTNode node) {

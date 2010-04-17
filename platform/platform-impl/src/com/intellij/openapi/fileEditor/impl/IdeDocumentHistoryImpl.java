@@ -279,16 +279,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     final VirtualFile file = placeInfo.getFile();
     if (myChangedFilesInCurrentCommand.contains(file)) {
       myRecentlyChangedFiles.register(file);
-    }
 
-    myCurrentChangePlace = placeInfo;
-    if (!myChangePlaces.isEmpty()) {
-      final PlaceInfo lastInfo = myChangePlaces.get(myChangePlaces.size() - 1);
-      if (isSame(placeInfo, lastInfo)) {
-        myChangePlaces.removeLast();
+      myCurrentChangePlace = placeInfo;
+      if (!myChangePlaces.isEmpty()) {
+        final PlaceInfo lastInfo = myChangePlaces.get(myChangePlaces.size() - 1);
+        if (isSame(placeInfo, lastInfo)) {
+          myChangePlaces.removeLast();
+        }
       }
+      myCurrentIndex = myStartIndex + myChangePlaces.size();
     }
-    myCurrentIndex = myStartIndex + myChangePlaces.size();
   }
 
   private void pushCurrentChangePlace() {

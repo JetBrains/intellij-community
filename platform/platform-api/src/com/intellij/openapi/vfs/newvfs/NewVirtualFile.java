@@ -143,8 +143,8 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
 
   public abstract Collection<VirtualFile> getCachedChildren();
 
-  @NotNull
-  public abstract Collection<VirtualFile> getInDbChildren();
+  /** iterated children will NOT contain NullVirtualFile.INSTANCE */
+  public abstract Iterable<VirtualFile> iterInDbChildren();
 
   public abstract void setFlag(int flag_mask, boolean value);
 

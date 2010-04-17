@@ -833,10 +833,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     if (file.getFileSystem() instanceof LocalFileSystem) {
       if (file.isDirectory()) {
         if (dbOnly) {
-          for (VirtualFile child : ((NewVirtualFile)file).getInDbChildren()) {
-            if (NullVirtualFile.INSTANCE != child) {
-              processRecursively(child, true, processor);
-            }
+          for (VirtualFile child : ((NewVirtualFile)file).iterInDbChildren()) {
+            processRecursively(child, true, processor);
           }
         }
         else {

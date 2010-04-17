@@ -18,7 +18,6 @@ package com.intellij.lang.ant.dom;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReferenceInjector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 */
 class AntReferenceInjector implements DomReferenceInjector {
   public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
-    final DomElement element = context.getInvocationElement();
-    return null;
+    //final DomElement element = context.getInvocationElement();
+    return unresolvedText; // todo
   }
 
   @NotNull

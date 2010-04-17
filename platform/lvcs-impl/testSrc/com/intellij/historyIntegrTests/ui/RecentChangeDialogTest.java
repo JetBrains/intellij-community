@@ -20,6 +20,7 @@ import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.history.integration.ui.views.RecentChangeDialog;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -27,36 +28,38 @@ import java.io.IOException;
 public class RecentChangeDialogTest extends LocalHistoryUITestCase {
   public void testDialogWork() throws IOException {
     getVcs().beginChangeSet();
-    root.createChildData(null, "f.txt");
+    myRoot.createChildData(null, "f.txt");
     getVcs().endChangeSet("change");
 
-    RecentChange c = getVcs().getRecentChanges().get(0);
+    RecentChange c = getVcs().getRecentChanges(getRootEntry()).get(0);
     RecentChangeDialog d = null;
 
     try {
-      d = new RecentChangeDialog(gateway, c);
+      d = new RecentChangeDialog(myProject, myGateway, c);
     }
     finally {
-      if (d != null) d.close(0);
+      if (d != null) {
+        Disposer.dispose(d);
+      }
     }
   }
 
   public void testRevertChange() throws IOException {
     getVcs().beginChangeSet();
-    VirtualFile f = root.createChildData(null, "f1.txt");
+    myRoot.createChildData(null, "f1.txt");
     getVcs().endChangeSet("change");
 
     getVcs().beginChangeSet();
-    f.rename(null, "f2.txt");
+    myRoot.createChildData(null, "f2.txt");
     getVcs().endChangeSet("another change");
 
-    RecentChange c = getVcs().getRecentChanges().get(1);
-    RecentChangeDialogModel m = new RecentChangeDialogModel(gateway, getVcs(), c);
+    RecentChange c = getVcs().getRecentChanges(getRootEntry()).get(1);
+    RecentChangeDialogModel m = new RecentChangeDialogModel(myProject, myGateway, getVcs(), c);
 
     Reverter r = m.createReverter();
     r.revert();
 
-    assertNull(root.findChild("f1.txt"));
-    assertNull(root.findChild("f2.txt"));
+    assertNull(myRoot.findChild("f1.txt"));
+    assertNotNull(myRoot.findChild("f2.txt"));
   }
 }

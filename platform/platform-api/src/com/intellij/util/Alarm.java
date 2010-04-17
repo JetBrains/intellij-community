@@ -223,7 +223,12 @@ public class Alarm implements Disposable {
                 }
               }
               else {
-                task.run();
+                try {
+                  task.run();
+                }
+                catch (Exception e) {
+                  LOG.error(e);
+                }
               }
             }
           };

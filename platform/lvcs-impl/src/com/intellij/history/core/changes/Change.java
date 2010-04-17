@@ -16,76 +16,56 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.Stream;
-import com.intellij.history.core.tree.Entry;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public abstract class Change {
-  public abstract void write(Stream s) throws IOException;
+  private final long myId;
 
-  public String getName() {
-    throw new UnsupportedOperationException();
+  protected Change(long id) {
+    myId = id;
   }
 
-  public long getTimestamp() {
-    throw new UnsupportedOperationException();
+  protected Change(DataInput in) throws IOException {
+    myId = in.readLong();
   }
 
-  public List<Change> getChanges() {
-    return Collections.singletonList(this);
+  public void write(DataOutput out) throws IOException {
+    out.writeLong(myId);
   }
 
-  public abstract void applyTo(Entry r);
+  public abstract boolean affectsPath(String paths);
 
-  public void revertOn(Entry r) {
-    revertOnUpTo(r, null, false);
-  }
+  public abstract boolean affectsProject(String projectId);
 
-  public boolean revertOnUpTo(Entry r, Change upTo, boolean revertTargetChange) {
-    if (!revertTargetChange && this == upTo) return false;
-    doRevertOn(r);
-    return this != upTo;
-  }
+  public abstract boolean affectsMatching(Pattern pattern);
 
-  protected abstract void doRevertOn(Entry root);
-
-  public boolean canRevertOn(Entry r) {
-    return true;
-  }
-
-  public boolean affects(Entry e) {
-    return affects(e.getIdPath());
-  }
-
-  protected abstract boolean affects(IdPath... pp);
-
-  public boolean affectsSameAs(List<Change> cc) {
-    return false;
-  }
-
-  public abstract boolean affectsOnlyInside(Entry e);
-
-  public abstract boolean isCreationalFor(Entry e);
+  public abstract boolean isCreationalFor(String path);
 
   public abstract List<Content> getContentsToPurge();
 
-  public boolean isLabel() {
-    return false;
+  public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {
   }
 
-  public boolean isSystemLabel() {
-    return false;
+  @Override
+  public final boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Change change = (Change)o;
+
+    if (myId != change.myId) return false;
+
+    return true;
   }
 
-  public boolean isFileContentChange() {
-    return false;
-  }
-
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+  @Override
+  public final int hashCode() {
+    return (int)(myId ^ (myId >>> 32));
   }
 }

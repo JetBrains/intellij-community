@@ -62,7 +62,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     LocalHistoryAction action = LocalHistoryAction.NULL;
     if (actionName != null) {
-      action = LocalHistory.startAction(project, actionName);
+      action = LocalHistory.getInstance().startAction(actionName);
     }
 
     try {

@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 

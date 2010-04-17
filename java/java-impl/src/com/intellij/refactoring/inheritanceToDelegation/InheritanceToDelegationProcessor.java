@@ -384,7 +384,9 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     if (!myIsInnerClassNeeded) return;
 
     PsiClass innerClass = myFactory.createClass(myInnerClassName);
-    final PsiJavaCodeReferenceElement baseClassReferenceElement = myFactory.createClassReferenceElement(myBaseClass);
+    final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(myBaseClass, myClass, PsiSubstitutor.EMPTY);
+    final PsiClassType superClassType = myFactory.createType(myBaseClass, superClassSubstitutor);
+    final PsiJavaCodeReferenceElement baseClassReferenceElement = myFactory.createReferenceElementByType(superClassType);
     if (!myBaseClass.isInterface()) {
       innerClass.getExtendsList().add(baseClassReferenceElement);
     } else {

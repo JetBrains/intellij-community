@@ -17,11 +17,14 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
 public class FieldElement extends CompositeElement{
@@ -102,5 +105,12 @@ public class FieldElement extends CompositeElement{
       }
       return ChildRoleBase.NONE;
     }
+  }
+
+   @Override
+  public ASTNode copyElement() {
+    final CharTable table = SharedImplUtil.findCharTableByTree(this);
+    final PsiClass psiClass = ((PsiField)getPsi()).getContainingClass();
+    return psiClass != null ? ChangeUtil.copyElement(this, psiClass.getTypeParameterList(), table) : super.copyElement();
   }
 }

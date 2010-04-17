@@ -231,7 +231,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   public String suggestedName() {
-    return ExecutionUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
+    return ProgramRunnerUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
   }
 
   public void setMainClassName(final String qualifiedName) {

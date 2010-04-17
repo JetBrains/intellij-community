@@ -15,6 +15,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,9 +30,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
@@ -67,7 +67,10 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableForFile(PsiFile file) {
-    return MavenDomUtil.isMavenFile(file) ;
+    VirtualFile virtualFile = file.getVirtualFile();
+    return MavenDomUtil.isMavenFile(file)
+           && virtualFile != null
+           && virtualFile.getFileSystem() != JarFileSystem.getInstance();
   }
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
@@ -83,18 +86,30 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       if (selectedElement != null) {
         String stringValue = selectedElement.getText();
         if (stringValue != null) {
+
           final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
           final String selectedString = editor.getSelectionModel().getSelectedText();
 
-          if (model == null || StringUtil.isEmptyOrSpaces(selectedString)) return;
+          Set<TextRange> ranges = getPropertiesTextRanges(stringValue);
+          int offsetInElement = startOffset - selectedElement.getTextOffset();
+
+          if (model == null ||
+              StringUtil.isEmptyOrSpaces(selectedString) ||
+              isInsideTextRanges(ranges, offsetInElement, offsetInElement + selectedString.length())) {
+            return;
+          }
 
           IntroducePropertyDialog dialog = new IntroducePropertyDialog(project, selectedElement, model, null, selectedString);
           dialog.show();
 
           if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-            final String enteredName = dialog.getEnteredName();
-            final String replaceWith = PREFIX + enteredName + SUFFIX;
+            final String propertyName = dialog.getEnteredName();
+            final String replaceWith = PREFIX + propertyName + SUFFIX;
             final MavenDomProjectModel selectedProject = dialog.getSelectedProject();
+
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFiles(file, selectedProject)).hasReadonlyFiles()) {
+              return;
+            }
 
             new WriteCommandAction(project) {
               @Override
@@ -102,16 +117,32 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
                 editor.getDocument().replaceString(startOffset, endOffset, replaceWith);
                 PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-                createMavenProperty(selectedProject, enteredName, selectedString);
+                createMavenProperty(selectedProject, propertyName, selectedString);
 
                 PsiDocumentManager.getInstance(project).commitAllDocuments();
               }
             }.execute();
 
-            showFindUsages(project, selectedString, replaceWith, selectedProject);
+            showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
           }
         }
       }
+    }
+
+    private static VirtualFile[] getFiles(PsiFile file, MavenDomProjectModel model) {
+      Set<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        virtualFiles.add(virtualFile);
+      }
+
+      XmlElement xmlElement = model.getXmlElement();
+      if (xmlElement != null) {
+        VirtualFile vf = xmlElement.getContainingFile().getVirtualFile();
+        if (vf != null) virtualFiles.add(vf);
+      }
+
+      return virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
     }
 
     private static void createMavenProperty(@NotNull MavenDomProjectModel model,
@@ -126,6 +157,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     }
 
     private static void showFindUsages(@NotNull Project project,
+                                       @NotNull String propertyName,
                                        @NotNull String selectedString,
                                        @NotNull String replaceWith,
                                        @NotNull MavenDomProjectModel model) {
@@ -142,7 +174,8 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       final FindModel findModelCopy = (FindModel)findModel.clone();
 
       ReplaceInProjectManager.getInstance(project)
-        .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, selectedString), findModelCopy, presentation, processPresentation,
+        .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, propertyName, selectedString), findModelCopy, presentation,
+                             processPresentation,
                              findManager);
 
     }
@@ -180,10 +213,12 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
     private static class MyUsageSearcherFactory implements Factory<UsageSearcher> {
       private final MavenDomProjectModel myModel;
+      private final String myPropertyName;
       private final String mySelectedString;
 
-      public MyUsageSearcherFactory(MavenDomProjectModel model, String selectedString) {
+      public MyUsageSearcherFactory(MavenDomProjectModel model, String propertyName, String selectedString) {
         myModel = model;
+        myPropertyName = propertyName;
         mySelectedString = selectedString;
 
       }
@@ -197,28 +232,31 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 collectUsages(myModel);
-                for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.collectChildrenProjects(myModel)) {
+                for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                   collectUsages(model);
                 }
               }
 
               private void collectUsages(@NotNull MavenDomProjectModel model) {
                 if (model.isValid()) {
-                  XmlElement root = model.getXmlElement();
+                  final XmlElement root = model.getXmlElement();
                   if (root != null) {
-                    root.accept(new XmlElementVisitor() {
+                    root.acceptChildren(new XmlElementVisitor() {
 
                       @Override
                       public void visitXmlText(XmlText text) {
                         XmlTag xmlTag = PsiTreeUtil.getParentOfType(text, XmlTag.class);
-                        if (xmlTag != null && !xmlTag.getName().equals(mySelectedString) ) {
+                        if (xmlTag != null && !xmlTag.getName().equals(myPropertyName)) {
                           usages.addAll(getUsages(text));
                         }
                       }
 
                       @Override
                       public void visitXmlAttributeValue(XmlAttributeValue value) {
-                        usages.addAll(getUsages(value));
+                        XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
+                        if (xmlTag != null && !xmlTag.equals(root)) {
+                          usages.addAll(getUsages(value));
+                        }
                       }
 
                       @Override
@@ -249,13 +287,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
           int start = s.indexOf(mySelectedString);
           while (start >= 0) {
             int end = start + mySelectedString.length();
-            boolean isInsideProperty = false;
-            for (TextRange range : ranges) {
-              if (start >= range.getStartOffset() && end <= range.getEndOffset()) {
-                isInsideProperty = true;
-                break;
-              }
-            }
+            boolean isInsideProperty = isInsideTextRanges(ranges, start, end);
             if (!isInsideProperty) {
               usages.add(new UsageInfo(xmlElement, start, end));
             }
@@ -265,27 +297,41 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         return usages;
       }
 
-      private static Set<TextRange> getPropertiesTextRanges(String s) {
-        Set<TextRange> ranges = new HashSet<TextRange>();
-        int startOffset = s.indexOf(PREFIX);
-        while (startOffset >= 0) {
-          int endOffset = s.indexOf(SUFFIX, startOffset);
-          if (endOffset > startOffset) {
-            if (s.substring(startOffset + PREFIX.length(), endOffset).contains(PREFIX)) {
-              startOffset = s.indexOf(PREFIX, startOffset + 1);
-            }
-            else {
-              ranges.add(new TextRange(startOffset, endOffset));
-              startOffset = s.indexOf(PREFIX, endOffset);
-            }
-          }
-          else {
-            break;
-          }
-        }
 
-        return ranges;
+    }
+  }
+
+  private static Set<TextRange> getPropertiesTextRanges(String s) {
+    Set<TextRange> ranges = new HashSet<TextRange>();
+    int startOffset = s.indexOf(PREFIX);
+    while (startOffset >= 0) {
+      int endOffset = s.indexOf(SUFFIX, startOffset);
+      if (endOffset > startOffset) {
+        if (s.substring(startOffset + PREFIX.length(), endOffset).contains(PREFIX)) {
+          startOffset = s.indexOf(PREFIX, startOffset + 1);
+        }
+        else {
+          ranges.add(new TextRange(startOffset, endOffset));
+          startOffset = s.indexOf(PREFIX, endOffset);
+        }
+      }
+      else {
+        break;
       }
     }
+
+    return ranges;
+  }
+
+  private static boolean isInsideTextRanges(@NotNull Set<TextRange> ranges, int start, int end) {
+    boolean isInsideProperty = false;
+    for (TextRange range : ranges) {
+      if ((start >= range.getStartOffset() && (end <= range.getEndOffset() || start <= range.getEndOffset())) ||
+          (end <= range.getEndOffset() && (end > range.getStartOffset()))) {
+        isInsideProperty = true;
+        break;
+      }
+    }
+    return isInsideProperty;
   }
 }
