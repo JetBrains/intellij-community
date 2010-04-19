@@ -205,7 +205,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             }
           }
           PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
-          setModifiers(field, settings, settings.isDeclareStatic(), occurrences);
+          setModifiers(field, settings, settings.isDeclareStatic());
           if ((anchorMember instanceof PsiField) &&
               anchorMember.hasModifierProperty(PsiModifier.STATIC) == field.hasModifierProperty(PsiModifier.STATIC)) {
             field = (PsiField)destClass.addBefore(field, anchorMember);
@@ -316,7 +316,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return true;
   }
 
-  public static void setModifiers(PsiField field, Settings settings, final boolean declareStatic, PsiExpression[] occurrences) {
+  public static void setModifiers(PsiField field, Settings settings, final boolean declareStatic) {
     if (!settings.isIntroduceEnumConstant()) {
       if (declareStatic) {
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
