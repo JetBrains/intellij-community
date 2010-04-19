@@ -43,7 +43,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -803,7 +803,7 @@ public class DocumentationManager {
       final PsiFile containingFile = psiElement.getContainingFile();
       if (containingFile != null) {
         final VirtualFile virtualFile = containingFile.getVirtualFile();
-        final LibraryOrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
+        final OrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
         if (libraryEntry != null) {
           ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(new NamedLibraryElement(libraryEntry.getOwnerModule(), libraryEntry));
         }
