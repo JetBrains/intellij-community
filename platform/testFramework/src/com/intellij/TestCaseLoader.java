@@ -40,19 +40,18 @@ import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class TestCaseLoader {
+
+  /** Holds name of JVM property that is assumed to hold target test group name. */
+  private static final String TARGET_TEST_GROUP = "idea.test.group";
+
   private final List<Class> myClassList = new ArrayList<Class>();
   private final TestClassesFilter myTestClassesFilter;
   private final String myTestGroupName;
   private final Set<String> blockedTests = new HashSet<String>();
 
   public TestCaseLoader(String classFilterName) {
-    String preconfiguredTestGroup = System.getProperty("idea.test.group");
-    if (StringUtil.isEmpty(preconfiguredTestGroup)) {
-      myTestGroupName = TestClassesFilter.ALL_EXCLUDE_DEFINED;
-    } else {
-      myTestGroupName = preconfiguredTestGroup.trim();
-    }
     InputStream excludedStream = getClass().getClassLoader().getResourceAsStream(classFilterName);
+    myTestGroupName = System.getProperty(TARGET_TEST_GROUP);
     if (excludedStream != null) {
       try {
         myTestClassesFilter = TestClassesFilter.createOn(new InputStreamReader(excludedStream));
@@ -135,7 +134,10 @@ public class TestCaseLoader {
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass) || blockedTests.contains(testCaseClass.getName());
+    if (myTestGroupName != null && !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName)) {
+      return true;
+    }
+    return isBombed(testCaseClass) || blockedTests.contains(testCaseClass.getName());
   }
 
   public static boolean isBombed(final Method method) {
