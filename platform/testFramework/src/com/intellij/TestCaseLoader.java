@@ -46,6 +46,12 @@ public class TestCaseLoader {
   private final Set<String> blockedTests = new HashSet<String>();
 
   public TestCaseLoader(String classFilterName) {
+    String preconfiguredTestGroup = System.getProperty("idea.test.group");
+    if (StringUtil.isEmpty(preconfiguredTestGroup)) {
+      myTestGroupName = TestClassesFilter.ALL_EXCLUDE_DEFINED;
+    } else {
+      myTestGroupName = preconfiguredTestGroup.trim();
+    }
     InputStream excludedStream = getClass().getClassLoader().getResourceAsStream(classFilterName);
     if (excludedStream != null) {
       try {
@@ -59,8 +65,6 @@ public class TestCaseLoader {
           e.printStackTrace();
         }
       }
-
-      myTestGroupName = System.getProperty("idea.test.group");
     }
     else {
       String patterns = System.getProperty("idea.test.patterns");
@@ -70,26 +74,28 @@ public class TestCaseLoader {
       else {
         myTestClassesFilter = TestClassesFilter.EMPTY_CLASSES_FILTER;
       }
-      myTestGroupName = "";
     }
 
-    try {
-      if (Comparing.equal(System.getProperty("idea.fast.only"), "true")) {
-        BufferedReader reader =
-          new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt")));
-        do {
-          final String testName = reader.readLine();
-          if (testName == null) break;
+    if (Comparing.equal(System.getProperty("idea.fast.only"), "true")) {
+      BufferedReader reader =
+              new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt")));
+      try {
+        String testName;
+        while ((testName = reader.readLine()) != null) {
           blockedTests.add(testName);
         }
-        while (true);
+      }
+      catch (IOException e) {
+        // No luck
+      } finally {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          // ignore
+        }
       }
     }
-    catch (IOException e) {
-      // No luck
-    }
-
-
     System.out.println("Using test group: [" + (myTestGroupName == null ? "" :  myTestGroupName) + "]");
   }
 
