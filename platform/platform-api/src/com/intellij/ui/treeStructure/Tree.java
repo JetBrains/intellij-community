@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.EmptyTextHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class Tree extends JTree implements Autoscroll, Queryable {
+public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Queryable {
   private EmptyTextHelper myEmptyTextHelper;
 
   private AsyncProcessIcon myBusyIcon;
@@ -85,6 +86,10 @@ public class Tree extends JTree implements Autoscroll, Queryable {
 
   public void setEmptyText(String emptyText) {
     myEmptyTextHelper.setEmptyText(emptyText);
+  }
+
+  public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
+    myEmptyTextHelper.setEmptyText(emptyText, attrs);
   }
 
   public void clearEmptyText() {

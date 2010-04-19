@@ -23,7 +23,7 @@ import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SeparatorWithText;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -41,11 +41,11 @@ import java.util.*;
 import java.util.List;
 
 public class RevisionsList {
-  private final JTable table;
+  private final JBTable table;
 
   public RevisionsList(SelectionListener l) {
-    table = new Table();
-    table.setModel(new MyModel(Collections.<Revision>emptyList(), Collections.EMPTY_MAP)); //
+    table = new JBTable();
+    table.setModel(new MyModel(Collections.<Revision>emptyList(), Collections.EMPTY_MAP));
 
     table.setDefaultRenderer(Object.class, new MyCellRenderer());
     table.setTableHeader(null);
@@ -129,6 +129,9 @@ public class RevisionsList {
       if (sel.contains(r.getChangeSetId())) {
         table.getSelectionModel().addSelectionInterval(i, i);
       }
+    }
+    if (table.getSelectionModel().isSelectionEmpty()) {
+      table.getSelectionModel().addSelectionInterval(0, 0);
     }
   }
 

@@ -18,12 +18,14 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -32,6 +34,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
@@ -56,7 +59,7 @@ import java.util.List;
  */
 public abstract class ChangesTreeList<T> extends JPanel {
   private final Tree myTree;
-  private final JList myList;
+  private final JBList myList;
   private final JScrollPane myTreeScrollPane;
   private final JScrollPane myListScrollPane;
   protected final Project myProject;
@@ -129,7 +132,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
     });
 
-    myList = new JList(new DefaultListModel());
+    myList = new JBList(new DefaultListModel());
     myList.setVisibleRowCount(10);
 
     add(myListScrollPane = new JScrollPane(myList), LIST_CARD);
@@ -194,6 +197,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
     });
 
     setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
+
+    String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
+    myTree.setEmptyText(emptyText);
+    myList.setEmptyText(emptyText);
   }
 
   public void setDoubleClickHandler(final Runnable doubleClickHandler) {
