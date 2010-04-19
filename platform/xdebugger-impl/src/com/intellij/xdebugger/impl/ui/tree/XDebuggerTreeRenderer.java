@@ -16,6 +16,8 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerNodeLink;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 
 import javax.swing.*;
@@ -33,6 +35,10 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
                                     final boolean hasFocus) {
     XDebuggerTreeNode node = (XDebuggerTreeNode)value;
     node.getText().appendToComponent(this);
+    final XDebuggerNodeLink link = node.getLink();
+    if (link != null) {
+      append(link.getLinkText(), SimpleTextAttributes.LINK_ATTRIBUTES, link);
+    }
     setIcon(node.getIcon());
   }
 }
