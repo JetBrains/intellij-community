@@ -351,7 +351,10 @@ public class TestAll implements Test {
 
   public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
     myTestCaseLoader = new TestCaseLoader((ourMode & FILTER_CLASSES) != 0 ? "tests/testGroups.properties" : "");
-    myTestCaseLoader.addClassIfTestCase(Class.forName("_FirstInSuiteTest"));
+
+    if (classRoots.length > 0) {
+      myTestCaseLoader.addClassIfTestCase(Class.forName("_FirstInSuiteTest"));
+    }
 
     for (String classRoot : classRoots) {
       ClassFinder classFinder = new ClassFinder(new File(classRoot), packageRoot);
