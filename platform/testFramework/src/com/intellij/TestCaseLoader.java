@@ -57,7 +57,12 @@ public class TestCaseLoader {
 
   public TestCaseLoader(String classFilterName) {
     InputStream excludedStream = getClass().getClassLoader().getResourceAsStream(classFilterName);
-    myTestGroupName = System.getProperty(TARGET_TEST_GROUP);
+    String preconfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
+    if (preconfiguredGroup == null || "".equals(preconfiguredGroup.trim())) {
+      myTestGroupName = "";
+    } else {
+      myTestGroupName = preconfiguredGroup.trim();
+    }
     if (excludedStream != null) {
       try {
         myTestClassesFilter = TestClassesFilter.createOn(new InputStreamReader(excludedStream));
@@ -140,10 +145,8 @@ public class TestCaseLoader {
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    if (myTestGroupName != null && !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName)) {
-      return true;
-    }
-    return isBombed(testCaseClass) || blockedTests.contains(testCaseClass.getName());
+    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass)
+              || blockedTests.contains(testCaseClass.getName());
   }
 
   public static boolean isBombed(final Method method) {
