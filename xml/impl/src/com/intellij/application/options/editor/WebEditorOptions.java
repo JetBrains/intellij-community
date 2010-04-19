@@ -82,11 +82,11 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     myAutomaticallyInsertRequiredAttributes = automaticallyInsertRequiredAttributes;
   }
 
-  public char getZenCodingExpandShortcut() {
-    return (char)myZenCodingExpandShortcut;
+  public int getZenCodingExpandShortcut() {
+    return myZenCodingExpandShortcut;
   }
 
-  public void setZenCodingExpandShortcut(char zenCodingExpandShortcut) {
+  public void setZenCodingExpandShortcut(int zenCodingExpandShortcut) {
     myZenCodingExpandShortcut = zenCodingExpandShortcut;
   }
 
