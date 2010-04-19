@@ -113,7 +113,7 @@ public abstract class LocalToFieldHandler {
           PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(aaClass, local, fieldName)
                                                               : createField(local, fieldName, initializerPlace == IN_FIELD_DECLARATION);
           field = (PsiField)aaClass.add(field);
-          BaseExpressionToFieldHandler.setModifiers(field, settings, isStatic, occurences);
+          BaseExpressionToFieldHandler.setModifiers(field, settings, isStatic);
           if (!settings.isIntroduceEnumConstant()) {
             VisibilityUtil.fixVisibility(occurences, field, settings.getFieldVisibility());
           }
