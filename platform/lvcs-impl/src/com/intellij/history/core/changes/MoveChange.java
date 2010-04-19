@@ -16,83 +16,67 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.Paths;
+import com.intellij.history.core.storage.StreamUtil;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 
-public class MoveChange extends StructuralChange<MoveChangeNonAppliedState, MoveChangeAppliedState> {
-  public MoveChange(String path, String newParentPath) {
-    super(path);
-    getNonAppliedState().myNewParentPath = newParentPath;
+public class MoveChange extends StructuralChange {
+  private final String myOldPath;
+
+  public MoveChange(long id, String path, String oldParent) {
+    super(id, path);
+    myOldPath = Paths.appended(oldParent, Paths.getNameOf(path));
   }
 
-  public MoveChange(Stream s) throws IOException {
-    super(s);
-    getAppliedState().myTargetIdPath = s.readIdPath();
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeIdPath(getAppliedState().myTargetIdPath);
+  public MoveChange(DataInput in) throws IOException {
+    super(in);
+    myOldPath = StreamUtil.readString(in);
   }
 
   @Override
-  protected MoveChangeAppliedState createAppliedState() {
-    return new MoveChangeAppliedState();
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    StreamUtil.writeString(out, myOldPath);
+  }
+
+  public String getOldPath() {
+    return myOldPath;
+  }
+
+  public String getOldParent() {
+    return Paths.getParentOf(myOldPath);
   }
 
   @Override
-  protected MoveChangeNonAppliedState createNonAppliedState() {
-    return new MoveChangeNonAppliedState();
-  }
-
-  @Override
-  protected IdPath doApplyTo(Entry r, MoveChangeAppliedState newState) {
-    Entry e = r.getEntry(getPath());
-    IdPath firstIdPath = e.getIdPath();
-
+  public void revertOn(RootEntry root) {
+    Entry e = root.findEntry(myPath);
+    if (e == null) {
+      cannotRevert(myPath);
+      return;
+    }
     removeEntry(e);
 
-    Entry newParent = r.getEntry(getNonAppliedState().myNewParentPath);
-    newParent.addChild(e);
+    Entry oldParent = root.findEntry(getOldParent());
+    if (oldParent == null) {
+      cannotRevert(getOldParent());
+      return;
+    }
 
-    newState.myTargetIdPath = e.getIdPath();
-
-    return firstIdPath;
-  }
-
-  @Override
-  public void doRevertOn(Entry root) {
-    Entry e = getEntry(root);
-    removeEntry(e);
-
-    Entry oldParent = getOldParent(root);
     oldParent.addChild(e);
   }
 
   @Override
-  public boolean canRevertOn(Entry r) {
-    return hasNoSuchEntry(getOldParent(r), getEntry(r).getName());
-  }
-
-  private Entry getEntry(Entry r) {
-    return r.getEntry(getAppliedState().myTargetIdPath);
-  }
-
-  private Entry getOldParent(Entry r) {
-    return r.getEntry(getAffectedIdPath().getParent());
+  protected String[] getAffectedPaths() {
+    return new String[]{myPath, myOldPath};
   }
 
   @Override
-  public IdPath[] getAffectedIdPaths() {
-    return new IdPath[]{getAffectedIdPath(), getAppliedState().myTargetIdPath};
-  }
-
-  @Override
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+  public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {
     v.visit(this);
   }
 }

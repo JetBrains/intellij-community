@@ -62,8 +62,16 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     ElementToWorkOn.processElementToWorkOn(editor, file, REFACTORING_NAME, getHelpID(), project, getElementProcessor(project, editor));
   }
 
-  protected boolean invokeImpl(Project project, final PsiLocalVariable localVariable, Editor editor) {
-    final LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, true);
+  protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
+    final LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, true){
+      @Override
+      protected Settings showRefactoringDialog(PsiClass aClass,
+                                               PsiLocalVariable local,
+                                               PsiExpression[] occurences,
+                                               boolean isStatic) {
+        return IntroduceConstantHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurences, null, null);
+      }
+    };
     return localToFieldHandler.convertLocalToField(localVariable, editor);
   }
 
@@ -112,7 +120,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
     }
 
-    IntroduceConstantDialog dialog =
+    final IntroduceConstantDialog dialog =
       new IntroduceConstantDialog(project, parentClass, expr, localVariable, false, occurences, getParentClass(),
                                   new TypeSelectorManagerImpl(project, type, expr, occurences));
     dialog.show();
@@ -218,7 +226,4 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return true;
   }
 
-  protected boolean isStaticField() {
-    return true;
-  }
 }

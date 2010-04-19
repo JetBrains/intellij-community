@@ -57,6 +57,9 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
     // every 10 minutes
     myTimer = new Timer("SVN authentication timer");
+  }
+
+  public void init() {
     myTimer.schedule(new TimerTask() {
       @Override
       public void run() {

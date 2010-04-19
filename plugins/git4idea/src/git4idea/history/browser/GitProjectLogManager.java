@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsListener;
@@ -28,7 +29,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.CalculateContinuation;
+import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.HashMap;
+import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +94,7 @@ public class GitProjectLogManager implements ProjectComponent {
 
     final VirtualFile baseDir = myProject.getBaseDir();
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    for (VirtualFile root : roots) {
+    for (final VirtualFile root : roots) {
       if (! currentState.containsKey(root)) {
         final GitLogTree tree = new GitLogTree(myProject, root);
         tree.setParentDisposable(myProject);
@@ -99,6 +103,19 @@ public class GitProjectLogManager implements ProjectComponent {
         content.setCloseable(false);
         cvcm.addContent(content);
         newKeys.put(root, content);
+        
+        new CalculateContinuation<String>().calculateAndContinue(new ThrowableComputable<String, Exception>() {
+          public String compute() throws Exception {
+            return getCaption(baseDir, root);
+          }
+        }, new CatchingConsumer<String, Exception>() {
+          public void consume(Exception e) {
+            //should not
+          }
+          public void consume(final String caption) {
+            content.setDisplayName(caption);
+          }
+        });
       }
     }
 
@@ -111,7 +128,7 @@ public class GitProjectLogManager implements ProjectComponent {
   }
 
   private String getCaption(@Nullable VirtualFile baseDir, final VirtualFile root) {
-    String result = root.getPresentableUrl();
+    String result = root.getPresentableUrl();                                                                                      
     if (baseDir != null) {
       if (baseDir.equals(root)) {
         result = "<Project root>";
@@ -132,9 +149,12 @@ public class GitProjectLogManager implements ProjectComponent {
     }
 
     if (searcher != null) {
-      result += " (" + searcher.getLocal().getName() + ")";
+      final GitBranch branch = searcher.getLocal();
+      if (branch != null) {
+        result += " (" + branch.getName() + ")";
+      }
     }
-    return "Log for: " + result;
+    return "Log: " + result;
   }
 
   @NotNull

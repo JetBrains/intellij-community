@@ -16,24 +16,27 @@
 
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.IdPath;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.StructuralChange;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.utils.RunnableAdapter;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 import java.util.*;
 
 public abstract class Reverter {
-  protected LocalVcs myVcs;
+  private final Project myProject;
+  protected LocalHistoryFacade myVcs;
   protected IdeaGateway myGateway;
 
-  protected Reverter(LocalVcs vcs, IdeaGateway gw) {
+  protected Reverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw) {
+    myProject = p;
     myVcs = vcs;
     myGateway = gw;
   }
@@ -43,38 +46,23 @@ public abstract class Reverter {
   }
 
   public List<String> checkCanRevert() throws IOException {
-    List<String> errors = new ArrayList<String>();
-    doCheckCanRevert(errors);
-    return removeDuplicatesAndSort(errors);
-  }
-
-  private List<String> removeDuplicatesAndSort(List<String> list) {
-    List<String> result = new ArrayList<String>(new HashSet<String>(list));
-    Collections.sort(result);
-    return result;
-  }
-
-  protected void doCheckCanRevert(List<String> errors) throws IOException {
     if (!askForReadOnlyStatusClearing()) {
-      errors.add(LocalHistoryBundle.message("revert.error.files.are.read.only"));
+      return Collections.singletonList(LocalHistoryBundle.message("revert.error.files.are.read.only"));
     }
+    return Collections.emptyList();
   }
 
   protected boolean askForReadOnlyStatusClearing() throws IOException {
-    return myGateway.ensureFilesAreWritable(getFilesToClearROStatus());
+    return myGateway.ensureFilesAreWritable(myProject, getFilesToClearROStatus());
   }
 
   protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
     final Set<VirtualFile> files = new HashSet<VirtualFile>();
 
-    myVcs.acceptRead(selective(new ChangeVisitor() {
+    myVcs.accept(selective(new ChangeVisitor() {
       @Override
-      public void visit(StructuralChange c) {
-        for (IdPath p : c.getAffectedIdPaths()) {
-          Entry e = myRoot.findEntry(p);
-          if (e == null) continue;
-          files.addAll(myGateway.getAllFilesFrom(e.getPath()));
-        }
+      public void visit(StructuralChange c) throws StopVisitingException {
+        files.addAll(myGateway.getAllFilesFrom(c.getPath()));
       }
     }));
 
@@ -87,14 +75,14 @@ public abstract class Reverter {
 
   public void revert() throws IOException {
     try {
-      myGateway.performCommandInsideWriteAction(formatCommandName(), new RunnableAdapter() {
+      new WriteCommandAction(myProject, getCommandName()) {
         @Override
-        public void doRun() throws Exception {
+        protected void run(Result objectResult) throws Throwable {
           myGateway.saveAllUnsavedDocuments();
           doRevert();
           myGateway.saveAllUnsavedDocuments();
         }
-      });
+      }.execute();
     }
     catch (RuntimeException e) {
       Throwable cause = e.getCause();
@@ -105,7 +93,7 @@ public abstract class Reverter {
     }
   }
 
-  protected abstract String formatCommandName();
+  public abstract String getCommandName();
 
   protected abstract void doRevert() throws IOException;
 }

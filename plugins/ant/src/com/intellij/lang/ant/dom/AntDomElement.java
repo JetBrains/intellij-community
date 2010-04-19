@@ -34,6 +34,10 @@ public abstract class AntDomElement implements DomElement {
     return null;
   }
 
+  public final AntDomProject getAntProject() {
+    return getParentOfType(AntDomProject.class, false);
+  }
+
   public final List<AntDomElement> getAntChildren() {
     return DomUtil.getDefinedChildrenOfType(this, AntDomElement.class, true, false);
   }

@@ -30,27 +30,14 @@ import org.jetbrains.annotations.Nullable;
 public interface Project extends ComponentManager, AreaInstance {
   @NonNls String DIRECTORY_STORE_FOLDER = ".idea";
 
-  /**
-   * @deprecated Because of multiple possible project formats, it is not allowed to call {@link #getProjectFile} anymore. Other methods should
-   * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
-   */
   @Nullable
   VirtualFile getProjectFile();
 
-  /**
-   * @deprecated Because of multiple possible project formats, it is not allowed to call {@link #getWorkspaceFile} anymore. Other methods should
-   * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
-   */
   @Nullable
   VirtualFile getWorkspaceFile();
 
-  /**
-   * @deprecated Since multiple possible project formats it is not allowed to ask for getProjectFile. Other methods should
-   * be used for project introspections, such as {@link #getPresentableUrl()},  {@link #getBaseDir()}, etc.
-   */
   @NotNull
   String getProjectFilePath();
-
 
   @Nullable
   VirtualFile getBaseDir();

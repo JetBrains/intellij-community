@@ -81,6 +81,8 @@ public class FileContentUtil {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
+            .before(new ArrayList<VFileEvent>(list));
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
             .after(new ArrayList<VFileEvent>(list));
       }
     });

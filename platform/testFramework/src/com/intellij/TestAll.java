@@ -337,6 +337,10 @@ public class TestAll implements Test {
   }
 
   private static String [] getClassRoots() {
+    String testRoots = System.getProperty("test.roots");
+    if (testRoots != null) {
+      return testRoots.split(";");
+    }
     final String[] roots = ExternalClasspathClassLoader.getRoots();
     return roots != null ? roots : System.getProperty("java.class.path").split(File.pathSeparator);
   }
@@ -347,7 +351,10 @@ public class TestAll implements Test {
 
   public TestAll(String packageRoot, String... classRoots) throws IOException, ClassNotFoundException {
     myTestCaseLoader = new TestCaseLoader((ourMode & FILTER_CLASSES) != 0 ? "tests/testGroups.properties" : "");
-    myTestCaseLoader.addClassIfTestCase(Class.forName("_FirstInSuiteTest"));
+
+    if (classRoots.length > 0) {
+      myTestCaseLoader.addClassIfTestCase(Class.forName("_FirstInSuiteTest"));
+    }
 
     for (String classRoot : classRoots) {
       ClassFinder classFinder = new ClassFinder(new File(classRoot), packageRoot);

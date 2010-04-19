@@ -17,20 +17,21 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.Block;
-import com.intellij.history.core.ContentFactory;
-import com.intellij.history.core.InMemoryLocalVcs;
-import com.intellij.history.core.LocalVcs;
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.InMemoryLocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.integration.TestIdeaGateway;
+import com.intellij.history.core.tree.RootEntry;
+import com.intellij.history.integration.IdeaGateway;
+
 import static org.easymock.classextension.EasyMock.*;
 import org.junit.Test;
 
 import java.util.List;
 
-public class SelectionCalculatorTest extends LocalVcsTestCase {
-  TestIdeaGateway gw = new TestIdeaGateway();
-  LocalVcs vcs = new InMemoryLocalVcs();
+public class SelectionCalculatorTest extends LocalHistoryTestCase {
+  IdeaGateway gw = new MyIdeaGateway();
+  LocalHistoryFacade vcs = new InMemoryLocalHistoryFacade();
 
   @Test
   public void testSelectionWasNotChanged() {
@@ -71,7 +72,7 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testNormailingLineEnds() {
+  public void testNormalizingLineEnds() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
@@ -80,17 +81,6 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
 
     assertBlock(0, 1, "abc\ndef", b0);
     assertBlock(0, 1, "abc\ndef", b1);
-  }
-
-  @Test
-  public void testCanNotCalculateIfThereWasUnavailableContent() {
-    List<Revision> rr = createRevisions(cf("one"), bigContentFactory(), cf("two"));
-
-    SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
-
-    assertTrue(c.canCalculateFor(rr.get(0), new NullProgress()));
-    assertFalse(c.canCalculateFor(rr.get(1), new NullProgress()));
-    assertFalse(c.canCalculateFor(rr.get(2), new NullProgress()));
   }
 
   @Test
@@ -126,25 +116,24 @@ public class SelectionCalculatorTest extends LocalVcsTestCase {
   }
 
   private List<Revision> createRevisions(String... contents) {
-    ContentFactory[] ff = new ContentFactory[contents.length];
-    for (int i = 0; i < contents.length; i++) {
-      ff[i] = cf(contents[i]);
+    RootEntry r = new RootEntry();
+    vcs.addChangeInTests(createFile(r, "f", contents[0], -1, false));
+    for (int i = 1; i < contents.length; i++) {
+      vcs.addChangeInTests(changeContent(r, "f", contents[i], i));
     }
-    return createRevisions(ff);
-  }
-
-  private List<Revision> createRevisions(ContentFactory... ff) {
-    long timestamp = -1;
-    vcs.createFile("f", ff[0], timestamp, false);
-    for (int i = 1; i < ff.length; i++) {
-      vcs.changeFileContent("f", ff[i], -1);
-    }
-    return vcs.getRevisionsFor("f");
+    return collectRevisions(vcs, r, "f", null, null);
   }
 
   private void assertBlock(int from, int to, String content, Block b) {
     assertEquals(from, b.getStart());
     assertEquals(to, b.getEnd());
     assertEquals(content, b.getBlockContent());
+  }
+
+  private static class MyIdeaGateway extends IdeaGateway {
+    @Override
+    public String stringFromBytes(byte[] bytes, String path) {
+      return new String(bytes);
+    }
   }
 }

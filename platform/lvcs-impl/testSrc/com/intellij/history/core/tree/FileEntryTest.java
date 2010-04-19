@@ -16,20 +16,22 @@
 
 package com.intellij.history.core.tree;
 
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.storage.UnavailableContent;
+import com.intellij.history.core.storage.StoredContent;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.ArrayList;
 
-public class FileEntryTest extends LocalVcsTestCase {
+public class FileEntryTest extends LocalHistoryTestCase {
   @Test
+  @Ignore
   public void testHasUnavailableContent() {
-    Entry e1 = new FileEntry(1, null, c("abc"), -1, false);
-    Entry e2 = new FileEntry(2, null, new UnavailableContent(), -1, false);
+    Entry e1 = new FileEntry(null, c("abc"), -1, false);
+    Entry e2 = new FileEntry(null, new StoredContent(-1), -1, false);
 
     assertFalse(e1.hasUnavailableContent());
     assertTrue(e2.hasUnavailableContent());
@@ -37,21 +39,20 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testCopying() {
-    FileEntry file = new FileEntry(33, "name", c("content"), 123L, true);
+    FileEntry file = new FileEntry("name", c("content"), 123L, true);
 
     Entry copy = file.copy();
 
-    assertEquals(33, copy.getId());
     assertEquals("name", copy.getName());
-    assertEquals(c("content"), copy.getContent());
+    assertContent("content", copy.getContent());
     assertEquals(123L, copy.getTimestamp());
     assertTrue(copy.isReadOnly());
   }
 
   @Test
   public void testDoesNotCopyParent() {
-    DirectoryEntry parent = new DirectoryEntry(-1, null);
-    FileEntry file = new FileEntry(-1, null, null, -1, false);
+    DirectoryEntry parent = new DirectoryEntry(null);
+    FileEntry file = new FileEntry(null, null, -1, false);
 
     parent.addChild(file);
 
@@ -61,14 +62,14 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testRenaming() {
-    Entry e = new FileEntry(-1, "name", null, -1, false);
-    e.changeName("new name");
+    Entry e = new FileEntry("name", null, -1, false);
+    e.setName("new name");
     assertEquals("new name", e.getName());
   }
 
   @Test
   public void testOutdated() {
-    Entry e = new FileEntry(-1, "name", null, 2L, false);
+    Entry e = new FileEntry("name", null, 2L, false);
 
     assertTrue(e.isOutdated(1L));
     assertTrue(e.isOutdated(3L));
@@ -78,16 +79,16 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testNoDifference() {
-    FileEntry e1 = new FileEntry(-1, "name", c("content"), -1, false);
-    FileEntry e2 = new FileEntry(-1, "name", c("content"), -1, false);
+    FileEntry e1 = new FileEntry("name", c("content"), -1, false);
+    FileEntry e2 = new FileEntry("name", c("content"), -1, false);
 
     assertTrue(e1.getDifferencesWith(e2).isEmpty());
   }
 
   @Test
   public void testDifferenceInName() {
-    Entry e1 = new FileEntry(-1, "name", c("content"), -1, false);
-    Entry e2 = new FileEntry(-1, "another name", c("content"), -1, false);
+    Entry e1 = new FileEntry("name", c("content"), -1, false);
+    Entry e2 = new FileEntry("another name", c("content"), -1, false);
 
     List<Difference> dd = e1.getDifferencesWith(e2);
     assertDifference(dd, e1, e2);
@@ -95,8 +96,8 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceInNameIsAlwaysCaseSensitive() {
-    Entry e1 = new FileEntry(-1, "name", c(""), -1, false);
-    Entry e2 = new FileEntry(-1, "NAME", c(""), -1, false);
+    Entry e1 = new FileEntry("name", c(""), -1, false);
+    Entry e2 = new FileEntry("NAME", c(""), -1, false);
 
     Paths.setCaseSensitive(false);
     assertEquals(1, e1.getDifferencesWith(e2).size());
@@ -107,8 +108,8 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testDifferenceInContent() {
-    FileEntry e1 = new FileEntry(-1, "name", c("content"), -1, false);
-    FileEntry e2 = new FileEntry(-1, "name", c("another content"), -1, false);
+    FileEntry e1 = new FileEntry("name", c("content"), -1, false);
+    FileEntry e2 = new FileEntry("name", c("another content"), -1, false);
 
     List<Difference> dd = e1.getDifferencesWith(e2);
     assertDifference(dd, e1, e2);
@@ -116,8 +117,8 @@ public class FileEntryTest extends LocalVcsTestCase {
   
   @Test
   public void testDifferenceInROStatus() {
-    FileEntry e1 = new FileEntry(-1, "name", c("content"), -1, true);
-    FileEntry e2 = new FileEntry(-1, "name", c("content"), -1, false);
+    FileEntry e1 = new FileEntry("name", c("content"), -1, true);
+    FileEntry e2 = new FileEntry("name", c("content"), -1, false);
 
     List<Difference> dd = e1.getDifferencesWith(e2);
     assertDifference(dd, e1, e2);
@@ -125,7 +126,7 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testAsCreatedDifference() {
-    FileEntry e = new FileEntry(-1, null, null, -1, false);
+    FileEntry e = new FileEntry(null, null, -1, false);
 
     ArrayList<Difference> dd = new ArrayList<Difference>();
     e.collectCreatedDifferences(dd);
@@ -134,7 +135,7 @@ public class FileEntryTest extends LocalVcsTestCase {
 
   @Test
   public void testAsDeletedDifference() {
-    FileEntry e = new FileEntry(-1, null, null, -1, false);
+    FileEntry e = new FileEntry(null, null, -1, false);
 
     ArrayList<Difference> dd = new ArrayList<Difference>();
     e.collectDeletedDifferences(dd);

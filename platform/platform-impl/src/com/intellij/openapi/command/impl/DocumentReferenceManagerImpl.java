@@ -24,8 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.containers.WeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,8 +86,7 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
       files.add(f);
     }
     else {
-      for (VirtualFile each : ((NewVirtualFile)f).getInDbChildren()) {
-        if (each == NullVirtualFile.INSTANCE) continue;
+      for (VirtualFile each : ((NewVirtualFile)f).iterInDbChildren()) {
         collectDeletedFiles(each, files);
       }
     }

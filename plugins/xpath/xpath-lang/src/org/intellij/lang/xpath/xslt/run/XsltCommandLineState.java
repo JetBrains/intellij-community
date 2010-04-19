@@ -41,12 +41,13 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.net.NetUtils;
-import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import static org.intellij.lang.xpath.xslt.run.XsltRunConfiguration.isEmpty;
 
 class XsltCommandLineState extends JavaCommandLineState {
     private static final Logger LOG = Logger.getInstance(XsltCommandLineState.class.getName());
@@ -116,7 +117,8 @@ class XsltCommandLineState extends JavaCommandLineState {
                 myPort = myXsltRunConfiguration.myRunnerPort;
             }
             vmParameters.defineProperty("xslt.listen-port", String.valueOf(myPort));
-        } else if (outputType == XsltRunConfiguration.OutputType.FILE) {
+        } 
+        if (myXsltRunConfiguration.isSaveToFile()) {
             vmParameters.defineProperty("xslt.output", myXsltRunConfiguration.myOutputFile);
         }
 
@@ -129,11 +131,17 @@ class XsltCommandLineState extends JavaCommandLineState {
         vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
         final PluginId pluginId = PluginManager.getPluginByClassName(getClass().getName());
-        assert pluginId != null;
-        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
-        assert descriptor != null;
+        assert pluginId != null || System.getProperty("xslt.plugin.path") != null;
 
-        final File pluginPath = descriptor.getPath();
+        final File pluginPath;
+        if (pluginId != null) {
+            final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(pluginId);
+            assert descriptor != null;
+            pluginPath = descriptor.getPath();
+        } else {
+            pluginPath = new File(System.getProperty("xslt.plugin.path"));
+        }
+
         LOG.debug("Plugin Path = " + pluginPath.getAbsolutePath());
 
         final char c = File.separatorChar;
@@ -171,7 +179,7 @@ class XsltCommandLineState extends JavaCommandLineState {
 
         public void processTerminated(final ProcessEvent event) {
 
-            if (myXsltRunConfiguration.getOutputType() == XsltRunConfiguration.OutputType.FILE) {
+            if (myXsltRunConfiguration.isSaveToFile()) {
                 Runnable runnable = new Runnable() {
                     public void run() {
                         Runnable runnable = new Runnable() {

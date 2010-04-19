@@ -16,24 +16,25 @@
 
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class SelectionHistoryDialog extends FileHistoryDialog {
   private final int myFrom;
   private final int myTo;
 
-  public SelectionHistoryDialog(IdeaGateway gw, VirtualFile f, int from, int to) {
-    super(gw, f, false);
+  public SelectionHistoryDialog(Project p, IdeaGateway gw, VirtualFile f, int from, int to) {
+    super(p, gw, f, false);
     myFrom = from;
     myTo = to;
     init();
   }
 
   @Override
-  protected FileHistoryDialogModel createModel(LocalVcs vcs) {
-    return new SelectionHistoryDialogModel(myGateway, vcs, myFile, myFrom, myTo);
+  protected FileHistoryDialogModel createModel(LocalHistoryFacade vcs) {
+    return new SelectionHistoryDialogModel(myProject, myGateway, vcs, myFile, myFrom, myTo);
   }
 }

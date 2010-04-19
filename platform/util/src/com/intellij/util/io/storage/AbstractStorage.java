@@ -13,25 +13,265 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/*
+ * @author max
+ */
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RecordDataOutput;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
 
-/**
- * @author Dmitry Avdeev
- */
-public abstract class AbstractStorage implements Forceable, Disposable {
+@SuppressWarnings({"HardCodedStringLiteral"})
+public abstract class AbstractStorage implements Disposable, Forceable {
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
 
-  public abstract int createNewRecord(int requiredLength) throws IOException;
+  @NonNls public static final String INDEX_EXTENSION = ".storageRecordIndex";
+  @NonNls public static final String DATA_EXTENSION = ".storageData";
 
-  public abstract void deleteRecord(int record);
+  private static final int MAX_PAGES_TO_FLUSH_AT_A_TIME = 50;
+
+  protected final Object myLock = new Object();
+
+  protected AbstractRecordsTable myRecordsTable;
+  protected DataTable myDataTable;
+  protected PagePool myPool;
+
+  public static boolean deleteFiles(String storageFilePath) {
+    final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
+    final File dataFile = new File(storageFilePath + DATA_EXTENSION);
+
+    // ensure both files deleted
+    final boolean deletedRecordsFile = FileUtil.delete(recordsFile);
+    final boolean deletedDataFile = FileUtil.delete(dataFile);
+    return deletedRecordsFile && deletedDataFile;
+  }
+
+  public static void convertFromOldExtensions(String storageFilePath) {
+    FileUtil.delete(new File(storageFilePath + ".rindex"));
+    FileUtil.delete(new File(storageFilePath + ".data"));
+  }
+
+  protected AbstractStorage(String storageFilePath) throws IOException {
+    this(storageFilePath, PagePool.SHARED);
+  }
+
+  protected AbstractStorage(String storageFilePath, PagePool pool) throws IOException {
+    tryInit(storageFilePath, pool, 0);
+  }
+
+  private void tryInit(String storageFilePath, PagePool pool, int retryCount) throws IOException {
+    convertFromOldExtensions(storageFilePath);
+
+    final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
+    final File dataFile = new File(storageFilePath + DATA_EXTENSION);
+
+    if (recordsFile.exists() != dataFile.exists()) {
+      deleteFiles(storageFilePath);
+    }
+
+    FileUtil.createIfDoesntExist(recordsFile);
+    FileUtil.createIfDoesntExist(dataFile);
+
+    AbstractRecordsTable recordsTable = null;
+    DataTable dataTable;
+    try {
+      recordsTable = createRecordsTable(pool, recordsFile);
+      dataTable = new DataTable(dataFile, pool);
+    }
+    catch (IOException e) {
+      LOG.info(e.getMessage());
+      if (recordsTable != null) {
+        recordsTable.dispose();
+      }
+
+      boolean deleted = deleteFiles(storageFilePath);
+      if (!deleted) {
+        throw new IOException("Can't delete caches at: " + storageFilePath);
+      }
+      if (retryCount >= 5) {
+        throw new IOException("Can't create storage at: " + storageFilePath);
+      }
+      
+      tryInit(storageFilePath, pool, retryCount+1);
+      return;
+    }
+
+    myRecordsTable = recordsTable;
+    myDataTable = dataTable;
+    myPool = pool;
+
+    if (myDataTable.isCompactNecessary()) {
+      compact(storageFilePath);
+    }
+  }
+
+  protected abstract AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException;
+
+  private void compact(final String path) {
+    synchronized (myLock) {
+      LOG.info("Space waste in " + path + " is " + myDataTable.getWaste() + " bytes. Compacting now.");
+      long start = System.currentTimeMillis();
+
+      try {
+        File newDataFile = new File(path + ".storageData.backup");
+        FileUtil.delete(newDataFile);
+        FileUtil.createIfDoesntExist(newDataFile);
+
+        File oldDataFile = new File(path + DATA_EXTENSION);
+        DataTable newDataTable = new DataTable(newDataFile, myPool);
+
+        final int count = myRecordsTable.getRecordsCount();
+        for (int i = 1; i <= count; i++) {
+          final long addr = myRecordsTable.getAddress(i);
+          final int size = myRecordsTable.getSize(i);
+
+          if (size > 0) {
+            assert addr > 0;
+
+            final int capacity = calcCapacity(size);
+            final long newaddr = newDataTable.allocateSpace(capacity);
+            final byte[] bytes = new byte[size];
+            myDataTable.readBytes(addr, bytes);
+            newDataTable.writeBytes(newaddr, bytes);
+            myRecordsTable.setAddress(i, newaddr);
+            myRecordsTable.setCapacity(i, capacity);
+          }
+        }
+
+        myDataTable.dispose();
+        newDataTable.dispose();
+
+        if (!FileUtil.delete(oldDataFile)) {
+          throw new IOException("Can't delete file: " + oldDataFile);
+        }
+
+        newDataFile.renameTo(oldDataFile);
+        myDataTable = new DataTable(oldDataFile, myPool);
+      }
+      catch (IOException e) {
+        LOG.info("Compact failed: " + e.getMessage());
+      }
+
+      long timedelta = System.currentTimeMillis() - start;
+      LOG.info("Done compacting in " + timedelta + "msec.");
+    }
+  }
+
+  public int getVersion() {
+    synchronized (myLock) {
+      return myRecordsTable.getVersion();
+    }
+  }
+
+  public void setVersion(int expectedVersion) {
+    synchronized (myLock) {
+      myRecordsTable.setVersion(expectedVersion);
+    }
+  }
+
+  public void force() {
+    synchronized (myLock) {
+      myDataTable.force();
+      myRecordsTable.force();
+    }
+  }
+
+  public boolean flushSome() {
+    synchronized (myLock) {
+      boolean okRecords = myRecordsTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
+      boolean okData = myDataTable.flushSome(MAX_PAGES_TO_FLUSH_AT_A_TIME);
+
+      return okRecords && okData;
+    }
+  }
+
+  public boolean isDirty() {
+    synchronized (myLock) {
+      return myDataTable.isDirty() || myRecordsTable.isDirty();
+    }
+  }
+
+  private void appendBytes(int record, byte[] bytes) {
+    int delta = bytes.length;
+    if (delta == 0) return;
+
+    synchronized (myLock) {
+      int capacity = myRecordsTable.getCapacity(record);
+      int oldSize = myRecordsTable.getSize(record);
+      int newSize = oldSize + delta;
+      if (newSize > capacity) {
+        if (oldSize > 0) {
+          byte[] newbytes = new byte[newSize];
+          System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
+          System.arraycopy(bytes, 0, newbytes, oldSize, delta);
+          writeBytes(record, newbytes);
+        }
+        else {
+          writeBytes(record, bytes);
+        }
+      }
+      else {
+        long address = myRecordsTable.getAddress(record) + oldSize;
+        myDataTable.writeBytes(address, bytes);
+        myRecordsTable.setSize(record, newSize);
+      }
+    }
+  }
+
+  public void writeBytes(int record, byte[] bytes) {
+    synchronized (myLock) {
+      final int requiredLength = bytes.length;
+      final int currentCapacity = myRecordsTable.getCapacity(record);
+
+      final int currentSize = myRecordsTable.getSize(record);
+      assert currentSize >= 0;
+
+      if (requiredLength == 0 && currentSize == 0) return;
+
+      final long address;
+      if (currentCapacity >= requiredLength) {
+        address = myRecordsTable.getAddress(record);
+      }
+      else {
+        if (currentCapacity > 0) {
+          myDataTable.reclaimSpace(currentCapacity);
+        }
+
+        final int newCapacity = calcCapacity(requiredLength);
+        address = myDataTable.allocateSpace(newCapacity);
+        myRecordsTable.setAddress(record, address);
+        myRecordsTable.setCapacity(record, newCapacity);
+      }
+
+      myDataTable.writeBytes(address, bytes);
+      myRecordsTable.setSize(record, requiredLength);
+    }
+  }
+
+  private static int calcCapacity(int requiredLength) {
+    return Math.max(64, nearestPowerOfTwo(requiredLength * 3 / 2));
+  }
+
+  private static int nearestPowerOfTwo(int n) {
+    int power = 1;
+    while (n != 0) {
+      power *= 2;
+      n /= 2;
+    }
+    return power;
+  }
 
   public StorageDataOutput writeStream(final int record) {
-    return new StorageDataOutput(record);
+    return new StorageDataOutput(this, record);
   }
 
   public AppenderStream appendStream(int record) {
@@ -43,33 +283,56 @@ public abstract class AbstractStorage implements Forceable, Disposable {
     return new DataInputStream(new ByteArrayInputStream(bytes));
   }
 
-  public abstract byte[] readBytes(int record);
+  public byte[] readBytes(int record) {
+    synchronized (myLock) {
+      final int length = myRecordsTable.getSize(record);
+      if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
+      assert length > 0;
 
-  public abstract void checkSanity(int record);
+      final long address = myRecordsTable.getAddress(record);
+      byte[] result = new byte[length];
+      myDataTable.readBytes(address, result);
 
-  public abstract boolean flushSome();
+      return result;
+    }
+  }
 
-  public abstract int getVersion();
+  protected void doDeleteRecord(int record) {
+    myDataTable.reclaimSpace(myRecordsTable.getSize(record));
+    myRecordsTable.deleteRecord(record);
+  }
 
-  public abstract void setVersion(int version);
+  public void dispose() {
+    synchronized (myLock) {
+      force();
+      myRecordsTable.dispose();
+      myDataTable.dispose();
+    }
+  }
 
-  protected abstract int appendBytes(int record, byte[] bytes);
+  public void checkSanity(final int record) {
+    synchronized (myLock) {
+      final int size = myRecordsTable.getSize(record);
+      assert size >= 0;
+      final long address = myRecordsTable.getAddress(record);
+      assert address >= 0;
+      assert address + size < myDataTable.getFileSize();
+    }
+  }
 
-  public abstract void writeBytes(int record, byte[] bytes);
-
-  public abstract int ensureCapacity(int attAddress, int capacity);
-
-  public class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
+  public static class StorageDataOutput extends DataOutputStream implements RecordDataOutput {
+    private final AbstractStorage myStorage;
     private final int myRecordId;
 
-    public StorageDataOutput(int recordId) {
+    public StorageDataOutput(AbstractStorage storage, int recordId) {
       super(new ByteArrayOutputStream());
+      myStorage = storage;
       myRecordId = recordId;
     }
 
     public void close() throws IOException {
       super.close();
-      AbstractStorage.this.writeBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
+      myStorage.writeBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
     }
 
     public int getRecordId() {
@@ -78,7 +341,7 @@ public abstract class AbstractStorage implements Forceable, Disposable {
   }
 
   public class AppenderStream extends DataOutputStream {
-    private int myRecordId;
+    private final int myRecordId;
 
     public AppenderStream(int recordId) {
       super(new ByteArrayOutputStream());
@@ -87,11 +350,7 @@ public abstract class AbstractStorage implements Forceable, Disposable {
 
     public void close() throws IOException {
       super.close();
-      myRecordId = appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
-    }
-
-    public int getRecordId() {
-      return myRecordId;
+      appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
     }
   }
 }

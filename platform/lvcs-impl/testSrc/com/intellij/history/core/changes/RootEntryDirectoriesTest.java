@@ -16,14 +16,15 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import org.junit.Ignore;
 import org.junit.Test;
 
-public class RootEntryDirectoriesTest extends LocalVcsTestCase {
-  private final Entry root = new RootEntry();
+public class RootEntryDirectoriesTest extends LocalHistoryTestCase {
+  private final RootEntry root = new RootEntry();
 
   @Test
   public void testCeatingDirectory() {
@@ -41,7 +42,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   @Test
   public void testCreatingFilesUnderDirectory() {
     createDirectory(root, "dir");
-    createFile(root, "dir/file", null, -1);
+    createFile(root, "dir/file");
 
     assertTrue(root.hasEntry("dir"));
     assertTrue(root.hasEntry("dir/file"));
@@ -55,35 +56,25 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCreatingFilesUnderNonExistingDirectoryThrowsException() {
-    try {
-      createFile(root, "dir/file", null, -1);
-      fail();
-    }
-    catch (RuntimeException e) {
-    }
-
-    try {
-      createFile(root, "dir1/dir2", null, -1);
-      fail();
-    }
-    catch (RuntimeException e) {
-    }
+  public void testCreatingFilesUnderNonExistingDirectoryCreatesIt() {
+    createFile(root, "dir/file");
+    assertTrue(root.hasEntry("dir"));
+    assertTrue(root.hasEntry("dir/file"));
   }
 
   @Test
   public void testChangingFileContentUnderDirectory() {
     createDirectory(root, "dir");
-    createFile(root, "dir/file", c("content"), -1);
+    createFile(root, "dir/file", "content");
 
-    changeFileContent(root, "dir/file", c("new content"), -1);
+    changeContent(root, "dir/file", "new content");
 
-    assertEquals(c("new content"), root.getEntry("dir/file").getContent());
+    assertContent("new content", root.getEntry("dir/file").getContent());
   }
 
   @Test
   public void testRenamingDirectories() {
-    createFile(root, "dir", null, -1);
+    createFile(root, "dir");
 
     rename(root, "dir", "new dir");
 
@@ -94,21 +85,22 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   @Test
   public void testRenamingFilesUnderDirectory() {
     createDirectory(root, "dir");
-    createFile(root, "dir/file", c("content"), -1);
+    createFile(root, "dir/file", "content");
 
     rename(root, "dir/file", "new file");
 
     assertFalse(root.hasEntry("dir/file"));
     assertTrue(root.hasEntry("dir/new file"));
 
-    assertEquals(c("content"), root.getEntry("dir/new file").getContent());
+    assertContent("content", root.getEntry("dir/new file").getContent());
   }
 
   @Test
+  @Ignore
   public void testRenamingFilesUnderDirectoryToExistingNameThrowsException() {
     createDirectory(root, "dir");
-    createFile(root, "dir/file1", null, -1);
-    createFile(root, "dir/file2", null, -1);
+    createFile(root, "dir/file1");
+    createFile(root, "dir/file2");
 
     try {
       rename(root, "dir/file1", "file2");
@@ -121,7 +113,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   @Test
   public void testRenamingSubdirectories() {
     createDirectory(root, "dir1");
-    createFile(root, "dir1/dir2", null, -1);
+    createFile(root, "dir1/dir2");
 
     rename(root, "dir1/dir2", "new dir");
 
@@ -132,7 +124,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   @Test
   public void testRenamingDirectoryWithContent() {
     createDirectory(root, "dir");
-    createFile(root, "dir/file", null, -1);
+    createFile(root, "dir/file");
 
     rename(root, "dir", "new dir");
 
@@ -144,10 +136,11 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   }
 
   @Test
+  @Ignore
   public void testRenamingDirectoryToExistingFileNameThrowsException() {
     createDirectory(root, "dir1");
     createDirectory(root, "dir1/dir2");
-    createFile(root, "dir1/file", null, -1);
+    createFile(root, "dir1/file");
 
     try {
       rename(root, "dir1/dir2", "file");
@@ -161,7 +154,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   public void testMovingFilesBetweenDirectories() {
     createDirectory(root, "dir1");
     createDirectory(root, "dir2");
-    createFile(root, "dir1/file", c("content"), -1);
+    createFile(root, "dir1/file", "content");
 
     move(root, "dir1/file", "dir2");
 
@@ -169,7 +162,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
     assertFalse(root.hasEntry("dir1/file"));
 
     Entry e = root.getEntry("dir2/file");
-    assertEquals(c("content"), e.getContent());
+    assertContent("content", e.getContent());
   }
 
   @Test
@@ -177,7 +170,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
     createDirectory(root, "root1");
     createDirectory(root, "root2");
     createDirectory(root, "root1/dir");
-    createFile(root, "root1/dir/file", null, -1);
+    createFile(root, "root1/dir/file");
 
     move(root, "root1/dir", "root2");
 
@@ -188,20 +181,9 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testDoesNotChangeTimestampOfContentWhenMoving() {
-    createDirectory(root, "dir1");
-    createDirectory(root, "dir2");
-    createFile(root, "dir1/file", null, 99L);
-
-    move(root, "dir1", "dir2");
-
-    assertEquals(99L, root.getEntry("dir2/dir1/file").getTimestamp());
-  }
-
-  @Test
   public void testMovingEntryFromRootToDirectory() {
     createDirectory(root, "dir");
-    createFile(root, "file", null, -1);
+    createFile(root, "file");
 
     move(root, "file", "dir");
 
@@ -214,8 +196,8 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
     createDirectory(root, "dir1");
     createDirectory(root, "dir1/dir2");
 
-    createFile(root, "dir1/file1", null, -1);
-    createFile(root, "dir1/dir2/file2", null, -1);
+    createFile(root, "dir1/file1");
+    createFile(root, "dir1/dir2/file2");
 
     move(root, "dir1/file1", "dir1/dir2");
     move(root, "dir1/dir2/file2", "dir1");
@@ -239,8 +221,8 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
 
   @Test
   public void testMovingEntryToNotADirectoryThrowsException() {
-    createFile(root, "file1", null, -1);
-    createFile(root, "file2", null, -1);
+    createFile(root, "file1");
+    createFile(root, "file2");
 
     try {
       move(root, "file1", "file1/file2");
@@ -253,7 +235,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   @Test
   public void testMovingEntryToSameDirectory() {
     createDirectory(root, "dir");
-    createFile(root, "dir/file", null, -1);
+    createFile(root, "dir/file");
 
     move(root, "dir/file", "dir");
 
@@ -297,7 +279,7 @@ public class RootEntryDirectoriesTest extends LocalVcsTestCase {
   @Test
   public void testDeletingFilesUnderDirectory() {
     createDirectory(root, "dir");
-    createFile(root, "dir/file", null, -1);
+    createFile(root, "dir/file");
     assertTrue(root.hasEntry("dir/file"));
 
     delete(root, "dir/file");

@@ -16,9 +16,13 @@
 
 package com.intellij.analysis;
 
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -240,15 +244,13 @@ public class AnalysisScope {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       final ContentIterator contentIterator = new ContentIterator() {
-        @SuppressWarnings({"SimplifiableIfStatement"})
         public boolean processFile(final VirtualFile fileOrDir) {
-          if (fileOrDir.isDirectory()) return true;
           final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
             public Boolean compute() {
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();
-          if (isInScope && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
+          if (isInScope) {
             return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
           }
           return true;
@@ -317,6 +319,11 @@ public class AnalysisScope {
                               final FileIndex projectFileIndex,
                               final PsiManager psiManager, final boolean needReadAction) {
     if (fileOrDir.isDirectory()) return true;
+    final FileType fileType = fileOrDir.getFileType();
+    if (fileType instanceof WorkspaceFileType ||
+        fileType instanceof ProjectFileType ||
+        fileType instanceof ModuleFileType ||
+        fileOrDir.getPath().contains("/.idea/")) return true;
     if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
       return processFile(fileOrDir, visitor, psiManager, needReadAction);
     }

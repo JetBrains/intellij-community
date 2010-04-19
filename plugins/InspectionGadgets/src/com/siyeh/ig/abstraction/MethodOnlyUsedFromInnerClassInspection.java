@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Bas Leijdekkers
+ * Copyright 2005-2010 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,22 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
+    @SuppressWarnings({"PublicField"})
     public boolean ignoreMethodsAccessedFromAnonymousClass = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreStaticMethodsFromNonStaticInnerClass = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean onlyReportStaticMethods = false;
 
     @Override
     @NotNull
@@ -64,10 +70,18 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     @Override
     @Nullable
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "method.only.used.from.inner.class.ignore.option"),
-                this, "ignoreMethodsAccessedFromAnonymousClass");
+        final MultipleCheckboxOptionsPanel panel =
+                new MultipleCheckboxOptionsPanel(this);
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "method.only.used.from.inner.class.ignore.option"),
+                "ignoreMethodsAccessedFromAnonymousClass");
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.static.methods.accessed.from.a.non.static.inner.class"),
+                "ignoreStaticMethodsFromNonStaticInnerClass");
+        panel.addCheckbox(
+                InspectionGadgetsBundle.message("only.report.static.methods"),
+                "onlyReportStaticMethods");
+        return panel;
     }
 
     @Override
@@ -84,6 +98,10 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
                 method.isConstructor()) {
                 return;
             }
+            if (onlyReportStaticMethods &&
+                !method.hasModifierProperty(PsiModifier.STATIC)) {
+                return;
+            }
             if (method.getNameIdentifier() == null) {
                 return;
             }
@@ -93,6 +111,14 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
                 return;
             }
             final PsiClass containingClass = processor.getContainingClass();
+            if (ignoreStaticMethodsFromNonStaticInnerClass &&
+                    method.hasModifierProperty(PsiModifier.STATIC)) {
+                final PsiElement parent = containingClass.getParent();
+                if (parent instanceof PsiClass &&
+                    !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+                    return;
+                }
+            }
             if (containingClass instanceof PsiAnonymousClass) {
                 final PsiClass[] interfaces =
                         containingClass.getInterfaces();

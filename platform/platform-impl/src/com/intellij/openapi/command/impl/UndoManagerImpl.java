@@ -206,13 +206,6 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCurrentMerger.markAsGlobal();
   }
 
-  public void invalidateAllGlobalActions() {
-    flushMergers();
-
-    myUndoStacksHolder.invalidateAllGlobalActions();
-    myRedoStacksHolder.invalidateAllGlobalActions();
-  }
-
   private void flushMergers() {
     // Run dummy command in order to flush all mergers...
     CommandProcessor.getInstance()

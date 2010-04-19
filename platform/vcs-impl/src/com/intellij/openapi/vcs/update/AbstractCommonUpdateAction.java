@@ -365,7 +365,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
       myProjectLevelVcsManager.startBackgroundVcsOperation();
 
-      myBefore = LocalHistory.putSystemLabel(myProject, "Before update");
+      myBefore = LocalHistory.getInstance().putSystemLabel(myProject, "Before update");
 
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 
@@ -402,7 +402,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           }
           doVfsRefresh();
         } finally {
-          myAfter = LocalHistory.putSystemLabel(myProject, "After update");
+          myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
         }
       }
@@ -435,14 +435,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private void doVfsRefresh() {
       final String actionName = VcsBundle.message("local.history.update.from.vcs");
-      final LocalHistoryAction action = LocalHistory.startAction(myProject, actionName);
+      final LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
       try {
         LOG.info("Calling refresh files after update for roots: " + Arrays.toString(myRoots));
         RefreshVFsSynchronously.updateAllChanged(myUpdatedFiles);
       }
       finally {
         action.finish();
-        LocalHistory.putSystemLabel(myProject, actionName);
+        LocalHistory.getInstance().putSystemLabel(myProject, actionName);
       }
     }
 

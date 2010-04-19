@@ -73,7 +73,7 @@ public class MavenEmbedderWrapperTest extends MavenImportingTestCase {
     myEmbedder.customizeForResolve(new SoutMavenConsole(), EMPTY_MAVEN_PROCESS);
     MavenExecutionResult result = myEmbedder.execute(myProjectPom, Collections.EMPTY_LIST, Arrays.asList("compile"));
 
-    assertNotNull(myProjectRoot.findFileByRelativePath("target"));
+    assertNotNull(new File(getProjectPath(), "target").exists());
 
     assertOrderedElementsAreEqual(result.getExceptions());
     assertOrderedElementsAreEqual(result.getUnresolvedArtifactIds());

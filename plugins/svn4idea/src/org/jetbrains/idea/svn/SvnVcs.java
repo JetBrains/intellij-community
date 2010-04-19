@@ -217,12 +217,6 @@ public class SvnVcs extends AbstractVcs {
     invokeRefreshSvnRoots(true);
   }
 
-  @Override
-  protected void shutdown() throws VcsException {
-    super.shutdown();
-    myAuthNotifier.stop();
-  }
-
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
     REFRESH_LOG.debug("refresh: ", new Throwable());
     if (myCopiesRefreshManager != null) {
@@ -360,6 +354,8 @@ public class SvnVcs extends AbstractVcs {
     LoadedRevisionsCache.getInstance(myProject);
     FrameStateManager.getInstance().addListener(myFrameStateListener);
 
+    myAuthNotifier.init();
+
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       public void run() {
@@ -411,6 +407,8 @@ public class SvnVcs extends AbstractVcs {
     }
     vcsManager.removeVcsListener(myRootsToWorkingCopies);
     myRootsToWorkingCopies.clear();
+
+    myAuthNotifier.stop();
     myAuthNotifier.clear();
   }
 

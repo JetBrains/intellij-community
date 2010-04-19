@@ -19,19 +19,13 @@ package com.intellij.historyIntegrTests;
 
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
-
-import static com.intellij.history.core.LocalVcsTestCase.list;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testRefreshingSynchronously() throws Exception {
@@ -56,25 +50,23 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void doTestRefreshing(boolean async) throws Exception {
-    String path1 = createFileExternally("f1.txt");
-    String path2 = createFileExternally("f2.txt");
+    int before = getRevisionsFor(myRoot).size();
 
-    assertFalse(hasVcsEntry(path1));
-    assertFalse(hasVcsEntry(path2));
+    createFileExternally("f1.txt");
+    createFileExternally("f2.txt");
+
+    assertEquals(before, getRevisionsFor(myRoot).size());
 
     refreshVFS(async);
 
-    assertTrue(hasVcsEntry(path1));
-    assertTrue(hasVcsEntry(path2));
-
-    assertEquals(2, getVcsRevisionsFor(root).size());
+    assertEquals(before + 1, getRevisionsFor(myRoot).size());
   }
 
   public void testChangeSetName() throws Exception {
     createFileExternally("f.txt");
     refreshVFS();
-    Revision r = getVcsRevisionsFor(root).get(0);
-    assertEquals("External change", r.getCauseChangeName());
+    Revision r = getRevisionsFor(myRoot).get(0);
+    assertEquals("External change", r.getChangeSetName());
   }
 
   public void testRefreshDuringCommand() {
@@ -84,16 +76,6 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
         refreshVFS();
       }
     }, "", null);
-  }
-
-  public void testRefreshingSpecifiedFiles() throws Exception {
-    String f1 = createFileExternally("f1.txt");
-    String f2 = createFileExternally("f2.txt");
-
-    LocalFileSystem.getInstance().refreshIoFiles(list(new File(f1), new File(f2)));
-
-    assertTrue(hasVcsEntry(f1));
-    assertTrue(hasVcsEntry(f2));
   }
 
   public void testCommandDuringRefresh() throws Exception {
@@ -115,36 +97,15 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void executeSomeCommand() {
-    CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), "", null);
-  }
-
-  public void testContentOfFileChangedDuringRefresh() throws Exception {
-    final VirtualFile f = root.createChildData(null, "file.txt");
-    f.setBinaryContent("before".getBytes());
-
-    performAllPendingJobs();
-
-    ContentChangesListener l = new ContentChangesListener(f);
-    addFileListenerDuring(l, new RunnableAdapter() {
-      @Override
-      public void doRun() throws IOException {
-        changeFileExternally(f.getPath(), "after");
-        refreshVFS();
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      public void run() {
       }
-    });
-
-    // todo unrelable test because content recorded before LvcsFileListener does its job
-    assertEquals("before", l.getContentBefore());
-    assertEquals("after", l.getContentAfter());
-  }
-
-  private void performAllPendingJobs() {
-    refreshVFS();
+    }, "", null);
   }
 
   public void testFileCreationDuringRefresh() throws Exception {
     final String path = createFileExternally("f.txt");
-    changeFileExternally(path, "content");
+    setContentExternally(path, "content");
 
     final String[] content = new String[1];
     VirtualFileListener l = new VirtualFileAdapter() {
@@ -168,38 +129,18 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertEquals("content", content[0]);
   }
 
-  public void ignoreTestCreationOfExcludedDirectoryDuringRefresh() throws Exception {
-    // todo does not work due to FileListener order. FileIndex gets event later than Lvcs.
-
-    VirtualFile dir = root.createChildDirectory(null, "EXCLUDED");
-    String p = dir.getPath();
-
-    assertTrue(hasVcsEntry(p));
-
-    ModifiableRootModel m = ModuleRootManager.getInstance(myModule).getModifiableModel();
-    m.getContentEntries()[0].addExcludeFolder(dir);
-    m.commit();
-
-    assertFalse(hasVcsEntry(p));
-
-    dir.delete(null);
-
-    createDirectoryExternally("EXCLUDED");
-    refreshVFS();
-
-    assertFalse(hasVcsEntry(p));
-  }
-
   public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, FILTERED_DIR_NAME);
-    String path = Paths.appended(root.getPath(), FILTERED_DIR_NAME);
+    int before = getRevisionsFor(myRoot).size();
 
-    assertFalse(hasVcsEntry(path));
+    myRoot.createChildDirectory(null, FILTERED_DIR_NAME);
+    String path = Paths.appended(myRoot.getPath(), FILTERED_DIR_NAME);
 
     new File(path).delete();
+    assertEquals(before, getRevisionsFor(myRoot).size());
+
     refreshVFS();
 
-    assertFalse(hasVcsEntry(path));
+    assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
   public void testCreationOfExcludedDirWithFilesDuringRefreshShouldNotThrowException() throws Exception {
@@ -209,14 +150,14 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
 
     File targetDir = createTargetDir();
 
-    FileUtil.copyDir(targetDir, new File(root.getPath(), "target"));
+    FileUtil.copyDir(targetDir, new File(myRoot.getPath(), "target"));
     VirtualFileManager.getInstance().refresh(false);
 
-    VirtualFile classes = root.findFileByRelativePath("target/classes");
-    addExcludedDir(classes);
-    classes.getParent().delete(null);
+    String classesPath = myRoot.getPath() + "/target/classes";
+    addExcludedDir(classesPath);
+    LocalFileSystem.getInstance().findFileByPath(classesPath).getParent().delete(null);
 
-    FileUtil.copyDir(targetDir, new File(root.getPath(), "target"));
+    FileUtil.copyDir(targetDir, new File(myRoot.getPath(), "target"));
     VirtualFileManager.getInstance().refresh(false); // shouldn't throw
   }
 

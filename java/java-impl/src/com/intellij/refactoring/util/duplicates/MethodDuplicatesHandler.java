@@ -134,7 +134,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   }
 
   private static void replaceDuplicate(final Project project, final List<Match> duplicates, final PsiMethod method) {
-    LocalHistoryAction a = LocalHistory.startAction(project, REFACTORING_NAME);
+    LocalHistoryAction a = LocalHistory.getInstance().startAction(REFACTORING_NAME);
     try {
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (progressIndicator != null && progressIndicator.isCanceled()) return;

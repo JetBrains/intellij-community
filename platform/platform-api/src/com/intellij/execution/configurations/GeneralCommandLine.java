@@ -44,6 +44,10 @@ public class GeneralCommandLine {
     myExePath = exePath.trim();
   }
 
+  public String getExePath() {
+    return myExePath;
+  }
+
   public void setWorkDirectory(@NonNls final String path) {
     setWorkingDirectory(path != null? new File(path) : null);
   }

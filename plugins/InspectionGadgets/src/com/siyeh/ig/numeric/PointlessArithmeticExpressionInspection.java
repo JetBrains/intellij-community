@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,6 +150,7 @@ public class PointlessArithmeticExpressionInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new PointlessArithmeticVisitor();
     }
@@ -159,7 +160,13 @@ public class PointlessArithmeticExpressionInspection
         @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if (!(expression.getROperand() != null)) {
+            final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
+                return;
+            }
+            final PsiType expressionType = expression.getType();
+            if (PsiType.DOUBLE.equals(expressionType) ||
+                    PsiType.FLOAT.equals(expressionType)) {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
@@ -170,11 +177,7 @@ public class PointlessArithmeticExpressionInspection
             if (TypeUtils.expressionHasType("java.lang.String", expression)) {
                 return;
             }
-            final PsiExpression rhs = expression.getROperand();
             final PsiExpression lhs = expression.getLOperand();
-            if (rhs == null) {
-                return;
-            }
             final IElementType tokenType = sign.getTokenType();
             final boolean isPointless;
             if (tokenType.equals(JavaTokenType.PLUS)) {
@@ -191,14 +194,14 @@ public class PointlessArithmeticExpressionInspection
                     tokenType.equals(JavaTokenType.GE) ||
                     tokenType.equals(JavaTokenType.GT) ||
                     tokenType.equals(JavaTokenType.LT)) {
-                isPointless = comparisonExpressionIsPointless(lhs, rhs, tokenType);
+                isPointless = comparisonExpressionIsPointless(lhs, rhs,
+                        tokenType);
             } else {
                 isPointless = false;
             }
             if (!isPointless) {
                 return;
             }
-            final PsiType expressionType = expression.getType();
             if (!PsiType.BOOLEAN.equals(expressionType)) {
                 if (expressionType == null ||
                         !expressionType.equals(rhs.getType()) ||
@@ -233,32 +236,40 @@ public class PointlessArithmeticExpressionInspection
             return PsiType.INT.equals(rhs.getType()) && isOne(rhs);
         }
 
-        private boolean comparisonExpressionIsPointless(PsiExpression lhs, PsiExpression rhs,
-                                                        IElementType comparison) {
-            if (PsiType.INT.equals(lhs.getType()) && PsiType.INT.equals(rhs.getType())) {
+        private boolean comparisonExpressionIsPointless(
+                PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
+            if (PsiType.INT.equals(lhs.getType()) &&
+                PsiType.INT.equals(rhs.getType())) {
                 return intComparisonIsPointless(lhs, rhs, comparison);
-            } else if (PsiType.LONG.equals(lhs.getType()) && PsiType.LONG.equals(rhs.getType())) {
+            } else if (PsiType.LONG.equals(lhs.getType()) &&
+                       PsiType.LONG.equals(rhs.getType())) {
                 return longComparisonIsPointless(lhs, rhs, comparison);
             }
             return false;
         }
 
-        private boolean intComparisonIsPointless(PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
+        private boolean intComparisonIsPointless(
+                PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
             if (isMaxInt(lhs) || isMinInt(rhs)) {
-                return JavaTokenType.GE.equals(comparison) || JavaTokenType.LT.equals(comparison);
+                return JavaTokenType.GE.equals(comparison) ||
+                       JavaTokenType.LT.equals(comparison);
             }
             if (isMinInt(lhs) || isMaxInt(rhs)) {
-                return JavaTokenType.LE.equals(comparison) || JavaTokenType.GT.equals(comparison);
+                return JavaTokenType.LE.equals(comparison) ||
+                       JavaTokenType.GT.equals(comparison);
             }
             return false;
         }
 
-        private boolean longComparisonIsPointless(PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
+        private boolean longComparisonIsPointless(
+                PsiExpression lhs, PsiExpression rhs, IElementType comparison) {
             if (isMaxLong(lhs) || isMinLong(rhs)) {
-                return JavaTokenType.GE.equals(comparison) || JavaTokenType.LT.equals(comparison);
+                return JavaTokenType.GE.equals(comparison) ||
+                       JavaTokenType.LT.equals(comparison);
             }
             if (isMinLong(lhs) || isMaxLong(rhs)) {
-                return JavaTokenType.LE.equals(comparison) || JavaTokenType.GT.equals(comparison);
+                return JavaTokenType.LE.equals(comparison) ||
+                       JavaTokenType.GT.equals(comparison);
             }
             return false;
         }

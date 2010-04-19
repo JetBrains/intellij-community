@@ -26,10 +26,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -40,7 +38,7 @@ import org.jetbrains.annotations.NonNls;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
 
-public class LocalToFieldHandler {
+public abstract class LocalToFieldHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.LocalToFieldHandler");
 
   private static final String REFACTORING_NAME = RefactoringBundle.message("convert.local.to.field.title");
@@ -54,52 +52,7 @@ public class LocalToFieldHandler {
     myIsConstant = isConstant;
   }
 
-  protected BaseExpressionToFieldHandler.Settings showRefactoringDialog(PsiClass aClass, PsiLocalVariable local, PsiExpression[] occurences, boolean isStatic) {
-    final String fieldName;
-    final BaseExpressionToFieldHandler.InitializationPlace initializerPlace;
-    final boolean declareFinal;
-    @Modifier String fieldVisibility;
-    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(myProject, local.getType(),
-                                                                                    occurences
-    );
-
-    final boolean annotateAsNonNls;
-    final boolean introduceEnumConstant;
-    if (myIsConstant) {
-      IntroduceConstantDialog dialog = new IntroduceConstantDialog(myProject, aClass,
-                                                                   local.getInitializer(), local, true, occurences, aClass, typeSelectorManager
-      );
-      dialog.show();
-      if (!dialog.isOK()) return null;
-      fieldName = dialog.getEnteredName();
-      declareFinal = true;
-      initializerPlace = IN_FIELD_DECLARATION;
-      fieldVisibility = dialog.getFieldVisibility();
-      annotateAsNonNls = dialog.isAnnotateAsNonNls();
-      introduceEnumConstant = dialog.introduceEnumConstant();
-    }
-    else {
-      PsiMethod method = PsiTreeUtil.getParentOfType(local, PsiMethod.class);
-      IntroduceFieldDialog dialog = new IntroduceFieldDialog(myProject, aClass,
-                                                             local.getInitializer(), local,
-                                                             method != null && method.isConstructor(),
-                                                             true, isStatic,
-                                                             occurences.length, method != null, method != null,
-                                                             typeSelectorManager
-      );
-      dialog.show();
-      if (!dialog.isOK()) return null;
-      fieldName = dialog.getEnteredName();
-      initializerPlace = dialog.getInitializerPlace();
-      declareFinal = dialog.isDeclareFinal();
-      fieldVisibility = dialog.getFieldVisibility();
-      annotateAsNonNls = false;
-      introduceEnumConstant = false;
-    }
-
-    return new BaseExpressionToFieldHandler.Settings(fieldName, true, isStatic, declareFinal, initializerPlace, fieldVisibility, local, null, true, new BaseExpressionToFieldHandler.TargetDestination(aClass), annotateAsNonNls,
-                                                     introduceEnumConstant);
-  }
+  protected abstract BaseExpressionToFieldHandler.Settings showRefactoringDialog(PsiClass aClass, PsiLocalVariable local, PsiExpression[] occurences, boolean isStatic);
 
   public boolean convertLocalToField(final PsiLocalVariable local, final Editor editor) {
     PsiClass aClass;
@@ -160,7 +113,7 @@ public class LocalToFieldHandler {
           PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(aaClass, local, fieldName)
                                                               : createField(local, fieldName, initializerPlace == IN_FIELD_DECLARATION);
           field = (PsiField)aaClass.add(field);
-          BaseExpressionToFieldHandler.setModifiers(field, settings, isStatic, occurences);
+          BaseExpressionToFieldHandler.setModifiers(field, settings, isStatic);
           if (!settings.isIntroduceEnumConstant()) {
             VisibilityUtil.fixVisibility(occurences, field, settings.getFieldVisibility());
           }

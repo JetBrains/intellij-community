@@ -97,11 +97,6 @@ abstract class UndoRedo {
       return;
     }
 
-    if (!myUndoableGroup.isValid()) {
-      reportCannotUndo(CommonBundle.message("cannot.undo.error.roots.was.changed.message"), myUndoableGroup.getAffectedDocuments());
-      return;
-    }
-
     Set<DocumentReference> clashing = getStackHolder().collectClashingActions(myUndoableGroup);
     if (!clashing.isEmpty()) {
       reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), clashing);

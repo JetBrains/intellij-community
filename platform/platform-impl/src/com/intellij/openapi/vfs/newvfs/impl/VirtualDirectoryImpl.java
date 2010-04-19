@@ -19,12 +19,14 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -167,8 +169,17 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return null;
   }
 
+  @Override
+  public Iterable<VirtualFile> iterInDbChildren() {
+    return ContainerUtil.iterate(getInDbChildren(), new Condition<VirtualFile>() {
+      public boolean value(VirtualFile file) {
+        return file != NullVirtualFile.INSTANCE;
+      }
+    });
+  }
+
   @NotNull
-  public synchronized Collection<VirtualFile> getInDbChildren() {
+  private synchronized Collection<VirtualFile> getInDbChildren() {
     if (myChildren instanceof VirtualFile[]) {
       return Arrays.asList((VirtualFile[])myChildren);
     }

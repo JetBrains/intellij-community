@@ -16,113 +16,101 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.storage.StreamUtil;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
+import com.intellij.history.utils.LocalHistoryLog;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
-public abstract class StructuralChange<
-    NON_APPLIED_STATE_TYPE extends StructuralChangeNonAppliedState,
-    APPLIED_STATE_TYPE extends StructuralChangeAppliedState> extends Change {
-  private StructuralChangeState myState;
+public abstract class StructuralChange extends Change {
+  protected final String myPath;
 
-  protected StructuralChange(String path) {
-    myState = createNonAppliedState();
-    getNonAppliedState().myPath = path;
+  protected StructuralChange(long id, String path) {
+    super(id);
+    myPath = path;
   }
 
-  protected StructuralChange(Stream s) throws IOException {
-    myState = createAppliedState();
-    getAppliedState().myAffectedIdPath = s.readIdPath();
+  protected StructuralChange(DataInput in) throws IOException {
+    super(in);
+    myPath = StreamUtil.readString(in);
   }
 
-  public void write(Stream s) throws IOException {
-    s.writeIdPath(getAffectedIdPath());
-  }
-
-  protected String getPath() {
-    return getNonAppliedState().myPath;
-  }
-
-  protected IdPath getAffectedIdPath() {
-    return getAppliedState().myAffectedIdPath;
-  }
-
-  protected abstract NON_APPLIED_STATE_TYPE createNonAppliedState();
-
-  protected abstract APPLIED_STATE_TYPE createAppliedState();
-
-  protected NON_APPLIED_STATE_TYPE getNonAppliedState() {
-    return (NON_APPLIED_STATE_TYPE)myState;
-  }
-
-  protected APPLIED_STATE_TYPE getAppliedState() {
-    return (APPLIED_STATE_TYPE)myState;
-  }
-
-  @Override
-  public void applyTo(Entry r) {
-    APPLIED_STATE_TYPE newState = createAppliedState();
-    newState.myAffectedIdPath = doApplyTo(r, newState);
-    myState = newState;
-  }
-
-  protected abstract IdPath doApplyTo(Entry r, APPLIED_STATE_TYPE newState);
-
-  @Override
-  public abstract void doRevertOn(Entry root);
-
-  protected boolean hasNoSuchEntry(Entry parent, String name) {
-    return parent.findChild(name) == null;
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    StreamUtil.writeString(out, myPath);
   }
 
   protected void removeEntry(Entry e) {
     e.getParent().removeChild(e);
   }
 
+  public String getPath() {
+    return myPath;
+  }
+
+  public String getOldPath() {
+    return myPath;
+  }
+
+  public abstract void revertOn(RootEntry root);
+
+  protected void cannotRevert(String path) {
+    LocalHistoryLog.LOG.warn("cannot revert " + getClass().getSimpleName() + "->file not found: " + path);
+  }
+
+  public String revertPath(String path) {
+    if (Paths.equals(getPath(), getOldPath())) return path;
+
+    String relative = Paths.relativeIfUnder(path, myPath);
+    if (relative == null) return path;
+    if (relative.length() == 0) return getOldPath();
+    return Paths.appended(getOldPath(), relative);
+  }
+
   @Override
-  protected boolean affects(IdPath... pp) {
-    for (IdPath p1 : getAffectedIdPaths()) {
-      for (IdPath p2 : pp) {
-        if (p1.isChildOrParentOf(p2)) return true;
-      }
+  public boolean affectsPath(String path) {
+    for (String each : getAffectedPaths()) {
+      if (Paths.isParentOrChild(each, path)) return true;
     }
     return false;
   }
 
   @Override
-  public boolean affectsOnlyInside(Entry e) {
-    for (IdPath p : getAffectedIdPaths()) {
-      if (!p.startsWith(e.getIdPath())) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Override
-  public boolean affectsSameAs(List<Change> cc) {
-    for (Change c : cc) {
-      if (c.affects(getAffectedIdPaths())) return true;
-    }
+  public boolean affectsProject(String projectId) {
     return false;
   }
 
   @Override
-  public boolean isCreationalFor(Entry e) {
+  public boolean affectsMatching(Pattern pattern) {
+    for (String each : getAffectedPaths()) {
+      if ( pattern.matcher(Paths.getNameOf(each)).matches()) return true;
+    }
     return false;
   }
 
-  public IdPath[] getAffectedIdPaths() {
-    return new IdPath[]{getAffectedIdPath()};
+  protected String[] getAffectedPaths() {
+    return new String[]{myPath};
+  }
+
+  @Override
+  public boolean isCreationalFor(String path) {
+    return false;
   }
 
   @Override
   public List<Content> getContentsToPurge() {
     return Collections.emptyList();
+  }
+
+  public String toString() {
+    return getClass().getSimpleName() + ": " + myPath;
   }
 }

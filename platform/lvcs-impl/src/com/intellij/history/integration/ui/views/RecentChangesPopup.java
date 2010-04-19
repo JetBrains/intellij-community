@@ -16,12 +16,14 @@
 
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.util.ui.UIUtil;
 
@@ -30,19 +32,20 @@ import java.awt.*;
 import java.util.List;
 
 public class RecentChangesPopup {
+  private final Project myProject;
   private final IdeaGateway myGateway;
-  private final LocalVcs myVcs;
+  private final LocalHistoryFacade myVcs;
 
-  public RecentChangesPopup(IdeaGateway gw, LocalVcs vcs) {
+  public RecentChangesPopup(Project project, IdeaGateway gw, LocalHistoryFacade vcs) {
+    myProject = project;
     myGateway = gw;
     myVcs = vcs;
   }
 
   public void show() {
-    List<RecentChange> cc = myVcs.getRecentChanges();
+    List<RecentChange> cc = myVcs.getRecentChanges(myGateway.createTransientRootEntry());
     if (cc.isEmpty()) {
-      String message = LocalHistoryBundle.message("recent.changes.to.changes");
-      myGateway.showMessage(message, getTitle());
+      Messages.showInfoMessage(myProject, LocalHistoryBundle.message("recent.changes.to.changes"), getTitle());
       return;
     }
 
@@ -73,12 +76,11 @@ public class RecentChangesPopup {
       setTitle(getTitle()).
       setItemChoosenCallback(selectAction).
       createPopup().
-      showCenteredInCurrentWindow(myGateway.getProject());
+      showCenteredInCurrentWindow(myProject);
   }
 
   private void showRecentChangeDialog(RecentChange c) {
-    DialogWrapper d = new RecentChangeDialog(myGateway, c);
-    d.show();
+    new RecentChangeDialog(myProject, myGateway, c).show();
   }
 
   private String getTitle() {
@@ -105,7 +107,7 @@ public class RecentChangesPopup {
     public Component getListCellRendererComponent(JList l, Object val, int i, boolean isSelected, boolean cellHasFocus) {
       RecentChange c = (RecentChange)val;
       myActionLabel.setText(c.getChangeName());
-      myDateLabel.setText(FormatUtil.formatTimestamp(c.getChange().getTimestamp()));
+      myDateLabel.setText(FormatUtil.formatTimestamp(c.getTimestamp()));
 
       updateColors(isSelected);
       return myPanel;

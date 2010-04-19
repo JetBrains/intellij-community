@@ -16,7 +16,6 @@
 
 package com.intellij.historyIntegrTests.ui;
 
-import com.intellij.history.core.ContentFactory;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
@@ -24,7 +23,8 @@ import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.integration.ui.views.FileHistoryDialog;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
-import com.intellij.openapi.diff.SimpleContent;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -32,17 +32,17 @@ import java.util.Date;
 
 public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDialogWorks() throws IOException {
-    VirtualFile file = root.createChildData(null, "f.txt");
+    VirtualFile file = myRoot.createChildData(null, "f.txt");
 
-    FileHistoryDialog d = new FileHistoryDialog(gateway, file);
-    d.close(0);
+    FileHistoryDialog d = new FileHistoryDialog(myProject, myGateway, file);
+    Disposer.dispose(d);
   }
 
   public void testTitles() throws IOException {
-    long leftTime = new Date(2001, 01, 03, 12, 0).getTime();
-    long rightTime = new Date(2002, 02, 04, 14, 0).getTime();
+    long leftTime = new Date(2001 - 1900, 1, 3, 12, 0).getTime();
+    long rightTime = new Date(2002 - 1900, 2, 4, 14, 0).getTime();
 
-    VirtualFile f = root.createChildData(null, "old.txt");
+    VirtualFile f = myRoot.createChildData(null, "old.txt");
     f.setBinaryContent("old".getBytes(), -1, leftTime);
 
     f.rename(null, "new.txt");
@@ -51,30 +51,14 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     f.setBinaryContent(new byte[0]); // to create current content to skip.
 
     FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 3);
-    assertEquals(f.getPath(), m.getDifferenceModel().getTitle());
+    assertEquals(FileUtil.toSystemDependentName(f.getPath()), m.getDifferenceModel().getTitle());
 
     assertEquals("03.02.01 12:00 - old.txt", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
     assertEquals("04.03.02 14:00 - new.txt", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
   }
 
-  public void testTitlesForAnavailableContent() throws IOException {
-    long leftTime = new Date(2001, 01, 03, 12, 0).getTime();
-    long rightTime = new Date(2002, 02, 04, 14, 0).getTime();
-
-    VirtualFile f = root.createChildData(null, "f.txt");
-    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, leftTime);
-    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, rightTime);
-
-    f.setBinaryContent(new byte[0]); // to create current content to skip.
-
-    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 1, 2);
-
-    assertEquals("03.02.01 12:00 - f.txt - File content is not available", m.getDifferenceModel().getLeftTitle(new NullRevisionsProgress()));
-    assertEquals("04.03.02 14:00 - f.txt - File content is not available", m.getDifferenceModel().getRightTitle(new NullRevisionsProgress()));
-  }
-
   public void testContent() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.txt");
+    VirtualFile f = myRoot.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("new".getBytes());
     f.setBinaryContent("current".getBytes());
@@ -85,7 +69,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testContentWhenOnlyOneRevisionSelected() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.txt");
+    VirtualFile f = myRoot.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("new".getBytes());
 
@@ -95,7 +79,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testContentForCurrentRevision() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.txt");
+    VirtualFile f = myRoot.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("current".getBytes());
 
@@ -105,20 +89,8 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     assertEquals(DocumentContent.class, getRightDiffContent(m).getClass());
   }
 
-  public void testDiffContentIsEmptyForUnavailableCurrent() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.txt");
-    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
-    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1]);
-
-    FileHistoryDialogModel m = createFileModelAndSelectRevisions(f, 0, 1);
-
-    assertDiffContents("", "", m);
-    assertEquals(SimpleContent.class, getLeftDiffContent(m).getClass());
-    assertEquals(SimpleContent.class, getRightDiffContent(m).getClass());
-  }
-
   public void testRevertion() throws Exception {
-    VirtualFile dir = root.createChildDirectory(null, "oldDir");
+    VirtualFile dir = myRoot.createChildDirectory(null, "oldDir");
     VirtualFile f = dir.createChildData(null, "old.txt");
     f.rename(null, "new.txt");
     dir.rename(null, "newDir");
@@ -129,32 +101,6 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
     assertEquals("old.txt", f.getName());
     assertEquals(f.getParent(), dir);
     assertEquals("newDir", dir.getName());
-  }
-
-  public void testChangeRevertion() throws Exception {
-    VirtualFile dir = root.createChildDirectory(null, "oldDir");
-    VirtualFile f = dir.createChildData(null, "old.txt");
-    f.rename(null, "new.txt");
-    dir.rename(null, "newDir");
-
-    FileHistoryDialogModel m = createFileModel(f);
-    m.selectChanges(1, 1);
-    m.createReverter().revert();
-
-    assertEquals("old.txt", f.getName());
-    assertEquals("oldDir", dir.getName());
-    assertNull(root.findChild("newDir"));
-  }
-
-  public void testRevertLabelChange() throws Exception {
-    VirtualFile f = root.createChildDirectory(null, "f.txt");
-    getVcs().putUserLabel("abc");
-
-    FileHistoryDialogModel m = createFileModel(f);
-    m.selectChanges(0, 0);
-    m.createReverter().revert();
-
-    assertNotNull(root.findChild("f.txt"));
   }
 
   private void assertDiffContents(String leftContent, String rightContent, FileHistoryDialogModel m) throws IOException {
@@ -176,7 +122,7 @@ public class FileHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   private FileHistoryDialogModel createFileModel(VirtualFile f) {
-    return new EntireFileHistoryDialogModel(gateway, getVcs(), f);
+    return new EntireFileHistoryDialogModel(myProject, myGateway, getVcs(), f);
   }
 
   private FileHistoryDialogModel createFileModelAndSelectRevisions(VirtualFile f, int first, int second) {

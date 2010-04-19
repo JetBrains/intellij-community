@@ -19,17 +19,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
-import java.util.Arrays;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Set;
 
 public class SelectMavenProjectDialog extends DialogWrapper {
@@ -37,13 +40,28 @@ public class SelectMavenProjectDialog extends DialogWrapper {
 
   private JComboBox myMavenProjectsComboBox;
   private JPanel myMainPanel;
+  private JCheckBox myReplaceAllCheckBox;
+  private boolean myHasUsagesInProjects = false;
+
+  private ItemListener myReplaceAllListener;
+  private final Function<MavenDomProjectModel, Set<MavenDomDependency>> myOccurrencesCountFunction;
 
   public SelectMavenProjectDialog(@NotNull Project project,
-                                 @NotNull Set<MavenDomProjectModel> mavenDomProjectModels) {
+                                 @NotNull Set<MavenDomProjectModel> mavenDomProjectModels,
+                                 @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences) {
     super(project, true);
     myMavenDomProjectModels = mavenDomProjectModels;
 
     setTitle(MavenDomBundle.message("choose.project"));
+
+    myOccurrencesCountFunction = funOccurrences;
+    for (MavenDomProjectModel model : myMavenDomProjectModels) {
+      if (myOccurrencesCountFunction.fun(model).size() > 0) {
+        myHasUsagesInProjects = true;
+        break;
+      }
+    }
+    
     init();
   }
 
@@ -53,12 +71,25 @@ public class SelectMavenProjectDialog extends DialogWrapper {
 
   protected void init() {
     super.init();
+
     updateOkStatus();
+  }
+
+  @Override
+  protected void dispose() {
+    super.dispose();
+    if (myReplaceAllCheckBox != null) {
+      myReplaceAllCheckBox.removeItemListener(myReplaceAllListener);
+    }
   }
 
   @Nullable
   public MavenDomProjectModel getSelectedProject() {
     return (MavenDomProjectModel)ComboBoxUtil.getSelectedValue((DefaultComboBoxModel)myMavenProjectsComboBox.getModel());
+  }
+
+  public boolean isReplaceAllOccurrences() {
+    return myReplaceAllCheckBox.isSelected();
   }
 
   protected JComponent createCenterPanel() {
@@ -76,9 +107,27 @@ public class SelectMavenProjectDialog extends DialogWrapper {
         }
       });
 
+    myReplaceAllListener = new ItemListener() {
+      public void itemStateChanged(ItemEvent e) {
+        updateControls();
+      }
+    };
+
+    myMavenProjectsComboBox.addItemListener(myReplaceAllListener);
     myMavenProjectsComboBox.setSelectedItem(0);
+    myReplaceAllCheckBox.setVisible(myHasUsagesInProjects);
+
+    updateControls();
 
     return myMainPanel;
+  }
+
+  private void updateControls() {
+    MavenDomProjectModel project = getSelectedProject();
+    Integer count = myOccurrencesCountFunction.fun(project).size();
+    myReplaceAllCheckBox.setText(RefactoringBundle.message("replace.all.occurences", count));
+
+    myReplaceAllCheckBox.setEnabled(count != 0);
   }
 
   private void updateOkStatus() {

@@ -19,10 +19,11 @@ package com.intellij.history.core.storage;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 
+import java.io.DataOutput;
 import java.io.IOException;
 
 public abstract class Content {
-  public void write(Stream s) throws IOException {
+  public void write(DataOutput out) throws IOException {
   }
 
   public abstract byte[] getBytes();
@@ -37,7 +38,7 @@ public abstract class Content {
 
   public abstract boolean isAvailable();
 
-  public abstract void purge();
+  public abstract void release();
 
   @Override
   public String toString() {

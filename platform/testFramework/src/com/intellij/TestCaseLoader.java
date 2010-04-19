@@ -40,6 +40,16 @@ import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class TestCaseLoader {
+
+  /** Holds name of JVM property that is assumed to define target test group name. */
+  private static final String TARGET_TEST_GROUP = "idea.test.group";
+
+  /** Holds name of JVM property that is assumed to define filtering rules for test classes. */
+  private static final String TARGET_TEST_PATTERNS = "idea.test.patterns";
+
+  /** Holds name of JVM property that is assumed to determine if only 'fast' tests should be executed. */
+  private static final String FAST_TESTS_ONLY_FLAG = "idea.fast.only";
+
   private final List<Class> myClassList = new ArrayList<Class>();
   private final TestClassesFilter myTestClassesFilter;
   private final String myTestGroupName;
@@ -47,6 +57,12 @@ public class TestCaseLoader {
 
   public TestCaseLoader(String classFilterName) {
     InputStream excludedStream = getClass().getClassLoader().getResourceAsStream(classFilterName);
+    String preconfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
+    if (preconfiguredGroup == null || "".equals(preconfiguredGroup.trim())) {
+      myTestGroupName = "";
+    } else {
+      myTestGroupName = preconfiguredGroup.trim();
+    }
     if (excludedStream != null) {
       try {
         myTestClassesFilter = TestClassesFilter.createOn(new InputStreamReader(excludedStream));
@@ -59,37 +75,37 @@ public class TestCaseLoader {
           e.printStackTrace();
         }
       }
-
-      myTestGroupName = System.getProperty("idea.test.group");
     }
     else {
-      String patterns = System.getProperty("idea.test.patterns");
+      String patterns = System.getProperty(TARGET_TEST_PATTERNS);
       if (patterns != null) {
         myTestClassesFilter = new TestClassesFilter(StringUtil.split(patterns, ";"));
       }
       else {
         myTestClassesFilter = TestClassesFilter.EMPTY_CLASSES_FILTER;
       }
-      myTestGroupName = "";
     }
 
-    try {
-      if (Comparing.equal(System.getProperty("idea.fast.only"), "true")) {
-        BufferedReader reader =
-          new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt")));
-        do {
-          final String testName = reader.readLine();
-          if (testName == null) break;
+    if (Comparing.equal(System.getProperty(FAST_TESTS_ONLY_FLAG), "true")) {
+      BufferedReader reader =
+              new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt")));
+      try {
+        String testName;
+        while ((testName = reader.readLine()) != null) {
           blockedTests.add(testName);
         }
-        while (true);
+      }
+      catch (IOException e) {
+        // No luck
+      } finally {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          // ignore
+        }
       }
     }
-    catch (IOException e) {
-      // No luck
-    }
-
-
     System.out.println("Using test group: [" + (myTestGroupName == null ? "" :  myTestGroupName) + "]");
   }
 
@@ -129,7 +145,8 @@ public class TestCaseLoader {
    * Determine if we should exclude this test case.
    */
   private boolean shouldExcludeTestClass(Class testCaseClass) {
-    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass) || blockedTests.contains(testCaseClass.getName());
+    return !myTestClassesFilter.matches(testCaseClass.getName(), myTestGroupName) || isBombed(testCaseClass)
+              || blockedTests.contains(testCaseClass.getName());
   }
 
   public static boolean isBombed(final Method method) {

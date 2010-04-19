@@ -173,7 +173,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
                 String actionName;
                 String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
                 actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
-                action = LocalHistory.startAction(myProject, actionName);
+                action = LocalHistory.getInstance().startAction(actionName);
 
                 final PsiDirectory createdDir;
                 if (myIsDirectory) {

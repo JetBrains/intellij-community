@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -94,6 +95,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private EditorListenerTracker myEditorListenerTracker;
   private String myTempDirPath;
   private ThreadTracker myThreadTracker;
+
+  protected static boolean ourPlatformPrefixInitialized;
 
   static {
     Logger.setFactory(TestLoggerFactory.getInstance());
@@ -271,6 +274,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (IOException e) {
       // ignore
     }
+
+    LocalHistoryImpl.getInstanceImpl().cleanupForNextTest();
+
     VirtualFilePointerManagerImpl virtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
     if (virtualFilePointerManager != null) {
       virtualFilePointerManager.cleanupForNextTest();
@@ -611,6 +617,22 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
       finally {
         myThrowable = null;
+      }
+    }
+  }
+
+  public static void initPlatformLangPrefix() {
+    if (!ourPlatformPrefixInitialized) {
+      ourPlatformPrefixInitialized = true;
+      boolean isUltimate = true;
+      try {
+        PlatformTestCase.class.getClassLoader().loadClass("com.intellij.openapi.project.impl.IdeaProjectManagerImpl");
+      }
+      catch (ClassNotFoundException e) {
+        isUltimate = false;
+      }
+      if (!isUltimate) {
+        System.setProperty("idea.platform.prefix", "PlatformLangXml");
       }
     }
   }

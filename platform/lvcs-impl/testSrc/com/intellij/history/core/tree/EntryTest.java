@@ -16,14 +16,14 @@
 
 package com.intellij.history.core.tree;
 
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import org.junit.Test;
 
 import java.util.List;
 
-public class EntryTest extends LocalVcsTestCase {
+public class EntryTest extends LocalHistoryTestCase {
   @Test
   public void testPathEquality() {
     Entry e = new MyEntry() {
@@ -44,7 +44,12 @@ public class EntryTest extends LocalVcsTestCase {
 
   private class MyEntry extends Entry {
     public MyEntry() {
-      super(-1, null);
+      super((String)null);
+    }
+
+    @Override
+    public long getTimestamp() {
+      throw new UnsupportedOperationException();
     }
 
     @Override

@@ -44,7 +44,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myEnableZenCoding = true;
-  private char myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
+  private int myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
@@ -83,7 +83,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   }
 
   public char getZenCodingExpandShortcut() {
-    return myZenCodingExpandShortcut;
+    return (char)myZenCodingExpandShortcut;
   }
 
   public void setZenCodingExpandShortcut(char zenCodingExpandShortcut) {

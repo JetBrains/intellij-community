@@ -68,6 +68,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
    * return non-null value if a breakpoint should have specific properties besides containing file and line. These properties will be stored in
    * {@link XBreakpoint} instance and can be obtained by using {@link XBreakpoint#getProperties()} method
    */
+  @Nullable
   public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {

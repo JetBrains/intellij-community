@@ -16,49 +16,89 @@
 
 package com.intellij.history.core;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.junit.Test;
 
-public class PathsTest extends LocalVcsTestCase {
+public class PathsTest extends LocalHistoryTestCase {
   @Test
   public void testParent() {
     assertEquals("dir1/dir2", Paths.getParentOf("dir1/dir2/file"));
-    assertNull(Paths.getParentOf("file"));
+    assertEquals("", Paths.getParentOf("file"));
+    assertEquals("c:", Paths.getParentOf("c:/file"));
+    assertEquals("/", Paths.getParentOf("/file"));
+    assertEquals("/dir", Paths.getParentOf("/dir/file"));
   }
 
   @Test
   public void testName() {
     assertEquals("file", Paths.getNameOf("file"));
     assertEquals("file", Paths.getNameOf("dir/file"));
+    assertEquals("/", Paths.getNameOf("/"));
   }
 
   @Test
   public void testAppending() {
     assertEquals("file1/file2", Paths.appended("file1", "file2"));
-  }
-
-  @Test
-  public void testAppendingPathWithDriveLetter() {
     assertEquals("c:/root/file", Paths.appended("c:/root", "file"));
+    assertEquals("/foo", Paths.appended("/", "foo"));
+    assertEquals("/foo/bar", Paths.appended("/foo", "bar"));
   }
 
   @Test
   public void testRenaming() {
     assertEquals("dir/file2", Paths.renamed("dir/file1", "file2"));
     assertEquals("file2", Paths.renamed("file1", "file2"));
+    assertEquals("/bar", Paths.renamed("/foo", "bar"));
   }
 
   @Test
-  public void testRemovingRoot() {
-    assertEquals("file", Paths.withoutRootIfUnder("dir/file", "dir"));
+  public void testRelative() {
+    assertEquals("file", Paths.relativeIfUnder("dir/file", "dir"));
 
-    assertNull(Paths.withoutRootIfUnder("dir/file", "abc"));
-    assertNull(Paths.withoutRootIfUnder("dir/file", "di"));
+    assertNull(Paths.relativeIfUnder("dir/file", "abc"));
+    assertNull(Paths.relativeIfUnder("dir/file", "di"));
+
+    assertNull("dir/file", Paths.relativeIfUnder("/dir/file", "/"));
+    assertEquals("file", Paths.relativeIfUnder("/dir/file", "/dir"));
 
     Paths.setCaseSensitive(true);
-    assertNull(Paths.withoutRootIfUnder("dir/file", "DiR"));
+    assertNull(Paths.relativeIfUnder("dir/file", "DiR"));
 
     Paths.setCaseSensitive(false);
-    assertEquals("file", Paths.withoutRootIfUnder("dir/file", "DiR"));
+    assertEquals("file", Paths.relativeIfUnder("dir/file", "DiR"));
+  }
+
+  @Test
+  public void testIsParentOf() throws Exception {
+    assertTrue(Paths.isParent("foo", "foo"));
+    assertTrue(Paths.isParent("foo", "foo/bar"));
+    assertTrue(Paths.isParent("foo/bar", "foo/bar"));
+    assertTrue(Paths.isParent("foo/bar", "foo/bar/baz"));
+    assertTrue(Paths.isParent("/", "/foo"));
+    assertTrue(Paths.isParent("/foo", "/foo/bar"));
+    assertFalse(Paths.isParent("foo/bar", "foo/baz"));
+    assertFalse(Paths.isParent("foo/bar", "foo/barr"));
+    assertFalse(Paths.isParent("foo/bar", "foo/barr/baz"));
+  }
+
+  @Test
+  public void testIsParentOrChildOf() throws Exception {
+    assertTrue(Paths.isParentOrChild("foo/bar", "foo/bar"));
+    assertTrue(Paths.isParentOrChild("foo/bar", "foo/bar/baz"));
+    assertTrue(Paths.isParentOrChild("foo/bar/baz", "foo/bar"));
+    assertTrue(Paths.isParentOrChild("/", "/foo/bar"));
+    assertTrue(Paths.isParentOrChild("/foo/bar", "/"));
+    assertFalse(Paths.isParentOrChild("foo/baz", "foo/bar"));
+  }
+
+  @Test
+  public void testSplitting() throws Exception {
+    assertEquals(array("/", "foo", "bar"), ContainerUtil.collect(Paths.split("/foo/bar").iterator()));
+    assertEquals(array("/", "foo", "bar"), ContainerUtil.collect(Paths.split("/foo/bar/").iterator()));
+    assertEquals(array("foo", "bar"), ContainerUtil.collect(Paths.split("foo/bar/").iterator()));
+    assertEquals(array("/", "foo"), ContainerUtil.collect(Paths.split("/foo").iterator()));
+    assertEquals(array("/"), ContainerUtil.collect(Paths.split("/").iterator()));
+    assertEquals(array("c:", "foo", "bar"), ContainerUtil.collect(Paths.split("c:/foo/bar").iterator()));
   }
 
   @Test

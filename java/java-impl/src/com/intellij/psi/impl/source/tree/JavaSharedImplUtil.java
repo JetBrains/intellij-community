@@ -94,9 +94,13 @@ public class JavaSharedImplUtil {
 
   public static void normalizeBrackets(PsiVariable variable) {
     CompositeElement variableElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(variable);
-    ASTNode type = variableElement.findChildByRole(ChildRole.TYPE);
-    LOG.assertTrue(type.getTreeParent() == variableElement);
-    ASTNode name = variableElement.findChildByRole(ChildRole.NAME);
+
+    PsiTypeElement typeElement = variable.getTypeElement();
+    PsiIdentifier nameElement = variable.getNameIdentifier();
+    LOG.assertTrue(typeElement != null && nameElement != null);
+
+    ASTNode type = typeElement.getNode();
+    ASTNode name = nameElement.getNode();
 
     ASTNode firstBracket = null;
     ASTNode lastBracket = null;

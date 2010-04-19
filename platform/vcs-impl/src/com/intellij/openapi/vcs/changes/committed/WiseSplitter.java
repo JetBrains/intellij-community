@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -26,8 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WiseSplitter {
-  private static final Border LEFT_BORDER = BorderFactory.createMatteBorder(1, 0, 0, 1, UIUtil.getBorderSeparatorColor());
-  private static final Border MIDDLE_BORDER = BorderFactory.createMatteBorder(1, 1, 0, 1, UIUtil.getBorderSeparatorColor());
+  private static final Border LEFT_BORDER = IdeBorderFactory.createSimpleBorder(1, 0, 0, 1);
+  private static final Border MIDDLE_BORDER = IdeBorderFactory.createSimpleBorder(1, 1, 0, 1);
 
   private final Runnable myRefresher;
   private final Splitter myParentSplitter;

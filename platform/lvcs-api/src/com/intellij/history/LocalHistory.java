@@ -16,62 +16,27 @@
 
 package com.intellij.history;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public abstract class LocalHistory implements SettingsSavingComponent {
-  public static LocalHistoryAction startAction(Project p, String name) {
-    return getInstance(p).startAction(name);
-  }
-
-  public static Label putUserLabel(Project p, String name) {
-    return getInstance(p).putUserLabel(name);
-  }
-
-  public static Label putUserLabel(Project p, VirtualFile f, String name) {
-    return getInstance(p).putUserLabel(f, name);
-  }
-
-  public static Label putSystemLabel(Project p, String name) {
-    return getInstance(p).putSystemLabel(name);
-  }
-
-  public static Label putSystemLabel(Project p, String name, int color) {
-    return getInstance(p).putSystemLabel(name, color);
-  }
-
-  public static byte[] getByteContent(Project p, VirtualFile f, FileRevisionTimestampComparator c) {
-    return getInstance(p).getByteContent(f, c);
-  }
-
-  public static boolean isUnderControl(Project p, VirtualFile f) {
-    return getInstance(p).isUnderControl(f);
-  }
-
-  public static boolean hasUnavailableContent(Project p, VirtualFile f) {
-    return getInstance(p).hasUnavailableContent(f);
-  }
-
-  public static LocalHistory getInstance(Project p) {
-    return p.getComponent(LocalHistory.class);
+public abstract class LocalHistory {
+  public static LocalHistory getInstance() {
+    return ApplicationManager.getApplication().getComponent(LocalHistory.class);
   }
 
   public abstract LocalHistoryAction startAction(String name);
 
-  public abstract Label putUserLabel(String name);
+  public abstract Label putSystemLabel(Project p, String name, int color);
 
-  public abstract Label putUserLabel(VirtualFile f, String name);
-
-  public abstract Label putSystemLabel(String name, int color);
-
-  public Label putSystemLabel(String name) {
-    return putSystemLabel(name, -1);
+  public Label putSystemLabel(Project p, String name) {
+    return putSystemLabel(p, name, -1);
   }
+
+  public abstract Label putUserLabel(Project p, String name);
 
   public abstract byte[] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
 
   public abstract boolean isUnderControl(VirtualFile f);
-
-  public abstract boolean hasUnavailableContent(VirtualFile f);
 }

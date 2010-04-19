@@ -16,7 +16,6 @@
 package com.intellij.compiler.actions;
 
 import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -31,14 +30,12 @@ public class CompileProjectAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, final Project project) {
     CompilerManager.getInstance(project).rebuild(new CompileStatusNotification() {
       public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-        if (!aborted && LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_PROJECT_COMPILATION) {
-          String text = getTemplatePresentation().getText();
-          if (!project.isDisposed()) {
-            LocalHistory.putSystemLabel(project, errors == 0
-                                           ? CompilerBundle.message("rebuild.lvcs.label.no.errors", text)
-                                           : CompilerBundle.message("rebuild.lvcs.label.with.errors", text));
-          }
-        }
+        if (aborted) return;
+
+        String text = getTemplatePresentation().getText();
+        LocalHistory.getInstance().putSystemLabel(project, errors == 0
+                                       ? CompilerBundle.message("rebuild.lvcs.label.no.errors", text)
+                                       : CompilerBundle.message("rebuild.lvcs.label.with.errors", text));
       }
     });
   }

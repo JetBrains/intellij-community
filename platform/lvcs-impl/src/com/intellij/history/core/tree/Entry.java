@@ -16,45 +16,35 @@
 
 package com.intellij.history.core.tree;
 
-import com.intellij.history.core.IdPath;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.storage.StreamUtil;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import static java.lang.String.format;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
+
+import static java.lang.String.format;
 
 public abstract class Entry {
-  protected int myId;
   protected String myName;
   protected DirectoryEntry myParent;
 
-  public Entry(int id, String name) {
-    myId = id;
+  public Entry(String name) {
     myName = name;
+    //assert name == null || !name.contains("/");
   }
 
-  public Entry(Stream s) throws IOException {
-    myId = s.readInteger();
-    myName = s.readString();
+  public Entry(DataInput in) throws IOException {
+    myName = StreamUtil.readString(in);
   }
 
-  public void write(Stream s) throws IOException {
-    s.writeInteger(myId);
-    s.writeString(myName);
-  }
-
-  public int getId() {
-    return myId;
-  }
-
-  public IdPath getIdPath() {
-    if (myParent == null) return new IdPath(myId);
-    return myParent.getIdPath().appendedWith(myId);
+  public void write(DataOutput out) throws IOException {
+    StreamUtil.writeString(out, myName);
   }
 
   public String getName() {
@@ -62,8 +52,16 @@ public abstract class Entry {
   }
 
   public String getPath() {
-    if (myParent == null) return myName;
-    return myParent.getPathAppendedWith(myName);
+    StringBuilder builder = new StringBuilder();
+    buildPath(this, builder);
+    return builder.toString();
+  }
+
+  private void buildPath(Entry e, StringBuilder builder) {
+    if (e == null) return;
+    buildPath(e.getParent(), builder);
+    if (builder.length() > 0 && builder.charAt(builder.length() - 1) != Paths.DELIM) builder.append(Paths.DELIM);
+    builder.append(e.getName());
   }
 
   public boolean nameEquals(String name) {
@@ -74,9 +72,7 @@ public abstract class Entry {
     return Paths.equals(getPath(), path);
   }
 
-  public long getTimestamp() {
-    throw new UnsupportedOperationException(formatPath());
-  }
+  public abstract long getTimestamp();
 
   public boolean isReadOnly() {
     throw new UnsupportedOperationException(formatPath());
@@ -149,72 +145,25 @@ public abstract class Entry {
     return result;
   }
 
-  public Entry findEntry(String path) {
-    String withoutMe = Paths.withoutRootIfUnder(path, myName);
-
-    if (withoutMe == null) return null;
-    if (withoutMe.length() == 0) return this;
-
-    return searchInChildren(withoutMe);
-  }
-
-  protected Entry searchInChildren(String path) {
-    for (Entry e : getChildren()) {
-      Entry result = e.findEntry(path);
-      if (result != null) return result;
+  public Entry findEntry(String relativePath) {
+    Iterable<String> parts = Paths.split(relativePath);
+    Entry result = this;
+    for (String each : parts) {
+      result = result.findChild(each);
+      if (result == null) return null;
     }
-    return null;
-  }
 
-  public Entry findEntry(IdPath p) {
-    if (!p.rootEquals(myId)) return null;
-    if (p.getId() == myId) return this;
-    return searchInChildren(p.withoutRoot());
-  }
-
-  protected Entry searchInChildren(IdPath p) {
-    for (Entry e : getChildren()) {
-      Entry result = e.findEntry(p);
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  public Entry getEntry(IdPath p) {
-    Entry result = findEntry(p);
-    if (result == null) {
-      throw new RuntimeException(format("entry '%s' not found", p.toString()));
-    }
     return result;
-  }
-
-  public Entry getEntry(int id) {
-    Entry result = findEntry(id);
-    if (result == null) {
-      throw new RuntimeException(format("entry #%d not found", id));
-    }
-    return result;
-  }
-
-  private Entry findEntry(int id) {
-    if (id == myId) return this;
-
-    for (Entry child : getChildren()) {
-      Entry result = child.findEntry(id);
-      if (result != null) return result;
-    }
-
-    return null;
   }
 
   public abstract Entry copy();
 
-  public void changeName(String newName) {
+  public void setName(String newName) {
     if (myParent != null) myParent.checkDoesNotExist(this, newName);
     myName = newName;
   }
 
-  public void changeContent(Content newContent, long timestamp) {
+  public void setContent(Content newContent, long timestamp) {
     throw new UnsupportedOperationException(formatPath());
   }           
 
@@ -232,7 +181,7 @@ public abstract class Entry {
 
   @Override
   public String toString() {
-    return String.valueOf(myId) + "-" + myName;
+    return myName;
   }
 
   private String formatPath() {

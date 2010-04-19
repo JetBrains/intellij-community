@@ -16,22 +16,66 @@
 
 package com.intellij.history.core.revisions;
 
-import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ChangeList;
-import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.Paths;
+import com.intellij.history.core.changes.ChangeSet;
+import com.intellij.history.core.tree.RootEntry;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
+
+import java.util.List;
 
 public class RevisionAfterChange extends RevisionBeforeChange {
-  public RevisionAfterChange(Entry e, Entry r, ChangeList cl, Change c) {
-    super(e, r, cl, c);
+  private final long myId;
+  private final String myName;
+  private final String myLabel;
+  private final int myLabelColor;
+  private final Pair<List<String>, Integer> myAffectedFiles;
+
+  public RevisionAfterChange(LocalHistoryFacade facade, RootEntry r, String entryPath, ChangeSet changeSet) {
+    super(facade, r, entryPath, changeSet);
+
+    // do not store changeSet to prevent huge memory consumption
+    myId = changeSet.getId();
+    myLabel = changeSet.getLabel();
+    myLabelColor = changeSet.getLabelColor();
+    myName = changeSet.getName();
+
+    List<String> allAffectedFiles = changeSet.getAffectedPaths();
+    List<String> someAffectedFiles = new SmartList<String>();
+    for (String each : allAffectedFiles.subList(0, Math.min(3, allAffectedFiles.size()))) {
+      someAffectedFiles.add(Paths.getNameOf(each));
+    }
+    myAffectedFiles = Pair.create(someAffectedFiles, allAffectedFiles.size());
   }
 
   @Override
-  public Change getCauseChange() {
-    return myChange;
+  public String getLabel() {
+    return myLabel;
   }
 
   @Override
-  protected boolean includeMyChange() {
+  public int getLabelColor() {
+    return myLabelColor;
+  }
+
+  @Override
+  public Long getChangeSetId() {
+    return myId;
+  }
+
+  @Override
+  public String getChangeSetName() {
+    return myName;
+  }
+
+  @Override
+  public Pair<List<String>, Integer> getAffectedFileNames() {
+    return myAffectedFiles;
+  }
+
+  @Override
+  protected boolean revertThisChangeSet() {
     return false;
   }
 }

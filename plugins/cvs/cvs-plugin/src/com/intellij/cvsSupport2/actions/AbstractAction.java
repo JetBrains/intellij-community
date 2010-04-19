@@ -135,7 +135,7 @@ public abstract class AbstractAction extends AnAction {
     if (project == null || getTitle(context) == null) return;
 
     String name = CvsBundle.getCvsDisplayName() + ": " + getTitle(context);
-    myLocalHistoryAction = LocalHistory.startAction(project, name);
+    myLocalHistoryAction = LocalHistory.getInstance().startAction(name);
   }
 
   protected void endAction() {

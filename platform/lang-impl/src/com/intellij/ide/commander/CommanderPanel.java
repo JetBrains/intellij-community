@@ -529,7 +529,7 @@ public class CommanderPanel extends JPanel {
 
   private final class MyDeleteElementProvider implements DeleteProvider {
     public void deleteElement(final DataContext dataContext) {
-      LocalHistoryAction a = LocalHistory.startAction(myProject, IdeBundle.message("progress.deleting"));
+      LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
         final PsiElement[] elements = getSelectedElements();
         DeleteHandler.deletePsiElement(elements, myProject);

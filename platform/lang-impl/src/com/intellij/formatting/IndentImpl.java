@@ -70,6 +70,9 @@ class IndentImpl extends Indent {
     return mySpaces;
   }
 
+  /**
+   * @return    <code>'isAbsolute'</code> property value as defined during {@link IndentImpl} object construction
+   */
   boolean isAbsolute(){
     return myIsAbsolute;
   }

@@ -20,7 +20,6 @@
     <xi:include href="/META-INF/PlatformExtensions.xml" xpointer="xpointer(/extensions/*)"/>
     <xi:include href="/META-INF/VcsExtensions.xml" xpointer="xpointer(/extensions/*)"/>
     <xi:include href="/META-INF/LangExtensions.xml" xpointer="xpointer(/extensions/*)"/>
-    <xi:include href="/META-INF/LocalHistoryExtensions.xml" xpointer="xpointer(/extensions/*)"/>
 
     <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
                         serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
@@ -34,6 +33,9 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
+
+    <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
+    <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
 
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
                     serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>

@@ -558,7 +558,7 @@ public class MavenProject {
     result.addAll(state.myReadingProblems);
 
     for (Map.Entry<String, String> each : state.myModulesPathsAndNames.entrySet()) {
-      if (LocalFileSystem.getInstance().findFileByPath(each.getKey()) == null) {
+      if (LocalFileSystem.getInstance().refreshAndFindFileByPath(each.getKey()) == null) {
         result.add(createDependencyProblem(file, ProjectBundle.message("maven.project.problem.moduleNotFound", each.getValue())));
       }
     }
@@ -667,7 +667,7 @@ public class MavenProject {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     Set<String> pathsInStack = getModulePaths();
     for (String each : pathsInStack) {
-      VirtualFile f = fs.findFileByPath(each);
+      VirtualFile f = fs.refreshAndFindFileByPath(each);
       if (f != null) result.add(f);
     }
     return result;

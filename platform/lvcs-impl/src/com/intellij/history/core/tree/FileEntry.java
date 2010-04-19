@@ -18,8 +18,10 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.storage.StoredContent;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 
@@ -28,26 +30,26 @@ public class FileEntry extends Entry {
   private boolean isReadOnly;
   private Content myContent;
 
-  public FileEntry(int id, String name, Content content, long timestamp, boolean isReadOnly) {
-    super(id, name);
+  public FileEntry(String name, Content content, long timestamp, boolean isReadOnly) {
+    super(name);
     myTimestamp = timestamp;
     this.isReadOnly = isReadOnly;
     myContent = content;
   }
 
-  public FileEntry(Stream s) throws IOException {
-    super(s);
-    myTimestamp = s.readLong();
-    isReadOnly = s.readBoolean();
-    myContent = s.readContent();
+  public FileEntry(DataInput in, boolean dummy /* to distinguish from general contructor*/) throws IOException {
+    super(in);
+    myTimestamp = in.readLong();
+    isReadOnly = in.readBoolean();
+    myContent = new StoredContent(in);
   }
 
   @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeLong(myTimestamp);
-    s.writeBoolean(isReadOnly);
-    s.writeContent(myContent);
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    out.writeLong(myTimestamp);
+    out.writeBoolean(isReadOnly);
+    myContent.write(out);
   }
 
   @Override
@@ -79,11 +81,11 @@ public class FileEntry extends Entry {
 
   @Override
   public FileEntry copy() {
-    return new FileEntry(myId, myName, myContent, myTimestamp, isReadOnly);
+    return new FileEntry(myName, myContent, myTimestamp, isReadOnly);
   }
 
   @Override
-  public void changeContent(Content newContent, long newTimestamp) {
+  public void setContent(Content newContent, long newTimestamp) {
     myContent = newContent;
     myTimestamp = newTimestamp;
   }

@@ -60,8 +60,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       new ParentElementFilter(new ClassFilter(PsiTryStatement.class)))
 )));
   public static final PsiJavaElementPattern.Capture<PsiElement> INSIDE_PARAMETER_LIST =
-    PsiJavaPatterns.psiElement().withSuperParent(
-      2, 
+    PsiJavaPatterns.psiElement().withParent(
       psiElement(PsiJavaCodeReferenceElement.class).withParent(
         psiElement(PsiTypeElement.class).withParent(PsiParameterList.class)));
 

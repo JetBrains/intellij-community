@@ -16,13 +16,13 @@
 
 package com.intellij.history.integration;
 
-import com.intellij.history.core.LocalVcsTestCase;
+import com.intellij.history.core.LocalHistoryTestCase;
 import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Date;
 
-public class FormatUtilTest extends LocalVcsTestCase {
+public class FormatUtilTest extends LocalHistoryTestCase {
   @Test
   public void testFormatting() {
     Date d = new Date(2003, 01, 01, 12, 30);

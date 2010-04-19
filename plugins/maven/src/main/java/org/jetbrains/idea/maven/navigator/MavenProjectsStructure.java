@@ -992,6 +992,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         }
       }
 
+      sort(myGoalNodes);
       updateFrom(this);
       childrenChanged();
     }
@@ -1031,6 +1032,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected void updateChildren(List<MavenArtifactNode> children, MavenProject mavenProject) {
       List<DependencyNode> newNodes = new ArrayList<DependencyNode>(children.size());
       for (MavenArtifactNode each : children) {
+        if (each.getState() != MavenArtifactNode.State.ADDED) continue;
+        
         DependencyNode newNode = findOrCreateNodeFor(each, mavenProject);
         newNodes.add(newNode);
         newNode.updateChildren(each.getDependencies(), mavenProject);

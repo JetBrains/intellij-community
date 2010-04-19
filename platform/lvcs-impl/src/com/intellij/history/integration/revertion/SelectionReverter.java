@@ -17,7 +17,7 @@
 package com.intellij.history.integration.revertion;
 
 import com.intellij.diff.Block;
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.FormatUtil;
@@ -26,6 +26,7 @@ import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.Progress;
 import com.intellij.history.integration.ui.models.SelectionCalculator;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -39,14 +40,15 @@ public class SelectionReverter extends Reverter {
   private final int myFromLine;
   private final int myToLine;
 
-  public SelectionReverter(LocalVcs vcs,
+  public SelectionReverter(Project p,
+                           LocalHistoryFacade vcs,
                            IdeaGateway gw,
                            SelectionCalculator c,
                            Revision leftRevision,
                            Entry rightEntry,
                            int fromLine,
                            int toLine) {
-    super(vcs, gw);
+    super(p, vcs, gw);
     myCalculator = c;
     myLeftRevision = leftRevision;
     myRightEntry = rightEntry;
@@ -54,7 +56,7 @@ public class SelectionReverter extends Reverter {
     myToLine = toLine;
   }
 
-  protected String formatCommandName() {
+  public String getCommandName() {
     String date = FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
     return LocalHistoryBundle.message("system.label.revert.of.selection.to.date", date);
   }

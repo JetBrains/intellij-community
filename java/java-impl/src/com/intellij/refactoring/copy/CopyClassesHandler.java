@@ -294,8 +294,8 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
   private static PsiClass[] getTopLevelClasses(PsiElement element) {
     while (true) {
       if (element == null || element instanceof PsiFile) break;
-      if (element instanceof PsiClass && (((PsiClass)element).getContainingClass() == null)) break;
-      element = element.getContext();
+      if (element instanceof PsiClass && element.getParent() != null && (((PsiClass)element).getContainingClass() == null)) break;
+      element = element.getParent();
     }
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();

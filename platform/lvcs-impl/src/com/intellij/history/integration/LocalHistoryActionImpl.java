@@ -20,9 +20,9 @@ import com.intellij.history.LocalHistoryAction;
 
 public class LocalHistoryActionImpl implements LocalHistoryAction {
   private final String myName;
-  private final EventDispatcher myDispatcher;
+  private final LocalHistoryEventDispatcher myDispatcher;
 
-  public LocalHistoryActionImpl(EventDispatcher l, String name) {
+  public LocalHistoryActionImpl(LocalHistoryEventDispatcher l, String name) {
     myName = name;
     myDispatcher = l;
   }

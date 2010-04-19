@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
-import static com.intellij.patterns.PsiJavaPatterns.*;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -59,6 +58,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static com.intellij.patterns.PsiJavaPatterns.*;
 
 /**
  * @author peter
@@ -88,7 +89,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   @Nullable 
   private static ElementFilter getReferenceFilter(PsiElement position) {
     // Completion after extends in interface, type parameter and implements in class
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class);
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class);
     if (containingClass != null && psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&").accepts(position)) {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }

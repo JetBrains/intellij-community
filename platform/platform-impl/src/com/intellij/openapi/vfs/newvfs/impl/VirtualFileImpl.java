@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +47,9 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public Collection<VirtualFile> getInDbChildren() {
-    return Collections.emptyList();
+  @Override
+  public Iterable<VirtualFile> iterInDbChildren() {
+    return ContainerUtil.emptyIterable();
   }
 
   @NotNull

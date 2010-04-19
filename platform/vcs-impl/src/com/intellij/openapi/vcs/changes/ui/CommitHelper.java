@@ -338,7 +338,7 @@ public class CommitHelper {
 
       myAction = ApplicationManager.getApplication().runReadAction(new Computable<LocalHistoryAction>() {
         public LocalHistoryAction compute() {
-          return LocalHistory.startAction(myProject, myActionName);
+          return LocalHistory.getInstance().startAction(myActionName);
         }
       });
     }
@@ -391,7 +391,7 @@ public class CommitHelper {
               }
             }, null);
 
-            LocalHistory.putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
+            LocalHistory.getInstance().putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
           }
         }
       };
