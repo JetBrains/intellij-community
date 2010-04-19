@@ -39,10 +39,11 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -81,6 +82,7 @@ import java.util.List;
 import java.util.Set;
 
 public class DocumentationManager {
+  private static final Logger LOG = Logger.getInstance("#" + DocumentationManager.class.getName());
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
@@ -661,6 +663,7 @@ public class DocumentationManager {
           text = provider.getDocumentation();
         }
         catch (Throwable e) {
+          LOG.info(e);
           ex[0] = e;
         }
 
@@ -800,7 +803,7 @@ public class DocumentationManager {
       final PsiFile containingFile = psiElement.getContainingFile();
       if (containingFile != null) {
         final VirtualFile virtualFile = containingFile.getVirtualFile();
-        final LibraryOrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
+        final OrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
         if (libraryEntry != null) {
           ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(new NamedLibraryElement(libraryEntry.getOwnerModule(), libraryEntry));
         }

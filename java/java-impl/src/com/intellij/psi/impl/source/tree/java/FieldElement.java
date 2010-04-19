@@ -29,6 +29,10 @@ public class FieldElement extends CompositeElement{
     super(Constants.FIELD);
   }
 
+  protected FieldElement(@NotNull IElementType type) {
+    super(type);
+  }
+
   public int getTextOffset() {
     return findChildByRole(ChildRole.NAME).getStartOffset();
   }
