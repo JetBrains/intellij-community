@@ -48,7 +48,7 @@ public class CustomTemplateCallback {
 
   private FileType myFileType;
 
-  private final LiveTemplateBuilder myBuilder = new LiveTemplateBuilder();
+  private LiveTemplateBuilder myBuilder = new LiveTemplateBuilder();
   private int myOffset = 0;
 
   public CustomTemplateCallback(Editor editor, PsiFile file) {
@@ -81,9 +81,15 @@ public class CustomTemplateCallback {
 
   @Nullable
   public TemplateImpl findApplicableTemplate(@NotNull String key) {
+    List<TemplateImpl> templates = findApplicableTemplates(key);
+    return templates.size() > 0 ? templates.get(0) : null;
+  }
+
+  @NotNull
+  public List<TemplateImpl> findApplicableTemplates(String key) {
     List<TemplateImpl> templates = getMatchingTemplates(key);
     templates = filterApplicableCandidates(templates);
-    return templates.size() > 0 ? templates.get(0) : null;
+    return templates;
   }
 
   private List<TemplateImpl> filterApplicableCandidates(Collection<TemplateImpl> candidates) {
@@ -101,16 +107,17 @@ public class CustomTemplateCallback {
    * @param predefinedVarValues
    * @param listener            @return returns if template invokation is finished
    */
-  public void startTemplate(@NotNull String key, Map<String, String> predefinedVarValues) {
-    List<TemplateImpl> templates = getMatchingTemplates(key);
-    templates = filterApplicableCandidates(templates);
+  public void expandTemplate(@NotNull String key,
+                             Map<String, String> predefinedVarValues) {
+    List<TemplateImpl> templates = findApplicableTemplates(key);
     if (templates.size() > 0) {
       TemplateImpl template = templates.get(0);
-      startTemplate(template, predefinedVarValues);
+      expandTemplate(template, predefinedVarValues);
     }
   }
 
-  public void startTemplate(@NotNull TemplateImpl template, Map<String, String> predefinedVarValues) {
+  public void expandTemplate(@NotNull TemplateImpl template,
+                             Map<String, String> predefinedVarValues) {
     int offset = myBuilder.insertTemplate(myOffset, template, predefinedVarValues);
     moveToOffset(offset);
   }
@@ -146,18 +153,30 @@ public class CustomTemplateCallback {
     }
   }
 
-  public void finish() {
+  public void startAllExpandedTemplates() {
     /*myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final CodeStyleManager style = CodeStyleManager.getInstance(myProject);
     if (myGlobalMarker != null) {
       style.reformatText(myFile, myGlobalMarker.getStartOffset(), myGlobalMarker.getEndOffset());
     }*/
+    if (myBuilder.getText().length() == 0) {
+      return;
+    }
     gotoEndOffset();
     if (myOffset < myBuilder.getText().length()) {
       myBuilder.insertVariableSegment(myOffset, TemplateImpl.END);
     }
     TemplateImpl template = myBuilder.buildTemplate();
     myTemplateManager.startTemplate(myEditor, template, false, myBuilder.getPredefinedValues(), null);
+    myBuilder = new LiveTemplateBuilder();
+    myEndOffsetMarker = null;
+    myCheckpoints.clear();
+  }
+
+  public boolean startTemplate() {
+    Map<TemplateImpl, String> template2Argument =
+      ((TemplateManagerImpl)myTemplateManager).findMatchingTemplates(myFile, myEditor, null, TemplateSettings.getInstance());
+    return ((TemplateManagerImpl)myTemplateManager).startNonCustomTemplates(template2Argument, myEditor, null);
   }
 
   private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
@@ -204,5 +223,10 @@ public class CustomTemplateCallback {
 
   public void insertString(int offset, String text) {
     myBuilder.insertText(offset, text);
+  }
+
+  public void deleteTemplateKey(String key) {
+    int caretAt = myEditor.getCaretModel().getOffset();
+    myEditor.getDocument().deleteString(caretAt - key.length(), caretAt);
   }
 }
