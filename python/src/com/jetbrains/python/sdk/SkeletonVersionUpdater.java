@@ -31,8 +31,13 @@ public class SkeletonVersionUpdater implements ProjectComponent {
             final List<Sdk> sdkList = PythonSdkType.getAllSdks();
             for (Sdk sdk : sdkList) {
               final String path = PythonSdkType.findSkeletonsPath(sdk);
-              PythonSdkType.generateBuiltinStubs(sdk.getHomePath(), path);
-              PythonSdkType.generateBinarySkeletons(sdk.getHomePath(), path, ProgressManager.getInstance().getProgressIndicator());
+              if (path == null) {
+                LOG.info("Could not find skeletons path for SDK path " + sdk.getHomePath());
+              }
+              else {
+                PythonSdkType.generateBuiltinStubs(sdk.getHomePath(), path);
+                PythonSdkType.generateBinarySkeletons(sdk.getHomePath(), path, ProgressManager.getInstance().getProgressIndicator());
+              }
             }
           }
         }
