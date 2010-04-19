@@ -15,10 +15,12 @@
  */
 package git4idea.history.browser;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface RepositoryCommonData {
   List<String> getAllTagsOrdered();
   List<String> getAllBranchesOrdered();
   List<String> getKnownUsers();
+  void cherryPick(final Collection<SHAHash> hash);
 }

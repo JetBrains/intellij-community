@@ -52,6 +52,15 @@ public class GitFileUtils {
     return handler.run();
   }
 
+  public static void cherryPick(final Project project, final VirtualFile root, final String hash) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.CHERRY_PICK);
+    handler.addParameters("-x", "-n", hash);
+    handler.endOptions();
+    //handler.addRelativePaths(new FilePathImpl(root));
+    handler.setNoSSH(true);
+    handler.run();
+  }
+
   /**
    * Delete files
    *

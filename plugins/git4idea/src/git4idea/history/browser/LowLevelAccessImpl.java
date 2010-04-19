@@ -15,6 +15,7 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
@@ -22,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
+import git4idea.commands.GitFileUtils;
 import git4idea.history.GitHistoryUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class LowLevelAccessImpl implements LowLevelAccess {
+  private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.LowLevelAccessImpl");
   private final Project myProject;
   private final VirtualFile myRoot;
 
@@ -97,5 +100,9 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
   public void loadAllTags(List<String> sink) throws VcsException {
     GitTag.listAsStrings(myProject, myRoot, sink, null);
+  }
+
+  public void cherryPick(SHAHash hash) throws VcsException {
+    GitFileUtils.cherryPick(myProject, myRoot, hash.getValue());
   }
 }
