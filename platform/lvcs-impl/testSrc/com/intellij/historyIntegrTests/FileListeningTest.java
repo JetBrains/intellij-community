@@ -191,14 +191,6 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
   
-  public void testIgnoringChangeOfROStatusForDirectory() throws Exception {
-    VirtualFile dir = createDirectory("dir");
-    assertEquals(1, getRevisionsFor(dir).size());
-
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(dir, true);
-    assertEquals(1, getRevisionsFor(dir).size());
-  }
-
   public void testDeletion() throws Exception {
     VirtualFile f = createDirectory("f.txt");
 
