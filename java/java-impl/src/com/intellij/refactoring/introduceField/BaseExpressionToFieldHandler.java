@@ -355,10 +355,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
   protected abstract boolean validClass(PsiClass parentClass, Editor editor);
 
-  protected boolean isStaticField() {
-    return false;
-  }
-
   private static PsiElement getNormalizedAnchor(PsiElement anchorElement) {
     PsiElement child = anchorElement;
     while (child != null) {

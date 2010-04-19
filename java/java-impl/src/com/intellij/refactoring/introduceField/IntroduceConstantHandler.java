@@ -226,7 +226,4 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return true;
   }
 
-  protected boolean isStaticField() {
-    return true;
-  }
 }
