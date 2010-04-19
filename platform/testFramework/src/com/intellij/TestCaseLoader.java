@@ -41,8 +41,14 @@ import java.util.*;
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class TestCaseLoader {
 
-  /** Holds name of JVM property that is assumed to hold target test group name. */
+  /** Holds name of JVM property that is assumed to define target test group name. */
   private static final String TARGET_TEST_GROUP = "idea.test.group";
+
+  /** Holds name of JVM property that is assumed to define filtering rules for test classes. */
+  private static final String TARGET_TEST_PATTERNS = "idea.test.patterns";
+
+  /** Holds name of JVM property that is assumed to determine if only 'fast' tests should be executed. */
+  private static final String FAST_TESTS_ONLY_FLAG = "idea.fast.only";
 
   private final List<Class> myClassList = new ArrayList<Class>();
   private final TestClassesFilter myTestClassesFilter;
@@ -66,7 +72,7 @@ public class TestCaseLoader {
       }
     }
     else {
-      String patterns = System.getProperty("idea.test.patterns");
+      String patterns = System.getProperty(TARGET_TEST_PATTERNS);
       if (patterns != null) {
         myTestClassesFilter = new TestClassesFilter(StringUtil.split(patterns, ";"));
       }
@@ -75,7 +81,7 @@ public class TestCaseLoader {
       }
     }
 
-    if (Comparing.equal(System.getProperty("idea.fast.only"), "true")) {
+    if (Comparing.equal(System.getProperty(FAST_TESTS_ONLY_FLAG), "true")) {
       BufferedReader reader =
               new BufferedReader(new InputStreamReader(getClass().getClassLoader().getResourceAsStream("tests/slowTests.txt")));
       try {
