@@ -35,6 +35,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
@@ -348,7 +349,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     if (!webEditorOptions.isZenCodingEnabled()) {
       return false;
     }
-    PsiElement element = file.findElementAt(offset > 0 ? offset - 1 : offset);
+    PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, offset > 0 ? offset - 1 : offset);
     if (element == null) {
       element = file;
     }
