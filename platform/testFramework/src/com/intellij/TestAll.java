@@ -337,6 +337,10 @@ public class TestAll implements Test {
   }
 
   private static String [] getClassRoots() {
+    String testRoots = System.getProperty("test.roots");
+    if (testRoots != null) {
+      return testRoots.split(";");
+    }
     final String[] roots = ExternalClasspathClassLoader.getRoots();
     return roots != null ? roots : System.getProperty("java.class.path").split(File.pathSeparator);
   }
