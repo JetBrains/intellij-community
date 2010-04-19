@@ -442,7 +442,7 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public char getShortcut() {
-    return WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+    return (char)WebEditorOptions.getInstance().getZenCodingExpandShortcut();
   }
 
   @Nullable
