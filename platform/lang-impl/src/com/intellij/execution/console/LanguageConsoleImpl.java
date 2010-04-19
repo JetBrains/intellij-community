@@ -519,17 +519,16 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     });
   }
 
-
   public static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
     printToConsole(console, string, type.getAttributes());
   }
 
-  public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
-    final TextAttributes attributes = TextAttributes.merge(textAttributes, ConsoleHighlighter.OUT.getDefaultAttributes());
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        console.addToHistory(string, attributes);
-      }
-    }, ModalityState.stateForComponent(console.getComponent()));
-  }
+   public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
+     final TextAttributes attributes = TextAttributes.merge(textAttributes, ConsoleHighlighter.OUT.getDefaultAttributes());
+     ApplicationManager.getApplication().invokeLater(new Runnable() {
+       public void run() {
+         console.printToHistory(string, attributes);
+       }
+     }, ModalityState.stateForComponent(console.getComponent()));
+   }
 }
