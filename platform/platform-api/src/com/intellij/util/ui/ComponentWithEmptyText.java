@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,20 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.ui.table.JBTable;
+import com.intellij.ui.SimpleTextAttributes;
 
-import javax.swing.table.TableModel;
+import java.awt.event.ActionListener;
 
+public interface ComponentWithEmptyText {
+  String getEmptyText();
 
-/**
- * @deprecated use com.intellij.ui.table.JBTable
- */
-public class Table extends JBTable {
-  public Table() {
-    super();
-  }
+  void setEmptyText(String emptyText);
 
-  public Table(final TableModel model) {
-    super(model);
-  }
+  void setEmptyText(String emptyText, SimpleTextAttributes attrs);
+
+  void clearEmptyText();
+
+  void appendEmptyText(String text, SimpleTextAttributes attrs);
+
+  void appendEmptyText(String text, SimpleTextAttributes attrs, ActionListener listener);
 }
