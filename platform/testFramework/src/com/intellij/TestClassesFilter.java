@@ -158,7 +158,6 @@ public class TestClassesFilter {
       }
     }
     return false;
-
   }
 
   /**
@@ -171,7 +170,10 @@ public class TestClassesFilter {
    *
    * @param className   target test class name to check
    * @param groupName   target test group name to check
-   * @return            <code>true</code> if test class with given name belongs to the test group with given name;
+   * @return            <code>true</code> if given test group name is defined (not <code>null</code>) and test class with given
+   *                    name belongs to the test group with given name;
+   *                    <code>true</code> if given group if undefined or equal to {@link #ALL_EXCLUDE_DEFINED} and given test
+   *                    class name is not matched by all registered patterns;
    *                    <code>false</code> otherwise
    */
   public boolean matches(String className, String groupName) {
@@ -187,15 +189,7 @@ public class TestClassesFilter {
   }
 
   private static boolean isAllExcludeDefinedGroup(String groupName) {
-    if (groupName == null){
-      return true;
-    }
-
-    if (ALL_EXCLUDE_DEFINED.equals(groupName)){
-      return true;
-    }
-
-    return false;
+    return groupName == null || ALL_EXCLUDE_DEFINED.equalsIgnoreCase(groupName.trim());
   }
 
   private List<Pattern> collectPatternsFor(String groupName) {
