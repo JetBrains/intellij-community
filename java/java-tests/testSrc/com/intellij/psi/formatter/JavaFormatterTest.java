@@ -1,5 +1,6 @@
 package com.intellij.psi.formatter;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -27,7 +28,7 @@ import java.io.File;
 public class JavaFormatterTest extends LightIdeaTestCase {
   private TextRange myTextRange;
   private TextRange myLineRange;
-  private static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/formatter/java";
+  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
 
   public void testSCR915() throws Exception {
     getSettings().SPACE_AROUND_ADDITIVE_OPERATORS = false;
