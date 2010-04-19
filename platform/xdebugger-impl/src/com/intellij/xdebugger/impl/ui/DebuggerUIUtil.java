@@ -15,15 +15,23 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
  * User: lex
@@ -80,5 +88,28 @@ public class DebuggerUIUtil {
       p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
     }
     return new RelativePoint(editor.getContentComponent(), p);
+  }
+
+  public static void showValuePopup(@NotNull String text, @NotNull MouseEvent event, @NotNull Project project) {
+    JTextArea textArea = new JTextArea(text);
+    textArea.setEditable(false);
+    textArea.setBackground(HintUtil.INFORMATION_COLOR);
+    textArea.setLineWrap(false);
+    final JScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
+    component.setBorder(null);
+    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+      .setResizable(true)
+      .setMovable(true)
+      .setRequestFocus(false)
+      .createPopup();
+
+    final Dimension size = textArea.getPreferredSize();
+    final Component parentComponent = event.getComponent();
+    final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
+    size.width = Math.min(size.width, frameSize.width / 2);
+    size.height = Math.min(size.height, frameSize.height / 2);
+    component.setPreferredSize(size);
+    RelativePoint point = new RelativePoint(parentComponent, new Point(event.getX()-size.width, event.getY()-size.height));
+    popup.show(point);
   }
 }

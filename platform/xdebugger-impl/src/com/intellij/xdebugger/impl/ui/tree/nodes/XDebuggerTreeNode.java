@@ -86,6 +86,11 @@ public abstract class XDebuggerTreeNode implements TreeNode {
     myLeaf = leaf;
   }
 
+  @Nullable
+  public XDebuggerNodeLink getLink() {
+    return null;
+  }
+
   @NotNull
   public SimpleColoredText getText() {
     return myText;
