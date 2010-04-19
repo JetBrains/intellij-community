@@ -77,6 +77,10 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
     final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null && containingClass.isAnnotationType()) {
+      CommonRefactoringUtil.showErrorHint(project, editor, REFACTORING_NAME + " is not supported for annotation types", REFACTORING_NAME, HelpID.CHANGE_SIGNATURE);
+      return;
+    }
     final PsiReferenceExpression refExpr = editor != null ? TargetElementUtil.findReferenceExpression(editor) : null;
     final ChangeSignatureDialog dialog = new ChangeSignatureDialog(project, method, containingClass != null && !containingClass.isInterface(),
                                                                    refExpr);
