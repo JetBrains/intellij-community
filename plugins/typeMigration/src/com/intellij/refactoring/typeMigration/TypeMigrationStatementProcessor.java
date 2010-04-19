@@ -251,7 +251,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterableClass.getProject());
           iterableType = factory.createType(iterableClass, factory.createSubstitutor(substMap));
         }
-        myLabeler.addMigrationRoot(value, iterableType, myStatement, TypeConversionUtil.isAssignable(iterableType, typeViewType), true);
+        myLabeler.migrateExpressionType(value, iterableType, myStatement, TypeConversionUtil.isAssignable(iterableType, typeViewType), true);
       } else {
         processVariable(psiParameter, value, psiType, null, null, false);
       }

@@ -647,4 +647,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.util.ArrayList<java.lang.Integer>>", null),
                          myJavaFacade.getElementFactory().createTypeFromText("java.util.List<java.lang.Integer>", null).createArrayType());
   }
+
+  public void testT123() throws Exception {
+    doTestFieldType("n",
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Number", null),
+                    myJavaFacade.getElementFactory().createTypeFromText("java.lang.Integer", null));
+  }
 }
