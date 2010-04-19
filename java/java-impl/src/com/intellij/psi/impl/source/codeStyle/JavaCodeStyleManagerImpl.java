@@ -31,10 +31,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportStatement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.statistics.JavaStatisticsManager;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -578,9 +575,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               || FIND_PREFIX.equals(firstWord)
               || CREATE_PREFIX.equals(firstWord)) {
             final String propertyName = methodName.substring(firstWord.length());
-            String[] names = getSuggestionsByName(propertyName, variableKind, false);
+            final String[] names = getSuggestionsByName(propertyName, variableKind, false);
             return new NamesByExprInfo(propertyName, names);
           }
+        } else {
+          return new NamesByExprInfo(methodName, getSuggestionsByName(methodName, variableKind, false));
         }
       }
     }
