@@ -16,11 +16,11 @@
 
 package com.intellij.history.integration.ui.actions;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,13 +29,13 @@ import com.intellij.vcsUtil.VcsSelectionUtil;
 
 public class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
-  protected DialogWrapper createDialog(IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+  protected void showDialog(Project p, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     VcsSelection sel = getSelection(e);
 
     int from = sel.getSelectionStartLineNumber();
     int to = sel.getSelectionEndLineNumber();
 
-    return new SelectionHistoryDialog(gw, f, from, to);
+    new SelectionHistoryDialog(p, gw, f, from, to).show();
   }
 
   @Override
@@ -45,7 +45,7 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   }
 
   @Override
-  protected boolean isEnabled(LocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     return super.isEnabled(vcs, gw, f, e) && !f.isDirectory() && getSelection(e) != null;
   }
 

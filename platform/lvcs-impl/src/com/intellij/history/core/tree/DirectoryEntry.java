@@ -16,43 +16,48 @@
 
 package com.intellij.history.core.tree;
 
-import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.storage.StreamUtil;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.util.SmartList;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DirectoryEntry extends Entry {
-  private final List<Entry> myChildren;
+import static java.lang.String.format;
 
-  public DirectoryEntry(int id, String name) {
-    super(id, name);
+public class DirectoryEntry extends Entry {
+  private final ArrayList<Entry> myChildren;
+
+  public DirectoryEntry(String name) {
+    super(name);
     myChildren = new ArrayList<Entry>(3);
   }
 
-  public DirectoryEntry(Stream s) throws IOException {
-    super(s);
-    int count = s.readInteger();
-    myChildren = count == 0 ? new SmartList<Entry>() : new ArrayList<Entry>(count);
+  public DirectoryEntry(DataInput in, boolean dummy /* to distinguish from general contructor*/) throws IOException {
+    super(in);
+    int count = in.readInt();
+    myChildren = new ArrayList<Entry>(count);
     while (count-- > 0) {
-      unsafeAddChild(s.readEntry());
+      unsafeAddChild(StreamUtil.readEntry(in));
     }
   }
 
   @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeInteger(myChildren.size());
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    out.writeInt(myChildren.size());
     for (Entry child : myChildren) {
-      s.writeEntry(child);
+      StreamUtil.writeEntry(out, child);
     }
   }
 
-  protected String getPathAppendedWith(String name) {
-    return Paths.appended(getPath(), name);
+  @Override
+  public long getTimestamp() {
+    return -1;
   }
 
   @Override
@@ -75,7 +80,8 @@ public class DirectoryEntry extends Entry {
     Entry found = findChild(name);
     if (found == null || found == e) return;
 
-    throw new RuntimeException(String.format("entry '%s' already exists in '%s'", name, getPath()));
+    removeChild(found);
+    LocalHistoryLog.LOG.warn(String.format("entry '%s' already exists in '%s'", name, getPath()));
   }
 
   @Override
@@ -100,6 +106,7 @@ public class DirectoryEntry extends Entry {
   @Override
   public DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
+    result.myChildren.ensureCapacity(myChildren.size());
     for (Entry child : myChildren) {
       result.unsafeAddChild(child.copy());
     }
@@ -107,7 +114,7 @@ public class DirectoryEntry extends Entry {
   }
 
   protected DirectoryEntry copyEntry() {
-    return new DirectoryEntry(myId, myName);
+    return new DirectoryEntry(myName);
   }
 
   @Override
@@ -125,7 +132,7 @@ public class DirectoryEntry extends Entry {
 
   private void addCreatedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry child : e.myChildren) {
-      if (findDirectChild(child.getId()) == null) {
+      if (findDirectChild(child.getName(), child.isDirectory()) == null) {
         child.collectCreatedDifferences(result);
       }
     }
@@ -133,7 +140,7 @@ public class DirectoryEntry extends Entry {
 
   private void addDeletedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry child : myChildren) {
-      if (e.findDirectChild(child.getId()) == null) {
+      if (e.findDirectChild(child.getName(), child.isDirectory()) == null) {
         child.collectDeletedDifferences(result);
       }
     }
@@ -141,16 +148,16 @@ public class DirectoryEntry extends Entry {
 
   private void addModifiedChildrenDifferences(DirectoryEntry e, List<Difference> result) {
     for (Entry myChild : myChildren) {
-      Entry itsChild = e.findDirectChild(myChild.getId());
+      Entry itsChild = e.findDirectChild(myChild.getName(), myChild.isDirectory());
       if (itsChild != null) {
         myChild.collectDifferencesWith(itsChild, result);
       }
     }
   }
 
-  Entry findDirectChild(int id) {
+  Entry findDirectChild(String name, boolean isDirectory) {
     for (Entry child : getChildren()) {
-      if (child.getId() == id) return child;
+      if (child.isDirectory() == isDirectory && child.nameEquals(name)) return child;
     }
     return null;
   }

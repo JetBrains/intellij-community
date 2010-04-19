@@ -30,6 +30,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
+ * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
+ */
 class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
 
@@ -69,6 +73,22 @@ class InitialInfoBuilder {
     return builder;
   }
 
+  /**
+   * Wraps given root block and all of its descendants and returns root block wrapper.
+   * <p/>
+   * This method performs necessary infrastructure actions and delegates actual processing to
+   * {@link #processCompositeBlock(Block, CompositeBlockWrapper, int, WrapImpl, boolean)} and
+   * {@link #processSimpleBlock(Block, CompositeBlockWrapper, boolean, int, Block)}.
+   *
+   * @param rootBlock               block to wrap
+   * @param index                   index of the current block at its parent block. <code>-1</code> may be used here if we don't
+   *                                have information about parent block
+   * @param parent                  parent block wrapper. <code>null</code> may be used here we no parent block wrapper exists
+   * @param currentWrapParent       parent wrap if any; <code>null</code> otherwise
+   * @param parentBlock             parent block of the block to wrap
+   * @param rootBlockIsRightBlock   flag that shows if target block is the right-most block
+   * @return                        wrapper for the given <code>'rootBlock'</code>
+   */
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
                                          final CompositeBlockWrapper parent,
@@ -113,20 +133,20 @@ class InitialInfoBuilder {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
       }
       if (isReadOnly) {
-        return processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
+        return processSimpleBlock(rootBlock, parent, isReadOnly, index, parentBlock);
       }
 
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty() || myReadOnlyBlockInformationProvider != null
                                  && myReadOnlyBlockInformationProvider.isReadOnly(rootBlock))
       {
-        final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, textRange, index, parentBlock);
+        final AbstractBlockWrapper wrapper = processSimpleBlock(rootBlock, parent, isReadOnly, index, parentBlock);
         if (!subBlocks.isEmpty()) {
           wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
         }
         return wrapper;
       }
-      return processCompositeBlock(rootBlock, parent, textRange, index, currentWrapParent, rootBlockIsRightBlock);
+      return processCompositeBlock(rootBlock, parent, index, currentWrapParent, rootBlockIsRightBlock);
     }
     finally {
       myReadOnlyBlockInformationProvider = previousProvider;
@@ -135,12 +155,11 @@ class InitialInfoBuilder {
 
   private AbstractBlockWrapper processCompositeBlock(final Block rootBlock,
                                                      final CompositeBlockWrapper parent,
-                                                     final TextRange textRange,
                                                      final int index,
                                                      final WrapImpl currentWrapParent,
                                                      boolean rootBlockIsRightBlock
                                                      ) {
-    final CompositeBlockWrapper info = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent, textRange);
+    final CompositeBlockWrapper info = new CompositeBlockWrapper(rootBlock, myCurrentWhiteSpace, parent);
     if (index == 0) {
       info.arrangeParentTextRange();
     }
@@ -199,16 +218,16 @@ class InitialInfoBuilder {
   private AbstractBlockWrapper processSimpleBlock(final Block rootBlock,
                                                   final CompositeBlockWrapper parent,
                                                   final boolean readOnly,
-                                                  final TextRange textRange,
                                                   final int index,
                                                   Block parentBlock
+
                                                   ) {
-    final LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myPreviousBlock, readOnly,
-                                                       textRange);
+    final LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myPreviousBlock, readOnly);
     if (index == 0) {
       info.arrangeParentTextRange();
     }
 
+    TextRange textRange = rootBlock.getTextRange();
     if (textRange.getLength() == 0) {
       assertInvalidRanges(
         textRange.getStartOffset(),

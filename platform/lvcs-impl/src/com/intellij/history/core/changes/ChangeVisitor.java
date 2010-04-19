@@ -16,53 +16,43 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.tree.Entry;
-
-import java.io.IOException;
-
 public abstract class ChangeVisitor {
-  protected Entry myRoot;
-
-  public void started(Entry root) throws IOException {
-    myRoot = root;
+  public void finished() {
   }
 
-  public void finished() throws IOException {
+  public void begin(ChangeSet c) throws StopVisitingException {
   }
 
-  public void begin(ChangeSet c) throws IOException, StopVisitingException {
+  public void end(ChangeSet c) throws StopVisitingException {
   }
 
-  public void end(ChangeSet c) throws IOException, StopVisitingException {
+  public void visit(PutLabelChange c) throws StopVisitingException {
   }
 
-  public void visit(PutLabelChange c) throws IOException, StopVisitingException {
+  public void visit(StructuralChange c) throws StopVisitingException {
   }
 
-  public void visit(StructuralChange c) throws IOException, StopVisitingException {
-  }
-
-  public void visit(CreateEntryChange c) throws IOException, StopVisitingException {
+  public void visit(CreateEntryChange c) throws StopVisitingException {
     visit((StructuralChange)c);
   }
 
-  public void visit(ContentChange c) throws IOException, StopVisitingException {
+  public void visit(ContentChange c) throws StopVisitingException {
     visit((StructuralChange)c);
   }
 
-  public void visit(RenameChange c) throws IOException, StopVisitingException {
+  public void visit(RenameChange c) throws StopVisitingException {
     visit((StructuralChange)c);
   }
 
-  public void visit(ROStatusChange c) throws IOException, StopVisitingException {
+  public void visit(ROStatusChange c) throws StopVisitingException {
     visit((StructuralChange)c);
   }
 
-  public void visit(MoveChange c) throws IOException, StopVisitingException {
+  public void visit(MoveChange c) throws StopVisitingException {
     visit((StructuralChange)c);
   }
 
-  public void visit(DeleteChange c) throws IOException, StopVisitingException {
+  public void visit(DeleteChange c) throws StopVisitingException {
     visit((StructuralChange)c);
   }
 

@@ -159,6 +159,7 @@ public class MyTestInjector {
     final Language ql = findLanguageByID("JPAQL");
     final Language js = findLanguageByID("JavaScript");
     if (ql == null || js == null) return;
+    final Language ecma4 = findLanguageByID("ECMA Script Level 4");
 
     final MultiHostInjector myMultiHostInjector = new MultiHostInjector() {
       public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
@@ -225,6 +226,10 @@ public class MyTestInjector {
           }
           if ("js".equals(tag.getLocalName())) {
             inject(host, placesToInject, js);
+            return;
+          }
+          if (ecma4 != null && "ecma4".equals(tag.getLocalName())) {
+            inject(host, placesToInject, ecma4);
             return;
           }
           if ("jsprefix".equals(tag.getLocalName())) {

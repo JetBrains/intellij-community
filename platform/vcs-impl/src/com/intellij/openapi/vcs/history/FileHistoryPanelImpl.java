@@ -59,10 +59,7 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
@@ -635,7 +632,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     };
     commentGroup.add(commentLabel, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myComments);
-    pane.setBorder(BorderFactory.createMatteBorder(1, 1, myAdditionalDetails == null ? 0 : 1, 0, UIUtil.getBorderSeparatorColor()));
+    pane.setBorder(IdeBorderFactory.createSimpleBorder(1, 1, myAdditionalDetails == null ? 0 : 1, 0));
 
     commentGroup.add(pane, BorderLayout.CENTER);
     detailsSplitter.setFirstComponent(commentGroup);
@@ -647,7 +644,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     myLoadingLabel.setBackground(UIUtil.getToolTipBackground());
     wrapper.add(myLoadingLabel, BorderLayout.NORTH);
 
-    myDualView.setViewBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, UIUtil.getBorderSeparatorColor()));
+    myDualView.setViewBorder(IdeBorderFactory.createSimpleBorder(0, 1, 1, 0));
     wrapper.add(myDualView, BorderLayout.CENTER);
 
     mySplitter.setFirstComponent(wrapper);
@@ -968,7 +965,7 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
 
     private LocalHistoryAction startLocalHistoryAction(final VcsFileRevision revision) {
-      return LocalHistory.startAction(myProject, createGetActionTitle(revision));
+      return LocalHistory.getInstance().startAction(createGetActionTitle(revision));
     }
 
     private String createGetActionTitle(final VcsFileRevision revision) {

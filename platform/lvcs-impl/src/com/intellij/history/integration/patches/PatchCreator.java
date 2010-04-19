@@ -20,6 +20,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -31,12 +32,12 @@ import java.io.Writer;
 import java.util.List;
 
 public class PatchCreator {
-  public static void create(IdeaGateway gw, List<Change> changes, String filePath, boolean isReverse)
+  public static void create(Project p, List<Change> changes, String filePath, boolean isReverse)
     throws IOException, VcsException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
     try {
-      List<FilePatch> patches = TextPatchBuilder.buildPatch(changes, gw.getBaseDir(), isReverse);
-      String lineSeparator = CodeStyleSettingsManager.getInstance(gw.getProject()).getCurrentSettings().getLineSeparator();
+      List<FilePatch> patches = TextPatchBuilder.buildPatch(changes, p.getBaseDir().getPath(), isReverse);
+      String lineSeparator = CodeStyleSettingsManager.getInstance(p).getCurrentSettings().getLineSeparator();
       UnifiedDiffWriter.write(patches, writer, lineSeparator);
     }
     finally {

@@ -26,7 +26,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.history.LocalHistory;
-import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildFile;
@@ -136,9 +135,7 @@ public final class ExecutionHandler {
     final Project project = buildFile.getProject();
 
     final long startTime = new Date().getTime();
-    if (LocalHistoryConfiguration.getInstance().ADD_LABEL_ON_RUNNING) {
-      LocalHistory.putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
-    }
+    LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
     JUnitProcessHandler handler;
     try {
       handler = JUnitProcessHandler.runCommandLine(commandLine);

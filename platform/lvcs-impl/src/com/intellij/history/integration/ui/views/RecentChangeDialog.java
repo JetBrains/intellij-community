@@ -16,51 +16,60 @@
 
 package com.intellij.history.integration.ui.views;
 
-import com.intellij.CommonBundle;
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class RecentChangeDialog extends DirectoryHistoryDialog {
   private final RecentChange myChange;
 
-  public RecentChangeDialog(IdeaGateway gw, RecentChange c) {
-    super(gw, null, false);
+  public RecentChangeDialog(Project p, IdeaGateway gw, RecentChange c) {
+    super(p, gw, null, false);
     myChange = c;
     init();
   }
 
   @Override
-  protected DirectoryHistoryDialogModel createModel(LocalVcs vcs) {
-    return new RecentChangeDialogModel(myGateway, vcs, myChange);
+  protected DirectoryHistoryDialogModel createModel(LocalHistoryFacade vcs) {
+    return new RecentChangeDialogModel(myProject, myGateway, vcs, myChange);
   }
 
   @Override
-  protected JComponent createCenterPanel() {
-    return createDiffPanel();
+  protected JComponent createComponent() {
+    JPanel result = new JPanel(new BorderLayout());
+    result.add(super.createComponent(), BorderLayout.CENTER);
+    result.add(createButtonsPanel(), BorderLayout.SOUTH);
+    return result;
   }
 
   @Override
-  protected Action[] createActions() {
-    Action revert = new AbstractAction() {
+  protected boolean showRevisionsList() {
+    return false;
+  }
+
+  private JPanel createButtonsPanel() {
+    AbstractAction revert = new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         revert();
+        close();
       }
     };
-    Action help = getHelpAction();
-    Action cancel = getCancelAction();
-
     UIUtil.setActionNameAndMnemonic(LocalHistoryBundle.message("action.revert"), revert);
-    UIUtil.setActionNameAndMnemonic(CommonBundle.getCloseButtonText(), cancel);
 
-    return new Action[]{revert, cancel, help};
+    JPanel p = new JPanel();
+    p.setLayout(new BoxLayout(p, BoxLayout.X_AXIS));
+    p.add(Box.createHorizontalGlue());
+    p.add(new JButton(revert));
+    return p;
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
@@ -56,6 +57,9 @@ public final class ReflectedProject {
         iterator.remove();
       }
       else {
+        if (pair.first != null && pair.first.getProject() == null) {
+          iterator.remove();
+        }
         if (pair.second == classLoader) {
           return pair.first;
         }
@@ -84,6 +88,9 @@ public final class ReflectedProject {
         myProperties = (Hashtable)method.invoke(myProject);
         myTargetClass = classLoader.loadClass("org.apache.tools.ant.Target");
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.info(e);

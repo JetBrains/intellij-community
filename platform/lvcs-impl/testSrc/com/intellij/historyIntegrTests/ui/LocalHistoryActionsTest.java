@@ -42,7 +42,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
-    f = root.createChildData(null, "f.txt");
+    f = myRoot.createChildData(null, "f.txt");
 
     document = FileDocumentManager.getInstance().getDocument(f);
     document.setText("foo");
@@ -62,15 +62,12 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
   public void testShowHistoryAction() throws IOException {
     ShowHistoryAction a = new ShowHistoryAction();
-    assertStatus(a, root, true);
+    assertStatus(a, myRoot, true);
     assertStatus(a, f, true);
     assertStatus(a, null, false);
 
-    VirtualFile ignored = root.createChildData(null, "f.xxx");
-    VirtualFile notUnderContentRoot = root.createChildData(null, "CVS");
-
-    assertStatus(a, ignored, false);
-    assertStatus(a, notUnderContentRoot, false);
+    assertStatus(a, myRoot.createChildData(null, "f.hprof"), false);
+    assertStatus(a, myRoot.createChildData(null, "f.xxx"), false);
   }
 
   public void testLocalHistoryActionDisabledWithoutProject() throws IOException {
@@ -78,8 +75,8 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
       public void actionPerformed(AnActionEvent e) {
       }
     };
-    assertStatus(a, root, myProject, true);
-    assertStatus(a, root, null, false);
+    assertStatus(a, myRoot, myProject, true);
+    assertStatus(a, myRoot, null, false);
   }
   
   public void testShowHistoryActionIsDisabledForMultipleSelection() throws Exception {
@@ -101,7 +98,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
 
   public void testShowSelectionHistoryActionIsDisabledForNonFiles() throws IOException {
     ShowSelectionHistoryAction a = new ShowSelectionHistoryAction();
-    assertStatus(a, root, false);
+    assertStatus(a, myRoot, false);
     assertStatus(a, null, false);
   }
 

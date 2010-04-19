@@ -996,6 +996,12 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testTabAfterNew() throws Exception {
+    configureByTestName();
+    select('\t');
+    checkResultByTestName();
+  }
+
   private void doTest(boolean performAction, boolean selectItem) throws Exception {
     configureByTestName();
     if (performAction) {

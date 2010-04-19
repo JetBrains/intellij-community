@@ -127,7 +127,7 @@ class UndoRedoStacksHolder {
     }
   }
 
-  private static void doAddToStack(LinkedList<UndoableGroup> stack, UndoableGroup group, int limit) {
+  private void doAddToStack(LinkedList<UndoableGroup> stack, UndoableGroup group, int limit) {
     if (!group.isUndoable() && stack.isEmpty()) return;
     
     stack.addLast(group);
@@ -169,19 +169,6 @@ class UndoRedoStacksHolder {
 
   public void clearAllStacksInTests() {
     clearStacks(true, getAffectedDocuments());
-  }
-
-  public void invalidateAllGlobalActions() {
-    doInvalidateAllGlobalActions(myGlobalStack);
-    for (DocumentReference each : getAffectedDocuments()) {
-      doInvalidateAllGlobalActions(getStack(each));
-    }
-  }
-
-  private static void doInvalidateAllGlobalActions(LinkedList<UndoableGroup> stack) {
-    for (UndoableGroup g : stack) {
-      g.invalidateIfGlobal();
-    }
   }
 
   public void collectAllAffectedDocuments(Collection<DocumentReference> result) {

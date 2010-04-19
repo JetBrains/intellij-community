@@ -59,7 +59,7 @@ public class GitPull extends GitRepositoryAction {
     if (!dialog.isOK()) {
       return;
     }
-    Label beforeLabel = LocalHistory.putSystemLabel(project, "Before update");
+    Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
     GitLineHandler h = dialog.pullHandler();
     final VirtualFile root = dialog.gitRoot();
     affectedRoots.add(root);

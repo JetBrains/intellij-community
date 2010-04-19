@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.beans.Introspector;
 
@@ -71,7 +70,7 @@ public class GroovyPropertyUtils {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertySetter(method)) {
-        if (getPropertyNameBySetter(method).equals(propertyName)) {
+        if (propertyName.equals(getPropertyNameBySetter(method))) {
           return method;
         }
       }
@@ -95,7 +94,7 @@ public class GroovyPropertyUtils {
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
 
       if (isSimplePropertyGetter(method)) {
-        if (getPropertyNameByGetter(method).equals(propertyName)) {
+        if (propertyName.equals(getPropertyNameByGetter(method))) {
           return method;
         }
       }
@@ -116,9 +115,7 @@ public class GroovyPropertyUtils {
     if (method == null || method.isConstructor()) return false;
     if (method.getParameterList().getParametersCount() != 0) return false;
     if (!isGetterName(method.getName())) return false;
-    if (method.getName().startsWith(IS_PREFIX) &&
-        !CommonClassNames.JAVA_LANG_BOOLEAN
-          .equals(TypesUtil.boxPrimitiveType(method.getReturnType(), method.getManager(), method.getResolveScope()).getCanonicalText())) {
+    if (method.getName().startsWith(IS_PREFIX) && !PsiType.BOOLEAN.equals(method.getReturnType())) {
       return false;
     }
     return (propertyName == null || propertyName.equals(getPropertyNameByGetter(method))) && method.getReturnType() != PsiType.VOID;
@@ -135,17 +132,18 @@ public class GroovyPropertyUtils {
     return propertyName == null || propertyName.equals(getPropertyNameBySetter(method));
   }
 
+  @Nullable
   public static String getPropertyNameByGetter(PsiMethod getterMethod) {
     if (getterMethod instanceof GrAccessorMethod) {
       return ((GrAccessorMethod)getterMethod).getProperty().getName();
     }
 
     @NonNls String methodName = getterMethod.getName();
-    final boolean isPropertyBoolean = CommonClassNames.JAVA_LANG_BOOLEAN.equals(TypesUtil
-      .boxPrimitiveType(getterMethod.getReturnType(), getterMethod.getManager(), getterMethod.getResolveScope()).getCanonicalText());
+    final boolean isPropertyBoolean = PsiType.BOOLEAN.equals(getterMethod.getReturnType());
     return getPropertyNameByGetterName(methodName, isPropertyBoolean);
   }
 
+  @Nullable
   public static String getPropertyNameByGetterName(String methodName, boolean canBeBoolean) {
     if (methodName.startsWith(GET_PREFIX) && methodName.length() > 3) {
       return decapitalize(methodName.substring(3));
@@ -153,9 +151,10 @@ public class GroovyPropertyUtils {
     else if (methodName.startsWith(IS_PREFIX) && methodName.length() > 2 && canBeBoolean) {
       return decapitalize(methodName.substring(2));
     }
-    return methodName;
+    return null;
   }
 
+  @Nullable
   public static String getPropertyNameBySetter(PsiMethod setterMethod) {
     if (setterMethod instanceof GrAccessorMethod) {
       return ((GrAccessorMethod)setterMethod).getProperty().getName();
@@ -165,13 +164,25 @@ public class GroovyPropertyUtils {
     return getPropertyNameBySetterName(methodName);
   }
 
+  @Nullable
   public static String getPropertyNameBySetterName(String methodName) {
     if (methodName.startsWith("set") && methodName.length() > 3) {
       return StringUtil.decapitalize(methodName.substring(3));
     }
     else {
-      return methodName;
+      return null;
     }
+  }
+
+  @Nullable
+  public static String getPropertyNameByAccessorName(String accessorName) {
+    if (isGetterName(accessorName)) {
+      return getPropertyNameByGetterName(accessorName, true);
+    }
+    else if (isSetterName(accessorName)) {
+      return getPropertyNameBySetterName(accessorName);
+    }
+    return null;
   }
 
   @Nullable

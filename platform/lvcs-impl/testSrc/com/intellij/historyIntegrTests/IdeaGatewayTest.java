@@ -22,19 +22,19 @@ import java.io.File;
 
 public class IdeaGatewayTest extends IntegrationTestCase {
   public void testFindingFile() throws Exception {
-    assertSame(root, gateway.findVirtualFile(root.getPath()));
-    assertNull(gateway.findVirtualFile(root.getPath() + "/nonexistent"));
+    assertSame(myRoot, myGateway.findVirtualFile(myRoot.getPath()));
+    assertNull(myGateway.findVirtualFile(myRoot.getPath() + "/nonexistent"));
   }
 
   public void testGettingDirectory() throws Exception {
-    assertSame(root, gateway.findOrCreateFileSafely(root.getPath(), true));
+    assertSame(myRoot, myGateway.findOrCreateFileSafely(myRoot.getPath(), true));
   }
 
   public void testCreatingDirectory() throws Exception {
-    String subSubDirPath = root.getPath() + "/subDir/subSubDir";
+    String subSubDirPath = myRoot.getPath() + "/subDir/subSubDir";
 
     assertFalse(new File(subSubDirPath).exists());
-    VirtualFile subDir = gateway.findOrCreateFileSafely(subSubDirPath, true);
+    VirtualFile subDir = myGateway.findOrCreateFileSafely(subSubDirPath, true);
 
     assertNotNull(subDir);
     assertEquals(subSubDirPath, subDir.getPath());
@@ -43,12 +43,12 @@ public class IdeaGatewayTest extends IntegrationTestCase {
   }
 
   public void testCreatingDirectoryWhenSuchFileExists() throws Exception {
-    String subSubDirPath = root.getPath() + "/subDir/subSubDir";
+    String subSubDirPath = myRoot.getPath() + "/subDir/subSubDir";
 
     assertFalse(new File(subSubDirPath).exists());
-    root.createChildData(this, "subDir");
+    myRoot.createChildData(this, "subDir");
 
-    VirtualFile subDir = gateway.findOrCreateFileSafely(subSubDirPath, true);
+    VirtualFile subDir = myGateway.findOrCreateFileSafely(subSubDirPath, true);
 
     assertNotNull(subDir);
     assertEquals(subSubDirPath, subDir.getPath());

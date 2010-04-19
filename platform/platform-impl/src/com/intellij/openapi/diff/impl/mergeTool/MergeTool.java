@@ -16,7 +16,7 @@
 package com.intellij.openapi.diff.impl.mergeTool;
 
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.diff.impl.FrameWrapper;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.Disposable;

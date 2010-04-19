@@ -25,9 +25,9 @@ import org.junit.BeforeClass;
 import java.io.File;
 import java.net.URISyntaxException;
 
-public abstract class TempDirTestCase extends LocalVcsTestCase {
+public abstract class TempDirTestCase extends LocalHistoryTestCase {
   protected static File classTempDir;
-  protected File tempDir;
+  protected File myTempDir;
 
   @BeforeClass
   public static void createClassTempDir() {
@@ -36,7 +36,7 @@ public abstract class TempDirTestCase extends LocalVcsTestCase {
 
   @Before
   public void createTempDir() {
-    tempDir = createDir("tempDir");
+    myTempDir = createDir("tempDir");
   }
 
   @AfterClass
@@ -46,7 +46,7 @@ public abstract class TempDirTestCase extends LocalVcsTestCase {
 
   @After
   public void deleteTempDir() {
-    deleteDir(tempDir);
+    deleteDir(myTempDir);
   }
 
   private static File createDir(String name) {

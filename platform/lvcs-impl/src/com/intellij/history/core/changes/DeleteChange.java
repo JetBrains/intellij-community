@@ -16,78 +16,62 @@
 
 package com.intellij.history.core.changes;
 
-import com.intellij.history.core.IdPath;
+import com.intellij.history.core.Paths;
 import com.intellij.history.core.storage.Content;
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.storage.StreamUtil;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteChange extends StructuralChange<StructuralChangeNonAppliedState, DeleteChangeAppliedState> {
-  public DeleteChange(String path) {
-    super(path);
+public class DeleteChange extends StructuralChange {
+  private final Entry myDeletedEntry;
+
+  public DeleteChange(long id, String path, Entry deletedEntry) {
+    super(id, path);
+    myDeletedEntry = deletedEntry;
   }
 
-  public DeleteChange(Stream s) throws IOException {
-    super(s);
-    getAppliedState().myAffectedEntry = s.readEntry();
-  }
-
-  @Override
-  public void write(Stream s) throws IOException {
-    super.write(s);
-    s.writeEntry(getAppliedState().myAffectedEntry);
+  public DeleteChange(DataInput in) throws IOException {
+    super(in);
+    myDeletedEntry = StreamUtil.readEntry(in);
   }
 
   @Override
-  protected StructuralChangeNonAppliedState createNonAppliedState() {
-    return new StructuralChangeNonAppliedState();
+  public void write(DataOutput out) throws IOException {
+    super.write(out);
+    StreamUtil.writeEntry(out, myDeletedEntry);
+  }
+
+  public Entry getDeletedEntry() {
+    return myDeletedEntry;
   }
 
   @Override
-  protected DeleteChangeAppliedState createAppliedState() {
-    return new DeleteChangeAppliedState();
+  public void revertOn(RootEntry root) {
+    String parentPath = Paths.getParentOf(myPath);
+    Entry parent = root.findEntry(parentPath);
+    if (parent == null) {
+      cannotRevert(parentPath);
+      return;
+    }
+    parent.addChild(myDeletedEntry.copy());
   }
 
-  public Entry getAffectedEntry() {
-    return getAppliedState().myAffectedEntry;
-  }
-
-  @Override
-  protected IdPath doApplyTo(Entry r, DeleteChangeAppliedState newState) {
-    newState.myAffectedEntry = r.getEntry(getPath());
-    IdPath idPath = newState.myAffectedEntry.getIdPath();
-
-    removeEntry(newState.myAffectedEntry);
-
-    return idPath;
-  }
-
-  @Override
-  public void doRevertOn(Entry root) {
-    Entry parent = getParent(root);
-    parent.addChild(getAppliedState().myAffectedEntry.copy());
-  }
-
-  @Override
-  public boolean canRevertOn(Entry r) {
-    return hasNoSuchEntry(getParent(r), getAppliedState().myAffectedEntry.getName());
-  }
-
-  private Entry getParent(Entry r) {
-    return r.getEntry(getAffectedIdPath().getParent());
-  }
-
-  public boolean isDeletionOf(IdPath p) {
-    return p.startsWith(getAffectedIdPath());
+  public boolean isDeletionOf(String p) {
+    String relative = Paths.relativeIfUnder(p, myPath);
+    if (relative == null) return false;
+    return myDeletedEntry.hasEntry(relative);
   }
 
   @Override
   public List<Content> getContentsToPurge() {
     List<Content> result = new ArrayList<Content>();
-    collectContentsRecursively(getAppliedState().myAffectedEntry, result);
+    collectContentsRecursively(myDeletedEntry, result);
     return result;
   }
 
@@ -103,8 +87,7 @@ public class DeleteChange extends StructuralChange<StructuralChangeNonAppliedSta
   }
 
   @Override
-  public void accept(ChangeVisitor v) throws IOException, ChangeVisitor.StopVisitingException {
+  public void accept(ChangeVisitor v) throws ChangeVisitor.StopVisitingException {
     v.visit(this);
   }
-
 }

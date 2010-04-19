@@ -24,6 +24,7 @@ import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.DocumentContent;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
@@ -32,12 +33,12 @@ import java.util.Collections;
 
 public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
   public void testDialogWorks() throws IOException {
-    DirectoryHistoryDialog d = new DirectoryHistoryDialog(gateway, root);
-    d.close(0);
+    DirectoryHistoryDialog d = new DirectoryHistoryDialog(myProject, myGateway, myRoot);
+    Disposer.dispose(d);
   }
 
   public void testFileDifference() throws IOException {
-    VirtualFile f = root.createChildData(null, "f.txt");
+    VirtualFile f = myRoot.createChildData(null, "f.txt");
     f.setBinaryContent("old".getBytes());
     f.setBinaryContent("new".getBytes());
     f.setBinaryContent("current".getBytes());
@@ -62,10 +63,10 @@ public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
 
   @Test
   public void testFileDifferenceModelWhenOneOfTheEntryIsNull() throws IOException {
-    root.createChildData(null, "dummy.txt");
+    myRoot.createChildData(null, "dummy.txt");
 
     getVcs().beginChangeSet();
-    VirtualFile f = root.createChildData(null, "f.txt");
+    VirtualFile f = myRoot.createChildData(null, "f.txt");
     f.setBinaryContent("content".getBytes(), -1, 123);
     getVcs().endChangeSet(null);
 
@@ -94,38 +95,24 @@ public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   public void testRevertion() throws Exception {
-    root.createChildData(null, "f.txt");
+    myRoot.createChildData(null, "f.txt");
 
     HistoryDialogModel m = createModelAndSelectRevision(1);
     m.createReverter().revert();
 
-    assertNull(root.findChild("f.txt"));
+    assertNull(myRoot.findChild("f.txt"));
   }
 
   public void testSelectionRevertion() throws Exception {
-    root.createChildData(null, "f1.txt");
-    root.createChildData(null, "f2.txt");
+    myRoot.createChildData(null, "f1.txt");
+    myRoot.createChildData(null, "f2.txt");
 
     DirectoryHistoryDialogModel m = createModelAndSelectRevision(2);
     DirectoryChange c = (DirectoryChange)m.getChanges().get(0);
     m.createRevisionReverter(Collections.singletonList(c.getDifference())).revert();
 
-    assertNull(root.findChild("f1.txt"));
-    assertNotNull(root.findChild("f2.txt"));
-  }
-
-  public void testChangeRevertion() throws Exception {
-    VirtualFile dir = root.createChildDirectory(null, "oldDir");
-    VirtualFile f = dir.createChildData(null, "f.txt");
-    dir.rename(null, "newDir");
-    f.move(null, root);
-
-    HistoryDialogModel m = new DirectoryHistoryDialogModel(gateway, getVcs(), dir);
-    m.selectChanges(1, 1); // rename
-    m.createReverter().revert();
-
-    assertEquals("oldDir", dir.getName());
-    assertEquals(dir, f.getParent());
+    assertNull(myRoot.findChild("f1.txt"));
+    assertNotNull(myRoot.findChild("f2.txt"));
   }
 
   private DirectoryHistoryDialogModel createModelAndSelectRevision(int rev) {
@@ -133,7 +120,7 @@ public class DirectoryHistoryDialogTest extends LocalHistoryUITestCase {
   }
 
   private DirectoryHistoryDialogModel createModelAndSelectRevisions(int first, int second) {
-    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(gateway, getVcs(), root);
+    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
     m.selectRevisions(first, second);
     return m;
   }

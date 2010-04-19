@@ -31,7 +31,9 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.ResizeableMappedFile;
+import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.io.storage.RefCountingStorage;
 import com.intellij.util.io.storage.Storage;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
@@ -48,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 public class FSRecords implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 9;
+  private static final int VERSION = 11;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -75,7 +77,8 @@ public class FSRecords implements Disposable, Forceable {
   private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // Reserverd
   private static final int HEADER_GLOBAL_MODCOUNT_OFFSET = 8;
   private static final int HEADER_CONNECTION_STATUS_OFFSET = 12;
-  private static final int HEADER_SIZE = HEADER_CONNECTION_STATUS_OFFSET + 4;
+  private static final int HEADER_TIMESTAMP_OFFSET = 16;
+  private static final int HEADER_SIZE = HEADER_TIMESTAMP_OFFSET + 8;
 
   private static final int CONNECTED_MAGIC = 0x12ad34e4;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
@@ -83,7 +86,6 @@ public class FSRecords implements Disposable, Forceable {
 
   private static final String CHILDREN_ATT = "FsRecords.DIRECTORY_CHILDREN";
   private static final Object lock = new Object();
-  private DbConnection myConnection;
 
   private volatile static int ourLocalModificationCount = 0;
 
@@ -99,11 +101,10 @@ public class FSRecords implements Disposable, Forceable {
     private static int refCount = 0;
     private static final Object LOCK = new Object();
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
-    private static int CONTENT_ID;
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
-    private static Storage myContents;
+    private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
@@ -177,8 +178,8 @@ public class FSRecords implements Disposable, Forceable {
         }
 
         myNames = new PersistentStringEnumerator(namesFile);
-        myAttributes = Storage.create(attributesFile.getCanonicalPath());
-        myContents = Storage.create(contentsFile.getCanonicalPath());
+        myAttributes = new Storage(attributesFile.getCanonicalPath());
+        myContents = new RefCountingStorage(contentsFile.getCanonicalPath());
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, new PagedFileStorage.StorageLock(false));
 
         if (myRecords.length() == 0) {
@@ -281,6 +282,7 @@ public class FSRecords implements Disposable, Forceable {
     private static void setupFlushing() {
       myFlushingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
         int lastModCount = 0;
+
         public void run() {
           if (lastModCount == ourLocalModificationCount && !HeavyProcessLatch.INSTANCE.isRunning()) {
             flushSome();
@@ -337,8 +339,13 @@ public class FSRecords implements Disposable, Forceable {
       return recordsVersion;
     }
 
+    public static long getTimestamp() {
+      return myRecords.getLong(HEADER_TIMESTAMP_OFFSET);
+    }
+
     private static void setCurrentVersion() throws IOException {
       myRecords.putInt(HEADER_VERSION_OFFSET, VERSION);
+      myRecords.putLong(HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
       myAttributes.setVersion(VERSION);
       myContents.setVersion(VERSION);
       myRecords.putInt(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_MAGIC);
@@ -350,10 +357,6 @@ public class FSRecords implements Disposable, Forceable {
 
     public static PersistentStringEnumerator getNames() {
       return myNames;
-    }
-
-    public static Storage getAttributes(int attId) {
-      return attId == CONTENT_ID ? myContents : myAttributes;
     }
 
     public static ResizeableMappedFile getRecords() {
@@ -412,9 +415,6 @@ public class FSRecords implements Disposable, Forceable {
       int id = myNames.enumerate(attId);
       myAttributeIds.put(attId, id);
 
-      if (PersistentFS.FILE_CONTENT.getId().equals(attId)) {
-        CONTENT_ID = id;
-      }
       return id;
     }
 
@@ -437,15 +437,25 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   public void connect() {
-    myConnection = DbConnection.connect();
+    DbConnection.connect();
+  }
+
+  public long getCreationTimestamp() {
+    synchronized (lock) {
+      return DbConnection.getTimestamp();
+    }
   }
 
   private static ResizeableMappedFile getRecords() {
     return DbConnection.getRecords();
   }
 
-  private static Storage getAttributes(int attId) {
-    return DbConnection.getAttributes(attId);
+  private static RefCountingStorage getContentStorage() {
+    return DbConnection.myContents;
+  }
+
+  private static Storage getAttributesStorage() {
+    return DbConnection.myAttributes;
   }
 
   public static PersistentStringEnumerator getNames() {
@@ -502,8 +512,7 @@ public class FSRecords implements Disposable, Forceable {
     synchronized (lock) {
       try {
         DbConnection.markDirty();
-        deleteAttribute(id, -1);
-        deleteAttribute(id, DbConnection.CONTENT_ID);
+        deleteContentAndAttributes(id);
 
         DbConnection.cleanRecord(id);
         addToFreeRecordsList(id);
@@ -514,17 +523,22 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private void deleteAttribute(int id, int isContent) throws IOException {
-    int att_page = getAttributeRecordId(id, isContent);
+  private void deleteContentAndAttributes(int id) throws IOException {
+    int content_page = getContentRecordId(id);
+    if (content_page != 0) {
+      getContentStorage().releaseRecord(content_page);
+    }
+
+    int att_page = getAttributeRecordId(id);
     if (att_page != 0) {
-      final DataInputStream attStream = getAttributes(isContent).readStream(att_page);
+      final DataInputStream attStream = getAttributesStorage().readStream(att_page);
       while (attStream.available() > 0) {
         attStream.readInt(); // Attribute ID;
         int attAddress = attStream.readInt();
-        getAttributes(isContent).deleteRecord(attAddress);
+        getAttributesStorage().deleteRecord(attAddress);
       }
       attStream.close();
-      getAttributes(isContent).deleteRecord(att_page);
+      getAttributesStorage().deleteRecord(att_page);
     }
   }
 
@@ -679,16 +693,14 @@ public class FSRecords implements Disposable, Forceable {
   public boolean wereChildrenAccessed(int id) {
     try {
       synchronized (lock) {
-        int encodedAttId = DbConnection.getAttributeId(CHILDREN_ATT);
-        final int att = findAttributePage(id, encodedAttId, false);
-        return att != 0;
+        return findAttributePage(id, CHILDREN_ATT, false) != 0;
       }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
     }
   }
-  
+
   public void updateList(int id, int[] children) {
     synchronized (lock) {
       try {
@@ -736,7 +748,7 @@ public class FSRecords implements Disposable, Forceable {
   public static int getParent(int id) {
     synchronized (lock) {
       try {
-        final int parentId = getRecords().getInt(id * RECORD_SIZE + PARENT_OFFSET);
+        final int parentId = getRecordInt(id, PARENT_OFFSET);
         if (parentId == id) {
           LOG.error("Cyclic parent child relations in the database. id = " + id);
           return 0;
@@ -760,7 +772,7 @@ public class FSRecords implements Disposable, Forceable {
       try {
         DbConnection.markDirty();
         incModCount(id);
-        getRecords().putInt(id * RECORD_SIZE + PARENT_OFFSET, parent);
+        putRecordInt(id, PARENT_OFFSET, parent);
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
@@ -771,7 +783,7 @@ public class FSRecords implements Disposable, Forceable {
   public static String getName(int id) {
     synchronized (lock) {
       try {
-        final int nameId = getRecords().getInt(id * RECORD_SIZE + NAME_OFFSET);
+        final int nameId = getRecordInt(id, NAME_OFFSET);
         return nameId != 0 ? getNames().valueOf(nameId) : "";
       }
       catch (Throwable e) {
@@ -785,7 +797,7 @@ public class FSRecords implements Disposable, Forceable {
       try {
         DbConnection.markDirty();
         incModCount(id);
-        getRecords().putInt(id * RECORD_SIZE + NAME_OFFSET, getNames().enumerate(name));
+        putRecordInt(id, NAME_OFFSET, getNames().enumerate(name));
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
@@ -795,7 +807,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static int getFlags(int id) {
     synchronized (lock) {
-      return getRecords().getInt(id * RECORD_SIZE + FLAGS_OFFSET);
+      return getRecordInt(id, FLAGS_OFFSET);
     }
   }
 
@@ -806,7 +818,7 @@ public class FSRecords implements Disposable, Forceable {
           DbConnection.markDirty();
           incModCount(id);
         }
-        getRecords().putInt(id * RECORD_SIZE + FLAGS_OFFSET, flags);
+        putRecordInt(id, FLAGS_OFFSET, flags);
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
@@ -816,7 +828,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static long getLength(int id) {
     synchronized (lock) {
-      return getRecords().getLong(id * RECORD_SIZE + LENGTH_OFFSET);
+      return getRecords().getLong(getOffset(id, LENGTH_OFFSET));
     }
   }
 
@@ -825,7 +837,7 @@ public class FSRecords implements Disposable, Forceable {
       try {
         DbConnection.markDirty();
         incModCount(id);
-        getRecords().putLong(id * RECORD_SIZE + LENGTH_OFFSET, len);
+        getRecords().putLong(getOffset(id, LENGTH_OFFSET), len);
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
@@ -835,7 +847,7 @@ public class FSRecords implements Disposable, Forceable {
 
   public static long getTimestamp(int id) {
     synchronized (lock) {
-      return getRecords().getLong(id * RECORD_SIZE + TIMESTAMP_OFFSET);
+      return getRecords().getLong(getOffset(id, TIMESTAMP_OFFSET));
     }
   }
 
@@ -844,7 +856,7 @@ public class FSRecords implements Disposable, Forceable {
       try {
         DbConnection.markDirty();
         incModCount(id);
-        getRecords().putLong(id * RECORD_SIZE + TIMESTAMP_OFFSET, value);
+        getRecords().putLong(getOffset(id, TIMESTAMP_OFFSET), value);
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
@@ -854,35 +866,77 @@ public class FSRecords implements Disposable, Forceable {
 
   public static int getModCount(int id) {
     synchronized (lock) {
-      return getRecords().getInt(id * RECORD_SIZE + MODCOUNT_OFFSET);
+      return getRecordInt(id, MODCOUNT_OFFSET);
     }
   }
 
   private static void setModCount(int id, int value) throws IOException {
-    getRecords().putInt(id * RECORD_SIZE + MODCOUNT_OFFSET, value);
+    putRecordInt(id, MODCOUNT_OFFSET, value);
   }
 
-  private static int getAttributeRecordId(final int id, int attributeId) throws IOException {
-    return getRecords().getInt(getAttrOffset(id, attributeId));
+  private static int getContentRecordId(int fileId) throws IOException {
+    return getRecordInt(fileId, CONTENT_OFFSET);
   }
 
-  private static int getAttrOffset(int id, int attributeId) {
-    return id * RECORD_SIZE + (DbConnection.CONTENT_ID == attributeId ? CONTENT_OFFSET : ATTREF_OFFSET);
+  private static void setContentRecordId(int id, int value) throws IOException {
+    putRecordInt(id, CONTENT_OFFSET, value);
+  }
+
+  private static int getAttributeRecordId(int id) throws IOException {
+    return getRecordInt(id, ATTREF_OFFSET);
+  }
+
+  private static void setAttributeRecordId(int id, int value) throws IOException {
+    putRecordInt(id, ATTREF_OFFSET, value);
+  }
+
+  private static int getRecordInt(int id, int offset) {
+    return getRecords().getInt(getOffset(id, offset));
+  }
+
+  private static void putRecordInt(int id, int offset, int value) {
+    getRecords().putInt(getOffset(id, offset), value);
+  }
+
+  private static int getOffset(int id, int offset) {
+    return id * RECORD_SIZE + offset;
   }
 
   @Nullable
-  public DataInputStream readAttribute(int id, String attId) {
+  public DataInputStream readContent(int fileId) {
+    try {
+      int page;
+      synchronized (lock) {
+        page = findContentPage(fileId, false);
+        if (page == 0) return null;
+      }
+      return getContentStorage().readStream(page);
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  @Nullable
+  public DataInputStream readContentById(int contentId) {
+    try {
+      return getContentStorage().readStream(contentId);
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  @Nullable
+  public DataInputStream readAttribute(int fileId, String attId) {
     try {
       synchronized (attId) {
-        final int page;
-        int encodedAttId;
+        int page;
         synchronized (lock) {
-          encodedAttId = DbConnection.getAttributeId(attId);
-          page = findAttributePage(id, encodedAttId, false);
+          page = findAttributePage(fileId, attId, false);
           if (page == 0) return null;
         }
-
-        return getAttributes(encodedAttId).readStream(page);
+        return getAttributesStorage().readStream(page);
       }
     }
     catch (Throwable e) {
@@ -890,30 +944,42 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound) throws IOException {
-    if (fileId <= 0) {
-      throw DbConnection.handleError(new AssertionError("assert fileId > 0 failed"));
+  private int findContentPage(int fileId, boolean toWrite) throws IOException {
+    checkFileIsValid(fileId);
+
+    int recordId = getContentRecordId(fileId);
+    if (toWrite) {
+      if (recordId == 0 || getContentStorage().getRefCount(recordId) > 1) {
+        recordId = getContentStorage().acquireNewRecord();
+        setContentRecordId(fileId, recordId);
+      }
     }
 
-    if ((getFlags(fileId) & FREE_RECORD_FLAG) != 0) { // TODO: This assertion is a bit timey, will remove when bug is caught.
-      throw DbConnection.handleError(new AssertionError("Trying to find an attribute of deleted page"));
-    }
-    int attrsRecord = getAttributeRecordId(fileId, attributeId);
+    return recordId;
+  }
 
-    if (attrsRecord == 0) {
-      if (!createIfNotFound) return 0;
+  private int findAttributePage(int fileId, String attrId, boolean toWrite) throws IOException {
+    checkFileIsValid(fileId);
 
-      attrsRecord = getAttributes(attributeId).createNewRecord();
-      getRecords().putInt(getAttrOffset(fileId, attributeId), attrsRecord);
+    Storage storage = getAttributesStorage();
+
+    int encodedAttrId = DbConnection.getAttributeId(attrId);
+    int recordId = getAttributeRecordId(fileId);
+
+    if (recordId == 0) {
+      if (!toWrite) return 0;
+
+      recordId = storage.createNewRecord();
+      setAttributeRecordId(fileId, recordId);
     }
     else {
-      final DataInputStream attrRefs = getAttributes(attributeId).readStream(attrsRecord);
+      DataInputStream attrRefs = storage.readStream(recordId);
       try {
         while (attrRefs.available() > 0) {
           final int attIdOnPage = attrRefs.readInt();
-          final int attAddress = attrRefs.readInt();
+          final int attrAddress = attrRefs.readInt();
 
-          if (attIdOnPage == attributeId) return attAddress;
+          if (attIdOnPage == encodedAttrId) return attrAddress;
         }
       }
       finally {
@@ -921,56 +987,155 @@ public class FSRecords implements Disposable, Forceable {
       }
     }
 
-    if (createIfNotFound) {
-      Storage.AppenderStream appender = getAttributes(attributeId).appendStream(attrsRecord);
-      appender.writeInt(attributeId);
-      int attAddress = getAttributes(attributeId).createNewRecord();
-      appender.writeInt(attAddress);
+    if (toWrite) {
+      Storage.AppenderStream appender = storage.appendStream(recordId);
+      appender.writeInt(encodedAttrId);
+      int attrAddress = storage.createNewRecord();
+      appender.writeInt(attrAddress);
       appender.close();
-      return attAddress;
+      return attrAddress;
     }
 
     return 0;
   }
 
-  private class AttributeOutputStream extends DataOutputStream {
+  private void checkFileIsValid(int fileId) {
+    assert fileId > 0 : "assert fileId > 0 failed";
+    // TODO: This assertion is a bit timey, will remove when bug is caught.
+    assert (getFlags(fileId) & FREE_RECORD_FLAG) == 0 : "Trying to find an attribute of deleted page";
+  }
+
+  public int acquireFileContent(int fileId) {
+    try {
+      synchronized (lock) {
+        int record = getContentRecordId(fileId);
+        if (record > 0) getContentStorage().acquireRecord(record);
+        return record;
+      }
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  public void releaseContent(int contentId) {
+    try {
+      getContentStorage().releaseRecord(contentId);
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  public int getContentId(int fileId) {
+    try {
+      synchronized (lock) {
+        return getContentRecordId(fileId);
+      }
+    }
+    catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  @NotNull
+  public DataOutputStream writeContent(int fileId) {
+    return new ContentOutputStream(fileId);
+  }
+
+  public int storeUnlinkedContent(byte[] bytes) {
+    try {
+      int recordId = getContentStorage().acquireNewRecord();
+      getContentStorage().writeBytes(recordId, bytes);
+      return recordId;
+    }
+    catch (IOException e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  @NotNull
+  public DataOutputStream writeAttribute(final int fileId, final String attId) {
+    return new AttributeOutputStream(fileId, attId);
+  }
+
+  private class ContentOutputStream extends BaseOutputStream {
+    private ContentOutputStream(final int fileId) {
+      super(fileId);
+    }
+
+    @Override
+    protected int findOrCreatePage() throws IOException {
+      return findContentPage(myFileId, true);
+    }
+
+    @Override
+    protected AbstractStorage getStorage() {
+      return getContentStorage();
+    }
+  }
+
+  private class AttributeOutputStream extends BaseOutputStream {
     private final String myAttributeId;
-    private final int myFileId;
 
     private AttributeOutputStream(final int fileId, final String attributeId) {
+      super(fileId);
+      myAttributeId = attributeId;
+    }
+
+    @Override
+    protected void doFlush() throws IOException {
+      synchronized (myAttributeId) {
+        super.doFlush();
+      }
+    }
+
+    @Override
+    protected int findOrCreatePage() throws IOException {
+      return findAttributePage(myFileId, myAttributeId, true);
+    }
+
+    @Override
+    protected AbstractStorage getStorage() {
+      return getAttributesStorage();
+    }
+  }
+
+  private abstract static class BaseOutputStream extends DataOutputStream {
+    protected final int myFileId;
+
+    private BaseOutputStream(final int fileId) {
       super(new ByteArrayOutputStream());
       myFileId = fileId;
-      myAttributeId = attributeId;
     }
 
     public void close() throws IOException {
       super.close();
 
       try {
-        synchronized (myAttributeId) {
-          final int page;
-          int encodedAttId;
-          synchronized (lock) {
-            DbConnection.markDirty();
-            incModCount(myFileId);
-            encodedAttId = DbConnection.getAttributeId(myAttributeId);
-            page = findAttributePage(myFileId, encodedAttId, true);
-          }
-
-          final DataOutputStream sinkStream = getAttributes(encodedAttId).writeStream(page);
-          sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
-          sinkStream.close();
-        }
+        doFlush();
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
-  }
 
-  @NotNull
-  public DataOutputStream writeAttribute(final int id, final String attId) {
-    return new AttributeOutputStream(id, attId);
+    protected void doFlush() throws IOException {
+      final int page;
+      synchronized (lock) {
+        DbConnection.markDirty();
+        incModCount(myFileId);
+        page = findOrCreatePage();
+      }
+
+      final DataOutputStream sinkStream = getStorage().writeStream(page);
+      sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
+      sinkStream.close();
+    }
+
+    protected abstract int findOrCreatePage() throws IOException;
+
+    protected abstract AbstractStorage getStorage();
   }
 
   public void dispose() {
@@ -998,7 +1163,7 @@ public class FSRecords implements Disposable, Forceable {
 
       IntArrayList usedAttributeRecordIds = new IntArrayList();
       IntArrayList validAttributeIds = new IntArrayList();
-      for(int id=2; id<recordCount; id++) {
+      for (int id = 2; id < recordCount; id++) {
         int flags = getFlags(id);
         assert (flags & ~ALL_VALID_FLAGS) == 0;
         if ((flags & FREE_RECORD_FLAG) != 0) {
@@ -1029,26 +1194,39 @@ public class FSRecords implements Disposable, Forceable {
     String name = getName(id);
     LOG.assertTrue(parentId == 0 || name.length() > 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
 
-    checkStorageSanity(id, usedAttributeRecordIds, validAttributeIds, -1);
-    checkStorageSanity(id, usedAttributeRecordIds, validAttributeIds, DbConnection.CONTENT_ID);
+    checkContentsStorageSanity(id);
+    checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds);
 
     long length = getLength(id);
-    assert length >= -1: "Invalid file length found for " + name + ": " + length;
+    assert length >= -1 : "Invalid file length found for " + name + ": " + length;
   }
 
-  private static void checkStorageSanity(int id, IntArrayList usedAttributeRecordIds, IntArrayList validAttributeIds, int attId) {
+  private static void checkContentsStorageSanity(int id) {
+    try {
+      int recordId = getContentRecordId(id);
+      assert recordId >= 0;
+      if (recordId > 0) {
+        getContentStorage().checkSanity(recordId);
+      }
+    }
+    catch (IOException e) {
+      throw DbConnection.handleError(e);
+    }
+  }
+
+  private static void checkAttributesStorageSanity(int id, IntArrayList usedAttributeRecordIds, IntArrayList validAttributeIds) {
     int attributeRecordId;
     try {
-      attributeRecordId = getAttributeRecordId(id, attId);
+      attributeRecordId = getAttributeRecordId(id);
     }
-    catch(IOException ex) {
+    catch (IOException ex) {
       throw DbConnection.handleError(ex);
     }
 
     assert attributeRecordId >= 0;
     if (attributeRecordId > 0) {
       try {
-        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds, attId);
+        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
       }
       catch (IOException ex) {
         throw DbConnection.handleError(ex);
@@ -1057,15 +1235,15 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private static void checkAttributesSanity(final int attributeRecordId, final IntArrayList usedAttributeRecordIds,
-                                            final IntArrayList validAttributeIds, int attrId) throws IOException {
+                                            final IntArrayList validAttributeIds) throws IOException {
     assert !usedAttributeRecordIds.contains(attributeRecordId);
     usedAttributeRecordIds.add(attributeRecordId);
 
-    final DataInputStream dataInputStream = getAttributes(attrId).readStream(attributeRecordId);
+    final DataInputStream dataInputStream = getAttributesStorage().readStream(attributeRecordId);
     try {
       final int streamSize = dataInputStream.available();
       assert (streamSize % 8) == 0;
-      for(int i=0; i<streamSize / 8; i++) {
+      for (int i = 0; i < streamSize / 8; i++) {
         int attId = dataInputStream.readInt();
         int attDataRecordId = dataInputStream.readInt();
         assert !usedAttributeRecordIds.contains(attDataRecordId);
@@ -1074,7 +1252,7 @@ public class FSRecords implements Disposable, Forceable {
           assert getNames().valueOf(attId).length() > 0;
           validAttributeIds.add(attId);
         }
-        getAttributes(attId).checkSanity(attDataRecordId);
+        getAttributesStorage().checkSanity(attDataRecordId);
       }
     }
     finally {

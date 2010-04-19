@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @NonNls public static final String DAILY = "Daily";
   @NonNls public static final String WEEKLY = "Weekly";
   @NonNls public static final String MONTHLY = "Monthly";
+  @NonNls public static final String ON_EXIT = "On every exit";
   private static final Map<Object, String> PERIOD_VALUE_MAP = new HashMap<Object, String>();
 
   static {
@@ -59,6 +60,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     PERIOD_VALUE_MAP.put(DAILY, IdeBundle.message("updates.check.period.daily"));
     PERIOD_VALUE_MAP.put(WEEKLY, IdeBundle.message("updates.check.period.weekly"));
     PERIOD_VALUE_MAP.put(MONTHLY, IdeBundle.message("updates.check.period.monthly"));
+    PERIOD_VALUE_MAP.put(ON_EXIT, IdeBundle.message("updates.check.period.on.exit"));
   }
 
   public JComponent createComponent() {
@@ -150,6 +152,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       myPeriodCombo.addItem(DAILY);
       myPeriodCombo.addItem(WEEKLY);
       myPeriodCombo.addItem(MONTHLY);
+      myPeriodCombo.addItem(ON_EXIT);
 
       myPeriodCombo.setRenderer(new MappingListCellRenderer(PERIOD_VALUE_MAP));
 

@@ -16,17 +16,19 @@
 
 package com.intellij.history.integration.ui.actions;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.LocalHistoryComponent;
+import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public abstract class LocalHistoryAction extends AnAction {
+public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
@@ -37,35 +39,38 @@ public abstract class LocalHistoryAction extends AnAction {
     }
     p.setVisible(true);
     p.setText(getText(e), true);
-    p.setEnabled(isEnabled(getVcs(e), getGateway(e), getFile(e), e));
+    p.setEnabled(isEnabled(getVcs(), getGateway(), getFile(e), e));
   }
 
   protected String getText(AnActionEvent e) {
     return e.getPresentation().getTextWithMnemonic();
   }
 
-  protected boolean isEnabled(LocalVcs vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+  protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     return true;
   }
 
-  protected LocalVcs getVcs(AnActionEvent e) {
-    return LocalHistoryComponent.getLocalVcsFor(getProject(e));
+  protected LocalHistoryFacade getVcs() {
+    return LocalHistoryImpl.getInstanceImpl().getFacade();
   }
 
-  protected IdeaGateway getGateway(AnActionEvent e) {
-    return LocalHistoryComponent.getGatewayFor(getProject(e));
+  protected IdeaGateway getGateway() {
+    return LocalHistoryImpl.getInstanceImpl().getGateway();
   }
 
   protected VirtualFile getFile(AnActionEvent e) {
-    VirtualFile[] ff = getFiles(e);
-    return (ff == null || ff.length != 1) ? null : ff[0];
+    VirtualFile[] ff = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    if (ff == null || ff.length == 0) return null;
+
+    VirtualFile commonParent = ff[0];
+    for (int i = 1; i < ff.length; i++) {
+      commonParent = VfsUtil.getCommonAncestor(commonParent, ff[i]);
+      if (commonParent == null) break;
+    }
+    return commonParent;
   }
 
-  private VirtualFile[] getFiles(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-  }
-
-  private Project getProject(AnActionEvent e) {
+  protected Project getProject(AnActionEvent e) {
     return e.getData(PlatformDataKeys.PROJECT);
   }
 }

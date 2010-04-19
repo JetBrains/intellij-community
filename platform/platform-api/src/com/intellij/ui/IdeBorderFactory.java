@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
@@ -43,5 +45,13 @@ public class IdeBorderFactory {
 
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {
     return new EmptyBorder(top, left, bottom, right);
+  }
+
+  public static Border createSimpleBorder() {
+    return createSimpleBorder(1, 1, 1, 1);
+  }
+
+  public static Border createSimpleBorder(int top, int left, int bottom, int right) {
+    return BorderFactory.createMatteBorder(top, left, bottom, right, UIUtil.getBorderSeparatorColor());
   }
 }

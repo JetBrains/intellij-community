@@ -16,42 +16,50 @@
 
 package com.intellij.history.core.revisions;
 
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.Change;
-import com.intellij.history.core.changes.ChangeList;
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
 
 public class RevisionBeforeChange extends Revision {
-  protected Entry myEntry;
-  protected Entry myRoot;
-  protected ChangeList myChangeList;
-  protected Change myChange;
+  private final LocalHistoryFacade myFacade;
+  private final RootEntry myRoot;
+  private final String myEntryPath;
+  private final long myTimestamp;
+  private final Change myChangeToRevert;
 
-  public RevisionBeforeChange(Entry e, Entry r, ChangeList cl, Change c) {
-    myEntry = e;
+  public RevisionBeforeChange(LocalHistoryFacade facade, RootEntry r, String entryPath, ChangeSet changeSet) {
+    myFacade = facade;
     myRoot = r;
-    myChangeList = cl;
-    myChange = c;
+    myEntryPath = entryPath;
+
+    myTimestamp = changeSet.getTimestamp();
+    myChangeToRevert = revertThisChangeSet()
+                      ? changeSet.getFirstChange()
+                      : changeSet.getLastChange();
   }
 
   @Override
   public long getTimestamp() {
-    return myChange.getTimestamp();
+    return myTimestamp;
   }
 
   @Override
   public Entry getEntry() {
-    Entry rootCopy = myRoot.copy();
-    myChangeList.revertUpTo(rootCopy, myChange, includeMyChange());
-    return rootCopy.getEntry(myEntry.getId());
+    RootEntry rootCopy = myRoot.copy();
+
+    boolean revertThis = revertThisChangeSet();
+    String path = myFacade.revertUpTo(rootCopy, myEntryPath, null, myChangeToRevert, revertThis);
+
+    return rootCopy.getEntry(path);
   }
 
-  @Override
-  public boolean isBefore(ChangeSet c) {
-    return myChangeList.isBefore(myChange, c, includeMyChange());
-  }
-
-  protected boolean includeMyChange() {
+  protected boolean revertThisChangeSet() {
     return true;
+  }
+
+  public String toString() {
+    return getClass().getSimpleName() + ": " + myChangeToRevert;
   }
 }

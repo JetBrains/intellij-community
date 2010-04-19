@@ -33,7 +33,7 @@ public class StorageTest extends TestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myStorage = Storage.create(getFileName());
+    myStorage = new Storage(getFileName());
   }
 
   private String getFileName() {

@@ -24,12 +24,15 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 
 public abstract class FileDifferenceModel {
-  protected IdeaGateway myGateway;
+  protected final Project myProject;
+  protected final IdeaGateway myGateway;
   private final boolean isRightContentCurrent;
 
-  protected FileDifferenceModel(IdeaGateway gw, boolean currentRightContent) {
+  protected FileDifferenceModel(Project p, IdeaGateway gw, boolean currentRightContent) {
+    myProject = p;
     myGateway = gw;
     isRightContentCurrent = currentRightContent;
   }
@@ -37,7 +40,7 @@ public abstract class FileDifferenceModel {
   public String getTitle() {
     Entry e = getRightEntry();
     if (e == null) e = getLeftEntry();
-    return e.getPath();
+    return FileUtil.toSystemDependentName(e.getPath());
   }
 
   public String getLeftTitle(RevisionProcessingProgress p) {
@@ -105,10 +108,6 @@ public abstract class FileDifferenceModel {
 
   protected SimpleContent createSimpleDiffContent(String content, Entry e) {
     return new SimpleContent(content, myGateway.getFileType(e.getName()));
-  }
-
-  protected Project getProject() {
-    return myGateway.getProject();
   }
 
   protected Document getDocument() {

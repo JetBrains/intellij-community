@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +19,33 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ReflectionForUnavailableAnnotationInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "reflection.for.unavailable.annotation.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "reflection.for.unavailable.annotation.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new ReflectionForUnavailableAnnotationVisitor();
     }
@@ -71,15 +76,10 @@ public class ReflectionForUnavailableAnnotationInspection
             if (!(arg instanceof PsiClassObjectAccessExpression)) {
                 return;
             }
-            final PsiMethod calledMethod = expression.resolveMethod();
-            if (calledMethod == null) {
-                return;
-            }
-            final PsiClass containingClass = calledMethod.getContainingClass();
-            if (containingClass == null) {
-                return;
-            }
-            if (!"java.lang.Class".equals(containingClass.getQualifiedName())) {
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (!TypeUtils.expressionHasTypeOrSubtype(qualifier,
+                    "java.lang.reflect.AnnotatedElement")) {
                 return;
             }
             final PsiClassObjectAccessExpression classObjectAccessExpression =
@@ -109,13 +109,14 @@ public class ReflectionForUnavailableAnnotationInspection
             final PsiNameValuePair[] attributes = parameters.getAttributes();
             for (PsiNameValuePair attribute : attributes) {
                 @NonNls final String name = attribute.getName();
-                if (name == null || "value".equals(name)) {
-                    final PsiAnnotationMemberValue value = attribute.getValue();
-                    @NonNls final String text = value.getText();
-                    if (!text.contains("RUNTIME")) {
-                        registerError(arg);
-                        return;
-                    }
+                if (name != null && !"value".equals(name)) {
+                    continue;
+                }
+                final PsiAnnotationMemberValue value = attribute.getValue();
+                @NonNls final String text = value.getText();
+                if (!text.contains("RUNTIME")) {
+                    registerError(arg);
+                    return;
                 }
             }
         }

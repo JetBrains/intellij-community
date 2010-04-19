@@ -16,7 +16,7 @@
 
 package com.intellij.history.integration.revertion;
 
-import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
@@ -25,8 +25,9 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.FormatUtil;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.history.utils.Reversed;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 
 import java.io.IOException;
@@ -40,15 +41,15 @@ public class DifferenceReverter extends Reverter {
   private final List<Difference> myDiffs;
   private final Revision myLeftRevision;
 
-  public DifferenceReverter(LocalVcs vcs, IdeaGateway gw, List<Difference> diffs, Revision leftRevision) {
-    super(vcs, gw);
+  public DifferenceReverter(Project p, LocalHistoryFacade vcs, IdeaGateway gw, List<Difference> diffs, Revision leftRevision) {
+    super(p, vcs, gw);
     myGateway = gw;
     myDiffs = diffs;
     myLeftRevision = leftRevision;
   }
 
   @Override
-  protected String formatCommandName() {
+  public String getCommandName() {
     String date = FormatUtil.formatTimestamp(myLeftRevision.getTimestamp());
     return LocalHistoryBundle.message("system.label.revert.to.date", date);
   }
@@ -76,7 +77,7 @@ public class DifferenceReverter extends Reverter {
   public void doRevert(boolean revertContentChanges) throws IOException {
     Set<String> vetoedFiles = new THashSet<String>();
 
-    for (Difference each : Reversed.list(myDiffs)) {
+    for (Difference each : ContainerUtil.iterateBackward(myDiffs)) {
       Entry l = each.getLeft();
       Entry r = each.getRight();
 
@@ -114,7 +115,7 @@ public class DifferenceReverter extends Reverter {
   }
 
   private void revertRename(Entry l, VirtualFile file) throws IOException {
-    String oldName = getNameOf(l);
+    String oldName = l.getName();
     if (!oldName.equals(file.getName())) {
       VirtualFile existing = file.getParent().findChild(oldName);
       if (existing != null) {
@@ -135,19 +136,5 @@ public class DifferenceReverter extends Reverter {
     Content c = l.getContent();
     if (!c.isAvailable()) return;
     file.setBinaryContent(c.getBytes(), -1, l.getTimestamp());
-  }
-
-  // todo refactor to a base class
-
-  // todo HACK: remove after introducing GhostDirectoryEntry
-  private String getParentOf(Entry e) {
-    // roots do not have parents - only paths
-    return Paths.getParentOf(e.getPath());
-  }
-
-  // todo HACK: remove after introducing GhostDirectoryEntry
-  private String getNameOf(Entry e) {
-    // name for roots may be the path
-    return Paths.getNameOf(e.getPath());
   }
 }

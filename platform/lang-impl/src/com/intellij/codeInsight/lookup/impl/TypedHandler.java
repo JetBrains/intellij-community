@@ -61,21 +61,20 @@ public class TypedHandler implements TypedActionHandler {
     }, "", editor.getDocument());
 
     if (result == CharFilter.Result.ADD_TO_PREFIX){
-      lookup.refreshUi();
+      return;
     }
-    else{
-      if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
-        LookupElement item = lookup.getCurrentItem();
-        if (item != null){
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
-          lookup.finishLookup(charTyped);
-          return;
-        }
-      }
 
-      lookup.hide();
-      myOriginalHandler.execute(editor, charTyped, dataContext);
+    if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP){
+      LookupElement item = lookup.getCurrentItem();
+      if (item != null){
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC);
+        lookup.finishLookup(charTyped);
+        return;
+      }
     }
+
+    lookup.hide();
+    myOriginalHandler.execute(editor, charTyped, dataContext);
   }
 
   private static CharFilter.Result getLookupAction(final char charTyped, final LookupElement currentItem, final LookupImpl lookup) {

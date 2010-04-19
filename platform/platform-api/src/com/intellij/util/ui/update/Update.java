@@ -86,7 +86,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
     }
   }
 
-  protected int getPriority() {
+  public int getPriority() {
     return myPriority;
   }
 

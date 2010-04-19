@@ -16,15 +16,21 @@
 
 package com.intellij.history.integration.ui.actions;
 
+import com.intellij.history.LocalHistory;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.ui.views.PutLabelDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import static com.intellij.history.integration.LocalHistoryBundle.message;
 
 public class PutLabelAction extends LocalHistoryActionWithDialog {
   @Override
-  protected DialogWrapper createDialog(IdeaGateway gw, VirtualFile f, AnActionEvent e) {
-    return new PutLabelDialog(gw, f);
+  protected void showDialog(Project p, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
+    String labelName = Messages.showInputDialog(p, message("put.label.name"), message("put.label.dialog.title"),null,
+                                                "", new NonEmptyInputValidator());
+    LocalHistory.getInstance().putUserLabel(p, labelName);
   }
 }

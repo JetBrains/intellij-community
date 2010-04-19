@@ -160,12 +160,12 @@ public class RollbackWorker {
 
     private void doRefresh(final Project project, final List<Change> changesToRefresh) {
       final String actionName = VcsBundle.message("changes.action.rollback.text");
-      final LocalHistoryAction action = LocalHistory.startAction(project, actionName);
+      final LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
 
       final Runnable forAwtThread = new Runnable() {
         public void run() {
           action.finish();
-          PeriodicalTasksCloser.safeGetComponent(project, LocalHistory.class).putSystemLabel((myLocalHistoryActionName == null) ?
+          LocalHistory.getInstance().putSystemLabel(myProject, (myLocalHistoryActionName == null) ?
                                                                                              actionName : myLocalHistoryActionName, -1);
           final VcsDirtyScopeManager manager = PeriodicalTasksCloser.safeGetComponent(project, VcsDirtyScopeManager.class);
           for (Change change : changesToRefresh) {

@@ -255,7 +255,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myAdditionalPrefix = additionalPrefix;
     myInitialPrefix = null;
     markDirty();
-    updateList();
+    refreshUi();
   }
 
   private void updateList() {
@@ -450,10 +450,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     int shiftLow = layeredPane.getHeight() - (layeredPanePoint.y + dim.height);
     int shiftHigh = layeredPanePoint.y - dim.height;
-    myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh ? Boolean.TRUE : Boolean.FALSE;
-
-    if (myPositionedAbove.booleanValue()){
+    if (!isPositionedAboveCaret()) {
+      myPositionedAbove = shiftLow < 0 && shiftLow < shiftHigh ? Boolean.TRUE : Boolean.FALSE;
+    }
+    if (isPositionedAboveCaret()) {
       layeredPanePoint.y -= dim.height + myEditor.getLineHeight();
+      if (pos.line == 0) {
+        layeredPanePoint.y += 1;
+        //otherwise the lookup won't intersect with the editor and every editor's resize (e.g. after typing in console) will close the lookup
+      }
     }
     return layeredPanePoint;
   }

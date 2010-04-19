@@ -16,8 +16,10 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -40,4 +42,6 @@ public interface FoldingModelEx extends FoldingModel {
   TextAttributes getPlaceholderAttributes();
 
   FoldRegion[] fetchTopLevel();
+  
+  FoldRegion createFoldRegion(int startOffset, int endOffset, @NotNull String placeholder, FoldingGroup group);
 }

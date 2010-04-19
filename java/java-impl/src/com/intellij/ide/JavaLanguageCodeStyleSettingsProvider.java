@@ -120,6 +120,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                        "}";
 
   private static final String INDENT_AND_BRACES_SAMPLE = "public class Foo {\n" +
+                                                         "  public Foo foo;\n" +
                                                          "  public int[] X = new int[]{1, 3, 5 7, 9, 11};\n" +
                                                          "\n" +
                                                          "  public void foo(boolean a, int x, int y, int z) {\n" +
@@ -163,6 +164,13 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                                          "    while (x < 10000);\n" +
                                                          "    while (x < 50000) x++;\n" +
                                                          "    for (int i = 0; i < 5; i++) System.out.println(i);\n" +
+                                                         "    foo.fooBar().fooBar()\n" +
+                                                         "       .fooBar().foo.fooBar().fooBar()\n" +
+                                                         "                    .fooBar();\n" +
+                                                         "  }\n" +
+                                                         "\n" +
+                                                         "  public Foo fooBar() {\n" +
+                                                         "    return this;\n" +
                                                          "  }\n" +
                                                          "\n" +
                                                          "  private class InnerClass implements I1, I2 {\n" +

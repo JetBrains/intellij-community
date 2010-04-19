@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 
 public class SelectionDifferenceModel extends FileDifferenceModel {
   private final SelectionCalculator myCalculator;
@@ -31,14 +32,15 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   private final int myFrom;
   private final int myTo;
 
-  public SelectionDifferenceModel(IdeaGateway gw,
+  public SelectionDifferenceModel(Project p,
+                                  IdeaGateway gw,
                                   SelectionCalculator c,
                                   Revision left,
                                   Revision right,
                                   int from,
                                   int to,
                                   boolean editableRightContent) {
-    super(gw, editableRightContent);
+    super(p, gw, editableRightContent);
     myCalculator = c;
     myLeftRevision = left;
     myRightRevision = right;
@@ -83,7 +85,7 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
     int fromOffset = d.getLineStartOffset(myFrom);
     int toOffset = d.getLineEndOffset(myTo);
 
-    return FragmentContent.fromRangeMarker(d.createRangeMarker(fromOffset, toOffset), getProject());
+    return FragmentContent.fromRangeMarker(d.createRangeMarker(fromOffset, toOffset), myProject);
   }
 
   private SimpleContent getDiffContent(Revision r, RevisionProcessingProgress p) {

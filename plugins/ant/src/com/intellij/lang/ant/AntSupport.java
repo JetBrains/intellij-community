@@ -17,6 +17,7 @@ package com.intellij.lang.ant;
 
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.ant.dom.AntDomElement;
 import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.changes.AntChangeVisitor;
@@ -31,6 +32,10 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -129,9 +134,16 @@ public class AntSupport implements ApplicationComponent {
   public static AntDomProject getAntDomProject(PsiFile psiFile) {
     if (psiFile instanceof XmlFile) {
       final DomManager domManager = DomManager.getDomManager(psiFile.getProject());
-      return domManager.getFileElement((XmlFile)psiFile, AntDomProject.class).getRootElement();
+      final DomFileElement<AntDomProject> fileElement = domManager.getFileElement((XmlFile)psiFile, AntDomProject.class);
+      return fileElement != null? fileElement.getRootElement() : null;
     }
     return null;
+  }
+
+  @Nullable
+  public static AntDomElement getAntDomElement(XmlTag xmlTag) {
+    final DomElement domElement = DomManager.getDomManager(xmlTag.getProject()).getDomElement(xmlTag);
+    return domElement instanceof AntDomElement? (AntDomElement)domElement : null;
   }
 
   @Nullable
@@ -145,5 +157,10 @@ public class AntSupport implements ApplicationComponent {
       return psiFile != null? getAntFile(psiFile) : null;
     }
     return null;
+  }
+
+  @Nullable
+  public static AntDomElement getInvocationAntDomElement(ConvertContext context) {
+    return context.getInvocationElement().getParentOfType(AntDomElement.class, false);
   }
 }

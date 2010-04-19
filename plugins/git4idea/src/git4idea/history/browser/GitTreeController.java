@@ -91,26 +91,29 @@ class GitTreeController implements ManageGitTreeView {
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
     myFilterRequestsMerger = new RequestsMerger(new Runnable() {
       public void run() {
-        if (myFilterHolder.isDirty()) {
-          final Portion filtered = loadPortion(myFilterHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(), null,
-                                               myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
-          if (filtered == null) return;
+        try {
+          if (myFilterHolder.isDirty()) {
+            final Portion filtered = loadPortion(myFilterHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(), null,
+                                                 myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
+            if (filtered == null) return;
 
-          final List<GitCommit> commitList = filtered.getXFrom(0, PageSizes.VISIBLE_PAGE_SIZE);
-          myFiltered = filtered;
-          myTreeView.refreshView(commitList, new TravelTicket(filtered.isStartFound(), filtered.getLast().getDate()));
+            final List<GitCommit> commitList = filtered.getXFrom(0, PageSizes.VISIBLE_PAGE_SIZE);
+            myFiltered = filtered;
+            myTreeView.refreshView(commitList, new TravelTicket(filtered.isStartFound(), filtered.getLast().getDate()));
 
-          myFilterHolder.setDirty(false);
+            myFilterHolder.setDirty(false);
+          }
+
+          // highlighting
+          if (myHighlightingHolder.isNothingSelected()) {
+            myTreeView.clearHighlighted();
+            return;
+          }
+
+          myTreeView.acceptHighlighted(loadIdsToHighlight());
+        } finally {
+          myTreeView.refreshFinished();
         }
-
-        // highlighting
-        if (myHighlightingHolder.isNothingSelected()) {
-          myTreeView.clearHighlighted();
-          return;
-        }
-
-        myTreeView.acceptHighlighted(loadIdsToHighlight());
-        myTreeView.refreshFinished();
       }
     }, new Consumer<Runnable>() {
       public void consume(Runnable runnable) {
@@ -311,6 +314,7 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   public void refresh() {
+    myFilterHolder.setDirty(true);
     myFilterRequestsMerger.request();
     myAlarm.addRequest(new Runnable() {
       public void run() {

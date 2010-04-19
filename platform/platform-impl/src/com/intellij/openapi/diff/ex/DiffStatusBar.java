@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -41,8 +42,8 @@ public class DiffStatusBar extends JPanel {
 
   private final Collection<JComponent> myLabels = new ArrayList<JComponent>();
 
-  private final JLabel myTextLabel = new JLabel("", JLabel.CENTER);
-  private static final int COMP_HEIGHT = 40;
+  private final JLabel myTextLabel = new JLabel("");
+  private static final int COMP_HEIGHT = 30;
   private EditorColorsScheme myColorScheme = null;
 
   public <T extends LegendTypeDescriptor> DiffStatusBar(List<T> types) {
@@ -50,7 +51,6 @@ public class DiffStatusBar extends JPanel {
       addDiffType(differenceType);
     }
     initGui();
-    setBorder(BorderFactory.createLineBorder(Color.GRAY));
   }
 
   private void addDiffType(final LegendTypeDescriptor diffType){
@@ -60,7 +60,7 @@ public class DiffStatusBar extends JPanel {
   private void addComponent(final LegendTypeDescriptor diffType) {
     JComponent component = new JPanel() {
       public void paint(Graphics g) {
-        setBackground(UIUtil.getTableHeaderBackground());
+        setBackground(UIUtil.getPanelBackgound());
         super.paint(g);
         FontMetrics metrics = getFontMetrics(getFont());
 
@@ -111,9 +111,15 @@ public class DiffStatusBar extends JPanel {
   }
 
   private void initGui() {
+    JComponent filler = new JComponent() {
+      @Override
+      public Dimension getPreferredSize() {
+        return myTextLabel.getPreferredSize();
+      }
+    };
     setLayout(new BorderLayout());
-    Border emptyBorder = BorderFactory.createEmptyBorder(3, 2, 5, 2);
-    setBorder(emptyBorder);
+    setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createSimpleBorder(),
+                                                 BorderFactory.createEmptyBorder(3, 20, 3, 20)));
 
     add(myTextLabel, BorderLayout.WEST);
     Box box = Box.createHorizontalBox();
@@ -125,8 +131,9 @@ public class DiffStatusBar extends JPanel {
     panel.setMaximumSize(panel.getPreferredSize());
     box.add(panel);
     box.add(Box.createHorizontalGlue());
-
     add(box, BorderLayout.CENTER);
+
+    add(filler, BorderLayout.EAST);
   }
 
   public void setColorScheme(EditorColorsScheme colorScheme) {

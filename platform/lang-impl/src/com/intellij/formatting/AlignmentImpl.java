@@ -50,14 +50,45 @@ class AlignmentImpl extends Alignment {
     return Type.values()[myFlags & 1];
   }
 
+  /**
+   * Selects target wrapped block by the following algorithm:
+   * <ol>
+   *   <li>
+   *      Filter blocks registered via {@link #setOffsetRespBlock(LeafBlockWrapper)} in order to process only those that start
+   *      before the given block (blocks which start offset is lower than start offset of the given block).
+   *   </li>
+   *   <li>
+   *      Try to find out result from those filtered blocks using the following algorithm:
+   *      <ol>
+   *        <li>
+   *            Use last block (block which has the greatest start offset) after the block which
+   *            {@link AbstractBlockWrapper#getWhiteSpace() white space} contains line feeds;
+   *        </li>
+   *        <li>
+   *            Use the first block (block with the smallest start offset) if no block can be selected using the rule above;
+   *        </li>
+   *        <li>
+   *            Use the last block (block with the greatest start offset) if no block can be selected using the rules above;
+   *        </li>
+   *      </ol>
+   *   </li>
+   *   <li>
+   *      Delegate the task to the {@link #setParent(Alignment) parent alignment} (if it's registered) if no blocks
+   *      are configured for the current one;
+   *   </li>
+   * </ol>
+   *
+   * @param block     target block to use during blocks filtering
+   * @return          block {@link #setOffsetRespBlock(LeafBlockWrapper) registered} for the current alignment object or
+   *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; <code>null</code> otherwise
+   */
   LeafBlockWrapper getOffsetRespBlockBefore(final LeafBlockWrapper block) {
     LeafBlockWrapper result = null;
     if (myOffsetRespBlocks != EMPTY) {
       LeafBlockWrapper lastBlockAfterLineFeed = null;
       LeafBlockWrapper firstAlignedBlock = null;
       LeafBlockWrapper lastAlignedBlock = null;
-      for (Iterator<LeafBlockWrapper> each = myOffsetRespBlocks.iterator(); each.hasNext();) {
-        final LeafBlockWrapper current = each.next();
+      for (final LeafBlockWrapper current : myOffsetRespBlocks) {
         if (block == null || current.getStartOffset() < block.getStartOffset()) {
           if (firstAlignedBlock == null || firstAlignedBlock.getStartOffset() > current.getStartOffset()) {
             firstAlignedBlock = current;
@@ -94,6 +125,12 @@ class AlignmentImpl extends Alignment {
 
   }
 
+  /**
+   * Registers wrapped block within the current alignment in order to use it for further
+   * {@link #getOffsetRespBlockBefore(LeafBlockWrapper)} calls processing.
+   *
+   * @param block   wrapped block to register within the curretn alignmnent object
+   */
   void setOffsetRespBlock(final LeafBlockWrapper block) {
     if (myOffsetRespBlocks == EMPTY) myOffsetRespBlocks = new LinkedHashSet<LeafBlockWrapper>(1);
     myOffsetRespBlocks.add(block);

@@ -1,8 +1,0 @@
-<components>
-  <application-components>
-    <component>
-      <implementation-class>com.intellij.util.xml.impl.DomApplicationComponent</implementation-class>
-    </component>
-  </application-components>
-
-</components>

@@ -16,31 +16,42 @@
 
 package com.intellij.history.core.tree;
 
-import com.intellij.history.core.storage.Stream;
+import com.intellij.history.core.Paths;
+import com.intellij.history.core.storage.StreamUtil;
 
+import java.io.DataOutput;
 import java.io.IOException;
 
-// todo replace all String.length() == 0 with String.isEmpty()
+import static java.lang.String.format;
+
 public class RootEntry extends DirectoryEntry {
   public RootEntry() {
-    super(-1, "");
-  }
-
-  public RootEntry(Stream s) throws IOException {
-    super(s);
-  }
-
-  protected String getPathAppendedWith(String name) {
-    return name;
+    super("");
   }
 
   @Override
-  public Entry findEntry(String path) {
-    return searchInChildren(path);
+  public void write(DataOutput out) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  public RootEntry copy() {
+    return (RootEntry)super.copy();
   }
 
   @Override
   protected DirectoryEntry copyEntry() {
     return new RootEntry();
+  }
+
+  public Entry ensureDirectoryExists(String path) {
+    Entry parent = this;
+    for (String each : Paths.split(path)) {
+      Entry nextParent = parent.findChild(each);
+      if (nextParent == null) {
+        parent.addChild(nextParent = new DirectoryEntry(each));
+      }
+      parent = nextParent;
+    }
+    return parent;
   }
 }

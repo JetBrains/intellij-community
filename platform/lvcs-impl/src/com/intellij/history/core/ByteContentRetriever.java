@@ -22,8 +22,10 @@ import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.ChangeVisitor;
 import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.storage.Content;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.history.core.tree.RootEntry;
+import com.intellij.openapi.util.Pair;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,21 +34,25 @@ import java.util.List;
 // Therefore we have to move along the changelist, revert only content changes
 // and record file and changeset timestamps to call comparator with.
 public class ByteContentRetriever extends ChangeSetsProcessor {
+  private final LocalHistoryFacade myVcs;
   private final FileRevisionTimestampComparator myComparator;
 
   private long myCurrentFileTimestamp;
   private Content myCurrentFileContent;
 
-  public ByteContentRetriever(LocalVcs vcs, String path, FileRevisionTimestampComparator c) {
-    super(vcs, path);
+  public ByteContentRetriever(LocalHistoryFacade vcs, RootEntry root, String path, FileRevisionTimestampComparator c) {
+    super(path);
+    myVcs = vcs;
     myComparator = c;
 
-    myCurrentFileContent = myEntry.getContent();
-    myCurrentFileTimestamp = myEntry.getTimestamp();
+    Entry entry = root.getEntry(path);
+    myCurrentFileContent = entry.getContent();
+    myCurrentFileTimestamp = entry.getTimestamp();
   }
 
   public byte[] getResult() {
     try {
+      checkCurrentRevision(); // optimization: do not collect changes if current revision will do
       process();
     }
     catch (ContentFoundException ignore) {
@@ -57,57 +63,48 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
   }
 
   @Override
-  protected List<Change> collectChanges() {
-    try {
-      final List<Change> result = new ArrayList<Change>();
+  protected Pair<String, List<ChangeSet>> collectChanges() {
+    final List<ChangeSet> result = new ArrayList<ChangeSet>();
 
-      myVcs.acceptRead(new ChangeVisitor() {
-        @Override
-        public void begin(ChangeSet c) {
-          if (c.affects(myEntry)) result.add(c);
-        }
-      });
+    myVcs.accept(new ChangeVisitor() {
+      @Override
+      public void begin(ChangeSet c) throws StopVisitingException {
+        if (c.affectsPath(myPath)) result.add(c);
+      }
+    });
 
-      return result;
-    }
-    catch (IOException ex) {
-      throw new RuntimeException(ex);
-    }
+    return Pair.create(myPath, result);
   }
 
   @Override
   protected void nothingToVisit() {
     // visit current version
-    doVisit();
+    checkCurrentRevision();
   }
 
   @Override
-  protected void visitLabel(Change c) {
+  public void visit(ChangeSet changeSet) {
+    checkCurrentRevision();
+    recordContentAndTimestamp(changeSet);
   }
 
   @Override
-  public void visitRegular(Change c) {
-    doVisit();
-    recordContentAndTimestamp(c);
+  protected void visitFirstAvailableNonCreational(ChangeSet changeSet) {
+    checkCurrentRevision();
   }
 
-  @Override
-  protected void visitFirstAvailableNonCreational(Change c) {
-    doVisit();
-  }
-
-  void doVisit() {
+  private void checkCurrentRevision() {
     if (myComparator.isSuitable(myCurrentFileTimestamp)) {
       throw new ContentFoundException();
     }
   }
 
-  private void recordContentAndTimestamp(Change c) {
+  private void recordContentAndTimestamp(ChangeSet c) {
+    // todo what if the path is being changed during changes?
     for (Change each : c.getChanges()) {
-      if (!each.isFileContentChange()) continue;
-      if (!each.affectsOnlyInside(myEntry)) continue;
-
+      if (!(each instanceof ContentChange)) continue;
       ContentChange cc = (ContentChange)each;
+      if (!cc.affectsPath(myPath)) continue;
 
       myCurrentFileTimestamp = cc.getOldTimestamp();
       myCurrentFileContent = cc.getOldContent();

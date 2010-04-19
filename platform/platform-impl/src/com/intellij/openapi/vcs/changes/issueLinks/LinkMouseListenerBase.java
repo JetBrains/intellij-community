@@ -30,11 +30,11 @@ public abstract class LinkMouseListenerBase extends MouseAdapter implements Mous
   public void mouseClicked(final MouseEvent e) {
     if (!e.isPopupTrigger() && e.getButton() == 1) {
       Object tag = getTagAt(e);
-      handleTagClick(tag);
+      handleTagClick(tag, e);
     }
   }
 
-  protected void handleTagClick(final Object tag) {
+  protected void handleTagClick(final Object tag, MouseEvent event) {
     if (tag instanceof Runnable) {
       ((Runnable) tag).run();
     }

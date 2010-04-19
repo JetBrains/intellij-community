@@ -26,7 +26,9 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import net.sf.cglib.core.CollectionUtils;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -46,7 +48,6 @@ class UndoableGroup {
   private EditorAndState myStateAfter;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
-  private boolean isValid = true;
 
   public UndoableGroup(String commandName,
                        boolean isGlobal,
@@ -107,7 +108,7 @@ class UndoableGroup {
         else {
           actionName = CommonBundle.message("local.vcs.action.name.redo.command", myCommandName);
         }
-        action = LocalHistory.startAction(myProject, actionName);
+        action = LocalHistory.getInstance().startAction(actionName);
       }
     }
 
@@ -122,10 +123,8 @@ class UndoableGroup {
   private void doUndoOrRedo(final boolean isUndo) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        Iterator<UndoableAction> it = isUndo ? reverseIterator(myActions.listIterator(myActions.size())) : myActions.iterator();
         try {
-          while (it.hasNext()) {
-            UndoableAction each = it.next();
+          for (UndoableAction each : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
             if (isUndo) {
               each.undo();
             }
@@ -139,22 +138,6 @@ class UndoableGroup {
         }
       }
     });
-  }
-
-  private Iterator<UndoableAction> reverseIterator(final ListIterator<UndoableAction> iter) {
-    return new Iterator<UndoableAction>() {
-      public boolean hasNext() {
-        return iter.hasPrevious();
-      }
-
-      public UndoableAction next() {
-        return iter.previous();
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
   }
 
   private void reportUndoProblem(UnexpectedUndoException e, boolean isUndo) {
@@ -218,15 +201,6 @@ class UndoableGroup {
     if (myConfirmationPolicy == UndoConfirmationPolicy.REQUEST_CONFIRMATION) return true;
     if (myConfirmationPolicy == UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION) return false;
     return myGlobal;
-  }
-
-  public void invalidateIfGlobal() {
-    if (!myGlobal) return;
-    isValid = false;
-  }
-
-  public boolean isValid() {
-    return isValid;
   }
 
   public String toString() {

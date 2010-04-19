@@ -119,6 +119,9 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         new String[]{"getDate"}, ArrayUtil.EMPTY_STRING_ARRAY, false, false));
   }
 
+  public void testTypeParametersSubstitution() throws Exception {
+     doTest(createPerformAction("A", "myDelegate", "MyIntf", "Intf", new int[]{}, ArrayUtil.EMPTY_STRING_ARRAY, true, false));
+  }
 
   private PerformAction createPerformAction(
     final String className, final String fieldName, final String innerClassName,

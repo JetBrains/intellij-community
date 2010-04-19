@@ -126,10 +126,21 @@ public class PsiUtil {
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
       signature = signature.curry(1);
     }
+
+    //check for default constructor
+    if (method.isConstructor() && method.getParameterList().getParametersCount() == 0 && argumentTypes.length == 1) {
+      final PsiType type = argumentTypes[0];
+      final PsiClassType mapType = JavaPsiFacade.getElementFactory(method.getProject())
+        .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, method.getResolveScope());
+      return TypesUtil.isAssignable(mapType, type, method.getManager(), method.getResolveScope());
+    }
+    LOG.assertTrue(signature != null);
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());
   }
 
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiManager manager) {
+    if (argumentTypes == null) return true;
+
     GrClosureSignature signature = type.getSignature();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, manager, type.getResolveScope());
   }

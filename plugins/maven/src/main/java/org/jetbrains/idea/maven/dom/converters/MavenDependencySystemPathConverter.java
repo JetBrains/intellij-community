@@ -39,7 +39,7 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
   @Override
   public PsiFile fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
-    VirtualFile f = LocalFileSystem.getInstance().findFileByPath(s);
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
     if (f == null) return null;
     return PsiManager.getInstance(context.getXmlElement().getProject()).findFile(f);
   }

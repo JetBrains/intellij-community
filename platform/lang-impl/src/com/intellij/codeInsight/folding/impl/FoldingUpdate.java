@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -87,8 +88,7 @@ public class FoldingUpdate {
     final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
     getFoldingsFor(file instanceof PsiCompiledElement ? (PsiFile)((PsiCompiledElement)file).getMirror() : file, document, elementsToFoldMap, quick);
 
-    final UpdateFoldRegionsOperation operation =
-      new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
+    final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, applyDefaultState, false);
     Runnable runnable = new Runnable() {
       public void run() {
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
@@ -104,7 +104,7 @@ public class FoldingUpdate {
 
   private static final Key<Object> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");
   @Nullable
-  public static Runnable updateInjectedFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file) {
+  public static Runnable updateInjectedFoldRegions(@NotNull final Editor editor, @NotNull PsiFile file, final boolean applyDefaultState) {
     if (file instanceof PsiCompiledElement) return null;
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -116,17 +116,32 @@ public class FoldingUpdate {
     Object lastTimeStamp = editor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
     if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp) return null;
 
-    final TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
-
     List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
     if (injectedDocuments.isEmpty()) return null;
+    final List<EditorWindow> injectedEditors = new ArrayList<EditorWindow>();
+    final List<Map<PsiElement, FoldingDescriptor>> maps = new ArrayList<Map<PsiElement, FoldingDescriptor>>();
     for (DocumentWindow injectedDocument : injectedDocuments) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
-      if (psiFile == null || !psiFile.isValid() || !injectedDocument.isValid()) continue;
-      getFoldingsFor(psiFile, injectedDocument, elementsToFoldMap, false);
+      PsiFile injectedFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument);
+      if (injectedFile == null || !injectedFile.isValid() || !injectedDocument.isValid()) continue;
+      Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injectedFile);
+      if (!(injectedEditor instanceof EditorWindow)) continue;
+
+      injectedEditors.add((EditorWindow)injectedEditor);
+      Map<PsiElement, FoldingDescriptor> map = new TreeMap<PsiElement, FoldingDescriptor>(COMPARE_BY_OFFSET);
+      maps.add(map);
+      getFoldingsFor(injectedFile, injectedDocument, map, false);
     }
 
-    final Runnable operation = new UpdateFoldRegionsOperation(project, editor, elementsToFoldMap, false, true);
+
+    final Runnable operation = new Runnable() {
+      public void run() {
+        for (int i = 0; i < injectedEditors.size(); i++) {
+          EditorWindow injectedEditor = injectedEditors.get(i);
+          Map<PsiElement, FoldingDescriptor> map = maps.get(i);
+          new UpdateFoldRegionsOperation(project, injectedEditor, map, applyDefaultState, true).run();
+        }
+      }
+    };
     return new Runnable() {
       public void run() {
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
@@ -135,7 +150,7 @@ public class FoldingUpdate {
     };
   }
 
-  private static void getFoldingsFor(PsiFile file, Document document, TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean quick) {
+  private static void getFoldingsFor(PsiFile file, Document document, Map<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (final Language language : viewProvider.getLanguages()) {
       final PsiFile psi = viewProvider.getPsi(language);

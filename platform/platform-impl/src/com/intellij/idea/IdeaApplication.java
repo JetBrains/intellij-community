@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateChannel;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -196,22 +194,21 @@ public class IdeaApplication {
         }
       }, ModalityState.NON_MODAL);
 
+      app.addApplicationListener(new ApplicationAdapter() {
+        @Override
+        public boolean canExitApplication() {
+          if (UpdateSettings.getInstance().isUpdateOnExit()) {
+            updatePlugins(false);            
+          }
+          return true;
+        }
+      });
+
       app.invokeLater(new Runnable() {
         public void run() {
           if (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded()) {
-            try {
-              UpdateChecker.setMyVeryFirstOpening(false);
-              final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
-              final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false);
-              if (newVersion != null) {
-                UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);
-              } else if (updatedPlugins != null) {
-                UpdateChecker.showNoUpdatesDialog(true, updatedPlugins);
-              }
-            }
-            catch (ConnectionException e) {
-              // It's not a problem on automatic check
-            }
+            UpdateChecker.setMyVeryFirstOpening(false);
+            updatePlugins(true);
           }
 
           if (myPerformProjectLoad) {
@@ -225,6 +222,21 @@ public class IdeaApplication {
           });
         }
       }, ModalityState.NON_MODAL);
+    }
+
+    private void updatePlugins(boolean showConfirmation) {
+      try {
+        final UpdateChannel newVersion = UpdateChecker.checkForUpdates();
+        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(false);
+        if (newVersion != null) {
+          UpdateChecker.showUpdateInfoDialog(true, newVersion, updatedPlugins);
+        } else if (updatedPlugins != null) {
+          UpdateChecker.showNoUpdatesDialog(true, updatedPlugins, showConfirmation);
+        }
+      }
+      catch (ConnectionException e) {
+        // It's not a problem on automatic check
+      }
     }
   }
 

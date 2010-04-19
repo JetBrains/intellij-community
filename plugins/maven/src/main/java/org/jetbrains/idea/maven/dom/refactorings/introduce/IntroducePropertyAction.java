@@ -15,6 +15,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,7 +67,10 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableForFile(PsiFile file) {
-    return MavenDomUtil.isMavenFile(file);
+    VirtualFile virtualFile = file.getVirtualFile();
+    return MavenDomUtil.isMavenFile(file)
+           && virtualFile != null
+           && virtualFile.getFileSystem() != JarFileSystem.getInstance();
   }
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
@@ -101,6 +107,10 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             final String replaceWith = PREFIX + propertyName + SUFFIX;
             final MavenDomProjectModel selectedProject = dialog.getSelectedProject();
 
+            if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFiles(file, selectedProject)).hasReadonlyFiles()) {
+              return;
+            }
+
             new WriteCommandAction(project) {
               @Override
               protected void run(Result result) throws Throwable {
@@ -117,6 +127,22 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
           }
         }
       }
+    }
+
+    private static VirtualFile[] getFiles(PsiFile file, MavenDomProjectModel model) {
+      Set<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        virtualFiles.add(virtualFile);
+      }
+
+      XmlElement xmlElement = model.getXmlElement();
+      if (xmlElement != null) {
+        VirtualFile vf = xmlElement.getContainingFile().getVirtualFile();
+        if (vf != null) virtualFiles.add(vf);
+      }
+
+      return virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
     }
 
     private static void createMavenProperty(@NotNull MavenDomProjectModel model,
@@ -148,7 +174,8 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       final FindModel findModelCopy = (FindModel)findModel.clone();
 
       ReplaceInProjectManager.getInstance(project)
-        .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, propertyName, selectedString), findModelCopy, presentation, processPresentation,
+        .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, propertyName, selectedString), findModelCopy, presentation,
+                             processPresentation,
                              findManager);
 
     }
@@ -205,16 +232,16 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 collectUsages(myModel);
-                for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.collectChildrenProjects(myModel)) {
+                for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                   collectUsages(model);
                 }
               }
 
               private void collectUsages(@NotNull MavenDomProjectModel model) {
                 if (model.isValid()) {
-                  XmlElement root = model.getXmlElement();
+                  final XmlElement root = model.getXmlElement();
                   if (root != null) {
-                    root.accept(new XmlElementVisitor() {
+                    root.acceptChildren(new XmlElementVisitor() {
 
                       @Override
                       public void visitXmlText(XmlText text) {
@@ -226,7 +253,10 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
 
                       @Override
                       public void visitXmlAttributeValue(XmlAttributeValue value) {
-                        usages.addAll(getUsages(value));
+                        XmlTag xmlTag = PsiTreeUtil.getParentOfType(value, XmlTag.class);
+                        if (xmlTag != null && !xmlTag.equals(root)) {
+                          usages.addAll(getUsages(value));
+                        }
                       }
 
                       @Override
@@ -296,7 +326,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   private static boolean isInsideTextRanges(@NotNull Set<TextRange> ranges, int start, int end) {
     boolean isInsideProperty = false;
     for (TextRange range : ranges) {
-      if ((start >= range.getStartOffset() && (end <= range.getEndOffset() || start <= range.getEndOffset())) || 
+      if ((start >= range.getStartOffset() && (end <= range.getEndOffset() || start <= range.getEndOffset())) ||
           (end <= range.getEndOffset() && (end > range.getStartOffset()))) {
         isInsideProperty = true;
         break;

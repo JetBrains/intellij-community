@@ -178,13 +178,14 @@ public class TestNGUtil implements TestFramework
     } else if (element instanceof PsiMethod) {
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
-      LOG.assertTrue(psiClass != null, element.getClass());
-      if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false, true)) {
-        //even if it has a global test, we ignore private methods
-        boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
-        return !isPrivate;
+      if (psiClass != null) {
+        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, false, true)) {
+          //even if it has a global test, we ignore private methods
+          boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
+          return !isPrivate;
+        }
+        if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
       }
-      if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
     }
     return false;
   }

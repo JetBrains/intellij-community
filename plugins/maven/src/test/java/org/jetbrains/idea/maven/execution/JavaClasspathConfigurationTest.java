@@ -22,13 +22,22 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
+  public static Test suite() {
+    return new TestSuite(JavaClasspathConfigurationTest.class, "testConfiguringModuleDependencies");
+  }
+
+
   public void testConfiguringModuleDependencies() throws Exception {
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +

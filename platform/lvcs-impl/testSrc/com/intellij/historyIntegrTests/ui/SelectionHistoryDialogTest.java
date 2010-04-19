@@ -16,7 +16,6 @@
 
 package com.intellij.historyIntegrTests.ui;
 
-import com.intellij.history.core.ContentFactory;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
@@ -25,11 +24,13 @@ import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.FragmentContent;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import static org.easymock.classextension.EasyMock.*;
 
 import java.io.IOException;
-import java.util.List;
+
+import static org.easymock.classextension.EasyMock.*;
 
 public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   private VirtualFile f;
@@ -40,24 +41,24 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
 
-    f = root.createChildData(null, "f.txt");
+    f = myRoot.createChildData(null, "f.txt");
     f.setBinaryContent("a\nb\nc\n".getBytes(), -1, 123);
     f.setBinaryContent("a\nbc\nd\n".getBytes(), -1, 456);
     f.setBinaryContent("a\nbcd\ne\n".getBytes(), -1, 789);
   }
 
   public void testDialogWorks() throws IOException {
-    SelectionHistoryDialog d = new SelectionHistoryDialog(gateway, f, 0, 0);
-    d.close(0);
+    SelectionHistoryDialog d = new SelectionHistoryDialog(myProject, myGateway, f, 0, 0);
+    Disposer.dispose(d);
   }
-  
+
   public void testTitles() throws IOException {
     f.rename(null, "ff.txt");
     f.setBinaryContent(new byte[0]);
 
     initModelOnSecondLineAndSelectRevisions(1, 2);
 
-    assertEquals(f.getPath(), dm.getTitle());
+    assertEquals(FileUtil.toSystemDependentName(f.getPath()), dm.getTitle());
     assertTrue(dm.getLeftTitle(new NullRevisionsProgress()), dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.txt"));
     assertTrue(dm.getRightTitle(new NullRevisionsProgress()), dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - ff.txt"));
   }
@@ -83,21 +84,6 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     verify(p);
   }
 
-  public void testRecreatingCalculatorAfterShowChangesOnlyOptionIsChanged() throws IOException {
-    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, 1234);
-    getVcs().putUserLabel("label");
-
-    initModelOnSecondLineAndSelectRevisions(0, 0);
-
-    m.showChangesOnly(false);
-    m.selectRevisions(0, 0);
-    assertEquals("", new String(dm.getLeftDiffContent((new NullRevisionsProgress())).getBytes())); // shouldn't raise exceptions
-
-    m.showChangesOnly(true);
-    m.selectRevisions(0, 0);
-    assertEquals("", new String(dm.getRightDiffContent((new NullRevisionsProgress())).getBytes())); // shouldn't raise exceptions
-  }
-
   public void testDiffContents() throws IOException {
     initModelOnSecondLineAndSelectRevisions(1, 2);
 
@@ -119,25 +105,6 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     assertTrue(right instanceof FragmentContent);
   }
 
-  public void testDiffContentAndTitlesWhenSomeContentIsUnavailable() throws IOException {
-    f.setBinaryContent(new byte[ContentFactory.MAX_CONTENT_LENGTH + 1], -1, 1234);
-    f.setBinaryContent("a\nb\nc\n".getBytes(), -1, 2345);
-    f.setBinaryContent("a\nbc\nd\n".getBytes(), -1, 3456);
-
-    initModelOnSecondLineAndSelectRevisions(1, 4);
-
-    assertTrue(dm.getLeftTitle(new NullRevisionsProgress()),
-               dm.getLeftTitle(new NullRevisionsProgress()).endsWith(" - f.txt - File content is not available"));
-    assertTrue(dm.getRightTitle(new NullRevisionsProgress()),
-               dm.getRightTitle(new NullRevisionsProgress()).endsWith(" - f.txt"));
-
-    DiffContent left = dm.getLeftDiffContent(new NullRevisionsProgress());
-    assertEquals("", new String(left.getBytes()));
-
-    DiffContent right = dm.getRightDiffContent(new NullRevisionsProgress());
-    assertEquals("b", new String(right.getBytes()));
-  }
-
   public void testRevert() throws IOException {
     initModelOnSecondLineAndSelectRevisions(1, 1);
     Reverter r = m.createReverter();
@@ -146,28 +113,9 @@ public class SelectionHistoryDialogTest extends LocalHistoryUITestCase {
     assertEquals("a\nbc\ne\n", new String(f.contentsToByteArray()));
   }
 
-  public void testWarningUserAboutRevertOfWholeFileOnChangeRevert() throws IOException {
-    initModelAndSelect(false, 1, 1);
-    Reverter r = m.createReverter();
-
-    List<String> questions = r.askUserForProceeding();
-    assertEquals(2, questions.size());
-
-    assertTrue(questions.get(0), questions.get(0).startsWith("There are some changes that have been done after this one"));
-    assertTrue(questions.get(1), questions.get(1).startsWith("The action could only be reverted for whole file"));
-  }
-
   private void initModelOnSecondLineAndSelectRevisions(int first, int second) {
-    initModelAndSelect(true, first, second);
-  }
-
-  private void initModelAndSelect(boolean selectRevisions, int first, int second) {
-    m = new SelectionHistoryDialogModel(gateway, getVcs(), f, 1, 1);
-    if (selectRevisions) {
-      m.selectRevisions(first, second);
-    } else {
-      m.selectChanges(first,  second);
-    }
+    m = new SelectionHistoryDialogModel(myProject, myGateway, getVcs(), f, 1, 1);
+    m.selectRevisions(first, second);
     dm = m.getDifferenceModel();
   }
 }

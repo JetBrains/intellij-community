@@ -364,7 +364,7 @@ public abstract class BaseRefactoringProcessor {
       }
     }
 
-    LocalHistoryAction action = LocalHistory.startAction(myProject, getCommandName());
+    LocalHistoryAction action = LocalHistory.getInstance().startAction(getCommandName());
 
     final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
     try {

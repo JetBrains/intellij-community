@@ -22,8 +22,10 @@ import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.SubTagList;
+import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,17 +43,21 @@ public abstract class AntDomProject extends AntDomElement {
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("default")
-  public abstract GenericAttributeValue<String> getDefaultTargetName();
+  @Convert(value = AntDomTargetConverter.class)
+  public abstract GenericAttributeValue<String> getDefaultTarget();
 
   @Attribute("basedir")
+  @Convert(value = PathReferenceConverter.class)
   public abstract GenericAttributeValue<String> getBasedir();
 
   @SubTagList("target")
-  public abstract List<AntDomTarget> getTargets();
+  public abstract List<AntDomTarget> getDeclaredTargets();
 
   @Nullable
-  public final AntDomTarget getTarget(String name) {
-    for (AntDomTarget target : getTargets()) {
+  public final AntDomTarget findTarget(String name) {
+    // todo: consider imported targes
+    // todo: search from the including project if any
+    for (AntDomTarget target : getDeclaredTargets()) {
       if (name.equals(target.getName().getValue())) {
         return target;
       }
