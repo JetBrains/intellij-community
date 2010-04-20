@@ -21,10 +21,10 @@ public interface DfaInstance<E> {
   // Please ensure that E has correctly implemented equals method
 
   // Invariant: fun must create new instance of DFAMap if modifies it
-  DFAMap<E> fun(DFAMap<E> e, Instruction instruction);
+  E fun(E e, Instruction instruction);
 
   @NotNull
-  DFAMap<E> initial();
+  E initial();
 
   boolean isForward();
 }
