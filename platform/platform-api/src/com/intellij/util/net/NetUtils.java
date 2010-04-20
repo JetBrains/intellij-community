@@ -17,9 +17,12 @@
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 
 /**
  * @author yole
@@ -71,5 +74,20 @@ public class NetUtils {
       socket.close();
     }
     return ports;
+  }
+
+  private static String getLocalHostString() {
+    // HACK for Windows with ipv6
+    String localHostString = "localhost";
+    try {
+      final InetAddress localHost = InetAddress.getByName(localHostString);
+      if (localHost.getAddress().length != 4 && SystemInfo.isWindows){
+        localHostString = "127.0.0.1";
+      }
+    }
+    catch (UnknownHostException e) {
+      // ignore
+    }
+    return localHostString;
   }
 }
