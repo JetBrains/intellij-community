@@ -40,9 +40,9 @@ public class TestDataHighlightingPassFactory extends AbstractProjectComponent im
   public static final List<String> SUPPORTED_FILE_TYPES = Arrays.asList(
     StdFileTypes.JAVA.getDefaultExtension()
   );
-  public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES = Arrays.asList("js", "php", "css", "html", "xhtml", "jsp");
+  public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES = Arrays.asList("js", "php", "css", "html", "xhtml", "jsp", "test", "py");
   private static final int MAX_HOPES = 3;
-  private static final String TEST_DATA = "testData";
+  private static final String TEST_DATA = "testdata";
 
 
   public TestDataHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
@@ -81,7 +81,7 @@ public class TestDataHighlightingPassFactory extends AbstractProjectComponent im
       int i = 0;
       VirtualFile parent = file.getParent();
       while (parent != null && i < MAX_HOPES) {
-        if (parent.getName().equalsIgnoreCase(TEST_DATA)) {
+        if (parent.getName().toLowerCase().contains(TEST_DATA)) {
           return true;
         }
         i++;
