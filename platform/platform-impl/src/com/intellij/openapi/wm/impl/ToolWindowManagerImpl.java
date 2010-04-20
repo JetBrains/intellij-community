@@ -16,17 +16,18 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.Patches;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -37,7 +38,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -45,11 +46,9 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.commands.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -61,11 +60,9 @@ import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
@@ -110,14 +107,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Application myApp;
 
   private final Set<String> myRestoredToolWindowIds = new java.util.HashSet<String>();
+  private FileEditorManager myFileEditorManager;
 
   /**
    * invoked by reflection
    */
-  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, final Application app) {
+  public ToolWindowManagerImpl(final Project project, WindowManagerEx windowManagerEx, final Application app, final FileEditorManager fem) {
     myApp = app;
     myProject = project;
     myWindowManager = windowManagerEx;
+    myFileEditorManager = fem;
     myListenerList = new EventListenerList();
 
     myLayout = new DesktopLayout();
@@ -136,7 +135,27 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myActiveStack = new ActiveStack();
     mySideStack = new SideStack();
 
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener(){
+      public void fileOpened(FileEditorManager source, VirtualFile file) {
+      }
 
+      public void fileClosed(FileEditorManager source, VirtualFile file) {
+        getFocusManagerImpl().doWhenFocusSettlesDown(new Runnable() {
+          public void run() {
+            if (!hasOpenEditorFiles()) {
+              focusToolWinowByDefault(null);
+            }
+          }
+        });
+      }
+
+      public void selectionChanged(FileEditorManagerEvent event) {
+      }
+    });
+  }
+
+  private boolean hasOpenEditorFiles() {
+    return myFileEditorManager.getOpenFiles().length > 0;
   }
 
   FocusManagerImpl getFocusManagerImpl() {
@@ -659,14 +678,21 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // window stack is enabled.
 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
+
       if (wasActive && moveFocus) {
         if (myActiveStack.isEmpty()) {
-          activateEditorComponentImpl(commandList, false);
+          if (hasOpenEditorFiles()) {
+            activateEditorComponentImpl(commandList, false);
+          } else {
+            focusToolWinowByDefault(id);
+          }
         }
         else {
           final String toBeActivatedId = myActiveStack.pop();
           if (toBeActivatedId != null) {
             activateToolWindowImpl(toBeActivatedId, commandList, false, true);
+          } else {
+            focusToolWinowByDefault(id);
           }
         }
       }
@@ -1783,6 +1809,34 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         return processDefaultFocusRequest(forced);
       }
     }, forced);
+  }
+
+  private void focusToolWinowByDefault(String idToIngore) {
+    String toFocus = null;
+
+    for (String each : myActiveStack.getStack()) {
+      if (idToIngore != null && idToIngore.equalsIgnoreCase(each)) continue;
+
+      if (getInfo(each).isVisible()) {
+        toFocus = each;
+        break;
+      }
+    }
+
+    if (toFocus == null) {
+      for (String each : myActiveStack.getPersistentStack()) {
+        if (idToIngore != null && idToIngore.equalsIgnoreCase(each)) continue;
+
+        if (getInfo(each).isVisible()) {
+          toFocus = each;
+          break;
+        }
+      }
+    }
+
+    if (toFocus != null) {
+      activateToolWindow(toFocus, false, true);
+    }
   }
 
   private ActionCallback processDefaultFocusRequest(boolean forced) {
