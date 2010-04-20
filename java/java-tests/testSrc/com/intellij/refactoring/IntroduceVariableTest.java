@@ -226,6 +226,6 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
   @Override
    protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.7");
+    return JavaSdkImpl.getMockJdk17();
   }
 }
