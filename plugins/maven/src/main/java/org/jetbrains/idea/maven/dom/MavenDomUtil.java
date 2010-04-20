@@ -351,7 +351,7 @@ public class MavenDomUtil {
 
 
   @NotNull
-  private static MavenDomDependency createMavenDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
+  public static MavenDomDependency createMavenDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
     MavenDomDependencies dependencies = model.getDependencies();
 
     int index = getCollectionIndex(dependencies, editor);
