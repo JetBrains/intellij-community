@@ -8,7 +8,6 @@ import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,10 +18,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.django.util.DjangoUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -44,7 +43,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   public static Key<PydevConsoleCommunication> CONSOLE_KEY = new Key<PydevConsoleCommunication>("PYDEV_CONSOLE_KEY");
-  private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
 
   protected PydevConsoleRunner(@NotNull final Project project,
                                @NotNull final String consoleTitle,
@@ -56,10 +54,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   public static void run(@NotNull final Project project,
-                         @NotNull final Sdk sdk,
-                         final String consoleTitle,
-                         final String projectRoot,
-                         final String ... statements2execute) {
+                         @NotNull final Module module,
+                         @NotNull final Sdk sdk) {
+    final String consoleTitle = PyBundle.message("python.console");
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -89,9 +86,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       }
     };
 
-    final PydevConsoleRunner consoleRunner = new PydevConsoleRunner(project, consoleTitle, provider, projectRoot, ports);
+    final PydevConsoleRunner consoleRunner = new PydevConsoleRunner(project, consoleTitle, provider, DjangoUtil.getProjectRoot(module), ports);
     try {
-      consoleRunner.initAndRun(statements2execute);
+      consoleRunner.initAndRun();
     }
     catch (ExecutionException e) {
       ExecutionHelper.showErrors(project, Arrays.<Exception>asList(e), consoleTitle, null);
@@ -120,27 +117,20 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(myProvider), outputEncoding);
   }
 
-  public void initAndRun(final String[] statements2execute) throws ExecutionException {
+  @Override
+  public void initAndRun() throws ExecutionException {
     super.initAndRun();
 
     // Propagate console communication to language console
     ((PydevLanguageConsoleView)myConsoleView).setPydevConsoleCommunication(myPydevConsoleCommunication);
 
     try {
-      Thread.sleep(300);
+      Thread.sleep(200);
     }
     catch (InterruptedException e) {
       // Ignore
     }
-
-    // Make executed statements visible to developers
-    final LanguageConsoleImpl console = myConsoleView.getConsole();
-    PyConsoleHighlightingUtil.processOutput(console, PYTHON_ENV_COMMAND, ProcessOutputTypes.SYSTEM);
-    sendInput(PYTHON_ENV_COMMAND);
-    for (String statement : statements2execute) {
-      PyConsoleHighlightingUtil.processOutput(console, statement + "\n", ProcessOutputTypes.SYSTEM);
-      sendInput(statement+"\n");
-    }
+    sendInput("import sys; print('Python %s on %s' % (sys.version, sys.platform))\n");
   }
 
   @Override
@@ -225,9 +215,5 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   public static boolean isInPydevConsole(final PsiElement element){
     return element.getContainingFile().getCopyableUserData(CONSOLE_KEY) != null;
-  }
-
-  public static String createExtendPathCommand(Module module) {
-    return "sys.path.append('" + PathUtil.getCanonicalPath(DjangoUtil.getProjectRoot(module)) + "')";
   }
 }
