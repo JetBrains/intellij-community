@@ -69,6 +69,30 @@ final class ActiveStack {
     return myStack.peek();
   }
 
+  int getSize() {
+    return myStack.size();
+  }
+
+  String peek(int i) {
+    return myStack.get(getSize() - i - 1);
+  }
+
+  String[] getStack() {
+    String[] result = new String[getSize()];
+    for (int i = 0; i < getSize(); i++) {
+      result[i] = peek(i);
+    }
+    return result;
+  }
+
+  String[] getPersistentStack() {
+    String[] result = new String[getPersistentSize()];
+    for (int i = 0; i < getPersistentSize(); i++) {
+      result[i] = peekPersistent(i);  
+    }
+    return result;
+  }
+
   void push(final String id) {
     remove(id, true);
     myStack.push(id);

@@ -402,6 +402,10 @@ public class IdeEventQueue extends EventQueue {
 
 
   private void _dispatchEvent(final AWTEvent e) {
+    _dispatchEvent(e, false);
+  }
+
+  public void _dispatchEvent(AWTEvent e, boolean typeaheadFlushing) {
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
@@ -413,9 +417,13 @@ public class IdeEventQueue extends EventQueue {
     myEventCount++;
 
 
+
+
     if (processAppActivationEvents(e)) return;
 
-    fixStickyFocusedComponents(e);
+    if (!typeaheadFlushing) {
+      fixStickyFocusedComponents(e);
+    }
 
     if (!myPopupManager.isPopupActive()) {
       enterSuspendModeIfNeeded(e);
@@ -425,7 +433,7 @@ public class IdeEventQueue extends EventQueue {
       myKeyboardBusy = e.getID() != KeyEvent.KEY_RELEASED || ((KeyEvent)e).getModifiers() != 0;
     }
 
-    if (typeAheadDispatchToFocusManager(e)) return;
+    if (!typeaheadFlushing && typeAheadDispatchToFocusManager(e)) return;
 
     if (e instanceof WindowEvent) {
       ActivityTracker.getInstance().inc();
