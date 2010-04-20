@@ -216,7 +216,13 @@ public class PyConsoleRunner {
                                        (lookup == null || !lookup.isCompletion()));
       }
     };
-    EmptyAction.setupAction(myRunAction, "Console.Python.Execute", null);
+    try {
+      // TODO[oleg] fix when Maia compatibility doesn't care
+      EmptyAction.setupAction(myRunAction, "Console.Execute", null);
+    }
+    catch (NullPointerException e) {
+        EmptyAction.setupAction(myRunAction, "Python.Console.Execute", null);    
+    }
     toolbarActions.add(myRunAction);
 
 // Help
