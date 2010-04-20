@@ -611,7 +611,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assert handler != null : "Cannot find handler for: " + targetElement;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements(), PsiElement.class);
     for (PsiElement psiElement : psiElements) {
-      handler.processElementUsages(psiElement, processor, myFindUsagesOptions);
+      handler.processElementUsages(psiElement, processor, getFindUsagesOptions());
     }
     return processor.getResults();
   }
