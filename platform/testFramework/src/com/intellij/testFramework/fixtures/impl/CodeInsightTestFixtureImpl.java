@@ -597,14 +597,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
-    final FindUsagesOptions options = new FindUsagesOptions(project, null);
-    options.isUsages = options.isReadAccess = options.isWriteAccess = true;    
+    FindUsagesOptions options = getFindUsagesOptions();
+    if (options == null) {
+      options = new FindUsagesOptions(project, null);
+      options.isUsages = options.isReadAccess = options.isWriteAccess = true;
+    }
     assert handler != null : "Cannot find handler for: " + targetElement;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements(), PsiElement.class);
     for (PsiElement psiElement : psiElements) {
       handler.processElementUsages(psiElement, processor, options);
     }
     return processor.getResults();
+  }
+
+  @Nullable
+  protected FindUsagesOptions getFindUsagesOptions() {
+    return null;
   }
 
   public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Exception {
