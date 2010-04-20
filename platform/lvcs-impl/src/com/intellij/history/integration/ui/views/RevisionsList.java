@@ -130,6 +130,9 @@ public class RevisionsList {
         table.getSelectionModel().addSelectionInterval(i, i);
       }
     }
+    if (table.getSelectionModel().isSelectionEmpty()) {
+      table.getSelectionModel().addSelectionInterval(0, 0);
+    }
   }
 
   public interface SelectionListener {

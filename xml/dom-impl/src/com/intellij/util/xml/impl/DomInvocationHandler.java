@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
@@ -535,7 +536,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final XmlTag tag = getXmlTag();
     final int index = info.second;
     if (tag != null) {
-      LOG.assertTrue(tag.isValid());
+      if (!LOG.assertTrue(tag.isValid())) {
+        throw new PsiInvalidElementAccessException(tag);
+      }
       final List<XmlTag> tags = DomImplUtil.findSubTags(tag.getSubTags(), evaluatedXmlName, getFile());
       if (tags.size() > index) {
         return myManager.getSemService().getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tags.get(index));

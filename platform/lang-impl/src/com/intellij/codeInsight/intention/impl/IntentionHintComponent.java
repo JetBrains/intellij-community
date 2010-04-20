@@ -94,6 +94,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private boolean myDisposed = false;
   private ListPopup myPopup;
   private final PsiFile myFile;
+  private static final int LIGHTBULB_OFFSET = 20;
 
   public static IntentionHintComponent showIntentionHint(Project project, final PsiFile file, Editor editor, ShowIntentionsPass.IntentionsInfo intentions,
                                                          boolean showExpanded) {
@@ -193,7 +194,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     LOG.assertTrue(editor.getComponent().isDisplayable());
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    Point realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift-20);
+    Point realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift- LIGHTBULB_OFFSET);
     Point location = SwingUtilities.convertPoint(editor.getContentComponent(), realPoint, editor.getComponent().getRootPane().getLayeredPane());
 
     return new Point(location.x, location.y);
@@ -300,7 +301,8 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     if (myPopup == null || myPopup.isDisposed()) return;
 
     if (isShowing()) {
-      myPopup.show(RelativePoint.getSouthWestOf(this));
+      final RelativePoint swCorner = RelativePoint.getSouthWestOf(this);
+      myPopup.show(new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y+LIGHTBULB_OFFSET)));
     }
     else {
       myPopup.showInBestPositionFor(myEditor);
