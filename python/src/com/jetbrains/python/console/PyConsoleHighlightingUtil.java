@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyHighlighter;
 
 import java.util.regex.Matcher;
@@ -36,6 +37,7 @@ public class PyConsoleHighlightingUtil {
                                                         ColoredProcessHandler.getByKey(PyHighlighter.PY_NUMBER));
 
   public static void processOutput(final LanguageConsoleImpl console, String string, final Key attributes) {
+    string = StringUtil.convertLineSeparators(string);
     final ConsoleViewContentType type =
       attributes == ProcessOutputTypes.STDERR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
     // Highlight output by pattern
