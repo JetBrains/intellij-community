@@ -126,7 +126,24 @@ public final class AntIntrospector {
       return null;
     }
   }
-  
+
+  public boolean isContainer() {
+    try {
+      return Boolean.TRUE.equals(invokeMethod("isContainer", false));
+      //boolean isAllTasksContainer = false;
+      //final ClassLoader loader = typeClass.getClassLoader();
+      //try {
+      //  final Class<?> containerClass = loader != null? loader.loadClass(TaskContainer.class.getName()) : TaskContainer.class;
+      //  isAllTasksContainer = containerClass.isAssignableFrom(typeClass);
+      //}
+      //catch (ClassNotFoundException ignored) {
+      //}
+    }
+    catch (RuntimeException e) {
+      return false;
+    }
+  }
+
   // for debug purposes
   //private static int ourAttempts = 0;
   //private static int ourHits = 0;
