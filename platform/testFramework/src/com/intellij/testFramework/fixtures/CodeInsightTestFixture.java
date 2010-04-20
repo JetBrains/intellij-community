@@ -23,6 +23,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -169,7 +170,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #getReferenceAtCaretPosition(String...)
    */
   @NotNull
-  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String... filePaths) throws Exception;
+  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls @TestDataFile String... filePaths) throws Exception;
 
   /**
    * Collects available intentions at caret position.
@@ -271,6 +272,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                   @TestDataFile @NonNls String fileAfter, @NonNls String newName, final String... additionalFiles) throws Exception;
 
   void testRename(String fileAfter, String newName) throws Exception;
+
+  @NotNull
+  FindUsagesOptions getFindUsagesOptions();
 
   Collection<UsageInfo> testFindUsages(@TestDataFile @NonNls String... fileNames);
 

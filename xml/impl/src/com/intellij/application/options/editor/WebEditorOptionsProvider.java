@@ -103,7 +103,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myEnableZenCodingCheckBox.setSelected(xmlEditorOptions.isZenCodingEnabled());
     myZenCodingExpandShortcutCombo.setEnabled(xmlEditorOptions.isZenCodingEnabled());
 
-    char shortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+    char shortcut = (char)WebEditorOptions.getInstance().getZenCodingExpandShortcut();
     if (shortcut == TemplateSettings.TAB_CHAR) {
       myZenCodingExpandShortcutCombo.setSelectedItem(TAB);
     }

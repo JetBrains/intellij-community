@@ -141,6 +141,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiElement myFileContext;
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
 
+  private FindUsagesOptions myFindUsagesOptions;
+
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
     myTempDirFixture = tempDirTestFixture;
@@ -583,6 +585,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
+  @NotNull
+  public FindUsagesOptions getFindUsagesOptions() {
+    if (myFindUsagesOptions == null) {
+      myFindUsagesOptions = new FindUsagesOptions(getProject(), null);
+      myFindUsagesOptions.isUsages = myFindUsagesOptions.isReadAccess = myFindUsagesOptions.isWriteAccess = true;
+    }
+    return myFindUsagesOptions;
+  }
+
   public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
@@ -597,12 +608,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final FindUsagesHandler handler = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
 
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
-    final FindUsagesOptions options = new FindUsagesOptions(project, null);
-    options.isUsages = options.isReadAccess = options.isWriteAccess = true;    
     assert handler != null : "Cannot find handler for: " + targetElement;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements(), PsiElement.class);
     for (PsiElement psiElement : psiElements) {
-      handler.processElementUsages(psiElement, processor, options);
+      handler.processElementUsages(psiElement, processor, myFindUsagesOptions);
     }
     return processor.getResults();
   }

@@ -166,9 +166,10 @@ public class ArrayUtil {
    * @return destination array
    */
   @NotNull
-  public static <T> T[] mergeArrayAndCollection(@NotNull T[] array, @NotNull Collection<T> collection,
+  public static <T> T[] mergeArrayAndCollection(@NotNull T[] array,
+                                                @NotNull Collection<T> collection,
                                                 @NotNull final ArrayFactory<T> factory) {
-    if (collection.size() == 0) {
+    if (collection.isEmpty()) {
       return array;
     }
 
@@ -188,6 +189,7 @@ public class ArrayUtil {
    * imagine the appended element will be the last one in the returned result.
    * @param src array to which the <code>element</code> should be appended.
    * @param element object to be appended to the end of <code>src</code> array.
+   * @return new array
    */
   @NotNull
   public static <T> T[] append(@NotNull final T[] src,final T element){
@@ -309,13 +311,7 @@ public class ArrayUtil {
   }
 
   public static int find(@NotNull int[] src, int obj) {
-    for (int i = 0; i < src.length; i++) {
-      int o = src[i];
-      if (o == obj) {
-        return i;
-      }
-    }
-    return -1;
+    return indexOf(src, obj);
   }
 
   public static boolean startsWith(byte[] array, byte[] subArray) {

@@ -944,6 +944,6 @@
 
   <action id="Jdbc.RunSqlScript"><keyboard-shortcut first-keystroke="control shift F10"/></action>
 
-  <action id="Console.Python.Execute"><keyboard-shortcut first-keystroke="ENTER"/></action>
+  <action id="Console.Execute"><keyboard-shortcut first-keystroke="ENTER"/></action>
 </keymap>
 </component>

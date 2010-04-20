@@ -95,11 +95,25 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
               addedDependency.getGroupId().setStringValue(dependency.getGroupId().getStringValue());
               addedDependency.getArtifactId().setStringValue(dependency.getArtifactId().getStringValue());
               addedDependency.getVersion().setStringValue(dependency.getVersion().getStringValue());
+              String typeValue = dependency.getType().getStringValue();
+              if (typeValue != null) {
+                addedDependency.getType().setStringValue(typeValue);
+              }
+              
+              String classifier = dependency.getClassifier().getStringValue();
+              if (classifier != null) {
+                addedDependency.getClassifier().setStringValue(classifier);
+              }
+
+              String systemPath = dependency.getSystemPath().getStringValue();
+              if (systemPath != null) {
+                addedDependency.getSystemPath().setStringValue(systemPath);
+              }
 
               dependency.getVersion().undefine();
 
               for (MavenDomDependency usage : usages) {
-                 usage.getVersion().undefine();
+                usage.getVersion().undefine();
               }
             }
           }.execute();
@@ -135,16 +149,16 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
           return Pair.create(model, Collections.<MavenDomDependency>emptySet());
         }
       }
-      else {
-        SelectMavenProjectDialog dialog = new SelectMavenProjectDialog(project, models, funOccurrences);
-        dialog.show();
 
-        if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-          MavenDomProjectModel model = dialog.getSelectedProject();
-          return Pair
-            .create(model, dialog.isReplaceAllOccurrences() ? funOccurrences.fun(model) : Collections.<MavenDomDependency>emptySet());
-        }
+      SelectMavenProjectDialog dialog = new SelectMavenProjectDialog(project, models, funOccurrences);
+      dialog.show();
+
+      if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        MavenDomProjectModel model = dialog.getSelectedProject();
+        return Pair
+          .create(model, dialog.isReplaceAllOccurrences() ? funOccurrences.fun(model) : Collections.<MavenDomDependency>emptySet());
       }
+
       return null;
     }
 
@@ -165,7 +179,7 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
       final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
 
       if (model == null) return Collections.emptySet();
-      return MavenDomProjectProcessorUtils.collectParentProjects(model, project);
+      return MavenDomProjectProcessorUtils.collectParentProjects(model);
     }
 
     private static boolean isManagedDependency(@NotNull MavenDomDependency dependency) {
