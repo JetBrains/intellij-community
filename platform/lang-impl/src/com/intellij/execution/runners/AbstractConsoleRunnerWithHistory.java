@@ -159,9 +159,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
     }
   }
 
-  protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
-                                          final Executor defaultExecutor,
-                                          final RunContentDescriptor myDescriptor) {
+  private AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
+                                        final Executor defaultExecutor,
+                                        final RunContentDescriptor myDescriptor) {
 //stop
     final AnAction stopAction = createStopAction();
     toolbarActions.add(stopAction);
@@ -183,7 +183,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
                                        (lookup == null || !lookup.isCompletion()));
       }
     };
-    EmptyAction.setupAction(myRunAction, "Console.Execute", null);
+    EmptyAction.setupAction(myRunAction, "Console.Python.Execute", null);
     toolbarActions.add(myRunAction);
 
 // Help

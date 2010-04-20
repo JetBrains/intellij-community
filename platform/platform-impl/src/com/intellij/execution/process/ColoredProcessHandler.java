@@ -16,6 +16,8 @@
 
 package com.intellij.execution.process;
 
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -65,7 +67,7 @@ public class ColoredProcessHandler extends OSProcessHandler {
     return super.getCharset();
   }
 
-  public final void notifyTextAvailable(final String text, final Key outputType) {
+  public void notifyTextAvailable(final String text, final Key outputType) {
     if (outputType != ProcessOutputTypes.STDOUT) {
       textAvailable(text, outputType);
       return;
