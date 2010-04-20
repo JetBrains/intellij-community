@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PairProcessor;
+import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
