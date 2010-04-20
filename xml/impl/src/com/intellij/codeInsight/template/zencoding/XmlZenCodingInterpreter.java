@@ -97,21 +97,6 @@ class XmlZenCodingInterpreter {
       myCallback.fixEndOffset();
       myCallback.moveToOffset(newOffset);
     }
-
-    /*CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
-    if (tagName != null) {
-      *//*if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
-        document.insertString(offset, "</" + tagName + '>');
-      }*//*
-    }
-    else if (offset != endOfTemplate) {
-      tagName = getPrecedingTagName(text, endOfTemplate, startOfTemplate);
-      if (tagName != null) {
-        *//*fixEndOffset();
-        document.insertString(endOfTemplate, "</" + tagName + '>');*//*
-        editor.getCaretModel().moveToOffset(endOfTemplate);
-      }
-    }*/
   }
 
   // returns if expanding finished
@@ -354,7 +339,7 @@ class XmlZenCodingInterpreter {
       }
       template.setToReformat(true);
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-      callback.startTemplate(template, predefinedValues);
+      callback.expandTemplate(template, predefinedValues);
     }
   }
 
@@ -397,15 +382,15 @@ class XmlZenCodingInterpreter {
           modifiedTemplate.setString(text);
           removeVariablesWhichHasNoSegment(modifiedTemplate);
           Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-          callback.startTemplate(modifiedTemplate, predefinedValues);
+          callback.expandTemplate(modifiedTemplate, predefinedValues);
           return;
         }
       }
-      callback.startTemplate(token.myTemplate, null);
+      callback.expandTemplate(token.myTemplate, null);
     }
     else {
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-      callback.startTemplate(token.myKey, predefinedValues);
+      callback.expandTemplate(token.myKey, predefinedValues);
     }
   }
 
