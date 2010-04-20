@@ -105,6 +105,11 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
                 addedDependency.getClassifier().setStringValue(classifier);
               }
 
+              String systemPath = dependency.getSystemPath().getStringValue();
+              if (systemPath != null) {
+                addedDependency.getSystemPath().setStringValue(systemPath);
+              }
+
               dependency.getVersion().undefine();
 
               for (MavenDomDependency usage : usages) {
