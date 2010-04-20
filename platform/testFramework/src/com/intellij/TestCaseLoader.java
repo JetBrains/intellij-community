@@ -241,4 +241,7 @@ public class TestCaseLoader {
     return result;
   }
 
+  public void clearClasses() {
+    myClassList.clear();
+  }
 }
