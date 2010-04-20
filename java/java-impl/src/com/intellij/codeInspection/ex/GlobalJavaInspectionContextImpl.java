@@ -51,7 +51,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -369,7 +368,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     return new PsiReferenceProcessor() {
       public boolean execute(PsiReference reference) {
         AnalysisScope scope = context.getRefManager().getScope();
-        if ((scope.contains(reference.getElement()) && reference.getElement().getLanguage() == StdLanguages.JAVA) ||
+        if (scope.contains(reference.getElement()) && reference.getElement().getLanguage() == StdLanguages.JAVA ||
             PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
           return true;
         }
@@ -391,13 +390,13 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void performPreRunActivities(final List<Tools> globalTools, final List<Tools> localTools,
                                       final GlobalInspectionContext context) {
     getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
-    ContainerUtil.quickSort(globalTools, new Comparator<Tools>() {
-      public int compare(Tools o1, Tools o2) {
-        if (o1.getTool() instanceof UnusedDeclarationInspection) return -1;
-        if (o2.getTool() instanceof UnusedDeclarationInspection) return 1;
-        return 0;
+    for (int i = 0; i < globalTools.size(); i++) {
+      InspectionProfileEntry tool = globalTools.get(i).getTool();
+      if (UnusedDeclarationInspection.SHORT_NAME.equals(tool.getShortName())) {
+        Collections.swap(globalTools, i, 0);
+        break;
       }
-    });
+    }
   }
 
 

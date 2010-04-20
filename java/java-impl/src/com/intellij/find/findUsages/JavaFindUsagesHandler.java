@@ -161,6 +161,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   @NotNull
   public PsiElement[] getSecondaryElements() {
     PsiElement element = getPsiElement();
+    if (ApplicationManager.getApplication().isUnitTestMode()) return PsiElement.EMPTY_ARRAY;
     if (element instanceof PsiField) {
       final PsiField field = (PsiField)element;
       PsiClass containingClass = field.getContainingClass();
