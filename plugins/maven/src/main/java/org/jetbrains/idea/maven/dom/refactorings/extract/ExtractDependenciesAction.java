@@ -99,6 +99,11 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
               if (typeValue != null) {
                 addedDependency.getType().setStringValue(typeValue);
               }
+              
+              String classifier = dependency.getClassifier().getStringValue();
+              if (classifier != null) {
+                addedDependency.getClassifier().setStringValue(classifier);
+              }
 
               dependency.getVersion().undefine();
 
