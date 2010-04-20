@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -349,9 +350,19 @@ public class XmlZenCodingTemplate implements CustomLiveTemplate {
     if (!webEditorOptions.isZenCodingEnabled()) {
       return false;
     }
-    PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, offset > 0 ? offset - 1 : offset);
+    if (file == null) {
+      return false;
+    }
+    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+    PsiElement element = null;
+    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+    }
     if (element == null) {
-      element = file;
+      element = file.findElementAt(offset > 0 ? offset - 1 : offset);
+      if (element == null) {
+        element = file;
+      }
     }
     if (element.getLanguage() instanceof XMLLanguage) {
       if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) {
