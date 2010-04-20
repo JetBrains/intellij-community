@@ -29,7 +29,7 @@ public class MakeClassStaticTest extends LightCodeInsightTestCase {
 
   public void testSimpleWithFields() throws Exception { performWithFields(); }
 
-  public void testFieldInitializerMoveToConstructor() throws Exception { performWithFields(); }
+  public void testFieldInitializerMovedToConstructor() throws Exception { performWithFields(); }
 
   public void testQualifiedThisInSibling() throws Exception { perform(); }
 

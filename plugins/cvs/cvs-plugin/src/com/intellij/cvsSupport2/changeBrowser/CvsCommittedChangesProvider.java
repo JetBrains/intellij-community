@@ -159,12 +159,16 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       final Set<Date> controlSet = new HashSet<Date>();
       final CvsResult executionResult = runRLogOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
         public void consume(LogInformationWrapper wrapper) {
-          final RevisionWrapper revisionWrapper = builder.revisionWrapperFromLog(wrapper);
-          final CvsChangeList changeList = builder.addRevision(revisionWrapper);
-          if (controlSet.contains(changeList.getCommitDate())) return;
-          controlSet.add(changeList.getCommitDate());
-          if (filter.accepts(changeList)) {
-            consumer.consume(changeList);
+          final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+          if (wrappers != null) {
+            for (RevisionWrapper revisionWrapper : wrappers) {
+              final CvsChangeList changeList = builder.addRevision(revisionWrapper);
+              if (controlSet.contains(changeList.getCommitDate())) continue;
+              controlSet.add(changeList.getCommitDate());
+              if (filter.accepts(changeList)) {
+                consumer.consume(changeList);
+              }
+            }
           }
         }
       });

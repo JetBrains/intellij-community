@@ -32,8 +32,9 @@ public class GrapeRunner {
       e.printStackTrace();
     }
 
-    for (URL url : shell.getClassLoader().getURLs()) {
-      System.out.println(URL_PREFIX + url);
+    URL[] URLs = shell.getClassLoader().getURLs();
+    for (int i = 0, URLsLength = URLs.length; i < URLsLength; i++) {
+      System.out.println(URL_PREFIX + URLs[i]);
     }
   }
 

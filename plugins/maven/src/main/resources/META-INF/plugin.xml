@@ -52,7 +52,7 @@
                                 order="first"/>
     <elementDescriptionProvider implementation="org.jetbrains.idea.maven.dom.MavenModelDocumentationProvider" order="first"/>
 
-    <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.MavenModelInspection"/>
+    <inspectionToolProvider implementation="org.jetbrains.idea.maven.dom.inspections.MavenInspectionToolProvider"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"

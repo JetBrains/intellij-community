@@ -31,6 +31,8 @@ public class GitCommand {
    * The constant for git command
    */
   public static final GitCommand CLONE = write("clone");
+
+  public static final GitCommand CHERRY_PICK = write("cherry-pick");
   /**
    * The constant for git command
    */

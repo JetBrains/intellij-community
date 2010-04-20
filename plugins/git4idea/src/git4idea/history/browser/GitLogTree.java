@@ -19,10 +19,13 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -35,6 +38,7 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.*;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,10 +215,13 @@ public class GitLogTree implements GitTreeViewI {
     final MyNextAction nextAction = new MyNextAction();
     group.add(nextAction);
     nextAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, KeyEvent.ALT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK)), myPanel);
-    final ActionManager am = ActionManager.getInstance();
-    final ActionToolbar tb = am.createActionToolbar("GitLogTree", group, true);
+    final MyCherryPick cp = new MyCherryPick();
+    group.add(cp);
+    cp.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, KeyEvent.ALT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK)), myPanel);
     group.add(new MyRefreshAction());
 
+    final ActionManager am = ActionManager.getInstance();
+    final ActionToolbar tb = am.createActionToolbar("GitLogTree", group, true);
     actionsPanel.add(tb.getComponent(), BorderLayout.WEST);
     actionsPanel.add(myStateLabel, BorderLayout.CENTER);
 
@@ -513,6 +520,74 @@ public class GitLogTree implements GitTreeViewI {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myController.refresh();
+    }
+  }
+
+  private class MyCherryPick extends AnAction {
+    private final Set<SHAHash> myIdsInProgress;
+
+    private MyCherryPick() {
+      super("Cherry-pick", "Cherry-pick", IconLoader.getIcon("/icons/cherryPick.png"));
+      myIdsInProgress = new HashSet<SHAHash>();
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      final List<GitCommit> commits = getSelectedCommitsAndCheck();
+      // earliest first!!!
+      Collections.reverse(commits);
+      if (commits == null) return;
+
+      for (GitCommit commit : commits) {
+        myIdsInProgress.add(commit.getHash());
+      }
+
+      final Application application = ApplicationManager.getApplication();
+      application.executeOnPooledThread(new Runnable() {
+        public void run() {
+          myController.cherryPick(ObjectsConvertor.convert(commits, new Convertor<GitCommit, SHAHash>() {
+            public SHAHash convert(GitCommit o) {
+              return o.getHash();
+            }
+          }));
+
+          application.invokeLater(new Runnable() {
+            public void run() {
+              for (GitCommit commit : commits) {
+                myIdsInProgress.remove(commit.getHash());
+              }
+            }
+          });
+        }
+      });
+    }
+
+    // newest first
+    @Nullable
+    private List<GitCommit> getSelectedCommitsAndCheck() {
+      final Object[] selectedCommits = myCommitsList.getSelectedValues();
+      if (selectedCommits.length > 0) {
+        final List<GitCommit> result = new ArrayList<GitCommit>(selectedCommits.length);
+        for (Object o : selectedCommits) {
+          final GitCommit commit = (GitCommit)o;
+          if (commit.getParentsHashes().size() > 1) {
+            return null;
+          }
+          if (myIdsInProgress.contains(commit.getHash())) {
+            return null;
+          }
+          result.add(commit);
+        }
+        return result;
+      }
+      return null;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      final boolean enabled = getSelectedCommitsAndCheck() != null;
+      e.getPresentation().setEnabled(enabled);
     }
   }
 

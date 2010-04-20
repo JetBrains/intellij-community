@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.browser;
+package org.jetbrains.idea.maven.dom.inspections;
 
-import java.util.Collection;
-import java.util.List;
+import com.intellij.codeInspection.InspectionToolProvider;
 
-public interface RepositoryCommonData {
-  List<String> getAllTagsOrdered();
-  List<String> getAllBranchesOrdered();
-  List<String> getKnownUsers();
-  void cherryPick(final Collection<SHAHash> hash);
+/**
+ * @author Serega.Vasiliev
+ */
+public class MavenInspectionToolProvider implements InspectionToolProvider {
+  public Class[] getInspectionClasses() {
+    return new Class[]{MavenModelInspection.class, MavenDuplicateDependenciesInspection.class};
+  }
 }
