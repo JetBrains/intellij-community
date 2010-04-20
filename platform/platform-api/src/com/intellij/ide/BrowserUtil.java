@@ -21,12 +21,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -244,11 +247,30 @@ public class BrowserUtil {
       }
 
       if (!currentTimestamp.equals(previousTimestamp)) {
-        ConfirmExtractDialog dialog = new ConfirmExtractDialog();
-        if (dialog.isToBeShown()) {
-          dialog.show();
-          if (!dialog.isOK()) return null;
+        final Ref<Boolean> extract = new Ref<Boolean>();
+        Runnable r = new Runnable() {
+          public void run() {
+            final ConfirmExtractDialog dialog = new ConfirmExtractDialog();
+            if (dialog.isToBeShown()) {
+              dialog.show();
+              extract.set(dialog.isOK());
+            } else {
+              extract.set(true);
+            }
+          }
+        };
+
+        try {
+          GuiUtils.runOrInvokeAndWait(r);
         }
+        catch (InvocationTargetException e) {
+          extract.set(false);
+        }
+        catch (InterruptedException e) {
+          extract.set(false);
+        }
+
+        if (!extract.get()) return null;
 
         final ZipFile jarFile = jarFileSystem.getJarFile(file);
         ZipEntry entry = jarFile.getEntry(targetFileRelativePath);
