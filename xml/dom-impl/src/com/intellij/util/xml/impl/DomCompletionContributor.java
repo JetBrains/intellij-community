@@ -65,7 +65,7 @@ public class DomCompletionContributor extends CompletionContributor{
       final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);
       if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<String>())) {
         return true;
-      }
+      }                  
     }
     if (element instanceof XmlAttributeValue) {
       final PsiElement parent = element.getParent();

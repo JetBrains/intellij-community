@@ -123,7 +123,8 @@ public class CvsChangeListsBuilder {
   }
 
   @Nullable
-  public RevisionWrapper revisionWrapperFromLog(final LogInformationWrapper log) {
+  public List<RevisionWrapper> revisionWrappersFromLog(final LogInformationWrapper log) {
+    final List<RevisionWrapper> result = new LinkedList<RevisionWrapper>();
     final String file = log.getFile();
     if (CvsChangeList.isAncestor(myRootPath, file)) {
       for (Revision revision : log.getRevisions()) {
@@ -135,9 +136,10 @@ public class CvsChangeListsBuilder {
             continue;
           }
           String branchName = getBranchName(revision, log.getSymbolicNames());
-          return new RevisionWrapper(stripAttic(file), revision, branchName);
+          result.add(new RevisionWrapper(stripAttic(file), revision, branchName));
         }
       }
+      return result;
     }
     return null;
   }
@@ -146,9 +148,9 @@ public class CvsChangeListsBuilder {
     List<RevisionWrapper> revisionWrappers = new ArrayList<RevisionWrapper>();
 
     for (LogInformationWrapper log : logs) {
-      final RevisionWrapper revisionWrapper = revisionWrapperFromLog(log);
-      if (revisionWrapper != null) {
-        revisionWrappers.add(revisionWrapper);
+      final List<RevisionWrapper> wrappers = revisionWrappersFromLog(log);
+      if (wrappers != null) {
+        revisionWrappers.addAll(wrappers);
       }
     }
 

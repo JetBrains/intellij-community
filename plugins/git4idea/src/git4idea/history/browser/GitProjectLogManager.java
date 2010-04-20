@@ -15,15 +15,18 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsListener;
+import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +34,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.CalculateContinuation;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitVcs;
@@ -52,6 +57,9 @@ public class GitProjectLogManager implements ProjectComponent {
   private final AtomicReference<Map<VirtualFile, Content>> myComponentsMap;
   private VcsListener myListener;
 
+  public static final Topic<CurrentBranchListener> CHECK_CURRENT_BRANCH =
+            new Topic<CurrentBranchListener>("CHECK_CURRENT_BRANCH", CurrentBranchListener.class);
+
   public GitProjectLogManager(final Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myVcsManager = vcsManager;
@@ -61,6 +69,27 @@ public class GitProjectLogManager implements ProjectComponent {
         recalculateWindows();
       }
     };
+    myProject.getMessageBus().connect(myProject).subscribe(CHECK_CURRENT_BRANCH, new CurrentBranchListener() {
+      public void consume(VirtualFile file) {
+        final VirtualFile baseDir = myProject.getBaseDir();
+        if (baseDir == null) return;
+        final Map<VirtualFile, Content> currentState = myComponentsMap.get();
+        for (VirtualFile virtualFile : currentState.keySet()) {
+          if (Comparing.equal(virtualFile, file)) {
+            final String title = getCaption(baseDir, virtualFile);
+            final Content content = currentState.get(virtualFile);
+            if (! Comparing.equal(title, content.getDisplayName())) {
+              new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+                public void run() {
+                  content.setDisplayName(title);
+                }
+              }.callMe();
+            }
+            return;
+          }
+        }
+      }
+    });
   }
 
   public static GitProjectLogManager getInstance(final Project project) {
@@ -166,5 +195,8 @@ public class GitProjectLogManager implements ProjectComponent {
   }
 
   public void disposeComponent() {
+  }
+
+  public interface CurrentBranchListener extends Consumer<VirtualFile> {
   }
 }

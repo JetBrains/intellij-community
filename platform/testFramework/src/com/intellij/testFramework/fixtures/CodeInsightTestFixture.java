@@ -169,7 +169,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #getReferenceAtCaretPosition(String...)
    */
   @NotNull
-  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String... filePaths) throws Exception;
+  PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls @TestDataFile String... filePaths) throws Exception;
 
   /**
    * Collects available intentions at caret position.

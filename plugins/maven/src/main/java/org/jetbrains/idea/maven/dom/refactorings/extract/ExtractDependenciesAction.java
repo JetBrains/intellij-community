@@ -165,7 +165,7 @@ public class ExtractDependenciesAction extends BaseRefactoringAction {
       final MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class);
 
       if (model == null) return Collections.emptySet();
-      return MavenDomProjectProcessorUtils.collectParentProjects(model, project);
+      return MavenDomProjectProcessorUtils.collectParentProjects(model);
     }
 
     private static boolean isManagedDependency(@NotNull MavenDomDependency dependency) {
