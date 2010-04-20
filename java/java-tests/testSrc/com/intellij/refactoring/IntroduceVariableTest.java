@@ -193,7 +193,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("b", true, true, false, "java.lang.String"));
   }
 
-  public void testAndAndSubExpression() throws Exception {
+  public void testAndAndSubexpression() throws Exception {
     doTest(new MockIntroduceVariableHandler("ab", true, true, false, "boolean"));
   }
 
@@ -226,6 +226,6 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
   @Override
    protected Sdk getProjectJDK() {
-    return JavaSdkImpl.getMockJdk17("java 1.7");
+    return JavaSdkImpl.getMockJdk17();
   }
 }

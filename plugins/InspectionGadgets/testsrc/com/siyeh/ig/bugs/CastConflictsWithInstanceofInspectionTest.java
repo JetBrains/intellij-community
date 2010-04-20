@@ -36,6 +36,6 @@ public class CastConflictsWithInstanceofInspectionTest extends IGInspectionTestC
   }
 
   private void doTest() throws Exception {
-    doTest("com/siyeh/igtest/bugs/castConflictingInstanceof/" + getTestName(false), new CastConflictsWithInstanceofInspection());
+    doTest("com/siyeh/igtest/bugs/castConflictingInstanceof/" + getTestName(true), new CastConflictsWithInstanceofInspection());
   }
 }
