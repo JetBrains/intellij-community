@@ -311,13 +311,7 @@ public class ArrayUtil {
   }
 
   public static int find(@NotNull int[] src, int obj) {
-    for (int i = 0; i < src.length; i++) {
-      int o = src[i];
-      if (o == obj) {
-        return i;
-      }
-    }
-    return -1;
+    return indexOf(src, obj);
   }
 
   public static boolean startsWith(byte[] array, byte[] subArray) {
