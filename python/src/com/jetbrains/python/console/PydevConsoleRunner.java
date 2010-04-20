@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.net.NetUtils;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,6 +69,7 @@ public class PydevConsoleRunner extends PyConsoleRunner {
     }
     final ArrayList<String> args = new ArrayList<String>(
       Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
+    args.add(getLocalHostString());
     for (int port : ports) {
       args.add(String.valueOf(port));
     }
@@ -207,5 +211,20 @@ public class PydevConsoleRunner extends PyConsoleRunner {
 
   public static boolean isInPydevConsole(final PsiElement element){
     return element.getContainingFile().getCopyableUserData(CONSOLE_KEY) != null;
+  }
+
+  public static String getLocalHostString() {
+    // HACK for Windows with ipv6
+    String localHostString = "localhost";
+    try {
+      final InetAddress localHost = InetAddress.getByName(localHostString);
+      if (localHost.getAddress().length != 4 && SystemInfo.isWindows){
+        localHostString = "127.0.0.1";
+      }
+    }
+    catch (UnknownHostException e) {
+      // ignore
+    }
+    return localHostString;
   }
 }
