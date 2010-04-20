@@ -20,11 +20,14 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
 import com.intellij.refactoring.typeMigration.rules.AtomicConversionRule;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.*;
 
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction{
@@ -72,11 +75,21 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+
 
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
     LOG.assertTrue(psiVariable != null);
+
+    final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);
+
+    final Set<PsiElement> elements = new HashSet<PsiElement>();
+    elements.add(file);
+    for (PsiReference reference : refs) {
+      elements.add(reference.getElement());
+    }
+    if (!CodeInsightUtilBase.preparePsiElementsForWrite(elements)) return;
+
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiType fromType = psiVariable.getType();
@@ -122,7 +135,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion);
         }
       }
-      for (PsiReference reference : ReferencesSearch.search(psiVariable)) {
+      for (PsiReference reference : refs) {
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
           final PsiElement parent = psiElement.getParent();

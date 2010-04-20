@@ -22,10 +22,13 @@ import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.ThreadLocalConversionRule;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + ConvertFieldToThreadLocalIntention.class.getName());
@@ -53,11 +56,18 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     LOG.assertTrue(psiField != null);
+    final Query<PsiReference> refs = ReferencesSearch.search(psiField);
+
+    final Set<PsiElement> elements = new HashSet<PsiElement>();
+    elements.add(file);
+    for (PsiReference reference : refs) {
+      elements.add(reference.getElement());
+    }
+    if (!CodeInsightUtilBase.preparePsiElementsForWrite(elements)) return;
+
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiType fromType = psiField.getType();
@@ -83,7 +93,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
       rules.setBoundScope(GlobalSearchScope.fileScope(file));
       final TypeMigrationLabeler labeler = new TypeMigrationLabeler(rules);
       labeler.getMigratedUsages(psiField, false);
-      for (PsiReference reference : ReferencesSearch.search(psiField)) {
+      for (PsiReference reference : refs) {
         PsiElement psiElement = reference.getElement();
         if (psiElement instanceof PsiExpression) {
           final PsiElement parent = psiElement.getParent();
