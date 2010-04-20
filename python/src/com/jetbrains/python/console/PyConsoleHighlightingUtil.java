@@ -64,7 +64,7 @@ public class PyConsoleHighlightingUtil {
     final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        console.printToHistory(string, attributes);
+        console.addToHistory(string, attributes);
       }
     }, ModalityState.stateForComponent(console.getComponent()));
   }
