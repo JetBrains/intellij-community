@@ -70,17 +70,6 @@ public class PyEditingTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile("/editing/py254.py", true);
   }
 
-  public void testUnindentBackspace() throws Exception {  // PY-853
-    myFixture.configureByFile("/editing/smartUnindent.before.py");
-    myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(1, 4));
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      public void run() {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
-      }
-    }, "", null);
-    myFixture.checkResultByFile("/editing/smartUnindent.after.py", true);
-  }
-
   private String doTestTyping(final String text, final int offset, final char character) {
     final PsiFile file = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
       public PsiFile compute() {

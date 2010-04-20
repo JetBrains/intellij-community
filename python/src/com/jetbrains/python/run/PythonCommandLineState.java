@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -61,7 +61,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return consoleView;
   }
 
-  protected ColoredProcessHandler startProcess() throws ExecutionException {
+  protected OSProcessHandler startProcess() throws ExecutionException {
     return startProcess(null);
   }
 
@@ -71,7 +71,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @return handler of the started process
    * @throws ExecutionException
    */
-  protected ColoredProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
+  protected OSProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine();
     if (patchers != null) {
       for (CommandLinePatcher patcher: patchers) {
@@ -79,7 +79,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       }
     }
 
-    final ColoredProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+    final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }

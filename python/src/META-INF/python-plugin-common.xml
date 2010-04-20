@@ -63,8 +63,6 @@
 
     <applicationService serviceInterface="com.jetbrains.python.JythonManager"
                         serviceImplementation="com.jetbrains.python.JythonManager"/>
-    <applicationService serviceInterface="com.intellij.execution.process.ColoredOutputTypeRegistry"
-                        serviceImplementation="com.intellij.execution.process.ColoredOutputTypeRegistry"/>
 
     <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>

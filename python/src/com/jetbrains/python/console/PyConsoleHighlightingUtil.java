@@ -2,8 +2,12 @@ package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.ColoredProcessHandler;
+import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.jetbrains.python.PyHighlighter;
 
@@ -37,20 +41,29 @@ public class PyConsoleHighlightingUtil {
     // Highlight output by pattern
     Matcher matcher;
     while ((matcher = CODE_ELEMENT_PATTERN.matcher(string)).find()) {
-      LanguageConsoleImpl.printToConsole(console, string.substring(0, matcher.start()), type);
+      printToConsole(console, string.substring(0, matcher.start()), type);
       // Number group
       if (matcher.group(1) != null) {
-        LanguageConsoleImpl.printToConsole(console, matcher.group(1), NUMBER_ATTRIBUTES);
+        printToConsole(console, matcher.group(1), NUMBER_ATTRIBUTES);
       }
       // String group
       else if (matcher.group(6) != null) {
-        LanguageConsoleImpl.printToConsole(console, matcher.group(6), STRING_ATTRIBUTES);
+        printToConsole(console, matcher.group(6), STRING_ATTRIBUTES);
       }
       else {
-        LanguageConsoleImpl.printToConsole(console, matcher.group(), type);
+        printToConsole(console, matcher.group(), type);
       }
       string = string.substring(matcher.end());
     }
-    LanguageConsoleImpl.printToConsole(console, string, type);
+    printToConsole(console, string, type);
+  }
+
+  static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
+    final TextAttributes attributes = TextAttributes.merge(type.getAttributes(), ConsoleHighlighter.OUT.getDefaultAttributes());
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        console.printToHistory(string, attributes);
+      }
+    }, ModalityState.stateForComponent(console.getComponent()));
   }
 }
