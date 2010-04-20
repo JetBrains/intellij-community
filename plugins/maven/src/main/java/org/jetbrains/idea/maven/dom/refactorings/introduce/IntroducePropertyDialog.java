@@ -184,7 +184,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     List<MavenDomProjectModel> projects = new ArrayList<MavenDomProjectModel>();
 
     projects.add(myMavenDomProjectModel);
-    projects.addAll(MavenDomProjectProcessorUtils.collectParentProjects(myMavenDomProjectModel, myMavenDomProjectModel.getManager().getProject()));
+    projects.addAll(MavenDomProjectProcessorUtils.collectParentProjects(myMavenDomProjectModel));
 
     return projects;
   }
@@ -208,7 +208,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
       if (isPropertyExist(text, child)) return true;
     }
 
-    for (MavenDomProjectModel parent : MavenDomProjectProcessorUtils.collectParentProjects(project, project.getManager().getProject())) {
+    for (MavenDomProjectModel parent : MavenDomProjectProcessorUtils.collectParentProjects(project)) {
       if (isPropertyExist(text, parent)) return true;
     }
     return false;  
