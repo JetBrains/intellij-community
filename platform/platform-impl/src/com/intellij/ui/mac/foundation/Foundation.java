@@ -106,4 +106,8 @@ public class Foundation {
     if (ok == 0) throw new RuntimeException("Could not convert string");
     return Native.toString(buffer);
   }
+
+  public static void cfRetain(ID id) {
+    myFoundationLibrary.CFRetain(id);
+  }
 }
