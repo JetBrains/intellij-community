@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.xml.ConvertContext;
@@ -35,32 +36,34 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: Apr 16, 2010
  */
-public class AntDomTargetDependsListConverter extends DelimitedListConverter<AntDomTarget> {
+public class AntDomTargetDependsListConverter extends DelimitedListConverter<XmlAttributeValue> {
   public AntDomTargetDependsListConverter() {
     super(",\t ");
   }
 
   @Nullable
-  protected AntDomTarget convertString(@Nullable String string, ConvertContext context) {
+  protected XmlAttributeValue convertString(@Nullable String string, ConvertContext context) {
     final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
     if (element == null) {
       return null;
     }
     final AntDomProject project = element.getAntProject();
-    return project.findTarget(string);
+    final AntDomTarget target = project.findTarget(string);
+    if (target == null) {
+      return null;
+    }
+    final GenericAttributeValue<String> name = target.getName();
+    return name != null? name.getXmlAttributeValue() : null;
   }
 
-  protected String toString(@Nullable AntDomTarget antDomTarget) {
-    if (antDomTarget != null) {
-      final GenericAttributeValue<String> name = antDomTarget.getName();
-      if (name != null) {
-        return name.getStringValue();
-      }
+  protected String toString(@Nullable XmlAttributeValue targetNameValue) {
+    if (targetNameValue != null) {
+      return targetNameValue.getValue();
     }
     return null;
   }
 
-  protected Object[] getReferenceVariants(ConvertContext context, GenericDomValue<List<AntDomTarget>> existingDeps) {
+  protected Object[] getReferenceVariants(ConvertContext context, GenericDomValue<List<XmlAttributeValue>> existingDeps) {
     final Set<String> existingTargetNames = StringSetSpinAllocator.alloc();
     try {
       final AntDomElement antDom = AntSupport.getInvocationAntDomElement(context);
@@ -69,10 +72,10 @@ public class AntDomTargetDependsListConverter extends DelimitedListConverter<Ant
       }
       final AntDomProject project = antDom.getAntProject();
       if (existingDeps != null) {
-        final List<AntDomTarget> domTargetList = existingDeps.getValue();
-        if (domTargetList != null && domTargetList.size() > 0) {
-          for (AntDomTarget target : domTargetList) {
-            existingTargetNames.add(target.getName().getStringValue());
+        final List<XmlAttributeValue> attribValueList = existingDeps.getValue();
+        if (attribValueList != null && attribValueList.size() > 0) {
+          for (XmlAttributeValue targetNameAttribValue : attribValueList) {
+            existingTargetNames.add(targetNameAttribValue.getValue());
           }
         }
       }
@@ -91,8 +94,8 @@ public class AntDomTargetDependsListConverter extends DelimitedListConverter<Ant
     }
   }
 
-  protected PsiElement resolveReference(@Nullable AntDomTarget antDomTarget, ConvertContext context) {
-    return antDomTarget != null? antDomTarget.getXmlElement() : null;
+  protected PsiElement resolveReference(@Nullable XmlAttributeValue targetAttrib, ConvertContext context) {
+    return targetAttrib;
   }
 
   protected String getUnresolvedMessage(String value) {

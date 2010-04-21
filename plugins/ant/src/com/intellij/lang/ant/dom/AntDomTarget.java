@@ -26,6 +26,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomTarget extends AntDomElement {
   @Attribute("name")
+  @Convert(value = AntDomAttributeValueConverter.class)
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("if")
