@@ -21,6 +21,10 @@
 #include <stdio.h>
 
 
+// logging
+void userlog(int priority, const char* format, ...);
+
+
 // variable-length array
 typedef struct __array array;
 
