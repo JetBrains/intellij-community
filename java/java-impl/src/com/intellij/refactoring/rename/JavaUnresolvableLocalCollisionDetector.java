@@ -47,7 +47,7 @@ public class JavaUnresolvableLocalCollisionDetector {
       // element is a PsiParameter
       scope = ((PsiParameter)element).getDeclarationScope();
     }
-    LOG.assertTrue(scope != null);
+    LOG.assertTrue(scope != null, element.getClass().getName());
 
     final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
       public void visitCollidingElement(PsiVariable collidingVariable) {

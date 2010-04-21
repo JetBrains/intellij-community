@@ -345,10 +345,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
 
-  private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, final Condition<PsiElement> insideElements) {
+  private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, @Nullable final Condition<PsiElement> insideElements) {
     TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new TextOccurrencesUtil.UsageInfoFactory() {
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-        if (insideElements.value(usage)) {
+        if (insideElements != null && insideElements.value(usage)) {
           return null;
         }
         return new SafeDeleteReferenceSimpleDeleteUsageInfo(usage, element, startOffset, endOffset, true, false);
@@ -356,15 +356,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     };
     if (mySearchInCommentsAndStrings) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
-      if (stringToSearch != null) {
-        TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, usages, nonCodeUsageFactory);
-      }
+      TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, usages, nonCodeUsageFactory);
     }
     if (mySearchNonJava) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA);
-      if (stringToSearch != null) {
-        TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
-      }
+      TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
     }
   }
 

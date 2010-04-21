@@ -648,7 +648,7 @@ public class GitLogTree implements GitTreeViewI {
           new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
         gb.anchor = GridBagConstraints.WEST;
         myPanel.removeAll();
-        myPanel.setBackground(list.getBackground());
+        myPanel.setBackground(isSelected ? UIUtil.getListSelectionBackground() : list.getBackground());
         int leftWidth = 0;
         for (String branch : branches) {
           Icon icon = myBranchMap.get(branch);

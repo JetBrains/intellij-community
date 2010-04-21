@@ -21,13 +21,14 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
+import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 /**
  * @author Eugene Zhuravlev
@@ -38,23 +39,74 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
     final XmlElement xmlElement = antDomElement.getXmlElement();
     if (xmlElement instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)xmlElement;
-      final String tagName = xmlTag.getName(); // todo: support namespace
+      final String tagName = xmlTag.getName(); // todo: support namespaces
 
       final ReflectedProject reflected = ReflectedProject.getProject(antDomElement.getAntProject().getClassLoader());
 
-      final Set<String> names = new HashSet<String>();
-      for (XmlTag tag : xmlTag.getSubTags()) {
-        names.add(tag.getName());
-      }
       final DomGenericInfo genericInfo = antDomElement.getGenericInfo();
-      for (String name : names) {
-        if (genericInfo.getCollectionChildDescription(name) == null) { // not defined yet
-          registrar.registerCollectionChildrenExtension(new XmlName(name), AntDomElement.class);
+      AntIntrospector parentElementIntrospector = null;
+      if ("project".equals(tagName)) {
+        parentElementIntrospector = getIntrospector(reflected.getProject().getClass());
+      }
+      else if ("target".equals(tagName)) {
+        parentElementIntrospector = getIntrospector(reflected.getTargetClass());
+      }
+      else {
+        final Hashtable tasks = reflected.getTaskDefinitions();
+        final Class taskClass = (Class)tasks.get(tagName);
+        if (taskClass != null) {
+          parentElementIntrospector = getIntrospector(taskClass);
+        }
+        else {
+          final Hashtable dataTypes = reflected.getDataTypeDefinitions();
+          final Class dataClass = (Class)dataTypes.get(tagName);
+          if (dataClass != null) {
+            parentElementIntrospector = getIntrospector(dataClass);
+          }
+        }
+      }
+
+      if (parentElementIntrospector != null) {
+
+        final Enumeration attributes = parentElementIntrospector.getAttributes();
+        while (attributes.hasMoreElements()) {
+          registerAttribute(registrar, genericInfo, (String)attributes.nextElement());
+        }
+
+        // todo: handle custom tasks registered in typedefs
+        if ("project".equals(tagName) || parentElementIntrospector.isContainer()) { // can contain any task or/and type definition
+          for (Object nestedName : reflected.getTaskDefinitions().keySet()) {
+            registerChild(registrar, genericInfo, (String)nestedName);
+          }
+          for (Object nestedTypeDef : reflected.getDataTypeDefinitions().keySet()) {
+            registerChild(registrar, genericInfo, (String)nestedTypeDef);
+          }
+        }
+        else {
+          final Enumeration nested = parentElementIntrospector.getNestedElements();
+          while (nested.hasMoreElements()) {
+            registerChild(registrar, genericInfo, (String)nested.nextElement());
+          }
         }
       }
     }
   }
 
+  @Nullable
+  private static DomExtension registerAttribute(DomExtensionsRegistrar registrar, DomGenericInfo genericInfo, String attrib) {
+    if (genericInfo.getAttributeChildDescription(attrib) == null) { // register if not yet defined statically
+      return registrar.registerGenericAttributeValueChildExtension(new XmlName(attrib), String.class);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static DomExtension registerChild(DomExtensionsRegistrar registrar, DomGenericInfo elementInfo, String childName) {
+    if (elementInfo.getCollectionChildDescription(childName) == null) { // register if not yet defined statically
+      return registrar.registerCollectionChildrenExtension(new XmlName(childName), AntDomElement.class);
+    }
+    return null;
+  }
 
   @Nullable
   private static AntIntrospector getIntrospector(Class c) {

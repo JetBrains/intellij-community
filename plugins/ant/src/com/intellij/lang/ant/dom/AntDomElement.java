@@ -15,10 +15,8 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.*;
 
 import java.util.List;
 
@@ -29,10 +27,12 @@ import java.util.List;
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomElement implements DomElement {
 
-  public final AntTypeDefinition getAntType() {
-    // todo
-    return null;
-  }
+  @Attribute("id")
+  public abstract GenericAttributeValue<String> getId();
+
+  @Attribute("refid")
+  @Convert(value = AntDomRefIdConverter.class)
+  public abstract GenericAttributeValue<String> getRefId();
 
   public final AntDomProject getAntProject() {
     return getParentOfType(AntDomProject.class, false);
