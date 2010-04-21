@@ -210,7 +210,12 @@ public class PydevConsoleRunner extends PyConsoleRunner {
   }
 
   public static boolean isInPydevConsole(final PsiElement element){
-    return element.getContainingFile().getCopyableUserData(CONSOLE_KEY) != null;
+    return getConsoleCommunication(element) != null;
+  }
+
+  @Nullable
+  public static PydevConsoleCommunication getConsoleCommunication(final PsiElement element) {
+    return element.getContainingFile().getCopyableUserData(CONSOLE_KEY);
   }
 
   public static String getLocalHostString() {
