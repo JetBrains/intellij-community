@@ -7,6 +7,7 @@ import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,6 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
@@ -29,8 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,7 +40,7 @@ import java.util.Map;
 /**
  * @author oleg
  */
-public class PydevConsoleRunner extends PyConsoleRunner {
+public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   public static Key<PydevConsoleCommunication> CONSOLE_KEY = new Key<PydevConsoleCommunication>("PYDEV_CONSOLE_KEY");
@@ -241,5 +242,4 @@ public class PydevConsoleRunner extends PyConsoleRunner {
     }
     return localHostString;
   }
-
 }
