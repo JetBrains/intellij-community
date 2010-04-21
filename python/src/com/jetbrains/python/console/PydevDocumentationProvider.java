@@ -1,6 +1,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,6 +37,7 @@ public class PydevDocumentationProvider extends QuickDocumentationProvider {
   @Nullable
   public static String createDoc(final PsiElement element, final PsiElement originalElement) {
     final PyExpression expression = PsiTreeUtil.getParentOfType(originalElement, PyExpression.class);
+    // Indicates that we are inside console, not a lookup element!
     if (expression == null){
       return null;
     }
@@ -44,7 +46,8 @@ public class PydevDocumentationProvider extends QuickDocumentationProvider {
       return null;
     }
     try {
-      return communication.getDescription(expression.getText());
+      final String description = communication.getDescription(expression.getText());
+      return StringUtil.isEmptyOrSpaces(description) ? null : description;
     }
     catch (Exception e) {
       return null;

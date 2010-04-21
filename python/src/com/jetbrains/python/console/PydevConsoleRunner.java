@@ -219,7 +219,7 @@ public class PydevConsoleRunner extends PyConsoleRunner {
   }
 
   public static boolean isInPydevConsole(final PsiElement element){
-    return getConsoleCommunication(element) != null;
+    return element instanceof PydevConsoleElement || getConsoleCommunication(element) != null;
   }
 
   @Nullable
