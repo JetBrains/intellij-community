@@ -38,7 +38,10 @@
     "fsnotifier utilizes \"user\" facility of syslog(3) - messages usually can be found in /var/log/user.log.\n" \
     "Verbosity is regulated via " LOG_ENV " environment variable, possible values are: " \
     LOG_ENV_DEBUG ", " LOG_ENV_INFO ", " LOG_ENV_WARNING ", " LOG_ENV_ERROR ", " LOG_ENV_OFF "; latter is the default.\n\n" \
-    "Use \"fsnotifier --selftest\" to perform some self-diagnostics (output will be logged and printed to console).\n"
+    "Use 'fsnotifier --selftest' to perform some self-diagnostics (output will be logged and printed to console).\n"
+
+#define HELP_MSG \
+    "Try 'fsnotifier --help' for more information.\n"
 
 #define INOTIFY_LIMIT_MSG \
     "The current <b>inotify</b>(7) watch limit of %d is too low. " \
@@ -70,13 +73,18 @@ static void output(const char* format, ...);
 
 
 int main(int argc, char** argv) {
-  if (argc == 2) {
+  if (argc > 1) {
     if (strcmp(argv[1], "--help") == 0) {
       printf(USAGE_MSG);
       return 0;
     }
-    if (strcmp(argv[1], "--selftest") == 0) {
+    else if (strcmp(argv[1], "--selftest") == 0) {
       self_test = true;
+    }
+    else {
+      printf("unrecognized option: %s\n", argv[1]);
+      printf(HELP_MSG);
+      return 1;
     }
   }
 
