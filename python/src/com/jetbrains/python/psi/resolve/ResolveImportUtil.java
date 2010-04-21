@@ -93,7 +93,7 @@ public class ResolveImportUtil {
       return null;
     }
 
-    final PsiFile file = import_element.getContainingFile();
+    final PsiFile file = import_element.getContainingFile().getOriginalFile();
     final PyStatement importStatement = import_element.getContainingImportStatement();
 
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(import_element);
