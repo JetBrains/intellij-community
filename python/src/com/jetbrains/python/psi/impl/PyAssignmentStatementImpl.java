@@ -58,7 +58,10 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     }
     List<PyExpression> targets = new ArrayList<PyExpression>();
     for (PyExpression expr : candidates) { // only filter out targets
-      if (expr instanceof PyTargetExpression || expr instanceof PyReferenceExpression || expr instanceof PySubscriptionExpression) {
+      if (expr instanceof PyTargetExpression ||
+          expr instanceof PyReferenceExpression ||
+          expr instanceof PySubscriptionExpression ||
+          expr instanceof PySliceExpression) {
         targets.add(expr);
       }
     }

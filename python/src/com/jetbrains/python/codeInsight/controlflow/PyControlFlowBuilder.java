@@ -50,7 +50,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyCallExpression(final PyCallExpression node) {
     if ("exit".equals(node.getCallee().getText())){
-      final Instruction instruction = myBuilder.startNode(node);
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);
       }
