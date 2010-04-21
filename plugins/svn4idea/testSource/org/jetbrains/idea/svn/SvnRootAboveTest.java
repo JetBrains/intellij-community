@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.pending.DuringChangeListManagerUpdateTes
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.io.ZipUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -45,7 +46,7 @@ public class SvnRootAboveTest extends SvnTestCase {
     }
     myClientBinaryPath = new File(pluginRoot, "testData/svn/bin");
 
-    verify(runSvnAdmin("create", svnRoot.getPath()));
+    ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), svnRoot, null);
 
     // real WC root
     myLocalWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
