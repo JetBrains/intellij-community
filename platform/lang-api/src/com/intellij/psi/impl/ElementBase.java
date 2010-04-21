@@ -43,6 +43,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
   public static final int FLAGS_LOCKED = 0x800;
+  private Icon myBaseIcon;
 
   @Nullable
   public Icon getIcon(int flags) {
@@ -67,7 +68,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     PsiElement psiElement = (PsiElement)this;
     Icon baseIcon = psiElement.getUserData(Iconable.LAST_COMPUTED_ICON);
     if (baseIcon == null) {
-      baseIcon = IconLoader.getIcon("/nodes/class.png");
+      if (myBaseIcon == null) {
+        myBaseIcon = computeBaseIcon();
+      }
+      baseIcon = myBaseIcon;
     }
 
     return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement,flags), new Function<ElementIconRequest, Icon>() {
@@ -81,6 +85,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         return getElementIcon(request.getFlags());
       }
     });
+  }
+
+  protected Icon computeBaseIcon() {
+    return new EmptyIcon(IconLoader.getIcon("/nodes/class.png"));
   }
 
   public static class ElementIconRequest extends ComparableObject.Impl {
