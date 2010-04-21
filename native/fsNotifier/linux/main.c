@@ -145,7 +145,13 @@ void userlog(int priority, const char* format, ...) {
   vsyslog(priority, format, ap);
 
   if (self_test) {
-    printf("fsnotifier[%d]: ", getpid());
+    const char* level = "debug";
+    switch (priority) {
+      case LOG_ERR:  level = "error"; break;
+      case LOG_WARNING:  level = " warn"; break;
+      case LOG_INFO:  level = " info"; break;
+    }
+    printf("fsnotifier[%d] %s: ", getpid(), level);
     vprintf(format, ap);
     printf("\n");
   }
