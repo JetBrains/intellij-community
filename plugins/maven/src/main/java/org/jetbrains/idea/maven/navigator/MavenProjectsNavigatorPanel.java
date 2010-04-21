@@ -29,7 +29,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
 import org.jetbrains.idea.maven.project.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -237,7 +237,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (standardGoalOrder == null) {
       standardGoalOrder = new THashMap<String, Integer>();
       int i = 0;
-      for (String aGoal : MavenEmbedderFactory.getPhasesList()) {
+      for (String aGoal : MavenEmbedderWrapper.PHASES) {
         standardGoalOrder.put(aGoal, i++);
       }
     }

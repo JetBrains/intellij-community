@@ -1016,7 +1016,7 @@ public class MavenProjectsTree {
                              MavenProgressIndicator process) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.EmbedderKind.FOR_PLUGINS_RESOLVE);
     embedder.customizeForResolve(console, process);
-    embedder.clearCachesFor(mavenProject);
+    embedder.clearCachesFor(mavenProject.getMavenId());
 
     try {
       for (MavenPlugin each : mavenProject.getDeclaredPlugins()) {
@@ -1099,9 +1099,9 @@ public class MavenProjectsTree {
     embedder.customizeForResolve(console, process);
 
     try {
-      Artifact artifact = embedder.resolve(id, MavenConstants.TYPE_JAR, null, mavenProject.getRemoteRepositories());
-      artifact.setScope(Artifact.SCOPE_COMPILE);
-      return new MavenArtifact(artifact, mavenProject.getLocalRepository());
+      MavenArtifact result = embedder.resolve(id, MavenConstants.TYPE_JAR, null, mavenProject.getRemoteRepositories());
+      result.setScope(Artifact.SCOPE_COMPILE);
+      return result;
     }
     finally {
       embeddersManager.release(embedder);
@@ -1116,7 +1116,7 @@ public class MavenProjectsTree {
                                   EmbedderTask task) throws MavenProcessCanceledException {
     MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(embedderKind);
     embedder.customizeForStrictResolve(getProjectIdToFileMapping(), console, process);
-    embedder.clearCachesFor(mavenProject);
+    embedder.clearCachesFor(mavenProject.getMavenId());
     try {
       task.run(embedder);
     }

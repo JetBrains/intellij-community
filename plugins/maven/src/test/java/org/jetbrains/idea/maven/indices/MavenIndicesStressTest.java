@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 
 import java.io.File;
@@ -34,7 +33,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     //setRepositoryPath(fixture.getTestDataPath("local1"));
 
-    final MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
+    final MavenEmbedderWrapper embedder = MavenEmbedderWrapper.create(getMavenGeneralSettings());
     File indicesDir = new File(myDir, "indices");
 
     final MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
@@ -94,7 +93,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    MavenEmbedderWrapper embedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
+    MavenEmbedderWrapper embedder = MavenEmbedderWrapper.create(getMavenGeneralSettings());
     File indicesDir = new File(myDir, "indices");
 
     MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
