@@ -8,6 +8,7 @@ import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -228,18 +229,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     return element.getContainingFile().getCopyableUserData(CONSOLE_KEY);
   }
 
-  public static String getLocalHostString() {
-    // HACK for Windows with ipv6
-    String localHostString = "localhost";
-    try {
-      final InetAddress localHost = InetAddress.getByName(localHostString);
-      if (localHost.getAddress().length != 4 && SystemInfo.isWindows){
-        localHostString = "127.0.0.1";
-      }
-    }
-    catch (UnknownHostException e) {
-      // ignore
-    }
-    return localHostString;
+  public static String createExtendPathCommand(Module module) {
+    return "sys.path.append('" + PathUtil.getCanonicalPath(DjangoUtil.getProjectRoot(module)) + "')";
   }
 }
