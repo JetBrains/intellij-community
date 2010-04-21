@@ -71,7 +71,6 @@ public class EclipseEmlTest extends IdeaTestCase {
       }
     });
 
-    replaceRoot(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX, project);
     replaceRoot(path, EclipseXml.DOT_CLASSPATH_EXT, project);
 
 
