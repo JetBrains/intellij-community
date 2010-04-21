@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.console;
 
+import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
@@ -22,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -522,4 +524,17 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
     });
   }
+
+  public static void printToConsole(final LanguageConsoleImpl console, final String string, final ConsoleViewContentType type) {
+    printToConsole(console, string, type.getAttributes());
+  }
+
+   public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
+     final TextAttributes attributes = TextAttributes.merge(textAttributes, ConsoleHighlighter.OUT.getDefaultAttributes());
+     ApplicationManager.getApplication().invokeLater(new Runnable() {
+       public void run() {
+         console.printToHistory(string, attributes);
+       }
+     }, ModalityState.stateForComponent(console.getComponent()));
+   }
 }

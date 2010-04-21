@@ -65,7 +65,7 @@ public class ColoredProcessHandler extends OSProcessHandler {
     return super.getCharset();
   }
 
-  public void notifyTextAvailable(final String text, final Key outputType) {
+  public final void notifyTextAvailable(final String text, final Key outputType) {
     if (outputType != ProcessOutputTypes.STDOUT) {
       textAvailable(text, outputType);
       return;
