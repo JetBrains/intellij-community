@@ -116,7 +116,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     if (files != null && files.length == 1) {
       setFile(files[0]);
     }
-    else {
+    else if (files != null && files.length > 1) {
       setFile(null);
     }
   }
