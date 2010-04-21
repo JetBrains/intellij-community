@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author oleg
@@ -146,11 +147,18 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     // Register problems
     for (PsiElement element : myUnusedElements) {
       final String name = element.getText();
-      // Ignore unused self parameters as obligatory
-      if ("self".equals(name) && PyPsiUtils.isMethodContext(element)) {
-        continue;
-      }
       if (element instanceof PyNamedParameter) {
+        // Ignore unused self parameters as obligatory
+        if ("self".equals(name) && PyPsiUtils.isMethodContext(element)) {
+          continue;
+        }
+        // cls for @classmethod decorated methods
+        if ("cls".equals(name)) {
+          final Set<PyFunction.Flag> flagSet = PyUtil.detectDecorationsAndWrappersOf(PsiTreeUtil.getParentOfType(element, PyFunction.class));
+          if (flagSet.contains(PyFunction.Flag.CLASSMETHOD)) {
+            continue;
+          }
+        }
         registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
       }
       else {
