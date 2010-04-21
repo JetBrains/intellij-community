@@ -242,7 +242,4 @@ public class PydevConsoleRunner extends PyConsoleRunner {
     return localHostString;
   }
 
-  public static String createExtendPathCommand(Module module) {
-    return "sys.path.append('" + PathUtil.getCanonicalPath(DjangoUtil.getProjectRoot(module)) + "')";
-  }
 }
