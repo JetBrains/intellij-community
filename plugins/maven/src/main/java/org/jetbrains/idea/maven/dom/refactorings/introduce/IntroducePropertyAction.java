@@ -26,8 +26,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.*;
 import com.intellij.usages.*;
+import com.intellij.usages.UsageViewManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -164,6 +165,8 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       UsageViewManager manager = UsageViewManager.getInstance(project);
       if (manager == null) return;
 
+      assureFindToolWindowRegistered(project);
+      
       FindManager findManager = FindManager.getInstance(project);
       FindModel findModel = createFindModel(findManager, selectedString, replaceWith);
 
@@ -177,6 +180,12 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, propertyName, selectedString), findModelCopy, presentation,
                              processPresentation,
                              findManager);
+
+    }
+
+    //IDEA-54113
+    private static void assureFindToolWindowRegistered(@NotNull Project project) {
+      com.intellij.usageView.UsageViewManager uvm = com.intellij.usageView.UsageViewManager.getInstance(project);
 
     }
 
