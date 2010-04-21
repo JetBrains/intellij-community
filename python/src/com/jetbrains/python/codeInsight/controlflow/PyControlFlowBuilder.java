@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +128,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PsiElement[] children = node.getChildren();
     // Case of non qualified reference
     if (children.length == 0){
-      final ReadWriteInstruction instruction = new ReadWriteInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE);
+      final ReadWriteInstruction.ACCESS access = node.getParent() instanceof PySliceExpression 
+                                                 ? ReadWriteInstruction.ACCESS.READ : ReadWriteInstruction.ACCESS.WRITE;
+      final ReadWriteInstruction instruction = new ReadWriteInstruction(myBuilder, node, node.getName(), access);
       myBuilder.addNode(instruction);
       myBuilder.checkPending(instruction);
     } else {

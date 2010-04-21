@@ -15,11 +15,15 @@ public class PyAssignmentStatementNavigator {
 
   @Nullable
   public static PyAssignmentStatement getStatementByTarget(final PsiElement element){
-    final PyAssignmentStatement parent = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
-    if (parent != null){
-      for (PyExpression expression : parent.getTargets()) {
-        if (element == expression || element.getParent() == expression){
-          return parent;
+    final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
+    if (assignmentStatement != null){
+      for (PyExpression expression : assignmentStatement.getTargets()) {
+        if (element == expression){
+          return assignmentStatement;
+        }
+        final PsiElement parent = element.getParent();
+        if (parent == expression && parent.getFirstChild() == element && parent.getLastChild() == element){
+          return assignmentStatement;
         }
       }
     }
