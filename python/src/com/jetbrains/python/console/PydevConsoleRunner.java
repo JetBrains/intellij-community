@@ -6,8 +6,6 @@ import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -117,8 +115,7 @@ public class PydevConsoleRunner extends PyConsoleRunner {
     return server;
   }
 
-  @Override
-  public void initAndRun() throws ExecutionException {
+  public void initAndRun(final String ... statements2execute) throws ExecutionException {
     super.initAndRun();
 
     // Propagate console communication to language console
