@@ -247,7 +247,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     if (map != null) {
       String location = map.remove(url);
       if (location != null) {
-        myResourceLocations.remove(url);
+        myResourceLocations.remove(location);
       }
       myModificationCount++;
       fireExternalResourceChanged();
