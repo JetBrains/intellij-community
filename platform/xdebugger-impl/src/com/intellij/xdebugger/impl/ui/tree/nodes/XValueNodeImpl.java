@@ -16,7 +16,9 @@
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
@@ -89,7 +91,17 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (myType != null) {
       myText.append("{" + myType + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-    myText.append(myValue, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    String value;
+    try {
+      StringUtil.escapeStringCharacters(myValue.length(), myValue, null, builder);
+      value = builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+    myText.append(value, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   public void markChanged() {
