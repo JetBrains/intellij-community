@@ -23,30 +23,24 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.NativeFileType;
-import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.util.io.FileTypeFilter;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileView;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -67,34 +61,6 @@ public class OpenFileAction extends AnAction implements DumbAware {
       return;
     }
 
-    String lastFilePath = project != null ? getLastFilePath(project):"";
-    //TODO String path = lastFilePath != null ? lastFilePath : RecentProjectsManager.getInstance().getLastProjectPath();
-    JFileChooser fileChooser = new JFileChooser(lastFilePath);
-    FileView fileView = new FileView() {
-      public Icon getIcon(File f) {
-        if (f.isDirectory()) return super.getIcon(f);
-        FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(f.getName());
-        if (fileType == UnknownFileType.INSTANCE || fileType == NativeFileType.INSTANCE) {
-          return super.getIcon(f);
-        }
-        return fileType.getIcon();
-      }
-    };
-    fileChooser.setFileView(fileView);
-    fileChooser.setMultiSelectionEnabled(true);
-    fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.setDialogTitle(IdeBundle.message("title.open.file"));
-
-    FileFilter allFilesFilter = new FileFilter() {
-      public boolean accept(File f) {
-        return true;
-      }
-
-      public String getDescription() {
-        return IdeBundle.message("filter.all.file.types");
-      }
-    };
-
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     ArrayList<FileType> list = new ArrayList<FileType>();
     for(FileType ft: fileTypeManager.getRegisteredFileTypes()) {
@@ -108,30 +74,27 @@ public class OpenFileAction extends AnAction implements DumbAware {
         return o1.getName().compareTo(o2.getName());
       }
     });
-    for(FileType ft: list) {
-      fileChooser.addChoosableFileFilter(new FileTypeFilter(ft));
-    }
-    fileChooser.addChoosableFileFilter(allFilesFilter);
 
-    fileChooser.setFileFilter(allFilesFilter);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, true);
+    descriptor.setTitle(IdeBundle.message("title.open.file"));
 
-    if (fileChooser.showOpenDialog(WindowManager.getInstance().suggestParentWindow(project)) !=
-        JFileChooser.APPROVE_OPTION) {
-      return;
-    }
-    File [] files = fileChooser.getSelectedFiles();
-    if (files == null) return;
+    final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
 
-    for (File file : files) {
-      if (project != null) setLastFilePath(project, file.getParent());
-      if (isProjectFile(file)) {
+    final String lastFilePath = project != null ? getLastFilePath(project) : null;
+    final VirtualFile toSelect = lastFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(lastFilePath);
+    final VirtualFile[] result = chooser.choose(toSelect, project);
+    if (result.length == 0) return;
+
+    for (final VirtualFile file : result) {
+      if (project != null) setLastFilePath(project, file.getParent().getPath());
+      if (isProjectFile(file.getName())) {
         int answer = Messages.showYesNoDialog(project,
                                               IdeBundle.message("message.open.file.is.project", file.getName(),
                                                                 ApplicationNamesInfo.getInstance().getProductName()),
                                               IdeBundle.message("title.open.project"),
                                               Messages.getQuestionIcon());
         if (answer == 0) {
-          ProjectUtil.openProject(file.getAbsolutePath(), project, false);
+          ProjectUtil.openProject(file.getPath(), project, false);
           return;
         }
       }
@@ -139,35 +102,24 @@ public class OpenFileAction extends AnAction implements DumbAware {
       FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file.getName());
       if (type == null) return;
 
-      String absolutePath = file.getAbsolutePath();
-
       if (project != null) {
-        openFile(absolutePath, project);
+        openFile(file, project);
       } else {
-        VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(file);
-        if (vfile != null) {
-          PlatformProjectOpenProcessor.getInstance().doOpenProject(vfile, null, false);
-        }
+        PlatformProjectOpenProcessor.getInstance().doOpenProject(file, null, false);
       }
     }
   }
 
-  public static void openFile(String absolutePath, final Project project) {
-    final String correctPath = absolutePath.replace(File.separatorChar, '/');
-    final VirtualFile[] virtualFiles = new VirtualFile[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        virtualFiles[0] = LocalFileSystem.getInstance().refreshAndFindFileByPath(correctPath);
-      }
-    });
-    
-    if (virtualFiles[0] == null) {
-      Messages.showErrorDialog(project, IdeBundle.message("error.file.does.not.exist", absolutePath), IdeBundle.message("title.cannot.open.file"));
-      return;
+  public static void openFile(final String filePath, final Project project) {
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+    if (file != null && file.isValid()) {
+      openFile(file, project);
     }
+  }
 
+  public static void openFile(final VirtualFile virtualFile, final Project project) {
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
-    if (editorProviderManager.getProviders(project, virtualFiles[0]).length == 0) {
+    if (editorProviderManager.getProviders(project, virtualFile).length == 0) {
       Messages.showMessageDialog(project,
                                  IdeBundle.message("error.files.of.this.type.cannot.be.opened",
                                                    ApplicationNamesInfo.getInstance().getProductName()),
@@ -176,12 +128,12 @@ public class OpenFileAction extends AnAction implements DumbAware {
       return;
     }
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFiles[0]);
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile);
     FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  public static boolean isProjectFile(File file) {
-    return FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) instanceof ProjectFileType;
+  public static boolean isProjectFile(final String file) {
+    return FileTypeManager.getInstance().getFileTypeByFileName(file) instanceof ProjectFileType;
   }
 
   public void update(AnActionEvent event) {
