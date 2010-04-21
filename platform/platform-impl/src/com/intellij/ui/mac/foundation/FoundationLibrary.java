@@ -32,8 +32,8 @@ public interface FoundationLibrary extends Library {
   byte CFStringGetCString(ID theString, byte[] buffer, int bufferSize, int encoding);
   int CFStringGetLength(ID theString);
 
-  void CFRetain(Pointer cfTypeRef);
-  void CFRelease(Pointer cfTypeRef);
+  void CFRetain(ID cfTypeRef);
+  void CFRelease(ID cfTypeRef);
   int CFGetRetainCount (Pointer cfTypeRef);
 
   ID objc_getClass(String className);
