@@ -201,6 +201,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public boolean isSelected(@NotNull final Content content) { return false; }
     public void removeAllContents(final boolean dispose) { }
     public boolean removeContent(@NotNull final Content content, final boolean dispose) { return false; }
+
+    public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean trackFocus, boolean implicitFocus) {
+      return new ActionCallback.Done();
+    }
+
     public void removeContentManagerListener(@NotNull final ContentManagerListener l) { }
     public void removeFromSelection(@NotNull final Content content) { }
     public ActionCallback selectNextContent() { return new ActionCallback.Done();}

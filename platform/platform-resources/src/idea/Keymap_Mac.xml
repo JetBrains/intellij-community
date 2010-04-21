@@ -324,7 +324,7 @@
       <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
     </action>
 
-    <action id="CloseEditor">
+    <action id="CloseContent">
       <keyboard-shortcut first-keystroke="meta W"/>
     </action>
     <action id="CloseActiveTab">

@@ -96,6 +96,8 @@
 
     <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction"/>
 
+    <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -243,7 +245,7 @@
         <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
         <separator/>
         <group id="CloseEditorsGroup">
-          <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+          <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
           <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
           <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
           <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>

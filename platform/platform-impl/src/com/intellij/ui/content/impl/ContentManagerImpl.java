@@ -125,6 +125,11 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         final Object data = each.getData(dataId);
         if (data != null) return data;
       }
+
+      if (myUI instanceof DataProvider) {
+        return ((DataProvider)myUI).getData(dataId);
+      }
+
       return null;
     }
   }
@@ -168,19 +173,43 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return removeContent(content, true, dispose);
   }
 
+  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean trackFocus, final boolean forcedFocus) {
+    final ActionCallback result = new ActionCallback();
+    _removeContent(content, true, dispose).doWhenDone(new Runnable() {
+      public void run() {
+        if (trackFocus) {
+          Content current = getSelectedContent();
+          if (current != null) {
+            setSelectedContent(current, true, true, !forcedFocus);
+          } else {
+            result.setDone();
+          }
+        } else {
+          result.setDone();
+        }
+      }
+    });
+
+    return result;
+  }
+
   private boolean removeContent(final Content content, boolean trackSelection, boolean dispose) {
+    return _removeContent(content, trackSelection, dispose).isDone();
+  }
+
+  private ActionCallback _removeContent(Content content, boolean trackSelection, boolean dispose) {
     int indexToBeRemoved = getIndexOfContent(content);
-    if (indexToBeRemoved == -1) return false;
+    if (indexToBeRemoved == -1) return new ActionCallback.Rejected();
 
     try {
       Content selection = mySelection.isEmpty() ? null : mySelection.get(mySelection.size() - 1);
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
 
       if (!fireContentRemoveQuery(content, indexToBeRemoved, ContentManagerEvent.ContentOperation.undefined)) {
-        return false;
+        return new ActionCallback.Rejected();
       }
       if (!content.isValid()) {
-        return false; // the content has already been invalidated by another thread or something
+        return new ActionCallback.Rejected();
       }
 
       boolean wasSelected = isSelected(content);
@@ -214,15 +243,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       int newSize = myContents.size();
+
+      ActionCallback result = new ActionCallback();
+
       if (newSize > 0 && trackSelection) {
         if (indexToSelect > -1) {
           final Content toSelect = myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
-              setSelectedContent(toSelect);
+              setSelectedContentCB(toSelect).notify(result);
             }
             else {
               addSelectedContent(toSelect);
+              result.setDone();
             }
           }
         }
@@ -231,7 +264,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         mySelection.clear();
       }
 
-      return true;
+      return result;
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {

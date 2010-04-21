@@ -314,10 +314,9 @@
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="alt 0"/>
   </action>
-  <action id="CloseEditor">
+  <action id="CloseContent">
     <keyboard-shortcut first-keystroke="control F4"/>
   </action>
-
   <action id="NextSplitter">
     <keyboard-shortcut first-keystroke="control TAB"/>
   </action>

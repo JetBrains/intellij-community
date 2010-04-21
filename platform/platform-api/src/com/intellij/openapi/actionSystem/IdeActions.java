@@ -114,6 +114,7 @@ public interface IdeActions {
 
   @NonNls String ACTION_EXTERNAL_JAVADOC = "ExternalJavaDoc";
 
+  @NonNls String ACTION_CLOSE = "CloseContent";
   @NonNls String ACTION_CLOSE_EDITOR = "CloseEditor";
   @NonNls String ACTION_CLOSE_ALL_EDITORS = "CloseAllEditors";
   @NonNls String ACTION_CLOSE_ALL_UNMODIFIED_EDITORS = "CloseAllUnmodifiedEditors";
