@@ -28,13 +28,14 @@ import java.io.IOException;
 
 public class StreamUtil {
   public static Entry readEntry(DataInput in) throws IOException {
-    switch (in.readInt()) {
+    int type = in.readInt();
+    switch (type) {
       case 0:
         return new FileEntry(in, true);
       case 1:
         return new DirectoryEntry(in, true);
     }
-    throw new IOException();
+    throw new IOException("unexpected entry type: " + type);
   }
 
   public static void writeEntry(DataOutput out, Entry e) throws IOException {
@@ -43,6 +44,8 @@ public class StreamUtil {
     Class c = e.getClass();
     if (c.equals(FileEntry.class)) id = 0;
     if (c.equals(DirectoryEntry.class)) id = 1;
+
+    if (id == -1) throw new IOException("unexpected entry type: " + c);
 
     out.writeInt(id);
     e.write(out);
