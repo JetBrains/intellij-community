@@ -52,8 +52,8 @@ public class StreamUtil {
   }
 
   public static Change readChange(DataInput in) throws IOException {
-    switch (in.readInt()) {
-      case 0:
+    int type = in.readInt();
+    switch (type) {
       case 1:
         return new CreateFileChange(in);
       case 2:
@@ -73,14 +73,13 @@ public class StreamUtil {
       case 9:
         return new PutSystemLabelChange(in);
     }
-    throw new IOException();
+    throw new IOException("unexpected change type: " + type);
   }
 
   public static void writeChange(DataOutput out, Change change) throws IOException {
     int id = -1;
 
     Class c = change.getClass();
-    if (c.equals(ChangeSet.class)) id = 0;
     if (c.equals(CreateFileChange.class)) id = 1;
     if (c.equals(CreateDirectoryChange.class)) id = 2;
     if (c.equals(ContentChange.class)) id = 3;
@@ -91,7 +90,7 @@ public class StreamUtil {
     if (c.equals(PutLabelChange.class)) id = 8;
     if (c.equals(PutSystemLabelChange.class)) id = 9;
 
-    assert id != -1;
+    if (id == -1) throw new IOException("unexpected change type: " + c);
 
     out.writeInt(id);
     change.write(out);
