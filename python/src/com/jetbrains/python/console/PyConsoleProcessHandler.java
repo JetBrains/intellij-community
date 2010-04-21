@@ -1,7 +1,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ColoredProcessHandler;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -10,7 +10,7 @@ import java.nio.charset.Charset;
 /**
  * @author oleg
  */
-public class PyConsoleProcessHandler extends OSProcessHandler {
+public class PyConsoleProcessHandler extends ColoredProcessHandler {
   private final Charset myCharset;
   private final LanguageConsoleImpl myLanguageConsole;
 
@@ -36,7 +36,7 @@ public class PyConsoleProcessHandler extends OSProcessHandler {
   }
 
   @Override
-  public void notifyTextAvailable(final String text, final Key attributes) {
+  protected void textAvailable(final String text, final Key attributes) {
     String string = processPrompts(myLanguageConsole, StringUtil.convertLineSeparators(text));
     PyConsoleHighlightingUtil.processOutput(myLanguageConsole, string, attributes);
   }
