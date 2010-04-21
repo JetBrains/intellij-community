@@ -18,9 +18,8 @@ public class PyConsoleProcessHandler extends ColoredProcessHandler {
                                  final LanguageConsoleImpl languageConsole,
                                  final String commandLine,
                                  final Charset charset) {
-    super(process, commandLine);
+    super(process, commandLine, charset);
     myLanguageConsole = languageConsole;
-    myCharset = charset;
   }
 
 
