@@ -14,6 +14,6 @@ public class PydevLanguageConsoleView extends LanguageConsoleViewImpl {
   }
 
   public void setPydevConsoleCommunication(final PydevConsoleCommunication communication){
-    ((PydevLanguageConsole)getConsole()).setPydevConsoleCommunication(communication);
+    ((PydevLanguageConsole)myConsole).setPydevConsoleCommunication(communication);
   }
 }
