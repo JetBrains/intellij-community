@@ -1,6 +1,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
-import com.jetbrains.django.run.ExecutionHelper;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PythonHelpersLocator;
