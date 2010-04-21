@@ -26,14 +26,16 @@ import java.util.HashSet;
  */
 class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
   private final HashSet<PsiElement> myUnusedElements;
+  private final HashSet<PsiElement> myUsedElements;
 
   public PyUnusedLocalVariableInspectionVisitor(final ProblemsHolder holder) {
     super(holder);
     myUnusedElements = new HashSet<PsiElement>();
+    myUsedElements = new HashSet<PsiElement>();
   }
 
   @Override
-  public void visitPyFunction(PyFunction node) {
+  public void visitPyFunction(final PyFunction node) {
     processScope(node);
   }
 
@@ -83,7 +85,9 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
         // WriteAccess
         if (access.isWriteAccess() && (parametersCanBeUnused || !(element != null && element.getParent() instanceof PyNamedParameter))) {
-          myUnusedElements.add(element);
+          if (!myUsedElements.contains(element)){
+            myUnusedElements.add(element);
+          }
         }
       }
     }
@@ -113,6 +117,8 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
               final PsiElement resolveElement = result.getElement();
               if (!PsiTreeUtil.isAncestor(owner, resolveElement, false)){
                 outOfScope = true;
+                myUsedElements.add(element);
+                myUsedElements.add(resolveElement);
                 myUnusedElements.remove(element);
                 myUnusedElements.remove(resolveElement);
               }
@@ -126,6 +132,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
             .iterateWriteAccessFor(name, number, instructions, new Function<ReadWriteInstruction, PyControlFlowUtil.Operation>() {
               public PyControlFlowUtil.Operation fun(final ReadWriteInstruction rwInstr) {
                 final PsiElement instrElement = rwInstr.getElement();
+                myUsedElements.add(instrElement);
                 myUnusedElements.remove(instrElement);
                 return PyControlFlowUtil.Operation.CONTINUE;
               }
