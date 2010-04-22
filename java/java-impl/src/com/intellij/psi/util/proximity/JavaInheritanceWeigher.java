@@ -28,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
 public class JavaInheritanceWeigher extends ProximityWeigher {
 
   public Comparable weigh(@NotNull final PsiElement element, final ProximityLocation location) {
+    if (element instanceof PsiClass && isTooGeneral((PsiClass)element)) return false;
+    if (element instanceof PsiMethod && isTooGeneral(((PsiMethod)element).getContainingClass())) return false;
+    
     final PsiElement position = location.getPosition();
     PsiClass placeClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
     if (position.getParent() instanceof PsiReferenceExpression) {
@@ -43,9 +46,8 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
       }
     }
 
-    if (element instanceof PsiClass && isTooGeneral((PsiClass)element)) return false;
-    if (element instanceof PsiMethod && isTooGeneral(((PsiMethod)element).getContainingClass())) return false;
-
+    if (placeClass == null) return false;
+    
     PsiClass contextClass = PsiTreeUtil.getContextOfType(position, PsiClass.class, false);
     while (contextClass != null) {
       PsiClass elementClass = placeClass;
