@@ -79,6 +79,13 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testImportModule() throws Exception {
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFiles(testName + ".py", "completion/someModule.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
   public void testPy255() throws Exception {
     final String dirname = "completion/";
     final String testName = dirname + "moduleClass";
