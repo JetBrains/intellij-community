@@ -16,6 +16,8 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -82,5 +84,12 @@ public class ColorSettingsUtil {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.info"), CodeInsightColors.INFO_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
+
+    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+      for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
+        final TextAttributesKey attributesKey = highlightInfoType.getAttributesKey();
+        descriptors.add(new AttributesDescriptor(attributesKey.myExternalName, attributesKey));
+      }
+    }
   }
 }
