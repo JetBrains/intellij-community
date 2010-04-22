@@ -6,7 +6,7 @@
     <action id="CloseActiveTab">
       <keyboard-shortcut first-keystroke="shift control 4" />
     </action>
-    <action id="CloseEditor">
+    <action id="CloseContent">
       <keyboard-shortcut first-keystroke="control 4" />
     </action>
     <action id="CompileDirty">
