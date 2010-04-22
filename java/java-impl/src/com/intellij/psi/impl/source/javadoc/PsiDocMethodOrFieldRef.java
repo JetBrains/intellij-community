@@ -30,6 +30,7 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
@@ -112,7 +113,17 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
           PsiParameter parameter = parameters[j];
           PsiType type1 = TypeConversionUtil.erasure(parameter.getType());
           String type2 = signature[j];
-          if (!Comparing.strEqual(type1.getPresentableText(), type2) && !Comparing.strEqual(type1.getCanonicalText(), type2)) continue nextMethod;
+          if (!Comparing.strEqual(type1.getPresentableText(), type2) && !Comparing.strEqual(type1.getCanonicalText(), type2)) {
+            String shortName = "";
+            PsiClass psiClass = PsiUtil.resolveClassInType(type1);
+            while (psiClass != null) {
+              shortName = psiClass.getName() + (shortName.length() > 0 ? "." + shortName : "");
+              psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+            }
+            if (!Comparing.strEqual(shortName, type2)) {
+              continue nextMethod;
+            }
+          }
         }
 
         return new MyReference(method) {

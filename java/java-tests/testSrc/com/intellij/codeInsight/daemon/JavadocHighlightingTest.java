@@ -90,6 +90,8 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testVararg() throws Exception {doTest();}
 
+  public void testInnerClassReferenceInSignature() throws Exception {doTest();}
+
   public void testBadReference() throws Exception{
     doTest();
   }
