@@ -702,6 +702,11 @@ public class PythonSdkType extends SdkType {
     }
     return LanguageLevel.getDefault();
   }
+
+  public boolean isRootTypeApplicable(final OrderRootType type) {
+    return type == OrderRootType.CLASSES;
+  }
+  
 }
 
 class InvalidSdkException extends RuntimeException {
