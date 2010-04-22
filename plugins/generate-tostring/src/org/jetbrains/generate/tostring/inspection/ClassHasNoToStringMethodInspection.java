@@ -85,19 +85,19 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
 
                 // must not be an exception
-                if (excludeException && psi.isExceptionClass(clazz)) {
+                if (excludeException && PsiAdapter.isExceptionClass(clazz)) {
                     log.debug("This class is an exception");
                     return;
                 }
 
                 // must not be deprecated
-                if (excludeDeprecated && psi.isDeprecatedClass(clazz)) {
+              if (excludeDeprecated && clazz.isDeprecated()) {
                     log.debug("Class is deprecated");
                     return;
                 }
 
                 // must not be enum
-                if (excludeEnum && psi.isEnumClass(clazz)) {
+                if (excludeEnum && clazz.isEnum()) {
                     log.debug("Class is an enum");
                     return;
                 }
@@ -117,7 +117,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
 
                 // must have fields
-                PsiField[] fields = psi.getFields(clazz);
+              PsiField[] fields = clazz.getFields();
                 if (fields.length == 0) {
                     log.debug("Class does not have any fields");
                     return;
