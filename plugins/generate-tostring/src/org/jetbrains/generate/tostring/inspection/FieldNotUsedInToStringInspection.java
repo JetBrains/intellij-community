@@ -83,7 +83,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
 
         // must have fields
         PsiAdapter psi = PsiAdapterFactory.getPsiAdapter();
-        PsiField[] fields = psi.getFields(clazz);
+        PsiField[] fields = clazz.getFields();
         if (fields.length == 0) {
             log.debug("Class does not have any fields");
             return;
@@ -181,7 +181,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         }
 
         // must have methods
-        PsiMethod[] methods = psi.getMethods(clazz);
+      PsiMethod[] methods = clazz.getMethods();
         if (methods.length == 0) {
             log.debug("Class does not have any methods");
             return;

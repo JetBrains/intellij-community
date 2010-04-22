@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -39,16 +40,6 @@ public abstract class PsiAdapter {
     }
 
   /**
-     * Get's the fields for the class.
-     *
-     * @param clazz class.
-     * @return the fields for the class. If the class doesn't have any fields the array's size is 0.
-     */
-    public PsiField[] getFields(PsiClass clazz) {
-        return clazz.getFields();
-    }
-
-    /**
      * Finds the class for the given element.
      * <p/>
      * Will look in the element's parent hieracy.
@@ -272,116 +263,6 @@ public abstract class PsiAdapter {
     }
 
   /**
-     * Is there a <code>transient</code> modifier?
-     * <p/>eg: <code>private transient String myField;</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierTransient(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.TRANSIENT);
-    }
-
-    /**
-     * Is there a <code>volatile</code> modifier?
-     * <p/>eg: <code>private volatile Image screen;</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierVolatile(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.VOLATILE);
-    }
-
-    /**
-     * Is there a <code>public</code> modifier?
-     * <p/>eg: <code>public String myField;</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierPublic(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.PUBLIC);
-    }
-
-    /**
-     * Is there a <code>protected</code> modifier?
-     * <p/>eg: <code>public String myField;</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierProtected(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.PROTECTED);
-    }
-
-    /**
-     * Is there a <code>package-local</code> modifier?
-     * <p/>eg: <code>String myField;</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierPackageLocal(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL);
-    }
-
-    /**
-     * Is there a <code>private</code> modifier?
-     * <p/>eg: <code>private static String myField;</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierPrivate(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.PRIVATE);
-    }
-
-    /**
-     * Is there a <code>abstract</code> modifier?
-     * <p/>eg: <code>public abstract String getConfiguration()</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierAbstract(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.ABSTRACT);
-    }
-
-    /**
-     * Is there a <code>final</code> modifier?
-     * <p/>eg: <code>final static boolean DEBUG = false;</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierFinal(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.FINAL);
-    }
-
-    /**
-     * Is there a <code>static</code> modifier?
-     * <p/>eg: <code>private static String getMyField()</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierStatic(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.STATIC);
-    }
-
-    /**
-     * Is there a <code>synchronized</code> modifier?
-     * <p/>eg: <code>public synchronized void putInCache()</code>.
-     *
-     * @param modifiers the modifiers
-     */
-    public boolean isModifierSynchronized(PsiModifierList modifiers) {
-        return modifiers.hasModifierProperty(PsiModifier.SYNCHRONIZED);
-    }
-
-    /**
-     * Get's the CodeStyleManager for the project.
-     *
-     * @param project project.
-     * @return the CodeStyleManager.
-     */
-    public CodeStyleManager getCodeStyleManager(Project project) {
-        return CodeStyleManager.getInstance(project);
-    }
-
-  /**
      * Does the javafile have the import statement?
      *
      * @param javaFile        javafile.
@@ -592,17 +473,7 @@ public abstract class PsiAdapter {
         }
     }
 
-    /**
-     * Get's the methods for the class.
-     *
-     * @param clazz class.
-     * @return the methods for the class. If the class doesn't have any methods the array's size is 0.
-     */
-    public PsiMethod[] getMethods(PsiClass clazz) {
-        return clazz.getMethods();
-    }
-
-    /**
+  /**
      * Find's an existing field with the given name.
      * If there isn't a field with the name, null is returned.
      *
@@ -725,38 +596,8 @@ public abstract class PsiAdapter {
             return false;
         }
 
-        return isEnumClass(clazz);
-    }
-
-    /**
-     * Returns true if the class is enum (JDK1.5).
-     *
-     * @param clazz class to check if it's a enum
-     * @return true if enum.
-     */
-    public boolean isEnumClass(PsiClass clazz) {
         return clazz.isEnum();
-    }
-
-    /**
-     * Returns true if the class is deprecated.
-     *
-     * @param clazz class to check if it's deprecated
-     * @return true if deprecated.
-     */
-    public boolean isDeprecatedClass(PsiClass clazz) {
-        return clazz.isDeprecated();
-    }
-
-    /**
-     * Returns true if the method is deprecated.
-     *
-     * @param method method to check if it's deprecated
-     * @return true if deprecated.
-     */
-    public boolean isDeprecatedMethod(PsiMethod method) {
-        return method.isDeprecated();
-    }
+  }
 
     /**
      * Is the class an exception - extends Throwable (will check super).
@@ -764,17 +605,8 @@ public abstract class PsiAdapter {
      * @param clazz class to check.
      * @return true if class is an exception.
      */
-    public boolean isExceptionClass(PsiClass clazz) {
-        PsiClass[] supers = clazz.getSupers();
-        for (PsiClass sup : supers) {
-            if ("java.lang.Throwable".equals(sup.getQualifiedName())) {
-                return true;
-            } else if (isExceptionClass(sup)) {
-                return true;
-            }
-        }
-
-        return false;
+    public static boolean isExceptionClass(PsiClass clazz) {
+      return InheritanceUtil.isInheritor(clazz, CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     /**
@@ -788,7 +620,7 @@ public abstract class PsiAdapter {
         if (list == null) {
             return false;
         }
-        return isModifierAbstract(clazz.getModifierList());
+        return clazz.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
     }
 
   /**
