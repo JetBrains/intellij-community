@@ -68,9 +68,6 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
           result.add(new NumberToken(num));
         }
         else {
-          if (key.length() == 0) {
-            return null;
-          }
           TemplateToken token = parseTemplateKey(key, callback);
           if (token == null) return null;
           result.add(token);
