@@ -4,9 +4,9 @@
 
   <id>Pythonid</id>
   <name>Python</name>
-  <idea-version since-build="94.585"/>
+  <idea-version since-build="95.66"/>
   <description>Smart editing for Python scripts</description>
-  <version>2.5.3</version>
+  <version>2.5.4</version>
   <depends>com.intellij.modules.ultimate</depends>
   <depends>org.jetbrains.plugins.yaml</depends>
   <vendor url="http://www.jetbrains.com/idea/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
