@@ -18,6 +18,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 
@@ -38,6 +39,21 @@ public class ModuleNode extends PackageDependenciesNode {
       PackageDependenciesNode child = (PackageDependenciesNode)getChildAt(i);
       child.fillFiles(set, true);
     }
+  }
+
+  @Override
+  public boolean canNavigate() {
+    return myModule != null && !myModule.isDisposed();
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return false;
+  }
+
+  @Override
+  public void navigate(boolean focus) {
+    ProjectSettingsService.getInstance(myModule.getProject()).openModuleSettings(myModule);
   }
 
   public Icon getOpenIcon() {

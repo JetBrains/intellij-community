@@ -33,8 +33,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
@@ -352,6 +354,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       group.add(actionManager.createExpandAllAction(treeExpander, tree));
     }
     group.add(actionManager.createCollapseAllAction(treeExpander, tree));
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     group.add(ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS));
     appendDependenciesAction(group);
     return group;
@@ -406,7 +409,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
-  private static class MyUserObject{
+  private static class MyUserObject implements Navigatable{
     private boolean myInCycle;
     private final Module myModule;
 
@@ -438,6 +441,18 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     public String toString() {
       return myModule.getName();
     }
+
+    public void navigate(boolean requestFocus) {
+      ProjectSettingsService.getInstance(myModule.getProject()).openModuleSettings(myModule);
+    }
+
+    public boolean canNavigate() {
+      return myModule != null && !myModule.isDisposed();
+    }
+
+    public boolean canNavigateToSource() {
+      return false;
+    }
   }
 
   private static class MyTreePanel extends JPanel implements DataProvider{
@@ -465,6 +480,15 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       }
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return ourHelpID;
+      }
+      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+        final TreePath selectionPath = myTree.getLeadSelectionPath();
+        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
+          DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+          if (node.getUserObject() instanceof MyUserObject){
+            return node.getUserObject();
+          }
+        }
       }
       return null;
     }

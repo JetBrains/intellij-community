@@ -21,7 +21,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
         result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, null));
         if (child.getElementType() == ElementType.COLON) {
           currentIndent = Indent.getNoneIndent();
-          currentWrap =Wrap.createWrap(Wrap.ALWAYS, true);
+          currentWrap =Wrap.createWrap(WrapType.ALWAYS, true);
         }
       }
       child = child.getTreeNext();
@@ -60,13 +59,6 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
     } else {
       return Indent.getLabelIndent();
     }
-  }
-
-  protected Wrap getReservedWrap(final IElementType elementType) {
-    return null;
-  }
-
-  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
   }
 
   @Override

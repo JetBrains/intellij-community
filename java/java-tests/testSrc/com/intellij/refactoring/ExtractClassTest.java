@@ -227,6 +227,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestField(null);
   }
 
+  public void testMethodTypeParameters() throws Exception {
+    doTestMethod();
+  }
+
   public void testPublicVisibility() throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {

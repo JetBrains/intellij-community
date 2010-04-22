@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +98,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
   }
 
+  @Nullable
   private ASTNode composeCodeBlock(final ArrayList<Block> result, ASTNode child, final Indent indent) {
     final ArrayList<Block> localResult = new ArrayList<Block>();
     processChild(localResult, child, null, null, Indent.getNoneIndent());
@@ -125,6 +127,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return result;
   }
 
+  @Nullable
   private ASTNode processCaseAndStatementAfter(final ArrayList<Block> result,
                                                ASTNode child,
                                                final Alignment childAlignment,
@@ -159,7 +162,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return null;
   }
 
-  private boolean isBreakOrReturn(final ASTNode child) {
+  private static boolean isBreakOrReturn(final ASTNode child) {
     IElementType elementType = child.getElementType();
     return JavaElementType.BREAK_STATEMENT == elementType || JavaElementType.RETURN_STATEMENT == elementType;
   }
@@ -193,7 +196,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return result;
   }
 
-  private int calcNewState(final ASTNode child, int state) {
+  private static int calcNewState(final ASTNode child, int state) {
     switch (state) {
       case BEFORE_FIRST: {
         if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())) {
@@ -218,7 +221,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     return INSIDE_BODY;
   }
 
-  private boolean isLBrace(final ASTNode child) {
+  private static boolean isLBrace(final ASTNode child) {
     return child.getElementType() == ElementType.LBRACE;
   }
 
@@ -250,7 +253,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
     }
   }
 
-  private boolean isRBrace(final ASTNode child) {
+  private static boolean isRBrace(final ASTNode child) {
     return child.getElementType() == ElementType.RBRACE;
   }
 
@@ -268,12 +271,5 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         return new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null);
       }
     }
-  }
-
-  protected Wrap getReservedWrap(final IElementType elementType) {
-    return null;
-  }
-
-  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
   }
 }

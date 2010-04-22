@@ -224,7 +224,7 @@
       <keyboard-shortcut first-keystroke="UP"/>
       <keyboard-shortcut first-keystroke="control P"/>
     </action>
-    <action id="CloseEditor">
+    <action id="CloseContent">
       <keyboard-shortcut first-keystroke="control F4"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="K"/>
     </action>

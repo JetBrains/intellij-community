@@ -33,7 +33,8 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
         allJava &= JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element);
       }
       else if (element instanceof PsiFile) {
-        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) && !CollectHighlightsUtil.isOutsideSourceRootJavaFile((PsiJavaFile) element);
+        allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) &&
+                   ((PsiJavaFile)element).getClasses().length > 0 && !CollectHighlightsUtil.isOutsideSourceRootJavaFile((PsiJavaFile) element);
       }
       else {
         return false;
@@ -55,6 +56,6 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
 
   @Override
   public void doMove(Project project, PsiElement[] elements, PsiElement targetContainer, MoveCallback callback) {
-    super.doMove(project, elements, targetContainer, callback);    //To change body of overridden methods use File | Settings | File Templates.
+    super.doMove(project, elements, targetContainer, callback);
   }
 }

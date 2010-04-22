@@ -31,6 +31,10 @@ public class StaticMembersWeigher extends CompletionWeigher {
     final PsiElement position = loc.getCompletionParameters().getPosition();
     if (!position.isValid()) return 0;
 
+    // cheap weigher applicability goes first
+    final Object o = element.getObject();
+    if (!(o instanceof PsiMember)) return 0;
+    
     if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class) != null) return 0;
     if (position.getParent() instanceof PsiReferenceExpression) {
       final PsiReferenceExpression refExpr = (PsiReferenceExpression)position.getParent();
@@ -42,9 +46,6 @@ public class StaticMembersWeigher extends CompletionWeigher {
         return 0;
       }
     }
-
-    final Object o = element.getObject();
-    if (!(o instanceof PsiMember)) return 0;
 
     if (((PsiMember)o).hasModifierProperty(PsiModifier.STATIC)) {
       if (o instanceof PsiMethod) return 5;

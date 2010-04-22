@@ -125,7 +125,7 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
-   * Calculates indent for the given block and target start offset according to the given idnent options.
+   * Calculates indent for the given block and target start offset according to the given indent options.
    *
    * @param options                 indent options to use
    * @param block                   target wrapped block
@@ -255,18 +255,13 @@ public abstract class AbstractBlockWrapper {
       return indent.add(getWhiteSpace());
     }
     else {
-      ArrayList<IndentData> ignored = new ArrayList<IndentData>();
       IndentData offsetFromParent = myParent.getChildOffset(this, indentOption, -1);
-      IndentData result = indent.add(offsetFromParent);
-      if (!ignored.isEmpty()) {
-        result = result.add(ignored.get(ignored.size() - 1));
-      }
-      return result;
+      return indent.add(offsetFromParent);
     }
 
   }
 
-  private IndentData getIndent(final CodeStyleSettings.IndentOptions options, final int index, IndentImpl indent) {
+  private static IndentData getIndent(final CodeStyleSettings.IndentOptions options, final int index, IndentImpl indent) {
     if (indent.getType() == IndentImpl.Type.CONTINUATION) {
       return new IndentData(options.CONTINUATION_INDENT_SIZE);
     }
@@ -292,7 +287,7 @@ public abstract class AbstractBlockWrapper {
    * value is defined (not <code>null</code>).
    * <p/>
    * This property is used later during
-   * {@link LeafBlockWrapper#calculateOffset(CodeStyleSettings.IndentOptions) leaf block offset calculation}.
+   * {@link LeafBlockWrapper#calculateOffset(CodeStyleSettings.IndentOptions)} leaf block offset calculation}.
    *
    * @param indentFromParent    indent value to apply
    */
@@ -339,5 +334,10 @@ public abstract class AbstractBlockWrapper {
     myIndentFromParent = null;
     myParent = null;
     myWhiteSpace = null;
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getName() + "(" + myStart + "-" + myEnd + ")";
   }
 }

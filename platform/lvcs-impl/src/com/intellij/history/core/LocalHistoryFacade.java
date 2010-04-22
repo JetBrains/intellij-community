@@ -46,6 +46,12 @@ public class LocalHistoryFacade {
     myChangeList.beginChangeSet();
   }
 
+  public void forceBeginChangeSet() {
+    if (myChangeList.forceBeginChangeSet()) {
+      fireChangeSetFinished();
+    }
+  }
+
   public void endChangeSet(String name) {
     if (myChangeList.endChangeSet(name)) {
       fireChangeSetFinished();

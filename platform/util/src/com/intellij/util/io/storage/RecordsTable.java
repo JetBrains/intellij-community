@@ -47,4 +47,8 @@ class RecordsTable extends AbstractRecordsTable {
   protected byte[] getZeros() {
     return ZEROES;
   }
+
+  @Override
+  protected void clearDeletedRecord(int record) {
+  }
 }

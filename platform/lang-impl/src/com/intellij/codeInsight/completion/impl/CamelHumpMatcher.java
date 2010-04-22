@@ -7,8 +7,6 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -62,12 +60,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
 
   public boolean prefixMatches(@NotNull final LookupElement element) {
-    final LookupItem item = element.as(LookupItem.class); //must die, use LookupElementBuilder or CompletionResultSet.caseInsensitive
-    final LookupElementBuilder builder = element.as(LookupElementBuilder.class);
-    boolean itemCaseInsensitive = item != null && Boolean.TRUE.equals(item.getAttribute(LookupItem.CASE_INSENSITIVE)) ||
-                                  builder != null && !builder.isCaseSensitive();
-
-    return prefixMatchersInternal(element, itemCaseInsensitive);
+    return prefixMatchersInternal(element, !element.isCaseSensitive());
   }
 
   private boolean prefixMatchersInternal(final LookupElement element, final boolean itemCaseInsensitive) {
