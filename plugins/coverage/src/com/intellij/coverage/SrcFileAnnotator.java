@@ -322,11 +322,12 @@ public class SrcFileAnnotator implements Disposable {
           }
 
           for (int line = lineNumber; line <= lastLineNumber; line++) {
-            final LineData lineData = executableLines.get(newToOldLineMapping.get(line));
+            final int oldLineNumber = newToOldLineMapping.get(line);
+            final LineData lineData = executableLines.get(oldLineNumber);
             if (lineData != null) {
               rangeHighlighters.add(
                   createRangeHighlighter(suite.getLastCoverageTimeStamp(), markupModel, coverageByTestApplicable, executableLines,
-                                         classLines.get(line), line, line));
+                                         classLines.get(oldLineNumber), oldLineNumber, line));
             }
           }
           myFile.putUserData(COVERAGE_HIGHLIGHTERS, rangeHighlighters.size() > 0 ? rangeHighlighters : null);
