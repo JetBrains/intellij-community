@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ import java.util.Set;
  * @author peter
  */
 public class FileContentUtil {
-  public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtil.saveOrReload";
+  @NonNls public static final String FORCE_RELOAD_REQUESTOR = "FileContentUtil.saveOrReload";
 
   private FileContentUtil() {
   }
@@ -67,23 +68,23 @@ public class FileContentUtil {
   }
 
   public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> files, boolean includeOpenFiles) {
-    final Set<VFilePropertyChangeEvent> list = new THashSet<VFilePropertyChangeEvent>();
+    final Set<VFilePropertyChangeEvent> events = new THashSet<VFilePropertyChangeEvent>();
     for (VirtualFile file : files) {
-      saveOrReload(file, list);
+      saveOrReload(file, events);
     }
     if (includeOpenFiles) {
       for (VirtualFile open : FileEditorManager.getInstance(project).getOpenFiles()) {
         if (!files.contains(open)) {
-          saveOrReload(open, list);
+          saveOrReload(open, events);
         }
       }
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
-            .before(new ArrayList<VFileEvent>(list));
+            .before(new ArrayList<VFileEvent>(events));
         ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES)
-            .after(new ArrayList<VFileEvent>(list));
+            .after(new ArrayList<VFileEvent>(events));
       }
     });
   }

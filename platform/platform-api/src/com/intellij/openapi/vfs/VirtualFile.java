@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
@@ -36,6 +37,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by the same
@@ -451,7 +453,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
           if (isValid() && !application.isDisposed()) {
             application.runWriteAction(new Runnable(){
               public void run() {
-                application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(Collections.singletonList(new VFilePropertyChangeEvent(this, VirtualFile.this, PROP_ENCODING, old, charset, false)));
+                List<VFilePropertyChangeEvent> events = Collections.singletonList(new VFilePropertyChangeEvent(this, VirtualFile.this, PROP_ENCODING, old, charset, false));
+                BulkFileListener listener = application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+                listener.before(events);
+                listener.after(events);
               }
             });
           }

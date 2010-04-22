@@ -144,7 +144,7 @@ public class ChangeList {
   }
 
   private void flushChanges(boolean force) {
-    if (myChangeSetDepth > 0) return; 
+    if (myChangeSetDepth > 0) return;
     if (myCurrentBlock.shouldFlush(force) || flushEveryChangeSetInTests()) {
       myStorage.writeNextBlock(myCurrentBlock);
       myCurrentBlock = myStorage.createNewBlock();

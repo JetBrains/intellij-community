@@ -173,8 +173,11 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   public void deleteRecord(final int record) {
     ensureFreeRecordsScanned();
     setSize(record, -1);
+    clearDeletedRecord(record);
     myFreeRecordsList.add(record);
   }
+
+  protected abstract void clearDeletedRecord(int record);
 
   public int getVersion() {
     return myStorage.getInt(HEADER_VERSION_OFFSET);

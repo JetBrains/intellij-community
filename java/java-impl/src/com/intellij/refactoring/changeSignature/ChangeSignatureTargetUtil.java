@@ -35,10 +35,11 @@ public class ChangeSignatureTargetUtil {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
     }
 
-    final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    final PsiCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiCallExpression.class);
     if (expression != null) {
       assert element != null;
-      final PsiExpression qualifierExpression = expression.getMethodExpression().getQualifierExpression();
+      final PsiExpression qualifierExpression = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression()
+                                                                                              : expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getQualifier() : null;
       if (PsiTreeUtil.isAncestor(qualifierExpression, element, false)) {
         final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(qualifierExpression, PsiExpressionList.class);
         if (expressionList != null) {

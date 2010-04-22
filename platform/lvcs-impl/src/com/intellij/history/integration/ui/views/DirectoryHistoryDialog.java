@@ -81,7 +81,6 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     p.add(myToolBar.getComponent(), BorderLayout.NORTH);
 
     p.add(myChangesTree, BorderLayout.CENTER);
-    p.add(new DiffStatusBar(DiffStatusBar.DEFAULT_TYPES), BorderLayout.SOUTH);
 
     return p;
   }

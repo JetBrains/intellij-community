@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.process;
+package com.intellij.xdebugger.frame;
 
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Roman.Chernyatchik, oleg
+ * @author nik
  */
-public interface CommandLineArgumentsProvider {
-    /**
-   * @return Commands to execute (one command corresponds to one add argument)
-   */
-  String[] getArguments();
+public class ImmediateFullValueEvaluator extends XFullValueEvaluator {
+  private String myFullValue;
 
-  boolean passParentEnvs();
+  public ImmediateFullValueEvaluator(@NotNull String linkText, @NotNull String fullValue) {
+    super(linkText);
+    myFullValue = fullValue;
+  }
 
-  @Nullable
-  Map<String, String> getAdditionalEnvs();
+  @Override
+  public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+    callback.evaluated(myFullValue);
+  }
 }

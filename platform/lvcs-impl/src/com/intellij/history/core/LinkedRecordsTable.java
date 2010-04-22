@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class LinkedRecordsTable extends AbstractRecordsTable {
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
 
   private static final int ID_COUNTER_OFFSET = DEFAULT_HEADER_SIZE;
   private static final int FIRST_RECORD_OFFSET = ID_COUNTER_OFFSET + 8;
@@ -62,6 +62,13 @@ public class LinkedRecordsTable extends AbstractRecordsTable {
     return ZEROS;
   }
 
+  @Override
+  protected void clearDeletedRecord(int record) {
+    setTimestamp(record, 0);
+    setNextRecord(record, 0);
+    setPrevRecord(record, 0);
+  }
+
   public void setFSTimestamp(long timestamp) {
     markDirty();
     myStorage.putLong(FS_TIMESTAMP_OFFSET, timestamp);
@@ -77,7 +84,6 @@ public class LinkedRecordsTable extends AbstractRecordsTable {
   }
 
   public int getFirstRecord() {
-    markDirty();
     return myStorage.getInt(FIRST_RECORD_OFFSET);
   }
 
@@ -87,7 +93,6 @@ public class LinkedRecordsTable extends AbstractRecordsTable {
   }
 
   public int getLastRecord() {
-    markDirty();
     return myStorage.getInt(LAST_RECORD_OFFSET);
   }
 
