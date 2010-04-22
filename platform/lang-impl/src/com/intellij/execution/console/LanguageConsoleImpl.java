@@ -530,7 +530,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
    public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
-     final TextAttributes attributes = TextAttributes.merge(textAttributes, ConsoleHighlighter.OUT.getDefaultAttributes());
+     final TextAttributes attributes = TextAttributes.merge(ConsoleHighlighter.OUT.getDefaultAttributes(), textAttributes);
      ApplicationManager.getApplication().invokeLater(new Runnable() {
        public void run() {
          console.printToHistory(string, attributes);
