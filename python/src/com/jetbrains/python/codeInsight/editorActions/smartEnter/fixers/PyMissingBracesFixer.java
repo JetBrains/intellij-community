@@ -4,10 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.psi.PyDictLiteralExpression;
-import com.jetbrains.python.psi.PyListLiteralExpression;
-import com.jetbrains.python.psi.PySetLiteralExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +19,10 @@ public class PyMissingBracesFixer implements PyFixer {
       if (lastChild != null && !"}".equals(lastChild.getText())) {
         editor.getDocument().insertString(lastChild.getTextRange().getEndOffset(), "}");
       }
-    } else if (psiElement instanceof PyListLiteralExpression) {
+    }
+    else if (psiElement instanceof PyListLiteralExpression ||
+             psiElement instanceof PySliceExpression ||
+             psiElement instanceof PySubscriptionExpression) {
       PsiElement lastChild = PyUtil.getFirstNonCommentBefore(psiElement.getLastChild());
       if (lastChild != null && !"]".equals(lastChild.getText())) {
         editor.getDocument().insertString(lastChild.getTextRange().getEndOffset(), "]");
