@@ -359,4 +359,16 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     myAttributes.putAll(item.myAttributes);
   }
 
+  @Override
+  public boolean isCaseSensitive() {
+    return !Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE));
+  }
+  
+  public static @Nullable LookupItem from(LookupElement lookupElement) {
+    if (lookupElement instanceof LookupElementDecorator) {
+      lookupElement = ((LookupElementDecorator)lookupElement).getDelegate();
+    }
+    if (lookupElement instanceof LookupItem) return (LookupItem)lookupElement;
+    return null;
+  }
 }
