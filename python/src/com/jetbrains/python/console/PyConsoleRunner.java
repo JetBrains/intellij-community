@@ -239,14 +239,19 @@ public class PyConsoleRunner {
         return true;
       }
     };
-    final AnAction historyNextAction = ConsoleHistoryModel.createHistoryAction(myHistory, true, historyProcessor);
-    final AnAction historyPrevAction = ConsoleHistoryModel.createHistoryAction(myHistory, false, historyProcessor);
-    historyNextAction.getTemplatePresentation().setVisible(false);
-    historyPrevAction.getTemplatePresentation().setVisible(false);
-    toolbarActions.add(historyNextAction);
-    toolbarActions.add(historyPrevAction);
+    // API compatibility with Maia
+    final AnAction historyAction = ActionManager.getInstance().getAction("Console.History.Next");
+    if (historyAction != null) {
+      final AnAction historyNextAction = ConsoleHistoryModel.createHistoryAction(myHistory, true, historyProcessor);
+      final AnAction historyPrevAction = ConsoleHistoryModel.createHistoryAction(myHistory, false, historyProcessor);
+      historyNextAction.getTemplatePresentation().setVisible(false);
+      historyPrevAction.getTemplatePresentation().setVisible(false);
+      toolbarActions.add(historyNextAction);
+      toolbarActions.add(historyPrevAction);
+      return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
+    }
 
-    return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
+    return new AnAction[]{stopAction, closeAction, myRunAction};
   }
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
