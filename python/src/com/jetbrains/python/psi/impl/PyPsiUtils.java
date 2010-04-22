@@ -206,8 +206,12 @@ public class PyPsiUtils {
 
   public static void removeRedundantPass(final PyStatementList statementList) {
     final PyStatement[] statements = statementList.getStatements();
-    if ((statements.length > 1) && (statements[0] instanceof PyPassStatement)) {
-      statements[0].delete();
+    if (statements.length > 1) {
+      for (PyStatement statement : statements) {
+        if (statement instanceof PyPassStatement) {
+          statement.delete();
+        }
+      }
     }
   }
 

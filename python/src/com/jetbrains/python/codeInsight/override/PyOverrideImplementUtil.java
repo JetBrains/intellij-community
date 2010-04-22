@@ -17,10 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,18 +107,28 @@ public class PyOverrideImplementUtil {
                             @NotNull final List<String> newMembers,
                             @NotNull final Project project,
                             @NotNull final Editor editor) {
+    final PyStatementList statementList = pyClass.getStatementList();
+    final int offset = editor.getCaretModel().getOffset();
+    PsiElement anchor = null;
+    for (PyStatement statement: statementList.getStatements()) {
+      if (statement.getTextRange().getStartOffset() < offset) {
+        anchor = statement;
+      }
+    }
+
     PyFunction element = null;
     for (String newMember : newMembers) {
       element = PyElementGenerator.getInstance(project).createFromText(PyFunction.class, newMember + "\n    pass");
       try {
-        element = (PyFunction)pyClass.getStatementList().add(element);
+        element = (PyFunction)statementList.addAfter(element, anchor);
         element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
     }
-    PyPsiUtils.removeRedundantPass(pyClass.getStatementList());
+    
+    PyPsiUtils.removeRedundantPass(statementList);
     final int start = element.getStatementList().getTextRange().getStartOffset();
     editor.getCaretModel().moveToOffset(start);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
