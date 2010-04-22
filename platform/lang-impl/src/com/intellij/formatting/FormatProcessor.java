@@ -629,9 +629,9 @@ class FormatProcessor {
   }
 
   /**
-   * Tries to get align-implied indent of the line that contains current block.
+   * Tries to get align-implied indent of the current block.
    *
-   * @return    indent of the line that contains current block if any; <code>null</code> otherwise
+   * @return    indent of the current block if any; <code>null</code> otherwise
    */
   @Nullable
   private IndentData getAlignOffset() {
