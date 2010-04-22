@@ -140,7 +140,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   public synchronized List<ChangeSetBlock> purge(long period, int intervalBetweenActivities) {
-    List<ChangeSetBlock> result = new ArrayList<ChangeSetBlock>();
+    List<ChangeSetBlock> result = new ArrayList<ChangeSetBlock>(); // todo : do not collect changesets
     int each = findFirstObsoleteBlock(period, intervalBetweenActivities);
     try {
       while(each != 0) {
@@ -154,7 +154,6 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     }
     return result;
   }
-
 
   private int findFirstObsoleteBlock(long period, int intervalBetweenActivities) {
     long prevTimestamp = 0;
@@ -178,8 +177,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
     return 0;
   }
 
-
-  public void flush() {
+  public synchronized void flush() {
     myStorage.flushSome();
   }
 }
