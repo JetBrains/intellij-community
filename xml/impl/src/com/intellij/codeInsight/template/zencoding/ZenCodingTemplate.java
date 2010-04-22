@@ -20,7 +20,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +29,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -231,16 +229,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       return false;
     }
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-    PsiElement element = null;
-    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-      element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
-    }
-    if (element == null) {
-      element = file.findElementAt(offset > 0 ? offset - 1 : offset);
-      if (element == null) {
-        element = file;
-      }
-    }
+    PsiElement element = CustomTemplateCallback.getContext(file, offset);
     return isApplicable(element);
   }
 
