@@ -32,4 +32,6 @@ public interface JavaParameterInfo extends ParameterInfo {
   CanonicalTypes.Type getTypeWrapper();
 
   PsiExpression getValue(PsiCallExpression callExpression);
+
+  boolean isVarargType();
 }

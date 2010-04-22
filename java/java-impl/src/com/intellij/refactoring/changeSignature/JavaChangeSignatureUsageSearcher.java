@@ -44,11 +44,11 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-class UsageSearcher {
+class JavaChangeSignatureUsageSearcher {
   private final JavaChangeInfo myChangeInfo;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.UsageSearcher");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageSearcher");
 
-  UsageSearcher(JavaChangeInfo changeInfo) {
+  JavaChangeSignatureUsageSearcher(JavaChangeInfo changeInfo) {
     this.myChangeInfo = changeInfo;
   }
 
@@ -97,7 +97,7 @@ class UsageSearcher {
 
   private void detectLocalsCollisionsInMethod(final PsiMethod method, final ArrayList<UsageInfo> result, boolean isOriginal) {
     if (!StdLanguages.JAVA.equals(method.getLanguage())) return;
-    
+
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final Set<PsiParameter> deletedOrRenamedParameters = new HashSet<PsiParameter>();
     if (isOriginal) {
@@ -206,8 +206,6 @@ class UsageSearcher {
       for (PsiReference ref : refs) {
         PsiElement element = ref.getElement();
 
-        if (!StdLanguages.JAVA.equals(element.getLanguage())) continue;
-
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
         if (!isToCatchExceptions) {
           if (RefactoringUtil.isMethodUsage(element)) {
@@ -219,7 +217,7 @@ class UsageSearcher {
           result.add(new MethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
         }
         else if (element instanceof PsiDocTagValue) {
-          result.add(new UsageInfo(ref.getElement()));
+          result.add(new UsageInfo(element));
         }
         else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
           DefaultConstructorImplicitUsageInfo implicitUsageInfo =

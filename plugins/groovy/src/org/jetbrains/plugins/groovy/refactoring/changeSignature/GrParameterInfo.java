@@ -117,4 +117,8 @@ public class GrParameterInfo implements JavaParameterInfo {
   public PsiExpression getValue(PsiCallExpression callExpression) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
+
+  public boolean isVarargType() {
+    return getTypeText().endsWith("...");
+  }
 }

@@ -269,10 +269,10 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
     String newName = getNewName();
     final List<GrParameterInfo> parameterInfos = myParameterModel.getParameterInfos();
-    invokeRefactoring(new GrChangeSignatureProcessor(myProject, new GrChangeSignatureProcessor.GrChangeInfoImpl(myMethod, modifier,
-                                                                                                                CanonicalTypes.createTypeWrapper(
-                                                                                                                  returnType), newName,
-                                                                                                                parameterInfos)));
+    invokeRefactoring(new GrChangeSignatureProcessor(myProject, new GrChangeInfoImpl(myMethod, modifier,
+                                                                                     CanonicalTypes.createTypeWrapper(
+                                                                                       returnType), newName,
+                                                                                     parameterInfos)));
 
   }
 

@@ -54,7 +54,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
   public UsageInfo[] findUsages(ChangeInfo info) {
     if (info instanceof JavaChangeInfo) {
-      return new UsageSearcher((JavaChangeInfo)info).findUsages();
+      return new JavaChangeSignatureUsageSearcher((JavaChangeInfo)info).findUsages();
     }
     else {
       return UsageInfo.EMPTY_ARRAY;
