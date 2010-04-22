@@ -46,6 +46,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   private static final String SELECTORS = ".#[";
   private static final String ID = "id";
   private static final String CLASS = "class";
+  private static final String DEFAULT_TAG = "div";
 
   private static String getPrefix(@NotNull String templateKey) {
     for (int i = 0, n = templateKey.length(); i < n; i++) {
@@ -160,16 +161,35 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
   }
 
+  private static boolean isHtml(CustomTemplateCallback callback) {
+    FileType type = callback.getFileType();
+    return type == StdFileTypes.HTML || type == StdFileTypes.XHTML;
+  }
+
   @Override
   @Nullable
   protected TemplateToken parseTemplateKey(String key, CustomTemplateCallback callback) {
     String prefix = getPrefix(key);
+    boolean useDefaultTag = false;
+    if (prefix.length() == 0) {
+      if (!isHtml(callback)) {
+        return null;
+      }
+      else {
+        useDefaultTag = true;
+        prefix = DEFAULT_TAG;
+        key = prefix + key;
+      }
+    }
     TemplateImpl template = callback.findApplicableTemplate(prefix);
     if (template == null && !isXML11ValidQName(prefix)) {
       return null;
     }
     TemplateToken token = parseSelectors(key);
     if (token == null) {
+      return null;
+    }
+    if (useDefaultTag && token.myAttribute2Value.size() == 0) {
       return null;
     }
     if (template != null && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
