@@ -16,19 +16,20 @@
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.componentTree.ComponentTree;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Decoration layer is over COMPONENT_LAYER (layer where all components are located).
@@ -56,7 +57,9 @@ class PassiveDecorationLayer extends JComponent{
     final Set<RadButtonGroup> paintedGroups = new HashSet<RadButtonGroup>();
     final RadRootContainer rootContainer = myEditor.getRootContainer();
     final ComponentTree componentTree = UIDesignerToolWindowManager.getInstance(component.getProject()).getComponentTree();
-    final Collection<RadButtonGroup> selectedGroups = componentTree.getSelectedElements(RadButtonGroup.class);
+    final Collection<RadButtonGroup> selectedGroups = componentTree != null
+                                                      ? componentTree.getSelectedElements(RadButtonGroup.class)
+                                                      : Collections.<RadButtonGroup>emptyList();
 
     // Paint selection and dragger
     FormEditingUtil.iterate(
