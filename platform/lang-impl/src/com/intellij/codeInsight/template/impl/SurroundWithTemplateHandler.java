@@ -77,7 +77,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     List<CustomLiveTemplate> result = new ArrayList<CustomLiveTemplate>();
     int offset = editor.getCaretModel().getOffset();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
-      if (template.isApplicable(file, offset, true)) {
+      if (template.supportsWrapping() && template.isApplicable(file, offset)) {
         result.add(template);
       }
     }
