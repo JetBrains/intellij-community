@@ -38,9 +38,8 @@ public interface XValueNode extends Obsolescent {
   /**
    * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(String, javax.swing.Icon, String, String, boolean)}
    * method and call this method to provide full value.
-   * This will add a link to the node and show <code>fullValue</code> text if a user click on that link.
-   * @param fullValue full text of the value. Will be shown in popup window
-   * @param linkText text of the link. Will be appended to the node text
+   * This will add a link to the node and show popup with full value if an user clicks on that link.
+   * @param fullValueEvaluator will be used to obtain full text of the value
    */
-  void setFullValue(@NotNull String fullValue, @NotNull String linkText);
+  void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
 }
