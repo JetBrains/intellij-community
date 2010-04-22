@@ -35,7 +35,12 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   public MultiMap<PsiElement, String> findConflicts(ChangeInfo info, Ref<UsageInfo[]> refUsages) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    if (info instanceof JavaChangeInfo) {
+      return new GrChangeSignatureConflictSearcher((JavaChangeInfo)info).findConflicts(refUsages);
+    }
+    else {
+      return new MultiMap<PsiElement, String>();
+    }
   }
 
   public boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages) {
