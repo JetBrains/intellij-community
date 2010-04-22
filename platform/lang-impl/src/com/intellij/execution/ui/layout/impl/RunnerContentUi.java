@@ -29,9 +29,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -50,7 +53,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener {
+public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider {
 
   @NonNls public static final String LAYOUT = "Runner.Layout";
   @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
@@ -1103,5 +1106,38 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myRunnerUi;
   }
 
+  public SwitchTarget getCurrentTarget() {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null) return myTabs.getCurrentTarget();
 
+    GridImpl grid = getSelectedGrid();
+    if (grid.getContents().size() <= 1) return myTabs.getCurrentTarget();
+
+    SwitchTarget cell = grid.getCellFor(owner);
+
+    return cell != null ? cell : myTabs.getCurrentTarget();
+  }
+
+  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+    List<SwitchTarget> result = new ArrayList<SwitchTarget>();
+
+    result.addAll(myTabs.getTargets(true));
+    result.addAll(getSelectedGrid().getTargets(onlyVisible));
+
+    return result;
+  }
+
+  private class LayoutTarget implements SwitchTarget {
+    public ActionCallback switchTo(boolean requestFocus) {
+      return null;
+    }
+
+    public boolean isVisible() {
+      return false;
+    }
+
+    public RelativeRectangle getRectangle() {
+      return null;
+    }
+  }
 }

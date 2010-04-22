@@ -40,12 +40,7 @@ public abstract class SwitchAction extends AnAction implements DumbAware {
   }
 
   private SwitchProvider getProvider(AnActionEvent e) {
-    return new SwitchProvider() {
-      public SwitchTarget[] getTargets() {
-        return new SwitchTarget[0];
-      }
-    };
-    //return e.getData(SwitchProvider.KEY);
+    return e.getData(SwitchProvider.KEY);
   }
 
   protected abstract void move(SwitchingSession session);

@@ -15,5 +15,14 @@
  */
 package com.intellij.ui.switcher;
 
-public class SwitchTarget {
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.ui.awt.RelativeRectangle;
+
+public interface SwitchTarget {
+
+  ActionCallback switchTo(boolean requestFocus);
+
+  boolean isVisible();
+  RelativeRectangle getRectangle();
+
 }

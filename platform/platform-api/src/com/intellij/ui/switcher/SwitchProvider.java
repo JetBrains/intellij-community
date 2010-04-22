@@ -17,10 +17,16 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.actionSystem.DataKey;
 
+import javax.swing.*;
+import java.util.List;
+
 public interface SwitchProvider {
 
   DataKey<SwitchProvider> KEY = DataKey.create("SwitchProvider");
 
-  SwitchTarget[] getTargets();
+  List<SwitchTarget> getTargets(boolean onlyVisible);
+  SwitchTarget getCurrentTarget();
+
+  JComponent getComponent();
 
 }

@@ -26,6 +26,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -222,6 +224,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
     return getCellFor(content).isMinimized(content);
   }
 
+
   static class Placeholder extends Wrapper implements NullableComponent {
 
     private JComponent myContent;
@@ -402,5 +405,31 @@ public class GridImpl extends Wrapper implements Grid, Disposable, CellTransform
 
   public String getSessionName() {
     return mySessionName;
+  }
+  public SwitchTarget getCellFor(Component c) {
+    Component eachParent = c;
+    while (eachParent != null) {
+      for (GridCellImpl eachCell : myContent2Cell.values()) {
+        if (eachCell.contains(eachParent)) {
+          return eachCell.getTargetForSelection();
+        }
+      }
+
+      eachParent = eachParent.getParent();
+    }
+
+    return null;
+  }
+
+
+  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+    Collection<GridCellImpl> cells = myPlaceInGrid2Cell.values();
+    ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
+    for (GridCellImpl each : cells) {
+      if (!each.isDetached()) {
+        result.addAll(each.getTargets(onlyVisible));
+      }
+    }
+    return result;
   }
 }
