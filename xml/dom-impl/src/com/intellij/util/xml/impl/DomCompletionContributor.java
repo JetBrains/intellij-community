@@ -26,8 +26,8 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xml.util.XmlUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.util.XmlUtil;
 
 /**
  * @author peter
@@ -65,7 +65,7 @@ public class DomCompletionContributor extends CompletionContributor{
       final XmlTag simpleContent = XmlUtil.getSchemaSimpleContent((XmlTag)element);
       if (simpleContent != null && XmlUtil.collectEnumerationValues(simpleContent, new HashSet<String>())) {
         return true;
-      }
+      }                  
     }
     if (element instanceof XmlAttributeValue) {
       final PsiElement parent = element.getParent();

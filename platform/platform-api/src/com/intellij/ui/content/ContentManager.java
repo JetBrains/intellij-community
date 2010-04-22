@@ -16,9 +16,9 @@
 package com.intellij.ui.content;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +36,7 @@ public interface ContentManager extends Disposable {
   void addContent(@NotNull Content content, Object constraints);
 
   boolean removeContent(@NotNull Content content, final boolean dispose);
+  ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean trackFocus, boolean forcedFocus);
 
   void setSelectedContent(@NotNull Content content);
   ActionCallback setSelectedContentCB(@NotNull Content content);

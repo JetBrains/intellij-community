@@ -673,14 +673,14 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return mySchemesManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, char shortcutChar, boolean hasArgument) {
+  public List<TemplateImpl> collectMatchingCandidates(String key, Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
     List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) {
         continue;
       }
-      if (getShortcutChar(template) != shortcutChar) {
+      if (shortcutChar != null && getShortcutChar(template) != shortcutChar) {
         continue;
       }
       if (template.isSelectionTemplate()) {

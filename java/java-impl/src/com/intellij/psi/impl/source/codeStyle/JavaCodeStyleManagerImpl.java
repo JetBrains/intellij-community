@@ -578,9 +578,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               || FIND_PREFIX.equals(firstWord)
               || CREATE_PREFIX.equals(firstWord)) {
             final String propertyName = methodName.substring(firstWord.length());
-            String[] names = getSuggestionsByName(propertyName, variableKind, false);
+            final String[] names = getSuggestionsByName(propertyName, variableKind, false);
             return new NamesByExprInfo(propertyName, names);
           }
+        } else {
+          return new NamesByExprInfo(methodName, getSuggestionsByName(methodName, variableKind, false));
         }
       }
     }

@@ -25,6 +25,7 @@ import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
+import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -251,32 +252,40 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
 
       public void run() {
+        invokeAndWait(new Runnable() {
+          public void run() {
+            isUpdating = true;
+            updateActions();
+            myDiffView.startUpdating();
+          }
+        });
+
+        Runnable apply = null;
         try {
-          invokeAndWait(new Runnable() {
-            public void run() {
-              isUpdating = true;
-              updateActions();
-              myDiffView.startUpdating();
-            }
-          });
-
-          final Runnable apply = update.compute();
-
-          invokeAndWait(new Runnable() {
-            public void run() {
-              if (isDisposed()) return;
-
-              isUpdating = false;
-              if (apply != null) apply.run();
-              updateActions();
-              myDiffView.finishUpdating();
-            }
-          });
+          apply = update.compute();
         }
         catch (Exception e) {
-          //e.printStackTrace();
-          throw new RuntimeException(e);
+          LocalHistoryLog.LOG.error(e);
         }
+
+        final Runnable finalApply = apply;
+        invokeAndWait(new Runnable() {
+          public void run() {
+            if (isDisposed()) return;
+
+            isUpdating = false;
+            if (finalApply != null) {
+              try {
+                finalApply.run();
+              }
+              catch (Exception e) {
+                LocalHistoryLog.LOG.error(e);
+              }
+            }
+            updateActions();
+            myDiffView.finishUpdating();
+          }
+        });
       }
     });
   }

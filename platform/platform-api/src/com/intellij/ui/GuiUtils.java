@@ -187,7 +187,7 @@ public class GuiUtils {
   }
 
   public static String getTextWithoutMnemonicEscaping(String text) {
-    return StringUtil.replace(text, String.valueOf(UIUtil.MNEMONIC), "");
+    return text.replaceAll("&", "");
   }
 
   public static char getDisplayedMnemonic(String text) {

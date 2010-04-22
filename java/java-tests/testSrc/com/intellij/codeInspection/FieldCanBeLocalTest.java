@@ -29,4 +29,5 @@ public class FieldCanBeLocalTest extends InspectionTestCase {
   public void testStateField() throws Exception { doTest(); }
   public void testLocalStateVar2InnerClass() throws Exception { doTest(); }
   public void testNotConstantInitializer() throws Exception {doTest();}
+  public void testInnerClassFieldInitializer() throws Exception {doTest();}
 }

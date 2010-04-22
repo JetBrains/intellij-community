@@ -52,7 +52,9 @@ public class ProgramRunnerUtil {
 
   public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettingsImpl configuration, @NotNull final Executor executor, @NotNull final DataContext dataContext) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
-    LOG.assertTrue(runner != null, "Runner MUST not be null!");
+    if (runner == null) {
+      LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration);
+    }
 
     if (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
       final boolean result = RunDialog.editConfiguration(project, configuration, "Edit configuration", executor.getActionName(), executor.getIcon());

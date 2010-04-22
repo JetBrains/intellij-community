@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -325,7 +326,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       final BaseLabel tab = (BaseLabel)c;
       if (tab.getContent() != null) {
         if (myManager.canCloseContents() && tab.getContent().isCloseable()) {
-          myManager.removeContent(tab.getContent(), true);
+          myManager.removeContent(tab.getContent(), true, true, true);
         } else {
           if (myManager.getContentCount() == 1) {
             hideWindow(e);
@@ -351,7 +352,42 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) return myWindow;
 
+    if (CloseAction.CloseTarget.KEY.is(dataId)) {
+      return computeCloseTarget();
+    }
+
     return null;
+  }
+
+
+  private CloseAction.CloseTarget computeCloseTarget() {
+    if (myManager.canCloseContents()) {
+      Content selected = myManager.getSelectedContent();
+      if (selected != null && selected.isCloseable()) {
+        return new CloseContentTarget(selected);
+      }
+    }
+
+    return new HideToolwindowTarget();
+  }
+
+  private class HideToolwindowTarget implements CloseAction.CloseTarget {
+    public void close() {
+      myWindow.fireHidden();
+    }
+  }
+
+  private class CloseContentTarget implements CloseAction.CloseTarget {
+
+    private Content myContent;
+
+    private CloseContentTarget(Content content) {
+      myContent = content;
+    }
+
+    public void close() {
+      myManager.removeContent(myContent, true, true, true);
+    }
   }
 
   public void dispose() {

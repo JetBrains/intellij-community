@@ -49,14 +49,14 @@ public class UnusedDeclarationTest extends InspectionTestCase {
     myTool.ADD_NONJAVA_TO_ENTRIES = old;
   }
 
-  public void testUIFormUsage() throws Exception {
+  public void testFormUsage() throws Exception {
     boolean old = myTool.ADD_NONJAVA_TO_ENTRIES;
     myTool.ADD_NONJAVA_TO_ENTRIES = false;
     doTest();
     myTool.ADD_NONJAVA_TO_ENTRIES = old;
   }
 
-  public void testSerializable() throws Exception {
+  public void testSserializable() throws Exception {
     doTest();
   }
 

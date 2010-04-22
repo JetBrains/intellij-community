@@ -32,7 +32,7 @@
 
 #define DEFAULT_SUBDIR_COUNT 5
 
-#define CHECK_NULL(p) if (p == NULL)  { syslog(LOG_ERR, "out of memory"); return ERR_ABORT; }
+#define CHECK_NULL(p) if (p == NULL)  { userlog(LOG_ERR, "out of memory"); return ERR_ABORT; }
 
 typedef struct __watch_node {
   char* name;
@@ -55,13 +55,13 @@ static char event_buf[EVENT_BUF_LEN];
 static void read_watch_descriptors_count() {
   FILE* f = fopen(WATCH_COUNT_NAME, "r");
   if (f == NULL) {
-    syslog(LOG_ERR, "can't open %s: %s", WATCH_COUNT_NAME, strerror(errno));
+    userlog(LOG_ERR, "can't open %s: %s", WATCH_COUNT_NAME, strerror(errno));
     return;
   }
 
   char* str = read_line(f);
   if (str == NULL) {
-    syslog(LOG_ERR, "can't read from %s", WATCH_COUNT_NAME);
+    userlog(LOG_ERR, "can't read from %s", WATCH_COUNT_NAME);
   }
   else {
     watch_count = atoi(str);
@@ -74,10 +74,10 @@ static void read_watch_descriptors_count() {
 bool init_inotify() {
   inotify_fd = inotify_init();
   if (inotify_fd < 0) {
-    syslog(LOG_ERR, "inotify_init: %s", strerror(errno));
+    userlog(LOG_ERR, "inotify_init: %s", strerror(errno));
     return false;
   }
-  syslog(LOG_DEBUG, "inotify fd: %d", get_inotify_fd());
+  userlog(LOG_DEBUG, "inotify fd: %d", get_inotify_fd());
 
   read_watch_descriptors_count();
   if (watch_count <= 0) {
@@ -85,11 +85,11 @@ bool init_inotify() {
     inotify_fd = -1;
     return false;
   }
-  syslog(LOG_INFO, "inotify watch descriptors: %d", watch_count);
+  userlog(LOG_INFO, "inotify watch descriptors: %d", watch_count);
 
   watches = table_create(watch_count);
   if (watches == NULL) {
-    syslog(LOG_ERR, "out of memory");
+    userlog(LOG_ERR, "out of memory");
     close(inotify_fd);
     inotify_fd = -1;
     return false;
@@ -125,17 +125,17 @@ static int add_watch(const char* path, watch_node* parent) {
     if (errno == ENOSPC) {
       limit_reached = true;
     }
-    syslog(LOG_ERR, "inotify_add_watch(%s): %s", path, strerror(errno));
+    userlog(LOG_ERR, "inotify_add_watch(%s): %s", path, strerror(errno));
     return ERR_CONTINUE;
   }
   else {
-    syslog(LOG_DEBUG, "watching %s: %d", path, wd);
+    userlog(LOG_DEBUG, "watching %s: %d", path, wd);
   }
 
   watch_node* node = table_get(watches, wd);
   if (node != NULL) {
     if (node->wd != wd || strcmp(node->name, path) != 0) {
-      syslog(LOG_ERR, "table error: collision (new %d:%s, existing %d:%s)", wd, path, node->wd, node->name);
+      userlog(LOG_ERR, "table error: collision (new %d:%s, existing %d:%s)", wd, path, node->wd, node->name);
       return ERR_ABORT;
     }
 
@@ -160,7 +160,7 @@ static int add_watch(const char* path, watch_node* parent) {
   }
 
   if (table_put(watches, wd, node) == NULL) {
-    syslog(LOG_ERR, "table error: unable to put (%d:%s)", wd, path);
+    userlog(LOG_ERR, "table error: unable to put (%d:%s)", wd, path);
     return ERR_ABORT;
   }
 
@@ -174,10 +174,10 @@ static void rm_watch(int wd, bool update_parent) {
     return;
   }
 
-  syslog(LOG_DEBUG, "unwatching %s: %d (%p)", node->name, node->wd, node);
+  userlog(LOG_DEBUG, "unwatching %s: %d (%p)", node->name, node->wd, node);
 
   if (inotify_rm_watch(inotify_fd, node->wd) < 0) {
-    syslog(LOG_DEBUG, "inotify_rm_watch(%d:%s): %s", node->wd, node->name, strerror(errno));
+    userlog(LOG_DEBUG, "inotify_rm_watch(%d:%s): %s", node->wd, node->name, strerror(errno));
   }
 
   for (int i=0; i<array_size(node->kids); i++) {
@@ -221,7 +221,7 @@ static bool is_ignored(const char* path, array* ignores) {
       const char* ignore = array_get(ignores, i);
       int il = strlen(ignore);
       if (pl >= il && strncmp(path, ignore, il) == 0) {
-        syslog(LOG_DEBUG, "path %s is under unwatchable %s - ignoring", path, ignore);
+        userlog(LOG_DEBUG, "path %s is under unwatchable %s - ignoring", path, ignore);
         return true;
       }
     }
@@ -242,7 +242,7 @@ static int walk_tree(const char* path, watch_node* parent, array* ignores) {
     else if (errno == ENOTDIR) {  // flat root
       return add_watch(path, parent);
     }
-    syslog(LOG_ERR, "opendir(%s): %s", path, strerror(errno));
+    userlog(LOG_ERR, "opendir(%s): %s", path, strerror(errno));
     return ERR_CONTINUE;
   }
 
@@ -299,7 +299,7 @@ static bool process_inotify_event(struct inotify_event* event) {
     return true;
   }
 
-  syslog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s",
+  userlog(LOG_DEBUG, "inotify: wd=%d mask=%d dir=%d name=%s",
       event->wd, event->mask & (~IN_ISDIR), (event->mask & IN_ISDIR) != 0, node->name);
 
   char path[PATH_MAX];
@@ -339,7 +339,7 @@ static bool process_inotify_event(struct inotify_event* event) {
 bool process_inotify_input() {
   size_t len = read(inotify_fd, event_buf, EVENT_BUF_LEN);
   if (len < 0) {
-    syslog(LOG_ERR, "read: %s", strerror(errno));
+    userlog(LOG_ERR, "read: %s", strerror(errno));
     return false;
   }
 
@@ -352,7 +352,7 @@ bool process_inotify_input() {
       continue;
     }
     if (event->mask & IN_Q_OVERFLOW) {
-      syslog(LOG_ERR, "event queue overflow");
+      userlog(LOG_ERR, "event queue overflow");
       continue;
     }
 

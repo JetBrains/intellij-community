@@ -86,8 +86,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.disableToolbar(!enableToolbar);
     if (enableToolbar) myPanel.resetToolbar();
     myOwnerWindow = owner;
-    myLeftSide = new DiffSideView(DiffBundle.message("diff.left.side.default.title"), this);
-    myRightSide = new DiffSideView(DiffBundle.message("diff.right.side.default.title"), this);
+    myLeftSide = new DiffSideView("", this);
+    myRightSide = new DiffSideView("", this);
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
 

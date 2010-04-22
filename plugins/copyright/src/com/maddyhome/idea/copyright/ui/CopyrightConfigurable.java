@@ -16,6 +16,8 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -66,6 +68,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   }
 
   public JComponent createOptionsPanel() {
+    myCopyrightPane.setFont(EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN));
     myValidateButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         try {

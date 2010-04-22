@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -315,10 +317,7 @@ public class JavaDocInfoGenerator {
 
     PsiDocComment comment = getDocComment(aClass);
     if (comment != null) {
-      generateDescription(buffer, comment);
-      generateDeprecatedSection(buffer, comment);
-      generateSinceSection(buffer, comment);
-      generateSeeAlsoSection(buffer, comment);
+      generateCommonSection(buffer, comment);
       generateTypeParametersSection(buffer, aClass);
     }
     generateEpilogue(buffer);
@@ -418,10 +417,7 @@ public class JavaDocInfoGenerator {
 
     PsiDocComment comment = getDocComment(field);
     if (comment != null) {
-      generateDescription(buffer, comment);
-      generateDeprecatedSection(buffer, comment);
-      generateSinceSection(buffer, comment);
-      generateSeeAlsoSection(buffer, comment);
+      generateCommonSection(buffer, comment);
     }
 
     generateEpilogue(buffer);
@@ -463,12 +459,36 @@ public class JavaDocInfoGenerator {
 
   private void generatePackageJavaDoc(final StringBuilder buffer, final PsiPackage psiPackage) {
     for(PsiDirectory directory: psiPackage.getDirectories()) {
+      final PsiFile packageInfoFile = directory.findFile("package-info.java");
+      if (packageInfoFile != null) {
+        final ASTNode node = packageInfoFile.getNode();
+        if (node != null) {
+          final ASTNode docCommentNode = node.findChildByType(JavaDocElementType.DOC_COMMENT);
+          if (docCommentNode != null) {
+            final PsiDocComment docComment = (PsiDocComment)docCommentNode.getPsi();
+
+            generatePrologue(buffer);
+
+            generateCommonSection(buffer, docComment);
+
+            generateEpilogue(buffer);
+            break;
+          }
+        }
+      }
       PsiFile packageHtmlFile = directory.findFile("package.html");
       if (packageHtmlFile != null) {
         generatePackageHtmlJavaDoc(buffer, packageHtmlFile);
         break;
       }
     }
+  }
+
+  private void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
+    generateDescription(buffer, docComment);
+    generateDeprecatedSection(buffer, docComment);
+    generateSinceSection(buffer, docComment);
+    generateSeeAlsoSection(buffer, docComment);
   }
 
   private void generatePackageHtmlJavaDoc(final StringBuilder buffer, final PsiFile packageHtmlFile) {
@@ -502,9 +522,7 @@ public class JavaDocInfoGenerator {
 
     generatePrologue(buffer);
 
-    generateDescription(buffer, docComment);
-    generateSinceSection(buffer, docComment);
-    generateSeeAlsoSection(buffer, docComment);
+    generateCommonSection(buffer, docComment);
 
     generateEpilogue(buffer);
   }

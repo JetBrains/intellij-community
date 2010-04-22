@@ -22,8 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
@@ -87,6 +87,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
     if (originalFileType == StdFileTypes.JAVA && c == '{') {
       int offset = editor.getCaretModel().getOffset();
+      if (offset == 0) {
+        return Result.CONTINUE;
+      }
+
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
       while (iterator.getTokenType() == TokenType.WHITE_SPACE) {
         iterator.retreat();

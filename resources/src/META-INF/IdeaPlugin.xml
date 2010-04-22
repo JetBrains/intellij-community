@@ -120,9 +120,6 @@
     <extensionPoint name="testFramework"
                     interface="com.intellij.codeInsight.TestFramework"/>
 
-    <extensionPoint name="semContributor"
-                    interface="com.intellij.semantic.SemContributor" area="IDEA_PROJECT"/>
-
     <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
 
     <!--new project wizard-->
@@ -1022,6 +1019,7 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticParametersRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory"/>
+    <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.AutomaticTestRenamerFactory"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.naming.ConstructorParameterOnFieldRenameRenamerFactory"/>
 
     <nameSuggestionProvider implementation="com.intellij.refactoring.rename.JavaNameSuggestionProvider" id="java"/>

@@ -1,5 +1,6 @@
-import java.util.*;
 class A1<T> {
+  A1(){}
+
   public static void main(String[] args) {
 
     Callable<Object> callable = new Callable<Object>() {

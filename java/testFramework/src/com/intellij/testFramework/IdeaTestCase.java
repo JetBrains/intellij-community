@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NonNls;
  * @author mike
  */
 @NonNls public abstract class IdeaTestCase extends PlatformTestCase {
-  private static boolean ourPlatformPrefixInitialized;
-
   protected IdeaTestCase() {
     initPlatformPrefix();
   }

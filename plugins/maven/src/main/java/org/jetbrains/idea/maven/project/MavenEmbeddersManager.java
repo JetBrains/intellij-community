@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.SoftValueHashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
@@ -61,13 +60,13 @@ public class MavenEmbeddersManager {
   public synchronized MavenEmbedderWrapper getEmbedder(EmbedderKind kind) {
     MavenEmbedderWrapper result = myPool.get(kind);
     if (result == null) {
-      result = MavenEmbedderFactory.createEmbedder(myGeneralSettings);
+      result = MavenEmbedderWrapper.create(myGeneralSettings);
       myPool.put(kind, result);
     }
 
     if (myEmbeddersInUse.contains(result)) {
       MavenLog.LOG.warn("embedder " + kind + " is already used");
-      return MavenEmbedderFactory.createEmbedder(myGeneralSettings);
+      return MavenEmbedderWrapper.create(myGeneralSettings);
     }
 
     myEmbeddersInUse.add(result);

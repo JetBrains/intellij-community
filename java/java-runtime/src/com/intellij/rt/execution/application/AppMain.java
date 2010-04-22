@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -105,6 +106,10 @@ public class AppMain {
       parms[j - 1] = args[j];
     }
     Method m = Class.forName(mainClass).getMethod("main", new Class[]{parms.getClass()});
+    if (!Modifier.isStatic(m.getModifiers())) {
+      System.err.println("main method should be static");
+      return;
+    }
     try {
       ensureAccess(m);
       m.invoke(null, new Object[]{parms});

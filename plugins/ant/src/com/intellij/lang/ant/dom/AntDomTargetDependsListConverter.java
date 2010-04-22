@@ -54,7 +54,7 @@ public class AntDomTargetDependsListConverter extends DelimitedListConverter<Ant
     if (antDomTarget != null) {
       final GenericAttributeValue<String> name = antDomTarget.getName();
       if (name != null) {
-        return name.getValue();
+        return name.getStringValue();
       }
     }
     return null;
@@ -72,14 +72,14 @@ public class AntDomTargetDependsListConverter extends DelimitedListConverter<Ant
         final List<AntDomTarget> domTargetList = existingDeps.getValue();
         if (domTargetList != null && domTargetList.size() > 0) {
           for (AntDomTarget target : domTargetList) {
-            existingTargetNames.add(target.getName().getValue());
+            existingTargetNames.add(target.getName().getStringValue());
           }
         }
       }
       final List<Object> result = new ArrayList<Object>();
       final List<AntDomTarget> allTargets = project.getDeclaredTargets();
       for (AntDomTarget target : allTargets) {
-        final String targetName = target.getName().getValue();
+        final String targetName = target.getName().getStringValue();
         if (targetName != null && !existingTargetNames.contains(targetName)) {
           result.add(LookupElementBuilder.create(target, targetName));
         }

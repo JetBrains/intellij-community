@@ -23,7 +23,6 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,8 +41,8 @@ public class DiffStatusBar extends JPanel {
 
   private final Collection<JComponent> myLabels = new ArrayList<JComponent>();
 
-  private final JLabel myTextLabel = new JLabel("", JLabel.CENTER);
-  private static final int COMP_HEIGHT = 40;
+  private final JLabel myTextLabel = new JLabel("");
+  private static final int COMP_HEIGHT = 30;
   private EditorColorsScheme myColorScheme = null;
 
   public <T extends LegendTypeDescriptor> DiffStatusBar(List<T> types) {
@@ -51,7 +50,6 @@ public class DiffStatusBar extends JPanel {
       addDiffType(differenceType);
     }
     initGui();
-    setBorder(IdeBorderFactory.createSimpleBorder());
   }
 
   private void addDiffType(final LegendTypeDescriptor diffType){
@@ -112,29 +110,29 @@ public class DiffStatusBar extends JPanel {
   }
 
   private void initGui() {
-    setLayout(new GridBagLayout());
-    Border emptyBorder = BorderFactory.createEmptyBorder(3, 20, 5, 20);
-    setBorder(emptyBorder);
+    JComponent filler = new JComponent() {
+      @Override
+      public Dimension getPreferredSize() {
+        return myTextLabel.getPreferredSize();
+      }
+    };
+    setLayout(new BorderLayout());
+    setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createSimpleBorder(),
+                                                 BorderFactory.createEmptyBorder(3, 20, 3, 20)));
 
-    GridBagConstraints c = new GridBagConstraints();
-    c.gridy = 0;
-    c.gridx = 0;
-    c.gridwidth = 0;
-
-    add(myTextLabel, c);
+    add(myTextLabel, BorderLayout.WEST);
+    Box box = Box.createHorizontalBox();
+    box.add(Box.createHorizontalGlue());
     JPanel panel = new JPanel(new GridLayout(1, myLabels.size(), 0, 0));
     for (final JComponent myLabel : myLabels) {
       panel.add(myLabel);
     }
     panel.setMaximumSize(panel.getPreferredSize());
+    box.add(panel);
+    box.add(Box.createHorizontalGlue());
+    add(box, BorderLayout.CENTER);
 
-    c.gridx = 1;
-    c.gridwidth = 1;
-    add(panel, c);
-
-    c.gridx = 2;
-    c.gridwidth = 0;
-    add(Box.createHorizontalGlue(), c);
+    add(filler, BorderLayout.EAST);
   }
 
   public void setColorScheme(EditorColorsScheme colorScheme) {

@@ -64,7 +64,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   public void undoTransparentActionFinished() {
   }
 
-  public void startAction() {
+  public synchronized void startAction() {
     // save document in current or new changeset and close it
     if (myChangeSetDepth == 0) {
       myVcs.beginChangeSet();
@@ -80,19 +80,19 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
     beginChangeSet();
   }
 
-  public void finishAction(String name) {
+  public synchronized void finishAction(String name) {
     myGateway.registerUnsavedDocuments(myVcs);
     endChangeSet(name);
   }
 
-  public void beginChangeSet() {
+  private synchronized void beginChangeSet() {
     myChangeSetDepth++;
     if (myChangeSetDepth == 1) {
       myVcs.beginChangeSet();
     }
   }
 
-  public void endChangeSet(String name) {
+  private synchronized void endChangeSet(String name) {
     LocalHistoryLog.LOG.assertTrue(myChangeSetDepth > 0, "changeset depth is invalid");
 
     myChangeSetDepth--;

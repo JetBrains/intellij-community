@@ -15,19 +15,22 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.openapi.application.ApplicationManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author nik
@@ -36,8 +39,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private String myName;
   private String myType;
   private String myValue;
+  private String myFullValue;
   private String mySeparator;
   private boolean myChanged;
+  private String myLinkText;
 
   public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, final XValue value) {
     super(tree, parent, value);
@@ -69,6 +74,16 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
+  public void setFullValue(@NotNull final String fullValue, @NotNull final String linkText) {
+    DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
+      public void run() {
+        myLinkText = linkText;
+        myFullValue = fullValue;
+        fireNodeChanged();
+      }
+    });
+  }
+
   private void updateText() {
     myText.clear();
     myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
@@ -76,7 +91,17 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (myType != null) {
       myText.append("{" + myType + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-    myText.append(myValue, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+
+    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+    String value;
+    try {
+      StringUtil.escapeStringCharacters(myValue.length(), myValue, null, builder);
+      value = builder.toString();
+    }
+    finally {
+      StringBuilderSpinAllocator.dispose(builder);
+    }
+    myText.append(value, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   public void markChanged() {
@@ -95,8 +120,24 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return myName;
   }
 
+  @Override
+  public XDebuggerNodeLink getLink() {
+    if (myFullValue != null) {
+      return new XDebuggerNodeLink(myLinkText) {
+        @Override
+        public void onClick(MouseEvent event) {
+          DebuggerUIUtil.showValuePopup(myFullValue, event, myTree.getProject());
+        }
+      };
+    }
+    return null;
+  }
+
   @Nullable
   public String getValue() {
+    if (myFullValue != null) {
+      return myFullValue;
+    }
     return myValue;
   }
 

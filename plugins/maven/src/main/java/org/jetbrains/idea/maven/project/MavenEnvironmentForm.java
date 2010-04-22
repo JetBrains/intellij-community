@@ -17,12 +17,12 @@
 
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderUtilEx;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -46,7 +46,7 @@ public class MavenEnvironmentForm {
     mavenHomeOverrider = new PathOverrider(mavenHomeComponent, mavenHomeOverrideCheckBox, new PathOverrider.PathProvider() {
       @Nullable
       protected File getFile() {
-        return MavenEmbedderFactory.resolveMavenHomeDirectory("");
+        return MavenEmbedderUtilEx.resolveMavenHomeDirectory("");
       }
     });
 
@@ -54,7 +54,7 @@ public class MavenEnvironmentForm {
       new PathOverrider(mavenSettingsFileComponent, mavenSettingsFileOverrideCheckBox, new PathOverrider.PathProvider() {
         @Nullable
         protected File getFile() {
-          return MavenEmbedderFactory.resolveUserSettingsFile("");
+          return MavenEmbedderUtilEx.resolveUserSettingsFile("");
         }
       });
 
@@ -62,7 +62,7 @@ public class MavenEnvironmentForm {
       new PathOverrider(localRepositoryComponent, localRepositoryOverrideCheckBox, new PathOverrider.PathProvider() {
         @Nullable
         protected File getFile() {
-          return MavenEmbedderFactory.resolveLocalRepository(mavenHomeOverrider.getText(),
+          return MavenEmbedderUtilEx.resolveLocalRepository(mavenHomeOverrider.getText(),
                                                              mavenSettingsFileOverrider.getText(),
                                                              "");
         }

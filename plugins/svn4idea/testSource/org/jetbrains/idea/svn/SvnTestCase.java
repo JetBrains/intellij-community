@@ -22,6 +22,7 @@ import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
+import com.intellij.util.io.ZipUtil;
 import org.junit.After;
 import org.junit.Before;
 
@@ -57,7 +58,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
     }
     myClientBinaryPath = new File(pluginRoot, "testData/svn/bin");
 
-    verify(runSvnAdmin("create", svnRoot.getPath()));
+    ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), svnRoot, null);
 
     myWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
     myWcRoot.mkdir();
@@ -95,10 +96,6 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
       myTempDirFixture.tearDown();
       myTempDirFixture = null;
     }
-  }
-
-  protected ProcessOutput runSvnAdmin(String... commandLine) throws IOException {
-    return runClient("svnadmin", null, null, commandLine);
   }
 
   protected ProcessOutput runSvn(String... commandLine) throws IOException {

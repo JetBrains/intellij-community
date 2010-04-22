@@ -87,7 +87,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   public String getEnteredName() {
-    return myNameField.getEnteredName();
+    return myNameField.getEnteredName().trim();
   }
 
   @NotNull
@@ -184,7 +184,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     List<MavenDomProjectModel> projects = new ArrayList<MavenDomProjectModel>();
 
     projects.add(myMavenDomProjectModel);
-    projects.addAll(MavenDomProjectProcessorUtils.collectParentProjects(myMavenDomProjectModel, myMavenDomProjectModel.getManager().getProject()));
+    projects.addAll(MavenDomProjectProcessorUtils.collectParentProjects(myMavenDomProjectModel));
 
     return projects;
   }
@@ -196,7 +196,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private static boolean isContainWrongSymbols(@NotNull String text) {
-    return text.length() == 0 || StringUtil.containsAnyChar(text, "\t ;*'\"\\/,()^&<>={}[]") ;
+    return text.length() == 0 || Character.isDigit(text.charAt(0)) || StringUtil.containsAnyChar(text, "\t ;*'\"\\/,()^&<>={}[]") ;
   }
 
   private boolean isPropertyExist(@NotNull String text) {
@@ -208,7 +208,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
       if (isPropertyExist(text, child)) return true;
     }
 
-    for (MavenDomProjectModel parent : MavenDomProjectProcessorUtils.collectParentProjects(project, project.getManager().getProject())) {
+    for (MavenDomProjectModel parent : MavenDomProjectProcessorUtils.collectParentProjects(project)) {
       if (isPropertyExist(text, parent)) return true;
     }
     return false;  

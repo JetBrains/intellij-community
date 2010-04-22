@@ -20,7 +20,6 @@ import com.intellij.history.core.changes.*;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
-import com.intellij.history.core.tree.RootEntry;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -28,13 +27,14 @@ import java.io.IOException;
 
 public class StreamUtil {
   public static Entry readEntry(DataInput in) throws IOException {
-    switch (in.readInt()) {
+    int type = in.readInt();
+    switch (type) {
       case 0:
         return new FileEntry(in, true);
       case 1:
         return new DirectoryEntry(in, true);
     }
-    throw new IOException();
+    throw new IOException("unexpected entry type: " + type);
   }
 
   public static void writeEntry(DataOutput out, Entry e) throws IOException {
@@ -43,6 +43,8 @@ public class StreamUtil {
     Class c = e.getClass();
     if (c.equals(FileEntry.class)) id = 0;
     if (c.equals(DirectoryEntry.class)) id = 1;
+
+    if (id == -1) throw new IOException("unexpected entry type: " + c);
 
     out.writeInt(id);
     e.write(out);

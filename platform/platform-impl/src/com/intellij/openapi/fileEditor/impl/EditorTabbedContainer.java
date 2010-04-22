@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -28,8 +29,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -58,7 +59,7 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class EditorTabbedContainer implements Disposable {
+final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
   private final JBTabs myTabs;
@@ -284,7 +285,7 @@ final class EditorTabbedContainer implements Disposable {
 
     public CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;
-      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_EDITOR), c);
+      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c);
     }
 
     @Override
@@ -327,7 +328,29 @@ final class EditorTabbedContainer implements Disposable {
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
+
+      if (CloseAction.CloseTarget.KEY.is(dataId)) {
+        TabInfo selected = myTabs.getSelectedInfo();
+        if (selected != null) {
+          return EditorTabbedContainer.this;
+        }
+      }
+
       return null;
+    }
+  }
+
+  public void close() {
+    TabInfo selected = myTabs.getSelectedInfo();
+    if (selected == null) return;
+
+    VirtualFile file = (VirtualFile)selected.getObject();
+    final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
+    EditorWindow wnd = mgr.getCurrentWindow();
+    if (wnd != null) {
+      if (wnd.findFileComposite(file) != null) {
+        mgr.closeFile(file, wnd);
+      }
     }
   }
 

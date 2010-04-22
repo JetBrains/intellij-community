@@ -35,7 +35,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -54,8 +54,8 @@ import static org.jetbrains.idea.maven.project.ProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/images/error.png");
-  private static final Collection<String> BASIC_PHASES = MavenEmbedderFactory.getBasicPhasesList();
-  private static final Collection<String> PHASES = MavenEmbedderFactory.getPhasesList();
+  private static final Collection<String> BASIC_PHASES = MavenEmbedderWrapper.BASIC_PHASES;
+  private static final Collection<String> PHASES = MavenEmbedderWrapper.PHASES;
 
   private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = new Comparator<MavenSimpleNode>() {
     public int compare(MavenSimpleNode o1, MavenSimpleNode o2) {
@@ -992,6 +992,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         }
       }
 
+      sort(myGoalNodes);
       updateFrom(this);
       childrenChanged();
     }
@@ -1031,6 +1032,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     protected void updateChildren(List<MavenArtifactNode> children, MavenProject mavenProject) {
       List<DependencyNode> newNodes = new ArrayList<DependencyNode>(children.size());
       for (MavenArtifactNode each : children) {
+        if (each.getState() != MavenArtifactNode.State.ADDED) continue;
+        
         DependencyNode newNode = findOrCreateNodeFor(each, mavenProject);
         newNodes.add(newNode);
         newNode.updateChildren(each.getDependencies(), mavenProject);

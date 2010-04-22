@@ -43,9 +43,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -257,6 +255,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setTitle(String title) {
     this.myTitle = title;
+  }
+
+  public void addToHistory(final String text, final TextAttributes attributes) {
+    printToHistory(text, attributes);
   }
 
   public void printToHistory(final String text, final TextAttributes attributes) {

@@ -37,6 +37,7 @@ import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 
 public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
@@ -226,7 +227,4 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     return true;
   }
 
-  protected boolean isStaticField() {
-    return true;
-  }
 }

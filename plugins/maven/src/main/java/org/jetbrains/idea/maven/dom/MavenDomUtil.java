@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -351,7 +350,7 @@ public class MavenDomUtil {
 
 
   @NotNull
-  private static MavenDomDependency createMavenDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
+  public static MavenDomDependency createMavenDomDependency(@NotNull MavenDomProjectModel model, @Nullable Editor editor) {
     MavenDomDependencies dependencies = model.getDependencies();
 
     int index = getCollectionIndex(dependencies, editor);

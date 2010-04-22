@@ -31,8 +31,6 @@ import org.jetbrains.idea.maven.utils.MavenConstants;
 import java.io.File;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.jetbrains.idea.maven.project.MavenId.append;
 
@@ -131,6 +129,10 @@ public class MavenArtifact implements Serializable {
 
   public String getScope() {
     return myScope;
+  }
+
+  public void setScope(String scope) {
+    myScope = scope;
   }
 
   public boolean isOptional() {

@@ -197,7 +197,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiExpression qualifier = expression.getQualifierExpression();
-        if (qualifier == null || qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null) {
+        if (qualifier == null || qualifier instanceof PsiThisExpression) {
           final PsiElement resolved = expression.resolve();
           if (resolved instanceof PsiField) {
             final PsiField field = (PsiField)resolved;

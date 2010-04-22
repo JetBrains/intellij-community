@@ -156,7 +156,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       return null;
     }
     int lineStartOffset = editor.getDocument().getLineStartOffset(caretPos.line);
-    int lineEndOffset = editor.getDocument().getLineEndOffset(caretPos.line);
+    int lineEndOffset = lineStartOffset + caretPos.column;
 
     CharSequence charSeq = editor.getDocument().getCharsSequence();
     // smart backspace is activated only if all characters in the caret line

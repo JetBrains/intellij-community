@@ -40,12 +40,11 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.utils.MavenRehighlighter;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenRehighlighter;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -105,7 +104,7 @@ public class MavenIndicesManager implements ApplicationComponent {
     if (myIndices != null) return;
 
     MavenGeneralSettings defaultSettings = new MavenGeneralSettings();
-    myEmbedder = MavenEmbedderFactory.createEmbedder(defaultSettings);
+    myEmbedder = MavenEmbedderWrapper.create(defaultSettings);
     myIndices = new MavenIndices(myEmbedder, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(null, Collections.singletonList(index), false);
@@ -267,7 +266,7 @@ public class MavenIndicesManager implements ApplicationComponent {
               protected void run(Result<MavenEmbedderWrapper> result) throws Throwable {
                 if (!projectOrNull.isDisposed()) {
                   MavenGeneralSettings settings = MavenProjectsManager.getInstance(projectOrNull).getGeneralSettings();
-                  result.setResult(MavenEmbedderFactory.createEmbedder(settings));
+                  result.setResult(MavenEmbedderWrapper.create(settings));
                 }
               }
             }.execute().getResultObject();

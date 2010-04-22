@@ -37,7 +37,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Project project) {
     if (SystemInfo.isMac && (System.getProperty("idea.use.native.mac.filechooser", Boolean.FALSE.toString()).equals(Boolean.TRUE.toString())
       || Registry.is("ide.use.native.mac.filechooser"))) {
-      return new MacFileChooserDialog(descriptor);
+      return new MacFileChooserDialog(descriptor, project);
     }
 
     return new FileChooserDialogImpl(descriptor, project);
@@ -46,7 +46,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   public FileChooserDialog createFileChooser(FileChooserDescriptor descriptor, Component parent) {
     if (SystemInfo.isMac && (System.getProperty("idea.use.native.mac.filechooser", Boolean.FALSE.toString()).equals(Boolean.TRUE.toString())
     || Registry.is("ide.use.native.mac.filechooser"))) {
-      return new MacFileChooserDialog(descriptor);
+      return new MacFileChooserDialog(descriptor, parent);
     }
 
     return new FileChooserDialogImpl(descriptor, parent);

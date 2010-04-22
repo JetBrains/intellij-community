@@ -56,6 +56,6 @@ public class AntDomTargetConverter extends ResolvingConverter<AntDomTarget>{
       return null;
     }
     final GenericAttributeValue<String> name = target.getName();
-    return name != null? name.getValue() : null;
+    return name != null? name.getStringValue() : null;
   }
 }

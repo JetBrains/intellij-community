@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.ref.SoftReference;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -91,6 +92,16 @@ public final class ReflectedProject {
     }
     catch (ProcessCanceledException e) {
       throw e;
+    }
+    catch (InvocationTargetException e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
+      else {
+        LOG.info(e);
+        myProject = null;
+      }
     }
     catch (Exception e) {
       LOG.info(e);

@@ -23,7 +23,8 @@ import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SeparatorWithText;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.commons.lang.time.DateUtils;
@@ -40,11 +41,11 @@ import java.util.*;
 import java.util.List;
 
 public class RevisionsList {
-  private final JTable table;
+  private final JBTable table;
 
   public RevisionsList(SelectionListener l) {
-    table = new Table();
-    table.setModel(new MyModel(Collections.<Revision>emptyList(), Collections.EMPTY_MAP)); //
+    table = new JBTable();
+    table.setModel(new MyModel(Collections.<Revision>emptyList(), Collections.EMPTY_MAP));
 
     table.setDefaultRenderer(Object.class, new MyCellRenderer());
     table.setTableHeader(null);
@@ -129,6 +130,9 @@ public class RevisionsList {
         table.getSelectionModel().addSelectionInterval(i, i);
       }
     }
+    if (table.getSelectionModel().isSelectionEmpty()) {
+      table.getSelectionModel().addSelectionInterval(0, 0);
+    }
   }
 
   public interface SelectionListener {
@@ -139,7 +143,7 @@ public class RevisionsList {
     TODAY(LocalHistoryBundle.message("revisions.table.period.today")),
     YESTERDAY(LocalHistoryBundle.message("revisions.table.period.yesterday")),
     OLDER(LocalHistoryBundle.message("revisions.table.period.older"));
-    
+
     private final String myDisplayString;
 
     private Period(String displayString) {
@@ -241,21 +245,25 @@ public class RevisionsList {
         myPeriodLabel.setCaption(p.getDisplayString());
       }
 
-      myBorder.set(table.getGridColor(), p != null, row == table.getModel().getRowCount() - 1);
+      myBorder.set(row == table.getModel().getRowCount() - 1);
 
       myDateLabel.setText(ensureString(FormatUtil.formatTimestamp(r.getTimestamp())));
-      myTitleLabel.setText(ensureString(labelsAndColor.titleText));
+      String text = ensureString(labelsAndColor.titleText);
+      if (r.getChangeSetName() != null) {
+        text = "<html><b>" + text + "</b></html>";
+      }
+      myTitleLabel.setText(text);
       myFilesNumberLabel.setText(ensureString(labelsAndColor.filesNumberText));
 
-      JComponent templ = (JComponent)myTemplate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      JComponent orig = (JComponent)myTemplate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-      Color bg = isSelected ? templ.getBackground() : labelsAndColor.color;
-      Color fg = isSelected ? templ.getForeground() : Color.GRAY;
+      Color bg = isSelected ? orig.getBackground() : labelsAndColor.color;
+      Color fg = isSelected ? orig.getForeground() : Color.GRAY;
       myItemPanel.setBackground(bg);
       myDateLabel.setForeground(fg);
       myFilesNumberLabel.setForeground(fg);
 
-      myTitleLabel.setForeground(templ.getForeground());
+      myTitleLabel.setForeground(orig.getForeground());
       myWrapperPanel.setBackground(table.getBackground());
 
       return myWrapperPanel;
@@ -304,26 +312,22 @@ public class RevisionsList {
     }
 
     private static class MyBorder extends EmptyBorder {
-      private Color myColor;
-      private boolean isFirstInGroup;
       private boolean isLast;
 
       private MyBorder() {
         super(2, 2, 2, 2);
       }
 
-      public void set(Color c, boolean isFirstInGroup, boolean isLast) {
-        myColor = c;
-        this.isFirstInGroup = isFirstInGroup;
+      public void set(boolean isLast) {
         this.isLast = isLast;
       }
 
       @Override
       public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        g.setColor(myColor);
-        if (!isFirstInGroup) {
-          g.drawLine(x, y, x + width, y);
-        }
+        g.setColor(UIUtil.getBorderSeparatorColor());
+        Graphics2D g2d = (Graphics2D)g;
+        g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, new float[]{1}, 1));
+        g.drawLine(x, y, x + width, y);
         if (isLast) {
           g.drawLine(x, y + height - 1, x + width, y + height - 1);
         }

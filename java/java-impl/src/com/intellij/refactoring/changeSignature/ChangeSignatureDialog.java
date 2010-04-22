@@ -427,13 +427,18 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private void updateSignature() {
     if (mySignatureArea == null) return;
 
-    myUpdateSignatureAlarm.cancelAllRequests();
-    myUpdateSignatureAlarm.addRequest(new Runnable() {
+    final Runnable updateRunnable = new Runnable() {
       public void run() {
-        doUpdateSignature();
-        updatePropagateButtons();
+        myUpdateSignatureAlarm.cancelAllRequests();
+        myUpdateSignatureAlarm.addRequest(new Runnable() {
+          public void run() {
+            doUpdateSignature();
+            updatePropagateButtons();
+          }
+        }, 100, ModalityState.stateForComponent(mySignatureArea));
       }
-    }, 100, ModalityState.stateForComponent(mySignatureArea));
+    };
+    SwingUtilities.invokeLater(updateRunnable);
   }
 
   private void doUpdateSignature() {
@@ -450,7 +455,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private boolean mayPropagateExceptions() {
     final ThrownExceptionInfo[] thrownExceptions = myExceptionsTableModel.getThrownExceptions();
     final PsiClassType[] types = myMethod.getThrowsList().getReferencedTypes();
-    if (thrownExceptions.length < types.length) return false;
+    if (thrownExceptions.length <= types.length) return false;
     for (int i = 0; i < types.length; i++) {
       if (thrownExceptions[i].oldIndex != i) return false;
     }
@@ -460,7 +465,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
   private boolean mayPropagateParameters() {
     final ParameterInfoImpl[] infos = myParametersTableModel.getParameters();
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-    if (infos.length < parameters.length) return false;
+    if (infos.length <= parameters.length) return false;
     for (int i = 0; i < parameters.length; i++) {
       if (infos[i].oldParameterIndex != i) return false;
     }

@@ -90,6 +90,10 @@ public class XValueHint extends AbstractValueHint {
             });
           }
 
+          public void setFullValue(@NotNull String fullValue, @NotNull String linkText) {
+            //todo[nik] implement?
+          }
+
           public boolean isObsolete() {
             //todo[nik]
             return false;

@@ -18,17 +18,17 @@ package com.intellij.util.ui;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-public abstract class EmptyTextHelper {
-  private static final int EMPTY_TEXT_TOP = 20;
-  
+public abstract class EmptyTextHelper implements ComponentWithEmptyText{
+  public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
+
   private final JComponent myOwner;
 
   private String myEmptyText = "";
@@ -63,15 +63,15 @@ public abstract class EmptyTextHelper {
       }
     });
     myEmptyTextComponent.setFont(UIUtil.getLabelFont());
+
+    setEmptyText(UIBundle.message("message.nothingToShow"), DEFAULT_ATTRIBUTES);
   }
 
   @Nullable
   private ActionListener findEmptyTextActionListenerAt(final Point point) {
-    final Rectangle bounds = myOwner.getBounds();
-    final Dimension size = myEmptyTextComponent.getPreferredSize();
-    int x = ((bounds.width - size.width)) / 2;
-    if (new Rectangle(x, EMPTY_TEXT_TOP, bounds.width, bounds.height).contains(point)) {
-      int index = myEmptyTextComponent.findFragmentAt(point.x - x);
+    Rectangle b = getTextComponentBound();
+    if (b.contains(point)) {
+      int index = myEmptyTextComponent.findFragmentAt(point.x - b.x);
       if (index >= 0 && index < myEmptyTextClickListeners.size()) {
         return myEmptyTextClickListeners.get(index);
       }
@@ -79,13 +79,25 @@ public abstract class EmptyTextHelper {
     return null;
   }
 
+  private Rectangle getTextComponentBound() {
+    Rectangle bounds = myOwner.getBounds();
+    Dimension size = myEmptyTextComponent.getPreferredSize();
+    int x = (bounds.width - size.width) / 2;
+    int y = bounds.height / 3;
+    return new Rectangle(x, y, size.width, size.height);
+  }
+
   public String getEmptyText() {
     return myEmptyText;
   }
 
-  public void setEmptyText(final String emptyText) {
+  public void setEmptyText(String emptyText) {
+    setEmptyText(emptyText, DEFAULT_ATTRIBUTES);
+  }
+
+  public void setEmptyText(String emptyText, SimpleTextAttributes attrs) {
     clearEmptyText();
-    appendEmptyText(emptyText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    appendEmptyText(emptyText, attrs);
   }
 
   public void clearEmptyText() {
@@ -109,17 +121,12 @@ public abstract class EmptyTextHelper {
       myEmptyTextComponent.setFont(myOwner.getFont());
       myEmptyTextComponent.setBackground(myOwner.getBackground());
       myEmptyTextComponent.setForeground(myOwner.getForeground());
-      final Rectangle bounds = myOwner.getBounds();
-      final Dimension size = myEmptyTextComponent.getPreferredSize();
-      myEmptyTextComponent.setBounds(0, 0, size.width, size.height);
-      int x = ((bounds.width - size.width)) / 2;
-      Graphics g2 = g.create(bounds.x + x, bounds.y + EMPTY_TEXT_TOP, size.width, size.height);
-      try {
-        myEmptyTextComponent.paint(g2);
-      }
-      finally {
-        g2.dispose();
-      }
+
+      Rectangle b = getTextComponentBound();
+      myEmptyTextComponent.setBounds(0, 0, b.width, b.height);
+
+      Graphics g2 = g.create(b.x, b.y, b.width, b.height);
+      myEmptyTextComponent.paint(g2);
     }
   }
 

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.embedder;
 
 import org.codehaus.plexus.logging.Logger;
+import org.jetbrains.maven.embedder.MavenEmbedderSettings;
 
 public class MavenExecutionOptions {
   public enum LoggingLevel {
@@ -86,14 +87,17 @@ public class MavenExecutionOptions {
   }
 
   public enum SnapshotUpdatePolicy {
-    ALWAYS_UPDATE("Always Update", "--update-snapshots"), DO_NOT_UPDATE("Do Not Update", "");
+    ALWAYS_UPDATE("Always Update", "--update-snapshots", MavenEmbedderSettings.SnapshotUpdatePolicy.ALWAYS_UPDATE),
+    DO_NOT_UPDATE("Do Not Update", "", MavenEmbedderSettings.SnapshotUpdatePolicy.DO_NOT_UPDATE);
 
     private final String myDisplayString;
     private final String myCommandLineOption;
+    private final MavenEmbedderSettings.SnapshotUpdatePolicy myEmbedderPolicy;
 
-    private SnapshotUpdatePolicy(String displayString, String commandLineOption) {
+    private SnapshotUpdatePolicy(String displayString, String commandLineOption, MavenEmbedderSettings.SnapshotUpdatePolicy policy) {
       myDisplayString = displayString;
       myCommandLineOption = commandLineOption;
+      myEmbedderPolicy = policy;
     }
 
     public String getDisplayString() {
@@ -102,18 +106,25 @@ public class MavenExecutionOptions {
 
     public String getCommandLineOption() {
       return myCommandLineOption;
+    }
+
+    public MavenEmbedderSettings.SnapshotUpdatePolicy getEmbedderPolicy() {
+      return myEmbedderPolicy;
     }
   }
 
   public enum PluginUpdatePolicy {
-    UPDATE("Check For Updates", "--check-plugin-updates"), DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates");
+    UPDATE("Check For Updates", "--check-plugin-updates", MavenEmbedderSettings.PluginUpdatePolicy.UPDATE),
+    DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates", MavenEmbedderSettings.PluginUpdatePolicy.DO_NOT_UPDATE);
 
     private final String myDisplayString;
     private final String myCommandLineOption;
+    private final MavenEmbedderSettings.PluginUpdatePolicy myEmbedderPolicy;
 
-    private PluginUpdatePolicy(String displayString, String commandLineOption) {
+    private PluginUpdatePolicy(String displayString, String commandLineOption, MavenEmbedderSettings.PluginUpdatePolicy policy) {
       myDisplayString = displayString;
       myCommandLineOption = commandLineOption;
+      myEmbedderPolicy = policy;
     }
 
     public String getDisplayString() {
@@ -122,6 +133,10 @@ public class MavenExecutionOptions {
 
     public String getCommandLineOption() {
       return myCommandLineOption;
+    }
+
+    public MavenEmbedderSettings.PluginUpdatePolicy getEmbedderPolicy() {
+      return myEmbedderPolicy;
     }
   }
 }

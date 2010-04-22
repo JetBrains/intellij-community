@@ -24,15 +24,12 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 public class FileListeningTest extends IntegrationTestCase {
@@ -191,14 +188,6 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
   
-  public void testIgnoringChangeOfROStatusForDirectory() throws Exception {
-    VirtualFile dir = createDirectory("dir");
-    assertEquals(1, getRevisionsFor(dir).size());
-
-    ReadOnlyAttributeUtil.setReadOnlyAttribute(dir, true);
-    assertEquals(1, getRevisionsFor(dir).size());
-  }
-
   public void testDeletion() throws Exception {
     VirtualFile f = createDirectory("f.txt");
 

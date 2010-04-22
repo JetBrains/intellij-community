@@ -110,6 +110,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       }
       for (PsiMethod method : methods) {
         method.accept(visitor);
+        //do not include method's type parameters in class signature
+        typeParamSet.removeAll(Arrays.asList(method.getTypeParameters()));
       }
       typeParams.addAll(typeParamSet);
     }

@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.project.MavenPlugin;
@@ -142,7 +142,7 @@ public class MavenKeymapExtension implements KeymapExtension {
 
   private static List<String> collectGoals(MavenProject project) {
     LinkedHashSet<String> result = new LinkedHashSet<String>(); // may contains similar plugins or somethig
-    result.addAll(MavenEmbedderFactory.getPhasesList());
+    result.addAll(MavenEmbedderWrapper.PHASES);
 
     for (MavenPlugin each : project.getDeclaredPlugins()) {
       collectGoals(project.getLocalRepository(), each, result);

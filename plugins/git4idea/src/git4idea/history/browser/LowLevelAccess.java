@@ -32,4 +32,6 @@ public interface LowLevelAccess {
 
   void loadAllBranches(final List<String> sink) throws VcsException;
   void loadAllTags(final List<String> sink) throws VcsException;
+
+  void cherryPick(SHAHash hash) throws VcsException;
 }
