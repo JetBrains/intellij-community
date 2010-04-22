@@ -17,14 +17,15 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 
 public class CopyProviderRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    final EditorEx editor = (EditorEx)dataProvider.getData(PlatformDataKeys.EDITOR.getName());
-    if (editor == null) {
-      return null;
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataProvider);
+    if (editor instanceof EditorEx) {
+      return ((EditorEx) editor).getCopyProvider();
     }
-    return editor.getCopyProvider();
+    return null;
   }
 }
