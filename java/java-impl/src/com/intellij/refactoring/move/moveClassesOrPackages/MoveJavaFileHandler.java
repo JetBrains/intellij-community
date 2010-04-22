@@ -84,5 +84,19 @@ public class MoveJavaFileHandler extends MoveFileHandler {
   @Override
   public void updateMovedFile(PsiFile file) throws IncorrectOperationException {
     ChangeContextUtil.decodeContextInfo(file, null, null);
+    final PsiDirectory containingDirectory = file.getContainingDirectory();
+    if (containingDirectory != null) {
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(containingDirectory);
+      if (aPackage != null) {
+        final PsiPackageStatement packageStatement =
+          JavaPsiFacade.getElementFactory(file.getProject()).createPackageStatement(aPackage.getQualifiedName());
+        if (file instanceof PsiJavaFile) {
+          final PsiPackageStatement filePackageStatement = ((PsiJavaFile)file).getPackageStatement();
+          if (filePackageStatement != null) {
+            filePackageStatement.getPackageReference().replace(packageStatement.getPackageReference());
+          }
+        }
+      }
+    }
   }
 }
