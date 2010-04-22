@@ -19,6 +19,7 @@ import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * Misc. code wrapping functions
@@ -48,5 +49,24 @@ public class WrappingUtil {
       default:
         return WrapType.CHOP_DOWN_IF_LONG;
     }
+  }
+
+  public static WrapType getArrayInitializerWrapType(CodeStyleSettings settings,
+                                                     ASTNode node,
+                                                     IElementType lBraceType,
+                                                     IElementType rBraceType) {
+    WrapType wrapType = WrapType.NONE;
+    if (shouldWrap(settings.ARRAY_INITIALIZER_WRAP)) {
+      if (node.getElementType() == rBraceType) {
+        wrapType = settings.ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE ? Wrap.ALWAYS : Wrap.NONE;
+      }
+      else if (FormatterUtil.isPrecededBy(node, lBraceType)) {
+        wrapType = settings.ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE ? Wrap.ALWAYS : Wrap.NONE;
+      }
+      else {
+        wrapType = WrappingUtil.getWrapType(settings.ARRAY_INITIALIZER_WRAP);
+      }
+    }
+    return wrapType;
   }
 }
