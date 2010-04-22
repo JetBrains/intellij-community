@@ -1,0 +1,1 @@
+while<caret> a

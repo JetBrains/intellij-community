@@ -200,6 +200,15 @@ public class PyUtil {
     return seeker;
   }
 
+  @Nullable
+  public static PsiElement getFirstNonCommentBefore(PsiElement start) {
+    PsiElement seeker = start;
+    while (seeker instanceof PsiWhiteSpace || seeker instanceof PsiComment) {
+      seeker = seeker.getPrevSibling();
+    }
+    return seeker;
+  }
+
   @NotNull
   public static <T extends PyElement> T[] getAllChildrenOfType(@NotNull PsiElement element, @NotNull Class<T> aClass) {
     List<T> result = new SmartList<T>();
