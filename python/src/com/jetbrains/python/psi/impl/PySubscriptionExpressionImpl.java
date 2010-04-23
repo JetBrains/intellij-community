@@ -5,6 +5,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.types.PySubscriptableType;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,13 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   }
 
   public PyType getType() {
+    final PyExpression indexExpression = getIndexExpression();
+    if (indexExpression != null) {
+      final PyType type = getOperand().getType();
+      if (type instanceof PySubscriptableType) {
+        return ((PySubscriptableType)type).getElementType(indexExpression);
+      }
+    }
     return null;
   }
 }

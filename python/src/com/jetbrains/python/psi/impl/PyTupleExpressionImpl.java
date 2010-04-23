@@ -8,6 +8,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.toolbox.ArrayIterator;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,12 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
   }
 
   public PyType getType() {
-    return PyBuiltinCache.getInstance(this).getTupleType();
+    final PyExpression[] elements = getElements();
+    final PyType[] types = new PyType[elements.length];
+    for (int i = 0; i < types.length; i++) {
+      types [i] = elements [i].getType();
+    }
+    return new PyTupleType(this, types);
   }
 
   public Iterator<PyExpression> iterator() {

@@ -97,6 +97,10 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl
     return whole;
   }
 
+  public boolean isIntegerLiteral() {
+    return getNode().getElementType() == PyElementTypes.INTEGER_LITERAL_EXPRESSION;
+  }
+
   private static @Nullable BigInteger getBigIntegerValue(String text) {
     Matcher m = PATTERN_INT.matcher(text);
     if (!m.matches()) return null;
