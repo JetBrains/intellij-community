@@ -16,6 +16,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -216,13 +218,17 @@ public class PyConsoleRunner {
                                        (lookup == null || !lookup.isCompletion()));
       }
     };
-    try {
+    final ActionManager manager = ActionManager.getInstance();
+
       // TODO[oleg] fix when Maia compatibility doesn't care
+    if (manager.getAction("Console.Execute") != null){
       EmptyAction.setupAction(myRunAction, "Console.Execute", null);
+      KeymapManager.getInstance().getActiveKeymap().addShortcut("Console.Execute", new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null));
+    } else {
+      EmptyAction.setupAction(myRunAction, "Python.Console.Execute", null);
+      KeymapManager.getInstance().getActiveKeymap().addShortcut("Python.Console.Execute", new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), null));
     }
-    catch (NullPointerException e) {
-        EmptyAction.setupAction(myRunAction, "Python.Console.Execute", null);    
-    }
+
     toolbarActions.add(myRunAction);
 
 // Help
@@ -240,7 +246,7 @@ public class PyConsoleRunner {
       }
     };
     // API compatibility with Maia
-    final AnAction historyAction = ActionManager.getInstance().getAction("Console.History.Next");
+    final AnAction historyAction = manager.getAction("Console.History.Next");
     if (historyAction != null) {
       final AnAction historyNextAction = ConsoleHistoryModel.createHistoryAction(myHistory, true, historyProcessor);
       final AnAction historyPrevAction = ConsoleHistoryModel.createHistoryAction(myHistory, false, historyProcessor);
