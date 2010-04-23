@@ -37,7 +37,7 @@ import static java.lang.Math.sqrt;
 public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   private SwitchProvider myProvider;
-  private AnActionEvent myInitialEvent;
+  private KeyEvent myInitialEvent;
   private boolean myFinished;
   private java.util.List<SwitchTarget> myTargets;
   private IdeGlassPane myGlassPane;
@@ -46,7 +46,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private JComponent myRootComponent;
   private SwitchTarget mySelection;
 
-  public SwitchingSession(SwitchProvider provider, AnActionEvent e) {
+  public SwitchingSession(SwitchProvider provider, KeyEvent e) {
     myProvider = provider;
     myInitialEvent = e;
 
@@ -92,7 +92,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   public boolean dispatchKeyEvent(KeyEvent e) {
-    KeyEvent event = (KeyEvent)myInitialEvent.getInputEvent();
+    KeyEvent event = myInitialEvent;
     if ((e.getModifiers() & event.getModifiers()) == 0) {
       finish();
       return false;

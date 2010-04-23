@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
+import java.awt.event.KeyEvent;
+
 public abstract class SwitchAction extends AnAction implements DumbAware {
 
   @Override
@@ -34,7 +36,7 @@ public abstract class SwitchAction extends AnAction implements DumbAware {
     SwitchingSession session = getSession(e);
     if (session == null || session.isFinished()) {
       SwitchProvider provider = getProvider(e);
-      session = new SwitchingSession(provider, e);
+      session = new SwitchingSession(provider, (KeyEvent)e.getInputEvent());
       initSession(e, session);
     }
 
