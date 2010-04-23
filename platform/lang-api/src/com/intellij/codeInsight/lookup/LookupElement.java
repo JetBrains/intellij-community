@@ -78,4 +78,8 @@ public abstract class LookupElement extends UserDataHolderBase {
     //noinspection unchecked
     return aClass.isInstance(this) ? (T) this : null;
   }
+  
+  public boolean isCaseSensitive() {
+    return true;
+  }
 }

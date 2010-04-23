@@ -34,7 +34,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     doTest("SCR915.java", "SCR915_after.java");
   }
 
-
   public void testForEach() throws Exception {
     doTest("ForEach.java", "ForEach_after.java");
   }
@@ -205,6 +204,35 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
     doTest();
+  }
+
+  public void testNestedMethodsIndentation() throws Exception {
+    // Inspired by IDEA-43962
+
+    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
+
+    doMethodTest(
+      "BigDecimal.ONE\n" +
+      "      .add(BigDecimal.ONE\n" +
+      "        .add(BigDecimal.ONE\n" +
+      "        .add(BigDecimal.ONE\n" +
+      "        .add(BigDecimal.ONE\n" +
+      ".add(BigDecimal.ONE\n" +
+      " .add(BigDecimal.ONE\n" +
+      "  .add(BigDecimal.ONE\n" +
+      " .add(BigDecimal.ONE\n" +
+      "        .add(BigDecimal.ONE)))))))));",
+      "BigDecimal.ONE\n" +
+      "    .add(BigDecimal.ONE\n" +
+      "        .add(BigDecimal.ONE\n" +
+      "            .add(BigDecimal.ONE\n" +
+      "                .add(BigDecimal.ONE\n" +
+      "                    .add(BigDecimal.ONE\n" +
+      "                        .add(BigDecimal.ONE\n" +
+      "                            .add(BigDecimal.ONE\n" +
+      "                                .add(BigDecimal.ONE\n" +
+      "                                    .add(BigDecimal.ONE)))))))));"
+    );
   }
 
   public void testSwitch() throws Exception {
@@ -2892,22 +2920,26 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_ALWAYS;
     getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
     getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
-    doTextTest("public @interface Ann\n" +
+    doTextTest(
+               "public @interface Ann\n" +
                "{\n" +
                "int[] x = { 1, 2 };\n" +
                "\n" +
                "Mode[] modes () default { @Mode(value = 1), @Mode(value = 2) };\n" +
-               "}", "public @interface Ann {\n" +
-                    "    int[] x = {\n" +
-                    "            1,\n" +
-                    "            2\n" +
-                    "    };\n" +
-                    "\n" +
-                    "    Mode[] modes() default {\n" +
-                    "            @Mode(value = 1),\n" +
-                    "            @Mode(value = 2)\n" +
-                    "    };\n" +
-                    "}");
+               "}",
+
+               "public @interface Ann {\n" +
+               "    int[] x = {\n" +
+               "            1,\n" +
+               "            2\n" +
+               "    };\n" +
+               "\n" +
+               "    Mode[] modes() default {\n" +
+               "            @Mode(value = 1),\n" +
+               "            @Mode(value = 2)\n" +
+               "    };\n" +
+               "}"
+    );
   }
 
   private void doMethodTest(final String before, final String after) throws Exception {

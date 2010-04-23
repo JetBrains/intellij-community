@@ -48,6 +48,7 @@ import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.palette.ComponentItem;
+import com.intellij.uiDesigner.propertyInspector.PropertyInspector;
 import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -465,7 +466,8 @@ public final class GuiEditor extends JPanel implements DataProvider {
 
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
     final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
-    if (manager.getPropertyInspector().isEditing()) {
+    final PropertyInspector inspector = manager.getPropertyInspector();
+    if (inspector != null && inspector.isEditing()) {
       return null;
     }
 

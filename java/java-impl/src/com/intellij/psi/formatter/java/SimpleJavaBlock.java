@@ -70,7 +70,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
         if (astNode != child && child != null) {
           offset = child.getTextRange().getStartOffset();
         }
-        if (indent != null && !(myNode.getPsi() instanceof PsiFile) && child.getElementType() != ElementType.MODIFIER_LIST) {
+        if (indent != null && !(myNode.getPsi() instanceof PsiFile) && child != null && child.getElementType() != ElementType.MODIFIER_LIST) {
           indent = Indent.getContinuationIndent();
         }
         //indent = FormatterEx.getInstance().getContinuationIndent();
@@ -107,10 +107,12 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     }
   }
 
-  protected Wrap getReservedWrap(final IElementType elementType) {
+  @Override
+  public Wrap getReservedWrap(final IElementType elementType) {
     return myReservedWrap.get(elementType);
   }
 
+  @Override
   protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
     myReservedWrap.put(operationType, reservedWrap);
   }

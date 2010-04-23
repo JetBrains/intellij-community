@@ -55,6 +55,12 @@ public class LinkedStorage extends AbstractStorage {
     }
   }
 
+  public int getFirstRecord() {
+    synchronized (myLock) {
+      return ((LinkedRecordsTable)myRecordsTable).getFirstRecord();
+    }
+  }
+
   public int getLastRecord() {
     synchronized (myLock) {
       return ((LinkedRecordsTable)myRecordsTable).getLastRecord();
@@ -64,6 +70,12 @@ public class LinkedStorage extends AbstractStorage {
   public int getPrevRecord(int record) {
     synchronized (myLock) {
       return ((LinkedRecordsTable)myRecordsTable).getPrevRecord(record);
+    }
+  }
+
+  public int getNextRecord(int record) {
+    synchronized (myLock) {
+      return ((LinkedRecordsTable)myRecordsTable).getNextRecord(record);
     }
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -90,26 +91,52 @@ public class DebuggerUIUtil {
     return new RelativePoint(editor.getContentComponent(), p);
   }
 
-  public static void showValuePopup(@NotNull String text, @NotNull MouseEvent event, @NotNull Project project) {
-    JTextArea textArea = new JTextArea(text);
+  public static void showValuePopup(@NotNull XFullValueEvaluator text, @NotNull MouseEvent event, @NotNull Project project) {
+    final JTextArea textArea = new JTextArea("Evaluating...");
+    text.startEvaluation(new FullValueEvaluationCallbackImpl(textArea));
+
     textArea.setEditable(false);
     textArea.setBackground(HintUtil.INFORMATION_COLOR);
     textArea.setLineWrap(false);
     final JScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
+    final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
+    final Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
+    component.setPreferredSize(size);
     component.setBorder(null);
     final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
       .setResizable(true)
       .setMovable(true)
+      .setDimensionServiceKey(project, "XDebugger.FullValuePopup", false)
       .setRequestFocus(false)
       .createPopup();
-
-    final Dimension size = textArea.getPreferredSize();
     final Component parentComponent = event.getComponent();
-    final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
-    size.width = Math.min(size.width, frameSize.width / 2);
-    size.height = Math.min(size.height, frameSize.height / 2);
-    component.setPreferredSize(size);
     RelativePoint point = new RelativePoint(parentComponent, new Point(event.getX()-size.width, event.getY()-size.height));
     popup.show(point);
+  }
+
+  private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {
+    private final JTextArea myTextArea;
+
+    public FullValueEvaluationCallbackImpl(JTextArea textArea) {
+      myTextArea = textArea;
+    }
+
+    public void evaluated(@NotNull final String fullValue) {
+      invokeOnEventDispatch(new Runnable() {
+        public void run() {
+          myTextArea.setText(fullValue);
+          myTextArea.setCaretPosition(0);
+        }
+      });
+    }
+
+    public void errorOccurred(@NotNull final String errorMessage) {
+      invokeOnEventDispatch(new Runnable() {
+        public void run() {
+          myTextArea.setForeground(XDebuggerUIConstants.ERROR_MESSAGE_ATTRIBUTES.getFgColor());
+          myTextArea.setText(errorMessage);
+        }
+      });
+    }
   }
 }

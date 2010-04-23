@@ -279,8 +279,7 @@ public class FormatterImpl extends FormatterEx
   {
     boolean wsContainsCaret = whiteSpace.getStartOffset() <= offset && offset < whiteSpace.getEndOffset();
 
-    final CharSequence text = getCharSequence(documentModel);
-    int lineStartOffset = getLineStartOffset(offset, whiteSpace, text, documentModel);
+    int lineStartOffset = getLineStartOffset(offset, whiteSpace, documentModel);
 
     final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
 
@@ -325,7 +324,7 @@ public class FormatterImpl extends FormatterEx
       final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
 
-      return indent.generateNewWhiteSpace(indentOptions).toString();
+      return indent.generateNewWhiteSpace(indentOptions);
     }
     return null;
   }
@@ -355,10 +354,10 @@ public class FormatterImpl extends FormatterEx
 
   private static int getLineStartOffset(final int offset,
                                         final WhiteSpace whiteSpace,
-                                        final CharSequence text,
                                         final FormattingDocumentModel documentModel) {
     int lineStartOffset = offset;
 
+    CharSequence text = getCharSequence(documentModel);
     lineStartOffset = CharArrayUtil.shiftBackwardUntil(text, lineStartOffset, " \t\n");
     if (lineStartOffset > whiteSpace.getStartOffset()) {
       if (lineStartOffset >= text.length()) lineStartOffset = text.length() - 1;
@@ -570,10 +569,6 @@ public class FormatterImpl extends FormatterEx
   public Indent getContinuationWithoutFirstIndent()//is default
   {
     return myContinutationWithoutFirstIndent;
-  }
-
-  public static int getLineFeedsToModified(final FormattingDocumentModel model, final int offset, final int startOffset) {
-    return model.getLineNumber(offset) - model.getLineNumber(startOffset);
   }
 
   private final Object DISABLING_LOCK = new Object();
