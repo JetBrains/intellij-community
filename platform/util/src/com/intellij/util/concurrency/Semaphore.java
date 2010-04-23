@@ -57,22 +57,29 @@ public class Semaphore {
 
   public void waitFor() {
     try {
-      sync.acquireSharedInterruptibly(1);
+      waitForUnsafe();
     }
     catch (InterruptedException e) {
       throw new ProcessCanceledException(e);
     }
   }
 
+  public void waitForUnsafe() throws InterruptedException {
+    sync.acquireSharedInterruptibly(1);
+  }
+
   public boolean waitFor(final long timeout)  {
     try {
-      if (sync.tryAcquireShared(1) >= 0) return true;
-
-      return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(timeout));
+      return waitForUnsafe(timeout);
     }
     catch (InterruptedException e) {
       throw new ProcessCanceledException(e);
     }
+  }
+
+  public boolean waitForUnsafe(long timeout) throws InterruptedException {
+    if (sync.tryAcquireShared(1) >= 0) return true;
+    return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(timeout));
   }
 
 }
