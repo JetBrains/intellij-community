@@ -238,4 +238,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testOverrideAnnotation() throws Exception {doTest();}
 
   public void testClosureCallWithTupleTypeArgument() throws Exception {doTest();}
+
+  public void testMethodDuplicates() throws Exception {doTest();}
 }

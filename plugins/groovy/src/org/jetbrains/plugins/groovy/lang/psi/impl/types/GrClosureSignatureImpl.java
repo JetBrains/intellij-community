@@ -32,6 +32,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   private final boolean myIsVarargs;
   @Nullable private final PsiType myReturnType;
   @NotNull private final GrClosureParameter[] myParameters;
+  @NotNull private PsiSubstitutor mySubstitutor;
 
   public GrClosureSignatureImpl(@NotNull PsiParameter[] parameters, @Nullable PsiType returnType, @NotNull PsiSubstitutor substitutor) {
     myReturnType = substitutor.substitute(returnType);
@@ -46,14 +47,11 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     else {
       myIsVarargs = false;
     }
+    mySubstitutor = substitutor;
   }
 
   public GrClosureSignatureImpl(PsiParameter[] parameters, PsiType returnType) {
     this(parameters, returnType, PsiSubstitutor.EMPTY);
-  }
-
-  public GrClosureSignatureImpl(PsiParameter[] parameters) {
-    this(parameters, null);
   }
 
   public GrClosureSignatureImpl(@NotNull GrClosableBlock block) {
@@ -68,7 +66,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     this(method.getParameterList().getParameters(), PsiUtil.getSmartReturnType(method), substitutor);
   }
 
-  private GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
+  GrClosureSignatureImpl(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
     myParameters = params;
     myReturnType = returnType;
     myIsVarargs = isVarArgs;
@@ -83,6 +81,11 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   @Nullable
   public PsiType getReturnType() {
     return myReturnType;
+  }
+
+  @NotNull
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutor;
   }
 
   @NotNull

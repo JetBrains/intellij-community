@@ -328,18 +328,16 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
         if (parameters.length > 0) {
           for (int i = 0; i < parameters.length; i++) {
             if (i > 0) buffer.append(", ");
-            final String name = parameters[i].getName();
             final PsiType psiType = parameters[i].getType();
-            if (name == null) {
-              buffer.append(psiType == null ? "null" : psiType.getPresentableText());
+            if (psiType == null) {
+              buffer.append("def");
             }
             else {
-              String typeText = psiType == null ? "def" : psiType.getPresentableText();
-              buffer.append(typeText).append(' ').append(name);
-              final GrExpression initializer = parameters[i].getDefaultInitializer();
-              if (initializer != null) {
-                buffer.append(" = ").append(initializer.getText());
-              }
+              buffer.append(psiType.getPresentableText());
+            }
+            final GrExpression initializer = parameters[i].getDefaultInitializer();
+            if (initializer != null) {
+              buffer.append(" = ").append(initializer.getText());
             }
           }
         }

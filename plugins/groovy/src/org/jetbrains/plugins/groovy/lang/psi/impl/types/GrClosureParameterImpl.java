@@ -29,12 +29,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
  */
 public class GrClosureParameterImpl implements GrClosureParameter {
   @Nullable final PsiType myType;
-  @Nullable final String myName=null;
   final boolean myOptional;
   @Nullable final GrExpression myDefaultInitializer;
 
-  public GrClosureParameterImpl(/*String name,*/ PsiType type, boolean optional, GrExpression defaultInitializer) {
-//    myName = name;
+  public GrClosureParameterImpl(PsiType type, boolean optional, GrExpression defaultInitializer) {
     myType = type;
     myOptional = optional;
     if (myOptional) {
@@ -45,16 +43,12 @@ public class GrClosureParameterImpl implements GrClosureParameter {
     }
   }
 
-  public GrClosureParameterImpl(@Nullable PsiType type) {
-    this(/*null,*/ type, false, null);
-  }
-
   public GrClosureParameterImpl(PsiParameter parameter) {
     this(parameter, PsiSubstitutor.EMPTY);
   }
 
   public GrClosureParameterImpl(PsiParameter parameter, PsiSubstitutor substitutor) {
-    this(/*parameter.getName(), */substitutor.substitute(parameter.getType()),
+    this(substitutor.substitute(parameter.getType()),
          parameter instanceof GrParameter ? ((GrParameter)parameter).isOptional() : false,
          parameter instanceof GrParameter ? ((GrParameter)parameter).getDefaultInitializer() : null);
   }
@@ -76,11 +70,6 @@ public class GrClosureParameterImpl implements GrClosureParameter {
 
   public boolean isValid() {
     return (myType == null || myType.isValid()) && (myDefaultInitializer == null || myDefaultInitializer.isValid());
-  }
-
-  @Nullable
-  public String getName() {
-    return myName;
   }
 
   @Override
