@@ -532,6 +532,14 @@ public class SSHMain {
      */
     public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) throws Exception {
       try {
+        String s = System.getenv(GitSSHHandler.SSH_IGNORE_KNOWN_HOSTS_ENV);
+        if(s != null && Boolean.parseBoolean(s)) {
+          return true;
+        }
+      } catch(Exception ex) {
+        // the known host check is not suppressed, proceed with normal check
+      }
+      try {
         final int result = database.verifyHostkey(hostname, serverHostKeyAlgorithm, serverHostKey);
         final boolean isNew;
         switch (result) {

@@ -33,6 +33,10 @@ public interface GitSSHHandler {
    */
   @NonNls String SSH_HANDLER_ENV = "GIT4IDEA_SSH_HANDLER";
   /**
+   * Name of environment variable for SSH handler number
+   */
+  @NonNls String SSH_IGNORE_KNOWN_HOSTS_ENV = "GIT4IDEA_SSH_IGNORE_KNOWN_HOSTS";
+  /**
    * Name of environment variable for SSH handler
    */
   @NonNls String SSH_PORT_ENV = "GIT4IDEA_SSH_PORT";
