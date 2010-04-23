@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
@@ -153,6 +154,8 @@ public class JBTabsImpl extends JComponent
   private DragHelper myDragHelper;
   private boolean myNavigationActionsEnabled = true;
   private boolean myUseBufferedPaint = true;
+
+  private boolean myOwnSwitchProvider = true;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -2589,6 +2592,10 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
+    if (SwitchProvider.KEY.getName().equals(dataId) && myOwnSwitchProvider) {
+      return this;
+    }
+
     return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
   }
 
@@ -2687,6 +2694,11 @@ public class JBTabsImpl extends JComponent
 
   public boolean isTabDraggingEnabled() {
     return myTabDraggingEnabled && isSingleRow();
+  }
+
+  public JBTabsPresentation setProvideSwitchTargets(boolean provide) {
+    myOwnSwitchProvider = provide;
+    return this;
   }
 
   void reallocate(TabInfo source, TabInfo target, boolean before) {

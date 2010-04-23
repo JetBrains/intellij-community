@@ -95,4 +95,6 @@ public interface JBTabsPresentation {
   
   boolean isTabDraggingEnabled();
 
+  JBTabsPresentation setProvideSwitchTargets(boolean provide);
+
 }

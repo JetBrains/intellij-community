@@ -366,6 +366,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       return computeCloseTarget();
     }
 
+    if (SwitchProvider.KEY.is(dataId) && myType == ToolWindowContentUiType.TABBED) {
+      return this;
+    }
+
     return null;
   }
 
