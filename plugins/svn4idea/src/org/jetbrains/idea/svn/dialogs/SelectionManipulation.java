@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.integrate;
+package org.jetbrains.idea.svn.dialogs;
 
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
-
-import java.io.File;
-
-public interface MergerFactory {
-  IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl);
+public interface SelectionManipulation<T> {
+  void add(T t);
+  void remove(T t);
+  void clearAll();
+  void setAll();
 }

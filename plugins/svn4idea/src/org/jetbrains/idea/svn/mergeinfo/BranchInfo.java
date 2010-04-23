@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.*;
@@ -50,6 +51,7 @@ public class BranchInfo {
   private final SvnVcs myVcs;
 
   private SvnMergeInfoCache.CopyRevison myCopyRevison;
+  private final MultiMap<Long, String> myPartlyMerged;
 
   public BranchInfo(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl,
                      final String trunkCorrected, final SVNWCClient client) {
@@ -61,6 +63,7 @@ public class BranchInfo {
     myClient = client;
 
     myPathMergedMap = new HashMap<String, Set<Long>>();
+    myPartlyMerged = new MultiMap<Long, String>();
     myNonInheritablePathMergedMap = new HashMap<String, Set<Long>>();
 
     myAlreadyCalculatedMap = new HashMap<Long, SvnMergeInfoCache.MergeCheckResult>();
@@ -127,42 +130,40 @@ public class BranchInfo {
     }
     final String subPathUnderBranch = SVNPathUtil.getRelativePath(myBranchUrl, info.getURL().toString());
 
-    final Set<SvnMergeInfoCache.MergeCheckResult> result = new HashSet<SvnMergeInfoCache.MergeCheckResult>();
-    result.addAll(checkPaths(list.getNumber(), list.getAddedPaths(), branchPath, subPathUnderBranch));
-    if (result.contains(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
+    final MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result = new MultiMap<SvnMergeInfoCache.MergeCheckResult, String>();
+    checkPaths(list.getNumber(), list.getAddedPaths(), branchPath, subPathUnderBranch, result);
+    if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
     }
-    result.addAll(checkPaths(list.getNumber(), list.getDeletedPaths(), branchPath, subPathUnderBranch));
-    if (result.contains(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
+    checkPaths(list.getNumber(), list.getDeletedPaths(), branchPath, subPathUnderBranch, result);
+    if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
     }
-    result.addAll(checkPaths(list.getNumber(), list.getChangedPaths(), branchPath, subPathUnderBranch));
+    checkPaths(list.getNumber(), list.getChangedPaths(), branchPath, subPathUnderBranch, result);
 
-    if (result.contains(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
+    if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS)) {
       return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
-    } else if (result.contains(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)) {
+    } else if (result.containsKey(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)) {
+      myPartlyMerged.put(list.getNumber(), result.get(SvnMergeInfoCache.MergeCheckResult.NOT_MERGED));
       return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
     return SvnMergeInfoCache.MergeCheckResult.MERGED;
   }
 
-  private List<SvnMergeInfoCache.MergeCheckResult> checkPaths(final long number, final Collection<String> paths,
-                                                              final String branchPath, final String subPathUnderBranch) {
-    final List<SvnMergeInfoCache.MergeCheckResult> result = new ArrayList<SvnMergeInfoCache.MergeCheckResult>();
+  private void checkPaths(final long number, final Collection<String> paths, final String branchPath, final String subPathUnderBranch,
+                          final MultiMap<SvnMergeInfoCache.MergeCheckResult, String> result) {
     final String myTrunkPathCorrespondingToLocalBranchPath = SVNPathUtil.append(myTrunkCorrected, subPathUnderBranch);
     for (String path : paths) {
       final String absoluteInTrunkPath = SVNPathUtil.append(myRepositoryRoot, path);
       if (! absoluteInTrunkPath.startsWith(myTrunkPathCorrespondingToLocalBranchPath)) {
-        result.add(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS);
-        return result;
+        result.putValue(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS, path);
       }
       final String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkPathCorrespondingToLocalBranchPath.length());
       final String localPathInBranch = new File(branchPath, relativeToTrunkPath).getAbsolutePath();
       
       final SvnMergeInfoCache.MergeCheckResult pathResult = checkPathGoingUp(number, -1, branchPath, localPathInBranch, path, true);
-      result.add(pathResult);
+      result.putValue(pathResult, path);
     }
-    return result;
   }
 
   private SvnMergeInfoCache.MergeCheckResult goUp(final long revisionAsked, final long targetRevision, final String branchRootPath,
@@ -364,5 +365,10 @@ public class BranchInfo {
 
   public boolean isMixedRevisionsFound() {
     return myMixedRevisionsFound;
+  }
+
+  // if nothing, maybe all not merged or merged: here only partly not merged
+  public Collection<String> getNotMergedPaths(final long number) {
+    return myPartlyMerged.get(number);
   }
 }
