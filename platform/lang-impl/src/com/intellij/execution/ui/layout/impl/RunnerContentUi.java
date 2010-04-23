@@ -1128,6 +1128,17 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     result.addAll(myTabs.getTargets(true));
     result.addAll(getSelectedGrid().getTargets(onlyVisible));
 
+    Iterator<Wrapper> toolbars = myMinimizedButtonsPlaceholder.values().iterator();
+    while (toolbars.hasNext()) {
+      Wrapper each = toolbars.next();
+      if (!each.isShowing()) continue;
+      JComponent target = each.getTargetComponent();
+      if (target instanceof ActionToolbar) {
+        ActionToolbar tb = (ActionToolbar)target;
+        result.addAll(tb.getTargets(onlyVisible));
+      }
+    }
+
     return result;
   }
 

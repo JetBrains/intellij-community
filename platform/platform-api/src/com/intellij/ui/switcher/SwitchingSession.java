@@ -136,6 +136,12 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
         g.fillOval(paintRect.x + dX - d / 2, paintRect.y + paintRect.height + dY - d / 2, d, d);
       }
 
+      if (myPoint != null) {
+        g.setColor(Color.green);
+        Point p = myPoint.getPoint(component);
+        //g.fillOval(p.x - 2, p.y - 2, 4, 4);
+      }
+
       cfg.restore();
     }
 
@@ -246,22 +252,22 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       Point eachPoint = target2Point.get(eachTarget);
       switch (direction) {
         case up:
-          if (eachPoint.y < selected.y) {
+          if (eachPoint.y <= selected.y) {
             return eachTarget;
           }
           break;
         case down:
-          if (eachPoint.y > selected.y) {
+          if (eachPoint.y >= selected.y) {
             return eachTarget;
           }
           break;
         case left:
-          if (eachPoint.x < selected.x) {
+          if (eachPoint.x <= selected.x) {
             return eachTarget;
           }
           break;
         case right:
-          if (eachPoint.x > selected.x) {
+          if (eachPoint.x >= selected.x) {
             return eachTarget;
           }
           break;
@@ -274,22 +280,22 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
       switch (direction) {
         case up:
-          if (eachPoint.y > selected.y) {
+          if (eachPoint.y >= selected.y) {
             return eachTarget;
           }
           break;
         case down:
-          if (eachPoint.y < selected.y) {
+          if (eachPoint.y <= selected.y) {
             return eachTarget;
           }
           break;
         case left:
-          if (eachPoint.x > selected.x) {
+          if (eachPoint.x >= selected.x) {
             return eachTarget;
           }
           break;
         case right:
-          if (eachPoint.x < selected.x) {
+          if (eachPoint.x <= selected.x) {
             return eachTarget;
           }
           break;

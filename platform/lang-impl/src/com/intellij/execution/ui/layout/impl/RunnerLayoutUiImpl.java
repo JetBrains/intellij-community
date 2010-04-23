@@ -44,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
   private final RunnerLayout myLayout;

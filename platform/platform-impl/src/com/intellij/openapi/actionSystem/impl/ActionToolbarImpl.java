@@ -33,12 +33,15 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.ex.WeakKeymapManagerListener;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +51,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
@@ -985,5 +989,48 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
       super.paintButtonLook(g);
     }
+  }
+
+  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+    ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
+
+    if ((getBounds().width * getBounds().height) <= 0) return result;
+
+    for (int i = 0; i < getComponentCount(); i++) {
+      Component each = getComponent(i);
+      if (each instanceof ActionButton) {
+        result.add(new ActionTarget((ActionButton)each));
+      }
+    }
+    return result;
+  }
+
+  private class ActionTarget implements SwitchTarget {
+    private ActionButton myButton;
+
+    private ActionTarget(ActionButton button) {
+      myButton = button;
+    }
+
+    public ActionCallback switchTo(boolean requestFocus) {
+      myButton.click();
+      return new ActionCallback.Done();
+    }
+
+    public boolean isVisible() {
+      return myButton.isVisible();
+    }
+
+    public RelativeRectangle getRectangle() {
+      return new RelativeRectangle(myButton.getParent(), myButton.getBounds());
+    }
+  }
+
+  public SwitchTarget getCurrentTarget() {
+    return null;
+  }
+
+  public boolean isCycleRoot() {
+    return false;
   }
 }
