@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
@@ -158,7 +157,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
             }
             return null;
           }
-        }).setInnerInsets(new Insets(1, 0, 0, 0)).setToDrawBorderIfTabsHidden(false).setUiDecorator(new UiDecorator() {
+        }).setProvideSwitchTargets(false).setInnerInsets(new Insets(1, 0, 0, 0)).setToDrawBorderIfTabsHidden(false).setUiDecorator(new UiDecorator() {
         @NotNull
         public UiDecoration getDecoration() {
           return new UiDecoration(null, new Insets(1, 8, 1, 8));
@@ -1122,10 +1121,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return cell != null ? cell : myTabs.getCurrentTarget();
   }
 
-  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
     List<SwitchTarget> result = new ArrayList<SwitchTarget>();
 
-    result.addAll(myTabs.getTargets(true));
+    result.addAll(myTabs.getTargets(true, false));
     result.addAll(getSelectedGrid().getTargets(onlyVisible));
 
     Iterator<Wrapper> toolbars = myMinimizedButtonsPlaceholder.values().iterator();
@@ -1135,7 +1134,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       JComponent target = each.getTargetComponent();
       if (target instanceof ActionToolbar) {
         ActionToolbar tb = (ActionToolbar)target;
-        result.addAll(tb.getTargets(onlyVisible));
+        result.addAll(tb.getTargets(onlyVisible, false));
       }
     }
 

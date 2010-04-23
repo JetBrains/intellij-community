@@ -135,9 +135,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       return null;
     }
 
-    public List<SwitchTarget> getTargets(boolean onlyVisible) {
+    public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
       if (myUI instanceof SwitchProvider) {
-        return ((SwitchProvider)myUI).getTargets(onlyVisible);
+        return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
       }
       return new ArrayList<SwitchTarget>();
     }

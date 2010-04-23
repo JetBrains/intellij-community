@@ -24,7 +24,7 @@ public interface SwitchProvider {
 
   DataKey<SwitchProvider> KEY = DataKey.create("SwitchProvider");
 
-  List<SwitchTarget> getTargets(boolean onlyVisible);
+  List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider);
   SwitchTarget getCurrentTarget();
 
   JComponent getComponent();

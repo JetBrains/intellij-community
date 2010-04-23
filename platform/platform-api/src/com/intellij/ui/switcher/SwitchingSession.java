@@ -16,9 +16,7 @@
 package com.intellij.ui.switcher;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.AbstractPainter;
-import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -27,7 +25,6 @@ import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
@@ -54,14 +51,14 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
 
 
-    myTargets = myProvider.getTargets(true);
+    myTargets = myProvider.getTargets(true, true);
 
     Component eachParent = myProvider.getComponent();
     eachParent = eachParent.getParent();
     while (eachParent != null) {
       if (eachParent instanceof SwitchProvider) {
         SwitchProvider eachProvider = (SwitchProvider)eachParent;
-        myTargets.addAll(eachProvider.getTargets(true));
+        myTargets.addAll(eachProvider.getTargets(true, false));
         if (eachProvider.isCycleRoot()) {
           break;
         }

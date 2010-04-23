@@ -47,8 +47,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Set;
 
 public class GridCellImpl implements GridCell, Disposable {
@@ -98,7 +96,7 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(true)
-      .setFocusCycle(false).setPaintFocus(true);
+      .setFocusCycle(false).setPaintFocus(true).setProvideSwitchTargets(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -250,7 +248,7 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   public java.util.List<SwitchTarget> getTargets(boolean onlyVisible) {
-    return myTabs.getTargets(onlyVisible);
+    return myTabs.getTargets(onlyVisible, false);
   }
 
   public SwitchTarget getTargetForSelection() {

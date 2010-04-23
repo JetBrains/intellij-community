@@ -442,7 +442,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   }
 
-  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
     List<SwitchTarget> result = new ArrayList<SwitchTarget>();
 
     if (myType == ToolWindowContentUiType.TABBED) {

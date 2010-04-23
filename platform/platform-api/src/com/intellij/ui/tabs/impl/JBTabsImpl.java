@@ -156,6 +156,7 @@ public class JBTabsImpl extends JComponent
   private boolean myUseBufferedPaint = true;
 
   private boolean myOwnSwitchProvider = true;
+  private SwitchProvider mySwitchDelegate;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -287,6 +288,11 @@ public class JBTabsImpl extends JComponent
 
   public final boolean isDisposed() {
     return myDisposed;
+  }
+
+  public JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate) {
+    mySwitchDelegate = delegate;
+    return this;
   }
 
   public void dispose() {
@@ -2743,16 +2749,29 @@ public class JBTabsImpl extends JComponent
     repaint();
   }
 
-  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
     ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
     for (TabInfo each : myVisibleInfos) {
       result.add(new TabTarget(each));
     }
+
+    if (originalProvider && mySwitchDelegate != null) {
+      List<SwitchTarget> additional = mySwitchDelegate.getTargets(onlyVisible, false);
+      if (additional != null) {
+        result.addAll(additional);
+      }
+    }
+
     return result;
   }
 
 
   public SwitchTarget getCurrentTarget() {
+    if (mySwitchDelegate != null) {
+      SwitchTarget selection = mySwitchDelegate.getCurrentTarget();
+      if (selection != null) return selection;
+    }
+
     return new TabTarget(getSelectedInfo());
   }
 

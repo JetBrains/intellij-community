@@ -40,7 +40,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -991,7 +990,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
     ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
 
     if ((getBounds().width * getBounds().height) <= 0) return result;

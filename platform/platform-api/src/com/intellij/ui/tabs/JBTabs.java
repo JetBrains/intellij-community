@@ -114,4 +114,6 @@ public interface JBTabs extends SwitchProvider {
   JBTabs setNavigationActionsEnabled(boolean enabled);
 
   boolean isDisposed();
+
+  JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate);
 }
