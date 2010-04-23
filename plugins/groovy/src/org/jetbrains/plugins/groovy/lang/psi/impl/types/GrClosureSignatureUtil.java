@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl;
+package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -70,7 +72,7 @@ public class GrClosureSignatureUtil {
   }
 
   private static boolean isApplicable(GrClosureSignature signature, PsiType[] args, PsiManager manager, GlobalSearchScope scope) {
-   GrClosureParameter[] params = signature.getParameters();
+    GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs()) return false;
     int optional = getOptionalParamCount(signature, false);
     int notOptional = params.length - optional;
@@ -343,5 +345,63 @@ public class GrClosureSignatureUtil {
       System.arraycopy(map, 0, copy, 0, map.length);
       return copy;
     }
+  }
+
+
+  public static List<MethodSignature> generateAllSignaturesForMethod(GrMethod method, PsiSubstitutor substitutor) {
+    GrClosureSignature signature = createSignature(method, substitutor);
+    String name = method.getName();
+    GrClosureParameter[] params = signature.getParameters();
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
+
+    ArrayList<PsiType> newParams = new ArrayList<PsiType>(params.length);
+    ArrayList<GrClosureParameter> opts = new ArrayList<GrClosureParameter>(params.length);
+    ArrayList<Integer> optInds = new ArrayList<Integer>(params.length);
+
+    for (int i = 0; i < params.length; i++) {
+      if (params[i].isOptional()) {
+        opts.add(params[i]);
+        optInds.add(i);
+      }
+      else {
+        newParams.add(params[i].getType());
+      }
+    }
+
+    List<MethodSignature> result = new ArrayList<MethodSignature>(opts.size() + 1);
+    result.add(generateSignature(name, newParams, typeParameters, substitutor));
+    for (int i = 0; i < opts.size(); i++) {
+      newParams.add(optInds.get(i), opts.get(i).getType());
+      result.add(generateSignature(name, newParams, typeParameters, substitutor));
+    }
+    return result;
+  }
+
+  public static Map<MethodSignature, List<GrMethod>> findMethodSignatures(GrMethod[] methods) {
+    List<Pair<MethodSignature, GrMethod>> signatures = new ArrayList<Pair<MethodSignature, GrMethod>>();
+    for (GrMethod method : methods) {
+      List<MethodSignature> current = generateAllSignaturesForMethod(method, PsiSubstitutor.EMPTY);
+      for (MethodSignature signature : current) {
+        signatures.add(new Pair<MethodSignature, GrMethod>(signature, method));
+      }
+    }
+
+    THashMap<MethodSignature, List<GrMethod>> map = new THashMap<MethodSignature, List<GrMethod>>();
+    for (Pair<MethodSignature, GrMethod> pair : signatures) {
+      List<GrMethod> list = map.get(pair.first);
+      if (list == null) {
+        list = new ArrayList<GrMethod>();
+        map.put(pair.first, list);
+      }
+      list.add(pair.second);
+    }
+    return map;
+  }
+
+  private static MethodSignature generateSignature(String name,
+                                                   List<PsiType> paramTypes,
+                                                   PsiTypeParameter[] typeParameters,
+                                                   PsiSubstitutor substitutor) {
+    return MethodSignatureUtil.createMethodSignature(name, paramTypes.toArray(new PsiType[paramTypes.size()]), typeParameters, substitutor);
   }
 }
