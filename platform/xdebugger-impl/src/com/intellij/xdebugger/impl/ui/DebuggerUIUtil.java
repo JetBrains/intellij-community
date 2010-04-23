@@ -125,6 +125,7 @@ public class DebuggerUIUtil {
       invokeOnEventDispatch(new Runnable() {
         public void run() {
           myTextArea.setText(fullValue);
+          myTextArea.setCaretPosition(0);
         }
       });
     }
