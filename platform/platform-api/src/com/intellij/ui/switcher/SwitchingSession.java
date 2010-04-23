@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
+import com.intellij.ui.awt.RelativePoint;
 
 import javax.swing.*;
 import java.awt.*;
@@ -109,6 +110,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     private SwitchTarget myTarget;
 
+    private RelativePoint myPoint;
+
     private TargetPainer(SwitchTarget target) {
       myTarget = target;
     }
@@ -126,11 +129,18 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
         g.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] {2, 4}, 0));
         g.draw(paintRect);
       } else {
-        g.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] {2, 4}, 0));
-        g.draw(paintRect);
+        g.setColor(Color.red);
+        int d = 6;
+        int dX = 4;
+        int dY = -4;
+        g.fillOval(paintRect.x + dX - d / 2, paintRect.y + paintRect.height + dY - d / 2, d, d);
       }
 
       cfg.restore();
+    }
+
+    public void setPoint(RelativePoint point) {
+      myPoint = point;
     }
 
     @Override
@@ -183,7 +193,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
           eachPoint = new Point(eachRec.x + eachRec.width / 2, eachRec.y + eachRec.height);
           break;
         case down:
-          eachPoint = new Point(eachRec.x + eachRec.width, eachRec.y);
+          eachPoint = new Point(eachRec.x + eachRec.width /2, eachRec.y);
           break;
         case left:
           eachPoint = new Point(eachRec.x + eachRec.width, eachRec.y + eachRec.height / 2);
@@ -205,14 +215,18 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
             selected = new Point(eachRec.x, eachRec.y + eachRec.height / 2);
             break;
           case right:
-            selected = new Point(eachRec.x + eachRec.width, eachRec.y + eachRec.y / 2);
+            selected = new Point(eachRec.x + eachRec.width, eachRec.y + eachRec.height / 2);
             break;
         }
         points.add(selected);
         target2Point.put(each, selected);
+
+        myPainters.get(each).setPoint(new RelativePoint(myRootComponent, selected));
       } else {
         points.add(eachPoint);
         target2Point.put(each, eachPoint);
+
+        myPainters.get(each).setPoint(new RelativePoint(myRootComponent, eachPoint));
       }
     }
 
@@ -226,7 +240,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     }
 
 
-    for (Integer eachDistance : distance.keySet()) {
+    Integer[] distancesArray = distance.keySet().toArray(new Integer[distance.size()]);
+    for (Integer eachDistance : distancesArray) {
       SwitchTarget eachTarget = distance.get(eachDistance);
       Point eachPoint = target2Point.get(eachTarget);
       switch (direction) {
@@ -247,6 +262,34 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
           break;
         case right:
           if (eachPoint.x > selected.x) {
+            return eachTarget;
+          }
+          break;
+      }
+    }
+
+    for (int i = distancesArray.length - 1; i >= 0; i--) {
+      SwitchTarget eachTarget = distance.get(distancesArray[i]);
+      Point eachPoint = target2Point.get(eachTarget);
+
+      switch (direction) {
+        case up:
+          if (eachPoint.y > selected.y) {
+            return eachTarget;
+          }
+          break;
+        case down:
+          if (eachPoint.y < selected.y) {
+            return eachTarget;
+          }
+          break;
+        case left:
+          if (eachPoint.x > selected.x) {
+            return eachTarget;
+          }
+          break;
+        case right:
+          if (eachPoint.x < selected.x) {
             return eachTarget;
           }
           break;
