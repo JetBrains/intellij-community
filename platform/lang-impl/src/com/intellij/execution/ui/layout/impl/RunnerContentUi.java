@@ -32,6 +32,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -50,7 +52,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener {
+public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider {
 
   @NonNls public static final String LAYOUT = "Runner.Layout";
   @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
@@ -155,7 +157,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
             }
             return null;
           }
-        }).setInnerInsets(new Insets(1, 0, 0, 0)).setToDrawBorderIfTabsHidden(false).setUiDecorator(new UiDecorator() {
+        }).setProvideSwitchTargets(false).setInnerInsets(new Insets(1, 0, 0, 0)).setToDrawBorderIfTabsHidden(false).setUiDecorator(new UiDecorator() {
         @NotNull
         public UiDecoration getDecoration() {
           return new UiDecoration(null, new Insets(1, 8, 1, 8));
@@ -295,6 +297,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   public JComponent getComponent() {
     initUi();
     return myComponent;
+  }
+
+  public boolean isCycleRoot() {
+    return false;
   }
 
   public void setManager(final ContentManager manager) {
@@ -1103,5 +1109,35 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myRunnerUi;
   }
 
+  public SwitchTarget getCurrentTarget() {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null) return myTabs.getCurrentTarget();
 
+    GridImpl grid = getSelectedGrid();
+    if (grid.getContents().size() <= 1) return myTabs.getCurrentTarget();
+
+    SwitchTarget cell = grid.getCellFor(owner);
+
+    return cell != null ? cell : myTabs.getCurrentTarget();
+  }
+
+  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
+    List<SwitchTarget> result = new ArrayList<SwitchTarget>();
+
+    result.addAll(myTabs.getTargets(true, false));
+    result.addAll(getSelectedGrid().getTargets(onlyVisible));
+
+    Iterator<Wrapper> toolbars = myMinimizedButtonsPlaceholder.values().iterator();
+    while (toolbars.hasNext()) {
+      Wrapper each = toolbars.next();
+      if (!each.isShowing()) continue;
+      JComponent target = each.getTargetComponent();
+      if (target instanceof ActionToolbar) {
+        ActionToolbar tb = (ActionToolbar)target;
+        result.addAll(tb.getTargets(onlyVisible, false));
+      }
+    }
+
+    return result;
+  }
 }

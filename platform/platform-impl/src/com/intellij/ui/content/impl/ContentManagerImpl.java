@@ -33,6 +33,8 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +108,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myComponent;
   }
 
-  private class MyContentComponent extends NonOpaquePanel implements DataProvider {
+  private class MyContentComponent extends NonOpaquePanel implements DataProvider, SwitchProvider {
 
     private final List<DataProvider> myProviders = new ArrayList<DataProvider>();
 
@@ -131,6 +133,37 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       return null;
+    }
+
+    public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
+      }
+      return new ArrayList<SwitchTarget>();
+    }
+
+    public SwitchTarget getCurrentTarget() {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).getCurrentTarget();
+      }
+
+      return null;
+    }
+
+    public JComponent getComponent() {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).getComponent();
+      }
+
+      return this;
+    }
+
+    public boolean isCycleRoot() {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).isCycleRoot();
+      }
+
+      return false;
     }
   }
 
