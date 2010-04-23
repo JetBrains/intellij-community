@@ -17,30 +17,45 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 
 public abstract class SwitchAction extends AnAction implements DumbAware {
 
-
-  private static SwitchingSession ourCurrentSession;
-
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled((ourCurrentSession != null && !ourCurrentSession.isFinished()) || getProvider(e) != null);
+    SwitchingSession session = getSession(e);
+    e.getPresentation().setEnabled((session != null && !session.isFinished()) || getProvider(e) != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    if (ourCurrentSession == null || ourCurrentSession.isFinished()) {
+    SwitchingSession session = getSession(e);
+    if (session == null || session.isFinished()) {
       SwitchProvider provider = getProvider(e);
-      ourCurrentSession = new SwitchingSession(provider, e);
+      session = new SwitchingSession(provider, e);
+      initSession(e, session);
     }
 
-    move(ourCurrentSession);
+    move(session);
   }
 
   private SwitchProvider getProvider(AnActionEvent e) {
     return e.getData(SwitchProvider.KEY);
+  }
+
+  private SwitchingSession getSession(AnActionEvent e) {
+    return getManager(e).getSession();
+  }
+
+  private SwitchManager getManager(AnActionEvent e) {
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    return SwitchManager.getInstance(project);
+  }
+
+  private void initSession(AnActionEvent e, SwitchingSession session) {
+    getManager(e).initSession(session);    
   }
 
   protected abstract void move(SwitchingSession session);

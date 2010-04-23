@@ -300,6 +300,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myComponent;
   }
 
+  public boolean isCycleRoot() {
+    return false;
+  }
+
   public void setManager(final ContentManager manager) {
     assert myManager == null;
 

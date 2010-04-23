@@ -22,14 +22,19 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +48,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
+import java.util.*;
+import java.util.List;
 
-public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
+public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider, SwitchProvider {
   public static final String POPUP_PLACE = "ToolwindowPopup";
 
   ContentManager myManager;
@@ -97,6 +103,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   public JComponent getComponent() {
     return myContent;
+  }
+
+  public boolean isCycleRoot() {
+    return true;
   }
 
   public JComponent getTabComponent() {
@@ -426,5 +436,47 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     step.setDefaultOptionIndex(Arrays.asList(myManager.getContents()).indexOf(myManager.getSelectedContent()));
     getCurrentLayout().showContentPopup(JBPopupFactory.getInstance().createListPopup(step));
 
+  }
+
+  public List<SwitchTarget> getTargets(boolean onlyVisible) {
+    List<SwitchTarget> result = new ArrayList<SwitchTarget>();
+
+    if (myType == ToolWindowContentUiType.TABBED) {
+      for (int i = 0; i < myManager.getContentCount(); i++) {
+        result.add(new ContentSwitchTarget(myManager.getContent(i)));
+      }
+    }
+
+    return result;
+  }
+
+  public SwitchTarget getCurrentTarget() {
+    return new ContentSwitchTarget(myManager.getSelectedContent());
+  }
+
+  private class ContentSwitchTarget extends ComparableObject.Impl implements SwitchTarget {
+
+    private Content myContent;
+
+    private ContentSwitchTarget(Content content) {
+      myContent = content;
+    }
+
+    public ActionCallback switchTo(boolean requestFocus) {
+      return myManager.setSelectedContentCB(myContent, requestFocus);
+    }
+
+    public boolean isVisible() {
+      return true;
+    }
+
+    public RelativeRectangle getRectangle() {
+      return myTabsLayout.getRectangleFor(myContent);
+    }
+
+    @Override
+    public Object[] getEqualityObjects() {
+      return new Object[] {myContent};
+    }
   }
 }

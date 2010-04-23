@@ -29,4 +29,6 @@ public interface SwitchProvider {
 
   JComponent getComponent();
 
+  boolean isCycleRoot();
+
 }

@@ -54,6 +54,23 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
 
     myTargets = myProvider.getTargets(true);
+
+    Component eachParent = myProvider.getComponent();
+    eachParent = eachParent.getParent();
+    while (eachParent != null) {
+      if (eachParent instanceof SwitchProvider) {
+        SwitchProvider eachProvider = (SwitchProvider)eachParent;
+        myTargets.addAll(eachProvider.getTargets(true));
+        if (eachProvider.isCycleRoot()) {
+          break;
+        }
+      }
+
+      eachParent = eachParent.getParent();
+    }
+
+
+
     if (myTargets.size() == 0) {
       Disposer.dispose(this);
       return;
@@ -191,9 +208,12 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
             selected = new Point(eachRec.x + eachRec.width, eachRec.y + eachRec.y / 2);
             break;
         }
+        points.add(selected);
+        target2Point.put(each, selected);
+      } else {
+        points.add(eachPoint);
+        target2Point.put(each, eachPoint);
       }
-      points.add(eachPoint);
-      target2Point.put(each, eachPoint);
     }
 
     TreeMap<Integer, SwitchTarget> distance = new TreeMap<Integer, SwitchTarget>();

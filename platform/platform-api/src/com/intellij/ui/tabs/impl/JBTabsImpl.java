@@ -2232,6 +2232,10 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  public boolean isCycleRoot() {
+    return false;
+  }
+
   @NotNull
   public JBTabs removeTabMouseListener(@NotNull MouseListener listener) {
     removeListeners();
@@ -2734,6 +2738,7 @@ public class JBTabsImpl extends JComponent
     }
     return result;
   }
+
 
   public SwitchTarget getCurrentTarget() {
     return new TabTarget(getSelectedInfo());
