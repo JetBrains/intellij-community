@@ -27,7 +27,7 @@ import java.io.File;
 public class JavaFormatterTest extends LightIdeaTestCase {
   private TextRange myTextRange;
   private TextRange myLineRange;
-  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
+  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath2() + "/psi/formatter/java";
 
   public void testSCR915() throws Exception {
     getSettings().SPACE_AROUND_ADDITIVE_OPERATORS = false;
