@@ -15,12 +15,18 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomReferenceInjector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * @author Eugene Zhuravlev
@@ -28,12 +34,67 @@ import org.jetbrains.annotations.Nullable;
 */
 class AntReferenceInjector implements DomReferenceInjector {
   public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
-    //final DomElement element = context.getInvocationElement();
-    return unresolvedText; // todo
+    // todo: speed optimization: disable string resolution in places where it is not applicable
+    if (unresolvedText == null) {
+      return null;
+    }
+    final DomElement element = context.getInvocationElement();
+    return AntStringResolver.computeString(element, unresolvedText);
   }
 
   @NotNull
   public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
+    if (element instanceof XmlAttributeValue) {
+      final List<PsiReference> refs = new ArrayList<PsiReference>();
+      addPropertyReferences(context, (XmlAttributeValue)element, refs);
+      return refs.toArray(new PsiReference[refs.size()]);
+    }
     return PsiReference.EMPTY_ARRAY;
   }
+
+  private static void addPropertyReferences(@NotNull ConvertContext context, final XmlAttributeValue xmlAttributeValue, final List<PsiReference> result) {
+    final String value = xmlAttributeValue.getValue();
+    final DomElement contextElement = context.getInvocationElement();
+    if (xmlAttributeValue != null && value.indexOf("@{") < 0) {
+      final int valueBeginingOffset = Math.abs(xmlAttributeValue.getTextRange().getStartOffset() - xmlAttributeValue.getValueTextRange().getStartOffset());
+      int startIndex;
+      int endIndex = -1;
+      while ((startIndex = value.indexOf("${", endIndex + 1)) > endIndex) {
+        if (startIndex > 0 && value.charAt(startIndex - 1) == '$') {
+          // the '$' is escaped
+          endIndex = startIndex + 1;
+          continue;
+        }
+        startIndex += 2;
+        endIndex = startIndex;
+        int nestedBrackets = 0;
+        while (value.length() > endIndex) {
+          final char ch = value.charAt(endIndex);
+          if (ch == '}') {
+            if (nestedBrackets == 0) {
+              break;
+            }
+            --nestedBrackets;
+          }
+          else if (ch == '{') {
+            ++nestedBrackets;
+          }
+          ++endIndex;
+        }
+        if (nestedBrackets > 0 || endIndex > value.length()) return;
+        if (endIndex >= startIndex) {
+          final String propName = value.substring(startIndex, endIndex);
+          //if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
+          //  continue;
+          //}
+
+          result.add(new AntDomPropertyReference(
+            contextElement, xmlAttributeValue, propName, new TextRange(valueBeginingOffset + startIndex, valueBeginingOffset + endIndex))
+          );
+        }
+        endIndex = startIndex;
+      }
+    }
+  }
+
 }

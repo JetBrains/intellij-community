@@ -82,7 +82,7 @@ public class AntDomTargetDependsListConverter extends DelimitedListConverter<Xml
       final List<Object> result = new ArrayList<Object>();
       final List<AntDomTarget> allTargets = project.getDeclaredTargets();
       for (AntDomTarget target : allTargets) {
-        final String targetName = target.getName().getStringValue();
+        final String targetName = target.getName().getRawText();
         if (targetName != null && !existingTargetNames.contains(targetName)) {
           result.add(LookupElementBuilder.create(target, targetName));
         }

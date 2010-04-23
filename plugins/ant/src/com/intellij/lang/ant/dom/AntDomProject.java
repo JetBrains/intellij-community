@@ -57,7 +57,7 @@ public abstract class AntDomProject extends AntDomElement {
     // todo: consider imported targes
     // todo: search from the including project if any
     for (AntDomTarget target : getDeclaredTargets()) {
-      if (name.equals(target.getName().getStringValue())) {
+      if (name.equals(target.getName().getRawText())) {
         return target;
       }
     }

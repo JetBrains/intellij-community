@@ -77,7 +77,7 @@ public class AntDomRefIdConverter extends ResolvingConverter<XmlAttributeValue>{
   private static AntDomElement findElementById(AntDomElement from, final String id) {
     final GenericAttributeValue<String> idValue = from.getId();
     if (idValue != null) {
-      if (id.equals(idValue.getStringValue())) {
+      if (id.equals(idValue.getRawText())) {
         return from;
       }
     }

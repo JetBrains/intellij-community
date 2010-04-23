@@ -15,9 +15,11 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
@@ -25,7 +27,20 @@ import java.util.Collection;
  */
 public interface PropertiesProvider {
   @NotNull
-  Collection<String> getPropertyNames();
+  Iterator<String> getNamesIterator();
 
+  /**
+   * @param propertyName
+   * @return property value string as defined in xml or null if this provider does not define a property with such name
+   */
+  @Nullable
   String getPropertyValue(String propertyName);
+
+  /**
+   * Needed for referencing purposes.
+   * Returned element will be used as a target element for the property reference.
+   * @param propertyName
+   */
+  @Nullable
+  PsiElement getNavigationElement(String propertyName);
 }

@@ -16,14 +16,16 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -34,6 +36,7 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
   private Map<String, String> myCachedPreperties;
 
   @Attribute("name")
+  @Convert(value = AntDomAttributeValueConverter.class)
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("value")
@@ -70,8 +73,17 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
   public abstract GenericAttributeValue<String> getbasedir();
 
   @NotNull
-  public final Collection<String> getPropertyNames() {
-    return buildProperties().keySet();
+  public final Iterator<String> getNamesIterator() {
+    return buildProperties().keySet().iterator();
+  }
+
+  public PsiElement getNavigationElement(String propertyName) {
+    final GenericAttributeValue<String> name = getName();
+    if (name != null) {
+      return name.getXmlAttributeValue();
+    }
+    // todo: process property files
+    return null;
   }
 
   @Nullable
@@ -89,7 +101,7 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
     if (name != null) {
       final GenericAttributeValue<String> value = getValue();
       if (value != null) {
-        result = Collections.singletonMap(name.getStringValue(), value.getStringValue());
+        result = Collections.singletonMap(name.getRawText(), value.getRawText());
       }
       else {
         final GenericAttributeValue<String> location = getLocation();
@@ -97,12 +109,12 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
           String locValue = location.getStringValue();
           locValue = FileUtil.toSystemDependentName(locValue);
           // todo: if the path is relative, resolve it against project basedir (see ant docs)
-          result = Collections.singletonMap(name.getStringValue(), locValue);
+          result = Collections.singletonMap(name.getRawText(), locValue);
         }
         else {
           // todo: process refid attrib if specifiedfor the value
           final String tagText = getXmlTag().getText();
-          result = Collections.singletonMap(name.getStringValue(), tagText);
+          result = Collections.singletonMap(name.getRawText(), tagText);
         }
       }
     }
