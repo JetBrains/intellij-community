@@ -30,4 +30,8 @@ public interface GenericDomValue<T> extends DomElement, MutableGenericValue<T>{
 
   void setValue(T value);
 
+  /**
+   * @return text of the value as it is specified in the underlying XML. No conversions or substitutions are made 
+   */
+  String getRawText();
 }
