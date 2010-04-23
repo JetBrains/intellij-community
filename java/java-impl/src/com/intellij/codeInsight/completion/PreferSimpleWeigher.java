@@ -25,11 +25,11 @@ import org.jetbrains.annotations.NotNull;
 public class PreferSimpleWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, final CompletionLocation location) {
-    final PsiTypeLookupItem lookupItem = item.as(PsiTypeLookupItem.class);
+    final PsiTypeLookupItem lookupItem = PsiTypeLookupItem.from(item);
     if (lookupItem != null) {
       return -lookupItem.getBracketsCount();
     }
-    if (item.as(CastingLookupElementDecorator.class) != null) {
+    if (CastingLookupElementDecorator.from(item) != null) {
       return -239;
     }
     return 0;
