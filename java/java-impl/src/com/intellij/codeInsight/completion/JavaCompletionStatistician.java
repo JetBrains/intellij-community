@@ -51,7 +51,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       }
     }
 
-    LookupItem item = element.as(LookupItem.class);
+    LookupItem item = LookupItem.from(element);
     if (item == null) return null;
 
     PsiType qualifierType = JavaCompletionUtil.getQualifierType(item);

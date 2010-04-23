@@ -19,10 +19,12 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -246,6 +248,24 @@ public class FormatterUtil {
       child = child.getTreeNext();
     }
     return true;
+  }
+
+  public static boolean isPrecededBy(ASTNode node, IElementType eType) {
+    ASTNode prevNode = node.getTreePrev();
+    while (prevNode != null && prevNode.getPsi() instanceof PsiWhiteSpace) {
+      prevNode = prevNode.getTreePrev();
+    }
+    if (prevNode == null) return false;
+    return prevNode.getElementType() == eType;
+  }
+
+  public static boolean isPrecededBy(ASTNode node, TokenSet tokens) {
+    ASTNode prevNode = node.getTreePrev();
+    while (prevNode != null && prevNode.getPsi() instanceof PsiWhiteSpace) {
+      prevNode = prevNode.getTreePrev();
+    }
+    if (prevNode == null) return false;
+    return tokens.contains(prevNode.getElementType());
   }
 
 }

@@ -316,6 +316,12 @@ public class DocumentationManager {
 
       component.setHint(hint);
 
+      if (myEditor == null) { 
+        // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked, 
+        // so reevaluate the editor for proper popup placement
+        Lookup lookup = LookupManager.getInstance(myProject).getActiveLookup();
+        myEditor = lookup != null ? lookup.getEditor() : null;
+      }
       fetchDocInfo(getDefaultCollector(element, originalElement), component);
 
       myDocInfoHintRef = new WeakReference<JBPopup>(hint);
