@@ -20,8 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
 class LeafBlockWrapper extends AbstractBlockWrapper {
   private static final int CONTAIN_LINE_FEEDS = 4;
   private static final int READ_ONLY = 8;
@@ -149,12 +147,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
       }
     }
 
-    ArrayList<IndentData> ignored = new ArrayList<IndentData>();
-    IndentData result = myParent.getChildOffset(this, options, this.getStartOffset());
-    if (!ignored.isEmpty()) {
-      result = result.add(ignored.get(ignored.size() - 1));
-    }
-    return result;
+    return myParent.getChildOffset(this, options, this.getStartOffset());
   }
 
   public void setSpaceProperty(final SpacingImpl currentSpaceProperty) {
@@ -191,8 +184,4 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new TextRange(myStart, myEnd);
   }
 
-  @Override
-  public String toString() {
-    return "LeafBlockWrapper(" + myStart + "-" + myEnd + ")";
-  }
 }

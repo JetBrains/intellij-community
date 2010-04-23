@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,13 +45,6 @@ public class DocCommentBlock extends AbstractJavaBlock{
     }
     return result;
 
-  }
-
-  protected Wrap getReservedWrap(final IElementType elementType) {
-    return null;
-  }
-
-  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
   }
 
   @NotNull

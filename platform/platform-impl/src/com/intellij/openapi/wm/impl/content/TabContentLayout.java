@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.TitlePanel;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -399,5 +400,15 @@ class TabContentLayout extends ContentLayout {
     } else {
       listPopup.showUnderneathOf(myIdLabel);
     }
+  }
+
+  @Override
+  public RelativeRectangle getRectangleFor(Content content) {
+    ContentTabLabel label = myContent2Tabs.get(content);
+    return new RelativeRectangle(label.getParent(), label.getBounds());
+  }
+
+  public Component getComponentFor(Content content) {
+    return myContent2Tabs.get(content);
   }
 }

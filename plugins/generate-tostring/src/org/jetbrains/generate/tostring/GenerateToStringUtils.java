@@ -71,7 +71,7 @@ public class GenerateToStringUtils {
         List<PsiField> availableFields = new ArrayList<PsiField>();
 
         // performs til filtering process
-        PsiField[] fields = psi.getFields(clazz);
+      PsiField[] fields = clazz.getFields();
         for (PsiField field : fields) {
             FieldElement fe = ElementFactory.newFieldElement(project, field, psi);
             if (log.isDebugEnabled()) log.debug("Field being filtered: " + fe);
@@ -103,7 +103,7 @@ public class GenerateToStringUtils {
         List<PsiMethod> availableMethods = new ArrayList<PsiMethod>();
         PsiElementFactory elementFactory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
 
-        PsiMethod[] methods = psi.getMethods(clazz);
+      PsiMethod[] methods = clazz.getMethods();
         for (PsiMethod method : methods) {
 
             MethodElement me = ElementFactory.newMethodElement(method, elementFactory, psi);

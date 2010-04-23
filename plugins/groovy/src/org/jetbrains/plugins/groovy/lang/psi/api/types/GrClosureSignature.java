@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.types;
 
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Medvedev
  */
 public interface GrClosureSignature {
+  @NotNull PsiSubstitutor getSubstitutor();
+
   @NotNull
   GrClosureParameter[] getParameters();
 

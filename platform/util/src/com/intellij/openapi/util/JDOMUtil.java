@@ -337,6 +337,13 @@ public class JDOMUtil {
   }
 
   @NotNull
+  public static Document loadDocument(Class clazz, String reaource) throws JDOMException, IOException {
+    InputStream stream = clazz.getResourceAsStream(reaource);
+    if (stream == null) throw new FileNotFoundException(reaource);
+    return loadDocument(stream);
+  }
+
+  @NotNull
   public static Document loadDocument(URL url) throws JDOMException, IOException {
     return loadDocument(URLUtil.openStream(url));
   }

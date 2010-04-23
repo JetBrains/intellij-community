@@ -15,8 +15,6 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 /**
  * The wrap setting for a formatting model block. Indicates the conditions under which a line break
  * is inserted before the block when formatting, if the block extends beyond the
@@ -34,13 +32,44 @@ public abstract class Wrap {
 
   private static WrapFactory myFactory;
 
+  /**
+   * @deprecated    use {@link WrapType#ALWAYS} instead
+   */
+  @Deprecated
   public static WrapType ALWAYS = WrapType.ALWAYS;
+
+  /**
+   * @deprecated    use {@link WrapType#NORMAL} instead
+   */
+  @Deprecated
   public static WrapType NORMAL = WrapType.NORMAL;
+
+  /**
+   * @deprecated    use {@link WrapType#NONE} instead
+   */
+  @Deprecated
   public static WrapType NONE = WrapType.NONE;
+
+  /**
+   * @deprecated    use {@link WrapType#CHOP_DOWN_IF_LONG} instead
+   */
+  @SuppressWarnings({"UnusedDeclaration"})
+  @Deprecated
   public static WrapType CHOP_DOWN_IF_LONG = WrapType.CHOP_DOWN_IF_LONG;
 
   static void setFactory(WrapFactory factory) {
     myFactory = factory;
+  }
+
+  /**
+   * Creates a block wrap setting of the legacy representation of specified wrap type (see {@link WrapType#getLegacyRepresentation()}).
+   *
+   * @param type                the type of the wrap setting.
+   * @param wrapFirstElement    if <code>true</code>, the first element in a sequence of elements of the same type is also wrapped.
+   * @return                    the wrap setting instance.
+   */
+  public static Wrap createWrap(final int type, final boolean wrapFirstElement) {
+    return myFactory.createWrap(WrapType.byLegacyRepresentation(type), wrapFirstElement);
   }
 
   /**

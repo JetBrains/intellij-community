@@ -26,7 +26,7 @@ import org.apache.maven.model.Parent;
 import org.apache.maven.model.Profile;
 import org.apache.maven.model.Resource;
 import org.jetbrains.idea.maven.MavenTestCase;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -1156,7 +1156,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
 
   public void testActivatingProfilesByProperty() throws Exception {
     System.setProperty("maven.test.property", "foo");
-    MavenEmbedderFactory.resetSystemPropertiesCacheInTests();
+    MavenEmbedderWrapper.resetSystemPropertiesCacheInTests();
 
     createProjectPom("<profiles>" +
                      "  <profile>" +

@@ -180,7 +180,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           InitializationPlace initializerPlace = settings.getInitializerPlace();
           final PsiLocalVariable localVariable = settings.getLocalVariable();
           final boolean deleteLocalVariable = settings.isDeleteLocalVariable();
-          PsiExpression initializer;
+          @Nullable PsiExpression initializer;
           if (localVariable != null) {
             initializer = localVariable.getInitializer();
           }
@@ -193,7 +193,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
           if (!CommonRefactoringUtil.checkReadOnlyStatus(project, destClass.getContainingFile())) return;
 
-          ChangeContextUtil.encodeContextInfo(initializer, true);
+          if (initializer != null) {
+            ChangeContextUtil.encodeContextInfo(initializer, true);
+          }
           PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, fieldName, initializer) : createField(fieldName, type, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null);
 
           PsiElement finalAnchorElement = null;
@@ -295,7 +297,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             }
           }
 
-          ChangeContextUtil.clearContextInfo(initializer);
+          if (initializer != null) {
+            ChangeContextUtil.clearContextInfo(initializer);
+          }
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

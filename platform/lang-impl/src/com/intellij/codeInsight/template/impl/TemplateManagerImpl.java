@@ -244,7 +244,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
         int caretOffset = editor.getCaretModel().getOffset();
-        if (customLiveTemplate.isApplicable(file, caretOffset, false)) {
+        if (customLiveTemplate.isApplicable(file, caretOffset)) {
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
           String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {

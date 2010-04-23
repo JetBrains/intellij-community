@@ -33,13 +33,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicProperty
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
-import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -83,6 +82,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -953,34 +953,33 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkDuplicateMethod(GrMethod[] methods, AnnotationHolder holder) {
-    final Map<GrMethod, List<GrMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<GrMethod>() {
-      public int computeHashCode(GrMethod method) {
-        return method.getSignature(PsiSubstitutor.EMPTY).hashCode();
-      }
-
-      public boolean equals(GrMethod method1, GrMethod method2) {
-        return method1.getSignature(PsiSubstitutor.EMPTY).equals(method2.getSignature(PsiSubstitutor.EMPTY));
-      }
-    });
+    Map<MethodSignature, List<GrMethod>> map = GrClosureSignatureUtil.findMethodSignatures(methods);
     processMethodDuplicates(map, holder);
   }
 
-  protected static void processMethodDuplicates(Map<GrMethod, List<GrMethod>> map, AnnotationHolder holder) {
-    HashSet<GrMethod> duplicateMethodsWarning = new HashSet<GrMethod>();
-    HashSet<GrMethod> duplicateMethodsErrors = new HashSet<GrMethod>();
-
-    DuplicatesUtil.collectMethodDuplicates(map, duplicateMethodsWarning, duplicateMethodsErrors);
-
-    for (GrMethod duplicateMethod : duplicateMethodsErrors) {
-      holder.createErrorAnnotation(duplicateMethod.getNameIdentifierGroovy(),
-                                   GroovyBundle.message("repetitive.method.name.signature.and.return.type"));
-    }
-
-    for (GrMethod duplicateMethod : duplicateMethodsWarning) {
-      holder.createWarningAnnotation(duplicateMethod.getNameIdentifierGroovy(), GroovyBundle.message("repetitive.method.name.signature"));
+  protected static void processMethodDuplicates(Map<MethodSignature, List<GrMethod>> map, AnnotationHolder holder) {
+    for (MethodSignature signature : map.keySet()) {
+      List<GrMethod> methods = map.get(signature);
+      if (methods.size() > 1) {
+        String signaturePresentation = getSignaturePresentation(signature);
+        for (GrMethod method : methods) {
+          holder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("method.duplicate", signaturePresentation));
+        }
+      }
     }
   }
 
+  private static String getSignaturePresentation(MethodSignature signature) {
+    StringBuilder builder = new StringBuilder();
+    builder.append(signature.getName()).append('(');
+    PsiType[] types = signature.getParameterTypes();
+    for (PsiType type : types) {
+      builder.append(type.getPresentableText()).append(", ");
+    }
+    if (types.length > 0) builder.delete(builder.length() - 2, builder.length());
+    builder.append(")");
+    return builder.toString();
+  }
 
   private static void checkTypeDefinition(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     final GroovyConfigUtils configUtils = GroovyConfigUtils.getInstance();

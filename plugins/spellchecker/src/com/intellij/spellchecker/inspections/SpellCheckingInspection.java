@@ -88,7 +88,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
   private static final Map<Language, SpellcheckingStrategy> factories = new HashMap<Language, SpellcheckingStrategy>();
 
-  private static void ensureFactoriesAreLoaded() {
+  public static void ensureFactoriesAreLoaded() {
     synchronized (factories) {
       if (!factories.isEmpty()) return;
       final SpellcheckingStrategy[] spellcheckingStrategies = Extensions.getExtensions(SpellcheckingStrategy.EP_NAME);
@@ -146,11 +146,8 @@ public class SpellCheckingInspection extends LocalInspectionTool {
           }
         }
 
-        final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
-        final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
-
         @SuppressWarnings({"unchecked"})
-        final Token[] tokens = tokenizer.tokenize(element);
+        final Token[] tokens = tokenize(element, language);
         if (tokens == null) return;
 
         Set<String> alreadyChecked = new THashSet<String>();
@@ -159,6 +156,19 @@ public class SpellCheckingInspection extends LocalInspectionTool {
         }
       }
     };
+  }
+
+  /**
+   * Splits element text in tokens according to spell checker strategy of given language
+   * @param element Psi element
+   * @param language Usually element.getLanguage()
+   * @return tokens array
+   */
+  @Nullable
+  public static Token[] tokenize(@NotNull final PsiElement element, @NotNull final Language language) {
+    final SpellcheckingStrategy factoryByLanguage = getFactoryByLanguage(language);
+    final Tokenizer tokenizer = factoryByLanguage.getTokenizer(element);
+    return tokenizer.tokenize(element);
   }
 
 
@@ -253,7 +263,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
     return validators;
   }
 
-  private static boolean isKeyword(NamesValidator[] validators, PsiElement element, String word) {
+  public static boolean isKeyword(NamesValidator[] validators, PsiElement element, String word) {
     if (validators == null) {
       return false;
     }

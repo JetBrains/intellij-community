@@ -21,10 +21,7 @@ import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.Convert;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.SubTagList;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +33,9 @@ import java.util.List;
  *         Date: Apr 6, 2010
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
+@DefinesXml
 public abstract class AntDomProject extends AntDomElement {
+
   private ClassLoader myClassLoader;
 
   @Attribute("name")
@@ -58,7 +57,7 @@ public abstract class AntDomProject extends AntDomElement {
     // todo: consider imported targes
     // todo: search from the including project if any
     for (AntDomTarget target : getDeclaredTargets()) {
-      if (name.equals(target.getName().getValue())) {
+      if (name.equals(target.getName().getStringValue())) {
         return target;
       }
     }

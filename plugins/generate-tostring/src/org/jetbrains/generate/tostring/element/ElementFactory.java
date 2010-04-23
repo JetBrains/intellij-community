@@ -55,9 +55,9 @@ public class ElementFactory {
     ce.setImplementNames(psi.getImplementsClassnames(clazz));
 
     // other
-    ce.setEnum(psi.isEnumClass(clazz));
-    ce.setDeprecated(psi.isDeprecatedClass(clazz));
-    ce.setException(psi.isExceptionClass(clazz));
+    ce.setEnum(clazz.isEnum());
+    ce.setDeprecated(clazz.isDeprecated());
+    ce.setException(PsiAdapter.isExceptionClass(clazz));
     ce.setAbstract(psi.isAbstractClass(clazz));
 
     return ce;
@@ -83,8 +83,8 @@ public class ElementFactory {
     if (psi.isEnumField(field)) fe.setEnum(true);
     PsiModifierList modifiers = field.getModifierList();
     if (modifiers != null) {
-      if (psi.isModifierTransient(modifiers)) fe.setModifierTransient(true);
-      if (psi.isModifierVolatile(modifiers)) fe.setModifierVolatile(true);
+      if (modifiers.hasModifierProperty(PsiModifier.TRANSIENT)) fe.setModifierTransient(true);
+      if (modifiers.hasModifierProperty(PsiModifier.VOLATILE)) fe.setModifierVolatile(true);
     }
 
     setElementInfo(fe, factory, type, modifiers, psi);
@@ -126,11 +126,11 @@ public class ElementFactory {
 
     // misc
     me.setReturnTypeVoid(psi.isTypeOfVoid(method.getReturnType()));
-    me.setDeprecated(psi.isDeprecatedMethod(method));
+    me.setDeprecated(method.isDeprecated());
 
     // modifiers
-    if (psi.isModifierAbstract(modifiers)) me.setModifierAbstract(true);
-    if (psi.isModifierSynchronized(modifiers)) me.setModifierSynchronzied(true);
+    if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT)) me.setModifierAbstract(true);
+    if (modifiers.hasModifierProperty(PsiModifier.SYNCHRONIZED)) me.setModifierSynchronzied(true);
 
     return me;
   }
@@ -184,18 +184,18 @@ public class ElementFactory {
 
     // modifiers
     if (modifiers != null) {
-      if (psi.isModifierStatic(modifiers)) element.setModifierStatic(true);
-      if (psi.isModifierFinal(modifiers)) element.setModifierFinal(true);
-      if (psi.isModifierPublic(modifiers)) {
+      if (modifiers.hasModifierProperty(PsiModifier.STATIC)) element.setModifierStatic(true);
+      if (modifiers.hasModifierProperty(PsiModifier.FINAL)) element.setModifierFinal(true);
+      if (modifiers.hasModifierProperty(PsiModifier.PUBLIC)) {
         element.setModifierPublic(true);
       }
-      else if (psi.isModifierProtected(modifiers)) {
+      else if (modifiers.hasModifierProperty(PsiModifier.PROTECTED)) {
         element.setModifierProtected(true);
       }
-      else if (psi.isModifierPackageLocal(modifiers)) {
+      else if (modifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         element.setModifierPackageLocal(true);
       }
-      else if (psi.isModifierPrivate(modifiers)) element.setModifierPrivate(true);
+      else if (modifiers.hasModifierProperty(PsiModifier.PRIVATE)) element.setModifierPrivate(true);
     }
 
   }

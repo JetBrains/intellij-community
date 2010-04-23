@@ -35,7 +35,4 @@ public interface GrClosureParameter {
   GrExpression getDefaultInitializer();
 
   boolean isValid();
-
-  @Nullable
-  String getName();
 }

@@ -44,7 +44,14 @@ public abstract class XWatchesTreeActionBase extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    boolean enabled = isEnabled(e);
+    final XDebuggerTree tree = XDebuggerTree.getTree(e);
+    boolean enabled;
+    if (tree == null || tree.getSession().isStopped()) {
+      enabled = false;
+    }
+    else {
+      enabled = isEnabled(e);
+    }
     e.getPresentation().setEnabled(enabled);
   }
 

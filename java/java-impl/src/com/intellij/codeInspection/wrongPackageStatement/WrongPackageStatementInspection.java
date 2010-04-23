@@ -40,14 +40,16 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
     if (file instanceof PsiJavaFile) {
       if (JspPsiUtil.isInJspFile(file)) return null;
       PsiJavaFile javaFile = (PsiJavaFile)file;
-      // highlight the first class in the file only
-      PsiClass[] classes = javaFile.getClasses();
-      if (classes.length == 0) return null;
+
       PsiDirectory directory = javaFile.getContainingDirectory();
       if (directory == null) return null;
       PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (dirPackage == null) return null;
       PsiPackageStatement packageStatement = javaFile.getPackageStatement();
+
+      // highlight the first class in the file only
+      PsiClass[] classes = javaFile.getClasses();
+      if (classes.length == 0 && packageStatement == null) return null;
 
       String packageName = dirPackage.getQualifiedName();
       if (!Comparing.strEqual(packageName, "", true) && packageStatement == null) {
@@ -75,7 +77,7 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
                                                          packageReference.getText(),
                                                          dirPackage.getQualifiedName());
-          return new ProblemDescriptor[]{manager.createProblemDescriptor(packageStatement, description, isOnTheFly, availableFixes.toArray(new LocalQuickFix[availableFixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+          return new ProblemDescriptor[]{manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly, availableFixes.toArray(new LocalQuickFix[availableFixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
 
         }
       }

@@ -30,6 +30,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
@@ -90,7 +91,7 @@ public class XValueHint extends AbstractValueHint {
             });
           }
 
-          public void setFullValue(@NotNull String fullValue, @NotNull String linkText) {
+          public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
             //todo[nik] implement?
           }
 

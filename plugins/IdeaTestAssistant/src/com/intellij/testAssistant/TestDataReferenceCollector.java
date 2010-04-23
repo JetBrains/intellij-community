@@ -16,6 +16,7 @@
 package com.intellij.testAssistant;
 
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.testFramework.UsefulTestCase;
@@ -90,7 +91,7 @@ public class TestDataReferenceCollector {
     final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     for (int i = 0; i < arguments.length && i < parameters.length; i++) {
       final int finalI = i;
-      result.put(parameters [i].getName(), new Computable<String>() {
+      result.put(parameters [i].getName(), new NullableComputable<String>() {
         public String compute() {
           return evaluate(arguments [finalI], Collections.<String, Computable<String>>emptyMap());
         }
@@ -121,7 +122,8 @@ public class TestDataReferenceCollector {
       final PsiElement result = ((PsiReferenceExpression)expression).resolve();
       if (result instanceof PsiParameter) {
         final String name = ((PsiParameter)result).getName();
-        return arguments.get(name).compute();
+        final Computable<String> arg = arguments.get(name);
+        return arg == null ? null : arg.compute();
       }
       if (result instanceof PsiVariable) {
         final PsiExpression initializer = ((PsiVariable)result).getInitializer();

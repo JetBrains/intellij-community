@@ -65,7 +65,7 @@ public class GenerateToStringWorker {
     this.psi = PsiAdapterFactory.getPsiAdapter();
     this.editor = editor;
     this.elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    this.codeStyleManager = psi.getCodeStyleManager(project);
+    this.codeStyleManager = CodeStyleManager.getInstance(project);
     this.containingFile = clazz.getContainingFile();
     this.config = GenerateToStringContext.getConfig();
     this.hasOverrideAnnotation = insertAtOverride;

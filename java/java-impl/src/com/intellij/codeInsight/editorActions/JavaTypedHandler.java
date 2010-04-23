@@ -87,6 +87,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
     if (originalFileType == StdFileTypes.JAVA && c == '{') {
       int offset = editor.getCaretModel().getOffset();
+      if (offset == 0) {
+        return Result.CONTINUE;
+      }
+
       HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
       while (iterator.getTokenType() == TokenType.WHITE_SPACE) {
         iterator.retreat();
