@@ -72,7 +72,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
       return false;
     }
 
-    if (myModifierCodes.contains(e.getKeyCode())) {
+    if (myModifierCodes != null && myModifierCodes.contains(e.getKeyCode())) {
       if (areAllModifiersPressed(e.getModifiers())) {
         myWaitingForAutoInitSession = true;
         myAutoInitSessionEvent = e;
