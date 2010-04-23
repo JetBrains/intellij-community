@@ -25,7 +25,9 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,6 +58,13 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
 
   public boolean dispatchKeyEvent(KeyEvent e) {
     if (mySession != null && !mySession.isFinished()) return false;
+
+    Component c = e.getComponent();
+    Component frame = UIUtil.findUltimateParent(c);
+    if (frame instanceof IdeFrame) {
+      if (((IdeFrame)frame).getProject() != myProject) return false;
+    }
+
     if (e.getID() != KeyEvent.KEY_PRESSED) {
       if (myWaitingForAutoInitSession) {
         cancelWaitingForAutoInit();

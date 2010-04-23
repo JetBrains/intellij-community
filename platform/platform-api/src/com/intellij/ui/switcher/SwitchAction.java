@@ -25,6 +25,10 @@ import java.awt.event.KeyEvent;
 
 public abstract class SwitchAction extends AnAction implements DumbAware {
 
+  protected SwitchAction() {
+    setEnabledInModalContext(true);
+  }
+
   @Override
   public void update(AnActionEvent e) {
     SwitchingSession session = getSession(e);

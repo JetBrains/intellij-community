@@ -168,4 +168,9 @@ class ComboContentLayout extends ContentLayout {
   public RelativeRectangle getRectangleFor(Content content) {
     return null;
   }
+
+  @Override
+  public Component getComponentFor(Content content) {
+    return null;
+  }
 }

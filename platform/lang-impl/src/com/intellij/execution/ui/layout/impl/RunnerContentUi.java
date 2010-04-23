@@ -1141,18 +1141,4 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     return result;
   }
-
-  private class LayoutTarget implements SwitchTarget {
-    public ActionCallback switchTo(boolean requestFocus) {
-      return null;
-    }
-
-    public boolean isVisible() {
-      return false;
-    }
-
-    public RelativeRectangle getRectangle() {
-      return null;
-    }
-  }
 }

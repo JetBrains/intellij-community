@@ -96,4 +96,7 @@ abstract class ContentLayout {
   public abstract void showContentPopup(ListPopup listPopup);
 
   public abstract RelativeRectangle getRectangleFor(Content content);
+
+  public abstract Component getComponentFor(Content content);
+
 }

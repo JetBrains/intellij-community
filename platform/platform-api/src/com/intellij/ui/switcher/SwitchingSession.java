@@ -86,7 +86,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       Disposer.register(this, eachPainter);
 
       myRootComponent = myProvider.getComponent();
-      myGlassPane.addPainter(myRootComponent, eachPainter, this);
+      myGlassPane.addPainter(each.getComponent(), eachPainter, this);
       myPainters.put(each, eachPainter);
     }
 
@@ -188,6 +188,10 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   private SwitchTarget getNextTarget(Direction direction) {
+    if (myTargets.size() == 1) {
+      return getSelection();
+    }
+
     List<Point> points = new ArrayList<Point>();
     Point selected = null;
     Map<SwitchTarget, Point> target2Point = new HashMap<SwitchTarget, Point>();

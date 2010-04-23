@@ -478,6 +478,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       return myTabsLayout.getRectangleFor(myContent);
     }
 
+    public Component getComponent() {
+      return myManager.getComponent();
+    }
+
     @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myContent};

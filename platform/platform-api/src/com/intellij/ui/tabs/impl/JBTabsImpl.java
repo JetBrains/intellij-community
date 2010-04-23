@@ -2784,6 +2784,10 @@ public class JBTabsImpl extends JComponent
       return new RelativeRectangle(label.getParent(), b);
     }
 
+    public Component getComponent() {
+      return myInfo2Label.get(myInfo);
+    }
+
     @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myInfo};

@@ -407,4 +407,8 @@ class TabContentLayout extends ContentLayout {
     ContentTabLabel label = myContent2Tabs.get(content);
     return new RelativeRectangle(label.getParent(), label.getBounds());
   }
+
+  public Component getComponentFor(Content content) {
+    return myContent2Tabs.get(content);
+  }
 }

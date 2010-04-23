@@ -1024,6 +1024,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     public RelativeRectangle getRectangle() {
       return new RelativeRectangle(myButton.getParent(), myButton.getBounds());
     }
+
+    public Component getComponent() {
+      return myButton;
+    }
   }
 
   public SwitchTarget getCurrentTarget() {
