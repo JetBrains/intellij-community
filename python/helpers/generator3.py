@@ -525,8 +525,6 @@ class ModuleRedeclarator(object):
     ("tuple", "__init__"): "(self, seq=())", # overrides a fake
     ("set", "__init__"): "(self, seq=())",
     ("dict", "__init__"): "(self, seq=None, **kwargs)",
-    (None, "min"): "(*args)",
-    (None, "max"): "(*args)",
     (None, "zip"): "(seq1, seq2, *more_seqs)",
     (None, "range"): "(start=None, stop=None, step=None)", # suboptimal: allows empty arglist
     (None, "filter"): "(function_or_none, sequence)",
@@ -536,8 +534,12 @@ class ModuleRedeclarator(object):
   if version[0] < 3:
     PREDEFINED_BUILTIN_SIGS[("unicode", "__init__")] = "(self, x, encoding=None, errors='strict')" # overrides a fake
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1, type2=None)"
+    PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, **kwargs)" # too permissive, but py2.x won't allow a better sig
+    PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, **kwargs)"
   else:
     PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
+    PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, key)"
+    PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key)"
 
   if version == (2, 5):
     PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there    
