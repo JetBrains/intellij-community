@@ -20,7 +20,6 @@ public class VariableIntroduceHandler extends IntroduceHandler {
     super(new VariableValidator(), PyBundle.message("refactoring.introduce.variable.dialog.title"));
   }
 
-  // TODO: Add declaration before first usage
   @Override
   protected PsiElement addDeclaration(@NotNull final PsiElement expression,
                                       @NotNull final PsiElement declaration,
@@ -30,19 +29,34 @@ public class VariableIntroduceHandler extends IntroduceHandler {
     return doIntroduceVariable(expression, declaration, occurrences, replaceAll);
   }
 
-  public static PsiElement doIntroduceVariable(PsiElement expression, PsiElement declaration, List<PsiElement> occurrences, boolean replaceAll) {
-    PyStatement anchorStatement;
-    if (replaceAll) {
-      final PsiElement parent = PsiTreeUtil.findCommonParent(occurrences.toArray(new PsiElement[occurrences.size()]));
-      assert parent != null;
-      anchorStatement = (parent instanceof PyStatement) ? ((PyStatement)parent) : PsiTreeUtil.getChildOfType(parent, PyStatement.class);
+  public static PsiElement doIntroduceVariable(PsiElement expression,
+                                               PsiElement declaration,
+                                               List<PsiElement> occurrences,
+                                               boolean replaceAll) {
+    PsiElement anchor = replaceAll ? findAnchor(occurrences) : expression;
+    assert anchor != null;
+    final PsiElement parent = anchor.getParent();
+    parent.addBefore(declaration, anchor);
+    return parent.getParent();
+  }
+
+  private static PsiElement findAnchor(List<PsiElement> occurrences) {
+    PsiElement anchor = occurrences.get(0);
+    next:
+    do {
+      PyStatement statement = PsiTreeUtil.getParentOfType(anchor, PyStatement.class);
+
+      final PsiElement parent = statement.getParent();
+      for (PsiElement element : occurrences) {
+        if (!PsiTreeUtil.isAncestor(parent, element, true)) {
+          anchor = statement;
+          continue next;
+        }
+      }
+
+      return statement;
     }
-    else {
-      anchorStatement = PsiTreeUtil.getParentOfType(expression, PyStatement.class);
-    }
-    assert anchorStatement != null;
-    anchorStatement.getParent().addBefore(declaration, anchorStatement);
-    return anchorStatement.getParent().getParent();
+    while (true);
   }
 
   @Override
