@@ -16,6 +16,7 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -56,7 +57,7 @@ public abstract class XDebuggerManager {
   public abstract XDebugSession startSession(@NotNull final ProgramRunner runner,
                                              @NotNull ExecutionEnvironment env,
                                              @Nullable RunContentDescriptor contentToReuse,
-                                             @NotNull XDebugProcessStarter processStarter);
+                                             @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
 
   /**
    * Start a new debugging session and open 'Debug' tool window
@@ -64,5 +65,5 @@ public abstract class XDebuggerManager {
    */
   @NotNull
   public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
-                                                       @NotNull XDebugProcessStarter starter);
+                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
 }
