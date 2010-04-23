@@ -252,13 +252,41 @@ public class PyConsoleRunner {
       final AnAction historyPrevAction = ConsoleHistoryModel.createHistoryAction(myHistory, false, historyProcessor);
       historyNextAction.getTemplatePresentation().setVisible(false);
       historyPrevAction.getTemplatePresentation().setVisible(false);
-      toolbarActions.add(historyNextAction);
-      toolbarActions.add(historyPrevAction);
+      return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
+    } else {
+      // TODO[oleg]: remove me!!!
+      final AnAction historyNextAction = createHistoryAction(myHistory, true, historyProcessor);
+      manager.registerAction("Console.History.Next", historyNextAction);
+      EmptyAction.setupAction(historyNextAction, "Console.History.Next", null);
+      KeymapManager.getInstance().getActiveKeymap().addShortcut("Console.History.Next",
+                                                                new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_MASK), null));
+
+      final AnAction historyPrevAction = createHistoryAction(myHistory, false, historyProcessor);
+      manager.registerAction("Console.History.Prev", historyPrevAction);
+      EmptyAction.setupAction(historyPrevAction, "Console.History.Prev", null);
+      KeymapManager.getInstance().getActiveKeymap().addShortcut("Console.History.Prev",
+                                                                new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_MASK), null));
+
+      historyNextAction.getTemplatePresentation().setVisible(false);
+      historyPrevAction.getTemplatePresentation().setVisible(false);
       return new AnAction[]{stopAction, closeAction, myRunAction, historyNextAction, historyPrevAction};
     }
-
-    return new AnAction[]{stopAction, closeAction, myRunAction};
   }
+
+   public static AnAction createHistoryAction(final ConsoleHistoryModel model, final boolean next, final PairProcessor<AnActionEvent,String> processor) {
+     final AnAction action = new AnAction(null, null, null) {
+       @Override
+       public void actionPerformed(final AnActionEvent e) {
+         processor.process(e, next ? model.getHistoryNext() : model.getHistoryPrev());
+       }
+
+       @Override
+       public void update(final AnActionEvent e) {
+         e.getPresentation().setEnabled(model.hasHistory(next));
+       }
+     };
+     return action;
+   }
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
     return new CloseAction(defaultExecutor, myDescriptor, myProject);
