@@ -331,15 +331,15 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
-    if (isFocusTransferReady()) {
-      runnable.run();
-      return;
-    }
-
     final boolean needsRestart = isIdleQueueEmpty();
     myIdleRequests.add(runnable);
-    if (needsRestart) {
-      restartIdleAlarm();
+
+    if (isFocusTransferReady()) {
+      flushIdleRequests();
+    } else {
+      if (needsRestart) {
+        restartIdleAlarm();
+      }
     }
   }
 
@@ -372,15 +372,21 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           }
         }
 
-        final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (owner == null) {
+          owner = JOptionPane.getRootFrame();
+        }
+
+        KeyEvent keyEvent = new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
+                                         each.getKeyLocation());
+
+        myToDispatchOnDone.remove(each);
+
         if (owner != null && SwingUtilities.getWindowAncestor(owner) != null) {
-          myToDispatchOnDone.remove(each);
-          IdeEventQueue.getInstance().dispatchEvent(
-            new KeyEvent(owner, each.getID(), each.getWhen(), each.getModifiersEx(), each.getKeyCode(), each.getKeyChar(),
-                         each.getKeyLocation()));
+          IdeEventQueue.getInstance().dispatchEvent(keyEvent);
         }
         else {
-          break;
+          myQueue._dispatchEvent(keyEvent, true);
         }
       }
 

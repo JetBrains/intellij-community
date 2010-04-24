@@ -47,6 +47,11 @@ class RefCountingRecordsTable extends AbstractRecordsTable {
     return ZEROES;
   }
 
+  @Override
+  protected void clearDeletedRecord(int record) {
+    myStorage.putInt(getOffset(record, REF_COUNT_OFFSET), 0);
+  }
+
   public void incRefCount(int record) {
     markDirty();
 

@@ -259,6 +259,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this.myTitle = title;
   }
 
+  public void addToHistory(final String text, final TextAttributes attributes) {
+    printToHistory(text, attributes);
+  }
+
   public void printToHistory(final String text, final TextAttributes attributes) {
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();

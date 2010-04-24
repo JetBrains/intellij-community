@@ -2,6 +2,8 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -154,5 +156,10 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
 
     new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf).run();
     FileDocumentManager.getInstance().saveAllDocuments();
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 }

@@ -33,7 +33,7 @@ public class CloseAction extends AnAction implements DumbAware {
     myExecutor = executor;
     myContentDescriptor = contentDescriptor;
     myProject = project;
-    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
+    copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE));
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setIcon(IconLoader.getIcon("/actions/cancel.png"));
     templatePresentation.setText(ExecutionBundle.message("close.tab.action.name"));

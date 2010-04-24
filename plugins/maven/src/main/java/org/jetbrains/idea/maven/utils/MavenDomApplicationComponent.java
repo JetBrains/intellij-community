@@ -17,12 +17,8 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.TypeNameManager;
@@ -33,9 +29,6 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.model.MavenDomRepository;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
-
-import java.io.File;
 
 public class MavenDomApplicationComponent implements ApplicationComponent {
 

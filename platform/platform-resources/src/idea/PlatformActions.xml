@@ -96,6 +96,15 @@
 
     <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction"/>
 
+    <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+
+    <group id="SwitchViewActions">
+      <action id="SwitchUp" class="com.intellij.ui.switcher.SwitchAction$Up"/>
+      <action id="SwitchDown" class="com.intellij.ui.switcher.SwitchAction$Down"/>
+      <action id="SwitchLeft" class="com.intellij.ui.switcher.SwitchAction$Left"/>
+      <action id="SwitchRight" class="com.intellij.ui.switcher.SwitchAction$Right"/>
+    </group>
+
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -243,7 +252,7 @@
         <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
         <separator/>
         <group id="CloseEditorsGroup">
-          <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+          <action id="CloseContent" class="com.intellij.ide.actions.CloseAction"/>
           <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
           <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
           <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction"/>

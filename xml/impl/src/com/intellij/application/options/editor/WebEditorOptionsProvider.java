@@ -91,7 +91,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
-    xmlEditorOptions.setEnableZenCoding(myEnableZenCodingCheckBox.isSelected());
+    xmlEditorOptions.setZenCodingEnabled(myEnableZenCodingCheckBox.isSelected());
     xmlEditorOptions.setZenCodingExpandShortcut(getSelectedZenCodingExpandShortcut());
   }
 
@@ -103,7 +103,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     myEnableZenCodingCheckBox.setSelected(xmlEditorOptions.isZenCodingEnabled());
     myZenCodingExpandShortcutCombo.setEnabled(xmlEditorOptions.isZenCodingEnabled());
 
-    char shortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+    char shortcut = (char)WebEditorOptions.getInstance().getZenCodingExpandShortcut();
     if (shortcut == TemplateSettings.TAB_CHAR) {
       myZenCodingExpandShortcutCombo.setSelectedItem(TAB);
     }

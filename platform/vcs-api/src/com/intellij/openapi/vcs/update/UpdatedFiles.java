@@ -93,6 +93,8 @@ public class UpdatedFiles implements JDOMExternalizable {
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.skipped"), VcsBundle.message("status.group.name.skipped"), false, FileGroup.SKIPPED_ID, false));
 
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.conflicts"), VcsBundle.message("status.group.name.will.be.merged.with.conflicts"), false, FileGroup.MERGED_WITH_CONFLICT_ID, false));
+    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
+                                       VcsBundle.message("update.group.name.merged.with.tree.conflicts"), false, FileGroup.MERGED_WITH_TREE_CONFLICT, false));
     //result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.property.conflicts"), VcsBundle.message("status.group.name.will.be.merged.with.property.conflicts"), false, FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, false));
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged"), VcsBundle.message("status.group.name.will.be.merged"), false, FileGroup.MERGED_ID, false));
     result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.not.in.repository"), VcsBundle.message("status.group.name.not.in.repository"), true, FileGroup.UNKNOWN_ID, false));

@@ -22,7 +22,6 @@ import org.apache.lucene.search.*;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexingContext;
@@ -47,7 +46,7 @@ public class NexusIndexerTest extends MavenIndicesTestCase {
     super.setUp();
     myRepositoryHelper = new MavenCustomRepositoryHelper(myDir, "local1_index", "local1", "remote");
 
-    myEmbedder = MavenEmbedderFactory.createEmbedder(getMavenGeneralSettings());
+    myEmbedder = MavenEmbedderWrapper.create(getMavenGeneralSettings());
 
     myIndexer = myEmbedder.getComponent(NexusIndexer.class);
     myUpdater = myEmbedder.getComponent(IndexUpdater.class);

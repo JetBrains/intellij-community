@@ -108,7 +108,6 @@ public class ColorProgressBar extends JComponent {
 
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (myFraction == 0) return;
 
     Graphics2D g2 = (Graphics2D)g;
     Object oldAntialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);

@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class Merger {
+public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
   protected final File myTarget;
   protected final SVNDiffClient myDiffClient;
@@ -164,7 +164,7 @@ public class Merger {
     return myTarget;
   }
 
-  protected void afterProcessing() {
+  public void afterProcessing() {
     myProject.getMessageBus().syncPublisher(COMMITTED_CHANGES_MERGED_STATE).event(new ArrayList<CommittedChangeList>(myChangeLists.subList(0, myCount)));
   }
 

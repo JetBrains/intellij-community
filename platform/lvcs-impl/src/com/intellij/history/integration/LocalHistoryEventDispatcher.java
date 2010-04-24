@@ -30,9 +30,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   private static final Key<Boolean> WAS_VERSIONED_KEY = Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
   private final LocalHistoryFacade myVcs;
-
   private final IdeaGateway myGateway;
-  private int myChangeSetDepth = 0;
 
   public LocalHistoryEventDispatcher(LocalHistoryFacade vcs, IdeaGateway gw) {
     myVcs = vcs;
@@ -65,19 +63,8 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   public void startAction() {
-    // save document in current or new changeset and close it
-    if (myChangeSetDepth == 0) {
-      myVcs.beginChangeSet();
-    }
     myGateway.registerUnsavedDocuments(myVcs);
-    myVcs.endChangeSet(null);
-
-    // restore changeset if there were before saving the documents
-    if (myChangeSetDepth > 0) {
-      myVcs.beginChangeSet();
-    }
-
-    beginChangeSet();
+    myVcs.forceBeginChangeSet();
   }
 
   public void finishAction(String name) {
@@ -85,20 +72,12 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
     endChangeSet(name);
   }
 
-  public void beginChangeSet() {
-    myChangeSetDepth++;
-    if (myChangeSetDepth == 1) {
-      myVcs.beginChangeSet();
-    }
+  private void beginChangeSet() {
+    myVcs.beginChangeSet();
   }
 
-  public void endChangeSet(String name) {
-    LocalHistoryLog.LOG.assertTrue(myChangeSetDepth > 0, "changeset depth is invalid");
-
-    myChangeSetDepth--;
-    if (myChangeSetDepth == 0) {
-      myVcs.endChangeSet(name);
-    }
+  private void endChangeSet(String name) {
+    myVcs.endChangeSet(name);
   }
 
   @Override
@@ -113,7 +92,7 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
       myVcs.created(f.getPath(), f.isDirectory());
     }
     if (f.isDirectory()) {
-      for (VirtualFile each : ((NewVirtualFile)f).getChildren()) {
+      for (VirtualFile each : ((NewVirtualFile)f).iterInDbChildren()) {
         createRecursively(each);
       }
     }

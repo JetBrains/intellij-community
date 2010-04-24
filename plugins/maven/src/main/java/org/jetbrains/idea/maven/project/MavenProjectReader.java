@@ -400,7 +400,7 @@ public class MavenProjectReader {
   private ProfileActivator[] getProfileActivators() {
     SystemPropertyProfileActivator sysPropertyActivator = new SystemPropertyProfileActivator();
     DefaultContext context = new DefaultContext();
-    context.put("SystemProperties", MavenEmbedderFactory.collectSystemProperties());
+    context.put("SystemProperties", MavenEmbedderWrapper.collectSystemProperties());
     try {
       sysPropertyActivator.contextualize(context);
     }
@@ -607,7 +607,7 @@ public class MavenProjectReader {
     Collection<DependencyNode> dependencyTree = Collections.emptyList();
 
     try {
-      MavenResolutionResult result = doResolveProject(embedder, file, explicitProfiles, problems);
+      MavenWrapperResolutionResult result = doResolveProject(embedder, file, explicitProfiles, problems);
       mavenProject = result.getMavenProject();
       unresolvedArtifactsIds = result.getUnresolvedArtifactIds();
       dependencyTree = result.getOriginalDependencyTree();
@@ -639,16 +639,16 @@ public class MavenProjectReader {
     return new MavenProjectReaderResult(generalSettings, mavenProject, dependencyTree, problems, unresolvedArtifactsIds, embedder.getLocalRepositoryFile());
   }
 
-  private MavenResolutionResult doResolveProject(MavenEmbedderWrapper embedder,
+  private MavenWrapperResolutionResult doResolveProject(MavenEmbedderWrapper embedder,
                                                             VirtualFile file,
                                                             Collection<String> profiles,
                                                             Collection<MavenProjectProblem> problems) throws MavenProcessCanceledException {
-    MavenResolutionResult result = embedder.resolveProject(file, profiles);
+    MavenWrapperResolutionResult result = embedder.resolveProject(file, profiles);
     validate(file, result, problems);
     return result;
   }
 
-  private boolean validate(VirtualFile file, MavenExecutionResult r, Collection<MavenProjectProblem> problems) {
+  private boolean validate(VirtualFile file, MavenWrapperExecutionResult r, Collection<MavenProjectProblem> problems) {
     for (Exception each : r.getExceptions()) {
       MavenLog.LOG.info(each);
 
@@ -682,7 +682,7 @@ public class MavenProjectReader {
                                                   Collection<String> profiles,
                                                   MavenConsole console) throws MavenProcessCanceledException {
     try {
-      MavenExecutionResult result = embedder.execute(file, profiles, Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase()));
+      MavenWrapperExecutionResult result = embedder.execute(file, profiles, Arrays.asList(importingSettings.getUpdateFoldersOnImportPhase()));
 
       if (result.hasExceptions()) {
         MavenConsoleHelper.printExecutionExceptions(console, result);

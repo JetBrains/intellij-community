@@ -116,6 +116,28 @@ public class ChangeListTest extends ChangeListTestCase {
   }
 
   @Test
+  public void testForcesBegin() throws Exception {
+    facade.beginChangeSet();
+    add(facade, createFile(r, "f1"));
+    facade.beginChangeSet();
+    add(facade, createFile(r, "f2"));
+    facade.forceBeginChangeSet();
+    add(facade, createFile(r, "f3"));
+    facade.endChangeSet("a");
+    add(facade, createFile(r, "f4"));
+    facade.endChangeSet("b");
+    add(facade, createFile(r, "f5"));
+    facade.endChangeSet("c");
+
+    List<ChangeSet> cc = facade.getChangeListInTests().getChangesInTests();
+    assertEquals(2, cc.size());
+    assertEquals("c", cc.get(0).getName());
+    assertEquals(3, cc.get(0).getChanges().size());
+    assertEquals(null, cc.get(1).getName());
+    assertEquals(2, cc.get(1).getChanges().size());
+  }
+
+  @Test
   public void testChangeSetTimestamp() {
     setCurrentTimestamp(123);
     facade.beginChangeSet();

@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -38,8 +39,11 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -51,6 +55,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -58,7 +63,7 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class EditorTabbedContainer implements Disposable {
+final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
   private final JBTabs myTabs;
@@ -95,7 +100,7 @@ final class EditorTabbedContainer implements Disposable {
             newEditor.selectNotify();
           }
         }
-      });
+      }).setAdditinalSwitchProviderWhenOriginal(new MySwitchProvider());
 
     setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
 
@@ -177,7 +182,7 @@ final class EditorTabbedContainer implements Disposable {
   public void setBackgroundColorAt(final int index, final Color color) {
     myTabs.getTabAt(index).setTabColor(color);
   }
-  
+
   public void setTabLayoutPolicy(final int policy) {
     switch (policy) {
       case JTabbedPane.SCROLL_TAB_LAYOUT:
@@ -221,7 +226,8 @@ final class EditorTabbedContainer implements Disposable {
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) return;
 
-    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file).setTabColor(calcTabColor(myProject, file));
+    tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
+      .setTabColor(calcTabColor(myProject, file));
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();
@@ -284,7 +290,7 @@ final class EditorTabbedContainer implements Disposable {
 
     public CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;
-      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_EDITOR), c);
+      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c);
     }
 
     @Override
@@ -300,7 +306,8 @@ final class EditorTabbedContainer implements Disposable {
       final VirtualFile file = (VirtualFile)myTabInfo.getObject();
       if (ActionPlaces.EDITOR_TAB.equals(e.getPlace())) {
         window = myWindow;
-      } else {
+      }
+      else {
         window = mgr.getCurrentWindow();
       }
 
@@ -327,7 +334,29 @@ final class EditorTabbedContainer implements Disposable {
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;
       }
+
+      if (CloseAction.CloseTarget.KEY.is(dataId)) {
+        TabInfo selected = myTabs.getSelectedInfo();
+        if (selected != null) {
+          return EditorTabbedContainer.this;
+        }
+      }
+
       return null;
+    }
+  }
+
+  public void close() {
+    TabInfo selected = myTabs.getSelectedInfo();
+    if (selected == null) return;
+
+    VirtualFile file = (VirtualFile)selected.getObject();
+    final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
+    EditorWindow wnd = mgr.getCurrentWindow();
+    if (wnd != null) {
+      if (wnd.findFileComposite(file) != null) {
+        mgr.closeFile(file, wnd);
+      }
     }
   }
 
@@ -354,6 +383,55 @@ final class EditorTabbedContainer implements Disposable {
           ShowFilePathAction.show(vFile, e);
         }
       }
+    }
+  }
+
+  private class MySwitchProvider implements SwitchProvider {
+    public List<SwitchTarget> getTargets(final boolean onlyVisible, boolean originalProvider) {
+      final ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
+      TabInfo selected = myTabs.getSelectedInfo();
+      new AwtVisitor(selected.getComponent()) {
+        @Override
+        public boolean visit(Component component) {
+          if (component instanceof JBTabs) {
+            JBTabs tabs = (JBTabs)component;
+            if (tabs != myTabs) {
+              result.addAll(tabs.getTargets(onlyVisible, false));
+              return true;
+            }
+          }
+          return false;
+        }
+      };
+      return result;
+    }
+
+    public SwitchTarget getCurrentTarget() {
+      TabInfo selected = myTabs.getSelectedInfo();
+      final Ref<SwitchTarget> targetRef = new Ref<SwitchTarget>();
+      new AwtVisitor(selected.getComponent()) {
+        @Override
+        public boolean visit(Component component) {
+          if (component instanceof JBTabs) {
+            JBTabs tabs = (JBTabs)component;
+            if (tabs != myTabs) {
+              targetRef.set(tabs.getCurrentTarget());
+              return true;
+            }
+          }
+          return false;
+        }
+      };
+
+      return targetRef.get();
+    }
+
+    public JComponent getComponent() {
+      return null;
+    }
+
+    public boolean isCycleRoot() {
+      return false;
     }
   }
 }

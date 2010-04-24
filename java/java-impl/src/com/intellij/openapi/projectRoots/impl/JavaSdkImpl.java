@@ -302,9 +302,13 @@ public class JavaSdkImpl extends JavaSdk {
     return createMockJdk(jdkHome, versionName, getInstance());
   }
   
-  public static Sdk getMockJdk17(@NonNls String versionName) {
-    String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.7";
-    return createMockJdk(jdkHome, versionName, getInstance());
+  public static Sdk getMockJdk17() {
+    File mockJdkCEPath = new File(PathManager.getHomePath(), "java/mockJDK-1.7");
+    if (mockJdkCEPath.exists()) {
+      return createMockJdk(mockJdkCEPath.getPath(), "java 1.7", getInstance());
+    }
+    mockJdkCEPath = new File(PathManager.getHomePath(), "community/java/mockJDK-1.7");
+    return createMockJdk(mockJdkCEPath.getPath(), "java 1.7", getInstance());
   }
 
   private static Sdk createMockJdk(String jdkHome, final String versionName, JavaSdk javaSdk) {

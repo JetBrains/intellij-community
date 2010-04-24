@@ -33,6 +33,8 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +108,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myComponent;
   }
 
-  private class MyContentComponent extends NonOpaquePanel implements DataProvider {
+  private class MyContentComponent extends NonOpaquePanel implements DataProvider, SwitchProvider {
 
     private final List<DataProvider> myProviders = new ArrayList<DataProvider>();
 
@@ -125,7 +127,43 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         final Object data = each.getData(dataId);
         if (data != null) return data;
       }
+
+      if (myUI instanceof DataProvider) {
+        return ((DataProvider)myUI).getData(dataId);
+      }
+
       return null;
+    }
+
+    public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).getTargets(onlyVisible, false);
+      }
+      return new ArrayList<SwitchTarget>();
+    }
+
+    public SwitchTarget getCurrentTarget() {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).getCurrentTarget();
+      }
+
+      return null;
+    }
+
+    public JComponent getComponent() {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).getComponent();
+      }
+
+      return this;
+    }
+
+    public boolean isCycleRoot() {
+      if (myUI instanceof SwitchProvider) {
+        return ((SwitchProvider)myUI).isCycleRoot();
+      }
+
+      return false;
     }
   }
 
@@ -168,19 +206,43 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return removeContent(content, true, dispose);
   }
 
+  public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean trackFocus, final boolean forcedFocus) {
+    final ActionCallback result = new ActionCallback();
+    _removeContent(content, true, dispose).doWhenDone(new Runnable() {
+      public void run() {
+        if (trackFocus) {
+          Content current = getSelectedContent();
+          if (current != null) {
+            setSelectedContent(current, true, true, !forcedFocus);
+          } else {
+            result.setDone();
+          }
+        } else {
+          result.setDone();
+        }
+      }
+    });
+
+    return result;
+  }
+
   private boolean removeContent(final Content content, boolean trackSelection, boolean dispose) {
+    return _removeContent(content, trackSelection, dispose).isDone();
+  }
+
+  private ActionCallback _removeContent(Content content, boolean trackSelection, boolean dispose) {
     int indexToBeRemoved = getIndexOfContent(content);
-    if (indexToBeRemoved == -1) return false;
+    if (indexToBeRemoved == -1) return new ActionCallback.Rejected();
 
     try {
       Content selection = mySelection.isEmpty() ? null : mySelection.get(mySelection.size() - 1);
       int selectedIndex = selection != null ? myContents.indexOf(selection) : -1;
 
       if (!fireContentRemoveQuery(content, indexToBeRemoved, ContentManagerEvent.ContentOperation.undefined)) {
-        return false;
+        return new ActionCallback.Rejected();
       }
       if (!content.isValid()) {
-        return false; // the content has already been invalidated by another thread or something
+        return new ActionCallback.Rejected();
       }
 
       boolean wasSelected = isSelected(content);
@@ -214,15 +276,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       int newSize = myContents.size();
+
+      ActionCallback result = new ActionCallback();
+
       if (newSize > 0 && trackSelection) {
         if (indexToSelect > -1) {
           final Content toSelect = myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
             if (myUI.isSingleSelection()) {
-              setSelectedContent(toSelect);
+              setSelectedContentCB(toSelect).notify(result);
             }
             else {
               addSelectedContent(toSelect);
+              result.setDone();
             }
           }
         }
@@ -231,7 +297,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
         mySelection.clear();
       }
 
-      return true;
+      return result;
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {

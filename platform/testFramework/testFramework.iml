@@ -16,6 +16,12 @@
     <orderEntry type="module" module-name="vcs-api" exported="" />
     <orderEntry type="module" module-name="lvcs-impl" />
     <orderEntry type="module" module-name="tests_bootstrap" />
+    <orderEntry type="module" module-name="RegExpSupport" scope="RUNTIME" />
+    <orderEntry type="module" module-name="images" scope="RUNTIME" />
+    <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="resources-en" scope="RUNTIME" />
+    <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="platform-ultimate" scope="RUNTIME" />
   </component>
 </module>
 

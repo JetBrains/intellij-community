@@ -71,7 +71,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     }
   }
 
-  private int calcNewState(final ASTNode child, final int state) {
+  private static int calcNewState(final ASTNode child, final int state) {
     if (state == BEFORE_FIRST) {
       if (child.getElementType() == ElementType.ELSE_KEYWORD) {
         return AFTER_ELSE;
@@ -152,13 +152,13 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     return Indent.getContinuationIndent();
   }
 
-  private boolean isSimpleStatement(final ASTNode child) {
+  private static boolean isSimpleStatement(final ASTNode child) {
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return false;
     if (!ElementType.STATEMENT_BIT_SET.contains(child.getElementType())) return false;
     return isStatement(child, child.getTreeParent());
   }
 
-  private boolean isPartOfCodeBlock(final ASTNode child) {
+  private static boolean isPartOfCodeBlock(final ASTNode child) {
     if (child == null) return false;
     if (child.getElementType() == ElementType.BLOCK_STATEMENT) return true;
     if (child.getElementType() == ElementType.CODE_BLOCK) return true;
@@ -168,12 +168,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     return child.getElementType() == JavaDocElementType.DOC_COMMENT;
   }
 
-  protected Wrap getReservedWrap(final IElementType elementType) {
-    return null;
-  }
 
-  protected void setReservedWrap(final Wrap reservedWrap, final IElementType operationType) {
-  }
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {

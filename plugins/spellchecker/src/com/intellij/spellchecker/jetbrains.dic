@@ -1,3 +1,5 @@
+rubymine
+jetbrains
 noinspection
 noinspections
 impl
@@ -106,4 +108,5 @@ utf
 stylesheet
 charset
 vertices
-
+commandline
+cmdline

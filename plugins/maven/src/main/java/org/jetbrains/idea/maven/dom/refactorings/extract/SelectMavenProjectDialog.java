@@ -37,10 +37,12 @@ import java.util.Set;
 
 public class SelectMavenProjectDialog extends DialogWrapper {
  private final Set<MavenDomProjectModel> myMavenDomProjectModels;
+  private final boolean myHasExclusions;
 
   private JComboBox myMavenProjectsComboBox;
   private JPanel myMainPanel;
   private JCheckBox myReplaceAllCheckBox;
+  private JCheckBox myExtractExclusions;
   private boolean myHasUsagesInProjects = false;
 
   private ItemListener myReplaceAllListener;
@@ -48,9 +50,11 @@ public class SelectMavenProjectDialog extends DialogWrapper {
 
   public SelectMavenProjectDialog(@NotNull Project project,
                                  @NotNull Set<MavenDomProjectModel> mavenDomProjectModels,
-                                 @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences) {
+                                 @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
+                                 @NotNull boolean hasExclusions) {
     super(project, true);
     myMavenDomProjectModels = mavenDomProjectModels;
+    myHasExclusions = hasExclusions;
 
     setTitle(MavenDomBundle.message("choose.project"));
 
@@ -92,6 +96,10 @@ public class SelectMavenProjectDialog extends DialogWrapper {
     return myReplaceAllCheckBox.isSelected();
   }
 
+  public boolean isExtractExclusions() {
+    return myExtractExclusions.isSelected();
+  }
+
   protected JComponent createCenterPanel() {
     ComboBoxUtil.setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), myMavenDomProjectModels, new Function<MavenDomProjectModel, Pair<String, ?>>() {
         public Pair<String, ?> fun(MavenDomProjectModel model) {
@@ -116,6 +124,7 @@ public class SelectMavenProjectDialog extends DialogWrapper {
     myMavenProjectsComboBox.addItemListener(myReplaceAllListener);
     myMavenProjectsComboBox.setSelectedItem(0);
     myReplaceAllCheckBox.setVisible(myHasUsagesInProjects);
+    myExtractExclusions.setVisible(myHasExclusions);
 
     updateControls();
 

@@ -112,6 +112,10 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     final T t = super.as(aClass);
     return t == null ? myDelegate.as(aClass) : t;
   }
+  
+  public boolean isCaseSensitive() {
+    return myDelegate.isCaseSensitive();
+  }
 
   private static class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final InsertHandler<? super LookupElementDecorator<T>> myInsertHandler;

@@ -99,6 +99,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     ActionMenu.showDescriptionInStatusBar(setInfo, this, myPresentation.getDescription());
   }
 
+  public void click() {
+    performAction(new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false));
+  }
+
   private void performAction(MouseEvent e) {
     AnActionEvent event = new AnActionEvent(
       e, getDataContext(),

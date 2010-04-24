@@ -67,8 +67,21 @@ public class ChangeList {
     myChangeSetDepth++;
     if (myChangeSetDepth > 1) return;
 
+    doBeginChangeSet();
+  }
+
+  private void doBeginChangeSet() {
     myCurrentChangeSet = new ChangeSet(myStorage.nextId(), Clock.getCurrentTimestamp());
     myCurrentBlock.add(myCurrentChangeSet);
+  }
+
+  public synchronized boolean forceBeginChangeSet() {
+    boolean split = myChangeSetDepth > 0;
+    if (split) doEndChangeSet(null);
+
+    myChangeSetDepth++;
+    doBeginChangeSet();
+    return split;
   }
 
   public synchronized boolean endChangeSet(String name) {
@@ -77,6 +90,10 @@ public class ChangeList {
     myChangeSetDepth--;
     if (myChangeSetDepth > 0) return false;
 
+    return doEndChangeSet(name);
+  }
+
+  private boolean doEndChangeSet(String name) {
     if (myCurrentChangeSet.getChanges().isEmpty()) {
       myCurrentBlock.removeLast();
       return false;
@@ -144,7 +161,7 @@ public class ChangeList {
   }
 
   private void flushChanges(boolean force) {
-    if (myChangeSetDepth > 0) return; 
+    if (myChangeSetDepth > 0) return;
     if (myCurrentBlock.shouldFlush(force) || flushEveryChangeSetInTests()) {
       myStorage.writeNextBlock(myCurrentBlock);
       myCurrentBlock = myStorage.createNewBlock();

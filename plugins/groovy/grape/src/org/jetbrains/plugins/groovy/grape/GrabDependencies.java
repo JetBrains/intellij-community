@@ -102,6 +102,7 @@ public class GrabDependencies implements IntentionAction {
       //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       final boolean tests = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(vfile);
+      javaParameters.configureByModule(module, tests? JavaParameters.CLASSES_AND_TESTS : JavaParameters.CLASSES_ONLY);
       DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, tests, "org.jetbrains.plugins.groovy.grape.GrapeRunner");
 
       javaParameters.getProgramParametersList().add("--classpath");

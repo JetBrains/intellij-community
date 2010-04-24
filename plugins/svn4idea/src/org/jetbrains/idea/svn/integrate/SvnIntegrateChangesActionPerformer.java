@@ -20,8 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBranchConfiguration;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -65,7 +65,8 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
       // should not occur
       return;
     }
-    final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(myVcs, info, myMergerFactory, sourceUrl);
+    final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(myVcs, info, myMergerFactory, sourceUrl, SvnBundle.message("action.Subversion.integrate.changes.messages.title"),
+                                                                     SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN);
     ProgressManager.getInstance().run(task);
   }
 

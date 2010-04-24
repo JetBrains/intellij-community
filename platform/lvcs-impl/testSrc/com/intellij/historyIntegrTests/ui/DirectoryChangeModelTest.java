@@ -20,14 +20,11 @@ import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
-import com.intellij.history.core.tree.FileEntry;
-import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.DirectoryChangeModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;

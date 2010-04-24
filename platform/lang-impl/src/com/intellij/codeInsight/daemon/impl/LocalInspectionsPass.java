@@ -179,7 +179,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           LocalInspectionToolWrapper toolWrapper = tool2Wrapper.get(tool);
           toolWrapper.addProblemDescriptors(Collections.singletonList(patchedDescriptor), true);
         }
-      }
+     }
     }
   }
 

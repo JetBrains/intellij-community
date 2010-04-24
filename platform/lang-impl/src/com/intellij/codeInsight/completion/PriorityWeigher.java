@@ -26,12 +26,12 @@ import com.intellij.codeInsight.lookup.LookupItem;
 public class PriorityWeigher extends CompletionWeigher {
   @Override
   public Double weigh(@NotNull LookupElement element, CompletionLocation location) {
-    final PrioritizedLookupElement prioritized = element.as(PrioritizedLookupElement.class);
+    final PrioritizedLookupElement prioritized = PrioritizedLookupElement.from(element);
     if (prioritized != null) {
       return -prioritized.getPriority();
     }
 
-    final LookupItem item = element.as(LookupItem.class);
+    final LookupItem item = LookupItem.from(element);
     if (item != null) {
       return -item.getPriority();
     }

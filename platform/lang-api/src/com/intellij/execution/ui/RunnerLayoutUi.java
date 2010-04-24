@@ -26,10 +26,12 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.switcher.SwitchTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public interface RunnerLayoutUi  {
 
@@ -79,7 +81,6 @@ public interface RunnerLayoutUi  {
   void updateActionsNow();
 
   Content[] getContents();
-  
 
   abstract class Factory {
     protected Factory() {

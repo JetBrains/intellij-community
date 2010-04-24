@@ -133,6 +133,10 @@ public class MavenArtifact implements Serializable {
     return myScope;
   }
 
+  public void setScope(String scope) {
+    myScope = scope;
+  }
+
   public boolean isOptional() {
     return myOptional;
   }

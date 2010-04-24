@@ -23,7 +23,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderFactory;
+import org.jetbrains.idea.maven.embedder.MavenEmbedderUtilEx;
 import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
@@ -116,7 +116,7 @@ public class MavenGeneralSettings implements Cloneable {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = MavenEmbedderFactory.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
+    result = MavenEmbedderUtilEx.resolveLocalRepository(mavenHome, mavenSettingsFile, localRepository);
     myEffectiveLocalRepositoryCache = result;
     return result;
   }
@@ -147,7 +147,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveMavenHome() {
-    return MavenEmbedderFactory.resolveMavenHomeDirectory(getMavenHome());
+    return MavenEmbedderUtilEx.resolveMavenHomeDirectory(getMavenHome());
   }
 
   @NotNull
@@ -175,12 +175,12 @@ public class MavenGeneralSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveUserSettingsIoFile() {
-    return MavenEmbedderFactory.resolveUserSettingsFile(getMavenSettingsFile());
+    return MavenEmbedderUtilEx.resolveUserSettingsFile(getMavenSettingsFile());
   }
 
   @Nullable
   public File getEffectiveGlobalSettingsIoFile() {
-    return MavenEmbedderFactory.resolveGlobalSettingsFile(getMavenHome());
+    return MavenEmbedderUtilEx.resolveGlobalSettingsFile(getMavenHome());
   }
 
   @Nullable
@@ -206,7 +206,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   @NotNull
   public VirtualFile getEffectiveSuperPom() {
-    return MavenEmbedderFactory.resolveSuperPomFile(getMavenHome());
+    return MavenEmbedderUtilEx.resolveSuperPomFile(getMavenHome());
   }
 
   public boolean isDefaultPlugin(String groupId, String artifactId) {

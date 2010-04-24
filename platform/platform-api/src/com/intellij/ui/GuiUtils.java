@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,6 +51,11 @@ public class GuiUtils {
   private static final Insets paddingInsideDialog = new Insets(5, 5, 5, 5);
 
   public static final int lengthForFileField = 25;
+  private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = new CharFilter() {
+    public boolean accept(char ch) {
+      return ch != '&' && ch != UIUtil.MNEMONIC;
+    }
+  };
 
   public static JPanel constructFieldWithBrowseButton(JComponent aComponent, ActionListener aActionListener) {
     return constructFieldWithBrowseButton(aComponent, aActionListener, 0);
@@ -187,7 +193,7 @@ public class GuiUtils {
   }
 
   public static String getTextWithoutMnemonicEscaping(String text) {
-    return StringUtil.replace(text, String.valueOf(UIUtil.MNEMONIC), "");
+    return StringUtil.strip(text, NOT_MNEMONIC_CHAR_FILTER);
   }
 
   public static char getDisplayedMnemonic(String text) {

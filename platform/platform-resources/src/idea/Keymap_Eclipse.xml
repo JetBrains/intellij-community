@@ -22,19 +22,13 @@
       <keyboard-shortcut first-keystroke="shift alt C" />
     </action>
     <action id="CheckinProject" />
-    <action id="CloseActiveTab">
-      <keyboard-shortcut first-keystroke="control F4" />
-      <keyboard-shortcut first-keystroke="control W" />
-    </action>
+    <action id="CloseActiveTab" />
     <action id="CloseAllEditors">
       <keyboard-shortcut first-keystroke="shift control F4" />
       <keyboard-shortcut first-keystroke="shift control W" />
     </action>
     <action id="CloseEditor" />
-    <action id="CloseWindow">
-      <keyboard-shortcut first-keystroke="control F4" />
-      <keyboard-shortcut first-keystroke="control W" />
-    </action>
+    <action id="CloseWindow" />
     <action id="CodeInspection.OnEditor" />
     <action id="CollapseAllRegions">
       <keyboard-shortcut first-keystroke="shift control DIVIDE" />

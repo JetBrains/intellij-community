@@ -29,7 +29,9 @@ public interface CustomLiveTemplate {
   @Nullable
   String computeTemplateKey(@NotNull CustomTemplateCallback callback);
 
-  boolean isApplicable(PsiFile file, int offset, boolean selection);
+  boolean isApplicable(PsiFile file, int offset);
+
+  boolean supportsWrapping();
 
   void expand(String key, @NotNull CustomTemplateCallback callback);
 
