@@ -21,6 +21,10 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedList;
 
+
+/**
+ * @deprecated use lightweight com.intellij.util.concurrency.QueueProcessor instead
+ */
 public class WorkerThread implements Runnable, Disposable {
   private final LinkedList<Runnable> myTasks = new LinkedList<Runnable>();
   private boolean myToDispose = false;
