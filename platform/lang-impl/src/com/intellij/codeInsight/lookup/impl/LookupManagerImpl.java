@@ -183,6 +183,8 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         myActiveLookup.addItem(item);
       }
       myActiveLookup.refreshUi();
+    } else {
+      alarm.cancelAllRequests(); // no items -> no doc
     }
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
