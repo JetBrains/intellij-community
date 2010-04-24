@@ -65,7 +65,7 @@ import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.DebuggerLogConsoleManagerBase;
+import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +74,7 @@ import javax.swing.tree.TreePath;
 import java.util.Collection;
 import java.util.List;
 
-public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements Disposable {
+public class DebuggerSessionTab extends DebuggerSessionTabBase implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
   private static final Icon WATCH_RETURN_VALUES_ICON = IconLoader.getIcon("/debugger/watchLastReturnValue.png");
@@ -83,11 +83,8 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
   private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
 
-  private ExecutionConsole myConsole;
   private ProgramRunner myRunner;
   private volatile DebuggerSession myDebuggerSession;
-
-  private RunContentDescriptor myRunContentDescriptor;
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
@@ -417,13 +414,6 @@ public class DebuggerSessionTab extends DebuggerLogConsoleManagerBase implements
     final WatchDebuggerTree watchTree = getWatchPanel().getWatchTree();
     for (DebuggerTreeNodeImpl watch : watches) {
       watchTree.addWatch((WatchItemDescriptor)watch.getDescriptor());
-    }
-  }
-
-  protected void toFront() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
-      ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
     }
   }
 
