@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -95,6 +96,11 @@ public class GrabDependencies implements IntentionAction {
 
     final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
     assert vfile != null;
+
+    if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", file.getResolveScope()) == null) {
+      Messages.showErrorDialog("Sorry, but IDEA cannot @Grab the dependencies without Ivy. Please add Ivy to your module dependencies and re-run the action.", "Ivy missing");
+      return;
+    }
 
     final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
     try {
