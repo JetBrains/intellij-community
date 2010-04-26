@@ -560,7 +560,7 @@ public class GroovyToJavaGenerator {
 
     text.append(") ");
 
-    final Set<String> throwsTypes = collectThrowsTypes(constructor);
+    final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
       text.append("throws ").append(StringUtil.join(throwsTypes, ", ")).append(" ");
     }
@@ -582,24 +582,28 @@ public class GroovyToJavaGenerator {
     text.append("\n  }\n");
   }
 
-  private static Set<String> collectThrowsTypes(GrConstructor constructor) {
+  private static Set<String> collectThrowsTypes(GrConstructor constructor, Set<PsiMethod> visited) {
     final GroovyResolveResult resolveResult = resolveChainingConstructor(constructor);
     if (resolveResult == null) {
       return Collections.emptySet();
     }
 
-    final Set<String> result = CollectionFactory.newTroveSet();
 
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     final PsiMethod chainedConstructor = (PsiMethod)resolveResult.getElement();
     assert chainedConstructor != null;
 
+    if (!visited.add(chainedConstructor)) {
+      return Collections.emptySet();
+    }
+
+    final Set<String> result = CollectionFactory.newTroveSet();
     for (PsiClassType type : chainedConstructor.getThrowsList().getReferencedTypes()) {
       result.add(getTypeText(substitutor.substitute(type), null, false));
     }
 
     if (chainedConstructor instanceof GrConstructor) {
-      result.addAll(collectThrowsTypes((GrConstructor)chainedConstructor));
+      result.addAll(collectThrowsTypes((GrConstructor)chainedConstructor, visited));
     }
     return result;
   }
