@@ -70,7 +70,7 @@ public class PydevConsoleRunner extends PyConsoleRunner {
       return;
     }
     final ArrayList<String> args = new ArrayList<String>(
-      Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
+      Arrays.asList(sdk.getHomePath(), PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
     args.add(getLocalHostString());
     for (int port : ports) {
       args.add(String.valueOf(port));
