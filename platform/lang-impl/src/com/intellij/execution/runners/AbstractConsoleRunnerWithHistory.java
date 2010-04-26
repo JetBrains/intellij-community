@@ -51,6 +51,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
 /**
  * @author oleg
@@ -83,7 +84,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
    * Launch process, setup history, actions etc.
    * @throws ExecutionException
    */
-  protected void initAndRun() throws ExecutionException {
+  public void initAndRun() throws ExecutionException {
     // Create Server process
     final Process process = createProcess();
 
@@ -218,7 +219,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  protected void sendInput(final String input) {
+  public void sendInput(final String input) {
     final Charset charset = myProcessHandler.getCharset();
     final OutputStream outputStream = myProcessHandler.getProcessInput();
     try {
