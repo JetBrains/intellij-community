@@ -240,8 +240,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return rate;
   }
 
+  @NotNull
   public String getCanonicalText() {
-    return null;
+    return getRangeInElement().substring(getElement().getText());
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
