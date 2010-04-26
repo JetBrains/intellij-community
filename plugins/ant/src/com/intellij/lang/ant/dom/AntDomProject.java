@@ -20,6 +20,7 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
+import com.intellij.openapi.paths.PathReference;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.converters.PathReferenceConverter;
@@ -47,10 +48,16 @@ public abstract class AntDomProject extends AntDomElement {
 
   @Attribute("basedir")
   @Convert(value = PathReferenceConverter.class)
-  public abstract GenericAttributeValue<String> getBasedir();
+  public abstract GenericAttributeValue<PathReference> getBasedir();
 
   @SubTagList("target")
   public abstract List<AntDomTarget> getDeclaredTargets();
+
+  @SubTagList("import")
+  public abstract List<AntDomImport> getDeclaredImports();
+
+  @SubTagList("include")
+  public abstract List<AntDomInclude> getDeclaredIncludes();
 
   @Nullable
   public final AntDomTarget findTarget(String name) {
