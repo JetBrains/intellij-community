@@ -24,6 +24,8 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
   protected boolean isAvailable(AnActionEvent e) {
+    if (!super.isAvailable(e)) return false;
+
     final DataContext context = e.getDataContext();
     for (VirtualFile each : MavenActionUtil.getMavenProjectsFiles(context)) {
       if (MavenActionUtil.getProjectsManager(context).isManagedFile(each)) return true;
