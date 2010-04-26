@@ -14,6 +14,7 @@ import com.jetbrains.python.console.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -184,7 +185,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     ResolveResult[] targets = getReference().multiResolve(false);
-    if (targets.length == 0) return null;
+    if (targets.length == 0 || targets [0] instanceof ImplicitResolveResult) return null;
     PsiElement target = targets[0].getElement();
     if (target == this) {
       return null;

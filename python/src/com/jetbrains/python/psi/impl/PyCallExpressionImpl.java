@@ -6,6 +6,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
@@ -80,7 +81,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         }
         // normal cases
         ResolveResult[] targets = ((PyReferenceExpression)callee).getReference().multiResolve(false);
-        if (targets.length > 0) {
+        if (targets.length > 0 && !(targets [0] instanceof ImplicitResolveResult)) {
           PsiElement target = targets[0].getElement();
           if (target instanceof PyClass) {
             return new PyClassType((PyClass)target, false); // we call a class name, that is, the constructor, we get an instance.
