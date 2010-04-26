@@ -143,6 +143,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         if (returnType.equals("string")) {
           return builtinCache.getStrType();
         }
+        if (returnType.equals("file object")) {
+          return builtinCache.getObjectType("file");
+        }
+        if (returnType.equals("dictionary")) {
+          return builtinCache.getObjectType("dict");
+        }
         final PyClassType type = builtinCache.getObjectType(returnType);
         if (type != null) {
           return type;
