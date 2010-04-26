@@ -176,10 +176,10 @@ public class PyPsiUtils {
    * @return
    */
   @NotNull
-  public static PyElement removeIndentation(final PsiElement element) {
+  public static PsiElement removeIndentation(final PsiElement element) {
     final int indentLength = getElementIndentation(element);
     if (indentLength == 0 && element instanceof PyElement) {
-      return (PyElement) element;
+      return element;
     }
     final String indentString = StringUtil.repeatSymbol(' ', indentLength);
     final String text = element.getText();
@@ -197,7 +197,7 @@ public class PyPsiUtils {
       }
     }
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());
-    final PyElement result = elementGenerator.createFromText(PyElement.class, builder.toString());
+    final PsiElement result = elementGenerator.createFromText(PsiElement.class, builder.toString());
     if (result == null) {
       throw new RuntimeException("Failed to create element from text " + builder.toString());
     }
