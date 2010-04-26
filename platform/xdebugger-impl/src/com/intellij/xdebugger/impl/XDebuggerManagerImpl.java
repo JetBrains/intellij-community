@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
@@ -141,13 +142,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   public XDebugSession startSession(@NotNull final ProgramRunner runner,
                                     @NotNull final ExecutionEnvironment env,
                                     @Nullable final RunContentDescriptor contentToReuse,
-                                    @NotNull final XDebugProcessStarter processStarter) {
+                                    @NotNull final XDebugProcessStarter processStarter) throws ExecutionException {
     return startSession(contentToReuse, processStarter, new XDebugSessionImpl(env, runner, this));
   }
 
   @NotNull
   public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
-                                    @NotNull XDebugProcessStarter starter) {
+                                    @NotNull XDebugProcessStarter starter) throws ExecutionException {
     XDebugSession session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, null, this, sessionName));
     RunContentDescriptor descriptor = session.getRunContentDescriptor();
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
@@ -159,7 +160,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   }
 
   private XDebugSession startSession(final RunContentDescriptor contentToReuse, final XDebugProcessStarter processStarter,
-                                     final XDebugSessionImpl session) {
+                                     final XDebugSessionImpl session) throws ExecutionException {
     XDebugProcess process = processStarter.start(session);
 
     XDebugSessionData oldSessionData = contentToReuse != null ? mySessionData.remove(contentToReuse.getProcessHandler()) : null;

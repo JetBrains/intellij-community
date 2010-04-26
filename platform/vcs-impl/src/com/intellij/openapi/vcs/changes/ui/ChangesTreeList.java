@@ -78,7 +78,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   private final Runnable myInclusionListener;
-  @Nullable private final ChangeNodeDecorator myChangeDecorator;
+  @Nullable private ChangeNodeDecorator myChangeDecorator;
 
   public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
                          final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
@@ -201,6 +201,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     myTree.setEmptyText(emptyText);
     myList.setEmptyText(emptyText);
+  }
+
+  public void setChangeDecorator(@Nullable ChangeNodeDecorator changeDecorator) {
+    myChangeDecorator = changeDecorator;
   }
 
   public void setDoubleClickHandler(final Runnable doubleClickHandler) {

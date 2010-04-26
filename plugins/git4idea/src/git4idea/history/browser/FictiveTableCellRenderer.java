@@ -17,7 +17,7 @@ package git4idea.history.browser;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +105,7 @@ public abstract class FictiveTableCellRenderer extends ColoredListCellRenderer {
         final Trinity<String, SimpleTextAttributes, Object> tag = getMoreTag();
         final int more = helper.getWidth(new Pair<String, SimpleTextAttributes>(tag.getFirst(), tag.getSecond()));
         if (more < difference) {
-          final String truncated = CommittedChangesTreeBrowser.CommittedChangeListRenderer
+          final String truncated = CommittedChangeListRenderer
             .truncateDescription(changeable.getFirst(), helper.getFontMetrics(changeable.getSecond()), difference - more);
           
           final int truncatedWidth = helper.getWidth(new Pair<String, SimpleTextAttributes>(truncated, changeable.getSecond()));

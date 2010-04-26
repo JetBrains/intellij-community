@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Getter;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +31,7 @@ import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.Comparator;
 
-public interface JBTabs {
+public interface JBTabs extends SwitchProvider {
 
   @NotNull
   TabInfo addTab(TabInfo info, int index);
@@ -112,4 +114,6 @@ public interface JBTabs {
   JBTabs setNavigationActionsEnabled(boolean enabled);
 
   boolean isDisposed();
+
+  JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate);
 }

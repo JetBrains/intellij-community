@@ -141,8 +141,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private PsiElement myFileContext;
   private final FileTreeAccessFilter myJavaFilesFilter = new FileTreeAccessFilter();
 
-  private FindUsagesOptions myFindUsagesOptions;
-
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
     myTempDirFixture = tempDirTestFixture;
@@ -585,15 +583,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actionManager.getActionHandler(actionId).execute(getEditor(), dataContext);
   }
 
-  @NotNull
-  public FindUsagesOptions getFindUsagesOptions() {
-    if (myFindUsagesOptions == null) {
-      myFindUsagesOptions = new FindUsagesOptions(getProject(), null);
-      myFindUsagesOptions.isUsages = myFindUsagesOptions.isReadAccess = myFindUsagesOptions.isWriteAccess = true;
-    }
-    return myFindUsagesOptions;
-  }
-
   public Collection<UsageInfo> testFindUsages(@NonNls final String... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
@@ -610,8 +599,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<UsageInfo>();
     assert handler != null : "Cannot find handler for: " + targetElement;
     final PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements(), PsiElement.class);
+    final FindUsagesOptions options = handler.getFindUsagesOptions();
     for (PsiElement psiElement : psiElements) {
-      handler.processElementUsages(psiElement, processor, getFindUsagesOptions());
+      handler.processElementUsages(psiElement, processor, options);
     }
     return processor.getResults();
   }

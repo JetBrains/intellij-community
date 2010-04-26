@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.execution.ExecutionException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +32,6 @@ public abstract class XDebugProcessStarter {
    * @return new {@link XDebugProcess} instance
    */
   @NotNull
-  public abstract XDebugProcess start(@NotNull XDebugSession session);
+  public abstract XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException;
 
 }

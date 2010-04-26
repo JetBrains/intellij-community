@@ -61,7 +61,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                        FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, false));
     updatedFiles.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
                                        VcsBundle.message("status.group.name.will.be.merged.with.tree.conflicts"), false,
-                                       SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT, false));
+                                       FileGroup.MERGED_WITH_TREE_CONFLICT, false));
   }
 
   @NotNull
@@ -175,7 +175,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     private class MyTreeConflictWorker implements Runnable {
       public void run() {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
-        final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT);
+        final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_TREE_CONFLICT);
         final Collection<String> conflictedFiles = conflictedGroup.getFiles();
         final Collection<VirtualFile> parents = new ArrayList<VirtualFile>();
 

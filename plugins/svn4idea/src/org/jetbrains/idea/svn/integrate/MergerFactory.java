@@ -22,5 +22,5 @@ import org.tmatesoft.svn.core.SVNURL;
 import java.io.File;
 
 public interface MergerFactory {
-  Merger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl);
+  IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl);
 }

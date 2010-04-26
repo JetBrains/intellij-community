@@ -28,7 +28,6 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
-import org.jetbrains.idea.svn.update.SvnUpdateGroups;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +81,7 @@ public class ResolveWorker {
 
   public static boolean haveUnresolvedConflicts(final UpdatedFiles updatedFiles) {
     final String[] ids = new String[] {FileGroup.MERGED_WITH_CONFLICT_ID, FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID,
-      SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT};
+      FileGroup.MERGED_WITH_TREE_CONFLICT, FileGroup.SKIPPED_ID};
     for (String id : ids) {
       final FileGroup group = updatedFiles.getGroupById(id);
       if ((group != null) && (! group.isEmpty())) return true;

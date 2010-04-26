@@ -58,5 +58,8 @@
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionPreloader</implementation-class>
       <skipForDefaultProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.ui.switcher.SwitchManager</implementation-class>
+    </component>
   </project-components>
 </components>

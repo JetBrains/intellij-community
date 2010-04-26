@@ -91,7 +91,7 @@ public class WebEditorOptionsProvider implements EditorOptionsProvider {
     xmlEditorOptions.setAutomaticallyInsertClosingTag(myAutomaticallyInsertClosingTagCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyInsertRequiredAttributes(myAutomaticallyInsertRequiredAttributesCheckBox.isSelected());
     xmlEditorOptions.setAutomaticallyStartAttribute(myAutomaticallyStartAttributeAfterCheckBox.isSelected());
-    xmlEditorOptions.setEnableZenCoding(myEnableZenCodingCheckBox.isSelected());
+    xmlEditorOptions.setZenCodingEnabled(myEnableZenCodingCheckBox.isSelected());
     xmlEditorOptions.setZenCodingExpandShortcut(getSelectedZenCodingExpandShortcut());
   }
 

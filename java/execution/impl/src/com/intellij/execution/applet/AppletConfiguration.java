@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -252,6 +253,12 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     if (HTML_USED) {
       if (HTML_FILE_NAME == null || HTML_FILE_NAME.length() == 0) {
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("html.file.not.specified.error.message"));
+      }
+      try {
+        new URL(HTML_FILE_NAME);
+      }
+      catch (MalformedURLException ex) {
+        throw new RuntimeConfigurationWarning("URL " + HTML_FILE_NAME + " is not valid: " + ex.getLocalizedMessage());
       }
     }
     else {

@@ -76,6 +76,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NonNls private final String myTemplatesDir;
   private MyTemplates myTemplates;
   private final RecentTemplatesManager myRecentList = new RecentTemplatesManager();
+  private final Set<String> notAdjusted = new HashSet<String>();
   private volatile boolean myLoaded = false;
   private final FileTemplateManagerImpl myInternalTemplatesManager;
   private final FileTemplateManagerImpl myPatternsManager;
@@ -277,6 +278,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
             return;
           }
           loadTemplates();
+          for (FileTemplate template : myTemplates.getAllTemplates()) {
+            template.setAdjust(!notAdjusted.contains(template.getName()));
+          }
         }
         myLoaded = true;
       }
@@ -427,22 +431,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     Element templatesElement = element.getChild(ELEMENT_TEMPLATES);
     if (templatesElement != null) {
       invalidate();
-      FileTemplate[] internals = getInternalTemplates();
       List children = templatesElement.getChildren();
+      notAdjusted.clear();
       for (final Object aChildren : children) {
         Element child = (Element)aChildren;
         String name = child.getAttributeValue(ATTRIBUTE_NAME);
         boolean reformat = Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT));
-        if (child.getName().equals(ELEMENT_INTERNAL_TEMPLATE)) {
-          for (FileTemplate internal : internals) {
-            if (name.equals(internal.getName())) internal.setAdjust(reformat);
-          }
-        }
-        else if (child.getName().equals(ELEMENT_TEMPLATE)) {
-          FileTemplate template = getTemplate(name);
-          if (template != null) {
-            template.setAdjust(reformat);
-          }
+        if (!reformat) {
+          notAdjusted.add(name);
         }
       }
     }

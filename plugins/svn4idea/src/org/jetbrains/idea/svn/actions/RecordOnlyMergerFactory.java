@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.Merger;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
@@ -34,7 +35,7 @@ public class RecordOnlyMergerFactory extends ChangeListsMergerFactory {
     myUndo = isUndo;
   }
 
-  public Merger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+  public IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
     return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl) {
       @Override
       protected SVNRevisionRange createRange() {
