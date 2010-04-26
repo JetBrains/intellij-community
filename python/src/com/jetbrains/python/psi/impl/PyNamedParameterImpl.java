@@ -169,7 +169,9 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
   @Override
   public SearchScope getUseScope() {
     PyFunction func = PsiTreeUtil.getParentOfType(this, PyFunction.class);
-    assert func != null;
-    return new LocalSearchScope(func);
+    if (func != null) {
+      return new LocalSearchScope(func);
+    }
+    return new LocalSearchScope(getContainingFile());
   }
 }
