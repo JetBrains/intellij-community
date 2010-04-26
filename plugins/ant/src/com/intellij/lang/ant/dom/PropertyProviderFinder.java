@@ -44,8 +44,10 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
     if (element.equals(myContextElement)) {
       stop();
     }
-    if (element instanceof PropertiesProvider) {
-      propertyProviderFound(((PropertiesProvider)element));
+    else {
+      if (element instanceof PropertiesProvider) {
+        propertyProviderFound(((PropertiesProvider)element));
+      }
     }
     if (!myStopped) {
       super.visitAntDomElement(element);
