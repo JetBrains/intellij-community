@@ -10,6 +10,12 @@ import org.jetbrains.annotations.NonNls;
  * @author Alexey
  */
 public abstract class IGInspectionTestCase extends InspectionTestCase {
+
+  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
+  public IGInspectionTestCase() {
+    System.setProperty("idea.platform.prefix", "Idea");
+  }
+
   protected String getTestDataPath() {
       return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
   }
