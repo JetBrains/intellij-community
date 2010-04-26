@@ -16,19 +16,26 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.diagnostic.logging.*;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -46,16 +53,20 @@ import java.util.Map;
 /**
  * @author nik
  */
-public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsoleManager, Disposable {
+public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManager, Disposable {
   private final Map<AdditionalTabComponent, Content> myAdditionalContent = new HashMap<AdditionalTabComponent, Content>();
   private final Map<AdditionalTabComponent, ContentManagerListener> myContentListeners =
     new HashMap<AdditionalTabComponent, ContentManagerListener>();
   private final Project myProject;
   private final LogFilesManager myManager;
   protected ExecutionEnvironment myEnvironment;
+
+  protected ExecutionConsole myConsole;
+  protected RunContentDescriptor myRunContentDescriptor;
+
   private final Icon DEFAULT_TAB_COMPONENT_ICON = IconLoader.getIcon("/fileTypes/text.png");
 
-  public DebuggerLogConsoleManagerBase(Project project) {
+  public DebuggerSessionTabBase(Project project) {
     myProject = project;
     myManager = new LogFilesManager(project, this, this);
   }
@@ -184,6 +195,13 @@ public abstract class DebuggerLogConsoleManagerBase implements DebuggerLogConsol
     component.dispose();
     final Content content = myAdditionalContent.remove(component);
     getUi().removeContent(content, true);
+  }
+
+  public void toFront() {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+      ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
+    }
   }
 
   protected Project getProject() {

@@ -41,6 +41,8 @@ public class Foundation {
     myFoundationLibrary = (FoundationLibrary)Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
   }
 
+  public static void init() { /* fake method to init foundation */ }
+
   private Foundation() {
   }
 
