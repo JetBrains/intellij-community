@@ -2,10 +2,12 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -19,9 +21,9 @@ public class PyTupleType extends PyClassType implements PySubscriptableType {
   }
 
   public String getName() {
-    return "tuple(" + StringUtil.join(myElementTypes, new NullableFunction<PyType, String>() {
+    return "tuple(" + StringUtil.join(myElementTypes, new Function<PyType, String>() {
       public String fun(PyType pyType) {
-        return pyType.getName();
+        return pyType == null ? "unknown" : pyType.getName();
       }
     }, ",") + ")";
   }
@@ -34,6 +36,26 @@ public class PyTupleType extends PyClassType implements PySubscriptableType {
         return myElementTypes[iIndex];
       }
     }
-    return PyNoneType.INSTANCE;
+    return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    PyTupleType that = (PyTupleType)o;
+
+    if (!Arrays.equals(myElementTypes, that.myElementTypes)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (myElementTypes != null ? Arrays.hashCode(myElementTypes) : 0);
+    return result;
   }
 }

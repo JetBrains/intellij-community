@@ -185,5 +185,24 @@ public class PyClassType implements PyType {
     // TODO: add our own ideas here, e.g. from methods other than constructor
     return Collections.unmodifiableSet(ret); 
   }
-  
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    PyClassType classType = (PyClassType)o;
+
+    if (myIsDefinition != classType.myIsDefinition) return false;
+    if (myClass != null ? !myClass.equals(classType.myClass) : classType.myClass != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myClass != null ? myClass.hashCode() : 0;
+    result = 31 * result + (myIsDefinition ? 1 : 0);
+    return result;
+  }
 }

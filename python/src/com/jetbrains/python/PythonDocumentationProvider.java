@@ -1,6 +1,8 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +16,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.SdkRootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.SingleIterable;
@@ -83,6 +86,10 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
     cat.add("def ").addWith(func_name_wrapper, $(fun.getName()));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
+    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
+      final PyType returnType = fun.getReturnType();
+      cat.add("<br>Inferred return type: ").add(returnType == null ? "unknown" : returnType.getName());
+    }
     return cat;
   }
 

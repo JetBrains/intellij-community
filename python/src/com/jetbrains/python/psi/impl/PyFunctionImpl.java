@@ -19,6 +19,9 @@ import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.psi.types.PyNoneType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,6 +111,34 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public boolean isTopLevel() {
     return getParentByStub() instanceof PsiFile;
+  }
+
+  public PyType getReturnType() {
+    ReturnVisitor visitor = new ReturnVisitor();
+    getStatementList().accept(visitor);
+    return visitor.result();
+  }
+
+  private static class ReturnVisitor extends PyRecursiveElementVisitor {
+    private PyType myResult = null;
+    private boolean myHasReturns = false;
+
+    @Override
+    public void visitPyReturnStatement(PyReturnStatement node) {
+      final PyExpression expr = node.getExpression();
+      PyType returnType = expr == null ? PyNoneType.INSTANCE : expr.getType();
+      if (!myHasReturns) {
+        myResult = returnType;
+        myHasReturns = true;
+      }
+      else {
+        myResult = PyUnionType.union(myResult, returnType);
+      }
+    }
+
+    PyType result() {
+      return myHasReturns ? myResult : PyNoneType.INSTANCE;
+    }
   }
 
   @Override

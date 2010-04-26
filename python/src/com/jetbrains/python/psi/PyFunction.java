@@ -6,6 +6,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,8 @@ public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyS
    * @return true if the function is top-level, false otherwise.
    */
   boolean isTopLevel();
+
+  PyType getReturnType();
 
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
