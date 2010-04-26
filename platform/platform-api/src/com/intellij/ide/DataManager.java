@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.AsyncResult;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,8 +32,11 @@ public abstract class DataManager {
 
   /**
    * @return {@link DataContext} constructed by the current focused component
+   * @deprecated use either {@link #getDataContext(java.awt.Component)} or {@link #getDataContextFromFocus())
    */
   public abstract DataContext getDataContext();
+
+  public abstract AsyncResult<DataContext> getDataContextFromFocus();
 
   /**
    * @return {@link DataContext} constructed by the specified <code>component</code>
