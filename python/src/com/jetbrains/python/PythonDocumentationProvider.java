@@ -86,10 +86,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
     cat.add("def ").addWith(func_name_wrapper, $(fun.getName()));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
-    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-      final PyType returnType = fun.getReturnType();
-      cat.add("<br>Inferred return type: ").add(returnType == null ? "unknown" : returnType.getName());
-    }
+    final PyType returnType = fun.getReturnType();
+    cat.add(escaper.apply("\nInferred return type: ")).add(returnType == null ? "unknown" : returnType.getName());
     return cat;
   }
 
