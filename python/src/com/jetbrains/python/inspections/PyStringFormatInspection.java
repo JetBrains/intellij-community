@@ -8,6 +8,7 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -209,11 +210,11 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         myVisitor.registerProblem(expression, message);
       }
 
-      private void checkType(@NotNull final PyExpression expression, @NotNull final String expextedTypeName) {
+      private void checkType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName) {
         final PyType type = expression.getType(TypeEvalContext.fast());
-        if (type != null) {
+        if (type != null && !(type instanceof PyTypeReference)) {
           final String typeName = type.getName();
-          simpleCheckType(expression, typeName, expextedTypeName);
+          simpleCheckType(expression, typeName, expectedTypeName);
         }
       }
 
@@ -226,7 +227,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         if ("int".equals(typeName) || "float".equals(typeName)) {
           return;
         }
-        registerProblem(expression, "Unexpected type");
+        registerProblem(expression, "Unexpected type " + typeName);
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
