@@ -102,11 +102,21 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       if (PyClassType.is("int", lhsType) && PyClassType.is("int", rhsType) && op.equals("+")) {
         return lhsType;
       }
-      if (((PyClassType.is("str", lhsType) || PyClassType.is("str", rhsType)) && op.equals("+"))) {
-        return PyBuiltinCache.getInstance(this).getStrType();
+      final String eitherType = getEitherType(lhsType, rhsType, "str", "list");
+      if ((eitherType != null && op.equals("+"))) {
+        return PyBuiltinCache.getInstance(this).getObjectType(eitherType);
       }
       if (PyClassType.is("str", lhsType) && op.equals("%")) {
         return lhsType;
+      }
+    }
+    return null;
+  }
+
+  private static String getEitherType(PyType lhsType, PyType rhsType, final String... names) {
+    for(String name: names) {
+      if (PyClassType.is(name, lhsType) || PyClassType.is(name, rhsType)) {
+        return name;
       }
     }
     return null;

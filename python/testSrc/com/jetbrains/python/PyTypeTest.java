@@ -30,6 +30,9 @@ public class PyTypeTest extends PyLightFixtureTestCase {
 
     type = (PyClassType) doTest("expr = '%s' % ('a')");
     assertEquals("str", type.getName());
+
+    type = (PyClassType) doTest("expr = [1] + [2]");
+    assertEquals("list", type.getName());
   }
 
   public void testUnaryExprType() {
