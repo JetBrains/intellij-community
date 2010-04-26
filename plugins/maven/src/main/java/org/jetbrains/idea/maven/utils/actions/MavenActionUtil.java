@@ -34,6 +34,10 @@ public class MavenActionUtil {
   private MavenActionUtil() {
   }
 
+  public static boolean hasProject(DataContext context) {
+    return PlatformDataKeys.PROJECT.getData(context) != null;
+  }
+
   @NotNull
   public static Project getProject(DataContext context) {
     return PlatformDataKeys.PROJECT.getData(context);

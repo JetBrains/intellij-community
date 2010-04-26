@@ -25,6 +25,9 @@
                         serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtilBase"
+                        serviceImplementation="com.intellij.codeInsight.TargetElementUtilBase"/>
+
     <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"

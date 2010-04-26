@@ -398,7 +398,7 @@ public class LineStatusTrackerManager implements ProjectComponent {
 
   private void trackAwtThread() {
     if (! ApplicationManager.getApplication().isDispatchThread()) {
-      LOG.info("NOT dispatch thread: " + Thread.currentThread().getName(), new Throwable());
+      LOG.warn("NOT dispatch thread: " + Thread.currentThread().getName(), new Throwable());
     }
   }
 }
