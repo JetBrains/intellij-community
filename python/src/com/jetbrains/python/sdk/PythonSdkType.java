@@ -45,9 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -164,81 +161,6 @@ public class PythonSdkType extends SdkType {
     };
     result.setTitle(PyBundle.message("sdk.select.path"));
     return result;
-  }
-
-  /**
-   * @param path where to look
-   * @return Python interpreter executable on the path, or null.
-   */
-  @Nullable
-  @NonNls
-  private static File getPythonBinaryPath(final String path) {
-    File interpreter = new File(path);
-      if (seemsExecutable(interpreter)) {
-        return interpreter;
-      }
-      else {
-        return null;
-      }
-  }
-
-  /**
-   * Invokes File.isExectable() by reflection.
-   * @param file what to test
-   * @return result of invocation, or null if method is not available
-   */
-  @Nullable
-  private static Boolean isExecutableUnder16(File file) {
-    try {
-      Method method = File.class.getMethod("canExecute", File.class);
-      Object ret = method.invoke(file);
-      if (ret instanceof Boolean) return ((Boolean)ret);
-    }
-    catch (NoSuchMethodException ignored) { }
-    catch (InvocationTargetException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    catch (IllegalAccessException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-    return null;
-  }
-
-  /**
-   * @param file what to test
-   * @return true if file is known to be executable, or hard to tell; false is file is definitely not executable.
-   */
-  private static boolean seemsExecutable(File file) {
-    if (file.isDirectory()) return false;
-    Boolean is_executable = isExecutableUnder16(file); // java 1.6 and above
-    if (is_executable != null) return is_executable;
-    // but we need to support 1.5 too
-    if (SystemInfo.isWindows) {
-      try {
-        final String path = file.getCanonicalPath();
-        for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
-          if (file.exists() && path.endsWith(suffix)) return true;
-          // TODO: check permissions?
-        }
-      }
-      catch (IOException ignored) { }
-    }
-    else if (SystemInfo.isUnix) {
-      /*
-      try {
-        ProcessOutput run_result = SdkUtil.getProcessOutput(file.getParent(), new String[] {"/usr/bin/[ -x " + file.getCanonicalPath() + " ]"});
-        if (run_result.getExitCode() > 1) {
-          LOG.warn(run_result.getStderr());
-        }
-        return run_result.getExitCode() == 0;
-      }
-      catch (IOException ex) {
-        LOG.warn(ex);
-        return false;
-      }
-      */
-    }
-    return true;
   }
 
   /**
@@ -463,7 +385,7 @@ public class PythonSdkType extends SdkType {
     Application application = ApplicationManager.getApplication();
     boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
 
-    String bin_path = getInterpreterPath(sdkModificator.getHomePath());
+    String bin_path = sdkModificator.getHomePath();
     assert bin_path != null;
     String working_dir = new File(bin_path).getParent();
     final String sep = File.separator;
@@ -558,12 +480,6 @@ public class PythonSdkType extends SdkType {
   public String getVersionString(final String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
-  }
-
-  @Nullable
-  public static String getInterpreterPath(final String sdkHome) {
-    final File file = getPythonBinaryPath(sdkHome);
-    return file != null ? file.getPath() : null;
   }
 
   private final static String GENERATOR3 = "generator3.py";
