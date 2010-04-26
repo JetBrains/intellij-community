@@ -9,12 +9,14 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -129,11 +131,38 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           return assignedValue.getType(context);
         }
       }
+      if (getParent() instanceof PyTupleExpression) {
+        return getTypeFromTupleAssignment(context);
+      }
       return null;
     }
     finally {
       TypeEvalStack.evaluated(this);
     }
+  }
+
+  @Nullable
+  private PyType getTypeFromTupleAssignment(TypeEvalContext context) {
+    final PyTupleExpression tuple = (PyTupleExpression) getParent();
+    PsiElement pparent = tuple;
+    while (pparent.getParent() instanceof PyParenthesizedExpression) {
+      pparent = pparent.getParent();
+    }
+    if (pparent.getParent() instanceof PyAssignmentStatement) {
+      final PyAssignmentStatement stmt = (PyAssignmentStatement) pparent.getParent();
+      final PyExpression assignedValue = stmt.getAssignedValue();
+      if (assignedValue != null) {
+        final PyType assignedType = assignedValue.getType(context);
+        if (assignedType instanceof PyTupleType) {
+          PyTupleType tupleType = (PyTupleType)assignedType;
+          if (tuple.getElements().length == tupleType.getElementCount()) {
+            int selfIndex = ArrayUtil.indexOf(tuple.getElements(), this);
+            return tupleType.getElementType(selfIndex, context);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   public PyExpression getQualifier() {

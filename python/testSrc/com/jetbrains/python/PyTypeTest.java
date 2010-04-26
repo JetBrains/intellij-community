@@ -5,7 +5,6 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import java.io.IOException;
@@ -16,6 +15,11 @@ import java.io.IOException;
 public class PyTypeTest extends PyLightFixtureTestCase {
   public void testTupleType() {
     PyClassType type = (PyClassType) doTest("t = ('a', 2)\nexpr = t[0]");
+    assertEquals("str", type.getName());
+  }
+
+  public void testTupleAssignmentType() {
+    PyClassType type = (PyClassType) doTest("t = ('a', 2)\n(expr, q) = t");
     assertEquals("str", type.getName());
   }
 

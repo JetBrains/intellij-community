@@ -9,4 +9,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PySubscriptableType extends PyType {
   @Nullable
   PyType getElementType(PyExpression index, TypeEvalContext context);
+
+  @Nullable
+  PyType getElementType(int index, TypeEvalContext context);
 }
