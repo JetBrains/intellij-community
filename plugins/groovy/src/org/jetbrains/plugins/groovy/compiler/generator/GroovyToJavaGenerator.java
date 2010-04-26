@@ -775,7 +775,7 @@ public class GroovyToJavaGenerator {
     return getTypeText(typeElement.getType(), typeElement, false);
   }
 
-  private static String getTypeText(PsiType type, @Nullable PsiElement context, boolean allowVarargs) {
+  private static String getTypeText(@Nullable PsiType type, @Nullable PsiElement context, boolean allowVarargs) {
     if (context != null && type instanceof PsiClassType) {
       final String accessible = findAccessibleSuperClass(context, ((PsiClassType)type).resolve());
       if (accessible != null) {
@@ -789,6 +789,10 @@ public class GroovyToJavaGenerator {
         return componentText + "...";
       }
       return componentText + "[]";
+    }
+
+    if (type == null) {
+      return CommonClassNames.JAVA_LANG_OBJECT;
     }
 
     String canonicalText = type.getCanonicalText();
