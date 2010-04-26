@@ -17,11 +17,14 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +47,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private JComponent myRootComponent;
   private SwitchTarget mySelection;
 
-  public SwitchingSession(SwitchProvider provider, KeyEvent e) {
+  public SwitchingSession(SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
     myProvider = provider;
     myInitialEvent = e;
 
@@ -76,6 +79,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
 
     mySelection = myProvider.getCurrentTarget();
+    if (myTargets.contains(preselected)) {
+      mySelection = preselected;
+    }
 
     myGlassPane = IdeGlassPaneUtil.find(myProvider.getComponent());
     for (SwitchTarget each : myTargets) {
@@ -324,12 +330,22 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     myFinished = true;
   }
 
-  private void finish() {
-    SwitchTarget selection = getSelection();
+  public AsyncResult<SwitchTarget> finish() {
+    final AsyncResult<SwitchTarget> result = new AsyncResult<SwitchTarget>();
+    final SwitchTarget selection = getSelection();
     if (selection != null) {
-      selection.switchTo(true);
+      selection.switchTo(true).doWhenDone(new Runnable() {
+        public void run() {
+          Disposer.dispose(SwitchingSession.this);
+          result.setDone(selection);
+        }
+      }).notifyWhenRejected(result);
+    } else {
+      Disposer.dispose(this);
+      result.setDone();
     }
-    Disposer.dispose(this);
+
+    return result;
   }
 
   public boolean isFinished() {
