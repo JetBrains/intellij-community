@@ -6,6 +6,8 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySetLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,7 +18,7 @@ public class PySetLiteralExpressionImpl extends PyElementImpl implements PySetLi
     super(astNode);
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return null;   // TODO
   }
 

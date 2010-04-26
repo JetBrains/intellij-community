@@ -3,6 +3,8 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
@@ -119,7 +121,7 @@ public class PyNumericLiteralExpressionImpl extends PyElementImpl
     return new BigInteger(text, radix);
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     ASTNode node = getNode();
     IElementType type = node.getElementType();
     if (type == PyElementTypes.INTEGER_LITERAL_EXPRESSION) {

@@ -156,7 +156,7 @@ public class UnsupportedFeatures extends PyAnnotator {
   @Override
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     if (isPy3K(node)) {
-      if (!"int".equals(node.getType().getName())) {
+      if (!node.isIntegerLiteral()) {
         return;
       }
       final String text = node.getText();

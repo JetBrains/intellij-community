@@ -16,6 +16,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -57,7 +58,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     PyExpression qualifier = myElement.getQualifier();
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
-      PyType type = qualifier.getType();
+      PyType type = qualifier.getType(TypeEvalContext.fast());
       if (type != null) return type.getCompletionVariants(myElement, new ProcessingContext());
       else return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
@@ -85,7 +86,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
             variants.addAll(processor.getResultList());
             // try to collect submodules
             PyExpression module = (PyExpression)mod_candidate;
-            PyType qualifierType = module.getType();
+            PyType qualifierType = module.getType(TypeEvalContext.fast());
             if (qualifierType != null) {
               ProcessingContext ctx = new ProcessingContext();
               for (Object ex : variants) { // just in case: file's definitions shadow submodules

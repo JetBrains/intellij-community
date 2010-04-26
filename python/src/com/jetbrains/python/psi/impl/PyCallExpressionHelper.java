@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -169,7 +170,7 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       PyExpression qualifier = ((PyReferenceExpression)callee).getQualifier();
       if (qualifier != null) {
-        PyType type = qualifier.getType();
+        PyType type = qualifier.getType(TypeEvalContext.fast());
         if ((type instanceof PyClassType) && (!((PyClassType)type).isDefinition())) {
           // we're calling an instance method of qualifier
           return true;

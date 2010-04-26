@@ -8,6 +8,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return "PyCallExpression: " + PyUtil.getReadableRepr(getCallee(), true); //or: getCalledFunctionReference().getReferencedName();
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     if (!TypeEvalStack.mayEvaluate(this)) {
       return null;
     }
@@ -71,7 +72,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
       if (callee instanceof PyReferenceExpression) {
         // hardwired special cases
         if ("super".equals(callee.getText())) {
-          final PyType superCallType = getSuperCallType(callee);
+          final PyType superCallType = getSuperCallType(callee, context);
           if (superCallType != null) {
             return superCallType;
           }
@@ -87,14 +88,14 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             return new PyClassType(((PyFunction)target).getContainingClass(), false); // resolved to __init__, back to class
           }
           // TODO: look at well-known functions and their return types
-          return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target);
+          return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context);
         }
       }
       if (callee == null) {
         return null;
       }
       else {
-        return callee.getType();
+        return callee.getType(context);
       }
     }
     finally {
@@ -102,7 +103,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     }
   }
 
-  private PyType getSuperCallType(PyExpression callee) {
+  private PyType getSuperCallType(PyExpression callee, TypeEvalContext context) {
     PsiElement must_be_super_init = ((PyReferenceExpression)callee).getReference().resolve();
     if (must_be_super_init instanceof PyFunction) {
       PyClass must_be_super = ((PyFunction)must_be_super_init).getContainingClass();
@@ -119,7 +120,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
                 // check 2nd argument, too; it should be an instance
                 PyExpression second_arg = args[1];
                 if (second_arg != null) {
-                  PyType second_type = second_arg.getType();
+                  PyType second_type = second_arg.getType(context);
                   if (second_type instanceof PyClassType) {
                     // imitate isinstance(second_arg, possible_class)
                     PyClass second_class = ((PyClassType)second_type).getPyClass();

@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -38,7 +39,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     assert qualifier != null;
 
     // regular attributes
-    PyType qualifierType = qualifier.getType();
+    PyType qualifierType = qualifier.getType(TypeEvalContext.fast());
     if (qualifierType != null) {
       if (qualifier instanceof PyQualifiedExpression) {
         // enrich the type info with any fields assigned nearby
@@ -96,7 +97,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     PyExpression qualifier = myElement.getQualifier();
     assert qualifier != null;
 
-    PyType qualifierType = qualifier.getType();
+    PyType qualifierType = qualifier.getType(TypeEvalContext.fast());
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> names_already = new HashSet<String>();
     ctx.put(PyType.CTX_NAMES, names_already);
@@ -146,7 +147,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
         ((PyFunction)element).getContainingClass() != null) {
       final PyExpression qualifier = myElement.getQualifier();
-      if (qualifier != null && qualifier.getType() == null) {
+      if (qualifier != null && qualifier.getType(TypeEvalContext.fast()) == null) {
         return true;
       }
     }

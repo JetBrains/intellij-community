@@ -16,6 +16,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +107,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return processor.execute(this, substitutor);
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     if (!TypeEvalStack.mayEvaluate(this)) {
       return null;
     }
@@ -123,9 +124,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             if (resolveResult == this) {
               return null;  // fix SOE on "a = a"
             }
-            return PyReferenceExpressionImpl.getTypeFromTarget(resolveResult);
+            return PyReferenceExpressionImpl.getTypeFromTarget(resolveResult, context, null);
           }
-          return assignedValue.getType();
+          return assignedValue.getType(context);
         }
       }
       return null;

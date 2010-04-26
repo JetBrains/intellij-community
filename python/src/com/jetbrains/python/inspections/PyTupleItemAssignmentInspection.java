@@ -6,7 +6,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,8 +66,8 @@ public class PyTupleItemAssignmentInspection extends LocalInspectionTool {
           PsiElement element = referenceExpression.followAssignmentsChain().getElement();
           if (element instanceof PyExpression) {
             PyExpression expression = (PyExpression)element;
-            PyType type = expression.getType();
-            if (type != null && "tuple".equals(type.getName())) {
+            PyType type = expression.getType(TypeEvalContext.fast());
+            if (type instanceof PyTupleType) {
               registerProblem(node, "Tuples doesn't support item assignment");
             }
           }

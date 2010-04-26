@@ -59,7 +59,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         }
       }
     }
-    PyType type = expression.getType();
+    PyType type = expression.getType(null);
     if (type != null) {
       final String typeName = type.getName();
       if (typeName != null) {

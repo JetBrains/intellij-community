@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 /**
  * @author yole
@@ -20,7 +21,7 @@ public class PyUsageTypeProvider implements UsageTypeProvider {
       }
       if (element instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
-        if (qualifier != null && qualifier.getType() == null) {
+        if (qualifier != null && qualifier.getType(TypeEvalContext.fast()) == null) {
           return UNTYPED;
         }
       }

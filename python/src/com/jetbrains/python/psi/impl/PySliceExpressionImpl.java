@@ -7,6 +7,8 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceExpression;
 import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -17,8 +19,8 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
     super(astNode);
   }
 
-  public PyType getType() {
-    return getOperand().getType();
+  public PyType getType(@NotNull TypeEvalContext context) {
+    return getOperand().getType(context);
   }
 
   public PyExpression getOperand() {

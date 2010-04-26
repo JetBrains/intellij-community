@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     @Override
     public void visitPyReturnStatement(PyReturnStatement node) {
       final PyExpression expr = node.getExpression();
-      PyType returnType = expr == null ? PyNoneType.INSTANCE : expr.getType();
+      PyType returnType;
+      returnType = expr == null ? PyNoneType.INSTANCE : expr.getType(TypeEvalContext.slow());
       if (!myHasReturns) {
         myResult = returnType;
         myHasReturns = true;

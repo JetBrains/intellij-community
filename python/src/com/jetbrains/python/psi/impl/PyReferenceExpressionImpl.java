@@ -9,15 +9,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.console.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,7 +167,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return "PyReferenceExpression: " + getReferencedName();
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     if (getQualifier() == null) {
       String name = getReferencedName();
       if (PyNames.NONE.equals(name)) {
@@ -179,7 +178,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       PyType maybe_type = PyUtil.getSpecialAttributeType(this);
       if (maybe_type != null) return maybe_type;
     }
-    PyType pyType = getTypeFromProviders();
+    PyType pyType = getTypeFromProviders(context);
     if (pyType != null) {
       return pyType;
     }
@@ -190,14 +189,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target == this) {
       return null;
     }
-    return getTypeFromTarget(target);
+    return getTypeFromTarget(target, context, this);
   }
 
   @Nullable
-  private PyType getTypeFromProviders() {
+  private PyType getTypeFromProviders(TypeEvalContext context) {
     for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
       try {
-        final PyType type = provider.getReferenceExpressionType(this);
+        final PyType type = provider.getReferenceExpressionType(this, context);
         if (type != null) {
           return type;
         }
@@ -210,8 +209,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  public static PyType getTypeFromTarget(final PsiElement target) {
-    final PyType pyType = getReferenceTypeFromProviders(target);
+  public static PyType getTypeFromTarget(final PsiElement target, final TypeEvalContext context, @Nullable PyReferenceExpression anchor) {
+    final PyType pyType = getReferenceTypeFromProviders(target, context);
     if (pyType != null) {
       return pyType;
     }
@@ -221,23 +220,41 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile) target);
     }
+    if (target instanceof PyTargetExpression && context.allowDataFlow() && anchor != null) {
+      final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(anchor, ScopeOwner.class);
+      if (scopeOwner != null) {
+        final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyTargetExpression) target, anchor);
+        if (defs.length > 0) {
+          PyType type = getTypeIfExpr(defs [0], context);
+          for (int i = 1; i < defs.length; i++) {
+            type = PyUnionType.union(type, getTypeIfExpr(defs [i], context));
+          }
+          return type;
+        }
+      }
+    }
     if (target instanceof PyExpression) {
-      return ((PyExpression) target).getType();
+      return ((PyExpression) target).getType(context);
     }
     if (target instanceof PyClass) {
       return new PyClassType((PyClass) target, true);
     }
     if (target instanceof PsiDirectory) {
       PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
-      if (file != null) return getTypeFromTarget(file);
+      if (file != null) return getTypeFromTarget(file, context, anchor);
     }
     return null;
   }
 
   @Nullable
-  public static PyType getReferenceTypeFromProviders(final PsiElement target) {
+  private static PyType getTypeIfExpr(PyElement def, TypeEvalContext context) {
+    return def instanceof PyExpression ? ((PyExpression)def).getType(context) : null;
+  }
+
+  @Nullable
+  public static PyType getReferenceTypeFromProviders(final PsiElement target, TypeEvalContext context) {
     for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType result = provider.getReferenceType(target);
+      final PyType result = provider.getReferenceType(target, context);
       if (result != null) return result;
     }
 

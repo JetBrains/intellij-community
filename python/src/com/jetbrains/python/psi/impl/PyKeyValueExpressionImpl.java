@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyKeyValueExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ public class PyKeyValueExpressionImpl extends PyElementImpl implements PyKeyValu
     super(astNode);
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return null;
   }
 

@@ -23,6 +23,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -537,20 +538,20 @@ public class PyUtil {
    * @param ref reference to a possible attribute; only qualified references make sense.
    * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
    */
-  public static @Nullable
-  PyType getSpecialAttributeType(PyReferenceExpression ref) {
+  @Nullable
+  public static PyType getSpecialAttributeType(PyReferenceExpression ref) {
     if (ref != null) {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {
         String attr_name = getIdentifier(ref);
         if ("__class__".equals(attr_name)) {
-          PyType qual_type = qualifier.getType();
+          PyType qual_type = qualifier.getType(TypeEvalContext.fast());
           if (qual_type instanceof PyClassType) {
             return new PyClassType(((PyClassType)qual_type).getPyClass(), true); // always as class, never instance
           }
         }
         else if ("__dict__".equals(attr_name)) {
-          PyType qual_type = qualifier.getType();
+          PyType qual_type = qualifier.getType(TypeEvalContext.fast());
           if (qual_type instanceof PyClassType && ((PyClassType)qual_type).isDefinition()) {
             return PyBuiltinCache.getInstance(ref).getDictType();
           }

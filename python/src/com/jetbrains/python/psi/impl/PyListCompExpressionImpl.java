@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.ComprhForComponent;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +39,7 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
     return true;
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return null;
   }
 

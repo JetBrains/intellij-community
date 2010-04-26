@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -371,7 +372,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (qualifier == null) {
       return HighlightSeverity.ERROR;
     }
-    if (qualifier.getType() != null) {
+    if (qualifier.getType(TypeEvalContext.fast()) != null) {
       return HighlightSeverity.WARNING;
     }
     return null;

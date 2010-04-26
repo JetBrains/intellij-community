@@ -6,6 +6,8 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStarExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,7 +26,7 @@ public class PyStarExpressionImpl extends PyElementImpl implements PyStarExpress
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return null;
   }
 

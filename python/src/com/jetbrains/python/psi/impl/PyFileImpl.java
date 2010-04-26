@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -343,7 +344,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return result;
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     if (myType == null) myType = new PyModuleType(this);
     return myType;
   }

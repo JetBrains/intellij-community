@@ -8,6 +8,7 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +210,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
       }
 
       private void checkType(@NotNull final PyExpression expression, @NotNull final String expextedTypeName) {
-        final PyType type = expression.getType();
+        final PyType type = expression.getType(TypeEvalContext.fast());
         if (type != null) {
           final String typeName = type.getName();
           simpleCheckType(expression, typeName, expextedTypeName);
@@ -322,7 +323,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           inspectValues(((PyParenthesizedExpression)rightExpression).getContainedExpression());
         }
         else {
-          final PyType type = rightExpression.getType();
+          final PyType type = rightExpression.getType(TypeEvalContext.fast());
           if (type != null) {
             if (myUsedMappingKeys.size() > 0 && !("dict".equals(type.getName()))) {
               registerProblem(rightExpression, "Format requires a mapping");

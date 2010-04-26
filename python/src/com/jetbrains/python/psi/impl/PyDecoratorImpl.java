@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
   }
 
   // TODO: create a custom version of public PyType getType()
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 }

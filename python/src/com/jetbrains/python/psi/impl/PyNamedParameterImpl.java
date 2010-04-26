@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +132,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
     return null; // we're not a tuple
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     if (getParent() instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList) getParent();
       final PyParameter[] params = parameterList.getParameters();
@@ -152,7 +153,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           return PyBuiltinCache.getInstance(this).getTupleType();
         }
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-          PyType result = provider.getParameterType(this, func);
+          PyType result = provider.getParameterType(this, func, context);
           if (result != null) return result;
         }
       }

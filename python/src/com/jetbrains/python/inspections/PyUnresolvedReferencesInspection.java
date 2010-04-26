@@ -27,10 +27,7 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -329,7 +326,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         if (reference.getElement() instanceof PyQualifiedExpression) {
           final PyExpression qexpr = ((PyQualifiedExpression)reference.getElement()).getQualifier();
           if (qexpr != null) {
-            PyType qtype = qexpr.getType();
+            PyType qtype = qexpr.getType(TypeEvalContext.fast());
             if (qtype != null) {
               if (qtype instanceof PyNoneType) {
                 // this almost always means that we don't know the type, so don't show an error in this case

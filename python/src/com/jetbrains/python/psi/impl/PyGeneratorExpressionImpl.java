@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
     pyVisitor.visitPyGeneratorExpression(this);
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return null;
   }
 

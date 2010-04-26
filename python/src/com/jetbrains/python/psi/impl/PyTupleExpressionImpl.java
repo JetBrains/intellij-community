@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ArrayIterator;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,11 +46,11 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
     return true;
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     final PyExpression[] elements = getElements();
     final PyType[] types = new PyType[elements.length];
     for (int i = 0; i < types.length; i++) {
-      types [i] = elements [i].getType();
+      types [i] = elements [i].getType(context);
     }
     return new PyTupleType(this, types);
   }

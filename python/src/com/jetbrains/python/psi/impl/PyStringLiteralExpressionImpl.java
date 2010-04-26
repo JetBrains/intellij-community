@@ -16,6 +16,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.jetbrains.annotations.NotNull;
 
@@ -256,7 +257,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return super.toString() + ": " + getStringValue();
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return PyBuiltinCache.getInstance(this).getStrType(); // TODO: detect unicode vs byte
   }
 

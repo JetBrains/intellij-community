@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -17,12 +18,12 @@ import java.util.List;
  * @author yole
  */
 public class PyJavaTypeProvider implements PyTypeProvider {
-  public PyType getReferenceExpressionType(PyReferenceExpression referenceExpression) {
+  public PyType getReferenceExpressionType(PyReferenceExpression referenceExpression, TypeEvalContext context) {
     return null;
   }
 
   @Nullable
-  public PyType getReferenceType(final PsiElement referenceTarget) {
+  public PyType getReferenceType(final PsiElement referenceTarget, TypeEvalContext context) {
     if (referenceTarget instanceof PsiClass) {
       return new PyJavaClassType((PsiClass) referenceTarget);
     }
@@ -40,7 +41,7 @@ public class PyJavaTypeProvider implements PyTypeProvider {
     return null;
   }
 
-  public PyType getParameterType(final PyNamedParameter param, final PyFunction func) {
+  public PyType getParameterType(final PyNamedParameter param, final PyFunction func, TypeEvalContext context) {
     if (!(param.getParent() instanceof PyParameterList)) return null;
     List<PyNamedParameter> params = ParamHelper.collectNamedParameters((PyParameterList) param.getParent());
     final int index = params.indexOf(param);

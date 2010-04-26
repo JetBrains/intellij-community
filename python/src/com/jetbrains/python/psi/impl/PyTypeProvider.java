@@ -6,6 +6,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,11 +16,11 @@ public interface PyTypeProvider {
   ExtensionPointName<PyTypeProvider> EP_NAME = ExtensionPointName.create("Pythonid.typeProvider");
 
   @Nullable
-  PyType getReferenceExpressionType(PyReferenceExpression referenceExpression);
+  PyType getReferenceExpressionType(PyReferenceExpression referenceExpression, TypeEvalContext context);
   
   @Nullable
-  PyType getReferenceType(PsiElement referenceTarget);
+  PyType getReferenceType(PsiElement referenceTarget, TypeEvalContext context);
 
   @Nullable
-  PyType getParameterType(PyNamedParameter param, final PyFunction func);
+  PyType getParameterType(PyNamedParameter param, final PyFunction func, TypeEvalContext context);
 }

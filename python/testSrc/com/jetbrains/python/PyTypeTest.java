@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import java.io.IOException;
 
@@ -24,7 +25,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
       }
     });
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    PyClassType type = (PyClassType) expr.getType();
+    PyClassType type = (PyClassType) expr.getType(TypeEvalContext.slow());
     assertEquals("str", type.getName());
   }
 }

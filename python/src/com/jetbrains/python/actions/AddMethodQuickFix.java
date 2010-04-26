@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
@@ -66,7 +67,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       boolean made_instance = false;
       if (call_by_class) {
         if (args.length > 0) {
-          PyType first_arg_type = args[0].getType();
+          PyType first_arg_type = args[0].getType(TypeEvalContext.fast());
           if (first_arg_type instanceof PyClassType && ((PyClassType)first_arg_type).getPyClass().isSubclass(cls)) {
             // class, first arg ok: instance method
             param_buf.append("self"); // NOTE: might use a name other than 'self', according to code style.

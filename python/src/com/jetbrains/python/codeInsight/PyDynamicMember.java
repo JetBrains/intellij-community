@@ -10,6 +10,8 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -102,7 +104,7 @@ public class PyDynamicMember {
       myClass = clazz;
     }
 
-    public PyType getType() {
+    public PyType getType(@NotNull TypeEvalContext context) {
       return new PyClassType(myClass, !myResolveToInstance);
     }
   }

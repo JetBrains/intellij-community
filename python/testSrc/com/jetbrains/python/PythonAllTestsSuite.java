@@ -49,7 +49,8 @@ public class PythonAllTestsSuite {
     PyExtractSuperclassTest.class,
     PyInlineLocalTest.class,
     PyAutoUnindentTest.class,
-    PyFindUsagesTest.class
+    PyFindUsagesTest.class,
+    PyTypeTest.class
   };
 
   public static TestSuite suite() {

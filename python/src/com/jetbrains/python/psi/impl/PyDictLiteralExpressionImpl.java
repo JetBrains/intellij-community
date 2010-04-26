@@ -7,6 +7,8 @@ import com.jetbrains.python.psi.PyDictLiteralExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyKeyValueExpression;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
 public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDictLiteralExpression {
   private static final TokenSet KEY_VALUE_EXPRESSIONS = TokenSet.create(PyElementTypes.KEY_VALUE_EXPRESSION);
@@ -19,7 +21,7 @@ public class PyDictLiteralExpressionImpl extends PyElementImpl implements PyDict
     return childrenToPsi(KEY_VALUE_EXPRESSIONS, PyKeyValueExpression.EMPTY_ARRAY);
   }
 
-  public PyType getType() {
+  public PyType getType(@NotNull TypeEvalContext context) {
     return PyBuiltinCache.getInstance(this).getDictType();
   }
 

@@ -17,6 +17,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +103,7 @@ public class ImportFromToImportIntention implements IntentionAction {
           PyReferenceExpression ref = import_element.getImportReference();
           if (ref != null && ref.isValid()) {
             PsiElement target = ref.getReference().resolve();
-            if (target instanceof PyExpression && ((PyExpression)target).getType() instanceof PyModuleType) return false;
+            if (target instanceof PyExpression && ((PyExpression)target).getType(TypeEvalContext.fast()) instanceof PyModuleType) return false;
           }
         }
 
