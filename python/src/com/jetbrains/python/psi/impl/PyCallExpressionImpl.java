@@ -94,7 +94,10 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             return providedType;
           }
           if (target instanceof PyFunction) {
-            return new PyReturnTypeReference((PyFunction) target);
+            if (context.allowReturnTypes()) {
+              return ((PyFunction) target).getReturnType();
+            }
+            return new PyReturnTypeReference((PyFunction)target);
           }
         }
       }

@@ -53,11 +53,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
       }
     });
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    PyType type = expr.getType(TypeEvalContext.slow());
-    while(type instanceof PyTypeReference) {
-      type = ((PyTypeReference) type).resolve(expr);
-    }
-    return type;
+    return expr.getType(TypeEvalContext.slow());
   }
 }
   

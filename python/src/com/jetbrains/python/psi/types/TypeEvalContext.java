@@ -14,6 +14,10 @@ public class TypeEvalContext {
     return myAllowDataFlow;
   }
 
+  public boolean allowReturnTypes() {
+    return myAllowDataFlow;
+  }
+
   public static TypeEvalContext slow() {
     return new TypeEvalContext(true);
   }
