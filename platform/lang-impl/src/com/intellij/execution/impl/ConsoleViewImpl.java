@@ -185,8 +185,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   };
 
-  private final CompositeFilter myPredefinedMessageFilter;
-  private final CompositeFilter myCustomFilter;
+  protected final CompositeFilter myPredefinedMessageFilter;
+  protected final CompositeFilter myCustomFilter;
 
   private final ArrayList<String> myHistory = new ArrayList<String>();
   private int myHistorySize = 20;
@@ -196,7 +196,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Alarm myFoldingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   private final List<FoldRegion> myPendingFoldRegions = new ArrayList<FoldRegion>();
 
-  public void addConsoleUserInputLestener(ConsoleInputListener consoleInputListener) {
+  public void addConsoleUserInputListener(ConsoleInputListener consoleInputListener) {
     myConsoleInputListeners.add(consoleInputListener);
   }
 
@@ -500,10 +500,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           it.remove();
         }
       }
-      highlightHyperlinks(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
+      highlightHyperlinksAndFoldings(newLineCount >= lineCount + 1 ? newLineCount - lineCount - 1 : 0, newLineCount - 1);
     } 
     else if (oldLineCount < newLineCount) {
-      highlightHyperlinks(oldLineCount - 1, newLineCount - 2);
+      highlightHyperlinksAndFoldings(oldLineCount - 1, newLineCount - 2);
     }
 
     if (isAtEndOfDocument) {
@@ -781,8 +781,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private void linkFollowed(final HyperlinkInfo info) {
-    MarkupModelEx markupModel = (MarkupModelEx)myEditor.getMarkupModel();
-    for (Map.Entry<RangeHighlighter,HyperlinkInfo> entry : myHyperlinks.getRanges().entrySet()) {
+    linkFollowed(myEditor, myHyperlinks, info);
+  }
+  public static void linkFollowed(final Editor editor, final Hyperlinks hyperlinks, final HyperlinkInfo info) {
+    MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
+    for (Map.Entry<RangeHighlighter,HyperlinkInfo> entry : hyperlinks.getRanges().entrySet()) {
       RangeHighlighter range = entry.getKey();
       TextAttributes oldAttr = range.getUserData(OLD_HYPERLINK_TEXT_ATTRIBUTES);
       if (oldAttr != null) {
@@ -805,28 +808,54 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     RangeHighlighter dummy = markupModel.addRangeHighlighter(0, 0, HYPERLINK_LAYER, getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE);
     markupModel.removeHighlighter(dummy);
   }
+  public HyperlinkInfo getHyperlinkInfoByPoint(final Point p){
+    return getHyperlinkInfoByPoint(myEditor, myHyperlinks, p);
+  }
 
-  private HyperlinkInfo getHyperlinkInfoByPoint(final Point p){
-    if (myEditor == null) return null;
-    final LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
-    return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
+  public static HyperlinkInfo getHyperlinkInfoByPoint(final Editor editor, final Hyperlinks hyperlinks, final Point p){
+    final LogicalPosition pos = editor.xyToLogicalPosition(new Point(p.x, p.y));
+    return getHyperlinkInfoByLineAndCol(editor, hyperlinks, pos.line, pos.column);
   }
 
   private HyperlinkInfo getHyperlinkInfoByLineAndCol(final int line, final int col) {
-    final int offset = myEditor.logicalPositionToOffset(new LogicalPosition(line, col));
-    return myHyperlinks.getHyperlinkAt(offset);
+    return getHyperlinkInfoByLineAndCol(myEditor, myHyperlinks, line, col);
   }
 
-  private void highlightHyperlinks(final int line1, final int endLine){
+  public static HyperlinkInfo getHyperlinkInfoByLineAndCol(final Editor editor, final Hyperlinks hyperlinks, final int line, final int col) {
+    final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, col));
+    return hyperlinks.getHyperlinkAt(offset);
+  }
+
+  private void highlightHyperlinksAndFoldings(final int line1, final int endLine){
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    highlightHyperlinks(myEditor, myHyperlinks, myCustomFilter, myPredefinedMessageFilter, line1, endLine);
+    updateFoldings(line1, endLine);
+  }
+
+  private void updateFoldings(final int line1, final int endLine) {
     final Document document = myEditor.getDocument();
+    final CharSequence chars = document.getCharsSequence();
+    final int startLine = Math.max(0, line1);
+    final List<FoldRegion> toAdd = new ArrayList<FoldRegion>();
+    for(int line = startLine; line <= endLine; line++) {
+      addFolding(document, chars, line, toAdd);
+    }
+    if (!toAdd.isEmpty()) {
+      doUpdateFolding(toAdd);
+    }
+  }
+
+  public static void highlightHyperlinks(final Editor editor,
+                                         final Hyperlinks hyperlinks,
+                                         final Filter myCustomFilter,
+                                         final Filter myPredefinedMessageFilter,
+                                         final int line1, final int endLine){
+    final Document document = editor.getDocument();
     final CharSequence chars = document.getCharsSequence();
     final TextAttributes hyperlinkAttributes = getHyperlinkAttributes();
 
     final int startLine = Math.max(0, line1);
-
-    final List<FoldRegion> toAdd = new ArrayList<FoldRegion>();
 
     for(int line = startLine; line <= endLine; line++) {
       int endOffset = document.getLineEndOffset(line);
@@ -842,12 +871,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         final int highlightStartOffset = result.highlightStartOffset;
         final int highlightEndOffset = result.highlightEndOffset;
         final HyperlinkInfo hyperlinkInfo = result.hyperlinkInfo;
-        addHyperlink(highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
+        addHyperlink(editor, hyperlinks, highlightStartOffset, highlightEndOffset, result.highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
       }
-      addFolding(document, chars, line, toAdd);
-    }
-    if (!toAdd.isEmpty()) {
-      doUpdateFolding(toAdd);
     }
   }
 
@@ -930,13 +955,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                             final TextAttributes highlightAttributes,
                             final HyperlinkInfo hyperlinkInfo,
                             final TextAttributes hyperlinkAttributes) {
+    addHyperlink(myEditor, myHyperlinks, highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo, hyperlinkAttributes);
+  }
+  private static void addHyperlink(final Editor editor,
+                                   final Hyperlinks hyperlinks,
+                                   final int highlightStartOffset,
+                                   final int highlightEndOffset,
+                                   final TextAttributes highlightAttributes,
+                                   final HyperlinkInfo hyperlinkInfo,
+                                   final TextAttributes hyperlinkAttributes) {
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : hyperlinkAttributes;
-    final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
+    final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
                                                                                        HYPERLINK_LAYER,
                                                                                        textAttributes,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
-    myHyperlinks.add(highlighter, hyperlinkInfo);
+    hyperlinks.add(highlighter, hyperlinkInfo);
   }
 
   private class ClearAllAction extends AnAction implements DumbAware {
