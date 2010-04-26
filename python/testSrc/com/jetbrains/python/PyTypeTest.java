@@ -3,9 +3,7 @@ package com.jetbrains.python;
 import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 
 import java.io.IOException;
 
@@ -42,6 +40,17 @@ public class PyTypeTest extends PyLightFixtureTestCase {
   public void testTypeFromComment() {
     PyClassType type = (PyClassType) doTest("expr = ''.capitalize()");
     assertEquals("str", type.getName());
+  }
+
+  public void testUnionOfTuples() {
+    PyTupleType type = (PyTupleType) doTest("def x():\n" +
+                                            "  if True:\n" +
+                                            "    return (1, 'a')\n" +
+                                            "  else:\n" +
+                                            "    return ('a', 1)\n" +
+                                            "expr = x()");
+    assertTrue(type.getElementType(0) instanceof PyUnionType);
+    assertTrue(type.getElementType(1) instanceof PyUnionType);
   }
 
   private PyType doTest(final String text) {

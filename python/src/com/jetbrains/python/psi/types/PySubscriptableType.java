@@ -11,5 +11,5 @@ public interface PySubscriptableType extends PyType {
   PyType getElementType(PyExpression index, TypeEvalContext context);
 
   @Nullable
-  PyType getElementType(int index, TypeEvalContext context);
+  PyType getElementType(int index);
 }

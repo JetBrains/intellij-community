@@ -157,7 +157,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
           PyTupleType tupleType = (PyTupleType)assignedType;
           if (tuple.getElements().length == tupleType.getElementCount()) {
             int selfIndex = ArrayUtil.indexOf(tuple.getElements(), this);
-            return tupleType.getElementType(selfIndex, context);
+            return tupleType.getElementType(selfIndex);
           }
         }
       }

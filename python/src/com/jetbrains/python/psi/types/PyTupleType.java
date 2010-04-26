@@ -20,6 +20,11 @@ public class PyTupleType extends PyClassType implements PySubscriptableType {
     myElementTypes = elementTypes;
   }
 
+  public PyTupleType(PyTupleType origin, PyType[] elementTypes) {
+    super(origin.getPyClass(), false);
+    myElementTypes = elementTypes;
+  }
+
   public String getName() {
     return "tuple(" + StringUtil.join(myElementTypes, new Function<PyType, String>() {
       public String fun(PyType pyType) {
@@ -31,12 +36,12 @@ public class PyTupleType extends PyClassType implements PySubscriptableType {
   public PyType getElementType(PyExpression index, TypeEvalContext context) {
     final Object value = PyConstantExpressionEvaluator.evaluate(index);
     if (value instanceof Integer) {
-      return getElementType(((Integer)value).intValue(), context);
+      return getElementType(((Integer)value).intValue());
     }
     return null;
   }
 
-  public PyType getElementType(int index, TypeEvalContext context) {
+  public PyType getElementType(int index) {
     if (index >= 0 && index < myElementTypes.length) {
       return myElementTypes[index];
     }
