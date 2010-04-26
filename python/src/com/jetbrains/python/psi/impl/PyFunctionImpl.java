@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
@@ -19,15 +20,13 @@ import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyUnionType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Implements PyFunction.
@@ -115,9 +114,42 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyType getReturnType() {
+    final PyStringLiteralExpression docString = getDocStringExpression();
+    if (docString != null) {
+      PyType result = getReturnTypeFromDocString(docString.getStringValue());
+      if (result != null) {
+        return result;
+      }
+    }
+
     ReturnVisitor visitor = new ReturnVisitor();
     getStatementList().accept(visitor);
     return visitor.result();
+  }
+
+  @Nullable
+  private PyType getReturnTypeFromDocString(String docString) {
+    final List<String> lines = StringUtil.split(docString, "\n");
+    while (lines.size() > 0 && lines.get(0).trim().length() == 0) {
+      lines.remove(0);
+    }
+    if (lines.size() > 1 && lines.get(1).trim().length() == 0) {
+      String firstLine = lines.get(0);
+      int pos = firstLine.lastIndexOf("->");
+      if (pos >= 0) {
+        String returnType = firstLine.substring(pos+2).trim();
+        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
+
+        if (returnType.equals("string")) {
+          return builtinCache.getStrType();
+        }
+        final PyClassType type = builtinCache.getObjectType(returnType);
+        if (type != null) {
+          return type;
+        }
+      }
+    }
+    return null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {

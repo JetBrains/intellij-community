@@ -194,7 +194,7 @@ public class PyBuiltinCache {
   @return 
   */
   @Nullable
-  private PyClassType _getObjectType(@NonNls String name) {
+  public PyClassType getObjectType(@NonNls String name) {
     PyClassType val = myTypeCache.get(name);
     if (val == null) {
       PyClass cls = getClass(name);
@@ -208,47 +208,47 @@ public class PyBuiltinCache {
   
   @Nullable
   public PyClassType getObjectType() {
-    return _getObjectType("object");
+    return getObjectType("object");
   }
   
   @Nullable
   public PyClassType getListType() {
-    return _getObjectType("list");
+    return getObjectType("list");
   }
   
   @Nullable
   public PyClassType getDictType() {
-    return _getObjectType("dict");
+    return getObjectType("dict");
   }
 
   @Nullable
   public PyClassType getTupleType() {
-    return _getObjectType("tuple");
+    return getObjectType("tuple");
   }
 
   @Nullable
   public PyClassType getIntType() {
-    return _getObjectType("int");
+    return getObjectType("int");
   }
 
   @Nullable
   public PyClassType getFloatType() {
-    return _getObjectType("float");
+    return getObjectType("float");
   }
 
   @Nullable
   public PyClassType getComplexType() {
-    return _getObjectType("complex");
+    return getObjectType("complex");
   }
 
   @Nullable
   public PyClassType getStrType() {
-    return _getObjectType("str");
+    return getObjectType("str");
   }
 
   @Nullable
   public PyClassType getOldstyleClassobjType() {
-    return _getObjectType("___Classobj");
+    return getObjectType("___Classobj");
   }
 
 

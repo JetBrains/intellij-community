@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyReturnTypeReference;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,13 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             return new PyClassType(((PyFunction)target).getContainingClass(), false); // resolved to __init__, back to class
           }
           // TODO: look at well-known functions and their return types
-          return PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context);
+          final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context);
+          if (providedType != null) {
+            return providedType;
+          }
+          if (target instanceof PyFunction) {
+            return new PyReturnTypeReference((PyFunction) target);
+          }
         }
       }
       if (callee == null) {
