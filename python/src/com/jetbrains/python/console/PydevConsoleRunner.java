@@ -193,7 +193,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   @Override
-  protected void sendInput(final String input) {
+  public void sendInput(final String input) {
     if (myPydevConsoleCommunication != null){
       myPydevConsoleCommunication.execInterpreter(input, new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
