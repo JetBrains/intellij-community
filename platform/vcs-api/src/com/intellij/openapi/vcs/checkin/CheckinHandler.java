@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -56,9 +57,10 @@ public abstract class CheckinHandler {
    *
    * @return the panel instance, or null if the handler does not provide any options to show in the
    * "After Check In" group.
+   * @param parentDisposable
    */
   @Nullable
-  public RefreshableOnComponent getAfterCheckinConfigurationPanel() {
+  public RefreshableOnComponent getAfterCheckinConfigurationPanel(final Disposable parentDisposable) {
     return null;
   }
 
