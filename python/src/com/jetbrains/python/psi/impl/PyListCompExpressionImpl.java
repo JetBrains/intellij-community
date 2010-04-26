@@ -40,7 +40,7 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    return null;
+    return PyBuiltinCache.getInstance(this).getListType();
   }
 
 }
