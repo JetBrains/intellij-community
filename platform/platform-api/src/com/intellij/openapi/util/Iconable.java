@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
+import java.util.Map;
 
 public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
@@ -25,6 +29,27 @@ public interface Iconable {
 
   Icon getIcon(int flags);
 
-  Key<Icon> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
+
+  class LastComputedIcon {
+
+    private static Key<Map<Integer, Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon"); 
+
+    @Nullable
+    public static Icon get(UserDataHolder holder, int flags) {
+      Map<Integer, Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+      return map != null ? map.get(flags) : null;
+    }
+
+    public static void put(UserDataHolder holder, Icon icon, int flags) {
+      Map<Integer, Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+      if (map == null) {
+        map = new HashMap<Integer, Icon>();
+        holder.putUserData(LAST_COMPUTED_ICON, map);
+      }
+
+      map.put(flags, icon);
+    }
+  }
+
 
 }

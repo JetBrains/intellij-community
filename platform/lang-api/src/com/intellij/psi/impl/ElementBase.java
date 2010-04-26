@@ -20,7 +20,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -50,7 +49,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (!(this instanceof PsiElement)) return null;
 
     try {
-      return computeIcon(flags);
+      Icon icon = computeIcon(flags);
+      Iconable.LastComputedIcon.put(this, icon, flags);
+      return icon;
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -66,7 +67,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   private Icon computeIcon(final int flags) {
     PsiElement psiElement = (PsiElement)this;
-    Icon baseIcon = psiElement.getUserData(Iconable.LAST_COMPUTED_ICON);
+    Icon baseIcon = LastComputedIcon.get(psiElement, flags);
     if (baseIcon == null) {
       if (myBaseIcon == null) {
         myBaseIcon = computeBaseIcon();

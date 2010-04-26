@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.RowIcon;
@@ -86,7 +85,7 @@ public class IconUtil {
   }
 
   public static Icon getIcon(final VirtualFile file, final int flags, final Project project) {
-    Icon lastIcon = file.getUserData(Iconable.LAST_COMPUTED_ICON);
+    Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
 
     return IconDeferrer.getInstance().defer(lastIcon != null ? lastIcon : file.getIcon(), new FileIconKey(file, project, flags), new Function<FileIconKey, Icon>() {
       public Icon fun(final FileIconKey key) {
@@ -112,7 +111,7 @@ public class IconUtil {
           icon = new LayeredIcon(icon, Icons.LOCKED_ICON);
         }
         
-        file.putUserData(Iconable.LAST_COMPUTED_ICON, icon);
+        Iconable.LastComputedIcon.put(file, icon, flags);
 
         return icon;
       }
