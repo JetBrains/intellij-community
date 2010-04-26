@@ -60,6 +60,15 @@ public void testArrayType1() throws Throwable { doTest(); }
   public void testToGenerate1() throws Throwable { doTest(); }
   public void testVararg1() throws Throwable { doTest(); }
   public void testInaccessibleConstructor() throws Throwable { doTest(); }
+
+  public void testCheckedExceptionInConstructorDelegate() throws Throwable {
+    myFixture.addClass("package foo;" +
+                       "public class SuperClass {" +
+                       "  public SuperClass(String s) throws java.io.IOException {}" +
+                       "}");
+    doTest();
+  }
+
   public void testImmutableAnno() throws Throwable {
     myFixture.addClass("package groovy.lang; public @interface Immutable {}");
     doTest();
