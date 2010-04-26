@@ -106,6 +106,7 @@ public class GantTargetReference implements PsiPolyVariantReference {
     return null;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myRefExpr.getCanonicalText();
   }

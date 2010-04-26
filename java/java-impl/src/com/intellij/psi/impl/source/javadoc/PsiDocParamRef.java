@@ -81,6 +81,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return resultReference;
       }
 
+      @NotNull
       public String getCanonicalText() {
         return valueToken.getText();
       }

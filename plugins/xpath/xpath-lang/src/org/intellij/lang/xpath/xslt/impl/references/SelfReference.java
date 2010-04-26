@@ -48,6 +48,7 @@ class SelfReference implements PsiReference {
         return myValue.isValid() ? myTarget : null;
     }
 
+    @NotNull
     public String getCanonicalText() {
         return myValue.getText();
     }

@@ -168,6 +168,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     return this;
   }
 
+  @NotNull
   public String getCanonicalText() {
     String name = getQualifiedName();
     if (name == null) return null;

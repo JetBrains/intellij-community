@@ -200,6 +200,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
           return (docTypePublic != null)?
                  super.getVariants(): EMPTY_ARRAY;
         }
+        @NotNull
         public String getCanonicalText() {
           return extractValue(dtdUrlElement);
         }

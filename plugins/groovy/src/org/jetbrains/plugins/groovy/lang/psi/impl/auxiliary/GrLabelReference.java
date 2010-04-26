@@ -61,6 +61,7 @@ public class GrLabelReference implements PsiReference {
     return resolve() == element;
   }
 
+  @NotNull
   public String getCanonicalText() {
     final String name = myStatement.getLabelName();
     if (name == null) return "";

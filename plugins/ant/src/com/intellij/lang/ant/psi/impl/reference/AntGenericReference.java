@@ -59,6 +59,7 @@ public abstract class AntGenericReference extends CachingReference implements An
     return myTextRange;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myText;
   }
