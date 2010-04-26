@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import java.io.IOException;
@@ -13,11 +14,24 @@ import java.io.IOException;
  */
 public class PyTypeTest extends PyLightFixtureTestCase {
   public void testTupleType() {
+    PyClassType type = (PyClassType) doTest("t = ('a', 2)\nexpr = t[0]");
+    assertEquals("str", type.getName());
+  }
+
+  public void testBinaryExprType() {
+    PyClassType type = (PyClassType) doTest("expr = 1 + 2");
+    assertEquals("int", type.getName());
+
+    type = (PyClassType) doTest("expr = '1' + '2'");
+    assertEquals("str", type.getName());
+  }
+
+  private PyType doTest(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
           myFixture.configureByText(PythonFileType.INSTANCE,
-                                    "t = ('a', 2)\nexpr = t[0]");
+                                    text);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -25,8 +39,7 @@ public class PyTypeTest extends PyLightFixtureTestCase {
       }
     });
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    PyClassType type = (PyClassType) expr.getType(TypeEvalContext.slow());
-    assertEquals("str", type.getName());
+    return expr.getType(TypeEvalContext.slow());
   }
 }
   

@@ -145,10 +145,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
 
     PsiFile psiFile = ((PsiFile) ancestor).getOriginalFile();
-    VirtualFile vFile = psiFile.getVirtualFile();
-    if (vFile != null) {
-      final String packageName = ResolveImportUtil.findShortestImportableName(this, vFile);
-      return packageName + "." + name;
+    final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
+    if (!psiFile.equals(builtins)) {
+      VirtualFile vFile = psiFile.getVirtualFile();
+      if (vFile != null) {
+        final String packageName = ResolveImportUtil.findShortestImportableName(this, vFile);
+        return packageName + "." + name;
+      }
     }
     return name;
   }

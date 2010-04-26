@@ -57,6 +57,10 @@ public class PyClassType implements PyType {
     return myIsDefinition;
   }
 
+  public String getClassQName() {
+    return myClass.getQualifiedName();
+  }
+
   @Nullable
   public PsiElement resolveMember(final String name) {
     if (myClass == null) return null;
@@ -204,5 +208,17 @@ public class PyClassType implements PyType {
     int result = myClass != null ? myClass.hashCode() : 0;
     result = 31 * result + (myIsDefinition ? 1 : 0);
     return result;
+  }
+
+  public static boolean is(@NotNull String qName, PyType type) {
+    if (type instanceof PyClassType) {
+      return qName.equals(((PyClassType) type).getClassQName());
+    }
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    return "PyClassType: " + getClassQName();
   }
 }

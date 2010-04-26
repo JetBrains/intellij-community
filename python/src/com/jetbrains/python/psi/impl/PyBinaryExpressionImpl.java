@@ -6,7 +6,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -88,6 +92,20 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
+    PyExpression lhs = getLeftExpression();
+    PyExpression rhs = getRightExpression();
+    final PsiElement operator = getPsiOperator();
+    if (lhs != null && rhs != null && operator != null) {
+      PyType lhsType = lhs.getType(context);
+      PyType rhsType = rhs.getType(context);
+      String op = operator.getText();
+      if (PyClassType.is("int", lhsType) && PyClassType.is("int", rhsType) && op.equals("+")) {
+        return lhsType;
+      }
+      if (((PyClassType.is("str", lhsType) || PyClassType.is("str", rhsType)) && op.equals("+"))) {
+        return PyBuiltinCache.getInstance(this).getStrType();
+      }
+    }
     return null;
   }
 }

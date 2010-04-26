@@ -7,9 +7,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,41 +61,56 @@ public class PyBuiltinCache {
         if (psifile != null) {  // formality
           final VirtualFile vfile = psifile.getVirtualFile();
           if (vfile != null) { // reality
-            sdk = ProjectRootManager.getInstance(project).getProjectJdk();
-          }
-        }
-      }
-      if (sdk != null) {
-        SdkType sdk_type = sdk.getSdkType();
-        if (sdk_type instanceof PythonSdkType) {
-          // dig out the builtins file, create an instance based on it
-          final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUILTIN_ROOT_TYPE);
-          for (String url : urls) {
-            if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
-              final String builtins_url = url + "/" + ((PythonSdkType)sdk.getSdkType()).getBuiltinsFileName(sdk);
-              File builtins = new File(VfsUtil.urlToPath(builtins_url));
-              if (builtins.isFile() && builtins.canRead()) {
-                VirtualFile builtins_vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(builtins);
-                if (builtins_vfile != null) {
-                  PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
-                  if (builtins_psifile instanceof PyFile) {
-                    instance = new PyBuiltinCache((PyFile)builtins_psifile);
-                    ourInstanceCache.put(instance_key, instance);
-                    if (! ourListenedProjects.contains(project)) {
-                      final MessageBusConnection connection = project.getMessageBus().connect();
-                      connection.subscribe(ProjectTopics.PROJECT_ROOTS, RESETTER);
-                      ourListenedProjects.add(project);
-                    }
-                    return instance;
-                  }
+            final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+            sdk = projectRootManager.getProjectJdk();
+            if (sdk == null) {
+              final List<OrderEntry> orderEntries = projectRootManager.getFileIndex().getOrderEntriesForFile(vfile);
+              for (OrderEntry orderEntry : orderEntries) {
+                if (orderEntry instanceof JdkOrderEntry) {
+                  sdk = ((JdkOrderEntry) orderEntry).getJdk();
                 }
               }
             }
           }
         }
       }
+      if (sdk != null) {
+        return getBuiltinsForSdk(project, instance_key, sdk);
+      }
     }
     return DUD_INSTANCE; // a non-functional fail-fast instance, for a case when skeletons are not available
+  }
+
+  private static PyBuiltinCache getBuiltinsForSdk(Project project, ComponentManager instance_key, Sdk sdk) {
+    PyBuiltinCache instance;
+    SdkType sdk_type = sdk.getSdkType();
+    if (sdk_type instanceof PythonSdkType) {
+      // dig out the builtins file, create an instance based on it
+      final String[] urls = sdk.getRootProvider().getUrls(PythonSdkType.BUILTIN_ROOT_TYPE);
+      for (String url : urls) {
+        if (url.contains(PythonSdkType.SKELETON_DIR_NAME)) {
+          final String builtins_url = url + "/" + ((PythonSdkType)sdk.getSdkType()).getBuiltinsFileName(sdk);
+          File builtins = new File(VfsUtil.urlToPath(builtins_url));
+          if (builtins.isFile() && builtins.canRead()) {
+            VirtualFile builtins_vfile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(builtins);
+            if (builtins_vfile != null) {
+              PsiFile builtins_psifile = PsiManager.getInstance(project).findFile(builtins_vfile);
+              if (builtins_psifile instanceof PyFile) {
+                instance = new PyBuiltinCache((PyFile)builtins_psifile);
+                ourInstanceCache.put(instance_key, instance);
+                if (! ourListenedProjects.contains(project)) {
+                  final MessageBusConnection connection = project.getMessageBus().connect();
+                  connection.subscribe(ProjectTopics.PROJECT_ROOTS, RESETTER);
+                  ourListenedProjects.add(project);
+                }
+                return instance;
+              }
+            }
+          }
+        }
+      }
+    }
+    return DUD_INSTANCE;
   }
 
   private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache((PyFile)null);
