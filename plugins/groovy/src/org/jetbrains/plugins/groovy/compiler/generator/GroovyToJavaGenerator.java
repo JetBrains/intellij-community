@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -132,8 +131,6 @@ public class GroovyToJavaGenerator {
         continue;
       }
 
-      boolean isInTestSources = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(file);
-
       final GroovyFileBase psiFile = findPsiFile(file);
       GrTopStatement[] statements = getTopStatementsInReadAction(psiFile);
 
@@ -146,7 +143,8 @@ public class GroovyToJavaGenerator {
 
       //top level class
       if (needCreateTopLevelClass) {
-        generationItems.add(new GenerationItem(prefix + file.getNameWithoutExtension() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file));
+        generationItems.add(new GenerationItem(prefix + file.getNameWithoutExtension() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()),
+                                               file));
       }
 
       GrTypeDefinition[] typeDefinitions = ApplicationManager.getApplication().runReadAction(new Computable<GrTypeDefinition[]>() {
@@ -156,7 +154,8 @@ public class GroovyToJavaGenerator {
       });
 
       for (GrTypeDefinition typeDefinition : typeDefinitions) {
-        item = new GenerationItem(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()), isInTestSources, file);
+        item = new GenerationItem(prefix + typeDefinition.getName() + "." + "java", module, new TimestampValidityState(file.getTimeStamp()),
+                                  file);
         generationItems.add(item);
       }
     }
@@ -381,7 +380,7 @@ public class GroovyToJavaGenerator {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
-        text.append("extends ").append(computeTypeText(extendsClassesTypes[0], false)).append(" ");
+        text.append("extends ").append(getTypeText(extendsClassesTypes[0], typeDefinition, false)).append(" ");
       }
       PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
 
@@ -390,7 +389,7 @@ public class GroovyToJavaGenerator {
         int i = 0;
         while (i < implementsTypes.length) {
           if (i > 0) text.append(", ");
-          text.append(computeTypeText(implementsTypes[i], false)).append(" ");
+          text.append(getTypeText(implementsTypes[i], typeDefinition, false)).append(" ");
           i++;
         }
       }
@@ -481,7 +480,7 @@ public class GroovyToJavaGenerator {
           text.append(" extends ");
           for (int j = 0; j < extendsListTypes.length; j++) {
             if (j > 0) text.append(" & ");
-            text.append(computeTypeText(extendsListTypes[j], false));
+            text.append(getTypeText(extendsListTypes[j], typeParameterListOwner, false));
           }
         }
       }
@@ -519,7 +518,7 @@ public class GroovyToJavaGenerator {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
-      String typeText = getTypeText(substitutor.substitute(superParams[j].getType()), false);
+      String typeText = getTypeText(substitutor.substitute(superParams[j].getType()), null, false);
       text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
     }
   }
@@ -596,7 +595,7 @@ public class GroovyToJavaGenerator {
     assert chainedConstructor != null;
 
     for (PsiClassType type : chainedConstructor.getThrowsList().getReferencedTypes()) {
-      result.add(getTypeText(substitutor.substitute(type), false));
+      result.add(getTypeText(substitutor.substitute(type), null, false));
     }
 
     if (chainedConstructor instanceof GrConstructor) {
@@ -684,7 +683,7 @@ public class GroovyToJavaGenerator {
       if (retType == null) retType = TypesUtil.getJavaLangObject(method);
     } else retType = method.getReturnType();
 
-    text.append(getTypeText(retType, false));
+    text.append(getTypeText(retType, method, false));
     text.append(" ");
 
     //append method name
@@ -702,7 +701,7 @@ public class GroovyToJavaGenerator {
 
       if (i > 0) text.append(", ");  //append ','
 
-      text.append(getTypeText(parameter.getType(), i == parameters.length - 1));
+      text.append(getTypeText(parameter.getType(), parameter, i == parameters.length - 1));
       text.append(" ");
       text.append(parameter.getName());
 
@@ -716,7 +715,7 @@ public class GroovyToJavaGenerator {
       text.append("{\n");
       text.append("    return ");
 
-      text.append(getDefaultValueText(getTypeText(retType, false)));
+      text.append(getDefaultValueText(getTypeText(retType, method, false)));
 
       text.append(";");
 
@@ -773,21 +772,26 @@ public class GroovyToJavaGenerator {
   }
 
   private static String getTypeText(GrTypeElement typeElement) {
-    return getTypeText(typeElement == null ? null : typeElement.getType(), false);
-  }
-
-  private static String getTypeText(PsiType type, boolean allowVarargs) {
-    if (type == null) {
-      return "java.lang.Object";
-    } else {
-      return computeTypeText(type, allowVarargs);
+    if (typeElement == null) {
+      return CommonClassNames.JAVA_LANG_OBJECT;
     }
+
+    return getTypeText(typeElement.getType(), typeElement, false);
   }
 
-  private static String computeTypeText(PsiType type, boolean allowVarargs) {
+  private static String getTypeText(PsiType type, @Nullable PsiElement context, boolean allowVarargs) {
+    if (context != null && type instanceof PsiClassType) {
+      final String accessible = findAccessibleSuperClass(context, ((PsiClassType)type).resolve());
+      if (accessible != null) {
+        return accessible;
+      }
+    }
+
     if (type instanceof PsiArrayType) {
-      String componentText = computeTypeText(((PsiArrayType) type).getComponentType(), false);
-      if (allowVarargs && type instanceof PsiEllipsisType) return componentText + "...";
+      String componentText = getTypeText(((PsiArrayType)type).getComponentType(), context, false);
+      if (allowVarargs && type instanceof PsiEllipsisType) {
+        return componentText + "...";
+      }
       return componentText + "[]";
     }
 
@@ -795,20 +799,38 @@ public class GroovyToJavaGenerator {
     return canonicalText != null ? canonicalText : type.getPresentableText();
   }
 
+  @Nullable
+  private static String findAccessibleSuperClass(PsiElement context, @Nullable PsiClass initialClass) {
+    if (initialClass == null) {
+      return null;
+    }
+
+    PsiClass curClass = initialClass;
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
+    while (curClass != null && !resolveHelper.isAccessible(curClass, context, null)) {
+      curClass = curClass.getSuperClass();
+    }
+    if (curClass != null && !initialClass.isEquivalentTo(curClass)) {
+      final String qname = curClass.getQualifiedName();
+      if (qname != null) {
+        return qname;
+      }
+    }
+    return null;
+  }
+
   CharTrie myTrie = new CharTrie();
 
   public class GenerationItem {
     ValidityState myState;
-    private final boolean myInTestSources;
     final Module myModule;
     public int myHashCode;
     private final VirtualFile myVFile;
 
-    public GenerationItem(String path, Module module, ValidityState state, boolean isInTestSources, VirtualFile vFile) {
+    public GenerationItem(String path, Module module, ValidityState state, VirtualFile vFile) {
       myVFile = vFile;
       myModule = module;
       myState = state;
-      myInTestSources = isInTestSources;
       myHashCode = myTrie.getHashCode(path);
     }
 

@@ -69,6 +69,12 @@ public void testArrayType1() throws Throwable { doTest(); }
     doTest();
   }
 
+  public void testInaccessiblePropertyType() throws Throwable {
+    myFixture.addClass("package foo;" +
+                       "class Hidden {}");
+    doTest();
+  }
+
   public void testImmutableAnno() throws Throwable {
     myFixture.addClass("package groovy.lang; public @interface Immutable {}");
     doTest();
