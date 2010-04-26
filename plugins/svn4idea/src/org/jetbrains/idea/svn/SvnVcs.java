@@ -19,6 +19,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
+import com.intellij.idea.RareLogger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -100,7 +101,14 @@ import java.util.logging.Level;
 public class SvnVcs extends AbstractVcs {
   private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnVcs");
+  private final static int ourLogUsualInterval = 20 * 1000;
+  private final static int ourLogRareInterval = 30 * 1000;
+
+  private final static Set<SVNErrorCode> ourLogRarely = new HashSet<SVNErrorCode>(
+    Arrays.asList(new SVNErrorCode[]{SVNErrorCode.WC_UNSUPPORTED_FORMAT, SVNErrorCode.WC_CORRUPT, SVNErrorCode.WC_CORRUPT_TEXT_BASE,
+      SVNErrorCode.WC_NOT_FILE, SVNErrorCode.WC_NOT_DIRECTORY, SVNErrorCode.WC_PATH_NOT_FOUND}));
+
+  private static final Logger LOG = wrapLogger(Logger.getInstance("org.jetbrains.idea.svn.SvnVcs"));
   @NonNls public static final String VCS_NAME = "svn";
   private static final VcsKey ourKey = createKey(VCS_NAME);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
@@ -138,6 +146,7 @@ public class SvnVcs extends AbstractVcs {
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
+  private static RareLogger.LogFilter[] ourLogFilters;
 
   static {
     SVNJNAUtil.setJNAEnabled(true);
@@ -160,6 +169,7 @@ public class SvnVcs extends AbstractVcs {
     if (! SVNJNAUtil.isJNAPresent()) {
       LOG.warn("JNA is not found by svnkit library");
     }
+    initLogFilters();
   }
 
   private static Boolean booleanProperty(final String systemParameterName) {
@@ -377,6 +387,52 @@ public class SvnVcs extends AbstractVcs {
     });
 
     vcsManager.addVcsListener(myRootsToWorkingCopies);
+  }
+
+  private static void initLogFilters() {
+    if (ourLogFilters != null) return;
+    ourLogFilters = new RareLogger.LogFilter[] {new RareLogger.LogFilter() {
+      public Object getKey(@NotNull org.apache.log4j.Level level,
+                           @NonNls String message,
+                           @Nullable Throwable t,
+                           @NonNls String... details) {
+        SVNException svnExc = null;
+        if (t instanceof SVNException) {
+          svnExc = (SVNException) t;
+        } else if (t instanceof VcsException && (t.getCause() instanceof SVNException)) {
+          svnExc = (SVNException) t.getCause();
+        }
+        if (svnExc != null) {
+          // only filter a few cases
+          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
+            return svnExc.getErrorMessage().getErrorCode();
+          }
+        }
+        return null;
+      }
+      @NotNull
+      public Integer getAllowedLoggingInterval(org.apache.log4j.Level level, String message, Throwable t, String[] details) {
+        SVNException svnExc = null;
+        if (t instanceof SVNException) {
+          svnExc = (SVNException) t;
+        } else if (t instanceof VcsException && (t.getCause() instanceof SVNException)) {
+          svnExc = (SVNException) t.getCause();
+        }
+        if (svnExc != null) {
+          if (ourLogRarely.contains(svnExc.getErrorMessage().getErrorCode())) {
+            return ourLogRareInterval;
+          } else {
+            return ourLogUsualInterval;
+          }
+        }
+        return 0;
+      }
+    }};
+  }
+
+  public static Logger wrapLogger(final Logger logger) {
+    initLogFilters();
+    return RareLogger.wrap(logger, Boolean.getBoolean("svn.logger.fairsynch"), ourLogFilters);
   }
 
   public RootsToWorkingCopies getRootsToWorkingCopies() {

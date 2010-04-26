@@ -15,15 +15,26 @@
  */
 package com.intellij.lang.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.LiteralEscaper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlToken;
 
 /**
  * @author Gregory.Shrago
  */
 public class XmlLiteralEscaper implements LiteralEscaper {
   public String getEscapedText(PsiElement context, String originalText) {
+    if (context instanceof XmlToken) {
+      context = context.getParent();
+    }
+
+    ASTNode contextNode = context != null ? context.getNode():null;
+    if (contextNode != null && contextNode.getElementType() == XmlElementType.XML_CDATA) {
+      return originalText;
+    }
     return escapeText(originalText);
   }
 

@@ -60,11 +60,9 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
+public class XDebugSessionTab extends DebuggerSessionTabBase {
   private final String mySessionName;
   private final RunnerLayoutUi myUi;
-  private RunContentDescriptor myRunContentDescriptor;
-  private ExecutionConsole myConsole;
   private XWatchesView myWatchesView;
   private final List<XDebugViewBase> myViews = new ArrayList<XDebugViewBase>();
 
@@ -176,6 +174,7 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
                                       final @Nullable ExecutionEnvironment environment, final @Nullable ProgramRunner runner) {
     ExecutionResult executionResult = createExecutionResult(session);
     myConsole = executionResult.getExecutionConsole();
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName());
 
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
@@ -194,7 +193,6 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
     }
     session.getDebugProcess().registerAdditionalContent(myUi);
 
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, executionResult.getProcessHandler(), myUi.getComponent(), getSessionName());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myRunContentDescriptor;
@@ -255,14 +253,5 @@ public class XDebugSessionTab extends DebuggerLogConsoleManagerBase {
   @Nullable
   public RunContentDescriptor getRunContentDescriptor() {
     return myRunContentDescriptor;
-  }
-
-  public void toFront() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        ProjectUtil.focusProjectWindow(getProject(), Registry.is("debugger.mayBringFrameToFrontOnBreakpoint"));
-        ExecutionManager.getInstance(getProject()).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
-      }
-    });
   }
 }

@@ -17,11 +17,12 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 public class ReimportAction extends MavenProjectsManagerAction {
   @Override
   protected boolean isAvailable(AnActionEvent e) {
-    return true;
+    return MavenActionUtil.hasProject(e.getDataContext());
   }
 
   @Override

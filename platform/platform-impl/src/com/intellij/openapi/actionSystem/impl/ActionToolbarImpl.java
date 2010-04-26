@@ -715,7 +715,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void updateActionsImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    updateActions(false);
+    updateActions(true);
   }
 
   private void updateActions(boolean now) {

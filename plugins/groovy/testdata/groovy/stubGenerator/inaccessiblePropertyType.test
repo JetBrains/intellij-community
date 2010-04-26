@@ -1,0 +1,37 @@
+class Foo {
+  foo.Hidden prop
+}
+
+-----
+public class Foo implements groovy.lang.GroovyObject {
+  public java.lang.Object getProp() {
+    return null;
+  }
+
+  public void setProp(java.lang.Object prop) {
+    return ;
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
+  }
+
+  private java.lang.Object prop = null;
+}
+---

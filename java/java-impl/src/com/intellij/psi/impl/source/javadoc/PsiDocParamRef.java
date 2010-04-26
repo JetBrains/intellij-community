@@ -23,10 +23,11 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -54,24 +55,30 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         !(owner instanceof PsiClass)) return null;
     final ASTNode valueToken = findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
     if (valueToken == null) return null;
-    myCachedReference = cachedReference = new PsiReference() {
-      public PsiElement resolve() {
-        String name = valueToken.getText();
-        final PsiElement firstChild = getFirstChild();
-        if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
-          final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
-          for (PsiTypeParameter typeParameter : typeParameters) {
-            if (typeParameter.getName().equals(name)) return typeParameter;
-          }
+    final String name = valueToken.getText();
+    PsiElement reference = null;
+    final PsiElement firstChild = getFirstChild();
+    if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
+      final PsiTypeParameter[] typeParameters = ((PsiTypeParameterListOwner)owner).getTypeParameters();
+      for (PsiTypeParameter typeParameter : typeParameters) {
+        if (typeParameter.getName().equals(name)) {
+          reference = typeParameter;
         }
-        else if (owner instanceof PsiMethod) {
-          final PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
-          for (PsiParameter parameter : parameters) {
-            if (parameter.getName().equals(name)) return parameter;
-          }
+      }
+    }
+    else if (owner instanceof PsiMethod) {
+      final PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
+      for (PsiParameter parameter : parameters) {
+        if (parameter.getName().equals(name)) {
+          reference = parameter;
         }
+      }
+    }
 
-        return null;
+    final PsiElement resultReference = reference;
+    myCachedReference = cachedReference = new PsiJavaReference() {
+      public PsiElement resolve() {
+        return resultReference;
       }
 
       public String getCanonicalText() {
@@ -101,14 +108,14 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
       }
 
       @NotNull
-      public Object[] getVariants() {
+      public PsiElement[] getVariants() {
         final PsiElement firstChild = getFirstChild();
         if (firstChild instanceof PsiDocToken && ((PsiDocToken)firstChild).getTokenType().equals(JavaDocTokenType.DOC_TAG_VALUE_LT)) {
           return ((PsiTypeParameterListOwner)owner).getTypeParameters();
         } else if (owner instanceof PsiMethod) {
           return ((PsiMethod)owner).getParameterList().getParameters();
         }
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+        return PsiElement.EMPTY_ARRAY;
       }
 
       public boolean isSoft(){
@@ -122,6 +129,26 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
 
       public PsiElement getElement() {
         return PsiDocParamRef.this;
+      }
+
+      public void processVariants(PsiScopeProcessor processor) {
+        for (final PsiElement element : getVariants()) {
+          if (!processor.execute(element, ResolveState.initial())) {
+            return;
+          }
+        }
+      }
+
+      @NotNull
+      public JavaResolveResult advancedResolve(boolean incompleteCode) {
+        return resultReference == null ? JavaResolveResult.EMPTY : new CandidateInfo(resultReference, PsiSubstitutor.EMPTY);
+      }
+
+      @NotNull
+      public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+        return resultReference == null
+               ? JavaResolveResult.EMPTY_ARRAY
+               : new JavaResolveResult[]{new CandidateInfo(resultReference, PsiSubstitutor.EMPTY)};
       }
     };
     return cachedReference;
