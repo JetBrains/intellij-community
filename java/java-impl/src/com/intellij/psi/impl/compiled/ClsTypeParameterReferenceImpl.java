@@ -107,6 +107,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return false;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myName;
   }

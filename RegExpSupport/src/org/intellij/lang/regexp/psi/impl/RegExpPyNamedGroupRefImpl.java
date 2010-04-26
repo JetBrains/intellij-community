@@ -87,6 +87,7 @@ public class RegExpPyNamedGroupRefImpl extends RegExpElementImpl implements RegE
         return RegExpPyNamedGroupRefImpl.this.resolve();
       }
 
+      @NotNull
       public String getCanonicalText() {
         return getRangeInElement().substring(getText());
       }

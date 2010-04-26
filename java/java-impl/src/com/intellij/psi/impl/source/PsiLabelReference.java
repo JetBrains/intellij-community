@@ -65,6 +65,7 @@ public class PsiLabelReference implements PsiReference{
       return null;
     }
 
+    @NotNull
     public String getCanonicalText(){
       return getElement().getText();
     }

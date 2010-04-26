@@ -80,6 +80,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
                 return TextRange.from(0, getElement().getTextLength());
             }
 
+            @NotNull
             public String getCanonicalText() {
                 return getElement().getText();
             }

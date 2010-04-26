@@ -102,6 +102,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
             return RegExpPropertyImpl.this;
         }
 
+        @NotNull
         public String getCanonicalText() {
             return getRangeInElement().substring(getElement().getText());
         }

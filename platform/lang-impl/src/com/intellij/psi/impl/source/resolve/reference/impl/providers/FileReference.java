@@ -323,6 +323,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return myRange;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myText;
   }
