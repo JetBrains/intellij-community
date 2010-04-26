@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -15,6 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -122,11 +124,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
             PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
             if (maybe_type != null) return maybe_type;
-            final PsiElement resolveResult = refex.getReference().resolve();
-            if (resolveResult == this) {
-              return null;  // fix SOE on "a = a"
+            final ResolveResult[] resolveResult = refex.getReference().multiResolve(false);
+            if (resolveResult.length == 1 && !(resolveResult [0] instanceof ImplicitResolveResult)) {
+              PsiElement target = resolveResult [0].getElement();
+              if (target == this) {
+                return null;  // fix SOE on "a = a"
+              }
+              return PyReferenceExpressionImpl.getTypeFromTarget(target, context, null);
             }
-            return PyReferenceExpressionImpl.getTypeFromTarget(resolveResult, context, null);
           }
           return assignedValue.getType(context);
         }
