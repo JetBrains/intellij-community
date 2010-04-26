@@ -99,7 +99,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       PyType lhsType = lhs.getType(context);
       PyType rhsType = rhs.getType(context);
       String op = operator.getText();
-      if (PyClassType.is("int", lhsType) && PyClassType.is("int", rhsType) && op.equals("+")) {
+      if (PyClassType.is("int", lhsType) && PyClassType.is("int", rhsType) && (op.equals("+") || op.equals("-")))  {
         return lhsType;
       }
       final String eitherType = getEitherType(lhsType, rhsType, "str", "list");

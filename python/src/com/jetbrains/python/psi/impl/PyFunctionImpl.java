@@ -152,6 +152,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         if (returnType.startsWith("list of")) {
           return builtinCache.getObjectType("list");
         }
+        if (returnType.equals("integer")) {
+          return builtinCache.getIntType();
+        }
         final PyClassType type = builtinCache.getObjectType(returnType);
         if (type != null) {
           return type;
