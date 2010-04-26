@@ -5,6 +5,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyPrefixExpression;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,16 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
+    String op = getNode().findChildByType(PyElementTypes.BINARY_OPS).getText();
+    if (op.equals("-")) {
+      final PyExpression operand = getOperand();
+      if (operand != null) {
+        final PyType type = operand.getType(context);
+        if (PyClassType.is("int", type)) {
+          return type;
+        }
+      }
+    }
     return null;
   }
 }
