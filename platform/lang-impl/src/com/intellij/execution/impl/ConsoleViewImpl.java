@@ -574,11 +574,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     addHyperlink(textLength - hyperlinkText.length(), textLength, null, info, getHyperlinkAttributes());
   }
 
-  private static TextAttributes getHyperlinkAttributes() {
+  public static TextAttributes getHyperlinkAttributes() {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
   }
 
-  private static TextAttributes getFollowedHyperlinkAttributes() {
+  public static TextAttributes getFollowedHyperlinkAttributes() {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
   }
   
@@ -779,7 +779,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
+  public static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private void linkFollowed(final HyperlinkInfo info) {
     MarkupModelEx markupModel = (MarkupModelEx)myEditor.getMarkupModel();
     for (Map.Entry<RangeHighlighter,HyperlinkInfo> entry : myHyperlinks.getRanges().entrySet()) {
@@ -907,7 +907,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static String getLineText(Document document, int lineNumber, boolean includeEol) {
+  public static String getLineText(Document document, int lineNumber, boolean includeEol) {
     int endOffset = document.getLineEndOffset(lineNumber);
     if (includeEol && endOffset < document.getTextLength()) {
       endOffset++;
@@ -1201,7 +1201,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static class Hyperlinks {
+  public static class Hyperlinks {
     private static final int NO_INDEX = Integer.MIN_VALUE;
     private final Map<RangeHighlighter,HyperlinkInfo> myHighlighterToMessageInfoMap = new HashMap<RangeHighlighter, HyperlinkInfo>();
     private int myLastIndex = NO_INDEX;
@@ -1229,7 +1229,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (myLastIndex != NO_INDEX && containsOffset(myLastIndex, highlighter)) myLastIndex = NO_INDEX;
     }
 
-    private Map<RangeHighlighter,HyperlinkInfo> getRanges() {
+    public Map<RangeHighlighter,HyperlinkInfo> getRanges() {
       return myHighlighterToMessageInfoMap;
     }
   }
