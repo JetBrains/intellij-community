@@ -24,7 +24,7 @@ import java.util.List;
 public interface LowLevelAccess {
   GitCommit getCommitByHash(final SHAHash hash);
   // todo define signature
-  void loadCommits(final List<String> startingPoints, final List<String> endPoints, final Collection<ChangesFilter.Filter> filters,
+  void loadCommits(final Collection<String> startingPoints, final Collection<String> endPoints, final Collection<ChangesFilter.Filter> filters,
                    final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt) throws VcsException;
 
   Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException;

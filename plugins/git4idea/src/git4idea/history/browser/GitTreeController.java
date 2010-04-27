@@ -165,7 +165,7 @@ class GitTreeController implements ManageGitTreeView {
 
   // !!!! after point is included! (should be)
   @Nullable
-  private Portion loadPortion(final List<String> startingPoints, final Date beforePoint, final Date afterPoint,
+  private Portion loadPortion(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                               final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) {
     try {
       final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
@@ -507,7 +507,7 @@ class GitTreeController implements ManageGitTreeView {
       requestRefresh();
     }
 
-    public List<String> getStartingPoints() {
+    public Collection<String> getStartingPoints() {
       return myState.getStartingPoints();
     }
 
@@ -522,7 +522,7 @@ class GitTreeController implements ManageGitTreeView {
 
   private static class MyFiltersStateHolder implements GitTreeFiltering {
     private final Object myLock;
-    private final List<String> myStartingPoints;
+    private final Set<String> myStartingPoints;
     private boolean myDirty;
 
     private final List<Date> myContinuationPoints;
@@ -533,8 +533,8 @@ class GitTreeController implements ManageGitTreeView {
 
     private MyFiltersStateHolder() {
       myLock = new Object();
-      myStartingPoints = new LinkedList<String>();
-      myFilters = new LinkedList<ChangesFilter.Filter>();
+      myStartingPoints = new HashSet<String>();
+      myFilters = new HashSet<ChangesFilter.Filter>();
       myContinuationPoints = new LinkedList<Date>();
     }
 
@@ -621,7 +621,7 @@ class GitTreeController implements ManageGitTreeView {
     }
 
     @Nullable
-    public List<String> getStartingPoints() {
+    public Collection<String> getStartingPoints() {
       synchronized (myLock) {
         return myStartingPoints;
       }
