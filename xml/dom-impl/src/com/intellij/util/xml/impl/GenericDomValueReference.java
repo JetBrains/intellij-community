@@ -136,6 +136,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return value == null ? null : resolveInner(value);
   }
 
+  @NotNull
   public String getCanonicalText() {
     return getStringValue();
   }

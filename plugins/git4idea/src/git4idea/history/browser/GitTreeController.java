@@ -66,7 +66,7 @@ class GitTreeController implements ManageGitTreeView {
   private Alarm myAlarm;
   private Portion myFiltered;
 
-  private final SLRUCache<SHAHash, CommittedChangeList> myListsCache = new SLRUCache<SHAHash, CommittedChangeList>(16, 64) {
+  private final SLRUCache<SHAHash, CommittedChangeList> myListsCache = new SLRUCache<SHAHash, CommittedChangeList>(128, 64) {
     @NotNull
     @Override
     public CommittedChangeList createValue(SHAHash key) {

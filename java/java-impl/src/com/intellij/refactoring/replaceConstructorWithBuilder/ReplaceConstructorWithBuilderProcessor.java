@@ -176,7 +176,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
         type = ((PsiEllipsisType)type).toArrayType();
       }
       field = myElementFactory.createField(parameterData.getFieldName(), type);
-      builderClass.add(field);
+      field = (PsiField)builderClass.add(field);
     }
 
     final String defaultValue = parameterData.getDefaultValue();

@@ -156,7 +156,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return CLASS;
   }
 
-  @Nullable
+  @NotNull
   public String getCanonicalText() {
     PsiElement resolved = resolve();
     if (resolved instanceof PsiClass) {

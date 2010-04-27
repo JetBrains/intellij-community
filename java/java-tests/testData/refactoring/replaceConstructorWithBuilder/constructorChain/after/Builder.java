@@ -1,5 +1,5 @@
 public class Builder {
-    private int i;
+    private int i = 2;
 
     public Builder setI(int i) {
         this.i = i;

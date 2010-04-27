@@ -29,11 +29,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
   private TextRange myLineRange;
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
 
-  public void testSCR915() throws Exception {
-    getSettings().SPACE_AROUND_ADDITIVE_OPERATORS = false;
-    doTest("SCR915.java", "SCR915_after.java");
-  }
-
   public void testForEach() throws Exception {
     doTest("ForEach.java", "ForEach_after.java");
   }
@@ -267,35 +262,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     doTest();
   }
 
-  public void testSCR260() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    settings.KEEP_LINE_BREAKS = false;
-    doTest();
-  }
-
-  public void testSCR114() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.CATCH_ON_NEW_LINE = true;
-    doTest();
-  }
-
-  public void testSCR259() throws Exception {
-    myTextRange = new TextRange(36, 60);
-    final CodeStyleSettings settings = getSettings();
-    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
-    settings.KEEP_LINE_BREAKS = false;
-    doTest();
-  }
-
-  public void testSCR279() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
-    doTest();
-  }
-
   public void testBinaryOperation() throws IncorrectOperationException {
     final CodeStyleSettings settings = getSettings();
 
@@ -412,13 +378,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     doTest();
   }
 
-  public void testSCR395() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    doTest();
-  }
-
-
   public void testBraces() throws Exception {
     final CodeStyleSettings settings = getSettings();
 
@@ -495,19 +454,96 @@ public class JavaFormatterTest extends LightIdeaTestCase {
 
   }
 
-  public void testSCR429() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.KEEP_BLANK_LINES_IN_CODE = 2;
-    settings.KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
-    settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
-    doTest();
-  }
+  public void testFlyingGeeseBraces() {
+    // Inspired by IDEA-52305
 
-  public void testSCR548() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
-    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
-    doTest();
+    getSettings().USE_FLYING_GEESE_BRACES = true;
+    getSettings().FLYING_GEESE_BRACES_GAP = 1;
+    getSettings().BLANK_LINES_AROUND_METHOD = 0; // controls number of blank lines between instance initialization block and field. Very strange
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true; // allow methods like 'void foo() {}'
+    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
+
+    // Flying gees style for class initialization and instance initialization block when there are no fields/methods.
+    doTextTest(
+      "class FormattingTest {\n" +
+      "  {\n" +
+      "  } \n" +
+      "}",
+      "class FormattingTest { {\n" +
+      "} }"
+    );
+
+    // Flying gees style for class initialization and instance initialization block when there are fields after the block.
+    doTextTest(
+      "class FormattingTest {\n" +
+      "  {\n" +
+      "  } \n" +
+      "  int i;\n" +
+      "}",
+      "class FormattingTest {\n" +
+      "  {\n" +
+      "  } \n" +
+      "  int i;\n" +
+      "}"
+    );
+
+    // Flying gees style for class initialization and instance initialization block when there are fields before the block.
+    doTextTest(
+      "class FormattingTest {\n" +
+      "  int i;\n" +
+      "  {\n" +
+      "  } \n" +
+      "}",
+      "class FormattingTest {\n" +
+      "  int i;\n" +
+      "  {\n" +
+      "  } \n" +
+      "}"
+    );
+
+    // Flying gees style for class initialization and instance initialization block when there are methods after the block.
+    doTextTest(
+      "class FormattingTest {\n" +
+      "  {\n" +
+      "  } \n" +
+      "  void foo() {}\n" +
+      "}",
+      "class FormattingTest {\n" +
+      "  {\n" +
+      "  } \n" +
+      "  void foo() {}\n" +
+      "}"
+    );
+
+    // Flying gees style for class initialization and instance initialization block when there are methods before the block.
+    doTextTest(
+      "class FormattingTest {\n" +
+      "  void foo() {}\n" +
+      "  {\n" +
+      "  } \n" +
+      "}",
+      "class FormattingTest {\n" +
+      "  void foo() {}\n" +
+      "  {\n" +
+      "  } \n" +
+      "}"
+    );
+
+    // Flying gees style for class initialization and multiple instance initialization blocks.
+    doTextTest(
+      "class FormattingTest {\n" +
+      "  {\n" +
+      "  } \n" +
+      "  {\n" +
+      "  }\n" +
+      "}",
+      "class FormattingTest {\n" +
+      "  {\n" +
+      "  } \n" +
+      "  {\n" +
+      "  }\n" +
+      "}"
+    );
   }
 
   public void testExtendsList() throws Exception {
@@ -707,26 +743,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
          "}");
   }
 
-  public void testSCR11799() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
-    settings.CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    doTest();
-  }
-
-  public void testSCR501() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.KEEP_FIRST_COLUMN_COMMENT = true;
-    doTest();
-  }
-
-  public void testSCR879() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    doTest();
-  }
-
   public void testDoNotIndentCaseFromSwitch() throws Exception {
     final CodeStyleSettings settings = getSettings();
     settings.INDENT_CASE_FROM_SWITCH = false;
@@ -738,36 +754,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
                                                                                                                     "        }\n" +
                                                                                                                     "    }\n" +
                                                                                                                     "}");
-  }
-
-  public void testSCR547() throws Exception {
-    doTextTest("class Foo { \n" +
-               "    Object[] objs = { \n" +
-               "            new Object() { \n" +
-               "        public String toString() { \n" +
-               "            return \"x\"; \n" +
-               "        } \n" +
-               "    } \n" +
-               "    }; \n" +
-"}", "class Foo {\n" +
-     "    Object[] objs = {\n" +
-     "            new Object() {\n" +
-     "                public String toString() {\n" +
-     "                    return \"x\";\n" +
-     "                }\n" +
-     "            }\n" +
-     "    };\n" +
-     "}");
-  }
-
-  public void testSCR11296() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.RIGHT_MARGIN = 50;
-    settings.WRAP_COMMENTS = true;
-    settings.ENABLE_JAVADOC_FORMATTING = true;
-    settings.JD_P_AT_EMPTY_LINES = false;
-    settings.JD_KEEP_EMPTY_LINES = false;
-    doTest();
   }
 
   public void testClass2() throws Exception {
@@ -798,52 +784,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
 
     doTextTest("class Foo{\n" + "  void foo(){\n" + "  return name   !=   null   ?   1   :   2   ;" + "}\n" + "}",
                "class Foo {\n" + "    void foo() {\n" + "        return name != null ?1 :2;\n" + "    }\n" + "}");
-  }
-
-  public void testSCR479() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.RIGHT_MARGIN = 80;
-    settings.TERNARY_OPERATION_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    doTextTest("public class Foo {\n" +
-               "    public static void main(String[] args) {\n" +
-               "        if (name != null ?                !name.equals(that.name) : that.name !=                null)\n" +
-               "            return false;\n" +
-               "    }\n" +
-"}", "public class Foo {\n" +
-     "    public static void main(String[] args) {\n" +
-     "        if (name != null ? !name.equals(that.name) : that.name != null)\n" +
-     "            return false;\n" +
-     "    }\n" +
-     "}");
-  }
-
-  public void testSCR190() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.KEEP_LINE_BREAKS = false;
-    doTextTest("public class EntityObject \n" +
-               "{ \n" +
-               "    private Integer id; \n" +
-               "\n" +
-               "    public Integer getId() \n" +
-               "    { \n" +
-               "        return id; \n" +
-               "    } \n" +
-               "\n" +
-               "    public void setId(Integer id) \n" +
-               "    { \n" +
-               "        this.id = id; \n" +
-               "    } \n" +
-"}", "public class EntityObject {\n" +
-     "    private Integer id;\n" +
-     "\n" +
-     "    public Integer getId() {\n" +
-     "        return id;\n" +
-     "    }\n" +
-     "\n" +
-     "    public void setId(Integer id) {\n" +
-     "        this.id = id;\n" +
-     "    }\n" +
-     "}");
   }
 
   public void testMethodCallChain() throws Exception {
@@ -904,29 +844,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
      "                .setProperty(\"hibernate.show_sql\", \"false\")\n" +
      "                .setProperty(\"hibernate.order_updates\", \"true\")\n" +
      "                .setProperty(\"hibernate.hbm2ddl.auto\", \"update\");\n" +
-     "    }\n" +
-     "}");
-  }
-
-  public void testSCR1535() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    doTextTest("public class Foo {\n" +
-               "    public int foo() {\n" +
-               "        if (a) {\n" +
-               "            return;\n" +
-               "        }\n" +
-               "    }\n" +
-"}", "public class Foo\n" +
-     "{\n" +
-     "    public int foo()\n" +
-     "    {\n" +
-     "        if (a)\n" +
-     "        {\n" +
-     "            return;\n" +
-     "        }\n" +
      "    }\n" +
      "}");
   }
@@ -1037,14 +954,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     doTest("SpacesBeforeLBrace.java", "SpacesBeforeLBrace.java");
   }
 
-  public void testSCR970() throws Exception {
-    final CodeStyleSettings settings = getSettings();
-    settings.THROWS_KEYWORD_WRAP = CodeStyleSettings.WRAP_ALWAYS;
-    settings.THROWS_LIST_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    settings.METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    doTest();
-  }
-
   public void testCommentBeforeField() throws Exception {
     final CodeStyleSettings settings = getSettings();
     settings.KEEP_LINE_BREAKS = false;
@@ -1130,47 +1039,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
      "        }\n" +
      "        if (a) {\n" +
      "        }\n" +
-     "    }\n" +
-     "}");
-  }
-
-  public void testSCR1047() throws Exception {
-    doTextTest("class Foo{\n" + "    void foo(){\n" + "        String field1, field2;\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        String field1, field2;\n" + "    }\n" + "}");
-  }
-
-  public void testSCR524() throws Exception {
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-    doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() { return;}\n" + "}");
-
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = false;
-    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-
-    doTextTest("class Foo{\n" +
-               "void foo() {\n" +
-               "if(a) {return;}\n" +
-               "for(a = 0; a < 10; a++) {return;}\n" +
-               "switch(a) {case 1: return;}\n" +
-               "do{return;} while (a);\n" +
-               "while(a){return;}\n" +
-               "try{return;} catch(Ex e){return;} finally{return;}\n" +
-               "}\n" +
-"}", "class Foo {\n" +
-     "    void foo() {\n" +
-     "        if (a) {return;}\n" +
-     "        for (a = 0; a < 10; a++) {return;}\n" +
-     "        switch (a)\n" +
-     "            {\n" +
-     "                case 1:\n" +
-     "                    return;\n" +
-     "            }\n" +
-     "        do {return;} while (a);\n" +
-     "        while (a) {return;}\n" +
-     "        try {return;} catch (Ex e) {return;} finally {return;}\n" +
      "    }\n" +
      "}");
   }
@@ -1334,31 +1202,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
                "class Foo {\n" + "    void foo() {\n" + "\n" + "    }\n" + "}");
   }
 
-  public void testSCR2632() throws Exception {
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().RIGHT_MARGIN = 20;
-
-    doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
-               "/**\n" +
-               " * <p/>\n" +
-               " * Another paragraph\n" +
-               " * of the description\n" +
-               " * placed after\n" +
-               " * blank line.\n" +
-               " */\n" +
-               "class A {\n" +
-               "}");
-  }
-
-  public void testSCR1486() throws Exception {
-    doTextTest("public class Test {\n" + "  private BigDecimal\n" + "}", "public class Test {\n" + "    private BigDecimal\n" + "}");
-
-    doTextTest("public class Test {\n" + "  @NotNull private BigDecimal\n" + "}",
-               "public class Test {\n" + "    @NotNull\n" + "    private BigDecimal\n" + "}");
-
-  }
-
   public void testJavaDocLeadingAsterisksAreDisabled() throws Exception {
     getSettings().JD_LEADING_ASTERISKS_ARE_ENABLED = false;
     doTextTest("class Foo {\n" +
@@ -1438,35 +1281,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     assertEquals("a = 1;\n" + "int b = 2;", result[0].getText());
   }
 
-  public void test1607() throws Exception {
-    getSettings().RIGHT_MARGIN = 30;
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().ALIGN_MULTILINE_PARAMETERS = true;
-    getSettings().METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    doTextTest("class TEst {\n" + "void foo(A a,B b){ /* compiled code */ }\n" + "}",
-               "class TEst {\n" + "    void foo(A a, B b)\n" + "    { /* compiled code */ }\n" + "}");
-  }
-
-  public void testSCR1615() throws Exception {
-    getSettings().CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-
-    doTextTest(
-      "public class ZZZZ \n" + "   { \n" + "   public ZZZZ() \n" + "      { \n" + "      if (a){\n" + "foo();}\n" + "      } \n" + "   }",
-      "public class ZZZZ\n" +
-      "    {\n" +
-      "    public ZZZZ()\n" +
-      "        {\n" +
-      "        if (a)\n" +
-      "            {\n" +
-      "            foo();\n" +
-      "            }\n" +
-      "        }\n" +
-      "    }");
-  }
-
   public void testNewLineAfterJavaDocs() throws Exception {
     doTextTest("/** @noinspection InstanceVariableNamingConvention*/class Foo{\n" +
                "/** @noinspection InstanceVariableNamingConvention*/int myFoo;\n" +
@@ -1529,90 +1343,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
 
   }
 
-  public void testSCR3062() throws Exception {
-    getSettings().KEEP_LINE_BREAKS = false;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    getSettings().RIGHT_MARGIN = 80;
-
-    getSettings().PREFER_PARAMETERS_WRAP = true;
-
-    doTextTest("public class Foo { \n" +
-               "    public static void main() { \n" +
-               "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
-               "                                                    \"fox jumped over\", \n" +
-               "                                                    \"the lazy\", \"dog\"); \n" +
-               "    } \n" +
-"}", "public class Foo {\n" +
-     "    public static void main() {\n" +
-     "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\",\n" +
-     "                                                    \"fox jumped over\",\n" +
-     "                                                    \"the lazy\", \"dog\");\n" +
-     "    }\n" +
-     "}");
-
-    getSettings().PREFER_PARAMETERS_WRAP = false;
-
-    doTextTest("public class Foo { \n" +
-               "    public static void main() { \n" +
-               "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
-               "                                                    \"fox jumped over\", \n" +
-               "                                                    \"the lazy\", \"dog\"); \n" +
-               "    } \n" +
-"}", "public class Foo {\n" +
-     "    public static void main() {\n" +
-     "        foo.foobelize().foobelize().foobelize()\n" +
-     "                .bar(\"The quick brown\", \"fox jumped over\", \"the lazy\", \"dog\");\n" +
-     "    }\n" +
-     "}");
-
-  }
-
-  public void testSCR1658() throws Exception {
-    doTextTest("/** \n" + " * @author\tMike\n" + " */\n" + "public class Foo {\n" + "}",
-               "/**\n" + " * @author Mike\n" + " */\n" + "public class Foo {\n" + "}");
-  }
-
-  public void testSCR1699() throws Exception {
-    doTextTest("class Test {\n" + "    Test(String t1 , String t2) {\n" + "    }\n" + "}",
-               "class Test {\n" + "    Test(String t1, String t2) {\n" + "    }\n" + "}");
-  }
-
-  public void testSCR1700() throws Exception {
-    doTextTest("class Test {\n" + "    Test(String      t1 , String      t2) {\n" + "    }\n" + "}",
-               "class Test {\n" + "    Test(String t1, String t2) {\n" + "    }\n" + "}");
-  }
-
-  public void testSCR1701() throws Exception {
-    getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
-    getSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.DO_NOT_WRAP;
-    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        foo(a,b);" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        foo( a, b );\n" + "    }\n" + "}");
-  }
-
-  public void testSCR1703() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    doTextTest("class Foo{\n" +
-               "    void foo() {\n" +
-               "        for (Object o : localizations) {\n" +
-               "            //do something \n" +
-               "        }\n" +
-               "    }\n" +
-"}", "class Foo {\n" +
-     "    void foo() {\n" +
-     "        for (Object o : localizations)\n" +
-     "        {\n" +
-     "            //do something \n" +
-     "        }\n" +
-     "    }\n" +
-     "}");
-  }
-
-
   public void testJavaDocIndentation() throws Exception {
     getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
     getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
@@ -1643,44 +1373,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
      "   */\n" +
      "  ASTNode parse(IElementType root, PsiBuilder builder);\n" +
      "}");
-  }
-
-  public void testSCR1804() throws Exception {
-    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
-    doTextTest(
-      "class Foo {\n" + "    void foo() {\n" + "        int i;\n" + "        i = \n" + "                1 + 2;\n" + "    }\n" + "}",
-      "class Foo {\n" + "    void foo() {\n" + "        int i;\n" + "        i =\n" + "                1 + 2;\n" + "    }\n" + "}");
-
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        i = j =\n" + "        k = l = 1 + 2;\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        i = j =\n" + "        k = l = 1 + 2;\n" + "    }\n" + "}");
-
-  }
-
-  public void testSCR1795() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
-    doTextTest("public class Test {\n" +
-               "    public static void main(String[] args) {\n" +
-               "        do {\n" +
-               "            // ...\n" +
-               "        } while (true);\n" +
-               "    }\n" +
-"}", "public class Test {\n" +
-     "    public static void main(String[] args) {\n" +
-     "        do {\n" +
-     "            // ...\n" +
-     "        } while (true);\n" +
-     "    }\n" +
-     "}");
-  }
-
-  public void testSCR1936() throws Exception {
-    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 4;
-    doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "}",
-               "/**\n" + " * Foo - test class\n" + " */\n" + "class Foo {\n" + "\n" + "\n" + "\n" + "\n" + "}");
-
-    doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "    int myFoo;\n" + "}",
-               "/**\n" + " * Foo - test class\n" + " */\n" + "class Foo {\n" + "\n" + "\n" + "\n" + "\n" + "    int myFoo;\n" + "}");
-
   }
 
   public void testRemoveLineBreak() throws Exception {
@@ -1784,25 +1476,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
 
   }
 
-  public void test1980() throws Exception {
-    getSettings().RIGHT_MARGIN = 144;
-    getSettings().TERNARY_OPERATION_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
-    getSettings().TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true;
-    doTextTest("class Foo{\n" +
-               "    void foo() {\n" +
-               "final VirtualFile moduleRoot = moduleRelativePath.equals(\"\") ? projectRootDirAfter : projectRootDirAfter.findFileByRelativePath(moduleRelativePath);\n" +
-               "    }\n" +
-"}", "class Foo {\n" +
-     "    void foo() {\n" +
-     "        final VirtualFile moduleRoot = moduleRelativePath.equals(\"\")\n" +
-     "                                       ? projectRootDirAfter\n" +
-     "                                       : projectRootDirAfter.findFileByRelativePath(moduleRelativePath);\n" +
-     "    }\n" +
-     "}");
-  }
-
   public void testStaticBlockBraces() throws Exception {
     getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
     doTextTest("class Foo {\n" + "    static {\n" + "        //comment\n" + "        i = foo();\n" + "    }\n" + "}",
@@ -1832,40 +1505,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
                                                                                                                       "}");
 
 
-  }
-
-  public void testSCR2089() throws Exception {
-    doTextTest("class Test { \n" +
-               "    void test(int i) { \n" +
-               "        switch (i) { \n" +
-               "            case 1: { \n" +
-               "                int x = 0; \n" +
-               "                System.out.println(x); \n" +
-               "            } \n" +
-               "                break; \n" +
-               "            case 2: { \n" +
-               "                int y = 0; \n" +
-               "                System.out.println(y); \n" +
-               "            } \n" +
-               "                break; \n" +
-               "        } \n" +
-               "    } \n" +
-"}", "class Test {\n" +
-     "    void test(int i) {\n" +
-     "        switch (i) {\n" +
-     "            case 1: {\n" +
-     "                int x = 0;\n" +
-     "                System.out.println(x);\n" +
-     "            }\n" +
-     "            break;\n" +
-     "            case 2: {\n" +
-     "                int y = 0;\n" +
-     "                System.out.println(y);\n" +
-     "            }\n" +
-     "            break;\n" +
-     "        }\n" +
-     "    }\n" +
-     "}");
   }
 
   public void testBraces2() throws Exception {
@@ -1947,29 +1586,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
 
   }
 
-  public void testSCR2122() throws Exception {
-    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 3;
-
-    doTextTest("class Foo {\n" +
-               "    void foo() {\n" +
-               "        new Runnable() {\n" +
-               "            public void run() {\n" +
-               "            }\n" +
-               "        }\n" +
-               "    }\n" +
-"}", "class Foo {\n" +
-     "\n" +
-     "\n" +
-     "\n" +
-     "    void foo() {\n" +
-     "        new Runnable() {\n" +
-     "            public void run() {\n" +
-     "            }\n" +
-     "        }\n" +
-     "    }\n" +
-     "}");
-  }
-
   public void testSynchronized() throws Exception {
 
     getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
@@ -2014,6 +1630,1158 @@ public class JavaFormatterTest extends LightIdeaTestCase {
 
   }
 
+  public void testNextLineShiftedForBlockStatement() throws Exception {
+    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+
+    doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "        foo();\n" + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "            foo();\n" + "    }\n" + "}");
+  }
+
+  public void testFieldWithJavadocAndAnnotation() throws Exception {
+    doTextTest("class Foo {\n" + "    /**\n" + "     * java doc\n" + "     */\n" + "    @NoInspection\n" + "    String field;\n" + "}",
+               "class Foo {\n" + "    /**\n" + "     * java doc\n" + "     */\n" + "    @NoInspection\n" + "    String field;\n" + "}");
+  }
+
+  public void testLongCallChainAfterElse() throws Exception {
+    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().ELSE_ON_NEW_LINE = false;
+    getSettings().RIGHT_MARGIN = 110;
+    getSettings().KEEP_LINE_BREAKS = false;
+    doTextTest("class Foo {\n" +
+               "    void foo() {\n" +
+               "        if (types.length > 1) // returns multiple columns\n" +
+               "        {\n" +
+               "        } else\n" +
+               "            result.add(initializeObject(os, types[0], initializeCollections, initializeAssociations, initializeChildren));" +
+               "    }\n" +
+"}", "class Foo {\n" +
+     "    void foo() {\n" +
+     "        if (types.length > 1) // returns multiple columns\n" +
+     "        {\n" +
+     "        } else\n" +
+     "            result.add(initializeObject(os, types[0], initializeCollections, initializeAssociations, initializeChildren));\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSpacesIncode() throws Exception {
+
+    final JavaPsiFacade facade = getJavaFacade();
+    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
+
+    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+
+    try {
+      doTextTest("class C<Y, X> {\n" + "}", "class C<Y, X> {\n" + "}");
+
+      getSettings().SPACE_BEFORE_METHOD_LBRACE = true;
+      getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+
+      doTextTest("enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}",
+                 "enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}");
+
+      doTextTest("class C {\n" +
+                 "    void foo (Map<?, String> s) {\n" +
+                 "        Set<? extends Map<?, String>.Entry<?, String>> temp = s.entries();\n" +
+                 "    }\n" +
+"}", "class C {\n" +
+     "    void foo(Map<?, String> s) {\n" +
+     "        Set<? extends Map<?, String>.Entry<?, String>> temp = s.entries();\n" +
+     "    }\n" +
+     "}");
+
+      doTextTest("class B {\n" +
+                 "    public final A<String> myDelegate = new A<String>();\n" +
+                 "\n" +
+                 "    public List<? extends String> method1() {\n" +
+                 "        return myDelegate.method1();\n" +
+                 "    }\n" +
+                 "\n" +
+                 "    public String method2(String t) {\n" +
+                 "        return myDelegate.method2(t);\n" +
+                 "    }\n" +
+"}", "class B {\n" +
+     "    public final A<String> myDelegate = new A<String>();\n" +
+     "\n" +
+     "    public List<? extends String> method1() {\n" +
+     "        return myDelegate.method1();\n" +
+     "    }\n" +
+     "\n" +
+     "    public String method2(String t) {\n" +
+     "        return myDelegate.method2(t);\n" +
+     "    }\n" +
+     "}");
+    }
+    finally {
+      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(level);
+    }
+
+  }
+
+  ///IDEA-7761
+  public void testKeepBlankLineInCodeBeforeComment() throws Exception {
+    getSettings().KEEP_BLANK_LINES_IN_CODE = 1;
+    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+
+    doTextTest("public class ReformatProblem {\n" +
+               "\n" +
+               "    //comment in declaration\n" +
+               "    public static void main(String[] args) {\n" +
+               "        for (String arg : args) {\n" +
+               "            \n" +
+               "            // a first system out\n" +
+               "            System.out.println(\"\");\n" +
+               "            \n" +
+               "            // another system out\n" +
+               "            System.out.println(\"arg = \" + arg);\n" +
+               "        }\n" +
+               "    }\n" +
+"}", "public class ReformatProblem {\n" +
+     "    //comment in declaration\n" +
+     "    public static void main(String[] args) {\n" +
+     "        for (String arg : args) {\n" +
+     "\n" +
+     "            // a first system out\n" +
+     "            System.out.println(\"\");\n" +
+     "\n" +
+     "            // another system out\n" +
+     "            System.out.println(\"arg = \" + arg);\n" +
+     "        }\n" +
+     "    }\n" +
+     "}");
+
+    getSettings().KEEP_BLANK_LINES_IN_CODE = 0;
+    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+
+    doTextTest("public class ReformatProblem {\n" +
+               "\n" +
+               "    //comment in declaration\n" +
+               "    public static void main(String[] args) {\n" +
+               "        for (String arg : args) {\n" +
+               "            \n" +
+               "            // a first system out\n" +
+               "            System.out.println(\"\");\n" +
+               "            \n" +
+               "            // another system out\n" +
+               "            System.out.println(\"arg = \" + arg);\n" +
+               "        }\n" +
+               "    }\n" +
+"}", "public class ReformatProblem {\n" +
+     "\n" +
+     "    //comment in declaration\n" +
+     "    public static void main(String[] args) {\n" +
+     "        for (String arg : args) {\n" +
+     "            // a first system out\n" +
+     "            System.out.println(\"\");\n" +
+     "            // another system out\n" +
+     "            System.out.println(\"arg = \" + arg);\n" +
+     "        }\n" +
+     "    }\n" +
+     "}");
+
+  }
+
+  public void testSpaceBeforeTryBrace() throws Exception {
+    getSettings().SPACE_BEFORE_TRY_LBRACE = false;
+    getSettings().SPACE_BEFORE_FINALLY_LBRACE = true;
+    doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + "        try{\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}");
+
+    getSettings().SPACE_BEFORE_TRY_LBRACE = true;
+    getSettings().SPACE_BEFORE_FINALLY_LBRACE = false;
+
+    doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + "        try {\n" + "        } finally{\n" + "        }\n" + "    }\n" + "}");
+
+  }
+
+  public void testFormatComments() throws Exception {
+    getSettings().ENABLE_JAVADOC_FORMATTING = true;
+    doTextTest("public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}",
+               "public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}");
+
+  }
+
+  public void testDoNotWrapLBrace() throws IncorrectOperationException {
+    getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    getSettings().RIGHT_MARGIN = 66;
+    doTextTest("public class Test {\n" +
+               "    void foo(){\n" +
+               "        if (veryLongIdentifier1 == 1 && veryLongIdentifier2 == 2) {\n" +
+               "            doSmth();\n" +
+               "        }\n" +
+               "    }\n" +
+"}", "public class Test {\n" +
+     "    void foo() {\n" +
+     "        if (veryLongIdentifier1 == 1 && veryLongIdentifier2 == 2) {\n" +
+     "            doSmth();\n" +
+     "        }\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testNewLinesAroundArrayInitializer() throws IncorrectOperationException {
+    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
+    getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
+    getSettings().RIGHT_MARGIN = 40;
+    doTextTest("class Foo {\n" + "    int[] a = new int[]{1,2,0x0052,0x0053,0x0054,0x0054,0x0054};\n" + "}", "class Foo {\n" +
+                                                                                                             "    int[] a = new int[]{\n" +
+                                                                                                             "            1, 2, 0x0052, 0x0053,\n" +
+                                                                                                             "            0x0054, 0x0054, 0x0054\n" +
+                                                                                                             "    };\n" +
+                                                                                                             "}");
+  }
+
+  public void testSpaceAfterCommaInEnum() throws IncorrectOperationException {
+    getSettings().SPACE_AFTER_COMMA = true;
+
+    final JavaPsiFacade facade = getJavaFacade();
+    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
+    try {
+      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+
+
+      doTextTest("public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}",
+                 "public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}");
+    }
+    finally {
+      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(effectiveLanguageLevel);
+    }
+  }
+
+  public void testRemoveBraceBeforeInstanceOf() throws IncorrectOperationException {
+    doTextTest("class ReformatInstanceOf {\n" +
+               "    void foo(Object string) {\n" +
+               "        if (string.toString() instanceof String) {} // reformat me\n" +
+               "    }\n" +
+"}", "class ReformatInstanceOf {\n" +
+     "    void foo(Object string) {\n" +
+     "        if (string.toString() instanceof String) {\n" +
+     "        } // reformat me\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testAnnotationBeforePackageLocalConstructor() throws IncorrectOperationException {
+    doTextTest("class Foo {\n" + "    @MyAnnotation Foo() {\n" + "    }\n" + "}",
+               "class Foo {\n" + "    @MyAnnotation\n" + "    Foo() {\n" + "    }\n" + "}");
+  }
+
+  public void testLongAnnotationsAreNotWrapped() throws Exception {
+    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  public void testWrapExtendsList() throws Exception {
+    getSettings().RIGHT_MARGIN = 50;
+    getSettings().EXTENDS_LIST_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getSettings().EXTENDS_KEYWORD_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+
+    doTextTest("class ColtreDataProvider extends DataProvider, AgentEventListener, ParameterDataEventListener {\n}",
+               "class ColtreDataProvider extends DataProvider,\n" +
+               "        AgentEventListener,\n" +
+               "        ParameterDataEventListener {\n}");
+  }
+
+  public void testWrapLongExpression() throws Exception {
+    getSettings().RIGHT_MARGIN = 80;
+    getSettings().BINARY_OPERATION_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
+    doTextTest("class Foo {\n" +
+               "    void foo () {\n" +
+               "        return (interval1.getEndIndex() >= interval2.getStartIndex() && interval3.getStartIndex() <= interval4.getEndIndex()) || (interval5.getEndIndex() >= interval6.getStartIndex() && interval7.getStartIndex() <= interval8.getEndIndex());" +
+               "    }\n" +
+               "}", "class Foo {\n" +
+                    "    void foo() {\n" +
+                    "        return (interval1.getEndIndex() >= interval2.getStartIndex() &&\n" +
+                    "                interval3.getStartIndex() <= interval4.getEndIndex()) ||\n" +
+                    "               (interval5.getEndIndex() >= interval6.getStartIndex() &&\n" +
+                    "                interval7.getStartIndex() <= interval8.getEndIndex());\n" +
+                    "    }\n" +
+                    "}");
+  }
+
+  public void testDoNotWrapCallChainIfParametersWrapped() throws Exception {
+    getSettings().RIGHT_MARGIN = 87;
+    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    //getSettings().PREFER_PARAMETERS_WRAP = true;
+
+    doMethodTest(
+      //9                    30                            70         80    86
+      "descriptors = manager.createProblemDescriptor(parameter1, parameter2, parameterparameterpar3,parameter4);",
+
+      "descriptors = manager.createProblemDescriptor(parameter1, parameter2,\n" +
+      "                                              parameterparameterpar3,\n" +
+      "                                              parameter4);"
+
+    );
+  }
+
+  public void testAlignTernaryOperation() throws Exception {
+    getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
+    doMethodTest("String s = x == 0 ? \"hello\" :\n" +
+                 "                x == 5 ? \"something else\" :\n" +
+                 "                        x > 0 ? \"bla, bla\" :\n" +
+                 "                                \"\";", "String s = x == 0 ? \"hello\" :\n" +
+                                                          "           x == 5 ? \"something else\" :\n" +
+                                                          "           x > 0 ? \"bla, bla\" :\n" +
+                                                          "           \"\";");
+
+    getSettings().TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true;
+
+    doMethodTest("int someVariable = a ?\n" + "x :\n" + "y;",
+                 "int someVariable = a ?\n" + "                   x :\n" + "                   y;");
+  }
+
+
+
+  public void testRightMargin() throws Exception {
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().RIGHT_MARGIN = 35;//      |
+    doTextTest(
+      "/** Here is one-line java-doc comment */" +
+      "class Foo {\n" +
+      "}",
+      "/**\n" +
+      " * Here is one-line java-doc\n" +
+      " * comment\n" +
+      " */\n" +
+      "class Foo {\n" +
+      "}");
+
+  }
+
+  public void testRightMargin_2() throws Exception {
+    getSettings().RIGHT_MARGIN = 65;
+    getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true;
+    getSettings().KEEP_LINE_BREAKS = false;
+
+    doClassTest(
+      "public static final Map<LongType, LongType> longVariableName =\n" +
+      "variableValue;",
+      "public static final Map<LongType, LongType> longVariableName\n" +
+      "        = variableValue;");
+  }
+
+  public void testRightMargin_3() throws Exception {
+    getSettings().RIGHT_MARGIN = 65;
+    getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
+    getSettings().KEEP_LINE_BREAKS = false;
+
+    doClassTest(
+      "public static final Map<LongType, LongType> longVariableName =\n" +
+      "variableValue;",
+      "public static final Map<LongType, LongType>\n" +
+      "        longVariableName = variableValue;");
+  }
+
+  public void testDoNotRemoveLineBreaksBetweenComments(){
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+
+    doTextTest(
+      "public class Foo {\n" +
+      "   //here is a comment\n" +
+      "   //line 2 of comment\n" +
+      "   public void myMethod() {\n" +
+      "       //a comment\n" +
+      "       //... another comment\n" +
+      "   }\n" +
+      "\n" +
+      "//save for later\n" +
+      "//    public void incompleteMethod() {\n" +
+      "//        int blah = 0;\n" +
+      "//        callSomeMethod();\n" +
+      "//        callSomeOtherMethod();\n" +
+      "//        doSomethingElse();\n" +
+      "//    }\n" +
+      "\n" +
+      "//comment at first line\n" +
+      "}",
+      "public class Foo {\n" +
+      "    //here is a comment\n" +
+      "    //line 2 of comment\n" +
+      "    public void myMethod() {\n" +
+      "        //a comment\n" +
+      "        //... another comment\n" +
+      "    }\n" +
+      "\n" +
+      "    //save for later\n" +
+      "    //    public void incompleteMethod() {\n" +
+      "    //        int blah = 0;\n" +
+      "    //        callSomeMethod();\n" +
+      "    //        callSomeOtherMethod();\n" +
+      "    //        doSomethingElse();\n" +
+      "    //    }\n" +
+      "\n" +
+      "    //comment at first line\n" +
+      "}");
+  }
+
+  public void testWrapParamsOnEveryItem() throws Exception {
+    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+
+    int oldMargin = codeStyleSettings.RIGHT_MARGIN;
+    boolean oldKeep = codeStyleSettings.KEEP_LINE_BREAKS;
+    int oldWrap = codeStyleSettings.METHOD_PARAMETERS_WRAP;
+
+    try {
+      codeStyleSettings.RIGHT_MARGIN = 80;
+      codeStyleSettings.KEEP_LINE_BREAKS = false;
+      codeStyleSettings.METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
+
+      doClassTest(
+        "public void foo(String p1,\n" +
+        "                String p2,\n" +
+        "                String p3,\n" +
+        "                String p4,\n" +
+        "                String p5,\n" +
+        "                String p6,\n" +
+        "                String p7) {\n" +
+        "    //To change body of implemented methods use File | Settings | File Templates.\n" +
+        "}",
+        "public void foo(String p1,\n" +
+        "                String p2,\n" +
+        "                String p3,\n" +
+        "                String p4,\n" +
+        "                String p5,\n" +
+        "                String p6,\n" +
+        "                String p7) {\n" +
+        "    //To change body of implemented methods use File | Settings | File Templates.\n" +
+        "}");
+    }
+    finally {
+      codeStyleSettings.RIGHT_MARGIN = oldMargin;
+      codeStyleSettings.KEEP_LINE_BREAKS = oldKeep;
+      codeStyleSettings.METHOD_PARAMETERS_WRAP = oldWrap;
+    }
+
+  }
+
+  public void testCommentAfterDeclaration() throws Exception {
+    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
+
+    int oldMargin = codeStyleSettings.RIGHT_MARGIN;
+
+    try {
+      codeStyleSettings.RIGHT_MARGIN = 20;
+      codeStyleSettings.ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+      doMethodTest(
+        "int i=0; //comment comment",
+        "int i =\n" +
+        "        0; //comment comment"
+      );
+
+    }
+    finally {
+      codeStyleSettings.RIGHT_MARGIN = oldMargin;
+    }
+  }
+
+  // ------------------------------------------------
+  //              Tickets-implied tests
+  // ------------------------------------------------
+
+  public void testSCR915() throws Exception {
+    getSettings().SPACE_AROUND_ADDITIVE_OPERATORS = false;
+    doTest("SCR915.java", "SCR915_after.java");
+  }
+
+  public void testSCR429() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.KEEP_BLANK_LINES_IN_CODE = 2;
+    settings.KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
+    settings.KEEP_BLANK_LINES_IN_DECLARATIONS = 2;
+    doTest();
+  }
+
+  public void testSCR548() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
+    doTest();
+  }
+
+  public void testIDEADEV_20878_1() throws Exception {
+    doMethodTest("checking(new Expectations() {{\n" +
+                 "one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
+                 "}});", "checking(new Expectations() {{\n" +
+                         "    one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
+                         "}});");
+  }
+
+  public void testIDEADEV_20878_2() throws Exception {
+    doTextTest("class Class {\n" + "    private Type field; {\n" + "    }\n" + "}",
+               "class Class {\n" + "    private Type field; {\n" + "    }\n" + "}");
+
+    doTextTest("class T {\n" +
+               "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
+               "        fmt.setGroupingUsed(false);\n" +
+               "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
+               "    }\n" +
+               "}", "class T {\n" +
+                    "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
+                    "        fmt.setGroupingUsed(false);\n" +
+                    "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
+                    "    }\n" +
+                    "}");
+
+    doTextTest("class T {\n" +
+               "    private final DecimalFormat fmt = new DecimalFormat();\n" +
+               "    {\n" +
+               "        fmt.setGroupingUsed(false);\n" +
+               "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
+               "    }\n" +
+               "}", "class T {\n" +
+                    "    private final DecimalFormat fmt = new DecimalFormat();\n" +
+                    "\n" +
+                    "    {\n" +
+                    "        fmt.setGroupingUsed(false);\n" +
+                    "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
+                    "    }\n" +
+                    "}");
+
+  }
+
+  public void testIDEADEV_3666() throws Exception {
+    getSettings().SPACE_AFTER_COMMA = true;
+
+    doTextTest("class Foo {\n" + "Map<String,String> map() {}\n" + "}",
+               "class Foo {\n" + "    Map<String, String> map() {\n" + "    }\n" + "}");
+  }
+
+  public void testIDEADEV_18529() throws Exception {
+    doTextTest("public class TestBed\n" +
+               "{\n" +
+               "    public void methodOne()\n" +
+               "    {\n" +
+               "        //code...\n" +
+               "    }\n" +
+               "\n" +
+               "    @SomeAnnotation\n" +
+               "            <T extends Comparable> void methodTwo(T item) {\n" +
+               "        //code...\n" +
+               "    }\n" +
+               "\n" +
+               "    private void methodThree(String s) {\n" +
+               "        //code...\n" +
+               "    }\n" +
+               "}", "public class TestBed {\n" +
+                    "    public void methodOne() {\n" +
+                    "        //code...\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    @SomeAnnotation\n" +
+                    "    <T extends Comparable> void methodTwo(T item) {\n" +
+                    "        //code...\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    private void methodThree(String s) {\n" +
+                    "        //code...\n" +
+                    "    }\n" +
+                    "}");
+  }
+
+
+ public void testIDEA_18299() throws Exception {
+   getSettings().RIGHT_MARGIN = 80;
+   getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+   doTextTest(
+     "@AttributeOverrides( { @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\"))," +
+     "@AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\"))," +
+     "@AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\"))," +
+     "@AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\"))," +
+     "@AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\"))," +
+     "@AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\"))," +
+     "@AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false))," +
+     "@AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\"))," +
+     "@AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\")) })\n" +
+     "class Foo {\n" +
+     "}",
+     "@AttributeOverrides({\n" +
+     "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
+     "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
+     "        @AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\")),\n" +
+     "        @AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\")),\n" +
+     "        @AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\")),\n" +
+     "        @AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\")),\n" +
+     "        @AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false)),\n" +
+     "        @AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\")),\n" +
+     "        @AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\"))})\n" +
+     "class Foo {\n" +
+     "}"
+   );
+ }
+
+  public void testIDEA_18051() throws Exception {
+    getSettings().RIGHT_MARGIN = 80;
+    doTextTest("package formatting;\n" +
+               "\n" +
+               "public class EnumInAnnotationFormatting {\n" +
+               "\n" +
+               "    public enum TheEnum {\n" +
+               "\n" +
+               "        FIRST,\n" +
+               "        SECOND,\n" +
+               "        THIRD,\n" +
+               "\n" +
+               "    }\n" +
+               "\n" +
+               "    public @interface TheAnnotation {\n" +
+               "\n" +
+               "        TheEnum[] value();\n" +
+               "\n" +
+               "        String comment();\n" +
+               "\n" +
+               "    }\n" +
+               "\n" +
+               "\n" +
+               "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
+               "    public class Test {\n" +
+               "\n" +
+               "    }\n" +
+               "\n" +
+               "}", "package formatting;\n" +
+                    "\n" +
+                    "public class EnumInAnnotationFormatting {\n" +
+                    "\n" +
+                    "    public enum TheEnum {\n" +
+                    "\n" +
+                    "        FIRST,\n" +
+                    "        SECOND,\n" +
+                    "        THIRD,\n" +
+                    "\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    public @interface TheAnnotation {\n" +
+                    "\n" +
+                    "        TheEnum[] value();\n" +
+                    "\n" +
+                    "        String comment();\n" +
+                    "\n" +
+                    "    }\n" +
+                    "\n" +
+                    "\n" +
+                    "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
+                    "    public class Test {\n" +
+                    "\n" +
+                    "    }\n" +
+                    "\n" +
+                    "}");
+  }
+
+  public void testIDEA_17870() throws Exception {
+    doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
+  }
+
+  public void testIDEA_16151() throws Exception {
+    doClassTest("@ValidateNestedProperties({\n" +
+                "@Validate(field=\"name\", required=true, maxlength=Trip.NAME),\n" +
+                "@Validate(field=\"name\", required=true, maxlength=Trip.NAME)\n" +
+                "})" +
+                "public Trip getTrip() {\n" +
+                "}", "@ValidateNestedProperties({\n" +
+                     "        @Validate(field = \"name\", required = true, maxlength = Trip.NAME),\n" +
+                     "        @Validate(field = \"name\", required = true, maxlength = Trip.NAME)\n" +
+                     "})\n" +
+                     "public Trip getTrip() {\n" +
+                     "}");
+
+  }
+
+  public void testIDEA_14324() throws Exception {
+    getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
+
+    doClassTest(
+      "@Ann1({ @Ann2,\n" +
+      "                      @Ann3})\n" +
+      "public AuthorAddress getAddress() {\n" +
+      "    return address;\n" +
+      "}",
+      "@Ann1({@Ann2,\n" +
+      "       @Ann3})\n" +
+      "public AuthorAddress getAddress() {\n" +
+      "    return address;\n" +
+      "}");
+
+    doClassTest("@AttributeOverrides({ @AttributeOverride(name = \"address\", column = @Column(name = \"ADDR\")),\n" +
+                "                      @AttributeOverride(name = \"country\", column = @Column(name = \"NATION\")) })\n" +
+                "public AuthorAddress getAddress() {\n" +
+                "    return address;\n" +
+                "}",
+                "@AttributeOverrides({@AttributeOverride(name = \"address\", column = @Column(name = \"ADDR\")),\n" +
+                "                     @AttributeOverride(name = \"country\", column = @Column(name = \"NATION\"))})\n" +
+                "public AuthorAddress getAddress() {\n" +
+                "    return address;\n" +
+                "}"
+
+    );
+  }
+
+public void testSCR260() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.KEEP_LINE_BREAKS = false;
+    doTest();
+  }
+
+  public void testSCR114() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.CATCH_ON_NEW_LINE = true;
+    doTest();
+  }
+
+  public void testSCR259() throws Exception {
+    myTextRange = new TextRange(36, 60);
+    final CodeStyleSettings settings = getSettings();
+    settings.IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+    settings.KEEP_LINE_BREAKS = false;
+    doTest();
+  }
+
+  public void testSCR279() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
+    doTest();
+  }
+
+  public void testSCR395() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    doTest();
+  }
+
+  public void testSCR11799() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
+    settings.CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    doTest();
+  }
+
+  public void testSCR501() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.KEEP_FIRST_COLUMN_COMMENT = true;
+    doTest();
+  }
+
+  public void testSCR879() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    doTest();
+  }
+
+  public void testSCR11296() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.RIGHT_MARGIN = 50;
+    settings.WRAP_COMMENTS = true;
+    settings.ENABLE_JAVADOC_FORMATTING = true;
+    settings.JD_P_AT_EMPTY_LINES = false;
+    settings.JD_KEEP_EMPTY_LINES = false;
+    doTest();
+  }
+
+  public void testSCR547() throws Exception {
+    doTextTest("class Foo { \n" +
+               "    Object[] objs = { \n" +
+               "            new Object() { \n" +
+               "        public String toString() { \n" +
+               "            return \"x\"; \n" +
+               "        } \n" +
+               "    } \n" +
+               "    }; \n" +
+"}", "class Foo {\n" +
+     "    Object[] objs = {\n" +
+     "            new Object() {\n" +
+     "                public String toString() {\n" +
+     "                    return \"x\";\n" +
+     "                }\n" +
+     "            }\n" +
+     "    };\n" +
+     "}");
+  }
+
+
+  public void testSCR479() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.RIGHT_MARGIN = 80;
+    settings.TERNARY_OPERATION_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    doTextTest("public class Foo {\n" +
+               "    public static void main(String[] args) {\n" +
+               "        if (name != null ?                !name.equals(that.name) : that.name !=                null)\n" +
+               "            return false;\n" +
+               "    }\n" +
+"}", "public class Foo {\n" +
+     "    public static void main(String[] args) {\n" +
+     "        if (name != null ? !name.equals(that.name) : that.name != null)\n" +
+     "            return false;\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSCR190() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.KEEP_LINE_BREAKS = false;
+    doTextTest("public class EntityObject \n" +
+               "{ \n" +
+               "    private Integer id; \n" +
+               "\n" +
+               "    public Integer getId() \n" +
+               "    { \n" +
+               "        return id; \n" +
+               "    } \n" +
+               "\n" +
+               "    public void setId(Integer id) \n" +
+               "    { \n" +
+               "        this.id = id; \n" +
+               "    } \n" +
+"}", "public class EntityObject {\n" +
+     "    private Integer id;\n" +
+     "\n" +
+     "    public Integer getId() {\n" +
+     "        return id;\n" +
+     "    }\n" +
+     "\n" +
+     "    public void setId(Integer id) {\n" +
+     "        this.id = id;\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSCR1535() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    doTextTest("public class Foo {\n" +
+               "    public int foo() {\n" +
+               "        if (a) {\n" +
+               "            return;\n" +
+               "        }\n" +
+               "    }\n" +
+"}", "public class Foo\n" +
+     "{\n" +
+     "    public int foo()\n" +
+     "    {\n" +
+     "        if (a)\n" +
+     "        {\n" +
+     "            return;\n" +
+     "        }\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSCR970() throws Exception {
+    final CodeStyleSettings settings = getSettings();
+    settings.THROWS_KEYWORD_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    settings.THROWS_LIST_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    settings.METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  public void testSCR2632() throws Exception {
+    getSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().WRAP_COMMENTS = true;
+    getSettings().RIGHT_MARGIN = 20;
+
+    doTextTest("/**\n" + " * <p />\n" + " * Another paragraph of the description placed after blank line.\n" + " */\n" + "class A{}",
+               "/**\n" +
+               " * <p/>\n" +
+               " * Another paragraph\n" +
+               " * of the description\n" +
+               " * placed after\n" +
+               " * blank line.\n" +
+               " */\n" +
+               "class A {\n" +
+               "}");
+  }
+
+  public void testSCR1486() throws Exception {
+    doTextTest("public class Test {\n" + "  private BigDecimal\n" + "}", "public class Test {\n" + "    private BigDecimal\n" + "}");
+
+    doTextTest("public class Test {\n" + "  @NotNull private BigDecimal\n" + "}",
+               "public class Test {\n" + "    @NotNull\n" + "    private BigDecimal\n" + "}");
+
+  }
+
+  public void test1607() throws Exception {
+    getSettings().RIGHT_MARGIN = 30;
+    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getSettings().METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    doTextTest("class TEst {\n" + "void foo(A a,B b){ /* compiled code */ }\n" + "}",
+               "class TEst {\n" + "    void foo(A a, B b)\n" + "    { /* compiled code */ }\n" + "}");
+  }
+
+  public void testSCR1615() throws Exception {
+    getSettings().CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+
+    doTextTest(
+      "public class ZZZZ \n" + "   { \n" + "   public ZZZZ() \n" + "      { \n" + "      if (a){\n" + "foo();}\n" + "      } \n" + "   }",
+      "public class ZZZZ\n" +
+      "    {\n" +
+      "    public ZZZZ()\n" +
+      "        {\n" +
+      "        if (a)\n" +
+      "            {\n" +
+      "            foo();\n" +
+      "            }\n" +
+      "        }\n" +
+      "    }");
+  }
+
+  public void testSCR1047() throws Exception {
+    doTextTest("class Foo{\n" + "    void foo(){\n" + "        String field1, field2;\n" + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + "        String field1, field2;\n" + "    }\n" + "}");
+  }
+
+  public void testSCR524() throws Exception {
+    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
+    doTextTest("class Foo {\n" + "    void foo() { return;}" + "}", "class Foo {\n" + "    void foo() { return;}\n" + "}");
+
+    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = false;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+
+    doTextTest("class Foo{\n" +
+               "void foo() {\n" +
+               "if(a) {return;}\n" +
+               "for(a = 0; a < 10; a++) {return;}\n" +
+               "switch(a) {case 1: return;}\n" +
+               "do{return;} while (a);\n" +
+               "while(a){return;}\n" +
+               "try{return;} catch(Ex e){return;} finally{return;}\n" +
+               "}\n" +
+"}", "class Foo {\n" +
+     "    void foo() {\n" +
+     "        if (a) {return;}\n" +
+     "        for (a = 0; a < 10; a++) {return;}\n" +
+     "        switch (a)\n" +
+     "            {\n" +
+     "                case 1:\n" +
+     "                    return;\n" +
+     "            }\n" +
+     "        do {return;} while (a);\n" +
+     "        while (a) {return;}\n" +
+     "        try {return;} catch (Ex e) {return;} finally {return;}\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSCR3062() throws Exception {
+    getSettings().KEEP_LINE_BREAKS = false;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getSettings().RIGHT_MARGIN = 80;
+
+    getSettings().PREFER_PARAMETERS_WRAP = true;
+
+    doTextTest("public class Foo { \n" +
+               "    public static void main() { \n" +
+               "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
+               "                                                    \"fox jumped over\", \n" +
+               "                                                    \"the lazy\", \"dog\"); \n" +
+               "    } \n" +
+"}", "public class Foo {\n" +
+     "    public static void main() {\n" +
+     "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\",\n" +
+     "                                                    \"fox jumped over\",\n" +
+     "                                                    \"the lazy\", \"dog\");\n" +
+     "    }\n" +
+     "}");
+
+    getSettings().PREFER_PARAMETERS_WRAP = false;
+
+    doTextTest("public class Foo { \n" +
+               "    public static void main() { \n" +
+               "        foo.foobelize().foobelize().foobelize().bar(\"The quick brown\", \n" +
+               "                                                    \"fox jumped over\", \n" +
+               "                                                    \"the lazy\", \"dog\"); \n" +
+               "    } \n" +
+"}", "public class Foo {\n" +
+     "    public static void main() {\n" +
+     "        foo.foobelize().foobelize().foobelize()\n" +
+     "                .bar(\"The quick brown\", \"fox jumped over\", \"the lazy\", \"dog\");\n" +
+     "    }\n" +
+     "}");
+
+  }
+
+  public void testSCR1658() throws Exception {
+    doTextTest("/** \n" + " * @author\tMike\n" + " */\n" + "public class Foo {\n" + "}",
+               "/**\n" + " * @author Mike\n" + " */\n" + "public class Foo {\n" + "}");
+  }
+
+  public void testSCR1699() throws Exception {
+    doTextTest("class Test {\n" + "    Test(String t1 , String t2) {\n" + "    }\n" + "}",
+               "class Test {\n" + "    Test(String t1, String t2) {\n" + "    }\n" + "}");
+  }
+
+  public void testSCR1700() throws Exception {
+    doTextTest("class Test {\n" + "    Test(String      t1 , String      t2) {\n" + "    }\n" + "}",
+               "class Test {\n" + "    Test(String t1, String t2) {\n" + "    }\n" + "}");
+  }
+
+  public void testSCR1701() throws Exception {
+    getSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    getSettings().SPACE_WITHIN_METHOD_PARENTHESES = false;
+    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTextTest("class Foo {\n" + "    void foo() {\n" + "        foo(a,b);" + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + "        foo( a, b );\n" + "    }\n" + "}");
+  }
+
+  public void testSCR1703() throws Exception {
+    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    doTextTest("class Foo{\n" +
+               "    void foo() {\n" +
+               "        for (Object o : localizations) {\n" +
+               "            //do something \n" +
+               "        }\n" +
+               "    }\n" +
+"}", "class Foo {\n" +
+     "    void foo() {\n" +
+     "        for (Object o : localizations)\n" +
+     "        {\n" +
+     "            //do something \n" +
+     "        }\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSCR1804() throws Exception {
+    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    doTextTest(
+      "class Foo {\n" + "    void foo() {\n" + "        int i;\n" + "        i = \n" + "                1 + 2;\n" + "    }\n" + "}",
+      "class Foo {\n" + "    void foo() {\n" + "        int i;\n" + "        i =\n" + "                1 + 2;\n" + "    }\n" + "}");
+
+    doTextTest("class Foo {\n" + "    void foo() {\n" + "        i = j =\n" + "        k = l = 1 + 2;\n" + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + "        i = j =\n" + "        k = l = 1 + 2;\n" + "    }\n" + "}");
+
+  }
+
+  public void testSCR1795() throws Exception {
+    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
+    doTextTest("public class Test {\n" +
+               "    public static void main(String[] args) {\n" +
+               "        do {\n" +
+               "            // ...\n" +
+               "        } while (true);\n" +
+               "    }\n" +
+"}", "public class Test {\n" +
+     "    public static void main(String[] args) {\n" +
+     "        do {\n" +
+     "            // ...\n" +
+     "        } while (true);\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSCR1936() throws Exception {
+    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 4;
+    doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "}",
+               "/**\n" + " * Foo - test class\n" + " */\n" + "class Foo {\n" + "\n" + "\n" + "\n" + "\n" + "}");
+
+    doTextTest("/**\n" + " * Foo - test class\n" + " */\n" + "class Foo{\n" + "    int myFoo;\n" + "}",
+               "/**\n" + " * Foo - test class\n" + " */\n" + "class Foo {\n" + "\n" + "\n" + "\n" + "\n" + "    int myFoo;\n" + "}");
+
+  }
+
+  public void test1980() throws Exception {
+    getSettings().RIGHT_MARGIN = 144;
+    getSettings().TERNARY_OPERATION_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
+    getSettings().TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true;
+    doTextTest("class Foo{\n" +
+               "    void foo() {\n" +
+               "final VirtualFile moduleRoot = moduleRelativePath.equals(\"\") ? projectRootDirAfter : projectRootDirAfter.findFileByRelativePath(moduleRelativePath);\n" +
+               "    }\n" +
+"}", "class Foo {\n" +
+     "    void foo() {\n" +
+     "        final VirtualFile moduleRoot = moduleRelativePath.equals(\"\")\n" +
+     "                                       ? projectRootDirAfter\n" +
+     "                                       : projectRootDirAfter.findFileByRelativePath(moduleRelativePath);\n" +
+     "    }\n" +
+     "}");
+  }
+
+    public void testSCR2089() throws Exception {
+    doTextTest("class Test { \n" +
+               "    void test(int i) { \n" +
+               "        switch (i) { \n" +
+               "            case 1: { \n" +
+               "                int x = 0; \n" +
+               "                System.out.println(x); \n" +
+               "            } \n" +
+               "                break; \n" +
+               "            case 2: { \n" +
+               "                int y = 0; \n" +
+               "                System.out.println(y); \n" +
+               "            } \n" +
+               "                break; \n" +
+               "        } \n" +
+               "    } \n" +
+"}", "class Test {\n" +
+     "    void test(int i) {\n" +
+     "        switch (i) {\n" +
+     "            case 1: {\n" +
+     "                int x = 0;\n" +
+     "                System.out.println(x);\n" +
+     "            }\n" +
+     "            break;\n" +
+     "            case 2: {\n" +
+     "                int y = 0;\n" +
+     "                System.out.println(y);\n" +
+     "            }\n" +
+     "            break;\n" +
+     "        }\n" +
+     "    }\n" +
+     "}");
+  }
+
+  public void testSCR2122() throws Exception {
+    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 3;
+
+    doTextTest("class Foo {\n" +
+               "    void foo() {\n" +
+               "        new Runnable() {\n" +
+               "            public void run() {\n" +
+               "            }\n" +
+               "        }\n" +
+               "    }\n" +
+"}", "class Foo {\n" +
+     "\n" +
+     "\n" +
+     "\n" +
+     "    void foo() {\n" +
+     "        new Runnable() {\n" +
+     "            public void run() {\n" +
+     "            }\n" +
+     "        }\n" +
+     "    }\n" +
+     "}");
+  }
+
   public void testSCR2132() throws Exception {
     getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     getSettings().ELSE_ON_NEW_LINE = true;
@@ -2041,87 +2809,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
      "}");
   }
 
-  public void testNextLineShiftedForBlockStatement() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED;
-
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "        foo();\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        if (a)\n" + "            foo();\n" + "    }\n" + "}");
-  }
-
-  private void doTest() throws Exception {
-    doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
-  }
-
-  private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
-
-    doTextTest(loadFile(fileNameBefore), loadFile(fileNameAfter));
-
-
-  }
-
-  private void doTextTest(final String text, String textAfter) throws IncorrectOperationException {
-    final PsiFile file = createPseudoPhysicalFile("A.java", text);
-
-    if (myLineRange != null) {
-      final DocumentImpl document = new DocumentImpl(text);
-      myTextRange =
-        new TextRange(document.getLineStartOffset(myLineRange.getStartOffset()), document.getLineEndOffset(myLineRange.getEndOffset()));
-    }
-
-    /*
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            performFormatting(file);
-          }
-        });
-      }
-    }, null, null);
-
-    assertEquals(prepareText(textAfter), prepareText(file.getText()));
-
-      
-    */
-
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-    final Document document = manager.getDocument(file);
-
-
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            document.replaceString(0, document.getTextLength(), text);
-            manager.commitDocument(document);
-            try {
-              if (myTextRange != null) {
-                CodeStyleManager.getInstance(getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
-              }
-              else {
-                CodeStyleManager.getInstance(getProject())
-                  .reformatText(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
-              }
-            }
-            catch (IncorrectOperationException e) {
-              assertTrue(e.getLocalizedMessage(), false);
-            }
-          }
-        });
-      }
-    }, "", "");
-
-
-    if (document == null) {
-      fail("Don't expect the document to be null");
-      return;
-    }
-    assertEquals(prepareText(textAfter), prepareText(document.getText()));
-    manager.commitDocument(document);
-    assertEquals(prepareText(textAfter), prepareText(file.getText()));
-
-  }
-
   public void testIDEADEV1047() throws Exception {
     doTextTest("class Foo{\n" + "String field1\n" + ",\n" + "field2\n" + ";" + "}",
                "class Foo {\n" + "    String field1,\n" + "            field2;\n" + "}");
@@ -2135,11 +2822,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     doTextTest("class Foo{\n" + "String field1\n" + ",\n" + "field2\n" + "; String field3;" + "}",
                "class Foo {\n" + "    String field1,\n" + "            field2;\n" + "    String field3;\n" + "}");
 
-  }
-
-  public void testFieldWithJavadocAndAnnotation() throws Exception {
-    doTextTest("class Foo {\n" + "    /**\n" + "     * java doc\n" + "     */\n" + "    @NoInspection\n" + "    String field;\n" + "}",
-               "class Foo {\n" + "    /**\n" + "     * java doc\n" + "     */\n" + "    @NoInspection\n" + "    String field;\n" + "}");
   }
 
   public void testSCR2241() throws Exception {
@@ -2167,31 +2849,7 @@ public class JavaFormatterTest extends LightIdeaTestCase {
      "}");
   }
 
-  public void testLongCallChainAfterElse() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    getSettings().KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    getSettings().ELSE_ON_NEW_LINE = false;
-    getSettings().RIGHT_MARGIN = 110;
-    getSettings().KEEP_LINE_BREAKS = false;
-    doTextTest("class Foo {\n" +
-               "    void foo() {\n" +
-               "        if (types.length > 1) // returns multiple columns\n" +
-               "        {\n" +
-               "        } else\n" +
-               "            result.add(initializeObject(os, types[0], initializeCollections, initializeAssociations, initializeChildren));" +
-               "    }\n" +
-"}", "class Foo {\n" +
-     "    void foo() {\n" +
-     "        if (types.length > 1) // returns multiple columns\n" +
-     "        {\n" +
-     "        } else\n" +
-     "            result.add(initializeObject(os, types[0], initializeCollections, initializeAssociations, initializeChildren));\n" +
-     "    }\n" +
-     "}");
-  }
-
-  public void testSCRIDEA_4783() throws IncorrectOperationException {
+    public void testSCRIDEA_4783() throws IncorrectOperationException {
     getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().RIGHT_MARGIN = 80;
@@ -2399,139 +3057,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
      "}");
   }
 
-  public void testSpacesIncode() throws Exception {
-
-    final JavaPsiFacade facade = getJavaFacade();
-    final LanguageLevel level = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-
-    try {
-      doTextTest("class C<Y, X> {\n" + "}", "class C<Y, X> {\n" + "}");
-
-      getSettings().SPACE_BEFORE_METHOD_LBRACE = true;
-      getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-
-      doTextTest("enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}",
-                 "enum En {\n" + "    A(10) {},\n" + "    B(10) {},\n" + "    C(10);\n" + "\n" + "    En(int i) { }\n" + "}");
-
-      doTextTest("class C {\n" +
-                 "    void foo (Map<?, String> s) {\n" +
-                 "        Set<? extends Map<?, String>.Entry<?, String>> temp = s.entries();\n" +
-                 "    }\n" +
-"}", "class C {\n" +
-     "    void foo(Map<?, String> s) {\n" +
-     "        Set<? extends Map<?, String>.Entry<?, String>> temp = s.entries();\n" +
-     "    }\n" +
-     "}");
-
-      doTextTest("class B {\n" +
-                 "    public final A<String> myDelegate = new A<String>();\n" +
-                 "\n" +
-                 "    public List<? extends String> method1() {\n" +
-                 "        return myDelegate.method1();\n" +
-                 "    }\n" +
-                 "\n" +
-                 "    public String method2(String t) {\n" +
-                 "        return myDelegate.method2(t);\n" +
-                 "    }\n" +
-"}", "class B {\n" +
-     "    public final A<String> myDelegate = new A<String>();\n" +
-     "\n" +
-     "    public List<? extends String> method1() {\n" +
-     "        return myDelegate.method1();\n" +
-     "    }\n" +
-     "\n" +
-     "    public String method2(String t) {\n" +
-     "        return myDelegate.method2(t);\n" +
-     "    }\n" +
-     "}");
-    }
-    finally {
-      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(level);
-    }
-
-  }
-
-  ///IDEA-7761
-  public void testKeepBlankLineInCodeBeforeComment() throws Exception {
-    getSettings().KEEP_BLANK_LINES_IN_CODE = 1;
-    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
-    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
-
-    doTextTest("public class ReformatProblem {\n" +
-               "\n" +
-               "    //comment in declaration\n" +
-               "    public static void main(String[] args) {\n" +
-               "        for (String arg : args) {\n" +
-               "            \n" +
-               "            // a first system out\n" +
-               "            System.out.println(\"\");\n" +
-               "            \n" +
-               "            // another system out\n" +
-               "            System.out.println(\"arg = \" + arg);\n" +
-               "        }\n" +
-               "    }\n" +
-"}", "public class ReformatProblem {\n" +
-     "    //comment in declaration\n" +
-     "    public static void main(String[] args) {\n" +
-     "        for (String arg : args) {\n" +
-     "\n" +
-     "            // a first system out\n" +
-     "            System.out.println(\"\");\n" +
-     "\n" +
-     "            // another system out\n" +
-     "            System.out.println(\"arg = \" + arg);\n" +
-     "        }\n" +
-     "    }\n" +
-     "}");
-
-    getSettings().KEEP_BLANK_LINES_IN_CODE = 0;
-    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
-    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
-
-    doTextTest("public class ReformatProblem {\n" +
-               "\n" +
-               "    //comment in declaration\n" +
-               "    public static void main(String[] args) {\n" +
-               "        for (String arg : args) {\n" +
-               "            \n" +
-               "            // a first system out\n" +
-               "            System.out.println(\"\");\n" +
-               "            \n" +
-               "            // another system out\n" +
-               "            System.out.println(\"arg = \" + arg);\n" +
-               "        }\n" +
-               "    }\n" +
-"}", "public class ReformatProblem {\n" +
-     "\n" +
-     "    //comment in declaration\n" +
-     "    public static void main(String[] args) {\n" +
-     "        for (String arg : args) {\n" +
-     "            // a first system out\n" +
-     "            System.out.println(\"\");\n" +
-     "            // another system out\n" +
-     "            System.out.println(\"arg = \" + arg);\n" +
-     "        }\n" +
-     "    }\n" +
-     "}");
-
-  }
-
-  public void testSpaceBeforeTryBrace() throws Exception {
-    getSettings().SPACE_BEFORE_TRY_LBRACE = false;
-    getSettings().SPACE_BEFORE_FINALLY_LBRACE = true;
-    doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        try{\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}");
-
-    getSettings().SPACE_BEFORE_TRY_LBRACE = true;
-    getSettings().SPACE_BEFORE_FINALLY_LBRACE = false;
-
-    doTextTest("class Foo{\n" + "    void foo() {\n" + "        try {\n" + "        } finally {\n" + "        }\n" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        try {\n" + "        } finally{\n" + "        }\n" + "    }\n" + "}");
-
-  }
-
   public void testIDEADEV_6239() throws Exception {
     getSettings().ENABLE_JAVADOC_FORMATTING = true;
     doTextTest("public class Test {\n" +
@@ -2551,84 +3076,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
      "     */\n" +
      "    private String s;\n" +
      "}");
-  }
-
-  public void testFormatComments() throws Exception {
-    getSettings().ENABLE_JAVADOC_FORMATTING = true;
-    doTextTest("public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}",
-               "public class Test {\n" + "\n" + "    /**\n" + "     * The s property.\n" + "     */\n" + "    private String s;\n" + "}");
-
-  }
-
-  public void testDoNotWrapLBrace() throws IncorrectOperationException {
-    getSettings().BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-    getSettings().RIGHT_MARGIN = 66;
-    doTextTest("public class Test {\n" +
-               "    void foo(){\n" +
-               "        if (veryLongIdentifier1 == 1 && veryLongIdentifier2 == 2) {\n" +
-               "            doSmth();\n" +
-               "        }\n" +
-               "    }\n" +
-"}", "public class Test {\n" +
-     "    void foo() {\n" +
-     "        if (veryLongIdentifier1 == 1 && veryLongIdentifier2 == 2) {\n" +
-     "            doSmth();\n" +
-     "        }\n" +
-     "    }\n" +
-     "}");
-  }
-
-  public void testNewLinesAroundArrayInitializer() throws IncorrectOperationException {
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
-    getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
-    getSettings().RIGHT_MARGIN = 40;
-    doTextTest("class Foo {\n" + "    int[] a = new int[]{1,2,0x0052,0x0053,0x0054,0x0054,0x0054};\n" + "}", "class Foo {\n" +
-                                                                                                             "    int[] a = new int[]{\n" +
-                                                                                                             "            1, 2, 0x0052, 0x0053,\n" +
-                                                                                                             "            0x0054, 0x0054, 0x0054\n" +
-                                                                                                             "    };\n" +
-                                                                                                             "}");
-  }
-
-  public void testSpaceAfterCommaInEnum() throws IncorrectOperationException {
-    getSettings().SPACE_AFTER_COMMA = true;
-
-    final JavaPsiFacade facade = getJavaFacade();
-    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    try {
-      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
-
-
-      doTextTest("public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}",
-                 "public enum StringExDirection {\n" + "\n" + "    RIGHT_TO_LEFT, LEFT_TO_RIGHT\n" + "\n" + "}");
-    }
-    finally {
-      LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(effectiveLanguageLevel);
-    }
-  }
-
-  public void testRemoveBraceBeforeInstanceOf() throws IncorrectOperationException {
-    doTextTest("class ReformatInstanceOf {\n" +
-               "    void foo(Object string) {\n" +
-               "        if (string.toString() instanceof String) {} // reformat me\n" +
-               "    }\n" +
-"}", "class ReformatInstanceOf {\n" +
-     "    void foo(Object string) {\n" +
-     "        if (string.toString() instanceof String) {\n" +
-     "        } // reformat me\n" +
-     "    }\n" +
-     "}");
-  }
-
-  public void testAnnotationBeforePackageLocalConstructor() throws IncorrectOperationException {
-    doTextTest("class Foo {\n" + "    @MyAnnotation Foo() {\n" + "    }\n" + "}",
-               "class Foo {\n" + "    @MyAnnotation\n" + "    Foo() {\n" + "    }\n" + "}");
-  }
-
-  public void testLongAnnotationsAreNotWrapped() throws Exception {
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    doTest();
   }
 
   public void testIDEADEV_8755() throws IncorrectOperationException {
@@ -2942,15 +3389,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     );
   }
 
-  private void doMethodTest(final String before, final String after) throws Exception {
-    doTextTest("class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + StringUtil.shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}");
-  }
-
-  private void doClassTest(final String before, final String after) throws Exception {
-    doTextTest("class Foo{\n" + before + '\n' + "}", "class Foo {\n" + StringUtil.shiftIndentInside(after, 4, false) + '\n' + "}");
-  }
-
   /*
   public void testIDEADEV_14192() throws IncorrectOperationException {
     getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
@@ -2966,428 +3404,93 @@ public class JavaFormatterTest extends LightIdeaTestCase {
   }
   */
 
-  public void testWrapExtendsList() throws Exception {
-    getSettings().RIGHT_MARGIN = 50;
-    getSettings().EXTENDS_LIST_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
-    getSettings().EXTENDS_KEYWORD_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+  // ------------------------------------------------
+  //              Util stuff
+  // ------------------------------------------------
 
-    doTextTest("class ColtreDataProvider extends DataProvider, AgentEventListener, ParameterDataEventListener {\n}",
-               "class ColtreDataProvider extends DataProvider,\n" +
-               "        AgentEventListener,\n" +
-               "        ParameterDataEventListener {\n}");
+  private void doTest() throws Exception {
+    doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
   }
 
-  public void testWrapLongExpression() throws Exception {
-    getSettings().RIGHT_MARGIN = 80;
-    getSettings().BINARY_OPERATION_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().ALIGN_MULTILINE_BINARY_OPERATION = true;
-    doTextTest("class Foo {\n" +
-               "    void foo () {\n" +
-               "        return (interval1.getEndIndex() >= interval2.getStartIndex() && interval3.getStartIndex() <= interval4.getEndIndex()) || (interval5.getEndIndex() >= interval6.getStartIndex() && interval7.getStartIndex() <= interval8.getEndIndex());" +
-               "    }\n" +
-               "}", "class Foo {\n" +
-                    "    void foo() {\n" +
-                    "        return (interval1.getEndIndex() >= interval2.getStartIndex() &&\n" +
-                    "                interval3.getStartIndex() <= interval4.getEndIndex()) ||\n" +
-                    "               (interval5.getEndIndex() >= interval6.getStartIndex() &&\n" +
-                    "                interval7.getStartIndex() <= interval8.getEndIndex());\n" +
-                    "    }\n" +
-                    "}");
-  }
+  private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
 
-  public void testDoNotWrapCallChainIfParametersWrapped() throws Exception {
-    getSettings().RIGHT_MARGIN = 87;
-    getSettings().CALL_PARAMETERS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    //getSettings().PREFER_PARAMETERS_WRAP = true;
+    doTextTest(loadFile(fileNameBefore), loadFile(fileNameAfter));
 
-    doMethodTest(
-      //9                    30                            70         80    86
-      "descriptors = manager.createProblemDescriptor(parameter1, parameter2, parameterparameterpar3,parameter4);",
-
-      "descriptors = manager.createProblemDescriptor(parameter1, parameter2,\n" +
-      "                                              parameterparameterpar3,\n" +
-      "                                              parameter4);"
-
-    );
-  }
-
-  public void testAlignTernaryOperation() throws Exception {
-    getSettings().ALIGN_MULTILINE_TERNARY_OPERATION = true;
-    doMethodTest("String s = x == 0 ? \"hello\" :\n" +
-                 "                x == 5 ? \"something else\" :\n" +
-                 "                        x > 0 ? \"bla, bla\" :\n" +
-                 "                                \"\";", "String s = x == 0 ? \"hello\" :\n" +
-                                                          "           x == 5 ? \"something else\" :\n" +
-                                                          "           x > 0 ? \"bla, bla\" :\n" +
-                                                          "           \"\";");
-
-    getSettings().TERNARY_OPERATION_SIGNS_ON_NEXT_LINE = true;
-
-    doMethodTest("int someVariable = a ?\n" + "x :\n" + "y;",
-                 "int someVariable = a ?\n" + "                   x :\n" + "                   y;");
-  }
-
-  public void testIDEADEV_20878_1() throws Exception {
-    doMethodTest("checking(new Expectations() {{\n" +
-                 "one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
-                 "}});", "checking(new Expectations() {{\n" +
-                         "    one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
-                         "}});");
-  }
-
-  public void testIDEADEV_20878_2() throws Exception {
-    doTextTest("class Class {\n" + "    private Type field; {\n" + "    }\n" + "}",
-               "class Class {\n" + "    private Type field; {\n" + "    }\n" + "}");
-
-    doTextTest("class T {\n" +
-               "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
-               "        fmt.setGroupingUsed(false);\n" +
-               "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-               "    }\n" +
-               "}", "class T {\n" +
-                    "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
-                    "        fmt.setGroupingUsed(false);\n" +
-                    "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-                    "    }\n" +
-                    "}");
-
-    doTextTest("class T {\n" +
-               "    private final DecimalFormat fmt = new DecimalFormat();\n" +
-               "    {\n" +
-               "        fmt.setGroupingUsed(false);\n" +
-               "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-               "    }\n" +
-               "}", "class T {\n" +
-                    "    private final DecimalFormat fmt = new DecimalFormat();\n" +
-                    "\n" +
-                    "    {\n" +
-                    "        fmt.setGroupingUsed(false);\n" +
-                    "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-                    "    }\n" +
-                    "}");
 
   }
 
-  public void testIDEADEV_3666() throws Exception {
-    getSettings().SPACE_AFTER_COMMA = true;
+  private void doTextTest(final String text, String textAfter) throws IncorrectOperationException {
+    final PsiFile file = createPseudoPhysicalFile("A.java", text);
 
-    doTextTest("class Foo {\n" + "Map<String,String> map() {}\n" + "}",
-               "class Foo {\n" + "    Map<String, String> map() {\n" + "    }\n" + "}");
-  }
-
-  public void testIDEADEV_18529() throws Exception {
-    doTextTest("public class TestBed\n" +
-               "{\n" +
-               "    public void methodOne()\n" +
-               "    {\n" +
-               "        //code...\n" +
-               "    }\n" +
-               "\n" +
-               "    @SomeAnnotation\n" +
-               "            <T extends Comparable> void methodTwo(T item) {\n" +
-               "        //code...\n" +
-               "    }\n" +
-               "\n" +
-               "    private void methodThree(String s) {\n" +
-               "        //code...\n" +
-               "    }\n" +
-               "}", "public class TestBed {\n" +
-                    "    public void methodOne() {\n" +
-                    "        //code...\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    @SomeAnnotation\n" +
-                    "    <T extends Comparable> void methodTwo(T item) {\n" +
-                    "        //code...\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    private void methodThree(String s) {\n" +
-                    "        //code...\n" +
-                    "    }\n" +
-                    "}");
-  }
-
-
- public void testIDEA_18299() throws Exception {
-   getSettings().RIGHT_MARGIN = 80;
-   getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-   doTextTest(
-     "@AttributeOverrides( { @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\"))," +
-     "@AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\"))," +
-     "@AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\"))," +
-     "@AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\"))," +
-     "@AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\"))," +
-     "@AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\"))," +
-     "@AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false))," +
-     "@AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\"))," +
-     "@AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\")) })\n" +
-     "class Foo {\n" +
-     "}",
-     "@AttributeOverrides({\n" +
-     "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
-     "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
-     "        @AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\")),\n" +
-     "        @AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\")),\n" +
-     "        @AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\")),\n" +
-     "        @AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\")),\n" +
-     "        @AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false)),\n" +
-     "        @AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\")),\n" +
-     "        @AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\"))})\n" +
-     "class Foo {\n" +
-     "}"
-   );
- }
-
-  public void testIDEA_18051() throws Exception {
-    getSettings().RIGHT_MARGIN = 80;
-    doTextTest("package formatting;\n" +
-               "\n" +
-               "public class EnumInAnnotationFormatting {\n" +
-               "\n" +
-               "    public enum TheEnum {\n" +
-               "\n" +
-               "        FIRST,\n" +
-               "        SECOND,\n" +
-               "        THIRD,\n" +
-               "\n" +
-               "    }\n" +
-               "\n" +
-               "    public @interface TheAnnotation {\n" +
-               "\n" +
-               "        TheEnum[] value();\n" +
-               "\n" +
-               "        String comment();\n" +
-               "\n" +
-               "    }\n" +
-               "\n" +
-               "\n" +
-               "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
-               "    public class Test {\n" +
-               "\n" +
-               "    }\n" +
-               "\n" +
-               "}", "package formatting;\n" +
-                    "\n" +
-                    "public class EnumInAnnotationFormatting {\n" +
-                    "\n" +
-                    "    public enum TheEnum {\n" +
-                    "\n" +
-                    "        FIRST,\n" +
-                    "        SECOND,\n" +
-                    "        THIRD,\n" +
-                    "\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    public @interface TheAnnotation {\n" +
-                    "\n" +
-                    "        TheEnum[] value();\n" +
-                    "\n" +
-                    "        String comment();\n" +
-                    "\n" +
-                    "    }\n" +
-                    "\n" +
-                    "\n" +
-                    "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
-                    "    public class Test {\n" +
-                    "\n" +
-                    "    }\n" +
-                    "\n" +
-                    "}");
-  }
-
-  public void testIDEA_17870() throws Exception {
-    doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
-  }
-
-  public void testIDEA_16151() throws Exception {
-    doClassTest("@ValidateNestedProperties({\n" +
-                "@Validate(field=\"name\", required=true, maxlength=Trip.NAME),\n" +
-                "@Validate(field=\"name\", required=true, maxlength=Trip.NAME)\n" +
-                "})" +
-                "public Trip getTrip() {\n" +
-                "}", "@ValidateNestedProperties({\n" +
-                     "        @Validate(field = \"name\", required = true, maxlength = Trip.NAME),\n" +
-                     "        @Validate(field = \"name\", required = true, maxlength = Trip.NAME)\n" +
-                     "})\n" +
-                     "public Trip getTrip() {\n" +
-                     "}");
-
-  }
-
-  public void testIDEA_14324() throws Exception {
-    getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = true;
-
-    doClassTest(
-      "@Ann1({ @Ann2,\n" +
-      "                      @Ann3})\n" +
-      "public AuthorAddress getAddress() {\n" +
-      "    return address;\n" +
-      "}",
-      "@Ann1({@Ann2,\n" +
-      "       @Ann3})\n" +
-      "public AuthorAddress getAddress() {\n" +
-      "    return address;\n" +
-      "}");
-
-    doClassTest("@AttributeOverrides({ @AttributeOverride(name = \"address\", column = @Column(name = \"ADDR\")),\n" +
-                "                      @AttributeOverride(name = \"country\", column = @Column(name = \"NATION\")) })\n" +
-                "public AuthorAddress getAddress() {\n" +
-                "    return address;\n" +
-                "}",
-                "@AttributeOverrides({@AttributeOverride(name = \"address\", column = @Column(name = \"ADDR\")),\n" +
-                "                     @AttributeOverride(name = \"country\", column = @Column(name = \"NATION\"))})\n" +
-                "public AuthorAddress getAddress() {\n" +
-                "    return address;\n" +
-                "}"
-
-    );
-  }
-
-  public void testRightMargin() throws Exception {
-    getSettings().WRAP_COMMENTS = true;
-    getSettings().RIGHT_MARGIN = 35;//      |
-    doTextTest(
-      "/** Here is one-line java-doc comment */" +
-      "class Foo {\n" +
-      "}",
-      "/**\n" +
-      " * Here is one-line java-doc\n" +
-      " * comment\n" +
-      " */\n" +
-      "class Foo {\n" +
-      "}");
-
-  }
-
-  public void testRightMargin_2() throws Exception {
-    getSettings().RIGHT_MARGIN = 65;
-    getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = true;
-    getSettings().KEEP_LINE_BREAKS = false;
-
-    doClassTest(
-      "public static final Map<LongType, LongType> longVariableName =\n" +
-      "variableValue;",
-      "public static final Map<LongType, LongType> longVariableName\n" +
-      "        = variableValue;");
-  }
-
-  public void testRightMargin_3() throws Exception {
-    getSettings().RIGHT_MARGIN = 65;
-    getSettings().ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
-    getSettings().KEEP_LINE_BREAKS = false;
-
-    doClassTest(
-      "public static final Map<LongType, LongType> longVariableName =\n" +
-      "variableValue;",
-      "public static final Map<LongType, LongType>\n" +
-      "        longVariableName = variableValue;");
-  }
-
-  public void testDoNotRemoveLineBreaksBetweenComments(){
-    getSettings().KEEP_LINE_BREAKS = false;
-    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
-
-    doTextTest(
-      "public class Foo {\n" +
-      "   //here is a comment\n" +
-      "   //line 2 of comment\n" +
-      "   public void myMethod() {\n" +
-      "       //a comment\n" +
-      "       //... another comment\n" +
-      "   }\n" +
-      "\n" +
-      "//save for later\n" +
-      "//    public void incompleteMethod() {\n" +
-      "//        int blah = 0;\n" +
-      "//        callSomeMethod();\n" +
-      "//        callSomeOtherMethod();\n" +
-      "//        doSomethingElse();\n" +
-      "//    }\n" +
-      "\n" +
-      "//comment at first line\n" +
-      "}",
-      "public class Foo {\n" +
-      "    //here is a comment\n" +
-      "    //line 2 of comment\n" +
-      "    public void myMethod() {\n" +
-      "        //a comment\n" +
-      "        //... another comment\n" +
-      "    }\n" +
-      "\n" +
-      "    //save for later\n" +
-      "    //    public void incompleteMethod() {\n" +
-      "    //        int blah = 0;\n" +
-      "    //        callSomeMethod();\n" +
-      "    //        callSomeOtherMethod();\n" +
-      "    //        doSomethingElse();\n" +
-      "    //    }\n" +
-      "\n" +
-      "    //comment at first line\n" +
-      "}");
-  }
-
-  public void testWrapParamsOnEveryItem() throws Exception {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
-
-    int oldMargin = codeStyleSettings.RIGHT_MARGIN;
-    boolean oldKeep = codeStyleSettings.KEEP_LINE_BREAKS;
-    int oldWrap = codeStyleSettings.METHOD_PARAMETERS_WRAP;
-
-    try {
-      codeStyleSettings.RIGHT_MARGIN = 80;
-      codeStyleSettings.KEEP_LINE_BREAKS = false;
-      codeStyleSettings.METHOD_PARAMETERS_WRAP = CodeStyleSettings.WRAP_ON_EVERY_ITEM;
-
-      doClassTest(
-        "public void foo(String p1,\n" +
-        "                String p2,\n" +
-        "                String p3,\n" +
-        "                String p4,\n" +
-        "                String p5,\n" +
-        "                String p6,\n" +
-        "                String p7) {\n" +
-        "    //To change body of implemented methods use File | Settings | File Templates.\n" +
-        "}",
-        "public void foo(String p1,\n" +
-        "                String p2,\n" +
-        "                String p3,\n" +
-        "                String p4,\n" +
-        "                String p5,\n" +
-        "                String p6,\n" +
-        "                String p7) {\n" +
-        "    //To change body of implemented methods use File | Settings | File Templates.\n" +
-        "}");
-    }
-    finally {
-      codeStyleSettings.RIGHT_MARGIN = oldMargin;
-      codeStyleSettings.KEEP_LINE_BREAKS = oldKeep;
-      codeStyleSettings.METHOD_PARAMETERS_WRAP = oldWrap;
+    if (myLineRange != null) {
+      final DocumentImpl document = new DocumentImpl(text);
+      myTextRange =
+        new TextRange(document.getLineStartOffset(myLineRange.getStartOffset()), document.getLineEndOffset(myLineRange.getEndOffset()));
     }
 
+    /*
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            performFormatting(file);
+          }
+        });
+      }
+    }, null, null);
+
+    assertEquals(prepareText(textAfter), prepareText(file.getText()));
+
+
+    */
+
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+    final Document document = manager.getDocument(file);
+
+
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            document.replaceString(0, document.getTextLength(), text);
+            manager.commitDocument(document);
+            try {
+              if (myTextRange != null) {
+                CodeStyleManager.getInstance(getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
+              }
+              else {
+                CodeStyleManager.getInstance(getProject())
+                  .reformatText(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
+              }
+            }
+            catch (IncorrectOperationException e) {
+              assertTrue(e.getLocalizedMessage(), false);
+            }
+          }
+        });
+      }
+    }, "", "");
+
+
+    if (document == null) {
+      fail("Don't expect the document to be null");
+      return;
+    }
+    assertEquals(prepareText(textAfter), prepareText(document.getText()));
+    manager.commitDocument(document);
+    assertEquals(prepareText(textAfter), prepareText(file.getText()));
+
   }
 
-  public void testCommentAfterDeclaration() throws Exception {
-    CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
 
-    int oldMargin = codeStyleSettings.RIGHT_MARGIN;
 
-    try {
-      codeStyleSettings.RIGHT_MARGIN = 20;
-      codeStyleSettings.ASSIGNMENT_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-      doMethodTest(
-        "int i=0; //comment comment",
-        "int i =\n" +
-        "        0; //comment comment"
-      );
+  private void doMethodTest(final String before, final String after) throws Exception {
+    doTextTest("class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + StringUtil.shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}");
+  }
 
-    }
-    finally {
-      codeStyleSettings.RIGHT_MARGIN = oldMargin;
-    }
+  private void doClassTest(final String before, final String after) throws Exception {
+    doTextTest("class Foo{\n" + before + '\n' + "}", "class Foo {\n" + StringUtil.shiftIndentInside(after, 4, false) + '\n' + "}");
   }
 
   private static String prepareText(String actual) {

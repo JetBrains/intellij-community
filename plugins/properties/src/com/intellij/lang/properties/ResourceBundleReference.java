@@ -54,6 +54,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
     return result;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myBundleName;
   }

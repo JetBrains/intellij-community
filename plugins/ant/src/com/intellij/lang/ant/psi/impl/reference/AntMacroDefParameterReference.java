@@ -43,7 +43,7 @@ public class AntMacroDefParameterReference extends AntGenericReference {
     myXmlElement = xmlElement;
   }
 
-  @Nullable
+  @NotNull
   public String getCanonicalText() {
     String text = super.getCanonicalText();
     if (text.indexOf("${") >= 0) {

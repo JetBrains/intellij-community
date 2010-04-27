@@ -17,12 +17,12 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -306,7 +306,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         myAdditionalComponents.add(beforePanel);
       }
 
-      final RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel();
+      final RefreshableOnComponent afterPanel = handler.getAfterCheckinConfigurationPanel(getDisposable());
       if (afterPanel != null) {
         afterBox.add(afterPanel.getComponent());
         afterVisible = true;

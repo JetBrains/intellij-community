@@ -73,6 +73,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
     return this;
   }
 
+  @NotNull
   public String getCanonicalText(){
     return getText();
   }
