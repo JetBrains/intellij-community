@@ -63,6 +63,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (UIUtil.isFullRowSelectionLAF()) {
         setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
+    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof UIUtil.MacTreeUI) {
+      setPaintFocusBorder(false);
+      setBackground(null);
+    }
     else {
       if (selected) {
         setPaintFocusBorder(true);
@@ -88,6 +92,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
 
     if (UIUtil.isUnderNimbusLookAndFeel() && selected && hasFocus) {
+      super.setOpaque(false);  // avoid erasing Nimbus focus frame
+      super.setIconOpaque(false);
+    }
+    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof UIUtil.MacTreeUI) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }

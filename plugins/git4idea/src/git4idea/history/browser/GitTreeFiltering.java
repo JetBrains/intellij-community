@@ -34,7 +34,7 @@ public interface GitTreeFiltering {
 
   // todo COPIES!
   @Nullable
-  List<String> getStartingPoints();
+  Collection<String> getStartingPoints();
   @Nullable
   List<String> getExcludePoints();
   Collection<ChangesFilter.Filter> getFilters();
