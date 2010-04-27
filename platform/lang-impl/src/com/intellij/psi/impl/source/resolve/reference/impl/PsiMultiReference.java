@@ -108,6 +108,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences.length > 1 && COMPARATOR.compare(myReferences[0], myReferences[1]) == 0;
   }
 
+  @NotNull
   public String getCanonicalText(){
     return chooseReference().getCanonicalText();
   }

@@ -58,6 +58,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return new TextRange(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
   }
 
+  @NotNull
   public String getCanonicalText() {
     return getRangeText();
   }

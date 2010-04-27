@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.switcher;
+package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.actionSystem.DataKey;
-
-import javax.swing.*;
-import java.util.List;
-
-public interface SwitchProvider extends QuickAccessProvider {
-
-  DataKey<SwitchProvider> KEY = DataKey.create("SwitchProvider");
-
-  List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider);
-  SwitchTarget getCurrentTarget();
-
-
+/**
+* @author Konstantin Bulenkov
+*/
+public enum MavenArtifactState {
+  ADDED, EXCLUDED, CONFLICT, DUPLICATE, CYCLE;
 }

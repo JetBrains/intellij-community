@@ -52,6 +52,7 @@ public abstract class MavenPsiReference implements PsiReference {
     return myElement;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myText;
   }

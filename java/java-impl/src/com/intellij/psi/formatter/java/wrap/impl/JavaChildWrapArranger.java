@@ -153,7 +153,7 @@ public class JavaChildWrapArranger {
       if (childType == JavaElementType.ANNOTATION) {
         return reservedWrapsProvider.getReservedWrap(JavaElementType.MODIFIER_LIST);
       }
-      ASTNode prevElement = FormattingAstUtil.getPrevElement(child);
+      ASTNode prevElement = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
       if (prevElement != null && prevElement.getElementType() == JavaElementType.ANNOTATION) {
         return reservedWrapsProvider.getReservedWrap(JavaElementType.MODIFIER_LIST);
       }

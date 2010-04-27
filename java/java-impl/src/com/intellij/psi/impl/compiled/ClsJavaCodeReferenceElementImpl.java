@@ -95,6 +95,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return this;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myCanonicalText;
   }

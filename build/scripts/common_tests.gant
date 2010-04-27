@@ -25,6 +25,8 @@ target('default': 'The default target') {
     jvmarg (value: "-ea")
     jvmarg (value: "-Didea.home.path=$home")
     pass("idea.test.group")
+    pass("idea.test.patterns")
+    pass("idea.fast.only")
     pass("teamcity.tests.recentlyFailedTests.file")
     jvmarg (value: "-Didea.platform.prefix=Idea")
     jvmarg (value: "-Didea.home.path=$home")

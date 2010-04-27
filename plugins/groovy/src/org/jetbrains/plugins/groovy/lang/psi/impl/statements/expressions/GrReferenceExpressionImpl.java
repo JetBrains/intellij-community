@@ -643,9 +643,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return Kind.TYPE_OR_PROPERTY;
   }
 
-  @Nullable
+  @NotNull
   public String getCanonicalText() {
-    return null;
+    return getRangeInElement().substring(getElement().getText());
   }
 
   public boolean isReferenceTo(PsiElement element) {

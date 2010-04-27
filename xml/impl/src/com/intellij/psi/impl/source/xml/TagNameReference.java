@@ -109,6 +109,7 @@ public class TagNameReference implements PsiReference {
     return null;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return getNameElement().getText();
   }

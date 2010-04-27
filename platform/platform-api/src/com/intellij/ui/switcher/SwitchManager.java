@@ -23,6 +23,8 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -30,6 +32,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +84,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
             IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
               public void run() {
                 if (myWaitingForAutoInitSession) {
-                  autoInitSession();
+                  tryToInitSessionFromFocus(null);
                 }
               }
             });
@@ -97,12 +100,16 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
     return false;
   }
 
-  private void autoInitSession() {
+  private ActionCallback tryToInitSessionFromFocus(@Nullable SwitchTarget preselected) {
+    if (mySession != null && !mySession.isFinished()) return new ActionCallback.Rejected();
+
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     SwitchProvider provider = SwitchProvider.KEY.getData(DataManager.getInstance().getDataContext(owner));
     if (provider != null) {
-      initSession(new SwitchingSession(provider, myAutoInitSessionEvent));
+      return initSession(new SwitchingSession(provider, myAutoInitSessionEvent, preselected));
     }
+
+    return new ActionCallback.Rejected();
   }
 
   private void cancelWaitingForAutoInit() {
@@ -204,16 +211,17 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
   }
 
   public static SwitchManager getInstance(Project project) {
-    return project.getComponent(SwitchManager.class);
+    return project != null ? project.getComponent(SwitchManager.class) : null;
   }
 
   public SwitchingSession getSession() {
     return mySession;
   }
 
-  public void initSession(SwitchingSession session) {
+  public ActionCallback initSession(SwitchingSession session) {
     disposeSession(mySession);
     mySession = session;
+    return new ActionCallback.Done();
   }
 
   private void disposeSession(SwitchingSession session) {
@@ -234,4 +242,35 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
     return "ViewSwitchManager";
   }
 
+  public boolean isSessionActive() {
+    return mySession != null && !mySession.isFinished();
+  }
+
+  public ActionCallback applySwitch() {
+    final ActionCallback result = new ActionCallback();
+    if (isSessionActive()) {
+      mySession.finish().doWhenDone(new AsyncResult.Handler<SwitchTarget>() {
+        public void run(final SwitchTarget switchTarget) {
+          mySession = null;
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+            public void run() {
+              tryToInitSessionFromFocus(switchTarget).doWhenProcessed(new Runnable() {
+                public void run() {
+                  result.setDone();
+                }
+              });
+            }
+          });
+        }
+      });
+    } else {
+      result.setDone();
+    }
+
+    return result;
+  }
+
+  public boolean canApplySwitch() {
+    return isSessionActive() && mySession.isSelectionWasMoved();
+  }
 }

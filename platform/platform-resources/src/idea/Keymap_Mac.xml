@@ -20,6 +20,10 @@
       <keyboard-shortcut first-keystroke="control alt RIGHT"/>
     </action>
 
+    <action id="SwitchApply">
+      <keyboard-shortcut first-keystroke="control alt ENTER"/>
+    </action>
+
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="alt TAB"/>
     </action>

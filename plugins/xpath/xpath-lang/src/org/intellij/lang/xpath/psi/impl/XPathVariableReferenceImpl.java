@@ -91,6 +91,7 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
         return context.resolve(this);
     }
 
+    @NotNull
     public String getCanonicalText() {
         return getText();
     }

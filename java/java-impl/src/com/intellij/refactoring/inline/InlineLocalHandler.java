@@ -16,10 +16,9 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -166,7 +165,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
 
-    if (checkRefsInAugmentedAssignment(refsToInline, project, editor, localName)) {
+    if (checkRefsInAugmentedAssignmentOrUnaryModified(refsToInline, project, editor, localName)) {
       return;
     }
 
@@ -238,21 +237,21 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     }, RefactoringBundle.message("inline.command", localName), null);
   }
 
-  private static boolean checkRefsInAugmentedAssignment(final PsiElement[] refsToInline, final Project project, final Editor editor,
+  private static boolean checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, final Project project, final Editor editor,
                                                         final String localName) {
-    for(PsiElement element: refsToInline) {
-      if (element.getParent() instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) element.getParent();
-        if (element == assignmentExpression.getLExpression()) {
-          EditorColorsManager manager = EditorColorsManager.getInstance();
-          final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
-          HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{element}, writeAttributes, true, null);
+    for (PsiElement element : refsToInline) {
+      final PsiElement parent = element.getParent();
 
-          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
-          CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-          return true;
-        }
+      if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression() || 
+          parent instanceof PsiPrefixExpression || parent instanceof PsiPostfixExpression ) {
+
+        EditorColorsManager manager = EditorColorsManager.getInstance();
+        final TextAttributes writeAttributes = manager.getGlobalScheme().getAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
+        HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{element}, writeAttributes, true, null);
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+        WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        return true;
       }
     }
     return false;

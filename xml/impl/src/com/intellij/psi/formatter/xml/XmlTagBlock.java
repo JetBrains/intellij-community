@@ -21,13 +21,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.*;
 import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -221,6 +221,26 @@ public class XmlTagBlock extends AbstractXmlBlock{
         return true;
       }
     }
+    
+    PsiFile containingFile = child.getPsi().getContainingFile();
+    FileViewProvider fileViewProvider = containingFile.getViewProvider();
+    
+    if (fileViewProvider instanceof TemplateLanguageFileViewProvider) {
+      Language templateLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage();
+      PsiElement at = fileViewProvider.findElementAt(child.getStartOffset(), templateLanguage);
+
+      if (at instanceof XmlToken) {
+        at = at.getParent();
+      }
+      
+      // TODO: several comments
+      if (at instanceof PsiComment && 
+          at.getTextRange().equals(child.getTextRange()) && 
+          at.getNode() != child) {
+        return buildInjectedPsiBlocks(result, at.getNode(), wrap, alignment, indent);
+      }
+    }
+
     return false;
   }
 

@@ -394,6 +394,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       return descriptor != null ? descriptor.getDeclaration() : null;
     }
 
+    @NotNull
     public String getCanonicalText() {
       return getName();
     }
