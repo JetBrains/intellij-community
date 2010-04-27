@@ -27,6 +27,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.formatter.java.spacing.JavaBraceSpacingProcessor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -45,7 +46,9 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import java.util.Map;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor"); 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor");
+
+  private final JavaBraceSpacingProcessor myBraceSpacingProcessor;
 
   private PsiElement myParent;
   private int myRole1;
@@ -63,7 +66,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<JavaSpacePropertyProcessor>();
 
-  private JavaSpacePropertyProcessor() {}
+  private JavaSpacePropertyProcessor() {
+    this(JavaBraceSpacingProcessor.INSTANCE);
+  }
+
+  public JavaSpacePropertyProcessor(JavaBraceSpacingProcessor braceSpacingProcessor) {
+    myBraceSpacingProcessor = braceSpacingProcessor;
+  }
 
   private void doInit(final ASTNode child, final CodeStyleSettings settings) {
     init(child);
@@ -204,8 +213,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LBRACE) {
       if (!(aClass instanceof PsiAnonymousClass)) {
-        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
-                                         mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+        myResult = myBraceSpacingProcessor.getLBraceSpacing(mySettings, myChild2);
       } else {
         if (myRole2 == ChildRole.CLASS_INITIALIZER && isTheOnlyClassMember(myChild2)) {
           myResult = Spacing.createSpacing(0, 0, 0,
@@ -273,8 +281,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.CLASS_INITIALIZER) {
       if (myRole2 == ChildRole.RBRACE) {
-        myResult = Spacing
-          .createSpacing(0, Integer.MAX_VALUE, isInsideAnonimusClass() ? 0 : 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+        myResult = myBraceSpacingProcessor.getRBraceSpacing(mySettings, myChild1, isInsideAnonimusClass());
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
