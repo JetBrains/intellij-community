@@ -15,17 +15,11 @@
  */
 package com.intellij.ui.switcher;
 
-import com.intellij.openapi.actionSystem.DataKey;
-
 import javax.swing.*;
-import java.util.List;
 
-public interface SwitchProvider extends QuickAccessProvider {
+public interface QuickAccessProvider {
 
-  DataKey<SwitchProvider> KEY = DataKey.create("SwitchProvider");
-
-  List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider);
-  SwitchTarget getCurrentTarget();
-
+  JComponent getComponent();
+  boolean isCycleRoot();
 
 }

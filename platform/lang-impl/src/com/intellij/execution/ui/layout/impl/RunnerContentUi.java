@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.*;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
@@ -52,7 +53,8 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider {
+public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener, SwitchProvider,
+                                        QuickActionProvider {
 
   @NonNls public static final String LAYOUT = "Runner.Layout";
   @NonNls public static final String VIEW_POPUP = "Runner.View.Popup";
@@ -103,6 +105,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private boolean myToDisposeRemovedContent = true;
 
   private int myAttractionCount;
+  private ActionGroup myLeftToolbarActions;
 
   public RunnerContentUi(Project project,
                          RunnerLayoutUi ui,
@@ -135,6 +138,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final ActionToolbar tb = myActionManager.createActionToolbar(place, group, false);
     tb.setTargetComponent(myComponent);
     myToolbar.setContent(tb.getComponent());
+    myLeftToolbarActions = group;
 
     myComponent.revalidate();
     myComponent.repaint();
@@ -729,7 +733,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return myToDisposeRemovedContent;
   }
 
-  private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
+  private class MyComponent extends Wrapper.FocusHolder implements DataProvider, QuickActionProvider {
 
     private boolean myWasEverAdded;
 
@@ -747,6 +751,23 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       else {
         return null;
       }
+    }
+
+    @Override
+    public String getName() {
+      return RunnerContentUi.this.getName();
+    }
+
+    public List<AnAction> getActions(boolean originalProvider) {
+      return RunnerContentUi.this.getActions(originalProvider);
+    }
+
+    public JComponent getComponent() {
+      return RunnerContentUi.this.getComponent();
+    }
+
+    public boolean isCycleRoot() {
+      return RunnerContentUi.this.isCycleRoot();
     }
 
     public void addNotify() {
@@ -1107,6 +1128,21 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   public RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerUi;
+  }
+
+  public String getName() {
+    return mySessionName;
+  }
+
+  public List<AnAction> getActions(boolean originalProvider) {
+    ArrayList<AnAction> result = new ArrayList<AnAction>();
+    if (myLeftToolbarActions != null) {
+      AnAction[] kids = myLeftToolbarActions.getChildren(null);
+      for (AnAction each : kids) {
+        result.add(each);
+      }
+    }
+    return result;
   }
 
   public SwitchTarget getCurrentTarget() {

@@ -677,15 +677,29 @@ public class GitUtil {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.setNoSSH(true);
-    h.addParameters("--pretty=format:%x0C%n" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
+    h.addParameters("--pretty=format:%x00%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);
 
     String output = h.run();
     LOG.debug("getLocalCommittedChanges output: '" + output + "'");
     StringScanner s = new StringScanner(output);
-    while (s.hasMoreData() && s.startsWith('\u000C')) {
-      s.nextLine();
-      consumer.consume(GitChangeUtils.parseChangeList(project, root, s, skipDiffsForMerge));
+    final StringBuilder sb = new StringBuilder();
+    boolean firstStep = true;
+    while (s.hasMoreData()) {
+      final String line = s.line();
+      final boolean lineIsAStart = line.startsWith("\u0000\u0001");
+      if ((! firstStep) && lineIsAStart) {
+        final StringScanner innerScanner = new StringScanner(sb.toString());
+        sb.setLength(0);
+        consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge));
+      }
+      sb.append(lineIsAStart ? line.substring(2) : line).append('\n');
+      firstStep = false;
+    }
+    if (sb.length() > 0) {
+      final StringScanner innerScanner = new StringScanner(sb.toString());
+      sb.setLength(0);
+      consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge));
     }
     if (s.hasMoreData()) {
       throw new IllegalStateException("More input is avaialble: " + s.line());

@@ -1176,6 +1176,7 @@ public class GitLogTree implements GitTreeViewI {
       void onDelete(Runnable after) {
         myFiltering.removeStartingPoint(getText());
         getParent().removeChild(this);
+        after.run();
       }
     }
 
@@ -1217,6 +1218,7 @@ public class GitLogTree implements GitTreeViewI {
       void onDelete(Runnable after) {
         myFiltering.removeStartingPoint(getText());
         getParent().removeChild(this);
+        after.run();
       }
     }
 
@@ -1351,6 +1353,7 @@ public class GitLogTree implements GitTreeViewI {
           myFiltering.removeFilter(filter);
         }
         getParent().removeChild(this);
+        after.run();
       }
     }
 
@@ -1449,7 +1452,9 @@ public class GitLogTree implements GitTreeViewI {
 
       void addChild(final Child child) {
         assert myAllowsChildren;
-        myChildren.add(child);
+        if (! myChildren.contains(child)) {
+          myChildren.add(child);
+        }
       }
 
       public Parent getParent() {

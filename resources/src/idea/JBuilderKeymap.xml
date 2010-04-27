@@ -96,9 +96,6 @@
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
       <keyboard-shortcut first-keystroke="shift control F6"/>
     </action>
-    <action id="NextEditorTab">
-      <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
-    </action>
     <action id="OpenFile">
       <keyboard-shortcut first-keystroke="control O"/>
     </action>
@@ -119,7 +116,6 @@
       <keyboard-shortcut first-keystroke="control F6"/>
     </action>
     <action id="PreviousEditorTab">
-      <keyboard-shortcut first-keystroke="alt shift LEFT"/>
       <keyboard-shortcut first-keystroke="control F6"/>
     </action>
     <action id="Resume"/>

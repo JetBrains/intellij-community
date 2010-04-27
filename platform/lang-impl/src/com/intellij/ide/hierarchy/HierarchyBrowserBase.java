@@ -196,7 +196,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   public Object getData(@NonNls final String dataId) {
       if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement anElement = getSelectedElement();
-      return anElement != null && anElement.isValid() ? anElement : null;
+      return anElement != null && anElement.isValid() ? anElement : super.getData(dataId);
     }
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return getSelectedElements();
@@ -214,7 +214,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
-    return null;
+    return super.getData(dataId);
   }
 
   private final class CloseAction extends CloseTabToolbarAction {
