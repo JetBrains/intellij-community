@@ -23,6 +23,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -99,14 +100,16 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
     return false;
   }
 
-  private void tryToInitSessionFromFocus(@Nullable SwitchTarget preselected) {
-    if (mySession != null && !mySession.isFinished()) return;
+  private ActionCallback tryToInitSessionFromFocus(@Nullable SwitchTarget preselected) {
+    if (mySession != null && !mySession.isFinished()) return new ActionCallback.Rejected();
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     SwitchProvider provider = SwitchProvider.KEY.getData(DataManager.getInstance().getDataContext(owner));
     if (provider != null) {
-      initSession(new SwitchingSession(provider, myAutoInitSessionEvent, preselected));
+      return initSession(new SwitchingSession(provider, myAutoInitSessionEvent, preselected));
     }
+
+    return new ActionCallback.Rejected();
   }
 
   private void cancelWaitingForAutoInit() {
@@ -215,9 +218,10 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
     return mySession;
   }
 
-  public void initSession(SwitchingSession session) {
+  public ActionCallback initSession(SwitchingSession session) {
     disposeSession(mySession);
     mySession = session;
+    return new ActionCallback.Done();
   }
 
   private void disposeSession(SwitchingSession session) {
@@ -242,18 +246,31 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
     return mySession != null && !mySession.isFinished();
   }
 
-  public void applySwitch() {
+  public ActionCallback applySwitch() {
+    final ActionCallback result = new ActionCallback();
     if (isSessionActive()) {
       mySession.finish().doWhenDone(new AsyncResult.Handler<SwitchTarget>() {
         public void run(final SwitchTarget switchTarget) {
           mySession = null;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
             public void run() {
-              tryToInitSessionFromFocus(switchTarget);
+              tryToInitSessionFromFocus(switchTarget).doWhenProcessed(new Runnable() {
+                public void run() {
+                  result.setDone();
+                }
+              });
             }
           });
         }
       });
+    } else {
+      result.setDone();
     }
+
+    return result;
+  }
+
+  public boolean canApplySwitch() {
+    return isSessionActive() && mySession.isSelectionWasMoved();
   }
 }

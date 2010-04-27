@@ -36,6 +36,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.switcher.QuickAccessProvider;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import org.jetbrains.annotations.NonNls;
@@ -310,6 +312,10 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
 
     public Object getData(@NonNls String dataId) {
       if (SwitchProvider.KEY.getName().equals(dataId)) {
+        return myContentUI;
+      }
+
+      if (QuickActionProvider.KEY.getName().equals(dataId)) {
         return myContentUI;
       }
 

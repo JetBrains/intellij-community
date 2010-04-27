@@ -18,22 +18,42 @@ package com.intellij.ui.switcher;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
 
 public class ApplySwitchAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    SwitchManager mgr = getManager(e);
-    e.getPresentation().setEnabled(mgr != null && mgr.isSessionActive());
+    Project project = getProject(e);
+    if (project == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
+    SwitchManager mgr = SwitchManager.getInstance(project);
+
+    boolean switchActionActive = mgr != null && mgr.isSessionActive();
+    e.getPresentation().setEnabled(switchActionActive);
+    if (!switchActionActive) {
+      QuickActionProvider quickActionProvider = QuickActionProvider.KEY.getData(e.getDataContext());
+      e.getPresentation().setEnabled(quickActionProvider != null);
+    }
   }
 
-  private SwitchManager getManager(AnActionEvent e) {
-    return SwitchManager.getInstance(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+  private Project getProject(AnActionEvent e) {
+    return PlatformDataKeys.PROJECT.getData(e.getDataContext());
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    getManager(e).applySwitch();
+    Project project = getProject(e);
+
+    SwitchManager switchManager = SwitchManager.getInstance(project);
+    if (switchManager.canApplySwitch()) {
+      switchManager.applySwitch();
+    } else {
+      QuickActionManager.getInstance(project).showQuickActions();
+    }
+    
   }
 }

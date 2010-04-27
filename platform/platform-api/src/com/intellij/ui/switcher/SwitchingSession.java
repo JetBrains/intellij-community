@@ -45,7 +45,11 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   private Map<SwitchTarget, TargetPainer> myPainters = new Hashtable<SwitchTarget, TargetPainer>();
   private JComponent myRootComponent;
+
   private SwitchTarget mySelection;
+  private SwitchTarget myStartSelection;
+
+  private boolean mySelectionWasMoved;
 
   public SwitchingSession(SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
     myProvider = provider;
@@ -83,6 +87,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       mySelection = preselected;
     }
 
+    myStartSelection = mySelection;
+
     myGlassPane = IdeGlassPaneUtil.find(myProvider.getComponent());
     for (SwitchTarget each : myTargets) {
       TargetPainer eachPainter = new TargetPainer(each);
@@ -107,6 +113,10 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   private SwitchTarget getSelection() {
     return mySelection;
+  }
+
+  public boolean isSelectionWasMoved() {
+    return mySelectionWasMoved;
   }
 
   private class TargetPainer extends AbstractPainter implements Disposable {
@@ -184,6 +194,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   private void setSelection(SwitchTarget target) {
     mySelection = target;
+
+    mySelectionWasMoved = !mySelection.equals(myStartSelection);
 
     for (TargetPainer each : myPainters.values()) {
       each.setNeedsRepaint(true);
