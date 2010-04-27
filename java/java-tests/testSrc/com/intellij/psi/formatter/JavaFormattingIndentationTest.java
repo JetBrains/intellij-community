@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 /**
  * Is intended to hold java formatting indentation-specific tests.
@@ -81,6 +82,45 @@ public class JavaFormattingIndentationTest extends AbstractJavaFormattingTest {
       "                            .add(BigDecimal.ONE\n" +
       "                                .add(BigDecimal.ONE\n" +
       "                                    .add(BigDecimal.ONE)))))))));"
+    );
+  }
+
+  public void testShiftedChainedIfElse() throws Exception {
+    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
+    getSettings().ELSE_ON_NEW_LINE = true;
+    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    doMethodTest(
+      "long a = System.currentTimeMillis();\n" +
+      "    if (a == 0){\n" +
+      "   }else if (a > 1){\n" +
+      "  }else if (a > 2){\n" +
+      " }else if (a > 3){\n" +
+      "     }else if (a > 4){\n" +
+      "      }else if (a > 5){\n" +
+      "       }else{\n" +
+      "        }",
+      "long a = System.currentTimeMillis();\n" +
+      "if (a == 0)\n" +
+      "    {\n" +
+      "    }\n" +
+      "else if (a > 1)\n" +
+      "    {\n" +
+      "    }\n" +
+      "else if (a > 2)\n" +
+      "    {\n" +
+      "    }\n" +
+      "else if (a > 3)\n" +
+      "    {\n" +
+      "    }\n" +
+      "else if (a > 4)\n" +
+      "    {\n" +
+      "    }\n" +
+      "else if (a > 5)\n" +
+      "    {\n" +
+      "    }\n" +
+      "else\n" +
+      "    {\n" +
+      "    }"
     );
   }
 }
