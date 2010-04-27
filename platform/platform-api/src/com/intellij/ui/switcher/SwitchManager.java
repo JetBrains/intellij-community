@@ -273,4 +273,8 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
   public boolean canApplySwitch() {
     return isSessionActive() && mySession.isSelectionWasMoved();
   }
+
+  public void resetSession() {
+    disposeSession(mySession);
+  }
 }
