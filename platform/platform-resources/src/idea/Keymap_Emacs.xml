@@ -137,9 +137,6 @@
       <keyboard-shortcut first-keystroke="alt RIGHT"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="N"/>
     </action>
-    <action id="NextEditorTab">
-      <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
-    </action>
     <action id="GotoLine">
       <keyboard-shortcut first-keystroke="alt G"/>
     </action>
@@ -154,9 +151,6 @@
     <action id="PreviousTab">
       <keyboard-shortcut first-keystroke="alt LEFT"/>
       <keyboard-shortcut first-keystroke="control X" second-keystroke="P"/>
-    </action>
-    <action id="PreviousEditorTab">
-      <keyboard-shortcut first-keystroke="alt shift LEFT"/>
     </action>
     <action id="EditorLineEnd">
       <keyboard-shortcut first-keystroke="END"/>
