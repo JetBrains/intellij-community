@@ -188,17 +188,17 @@ public class KeyboardShortcutDialog extends DialogWrapper {
 
     Set<String> keys = conflicts.keySet();
     String[] actionIds = ArrayUtil.toStringArray(keys);
+    boolean loaded = true;
     for (String actionId : actionIds) {
       String actionPath = myMainGroup.getActionQualifiedPath(actionId);
-      // actionPath == null for editor actions having corresponding $-actions
       if (actionPath == null) {
-        continue;
+        loaded = false;
       }
       if (buffer.length() > 1) {
         buffer.append('\n');
       }
       buffer.append('[');
-      buffer.append(actionPath);
+      buffer.append(actionPath != null ? actionPath : actionId);
       buffer.append(']');
     }
 
@@ -208,7 +208,11 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     }
     else {
       myConflictInfoArea.setForeground(Color.red);
-      myConflictInfoArea.setText(KeyMapBundle.message("assigned.to.info.message", buffer.toString()));
+      if (loaded) {
+        myConflictInfoArea.setText(KeyMapBundle.message("assigned.to.info.message", buffer.toString()));
+      } else {
+        myConflictInfoArea.setText("Assigned to " + buffer.toString() + " which is still not loaded");
+      }
     }
   }
 

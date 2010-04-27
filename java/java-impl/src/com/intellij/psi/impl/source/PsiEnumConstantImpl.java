@@ -228,6 +228,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
       return advancedResolve(false).getElement();
     }
 
+    @NotNull
     public String getCanonicalText() {
       return getContainingClass().getName();
     }

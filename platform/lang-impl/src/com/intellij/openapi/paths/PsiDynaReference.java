@@ -104,6 +104,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
 
+  @NotNull
   public String getCanonicalText(){
     final PsiReference reference = chooseReference();
     return reference == null ? myReferences.get(0).getCanonicalText() : reference.getCanonicalText();

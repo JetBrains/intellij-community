@@ -620,7 +620,8 @@ public class TemplateState implements Disposable {
     if (result == null) return;
 
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    PsiElement element = psiFile.findElementAt(start);
+    // psiFile does not contain modifications from document at this point so we need to use template start offset for retrieving anchor 
+    PsiElement element = psiFile.findElementAt(myTemplateRange != null ? myTemplateRange.getStartOffset():start);
     if (result.equalsToText(oldValue, element)) return;
 
     String newValue = result.toString();

@@ -92,6 +92,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -543,6 +544,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         new RenameProcessor(myProjectFixture.getProject(), substitution, newName, searchInComments, searchTextOccurrences).run();
      }
     }.execute().throwException();
+  }
+
+  public <T extends PsiElement> T findElementByText(String text, Class<T> elementClass) {
+    int pos = PsiDocumentManager.getInstance(getProject()).getDocument(getFile()).getText().indexOf(text);
+    assert pos >= 0: "text not found in file";
+    return PsiTreeUtil.getParentOfType(getFile().findElementAt(pos), elementClass);
   }
 
   public void type(final char c) {

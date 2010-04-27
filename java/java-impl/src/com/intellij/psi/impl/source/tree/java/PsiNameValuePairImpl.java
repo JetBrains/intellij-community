@@ -158,6 +158,7 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         return MethodSignatureUtil.findMethodBySignature(refClass, signature, false);
       }
 
+      @NotNull
       public String getCanonicalText() {
         String name = getName();
         return name != null ? name : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;

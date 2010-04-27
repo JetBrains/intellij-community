@@ -142,6 +142,7 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
       };
       actionGroup.add(action);
       myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
+      myToolbar.updateActionsImmediately();
       myToolbar.getComponent().setFocusable(false);
       myProject = project;
       myChooser = createFileTypeChooser(gotoFileModel);

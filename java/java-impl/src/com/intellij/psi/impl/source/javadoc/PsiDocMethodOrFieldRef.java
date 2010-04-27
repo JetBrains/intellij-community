@@ -267,6 +267,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return false;
     }
 
+    @NotNull
     public String getCanonicalText() {
       return getNameElement().getText();
     }

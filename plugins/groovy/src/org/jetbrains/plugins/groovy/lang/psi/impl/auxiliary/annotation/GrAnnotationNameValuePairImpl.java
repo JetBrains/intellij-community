@@ -115,8 +115,9 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return ppParent instanceof GrAnnotation ? (GrAnnotation)ppParent : null;
   }
 
+  @NotNull
   public String getCanonicalText() {
-    return null;
+    return getRangeInElement().substring(getText());
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {

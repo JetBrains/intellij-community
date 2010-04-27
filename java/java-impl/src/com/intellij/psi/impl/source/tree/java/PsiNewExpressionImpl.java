@@ -148,6 +148,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         return null;
       }
 
+      @NotNull
       public String getCanonicalText() {
         return null;
       }
