@@ -20,10 +20,12 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,7 +53,18 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   private boolean mySelectionWasMoved;
 
-  public SwitchingSession(SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
+  private Alarm myAutoApply = new Alarm();
+  private Runnable myAutoApplyRunnable = new Runnable() {
+    public void run() {
+      if (myManager.canApplySwitch()) {
+        myManager.applySwitch();
+      }
+    }
+  };
+  private SwitchManager myManager;
+
+  public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
+    myManager = mgr;
     myProvider = provider;
     myInitialEvent = e;
 
@@ -202,6 +215,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     for (TargetPainer each : myPainters.values()) {
       each.setNeedsRepaint(true);
     }
+
+    myAutoApply.cancelAllRequests();
+    myAutoApply.addRequest(myAutoApplyRunnable, Registry.intValue("actionSystem.autoSelectTimeout"));
   }
 
   private SwitchTarget getNextTarget(Direction direction) {
@@ -341,6 +357,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   public AsyncResult<SwitchTarget> finish() {
+    myAutoApply.cancelAllRequests();
+
     final AsyncResult<SwitchTarget> result = new AsyncResult<SwitchTarget>();
     final SwitchTarget selection = getSelection();
     if (selection != null) {

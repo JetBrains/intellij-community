@@ -313,6 +313,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent {
     }
   }
 
+  public AnAction getAction() {
+    return myAction;
+  }
+
   private class ActionButtonSynchronizer implements PropertyChangeListener {
     @NonNls protected static final String SELECTED_PROPERTY_NAME = "selected";
 

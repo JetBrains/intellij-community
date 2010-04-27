@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
@@ -89,7 +90,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
               }
             });
           }
-        }, 200);
+        }, Registry.intValue("actionSystem.keyGestureHoldTime"));
       }
     } else {
       if (myWaitingForAutoInitSession) {
@@ -106,7 +107,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, Keym
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     SwitchProvider provider = SwitchProvider.KEY.getData(DataManager.getInstance().getDataContext(owner));
     if (provider != null) {
-      return initSession(new SwitchingSession(provider, myAutoInitSessionEvent, preselected));
+      return initSession(new SwitchingSession(this, provider, myAutoInitSessionEvent, preselected));
     }
 
     return new ActionCallback.Rejected();

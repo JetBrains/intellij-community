@@ -1027,6 +1027,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     public Component getComponent() {
       return myButton;
     }
+
+    @Override
+    public String toString() {
+      return myButton.getAction().toString();
+    }
   }
 
   public SwitchTarget getCurrentTarget() {
