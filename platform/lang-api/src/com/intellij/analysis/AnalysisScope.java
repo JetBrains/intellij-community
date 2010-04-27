@@ -357,7 +357,7 @@ public class AnalysisScope {
     final Project project = dir.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    index.iterateContentUnderDirectory(dir.getVirtualFile(), new ContentIterator() {
+    FileIndexImplUtil.iterateRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(final VirtualFile fileOrDir) {
         if (!myIncludeTestSource && index.isInTestSourceContent(fileOrDir)) return true;

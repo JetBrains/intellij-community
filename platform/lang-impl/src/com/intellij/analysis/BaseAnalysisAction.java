@@ -118,7 +118,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   protected abstract void analyze(@NotNull Project project, AnalysisScope scope);
 
   @Nullable
-  private static AnalysisScope getInspectionScope(final DataContext dataContext) {
+  private AnalysisScope getInspectionScope(final DataContext dataContext) {
     if (PlatformDataKeys.PROJECT.getData(dataContext) == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
@@ -127,7 +127,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   @Nullable
-  private static AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
+  private AnalysisScope getInspectionScopeImpl(DataContext dataContext) {
     //Possible scopes: file, directory, package, project, module.
     Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
@@ -156,7 +156,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     PsiElement psiTarget = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
-      if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
+      if (!acceptNonProjectDirectories() && !psiDirectory.getManager().isInProject(psiDirectory)) return null;
       return new AnalysisScope(psiDirectory);
     }
     else if (psiTarget != null) {
@@ -180,6 +180,10 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(project, files);
     }
     return getProjectScope(dataContext);
+  }
+
+  protected boolean acceptNonProjectDirectories() {
+    return false;
   }
 
   private static AnalysisScope getProjectScope(DataContext dataContext) {
