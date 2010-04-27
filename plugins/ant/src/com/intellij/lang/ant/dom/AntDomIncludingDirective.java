@@ -15,11 +15,10 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.openapi.paths.PathReference;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.converters.PathReferenceConverter;
 import com.intellij.util.xml.converters.values.BooleanValueConverter;
 
 /**
@@ -30,8 +29,8 @@ public abstract class AntDomIncludingDirective extends AntDomElement {
   private static final String DEFAULT_SEPARATOR = ".";
 
   @Attribute("file")
-  @Convert(value = PathReferenceConverter.class)
-  public abstract GenericAttributeValue<PathReference> getFile();
+  @Convert(value = AntPathRelativeToAntFileConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
   @Attribute("optional")
   @Convert(value = BooleanValueConverter.class)

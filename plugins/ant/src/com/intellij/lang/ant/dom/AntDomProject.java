@@ -20,13 +20,17 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
-import com.intellij.openapi.paths.PathReference;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -36,7 +40,7 @@ import java.util.List;
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 @DefinesXml
 public abstract class AntDomProject extends AntDomElement {
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomProject");
   private ClassLoader myClassLoader;
 
   @Attribute("name")
@@ -47,8 +51,43 @@ public abstract class AntDomProject extends AntDomElement {
   public abstract GenericAttributeValue<String> getDefaultTarget();
 
   @Attribute("basedir")
-  @Convert(value = PathReferenceConverter.class)
-  public abstract GenericAttributeValue<PathReference> getBasedir();
+  @Convert(value = AntPathConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getBasedir();
+
+  @Nullable
+  public final String getProjectBasedirPath() {
+    final String basedir = getBasedir().getStringValue();
+    if (basedir != null) {
+      final File file = new File(basedir);
+      if (file.isAbsolute()) {
+        try {
+          return FileUtil.toSystemIndependentName(file.getCanonicalPath());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          return null;
+        }
+      }
+    }
+    final String selfDir = getContainingFileDir();
+    if (basedir == null) {
+      return selfDir;
+    }
+    // basedir is specified and is relative
+    try {
+      return FileUtil.toSystemIndependentName(new File(selfDir, basedir).getCanonicalPath());
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return null;
+    }
+  }
+
+  @Nullable
+  public final String getContainingFileDir() {
+    final VirtualFile containingFile = getXmlTag().getContainingFile().getOriginalFile().getVirtualFile();
+    return containingFile != null ? containingFile.getParent().getPath() : null;
+  }
 
   @SubTagList("target")
   public abstract List<AntDomTarget> getDeclaredTargets();

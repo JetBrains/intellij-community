@@ -15,8 +15,12 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
@@ -43,13 +47,15 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
   public abstract GenericAttributeValue<String> getValue();
 
   @Attribute("location")
-  public abstract GenericAttributeValue<String> getLocation();
+  @Convert(value = AntPathConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getLocation();
 
   @Attribute("resource")
   public abstract GenericAttributeValue<String> getResource();
 
   @Attribute("file")
-  public abstract GenericAttributeValue<String> getFile();
+  @Convert(value = AntPathConverter.class)
+  public abstract GenericAttributeValue<PsiFileSystemItem> getFile();
 
   @Attribute("url")
   public abstract GenericAttributeValue<String> getUrl();
@@ -74,13 +80,45 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
 
   @NotNull
   public final Iterator<String> getNamesIterator() {
-    return buildProperties().keySet().iterator();
+    final String prefix = getPropertyPrefixValue();
+    final Iterator<String> delegate = buildProperties().keySet().iterator();
+    if (prefix == null) {
+      return delegate;
+    }
+    return new Iterator<String>() {
+      public boolean hasNext() {
+        return delegate.hasNext();
+      }
+
+      public String next() {
+        return prefix + delegate.next();
+      }
+
+      public void remove() {
+        delegate.remove();
+      }
+    };
   }
 
-  public PsiElement getNavigationElement(String propertyName) {
-    final GenericAttributeValue<String> name = getName();
-    if (name != null) {
-      return name.getXmlAttributeValue();
+  public PsiElement getNavigationElement(final String propertyName) {
+    final XmlAttributeValue nameNavElement = getName().getXmlAttributeValue();
+    if (nameNavElement != null) {
+      return nameNavElement;
+    }
+    final PsiFileSystemItem psiFile = getFile().getValue();
+    if (psiFile != null) {
+      final String prefix = getPropertyPrefixValue();
+      String _propertyName = propertyName;
+      if (prefix != null) {
+        if (!propertyName.startsWith(prefix)) {
+          return null;
+        }
+        _propertyName = propertyName.substring(prefix.length());
+      }
+      if (psiFile instanceof PropertiesFile) {
+        final Property property = ((PropertiesFile)psiFile).findPropertyByKey(_propertyName);
+        return property != null? property.getNavigationElement() : null;
+      }
     }
     // todo: process property files
     return null;
@@ -88,6 +126,13 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
 
   @Nullable
   public final String getPropertyValue(String propertyName) {
+    final String prefix = getPropertyPrefixValue();
+    if (prefix != null) {
+      if (!propertyName.startsWith(prefix)) {
+        return null;
+      }
+      propertyName = propertyName.substring(prefix.length());
+    }
     return buildProperties().get(propertyName);
   }
 
@@ -97,56 +142,66 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
       return result;
     }
     result = Collections.emptyMap();
-    final GenericAttributeValue<String> name = getName();
-    if (name != null) {
-      final GenericAttributeValue<String> value = getValue();
-      if (value != null) {
-        result = Collections.singletonMap(name.getRawText(), value.getRawText());
+    final String propertyName = getName().getRawText();
+    if (propertyName != null) {
+      final String propertyValue = getValue().getRawText();
+      if (propertyValue != null) {
+        result = Collections.singletonMap(propertyName, propertyValue);
       }
       else {
-        final GenericAttributeValue<String> location = getLocation();
-        if (location != null) {
-          String locValue = location.getStringValue();
+        String locValue = getLocation().getStringValue();
+        if (locValue != null) {
           locValue = FileUtil.toSystemDependentName(locValue);
           // todo: if the path is relative, resolve it against project basedir (see ant docs)
-          result = Collections.singletonMap(name.getRawText(), locValue);
+          result = Collections.singletonMap(propertyName, locValue);
         }
         else {
-          // todo: process refid attrib if specifiedfor the value
+          // todo: process refid attrib if specified for the value
           final String tagText = getXmlTag().getText();
-          result = Collections.singletonMap(name.getRawText(), tagText);
+          result = Collections.singletonMap(propertyName, tagText);
         }
       }
     }
     else { // name attrib is not specified
-      final GenericAttributeValue<String> resourceValue = getResource();
-      if (resourceValue != null) {
-        final GenericAttributeValue<String> prefixValue = getPrefix();
-        // todo
-      }
-      else {
-        final GenericAttributeValue<String> fileValue = getFile();
-        if (fileValue != null) {
-          final String pathToPropFile = fileValue.getStringValue();
-          final GenericAttributeValue<String> prefixValue = getPrefix();
-          // todo: load properties from the file
-        }
-        else {
-          // todo: consider Url attribute?
-          final GenericAttributeValue<String> envValue = getEnvironment();
-          if (envValue != null) {
-            String prefix = envValue.getStringValue();
-            if (!prefix.endsWith(".")) {
-              prefix = prefix + ".";
-            }
-            result = new HashMap<String, String>();
-            for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-              result.put(prefix + entry.getKey(), entry.getValue());
-            }
+      final PsiFileSystemItem psiFile = getFile().getValue();
+      if (psiFile != null) {
+        if (psiFile instanceof PropertiesFile) {
+          result = new HashMap<String, String>();
+          for (Property property : ((PropertiesFile)psiFile).getProperties()) {
+            result.put(property.getKey(), property.getValue());
           }
         }
       }
+      else if (getEnvironment().getRawText() != null){
+        String prefix = getEnvironment().getRawText();
+        if (!prefix.endsWith(".")) {
+          prefix += ".";
+        }
+        result = new HashMap<String, String>();
+        for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+          result.put(prefix + entry.getKey(), entry.getValue());
+        }
+      }
+      else {
+        final GenericAttributeValue<String> resourceValue = getResource();
+        final GenericAttributeValue<String> prefixValue = getPrefix();
+        // todo: try to load the resource from classpath
+        // todo: consider Url attribute?
+      }
     }
     return (myCachedPreperties = result);
+  }
+
+  @Nullable
+  private String getPropertyPrefixValue() {
+    final GenericAttributeValue<String> prefixValue = getPrefix();
+    if (prefixValue == null) {
+      return null;
+    }
+    final String prefix = prefixValue.getRawText();
+    if (prefix != null && !prefix.endsWith(".")) {
+      return prefix + ".";
+    }
+    return prefix;
   }
 }
