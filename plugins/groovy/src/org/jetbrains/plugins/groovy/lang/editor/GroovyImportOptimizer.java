@@ -159,7 +159,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final List<GrImportStatement> oldImports = new ArrayList<GrImportStatement>();
       for (GrImportStatement statement : myFile.getImportStatements()) {
         final GrCodeReferenceElement reference = statement.getImportReference();
-        if (reference != null && reference.getCanonicalText() != null) {
+        if (reference != null && reference.multiResolve(false).length > 0) {
           oldImports.add(statement);
         }
       }
