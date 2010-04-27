@@ -70,6 +70,8 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           return false;
         }
       }
+    } else if (!myFromToMap.containsKey(psiType)) {
+      return false;
     }
     return true;
   }
