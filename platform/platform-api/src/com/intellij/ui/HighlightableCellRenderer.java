@@ -35,7 +35,16 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
     setFont(UIUtil.getTreeFont());
     setIcon(null);
 
-    myIsSelected = selected;
+    if (tree.getUI() instanceof UIUtil.MacTreeUI) {
+      setOpaque(false);
+      myIsSelected = false;
+      myHasFocus = false;
+    } else {
+      setOpaque(true);
+      myIsSelected = selected;
+      myHasFocus = hasFocus;
+    }
+    
     myHasFocus = hasFocus;
     return this;
   }
