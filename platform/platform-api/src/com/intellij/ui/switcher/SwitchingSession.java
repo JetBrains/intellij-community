@@ -116,7 +116,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   public boolean dispatchKeyEvent(KeyEvent e) {
     KeyEvent event = myInitialEvent;
-    if ((e.getModifiers() & event.getModifiers()) == 0) {
+    if (event == null || ((e.getModifiers() & event.getModifiers()) == 0)) {
       finish();
       return false;
     }
