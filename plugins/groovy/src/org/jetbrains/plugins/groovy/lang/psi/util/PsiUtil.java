@@ -129,10 +129,7 @@ public class PsiUtil {
 
     //check for default constructor
     if (method.isConstructor() && method.getParameterList().getParametersCount() == 0 && argumentTypes.length == 1) {
-      final PsiType type = argumentTypes[0];
-      final PsiClassType mapType = JavaPsiFacade.getElementFactory(method.getProject())
-        .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, method.getResolveScope());
-      return TypesUtil.isAssignable(mapType, type, method.getManager(), method.getResolveScope());
+      return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP);
     }
     LOG.assertTrue(signature != null);
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());

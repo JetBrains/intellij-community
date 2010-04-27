@@ -18,9 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -31,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
@@ -191,8 +192,8 @@ public class GrClosureSignatureUtil {
    * @return null if signature can not be applied to this argumentList
    */
   @Nullable
-  public static List<PsiElement>[] mapParametersToArguments(GrClosureSignature signature,
-                                                            GrArgumentList list,
+  public static List<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
+                                                            @NotNull GrArgumentList list,
                                                             PsiManager manager,
                                                             GlobalSearchScope scope) {
 
@@ -206,7 +207,7 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  private static List<PsiElement>[] map(GrClosureSignature signature, GrArgumentList list, PsiManager manager, GlobalSearchScope scope) {
+  private static List<PsiElement>[] map(@NotNull GrClosureSignature signature, @NotNull GrArgumentList list, PsiManager manager, GlobalSearchScope scope) {
     final GrExpression[] args = list.getExpressionArguments();
     final GrNamedArgument[] namedArgs = list.getNamedArguments();
     boolean hasNamedArgs = namedArgs.length > 0;
@@ -220,8 +221,7 @@ public class GrClosureSignatureUtil {
     if (hasNamedArgs) {
       if (paramLength == 0) return null;
       PsiType type = params[0].getType();
-      PsiClassType mapType = PsiUtil.createMapType(manager, scope);
-      if (TypesUtil.isAssignable(mapType, type, manager, scope)) {
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         paramLength--;
         map[0] = Arrays.<PsiElement>asList(namedArgs);
       }
@@ -287,8 +287,7 @@ public class GrClosureSignatureUtil {
       if (hasNamedArgs) {
         if (params.length == 0) return null;
         PsiType type = params[0].getType();
-        PsiClassType mapType = PsiUtil.createMapType(manager, scope);
-        if (TypesUtil.isAssignable(mapType, type, manager, scope)) {
+        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
           map[0] = Arrays.<PsiElement>asList(namedArgs);
         }
         else {
@@ -377,23 +376,24 @@ public class GrClosureSignatureUtil {
     return result;
   }
 
-  public static Map<MethodSignature, List<GrMethod>> findMethodSignatures(GrMethod[] methods) {
-    List<Pair<MethodSignature, GrMethod>> signatures = new ArrayList<Pair<MethodSignature, GrMethod>>();
-    for (GrMethod method : methods) {
-      List<MethodSignature> current = generateAllSignaturesForMethod(method, PsiSubstitutor.EMPTY);
+  public static MultiMap<MethodSignature, PsiMethod> findMethodSignatures(PsiMethod[] methods) {
+    List<Pair<MethodSignature, PsiMethod>> signatures = new ArrayList<Pair<MethodSignature, PsiMethod>>();
+    for (PsiMethod method : methods) {
+      List<MethodSignature> current;
+      if (method instanceof GrMethod) {
+        current = generateAllSignaturesForMethod((GrMethod)method, PsiSubstitutor.EMPTY);
+      }
+      else {
+        current = Collections.singletonList(method.getSignature(PsiSubstitutor.EMPTY));
+      }
       for (MethodSignature signature : current) {
-        signatures.add(new Pair<MethodSignature, GrMethod>(signature, method));
+        signatures.add(new Pair<MethodSignature, PsiMethod>(signature, method));
       }
     }
 
-    THashMap<MethodSignature, List<GrMethod>> map = new THashMap<MethodSignature, List<GrMethod>>();
-    for (Pair<MethodSignature, GrMethod> pair : signatures) {
-      List<GrMethod> list = map.get(pair.first);
-      if (list == null) {
-        list = new ArrayList<GrMethod>();
-        map.put(pair.first, list);
-      }
-      list.add(pair.second);
+    MultiMap<MethodSignature, PsiMethod> map = new MultiMap<MethodSignature, PsiMethod>();
+    for (Pair<MethodSignature, PsiMethod> pair : signatures) {
+      map.putValue(pair.first, pair.second);
     }
     return map;
   }

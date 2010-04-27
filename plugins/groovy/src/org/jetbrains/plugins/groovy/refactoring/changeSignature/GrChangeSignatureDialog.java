@@ -18,10 +18,8 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCodeFragment;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
@@ -261,11 +259,15 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       returnType = myReturnTypeCodeFragment.getType();
     }
     catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
     catch (PsiTypeCodeFragment.NoTypeException e) {
       returnType = PsiType.NULL;
     }
+    if (returnType == PsiType.NULL) {
+      returnType = JavaPsiFacade.getElementFactory(myProject)
+        .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myProject));
+    }
+    //todo show warnings
 
     String newName = getNewName();
     final List<GrParameterInfo> parameterInfos = myParameterModel.getParameterInfos();

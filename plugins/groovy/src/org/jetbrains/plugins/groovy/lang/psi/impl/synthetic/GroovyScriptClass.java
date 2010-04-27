@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -215,12 +216,12 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   @NotNull
   public PsiField[] getAllFields() {
-    return PsiField.EMPTY_ARRAY;
+    return PsiClassImplUtil.getAllFields(this);
   }
 
   @NotNull
   public PsiMethod[] getAllMethods() {
-    return getMethods(); //todo
+    return PsiClassImplUtil.getAllMethods(this);
   }
 
   @NotNull
@@ -233,17 +234,17 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
   }
 
   public PsiMethod findMethodBySignature(PsiMethod patternMethod, boolean checkBases) {
-    return null;
+    return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
-    return PsiMethod.EMPTY_ARRAY;
+    return PsiClassImplUtil.findMethodsBySignature(this, patternMethod, checkBases);
   }
 
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
-    return PsiMethod.EMPTY_ARRAY;
+    return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
   @NotNull

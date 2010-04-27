@@ -32,20 +32,20 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
 /**
-* @author Maxim.Medvedev
-*/
+ * @author Maxim.Medvedev
+ */
 class GrChangeSignatureConflictSearcher {
   private static final Logger LOG =
     Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureConflictSearcher");
@@ -77,7 +77,6 @@ class GrChangeSignatureConflictSearcher {
   private boolean needToChangeCalls() {
     return myChangeInfo.isNameChanged() || myChangeInfo.isParameterSetOrOrderChanged() || myChangeInfo.isExceptionSetOrOrderChanged();
   }
-
 
   private void addInaccessibilityDescriptions(Set<UsageInfo> usages, MultiMap<PsiElement, String> conflictDescriptions)
     throws IncorrectOperationException {
@@ -131,14 +130,14 @@ class GrChangeSignatureConflictSearcher {
 
 
   private void addMethodConflicts(MultiMap<PsiElement, String> conflicts) {
-    String newMethodName = myChangeInfo.getNewName();
     try {
-      PsiMethod prototype;
+      GrMethod prototype;
       final PsiMethod method = myChangeInfo.getMethod();
-      if (!GroovyFileType.GROOVY_LANGUAGE.equals(method.getLanguage())) return;
+      if (!(method instanceof GrMethod)) return;
       PsiManager manager = PsiManager.getInstance(method.getProject());
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(manager.getProject());
       final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
+      String newMethodName = myChangeInfo.getNewName();
       if (returnType != null) {
         prototype = factory.createMethodFromText("", newMethodName, returnType.getTypeText(), ArrayUtil.EMPTY_STRING_ARRAY);
       }
@@ -147,13 +146,13 @@ class GrChangeSignatureConflictSearcher {
       }
       JavaParameterInfo[] parameters = myChangeInfo.getNewParameters();
 
-
       for (JavaParameterInfo info : parameters) {
         PsiParameter param = factory.createParameter(info.getName(), info.getTypeText(), (GroovyPsiElement)method);
         prototype.getParameterList().add(param);
       }
 
       ConflictsUtil.checkMethodConflicts(method.getContainingClass(), method, prototype, conflicts);
+      GrMethodConflictUtil.checkMethodConflicts(method.getContainingClass(), prototype, ((GrMethod)method), conflicts);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

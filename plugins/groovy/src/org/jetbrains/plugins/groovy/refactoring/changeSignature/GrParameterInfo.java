@@ -34,6 +34,7 @@ public class GrParameterInfo implements JavaParameterInfo {
   private PsiTypeCodeFragment myType;
   private GroovyCodeFragment myDefaultInitializer;
   private final int myPosition;
+  private CanonicalTypes.Type myTypeWrapper;
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
@@ -107,15 +108,24 @@ public class GrParameterInfo implements JavaParameterInfo {
 
 
   public String getTypeText() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    if (getTypeWrapper() != null) {
+      return getTypeWrapper().getTypeText();
+    }
+    else {
+      return "";
+    }
   }
 
   public CanonicalTypes.Type getTypeWrapper() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    if (myTypeWrapper == null) {
+      myTypeWrapper = CanonicalTypes.createTypeWrapper(createType(myType.getContext(), myType.getManager()));
+    }
+    return myTypeWrapper;
   }
 
   public PsiExpression getValue(PsiCallExpression callExpression) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return JavaPsiFacade.getInstance(callExpression.getProject()).getElementFactory()
+      .createExpressionFromText(myDefaultValue.getText(), callExpression);
   }
 
   public boolean isVarargType() {
