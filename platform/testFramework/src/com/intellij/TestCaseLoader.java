@@ -64,8 +64,6 @@ public class TestCaseLoader {
       myTestGroupName = preconfiguredGroup.trim();
     }
     if (excludedStream != null) {
-      //TODO den remove
-      System.out.println("Found file with test groups definitions");
       try {
         myTestClassesFilter = TestClassesFilter.createOn(new InputStreamReader(excludedStream));
       }
@@ -80,8 +78,6 @@ public class TestCaseLoader {
     }
     else {
       String patterns = System.getProperty(TARGET_TEST_PATTERNS);
-      //TODO den remove
-      System.out.println("Found the following test patterns: " + patterns);
       if (patterns != null) {
         myTestClassesFilter = new TestClassesFilter(StringUtil.split(patterns, ";"));
       }
