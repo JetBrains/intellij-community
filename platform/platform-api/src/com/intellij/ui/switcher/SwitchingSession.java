@@ -40,7 +40,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private SwitchProvider myProvider;
   private KeyEvent myInitialEvent;
   private boolean myFinished;
-  private java.util.List<SwitchTarget> myTargets;
+  private LinkedHashSet<SwitchTarget> myTargets = new LinkedHashSet<SwitchTarget>();
   private IdeGlassPane myGlassPane;
 
   private Map<SwitchTarget, TargetPainer> myPainters = new Hashtable<SwitchTarget, TargetPainer>();
@@ -58,7 +58,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
 
 
-    myTargets = myProvider.getTargets(true, true);
+    myTargets.addAll(myProvider.getTargets(true, true));
 
     Component eachParent = myProvider.getComponent();
     eachParent = eachParent.getParent();
@@ -193,6 +193,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   private void setSelection(SwitchTarget target) {
+    if (target == null) return;
+
     mySelection = target;
 
     mySelectionWasMoved = !mySelection.equals(myStartSelection);
@@ -321,19 +323,15 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       }
     }
 
-    return distance.values().iterator().next();
-  }
 
-  private void selectNext() {
-    int index = myTargets.indexOf(getSelection());
+    if (myTargets.size() == 0) return null;
+
+    List<SwitchTarget> all = Arrays.asList(myTargets.toArray(new SwitchTarget[myTargets.size()]));
+    int index = all.indexOf(getSelection());
     if (index + 1 < myTargets.size()) {
-      mySelection = myTargets.get(index + 1);
+      return all.get(index + 1);
     } else {
-      mySelection = myTargets.get(0);
-    }
-
-    for (TargetPainer each : myPainters.values()) {
-      each.setNeedsRepaint(true);
+      return all.get(0);
     }
   }
 

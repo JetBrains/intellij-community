@@ -471,7 +471,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider {
       }
       return VfsUtil.toVirtualFileArray(result);
     }
-    return null;
+    return super.getData(dataId);
   }
 
   public static FileChooserDescriptor createXmlDescriptor() {

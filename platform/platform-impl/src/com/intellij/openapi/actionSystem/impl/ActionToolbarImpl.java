@@ -1036,4 +1036,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public boolean isCycleRoot() {
     return false;
   }
+
+  public List<AnAction> getActions(boolean originalProvider) {
+    ArrayList<AnAction> result = new ArrayList<AnAction>();
+
+    ArrayList<AnAction> secondary = new ArrayList<AnAction>();
+    if (myActionGroup != null) {
+      AnAction[] kids = myActionGroup.getChildren(null);
+      for (AnAction each : kids) {
+        if (myActionGroup.isPrimary(each)) {
+          result.add(each);
+        } else {
+          secondary.add(each);
+        }
+      }
+    }
+    result.add(new Separator());
+    result.addAll(secondary);
+
+    return result;
+  }
 }

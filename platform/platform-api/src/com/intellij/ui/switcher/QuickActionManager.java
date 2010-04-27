@@ -68,37 +68,38 @@ public class QuickActionManager implements ProjectComponent {
         if (provider == null) return;
 
         List<AnAction> actions = provider.getActions(true);
-        DefaultActionGroup group = new DefaultActionGroup();
-        for (AnAction each : actions) {
-          group.add(each);
-        }
-
-        boolean firstParent = true;
-        Component eachParent = provider.getComponent().getParent();
-        while (eachParent != null) {
-          if (eachParent instanceof QuickActionProvider) {
-            QuickActionProvider eachProvider = (QuickActionProvider)eachParent;
-            if (firstParent) {
-              group.addSeparator();
-              firstParent = false;
-            }
-            List<AnAction> eachActionList = eachProvider.getActions(false);
-            if (eachActionList.size() > 0) {
-              group.add(new Group(eachActionList, eachProvider.getName()));
-            }
-            if (eachProvider.isCycleRoot()) break;
-
+        if (actions != null) {
+          DefaultActionGroup group = new DefaultActionGroup();
+          for (AnAction each : actions) {
+            group.add(each);
           }
-          eachParent = eachParent.getParent();
-        }
 
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, new Runnable() {
-            public void run() {
-              myActiveProvider = null;
+          boolean firstParent = true;
+          Component eachParent = provider.getComponent().getParent();
+          while (eachParent != null) {
+            if (eachParent instanceof QuickActionProvider) {
+              QuickActionProvider eachProvider = (QuickActionProvider)eachParent;
+              if (firstParent) {
+                group.addSeparator();
+                firstParent = false;
+              }
+              List<AnAction> eachActionList = eachProvider.getActions(false);
+              if (eachActionList.size() > 0) {
+                group.add(new Group(eachActionList, eachProvider.getName()));
+              }
+              if (eachProvider.isCycleRoot()) break;
+
             }
-          }, -1).showInFocusCenter();
+            eachParent = eachParent.getParent();
+          }
 
+          JBPopupFactory.getInstance()
+            .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, new Runnable() {
+              public void run() {
+                myActiveProvider = null;
+              }
+            }, -1).showInFocusCenter();
+        }
       }
     });
 
