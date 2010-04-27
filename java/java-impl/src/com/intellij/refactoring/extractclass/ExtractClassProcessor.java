@@ -151,7 +151,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         conflicts.putValue(field, "Field \'" + field.getName() + "\' needs getter");
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   

@@ -141,7 +141,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (!myInlineThisOnly) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usagesIn);
   }
 
   private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {

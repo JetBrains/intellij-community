@@ -243,7 +243,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       processor.findConflicts(this, refUsages.get(), conflicts);
     }
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usagesIn);
   }
 
   private void detectAccessibilityConflicts(final UsageInfo[] usageArray, MultiMap<PsiElement, String> conflicts) {

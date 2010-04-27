@@ -115,7 +115,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return RenamePsiElementProcessor.forElement(myPrimaryElement).getHelpID(myPrimaryElement);
   }
 
-  public boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  public boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
@@ -125,7 +125,11 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new ConflictsInTestsException(conflicts.values());
       }
-      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
+      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, new Runnable() {
+        public void run() {
+          execute(refUsages.get());
+        }
+      });
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();

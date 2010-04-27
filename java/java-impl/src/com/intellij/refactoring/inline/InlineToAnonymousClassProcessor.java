@@ -128,7 +128,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
-      return showConflicts(conflicts);
+      return showConflicts(conflicts, refUsages.get());
     }
     return super.preprocessUsages(refUsages);
   }

@@ -149,7 +149,7 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
         }
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   public void findUsages(@NotNull List<FixableUsageInfo> usages) {

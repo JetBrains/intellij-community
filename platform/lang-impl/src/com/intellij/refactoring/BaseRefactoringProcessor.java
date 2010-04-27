@@ -256,7 +256,7 @@ public abstract class BaseRefactoringProcessor {
     return CommonRefactoringUtil.checkReadOnlyStatus(project, psiElements);
   }
 
-  void execute(final UsageInfo[] usages) {
+  protected void execute(final UsageInfo[] usages) {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -495,13 +495,22 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
-  protected boolean showConflicts(final MultiMap<PsiElement,String> conflicts) {
+  @Deprecated
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts) {
+    return showConflicts(conflicts, null);
+  }
+
+  protected boolean showConflicts(final MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       throw new ConflictsInTestsException(conflicts.values());
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflicts.isEmpty()) {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
+        public void run() {
+          execute(usages);
+        }
+      });
       conflictsDialog.show();
       if (!conflictsDialog.isOK()) {
         if (conflictsDialog.isShowConflicts()) prepareSuccessful();
