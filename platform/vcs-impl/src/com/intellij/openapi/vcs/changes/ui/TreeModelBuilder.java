@@ -60,6 +60,8 @@ public class TreeModelBuilder {
   }
 
   public DefaultTreeModel buildModel(final List<Change> changes, final ChangeNodeDecorator changeNodeDecorator) {
+    Collections.sort(changes, MyChangePathLengthComparator.getInstance());
+    
     final ChangesGroupingPolicy policy = createGroupingPolicy();
     for (final Change change : changes) {
       insertChangeNode(change, policy, root, new Computable<ChangesBrowserNode>() {
