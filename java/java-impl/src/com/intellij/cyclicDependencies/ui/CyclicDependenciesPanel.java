@@ -418,7 +418,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
       final PackageDependenciesNode node;
       if (value instanceof PackageDependenciesNode){
         node = (PackageDependenciesNode)value;
-        if (myLeftTree) {
+        if (myLeftTree && !mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES) {
           final PsiElement element = node.getPsiElement();
           if (element instanceof PsiPackage) {
             final PsiPackage aPackage = (PsiPackage)element;
