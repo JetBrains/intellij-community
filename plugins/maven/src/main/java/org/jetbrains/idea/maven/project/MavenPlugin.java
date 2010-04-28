@@ -17,12 +17,15 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
+import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -65,14 +68,23 @@ public class MavenPlugin implements Serializable {
   }
 
   private static Element xppToElement(Xpp3Dom xpp) {
-    Element result = new Element(xpp.getName());
+    Element result = null;
+    try {
+      result = new Element(xpp.getName());
+    }
+    catch (IllegalNameException e) {
+      MavenLog.LOG.warn("Cannot convert plugin configuration: " + xpp, e);
+      return null;
+    }
+
     Xpp3Dom[] children = xpp.getChildren();
     if (children == null || children.length == 0) {
       result.setText(xpp.getValue());
     }
     else {
       for (Xpp3Dom each : children) {
-        result.addContent(xppToElement(each));
+        Element child = xppToElement(each);
+        if (child != null) result.addContent(child);
       }
     }
     return result;

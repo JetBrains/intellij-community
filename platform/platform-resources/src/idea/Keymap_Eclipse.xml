@@ -248,6 +248,9 @@
       <keyboard-shortcut first-keystroke="shift control F6" />
       <keyboard-shortcut first-keystroke="control alt RIGHT" />
     </action>
+    <action id="PreviousEditorTab">
+      <keyboard-shortcut first-keystroke="control alt shift RIGHT" />
+    </action>
     <action id="Print">
       <keyboard-shortcut first-keystroke="control P" />
     </action>
