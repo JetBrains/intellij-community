@@ -127,7 +127,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
     catch (IncorrectOperationException e) {}
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usages);
   }
 
   @NotNull

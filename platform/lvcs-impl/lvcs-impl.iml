@@ -19,6 +19,7 @@
     <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="platform-ultimate" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

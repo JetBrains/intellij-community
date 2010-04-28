@@ -127,7 +127,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   private void checkExistingMethods(PsiMethod[] prototypes, MultiMap<PsiElement, String> conflicts, boolean isGetter) {

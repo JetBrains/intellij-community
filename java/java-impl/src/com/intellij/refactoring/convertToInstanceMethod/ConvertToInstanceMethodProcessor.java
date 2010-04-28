@@ -172,7 +172,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       LOG.error(e);
     }
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usagesIn);
   }
 
   private void addInaccessibilityConflicts(final UsageInfo[] usages, final MultiMap<PsiElement, String> conflicts) throws IncorrectOperationException {

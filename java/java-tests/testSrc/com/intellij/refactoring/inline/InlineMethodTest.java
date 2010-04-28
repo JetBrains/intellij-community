@@ -68,6 +68,8 @@ public class InlineMethodTest extends LightCodeInsightTestCase {
 
   public void testFieldInitializer() throws Exception { doTest(); }
 
+  public void testMethodCallInOtherAnonymousOrInner() throws Exception { doTest(); }
+
   public void testStaticFieldInitializer() throws Exception { doTest(); }
   public void testSCR22644() throws Exception { doTest(); }
 

@@ -131,30 +131,25 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
     if (!myGenerateAccessors) {
       calculateInitializersConflicts(conflicts);
-      final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor();
-      for (PsiField field : fields) {
-        field.accept(visitor);
-      }
-      for (PsiMethod method : methods) {
-        method.accept(visitor);
-      }
-      for (PsiClass innerClass : innerClasses) {
-        innerClass.accept(visitor);
-      }
-
-      final Set<PsiField> fieldsNeedingGetter = visitor.getFieldsNeedingGetter();
+      final NecessaryAccessorsVisitor visitor = checkNecessaryGettersSetters4ExtractedClass();
+      final NecessaryAccessorsVisitor srcVisitor = checkNecessaryGettersSetters4SourceClass();
+      final Set<PsiField> fieldsNeedingGetter = new LinkedHashSet<PsiField>();
+      fieldsNeedingGetter.addAll(visitor.getFieldsNeedingGetter());
+      fieldsNeedingGetter.addAll(srcVisitor.getFieldsNeedingGetter());
       for (PsiField field : fieldsNeedingGetter) {
         conflicts.putValue(field, "Field \'" + field.getName() + "\' needs getter");
       }
-      final Set<PsiField> fieldsNeedingSetter = visitor.getFieldsNeedingSetter();
+      final Set<PsiField> fieldsNeedingSetter = new LinkedHashSet<PsiField>();
+      fieldsNeedingSetter.addAll(visitor.getFieldsNeedingSetter());
+      fieldsNeedingSetter.addAll(srcVisitor.getFieldsNeedingSetter());
       for (PsiField field : fieldsNeedingSetter) {
-        conflicts.putValue(field, "Field \'" + field.getName() + "\' needs getter");
+        conflicts.putValue(field, "Field \'" + field.getName() + "\' needs setter");
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
-  
+
   private void calculateInitializersConflicts(MultiMap<PsiElement, String> conflicts) {
     final PsiClassInitializer[] initializers = sourceClass.getInitializers();
     for (PsiClassInitializer initializer : initializers) {
@@ -271,16 +266,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
 
     if (myGenerateAccessors) {
-      final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor();
-      for (PsiField field : fields) {
-        field.accept(visitor);
-      }
-      for (PsiMethod method : methods) {
-        method.accept(visitor);
-      }
-      for (PsiClass innerClass : innerClasses) {
-        innerClass.accept(visitor);
-      }
+      final NecessaryAccessorsVisitor visitor = checkNecessaryGettersSetters4SourceClass();
       for (PsiField field : visitor.getFieldsNeedingGetter()) {
         sourceClass.add(PropertyUtil.generateGetterPrototype(field));
       }
@@ -294,6 +280,83 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     for (PsiMember member : members) {
       VisibilityUtil.fixVisibility(usageInfos, member, myNewVisibility);
     }
+  }
+
+  private NecessaryAccessorsVisitor checkNecessaryGettersSetters4SourceClass() {
+    final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor() {
+      @Override
+      protected boolean hasGetterOrSetter(PsiMethod[] getters) {
+        for (PsiMethod getter : getters) {
+          if (!isInMovedElement(getter)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      protected boolean isProhibitedReference(PsiField field) {
+        if (fields.contains(field)) {
+          return false;
+        }
+        if (innerClasses.contains(field.getContainingClass())) {
+          return false;
+        }
+        return true;
+      }
+    };
+    for (PsiField field : fields) {
+      field.accept(visitor);
+    }
+    for (PsiMethod method : methods) {
+      method.accept(visitor);
+    }
+    for (PsiClass innerClass : innerClasses) {
+      innerClass.accept(visitor);
+    }
+    return visitor;
+  }
+
+  private NecessaryAccessorsVisitor checkNecessaryGettersSetters4ExtractedClass() {
+    final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor() {
+      @Override
+      protected boolean hasGetterOrSetter(PsiMethod[] getters) {
+        for (PsiMethod getter : getters) {
+          if (isInMovedElement(getter)) return true;
+        }
+        return false;
+      }
+
+      @Override
+      protected boolean isProhibitedReference(PsiField field) {
+        if (fields.contains(field)) {
+          return true;
+        }
+        if (innerClasses.contains(field.getContainingClass())) {
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      public void visitMethod(PsiMethod method) {
+        if (methods.contains(method)) return;
+        super.visitMethod(method);
+      }
+
+      @Override
+      public void visitField(PsiField field) {
+        if (fields.contains(field)) return;
+        super.visitField(field);
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {
+        if (innerClasses.contains(aClass)) return;
+        super.visitClass(aClass);
+      }
+
+    };
+    sourceClass.accept(visitor);
+    return visitor;
   }
 
 
@@ -501,8 +564,25 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
 
     final String qualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
-    @NonNls final String getter = PropertyUtil.suggestGetterName(myProject, field);
-    @NonNls final String setter = PropertyUtil.suggestSetterName(myProject, field);
+    @NonNls String getter = null;
+    if (myGenerateAccessors) {
+      getter = PropertyUtil.suggestGetterName(myProject, field);
+    } else {
+      final PsiMethod fieldGetter = PropertyUtil.findPropertyGetter(sourceClass, field.getName(), false, false);
+      if (fieldGetter != null && isInMovedElement(fieldGetter)) {
+        getter = fieldGetter.getName();
+      }
+    }
+
+    @NonNls String setter = null;
+    if (myGenerateAccessors) {
+      setter = PropertyUtil.suggestSetterName(myProject, field);
+    } else {
+      final PsiMethod fieldSetter = PropertyUtil.findPropertySetter(sourceClass, field.getName(), false, false);
+      if (fieldSetter != null && isInMovedElement(fieldSetter)) {
+        setter = fieldSetter.getName();
+      }
+    }
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
     for (PsiReference reference : ReferencesSearch.search(field, scope)) {
@@ -516,19 +596,19 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         if (RefactoringUtil.isPlusPlusOrMinusMinus(exp.getParent())) {
           usages.add(isStatic
                      ? new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName)
-                     : new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter));
+                     : new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter, field.getName()));
         }
         else if (RefactoringUtil.isAssignmentLHS(exp)) {
           usages.add(isStatic
                      ? new ReplaceStaticVariableAssignment(exp, qualifiedName)
                      : new ReplaceInstanceVariableAssignment(PsiTreeUtil.getParentOfType(exp, PsiAssignmentExpression.class),
-                                                             delegateFieldName, setter, getter));
+                                                             delegateFieldName, setter, getter, field.getName()));
 
         }
         else {
           usages.add(isStatic
                      ? new ReplaceStaticVariableAccess(exp, qualifiedName)
-                     : new ReplaceInstanceVariableAccess(exp, delegateFieldName, getter));
+                     : new ReplaceInstanceVariableAccess(exp, delegateFieldName, getter, field.getName()));
         }
 
         if (!isStatic) {
@@ -538,21 +618,6 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         usages.add(new BindJavadocReference(element, qualifiedName, field.getName()));
       }
     }
-  }
-
-  private boolean hasGetter(final PsiField field) {
-    return hasGetterOrSetter(sourceClass.findMethodsBySignature(PropertyUtil.generateGetterPrototype(field), false));
-  }
-
-  private boolean hasSetter(final PsiField field) {
-    return hasGetterOrSetter(sourceClass.findMethodsBySignature(PropertyUtil.generateSetterPrototype(field), false));
-  }
-
-  private boolean hasGetterOrSetter(final PsiMethod[] getters) {
-    for (PsiMethod getter : getters) {
-      if (!isInMovedElement(getter)) return true;
-    }
-    return false;
   }
 
 
@@ -579,18 +644,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     extractedClassBuilder.setInterfaces(interfaces);
 
     if (myGenerateAccessors) {
-      final NecessaryAccessorsVisitor visitor = new NecessaryAccessorsVisitor() {
-        @Override
-        protected boolean isProhibitedReference(PsiField field) {
-          if (fields.contains(field)) {
-            return true;
-          }
-          if (innerClasses.contains(field.getContainingClass())) {
-            return true;
-          }
-          return false;
-        }
-      };
+      final NecessaryAccessorsVisitor visitor = checkNecessaryGettersSetters4ExtractedClass();
       sourceClass.accept(visitor);
       extractedClassBuilder.setFieldsNeedingGetters(visitor.getFieldsNeedingGetter());
       extractedClassBuilder.setFieldsNeedingSetters(visitor.getFieldsNeedingSetter());
@@ -716,7 +770,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return true;
   }
 
-  private class NecessaryAccessorsVisitor extends JavaRecursiveElementWalkingVisitor {
+  private abstract class NecessaryAccessorsVisitor extends JavaRecursiveElementWalkingVisitor {
     private final Set<PsiField> fieldsNeedingGetter = new HashSet<PsiField>();
     private final Set<PsiField> fieldsNeedingSetter = new HashSet<PsiField>();
 
@@ -724,7 +778,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       super.visitReferenceExpression(expression);
       if (isProhibitedReference(expression)) {
         final PsiField field = getReferencedField(expression);
-        if (!hasGetter(field) && !isStaticFinal(field)) {
+        if (!hasGetter(field) && !isStaticFinal(field) && !field.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
           fieldsNeedingGetter.add(field);
         }
       }
@@ -742,7 +796,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       final PsiExpression lhs = expression.getLExpression();
       if (isProhibitedReference(lhs)) {
         final PsiField field = getReferencedField(lhs);
-        if (!hasGetter(field) && !isStaticFinal(field)) {
+        if (!hasGetter(field) && !isStaticFinal(field) && !field.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
           fieldsNeedingSetter.add(field);
         }
       }
@@ -779,6 +833,15 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       return fieldsNeedingSetter;
     }
 
+    private boolean hasGetter(final PsiField field) {
+      return hasGetterOrSetter(sourceClass.findMethodsBySignature(PropertyUtil.generateGetterPrototype(field), false));
+    }
+
+    private boolean hasSetter(final PsiField field) {
+      return hasGetterOrSetter(sourceClass.findMethodsBySignature(PropertyUtil.generateSetterPrototype(field), false));
+    }
+
+    protected abstract boolean hasGetterOrSetter(final PsiMethod[] getters);
 
     protected boolean isProhibitedReference(PsiExpression expression) {
       return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
@@ -788,15 +851,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       });
     }
 
-    protected boolean isProhibitedReference(PsiField field) {
-      if (fields.contains(field)) {
-        return false;
-      }
-      if (innerClasses.contains(field.getContainingClass())) {
-        return false;
-      }
-      return true;
-    }
+    protected abstract boolean isProhibitedReference(PsiField field);
 
     private PsiField getReferencedField(PsiExpression expression) {
       if (expression instanceof PsiParenthesizedExpression) {
