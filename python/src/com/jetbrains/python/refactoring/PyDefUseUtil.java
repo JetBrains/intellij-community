@@ -26,7 +26,9 @@ public class PyDefUseUtil {
     final ControlFlow controlFlow = block.getControlFlow();
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
-    assert instr >= 0;
+    if (instr < 0) {
+      throw new InstructionNotFoundException();
+    }
     final boolean[] visited = new boolean[instructions.length];
     final Collection<PyElement> result = new HashSet<PyElement>();
     getLatestDefs(var, instructions, instr, visited, result);
@@ -87,4 +89,6 @@ public class PyDefUseUtil {
     }
   }
 
+  public static class InstructionNotFoundException extends RuntimeException {
+  }
 }
