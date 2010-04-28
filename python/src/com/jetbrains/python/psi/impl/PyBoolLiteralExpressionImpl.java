@@ -15,7 +15,6 @@ public class PyBoolLiteralExpressionImpl extends PyElementImpl implements PyBool
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    // TODO
-    return null;
+    return PyBuiltinCache.getInstance(this).getBoolType();
   }
 }

@@ -247,6 +247,11 @@ public class PyBuiltinCache {
   }
 
   @Nullable
+  public PyClassType getBoolType() {
+    return getObjectType("bool");
+  }
+
+  @Nullable
   public PyClassType getOldstyleClassobjType() {
     return getObjectType("___Classobj");
   }
