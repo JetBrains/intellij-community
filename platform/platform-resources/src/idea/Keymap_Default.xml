@@ -1,26 +1,5 @@
 <component>
 <keymap name="$default" version="1" disable-mnemonics="false">
-
-  <action id="SwitchUp">
-    <keyboard-shortcut first-keystroke="alt shift UP"/>
-  </action>
-
-  <action id="SwitchDown">
-    <keyboard-shortcut first-keystroke="alt shift DOWN"/>
-  </action>
-
-  <action id="SwitchLeft">
-    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
-  </action>
-
-  <action id="SwitchRight">
-    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
-  </action>
-
-  <action id="SwitchApply">
-    <keyboard-shortcut first-keystroke="alt shift ENTER"/>
-  </action>
-
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
