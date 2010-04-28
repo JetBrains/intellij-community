@@ -58,7 +58,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    return results.length >= 1 && !(results [0] instanceof ImplicitResolveResult) ? results[0].getElement() : null;
   }
 
-  private static final boolean USE_CACHE = true; // change to false in debug time to switch off caching
+  // it is *not* final so that it can be changed in debug time. if set to false, caching is off
+  private static boolean USE_CACHE = true; 
 
   /**
    * Resolves reference to possible referred elements.
