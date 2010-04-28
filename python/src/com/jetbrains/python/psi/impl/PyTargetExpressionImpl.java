@@ -133,7 +133,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
               return PyReferenceExpressionImpl.getTypeFromTarget(target, context, null);
             }
           }
-          return assignedValue.getType(context);
+          return context.getType(assignedValue);
         }
       }
       if (getParent() instanceof PyTupleExpression) {
@@ -157,7 +157,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final PyAssignmentStatement stmt = (PyAssignmentStatement) pparent.getParent();
       final PyExpression assignedValue = stmt.getAssignedValue();
       if (assignedValue != null) {
-        final PyType assignedType = assignedValue.getType(context);
+        final PyType assignedType = context.getType(assignedValue);
         if (assignedType instanceof PyTupleType) {
           PyTupleType tupleType = (PyTupleType)assignedType;
           if (tuple.getElements().length == tupleType.getElementCount()) {

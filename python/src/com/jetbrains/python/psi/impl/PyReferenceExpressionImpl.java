@@ -257,7 +257,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       }
     }
     if (target instanceof PyExpression) {
-      return ((PyExpression) target).getType(context);
+      return context.getType((PyExpression) target);
     }
     if (target instanceof PyClass) {
       return new PyClassType((PyClass) target, true);
@@ -271,7 +271,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private static PyType getTypeIfExpr(PyElement def, TypeEvalContext context) {
-    return def instanceof PyExpression ? ((PyExpression)def).getType(context) : null;
+    return def instanceof PyExpression ? context.getType((PyExpression)def) : null;
   }
 
   @Nullable
