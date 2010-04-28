@@ -83,6 +83,9 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
         if (PyImportStatementNavigator.getImportStatementByElement(element) != null) {
           continue;
         }
+        if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
+          continue;
+        }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
         // WriteAccess
         if (access.isWriteAccess() && (parametersCanBeUnused || !(element != null && element.getParent() instanceof PyNamedParameter))) {
