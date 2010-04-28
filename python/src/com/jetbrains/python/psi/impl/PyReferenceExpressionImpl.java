@@ -14,7 +14,7 @@ import com.jetbrains.python.console.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -35,8 +35,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     super(astNode);
   }
 
+  @Override
   @NotNull
   public PsiPolyVariantReference getReference() {
+    return getReference(PyResolveContext.defaultContext());
+  }
+
+  @NotNull
+  public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PsiFile file = getContainingFile();
     final PyExpression qualifier = getQualifier();
     if (file != null) {
@@ -52,14 +58,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     // Handle import reference
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
-      return new PyImportReferenceImpl(this);
+      return new PyImportReferenceImpl(this, context);
     }
 
     if (qualifier != null) {
-      return new PyQualifiedReferenceImpl(this);
+      return new PyQualifiedReferenceImpl(this, context);
     }
 
-    return new PyReferenceImpl(this);
+    return new PyReferenceImpl(this, context);
   }
 
   @Override
@@ -184,8 +190,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       return pyType;
     }
 
-    ResolveResult[] targets = getReference().multiResolve(false);
-    if (targets.length == 0 || targets [0] instanceof ImplicitResolveResult) return null;
+    ResolveResult[] targets = getReference(PyResolveContext.noImplicits()).multiResolve(false);
+    if (targets.length == 0) return null;
     PsiElement target = targets[0].getElement();
     if (target == this) {
       return null;

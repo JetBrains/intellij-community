@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -124,8 +124,8 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             final PyReferenceExpression refex = (PyReferenceExpression)assignedValue;
             PyType maybe_type = PyUtil.getSpecialAttributeType(refex);
             if (maybe_type != null) return maybe_type;
-            final ResolveResult[] resolveResult = refex.getReference().multiResolve(false);
-            if (resolveResult.length == 1 && !(resolveResult [0] instanceof ImplicitResolveResult)) {
+            final ResolveResult[] resolveResult = refex.getReference(PyResolveContext.noImplicits()).multiResolve(false);
+            if (resolveResult.length == 1) {
               PsiElement target = resolveResult [0].getElement();
               if (target == this) {
                 return null;  // fix SOE on "a = a"
@@ -208,9 +208,9 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @Override
   public PsiReference getReference() {
     if (getQualifier() != null) {
-      return new PyQualifiedReferenceImpl(this);
+      return new PyQualifiedReferenceImpl(this, PyResolveContext.defaultContext());
     }
-    return new PyTargetReference(this);
+    return new PyTargetReference(this, PyResolveContext.defaultContext());
   }
 
   @NotNull

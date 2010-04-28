@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,4 +28,7 @@ public interface PyReferenceExpression extends PyQualifiedExpression {
 
   @NotNull
   PsiPolyVariantReference getReference();
+
+  @NotNull
+  PsiPolyVariantReference getReference(PyResolveContext context);
 }
