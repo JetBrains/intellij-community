@@ -49,7 +49,7 @@ import java.util.List;
  *
  * @see ProjectLevelVcsManager
  */
-public abstract class AbstractVcs extends StartedActivated {
+public abstract class AbstractVcs<ComList extends CommittedChangeList> extends StartedActivated {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.AbstractVcs");
 
@@ -433,12 +433,12 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   @Nullable
-  protected VcsOutgoingChangesProvider getOutgoingProviderImpl() {
+  protected VcsOutgoingChangesProvider<ComList> getOutgoingProviderImpl() {
     return null;
   }
 
   @Nullable
-  public final VcsOutgoingChangesProvider getOutgoingChangesProvider() {
+  public final VcsOutgoingChangesProvider<ComList> getOutgoingChangesProvider() {
     return VcsType.centralized.equals(getType()) ? null : getOutgoingProviderImpl();
   }
 

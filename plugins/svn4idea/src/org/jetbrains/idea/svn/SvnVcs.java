@@ -98,7 +98,7 @@ import java.util.*;
 import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-public class SvnVcs extends AbstractVcs {
+public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
   private final static int ourLogUsualInterval = 20 * 1000;

@@ -104,7 +104,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           myCreateClassDlg = CreateSubclassAction.chooseSubclassToCreate(myClass);
           if (myCreateClassDlg != null) {
             pushDownConflicts.checkTargetClassConflicts(null, false, myCreateClassDlg.getTargetDirectory());
-            return showConflicts(pushDownConflicts.getConflicts());
+            return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
           } else {
             return false;
           }
@@ -118,7 +118,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return showConflicts(pushDownConflicts.getConflicts());
+    return showConflicts(pushDownConflicts.getConflicts(), usagesIn);
   }
 
   protected void refreshElements(PsiElement[] elements) {
@@ -149,7 +149,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       removeFromTargetClass();
     }
     catch (IncorrectOperationException e) {
-      LOG.assertTrue(false);
+      LOG.error(e);
     }
   }
 

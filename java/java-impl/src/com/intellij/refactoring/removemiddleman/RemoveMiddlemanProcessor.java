@@ -84,7 +84,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
         }
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   private void processUsagesForMethod(final boolean deleteMethodHierarchy, PsiMethod method, int[] paramPermutation, String getterName, PsiMethod delegatedMethod,

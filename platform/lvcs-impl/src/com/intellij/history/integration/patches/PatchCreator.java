@@ -16,9 +16,8 @@
 
 package com.intellij.history.integration.patches;
 
-import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.TextPatchBuilder;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -36,7 +35,7 @@ public class PatchCreator {
     throws IOException, VcsException {
     Writer writer = new OutputStreamWriter(new FileOutputStream(filePath));
     try {
-      List<FilePatch> patches = TextPatchBuilder.buildPatch(changes, p.getBaseDir().getPath(), isReverse);
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(p, changes, p.getBaseDir().getPath(), isReverse);
       String lineSeparator = CodeStyleSettingsManager.getInstance(p).getCurrentSettings().getLineSeparator();
       UnifiedDiffWriter.write(patches, writer, lineSeparator);
     }

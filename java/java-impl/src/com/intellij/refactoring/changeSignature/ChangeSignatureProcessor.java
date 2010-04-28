@@ -372,7 +372,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
-    UsageInfo[] usagesIn = refUsages.get();
+    final UsageInfo[] usagesIn = refUsages.get();
     addMethodConflicts(conflictDescriptions);
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
@@ -387,7 +387,11 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflictDescriptions.isEmpty()) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions);
+      ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions, new Runnable(){
+        public void run() {
+          execute(usagesIn);
+        }
+      });
       dialog.show();
       if (!dialog.isOK()){
         if (dialog.isShowConflicts()) prepareSuccessful();
