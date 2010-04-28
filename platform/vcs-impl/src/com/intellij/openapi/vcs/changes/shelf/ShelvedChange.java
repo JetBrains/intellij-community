@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
+import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,22 +223,6 @@ public class ShelvedChange {
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return new TextRevisionNumber(VcsBundle.message("shelved.version.name"));
-    }
-  }
-
-  private static class TextRevisionNumber implements VcsRevisionNumber {
-    private final String myText;
-
-    public TextRevisionNumber(final String text) {
-      myText = text;
-    }
-
-    public String asString() {
-      return myText;
-    }
-
-    public int compareTo(final VcsRevisionNumber o) {
-      return 0;
     }
   }
 

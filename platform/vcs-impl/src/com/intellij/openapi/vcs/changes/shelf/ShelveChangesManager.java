@@ -171,7 +171,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       if (ind != null && ind.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      final List<FilePatch> patches = TextPatchBuilder.buildPatch(textChanges, myProject.getBaseDir().getPresentableUrl(), false);
+      final List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, textChanges, myProject.getBaseDir().getPresentableUrl(), false);
       if (ind != null && ind.isCanceled()) {
         throw new ProcessCanceledException();
       }
