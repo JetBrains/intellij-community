@@ -1170,6 +1170,20 @@ public class UIUtil {
     }
 
     @Override
+    protected CellRendererPane createCellRendererPane() {
+      return new CellRendererPane() {
+        @Override
+        public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
+          if (c instanceof JComponent) {
+            ((JComponent)c).setOpaque(false);
+          }
+
+          super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
+        }
+      };
+    }
+
+    @Override
     public void uninstallUI(JComponent c) {
       super.uninstallUI(c);
 

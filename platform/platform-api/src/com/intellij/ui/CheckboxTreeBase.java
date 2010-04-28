@@ -339,10 +339,6 @@ public class CheckboxTreeBase extends Tree {
       customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
 
-      if (tree.getUI() instanceof UIUtil.MacTreeUI) {
-        myTextRenderer.setOpaque(false);
-        setOpaque(false);
-      }
 
       return this;
     }
