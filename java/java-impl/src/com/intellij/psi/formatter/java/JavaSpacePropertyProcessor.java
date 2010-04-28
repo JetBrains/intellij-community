@@ -532,19 +532,20 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override public void visitTryStatement(PsiTryStatement statement) {
-    if (myRole2 == ChildRole.FINALLY_KEYWORD) {
-      processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
+    if (myRole2 == ChildRole.FINALLY_KEYWORD || myRole2 == ChildRole.CATCH_SECTION) {
+      boolean putRightChildOnNewLine = myRole2 == ChildRole.FINALLY_KEYWORD ? mySettings.FINALLY_ON_NEW_LINE : mySettings.CATCH_ON_NEW_LINE;
+      if (putRightChildOnNewLine) {
+        processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
+      } else {
+        createSpaceProperty(true, false, 0);
+      }
+      return;
     }
-    else if (myRole2 == ChildRole.TRY_BLOCK) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_TRY_LBRACE, mySettings.BRACE_STYLE, null,
-                                      mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
-    }
-    else if (myRole2 == ChildRole.FINALLY_BLOCK) {
-      myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FINALLY_LBRACE, mySettings.BRACE_STYLE, null,
-                                      mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
-    }    
-    else if (myRole2 == ChildRole.CATCH_SECTION) {
-      processOnNewLineCondition(mySettings.CATCH_ON_NEW_LINE);
+
+    if (myRole2 == ChildRole.TRY_BLOCK || myRole2 == ChildRole.FINALLY_BLOCK) {
+      boolean useSpaceBeforeLBrace = myRole2 == ChildRole.TRY_BLOCK ? mySettings.SPACE_BEFORE_TRY_LBRACE
+                                                                    : mySettings.SPACE_BEFORE_FINALLY_LBRACE;
+      myResult = getSpaceBeforeLBrace(useSpaceBeforeLBrace, mySettings.BRACE_STYLE, null, mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
     }
   }
 
