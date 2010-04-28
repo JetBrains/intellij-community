@@ -184,6 +184,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
+    private final TypeEvalContext myContext = TypeEvalContext.slow();
     private PyType myResult = null;
     private boolean myHasReturns = false;
 
@@ -191,7 +192,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     public void visitPyReturnStatement(PyReturnStatement node) {
       final PyExpression expr = node.getExpression();
       PyType returnType;
-      returnType = expr == null ? PyNoneType.INSTANCE : expr.getType(TypeEvalContext.slow());
+      returnType = expr == null ? PyNoneType.INSTANCE : myContext.getType(expr);
       if (!myHasReturns) {
         myResult = returnType;
         myHasReturns = true;
