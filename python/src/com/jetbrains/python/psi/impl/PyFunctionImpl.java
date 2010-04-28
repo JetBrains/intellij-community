@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
@@ -113,6 +114,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return getParentByStub() instanceof PsiFile;
   }
 
+  @Nullable
   public PyType getReturnType() {
     final PyStringLiteralExpression docString = getDocStringExpression();
     if (docString != null) {
@@ -124,7 +126,24 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
     ReturnVisitor visitor = new ReturnVisitor();
     getStatementList().accept(visitor);
+    if (isGeneratedStub() && !visitor.myHasReturns) {
+      return null;
+    }
     return visitor.result();
+  }
+
+  private boolean isGeneratedStub() {
+    VirtualFile vFile = getContainingFile().getVirtualFile();
+    if (vFile != null) {
+      vFile = vFile.getParent();
+      if (vFile != null) {
+        vFile = vFile.getParent();
+        if (vFile != null && vFile.getName().equals("python_stubs")) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable
