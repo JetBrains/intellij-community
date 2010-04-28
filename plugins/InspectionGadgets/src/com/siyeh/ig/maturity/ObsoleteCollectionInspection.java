@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,9 @@ import javax.swing.*;
 public class ObsoleteCollectionInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
-    public boolean ignoreLibraryArguments = false;
+    public boolean ignoreRequiredObsoleteCollectionTypes = false;
 
+    @Override
     @NotNull
     public String getID(){
         return "UseOfObsoleteCollectionType";
@@ -57,7 +58,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     public JComponent createOptionsPanel() {
         return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
                 "use.obsolete.collection.type.ignore.library.arguments.option"
-        ), this, "ignoreLibraryArguments");
+        ), this, "ignoreRequiredObsoleteCollectionTypes");
     }
 
     @Override
@@ -81,7 +82,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             if (typeElement == null) {
                 return;
             }
-            if (ignoreLibraryArguments &&
+            if (ignoreRequiredObsoleteCollectionTypes &&
                     isUsedAsParameterForLibraryMethod(variable)) {
                 return;
             }
@@ -101,7 +102,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             if (typeElement == null) {
                 return;
             }
-            if (ignoreLibraryArguments &&
+            if (ignoreRequiredObsoleteCollectionTypes &&
                     isUsedAsParameterForLibraryMethod(method)) {
                 return;
             }
@@ -115,9 +116,8 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             if (!isObsoleteCollectionType(type)){
                 return;
             }
-            if (ignoreLibraryArguments &&
-                    isObsoleteCollectionTypeElementArgumentOfLibraryMethod(
-                            newExpression)) {
+            if (ignoreRequiredObsoleteCollectionTypes &&
+                    isRequiredObsoleteCollectionElement(newExpression)) {
                 return;
             }
             registerNewExpressionError(newExpression);
@@ -153,15 +153,14 @@ public class ObsoleteCollectionInspection extends BaseInspection {
                             GlobalSearchScope.fileScope(containingFile));
             for (PsiReference reference : query) {
                 final PsiElement element = reference.getElement();
-                if (isObsoleteCollectionTypeElementArgumentOfLibraryMethod(
-                        element)) {
+                if (isRequiredObsoleteCollectionElement(element)) {
                     return true;
                 }
             }
             return false;
         }
 
-        private boolean isObsoleteCollectionTypeElementArgumentOfLibraryMethod(
+        private boolean isRequiredObsoleteCollectionElement(
                 PsiElement element) {
             final PsiElement parent = element.getParent();
             if (parent instanceof PsiVariable) {
@@ -207,13 +206,27 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             final PsiParameterList parameterList =
                     method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();
+            if (index >= parameters.length) {
+                final PsiParameter lastParameter =
+                        parameters[parameters.length - 1];
+                if (!lastParameter.isVarArgs()) {
+                    return false;
+                }
+                final PsiType type = lastParameter.getType();
+                if (!(type instanceof PsiEllipsisType)) {
+                    return false;
+                }
+                final PsiEllipsisType ellipsisType = (PsiEllipsisType) type;
+                final PsiType componentType = ellipsisType.getComponentType();
+                return isObsoleteCollectionType(componentType);
+            }
             final PsiParameter parameter = parameters[index];
             final PsiType type = parameter.getType();
             return isObsoleteCollectionType(type);
         }
 
         private int getIndexOfArgument(PsiExpressionList argumentList,
-                                              PsiElement argument) {
+                                       PsiElement argument) {
             final PsiExpression[] expressions =
                     argumentList.getExpressions();
             int index = -1;
