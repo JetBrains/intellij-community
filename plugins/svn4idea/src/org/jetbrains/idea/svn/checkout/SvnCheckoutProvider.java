@@ -54,18 +54,33 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
   public static void doCheckout(final Project project, final File target, final String url, final SVNRevision revision,
                                 final SVNDepth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
-    final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
-
     if (! target.exists()) {
       target.mkdirs();
     }
+
+    final String selectedFormat = promptForWCopyFormat(target, project);
+    if (selectedFormat == null) {
+      // cancelled
+      return;
+    }
+
+    checkout(project, target, url, revision, depth, ignoreExternals, listener, WorkingCopyFormat.getInstance(selectedFormat));
+  }
+
+  public static void checkout(final Project project,
+                               final File target,
+                               final String url,
+                               final SVNRevision revision,
+                               final SVNDepth depth,
+                               final boolean ignoreExternals,
+                               final Listener listener, final WorkingCopyFormat selectedFormat) {
+    final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
     final SVNException[] exception = new SVNException[1];
-    final String[] selectedFormat = new String[1];
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(selectedFormat[0]));
-        
+        SvnWorkingCopyFormatHolder.setPresetFormat(selectedFormat);
+
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
         client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, progressIndicator));
@@ -124,13 +139,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         }
       }
     };
-
-    // allow to select working copy format
-    selectedFormat[0] = promptForWCopyFormat(target, project);
-    if (selectedFormat == null) {
-      // cancelled
-      return;
-    }
     ProgressManager.getInstance().run(checkoutBackgroundTask);
   }
 
