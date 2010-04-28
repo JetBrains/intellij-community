@@ -28,7 +28,7 @@ public abstract class MavenProjectsManagerAction extends MavenAction {
 
   @Override
   protected boolean isAvailable(AnActionEvent e) {
-    return super.isAvailable(e) && MavenActionUtil.getProjectsManager(e.getDataContext()).isMavenizedProject();
+    return super.isAvailable(e) && MavenActionUtil.getProjectsManager(e).isMavenizedProject();
   }
 
   protected abstract void perform(MavenProjectsManager manager);
