@@ -21,9 +21,12 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.ExporterToTextFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
@@ -38,6 +41,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -54,17 +58,17 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Function;
-import com.intellij.util.Icons;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
@@ -295,6 +299,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new MarkAsIllegalAction());
     group.add(new ChooseScopeTypeAction());
     group.add(new EditDependencyRulesAction());
+    group.add(CommonActionsManager.getInstance().createExportToTextFileAction(new DependenciesExporterToTextFile()));
     group.add(new HelpAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
@@ -625,6 +630,49 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       }
     }
   }
+
+
+  private class DependenciesExporterToTextFile implements ExporterToTextFile {
+
+    public JComponent getSettingsEditor() {
+      return null;
+    }
+
+    public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
+    }
+
+    public void removeSettingsChangedListener(ChangeListener listener) {
+    }
+
+    public String getReportText() {
+      final Element rootElement = new Element("root");
+      rootElement.setAttribute("isBackward", String.valueOf(!myForward));
+      for (PsiFile file : myDependencies.keySet()) {
+        final Element fileElement = new Element("file");
+        fileElement.setAttribute("path", file.getVirtualFile().getPath());
+        for (PsiFile dep : myDependencies.get(file)) {
+          Element depElement = new Element("dependency");
+          depElement.setAttribute("path", dep.getVirtualFile().getPath());
+          fileElement.addContent(depElement);
+        }
+        rootElement.addContent(fileElement);
+      }
+      PathMacroManager.getInstance(myProject).collapsePaths(rootElement);
+      return JDOMUtil.writeDocument(new Document(rootElement), SystemProperties.getLineSeparator());
+    }
+
+    public String getDefaultFilePath() {
+      return "";
+    }
+
+    public void exportedTo(String filePath) {
+    }
+
+    public boolean canExport() {
+      return true;
+    }
+  }
+
 
   private class RerunAction extends AnAction {
     public RerunAction(JComponent comp) {
