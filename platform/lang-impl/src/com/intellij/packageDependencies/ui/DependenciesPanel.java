@@ -999,6 +999,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public boolean UI_GROUP_BY_SCOPE_TYPE = true;
     public String SCOPE_TYPE;
     public boolean UI_COMPACT_EMPTY_MIDDLE_PACKAGES = true;
+    public boolean UI_FILTER_OUT_OF_CYCLE_PACKAGES = true;
 
     public DependencyPanelSettings() {
       final DependencyUISettings settings = DependencyUISettings.getInstance();
@@ -1010,6 +1011,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       UI_GROUP_BY_SCOPE_TYPE = settings.UI_GROUP_BY_SCOPE_TYPE;
       SCOPE_TYPE = settings.SCOPE_TYPE;
       UI_COMPACT_EMPTY_MIDDLE_PACKAGES = settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
+      UI_FILTER_OUT_OF_CYCLE_PACKAGES = settings.UI_FILTER_OUT_OF_CYCLE_PACKAGES;
     }
 
     public void copyToApplicationDependencySettings(){
@@ -1022,6 +1024,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       settings.UI_GROUP_BY_SCOPE_TYPE = UI_GROUP_BY_SCOPE_TYPE;
       settings.SCOPE_TYPE = SCOPE_TYPE;
       settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
+      settings.UI_FILTER_OUT_OF_CYCLE_PACKAGES = UI_FILTER_OUT_OF_CYCLE_PACKAGES;
     }
   }
 }

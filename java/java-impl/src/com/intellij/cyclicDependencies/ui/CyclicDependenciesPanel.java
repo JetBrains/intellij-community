@@ -223,6 +223,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     group.add(new CloseAction());
     group.add(new RerunAction(this));
     group.add(new ShowFilesAction());
+    group.add(new HideOutOfCyclePackagesAction());
     group.add(new GroupByScopeTypeAction());
     group.add(new HelpAction());
 
@@ -257,7 +258,10 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     final Set<PsiPackage> psiPackages = myDependencies.keySet();
     final Set<PsiFile> psiFiles = new HashSet<PsiFile>();
     for (PsiPackage psiPackage : psiPackages) {
-      psiFiles.addAll(getPackageFiles(psiPackage));
+      final Set<List<PsiPackage>> cycles = myDependencies.get(psiPackage);
+      if (!mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES || cycles != null && !cycles.isEmpty()) {
+        psiFiles.addAll(getPackageFiles(psiPackage));
+      }
     }
     boolean showFiles = mySettings.UI_SHOW_FILES; //do not show files in the left tree
     mySettings.UI_FLATTEN_PACKAGES = true;
@@ -466,6 +470,25 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
+  private final class HideOutOfCyclePackagesAction extends ToggleAction {
+    @NonNls public static final String SHOW_PACKAGES_FROM_CYCLES_ONLY = "Hide packages without cyclic dependencies";
+
+    HideOutOfCyclePackagesAction() {
+      super(SHOW_PACKAGES_FROM_CYCLES_ONLY, SHOW_PACKAGES_FROM_CYCLES_ONLY, IconLoader.getIcon("/ant/filter.png"));
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      DependencyUISettings.getInstance().UI_FILTER_OUT_OF_CYCLE_PACKAGES = state;
+      mySettings.UI_FILTER_OUT_OF_CYCLE_PACKAGES = state;
+      rebuild();
+    }
+  }
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
