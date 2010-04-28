@@ -98,9 +98,8 @@ public class DocumentBasedFormattingModel implements FormattingModel {
         newWs = mergeWsWithCdataMarker(whiteSpace, ws, at - textRange.getStartOffset());
         
         if (removesPattern(textRange, newWs != null ? newWs: whiteSpace, marker = "]]>")) {
-          int i = newWs.lastIndexOf('\n');
-          
-          if (i > 0) {
+          int i;
+          if (newWs != null && (i = newWs.lastIndexOf('\n')) > 0) {
             int cdataStart = newWs.indexOf("<![CDATA[");
             int i2 = newWs.lastIndexOf('\n', cdataStart);
             String cdataIndent = i2 != -1 ? newWs.substring(i2 + 1, cdataStart):"";
