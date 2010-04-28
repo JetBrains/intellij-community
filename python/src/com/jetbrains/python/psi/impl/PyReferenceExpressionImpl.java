@@ -237,7 +237,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (target instanceof PyTargetExpression && context.allowDataFlow() && anchor != null) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(anchor, ScopeOwner.class);
-      if (scopeOwner != null) {
+      if (scopeOwner != null && scopeOwner == PsiTreeUtil.getParentOfType(target, ScopeOwner.class)) {
         final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyTargetExpression) target, anchor);
         if (defs.length > 0) {
           PyType type = getTypeIfExpr(defs [0], context);
