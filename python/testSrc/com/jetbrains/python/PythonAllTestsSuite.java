@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.jetbrains.python.refactoring.PyCodeFragmentTest;
 import com.jetbrains.python.refactoring.PyExtractMethodTest;
 import com.jetbrains.python.refactoring.PyInlineLocalTest;
 import com.jetbrains.python.refactoring.PyRenameTest;
@@ -50,7 +51,9 @@ public class PythonAllTestsSuite {
     PyInlineLocalTest.class,
     PyAutoUnindentTest.class,
     PyFindUsagesTest.class,
-    PyTypeTest.class
+    PyTypeTest.class,
+    PyControlFlowBuilderTest.class,
+    PyCodeFragmentTest.class
   };
 
   public static TestSuite suite() {

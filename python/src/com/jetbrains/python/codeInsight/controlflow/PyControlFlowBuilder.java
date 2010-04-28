@@ -1,7 +1,7 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
-import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.ControlFlow;
+import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.openapi.util.Pair;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +86,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null){
       qualifier.accept(this);
-      return;
+      if (!isSelf(qualifier)) {
+        return;
+      }
     }
     if (PyImportStatementNavigator.getImportStatementByElement(node) != null){
       return;
@@ -99,6 +100,19 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final ReadWriteInstruction readWriteInstruction = new ReadWriteInstruction(myBuilder, node, node.getName(), access);
     myBuilder.addNode(readWriteInstruction);
     myBuilder.checkPending(readWriteInstruction);
+  }
+
+  private static boolean isSelf(PsiElement qualifier) {
+    PyFunction func = PsiTreeUtil.getParentOfType(qualifier, PyFunction.class);
+    if (func == null || PsiTreeUtil.getParentOfType(func, PyClass.class) == null) {
+      return false;
+    }
+    final PyParameter[] params = func.getParameterList().getParameters();
+    if (params.length == 0) {
+      return false;
+    }
+    final PyNamedParameter named = params[0].getAsNamed();
+    return named != null && named.getName().equals(qualifier.getText());
   }
 
   @Override
@@ -127,13 +141,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyTargetExpression(final PyTargetExpression node) {
     final PsiElement[] children = node.getChildren();
     // Case of non qualified reference
-    if (children.length == 0){
+    if (children.length == 0 || (children.length == 1 && isSelf(children [0]))){
       final ReadWriteInstruction.ACCESS access = node.getParent() instanceof PySliceExpression 
                                                  ? ReadWriteInstruction.ACCESS.READ : ReadWriteInstruction.ACCESS.WRITE;
       final ReadWriteInstruction instruction = new ReadWriteInstruction(myBuilder, node, node.getName(), access);
       myBuilder.addNode(instruction);
       myBuilder.checkPending(instruction);
-    } else {
+    }
+    else {
       for (PsiElement child : children) {
         child.accept(this);
       }
