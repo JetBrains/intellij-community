@@ -194,7 +194,7 @@ public class MavenRootModelAdapter {
     return new Path(path);
   }
 
-  public void addModuleDependency(String moduleName, boolean isExportable, DependencyScope scope) {
+  public void addModuleDependency(String moduleName, DependencyScope scope) {
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -205,7 +205,6 @@ public class MavenRootModelAdapter {
       e = myRootModel.addInvalidModuleEntry(moduleName);
     }
 
-    e.setExported(isExportable);
     e.setScope(scope);
   }
 
@@ -215,7 +214,6 @@ public class MavenRootModelAdapter {
   }
 
   public void addLibraryDependency(MavenArtifact artifact,
-                                   boolean isExportable,
                                    DependencyScope scope,
                                    MavenModifiableModelsProvider provider,
                                    MavenProject project) {
@@ -234,7 +232,6 @@ public class MavenRootModelAdapter {
     }
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
-    e.setExported(isExportable);
     e.setScope(scope);
   }
 

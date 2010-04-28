@@ -1,0 +1,2 @@
+import a.FooBar
+FooBar

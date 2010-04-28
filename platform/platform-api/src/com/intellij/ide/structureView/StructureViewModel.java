@@ -81,4 +81,12 @@ public interface StructureViewModel extends TreeModel {
   void dispose();
 
   boolean shouldEnterElement(Object element);
+
+  interface ElementInfoProvider extends StructureViewModel {
+
+    boolean isAlwaysShowsPlus(StructureViewTreeElement element);
+
+    boolean isAlwaysLeaf(StructureViewTreeElement element);
+
+  }
 }
