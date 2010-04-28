@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.EnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.PyCommentBreakerEnterProcessor;
+import com.jetbrains.python.codeInsight.editorActions.smartEnter.enterProcessors.PyPlainEnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.fixers.*;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStatement;
@@ -49,6 +50,7 @@ public class PySmartEnterProcessor extends SmartEnterProcessor {
     ourFixers.add(new PyClassFixer());
 
     ourProcessors.add(new PyCommentBreakerEnterProcessor());
+    ourProcessors.add(new PyPlainEnterProcessor());
   }
 
   private static class TooManyAttemptsException extends Exception {

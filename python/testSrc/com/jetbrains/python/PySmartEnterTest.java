@@ -95,4 +95,8 @@ public class PySmartEnterTest extends PyLightFixtureTestCase {
   public void testComment() throws Exception {
     doTest();
   }
+
+  public void testPy891() throws Exception {
+    doTest();
+  }
 }

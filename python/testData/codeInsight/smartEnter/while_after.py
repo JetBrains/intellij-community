@@ -1,1 +1,2 @@
-while a:<caret>
+while a:
+    <caret>
