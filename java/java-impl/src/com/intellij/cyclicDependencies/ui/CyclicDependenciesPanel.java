@@ -32,6 +32,7 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.*;
@@ -234,9 +235,9 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     updateRightTreeModel();
   }
 
-  private static void initTree(final MyTree tree) {
+  private void initTree(final MyTree tree) {
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    tree.setCellRenderer(new MyTreeCellRenderer());
+    tree.setCellRenderer(new MyTreeCellRenderer(tree == myLeftTree));
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(tree);
@@ -394,7 +395,13 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     return null;
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+    private final boolean myLeftTree;
+
+    public MyTreeCellRenderer(boolean isLeftTree) {
+      myLeftTree = isLeftTree;
+    }
+
     public void customizeCellRenderer(JTree tree,
                                       Object value,
                                       boolean selected,
@@ -402,19 +409,32 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      PackageDependenciesNode node;
+      SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+
+      final PackageDependenciesNode node;
       if (value instanceof PackageDependenciesNode){
         node = (PackageDependenciesNode)value;
+        if (myLeftTree) {
+          final PsiElement element = node.getPsiElement();
+          if (element instanceof PsiPackage) {
+            final PsiPackage aPackage = (PsiPackage)element;
+            final Set<List<PsiPackage>> packageDependencies = myDependencies.get(aPackage);
+            if (packageDependencies != null && !packageDependencies.isEmpty()) {
+                attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+            }
+          }
+        }
       } else {
         node = (PackageDependenciesNode)((DefaultMutableTreeNode)value).getUserObject(); //cycle node children
       }
+      append(node.toString(), attributes);
+
       if (expanded) {
         setIcon(node.getOpenIcon());
       }
       else {
         setIcon(node.getClosedIcon());
       }
-      append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 
