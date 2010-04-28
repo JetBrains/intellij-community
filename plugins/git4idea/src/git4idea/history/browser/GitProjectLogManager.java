@@ -142,7 +142,11 @@ public class GitProjectLogManager implements ProjectComponent {
             //should not
           }
           public void consume(final String caption) {
-            content.setDisplayName(caption);
+            new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+              public void run() {
+                content.setDisplayName(caption);
+              }
+            }.callMe();
           }
         });
       }
