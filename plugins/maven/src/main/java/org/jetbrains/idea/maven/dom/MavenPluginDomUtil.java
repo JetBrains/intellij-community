@@ -47,7 +47,7 @@ public class MavenPluginDomUtil {
 
     File file = MavenArtifactUtil.getArtifactFile(MavenProjectsManager.getInstance(p).getLocalRepository(),
                                                     groupId, artifactId, version, "jar");
-    VirtualFile pluginFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile pluginFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (pluginFile == null) return null;
 
     VirtualFile pluginJarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(pluginFile);
