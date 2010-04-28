@@ -99,10 +99,10 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   private Indent calcIndent(final ASTNode child, final int state) {
     if (state == AFTER_ELSE && child.getElementType() == ElementType.IF_STATEMENT) {
-      if (!mySettings.SPECIAL_ELSE_IF_TREATMENT) {
-        return getCodeBlockInternalIndent(1);
+      if (mySettings.SPECIAL_ELSE_IF_TREATMENT) {
+        return Indent.getNoneIndent();
       } else {
-        return getCodeBlockExternalIndent();
+        return getCodeBlockInternalIndent(1);
       }
     }
     if (isSimpleStatement(child)){

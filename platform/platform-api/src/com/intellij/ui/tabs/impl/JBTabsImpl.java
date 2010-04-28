@@ -29,6 +29,10 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowPassInfo;
@@ -37,6 +41,7 @@ import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +61,7 @@ import java.util.*;
 import java.util.List;
 
 public class JBTabsImpl extends JComponent
-  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable {
+  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable, QuickActionProvider {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -150,6 +155,9 @@ public class JBTabsImpl extends JComponent
   private DragHelper myDragHelper;
   private boolean myNavigationActionsEnabled = true;
   private boolean myUseBufferedPaint = true;
+
+  private boolean myOwnSwitchProvider = true;
+  private SwitchProvider mySwitchDelegate;
 
   public JBTabsImpl(@NotNull Project project) {
     this(project, project);
@@ -281,6 +289,11 @@ public class JBTabsImpl extends JComponent
 
   public final boolean isDisposed() {
     return myDisposed;
+  }
+
+  public JBTabs setAdditinalSwitchProviderWhenOriginal(SwitchProvider delegate) {
+    mySwitchDelegate = delegate;
+    return this;
   }
 
   public void dispose() {
@@ -2229,6 +2242,10 @@ public class JBTabsImpl extends JComponent
     return this;
   }
 
+  public boolean isCycleRoot() {
+    return false;
+  }
+
   @NotNull
   public JBTabs removeTabMouseListener(@NotNull MouseListener listener) {
     removeListeners();
@@ -2582,9 +2599,33 @@ public class JBTabsImpl extends JComponent
       if (value != null) return value;
     }
 
+    if (SwitchProvider.KEY.getName().equals(dataId) && myOwnSwitchProvider) {
+      return this;
+    }
+
+    if (QuickActionProvider.KEY.getName().equals(dataId)) {
+      return this;
+    }
+
     return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
   }
 
+  public List<AnAction> getActions(boolean originalProvider) {
+    ArrayList<AnAction> result = new ArrayList<AnAction>();
+
+    TabInfo selection = getSelectedInfo();
+    if (selection != null) {
+      ActionGroup group = selection.getGroup();
+      if (group != null) {
+        AnAction[] children = group.getChildren(null);
+        for (int i = 0; i < children.length; i++) {
+          result.add(children[i]);
+        }
+      }
+    }
+
+    return result;
+  }
 
   public DataProvider getDataProvider() {
     return myDataProvider;
@@ -2682,6 +2723,11 @@ public class JBTabsImpl extends JComponent
     return myTabDraggingEnabled && isSingleRow();
   }
 
+  public JBTabsPresentation setProvideSwitchTargets(boolean provide) {
+    myOwnSwitchProvider = provide;
+    return this;
+  }
+
   void reallocate(TabInfo source, TabInfo target, boolean before) {
     if (source == target || source == null || target == null) return;
 
@@ -2722,5 +2768,74 @@ public class JBTabsImpl extends JComponent
     myUseBufferedPaint = useBufferedPaint;
     revalidate();
     repaint();
+  }
+
+  public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {
+    ArrayList<SwitchTarget> result = new ArrayList<SwitchTarget>();
+    for (TabInfo each : myVisibleInfos) {
+      result.add(new TabTarget(each));
+    }
+
+    if (originalProvider && mySwitchDelegate != null) {
+      List<SwitchTarget> additional = mySwitchDelegate.getTargets(onlyVisible, false);
+      if (additional != null) {
+        result.addAll(additional);
+      }
+    }
+
+    return result;
+  }
+
+
+  public SwitchTarget getCurrentTarget() {
+    if (mySwitchDelegate != null) {
+      SwitchTarget selection = mySwitchDelegate.getCurrentTarget();
+      if (selection != null) return selection;
+    }
+
+    return new TabTarget(getSelectedInfo());
+  }
+
+  private class TabTarget extends ComparableObject.Impl implements SwitchTarget {
+
+    private TabInfo myInfo;
+
+    private TabTarget(TabInfo info) {
+      myInfo = info;
+    }
+
+    public ActionCallback switchTo(boolean requestFocus) {
+      return select(myInfo, requestFocus);
+    }
+
+    public boolean isVisible() {
+      return getRectangle() != null;
+    }
+
+    public RelativeRectangle getRectangle() {
+      TabLabel label = myInfo2Label.get(myInfo);
+      if (label.getRootPane() == null) return null;
+
+      Rectangle b = label.getBounds();
+      b.x += 2;
+      b.width -= 4;
+      b.y += 2;
+      b.height -= 4;
+      return new RelativeRectangle(label.getParent(), b);
+    }
+
+    public Component getComponent() {
+      return myInfo2Label.get(myInfo);
+    }
+
+    @Override
+    public String toString() {
+      return myInfo.getText();
+    }
+
+    @Override
+    public Object[] getEqualityObjects() {
+      return new Object[] {myInfo};
+    }
   }
 }

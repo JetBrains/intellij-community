@@ -672,7 +672,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
     }
-    return null;
+    return super.getData(dataId);
   }
 
   private static PsiElement[] convertToPsiElementsArray(final Object[] selectedElements) {

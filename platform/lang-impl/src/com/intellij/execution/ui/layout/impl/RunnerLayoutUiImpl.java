@@ -25,6 +25,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.ActionCallback;
@@ -35,11 +36,18 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.switcher.QuickAccessProvider;
+import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.ui.switcher.SwitchProvider;
+import com.intellij.ui.switcher.SwitchTarget;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
   private final RunnerLayout myLayout;
@@ -56,7 +64,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     myContentUI = new RunnerContentUi(project, this, ActionManager.getInstance(), IdeFocusManager.getInstance(project), myLayout,
                                            runnerTitle + " - " + sessionName);
 
-    myContentPanel = new JPanel(new BorderLayout());
+    myContentPanel = new MyContent();
 
     myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), false, project);
     Disposer.register(this, myViewsContentManager);
@@ -296,4 +304,23 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
     }
     return contents;
   }
+
+  private class MyContent extends JPanel implements DataProvider {
+    public MyContent() {
+      super(new BorderLayout());
+    }
+
+    public Object getData(@NonNls String dataId) {
+      if (SwitchProvider.KEY.getName().equals(dataId)) {
+        return myContentUI;
+      }
+
+      if (QuickActionProvider.KEY.getName().equals(dataId)) {
+        return myContentUI;
+      }
+
+      return null;
+    }
+  }
+
 }

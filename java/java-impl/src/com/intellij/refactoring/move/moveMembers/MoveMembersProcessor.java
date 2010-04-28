@@ -242,7 +242,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     }
     analyzeMoveConflicts(myMembersToMove, myTargetClass, myNewVisibility, conflicts);
     RefactoringConflictsUtil.analyzeModuleConflicts(myProject, myMembersToMove, usages, myTargetClass, conflicts);
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usages);
   }
 
   private void addInaccessiblleConflicts(final MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {

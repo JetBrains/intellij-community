@@ -18,8 +18,8 @@ package com.intellij.psi.util.proximity;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**

@@ -79,9 +79,16 @@ public class ElementToWorkOn {
 
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
+
         if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
           editor.getSelectionModel().selectLineAtCaret();
-        } else {
+          final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, localVar, expr);
+          if (elementToWorkOn == null || elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {
+            editor.getSelectionModel().removeSelection();
+          }
+        }
+
+        if (!editor.getSelectionModel().hasSelection()){
           final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, offset, statementsInRange);
           if (expressions.isEmpty()) {
             editor.getSelectionModel().selectLineAtCaret();

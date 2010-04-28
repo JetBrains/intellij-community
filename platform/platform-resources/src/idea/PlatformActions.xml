@@ -98,6 +98,14 @@
 
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
 
+    <group id="SwitchViewActions">
+      <action id="SwitchUp" class="com.intellij.ui.switcher.SwitchAction$Up"/>
+      <action id="SwitchDown" class="com.intellij.ui.switcher.SwitchAction$Down"/>
+      <action id="SwitchLeft" class="com.intellij.ui.switcher.SwitchAction$Left"/>
+      <action id="SwitchRight" class="com.intellij.ui.switcher.SwitchAction$Right"/>
+      <action id="SwitchApply" class="com.intellij.ui.switcher.ApplySwitchAction"/>
+    </group>
+
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">

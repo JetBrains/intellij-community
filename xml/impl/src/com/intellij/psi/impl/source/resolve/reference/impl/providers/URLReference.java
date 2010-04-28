@@ -145,6 +145,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     return null;
   }
 
+  @NotNull
   public String getCanonicalText() {
     final String text = myElement.getText();
     if (text.length() > 1) {

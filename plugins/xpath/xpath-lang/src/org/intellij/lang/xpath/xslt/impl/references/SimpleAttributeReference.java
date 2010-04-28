@@ -33,6 +33,7 @@ abstract class SimpleAttributeReference implements PsiReference {
         myAttribute = attribute;
     }
 
+    @NotNull
     public String getCanonicalText() {
         return getTextRange().substring(myAttribute.getValue());
     }

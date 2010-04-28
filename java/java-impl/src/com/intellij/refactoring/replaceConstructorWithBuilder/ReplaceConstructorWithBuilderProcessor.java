@@ -176,7 +176,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
         type = ((PsiEllipsisType)type).toArrayType();
       }
       field = myElementFactory.createField(parameterData.getFieldName(), type);
-      builderClass.add(field);
+      field = (PsiField)builderClass.add(field);
     }
 
     final String defaultValue = parameterData.getDefaultValue();
@@ -285,7 +285,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       conflicts.putValue(null, "Found constructors are not reducible to simple chain");
     }
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   protected String getCommandName() {

@@ -81,8 +81,8 @@ public class UpdateEventHandler implements ISVNEventHandler {
       myText2 = SvnBundle.message("progress.text2.treeconflicted", displayPath);
       updateProgressIndicator();
       myUpdatedFiles.registerGroup(createFileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
-                                                   SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT));
-      addFileToGroup(SvnUpdateGroups.MERGED_WITH_TREE_CONFLICT, event);
+                                                   FileGroup.MERGED_WITH_TREE_CONFLICT));
+      addFileToGroup(FileGroup.MERGED_WITH_TREE_CONFLICT, event);
     }
 
     if (event.getAction() == SVNEventAction.UPDATE_ADD ||

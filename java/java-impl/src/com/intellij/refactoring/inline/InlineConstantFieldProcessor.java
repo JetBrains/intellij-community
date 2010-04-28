@@ -228,7 +228,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usagesIn);
   }
 
   private static boolean isAccessedForWriting (PsiExpression expr) {

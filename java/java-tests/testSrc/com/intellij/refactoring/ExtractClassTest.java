@@ -17,6 +17,8 @@ import com.intellij.refactoring.extractclass.ExtractClassProcessor;
 import junit.framework.Assert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.TreeSet;
 
 public class ExtractClassTest extends MultiFileTestCase{
   protected String getTestRoot() {
@@ -140,7 +142,9 @@ public class ExtractClassTest extends MultiFileTestCase{
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (conflicts != null) {
-        Assert.assertEquals(e.getMessage(), conflicts);
+        TreeSet expectedConflictsSet = new TreeSet(Arrays.asList(conflicts.split("\n")));
+        TreeSet actualConflictsSet = new TreeSet(Arrays.asList(e.getMessage().split("\n")));
+        Assert.assertEquals(expectedConflictsSet, actualConflictsSet);
         return;
       } else {
         fail(e.getMessage());
@@ -208,7 +212,7 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   public void testMultipleGetters() throws Exception {
-    doTestField(null);
+    doTestField("Field 'myT' needs getter");
   }
 
   public void testMultipleGetters1() throws Exception {
@@ -216,11 +220,15 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   public void testUsedInInitializer() throws Exception {
-    doTestField("Class initializer requires moved members");
+    doTestField("Field 'myT' needs setter\n" +
+                "Field 'myT' needs getter\n" +
+                "Class initializer requires moved members");
   }
 
   public void testUsedInConstructor() throws Exception {
-    doTestField("Constructor requires moved members");
+    doTestField("Field 'myT' needs getter\n" +
+                "Field 'myT' needs setter\n" +
+                "Constructor requires moved members");
   }
 
   public void testRefInJavadoc() throws Exception {

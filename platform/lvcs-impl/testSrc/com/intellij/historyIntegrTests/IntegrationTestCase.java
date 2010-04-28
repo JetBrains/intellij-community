@@ -51,6 +51,11 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   protected VirtualFile myRoot;
   protected IdeaGateway myGateway;
 
+  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
+  public IntegrationTestCase() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();

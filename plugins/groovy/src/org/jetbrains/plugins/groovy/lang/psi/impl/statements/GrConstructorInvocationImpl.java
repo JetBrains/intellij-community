@@ -149,6 +149,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     return resolveConstructor();
   }
 
+  @NotNull
   public String getCanonicalText() {
     return getText(); //TODO
   }

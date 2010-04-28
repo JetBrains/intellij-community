@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
@@ -46,6 +47,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class GridCellImpl implements GridCell, Disposable {
@@ -95,7 +97,7 @@ public class GridCellImpl implements GridCell, Disposable {
       }
     }).setSideComponentVertical(!context.getLayoutSettings().isToolbarHorizontal())
       .setStealthTabMode(true)
-      .setFocusCycle(false).setPaintFocus(true);
+      .setFocusCycle(false).setPaintFocus(true).setProvideSwitchTargets(false);
 
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
@@ -244,6 +246,20 @@ public class GridCellImpl implements GridCell, Disposable {
 
   public boolean isMinimized(Content content) {
     return myMinimizedContents.contains(content);
+  }
+
+  public java.util.List<SwitchTarget> getTargets(boolean onlyVisible) {
+    if (myTabs.getPresentation().isHideTabs()) return new ArrayList<SwitchTarget>();
+
+    return myTabs.getTargets(onlyVisible, false);
+  }
+
+  public SwitchTarget getTargetForSelection() {
+    return myTabs.getCurrentTarget();
+  }
+
+  public boolean contains(Component c) {
+    return myTabs.getComponent().isAncestorOf(c);
   }
 
   private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {

@@ -43,7 +43,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertClosingTag = true;
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyStartAttribute = true;
-  private boolean myEnableZenCoding = true;
+  private boolean myZenCodingEnabled = true;
   private int myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
 
   public static WebEditorOptions getInstance() {
@@ -95,15 +95,15 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   }
 
   public boolean isZenCodingEnabled() {
-    return myEnableZenCoding;
+    return myZenCodingEnabled;
   }
 
   public void setAutomaticallyStartAttribute(final boolean automaticallyStartAttribute) {
     myAutomaticallyStartAttribute = automaticallyStartAttribute;
   }
 
-  public void setEnableZenCoding(boolean enableZenCoding) {
-    myEnableZenCoding = enableZenCoding;
+  public void setZenCodingEnabled(boolean zenCodingEnabled) {
+    myZenCodingEnabled = zenCodingEnabled;
   }
 
   @NotNull

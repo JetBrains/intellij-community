@@ -15,18 +15,29 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.util.Ref;
+import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
-public class SimpleToolWindowPanel extends JPanel {
+public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider, DataProvider {
 
   private JComponent myToolbar;
   private JComponent myContent;
 
   private boolean myBorderless;
   private boolean myVertical;
+  private boolean myProvideQuickActions;
 
   public SimpleToolWindowPanel(boolean vertical) {
     this(vertical, false);
@@ -36,6 +47,7 @@ public class SimpleToolWindowPanel extends JPanel {
     setLayout(new BorderLayout(vertical ? 0 : 1, vertical ? 1 : 0));
     myBorderless = borderless;
     myVertical = vertical;
+    setProvideQuickActions(true);
   }
 
   public void setToolbar(JComponent c) {
@@ -53,6 +65,45 @@ public class SimpleToolWindowPanel extends JPanel {
 
     revalidate();
     repaint();
+  }
+
+  public Object getData(@NonNls String dataId) {
+    return QuickActionProvider.KEY.is(dataId) && myProvideQuickActions ? this : null;
+  }
+
+  public SimpleToolWindowPanel setProvideQuickActions(boolean provide) {
+    myProvideQuickActions = provide;
+    return this;
+  }
+
+  public List<AnAction> getActions(boolean originalProvider) {
+    final Ref<ActionToolbar> toolbar = new Ref<ActionToolbar>();
+    if (myToolbar != null) {
+      new AwtVisitor(myToolbar) {
+        @Override
+        public boolean visit(Component component) {
+          if (component instanceof ActionToolbar) {
+            toolbar.set((ActionToolbar)component);
+            return true;
+          }
+          return false;
+        }
+      };
+    }
+
+    if (toolbar.get() != null) {
+      return toolbar.get().getActions(originalProvider);
+    }
+
+    return null;
+  }
+
+  public JComponent getComponent() {
+    return this;
+  }
+
+  public boolean isCycleRoot() {
+    return false;
   }
 
   public void setContent(JComponent c) {

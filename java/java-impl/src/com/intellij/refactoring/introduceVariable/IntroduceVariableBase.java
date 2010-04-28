@@ -77,18 +77,26 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   protected static String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    if (!editor.getSelectionModel().hasSelection()) {
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
       final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
+
+      //try line selection
       if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) || isPreferStatements())) {
-        editor.getSelectionModel().selectLineAtCaret();
-      } else {
+        selectionModel.selectLineAtCaret();
+        if (findExpressionInRange(project, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()) == null) {
+          selectionModel.removeSelection();
+        }
+      }
+
+      if (!selectionModel.hasSelection()) {
         final List<PsiExpression> expressions = collectExpressions(file, editor, offset, statementsInRange);
         if (expressions.isEmpty()) {
-          editor.getSelectionModel().selectLineAtCaret();
+          selectionModel.selectLineAtCaret();
         } else if (expressions.size() == 1) {
           final TextRange textRange = expressions.get(0).getTextRange();
-          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+          selectionModel.setSelection(textRange.getStartOffset(), textRange.getEndOffset());
         }
         else {
           showChooser(editor, expressions, new Pass<PsiExpression>(){
@@ -100,8 +108,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         }
       }
     }
-    if (invoke(project, editor, file, editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd())) {
-      editor.getSelectionModel().removeSelection();
+    if (invoke(project, editor, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd())) {
+      selectionModel.removeSelection();
     }
   }
 
@@ -224,6 +232,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
 
+    return invokeImpl(project, findExpressionInRange(project, file, startOffset, endOffset), editor);
+  }
+
+  private static PsiExpression findExpressionInRange(Project project, PsiFile file, int startOffset, int endOffset) {
     PsiExpression tempExpr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (tempExpr == null) {
       PsiElement[] statements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
@@ -239,7 +251,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if (tempExpr == null) {
       tempExpr = getSelectedExpression(project, file, startOffset, endOffset);
     }
-    return invokeImpl(project, tempExpr, editor);
+    return tempExpr;
   }
 
   public static PsiExpression getSelectedExpression(final Project project, final PsiFile file, final int startOffset, final int endOffset) {

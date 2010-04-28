@@ -127,6 +127,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return null;
   }
 
+  @NotNull
   public String getCanonicalText() {
     PsiElement resolved = resolve();
     if (resolved instanceof PsiMember && resolved instanceof PsiNamedElement) {

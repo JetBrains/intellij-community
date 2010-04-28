@@ -150,6 +150,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       return myElement.getParent().getParent();
     }
 
+    @NotNull
     public String getCanonicalText() {
       String text = myElement.getText();
       return text.substring(1,text.length()- 1);
@@ -412,6 +413,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       return namespaceByPrefix;
     }
 
+    @NotNull
     public String getCanonicalText() {
       final String text = myElement.getText();
       String name = myRange.getEndOffset() < text.length() ? myRange.substring(text) : "";

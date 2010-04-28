@@ -16,6 +16,8 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 
 import javax.swing.border.EmptyBorder;
@@ -92,4 +94,9 @@ abstract class ContentLayout {
   }
 
   public abstract void showContentPopup(ListPopup listPopup);
+
+  public abstract RelativeRectangle getRectangleFor(Content content);
+
+  public abstract Component getComponentFor(Content content);
+
 }

@@ -291,6 +291,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return (JavaResolveResult[])results;
   }
 
+  @NotNull
   public String getCanonicalText() {
     PsiElement element = resolve();
     if (element instanceof PsiClass) return ((PsiClass)element).getQualifiedName();

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.*;
@@ -135,11 +136,11 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         ret.add(tokenizer.nextToken());
       }
       for (final String s : ret) {
-        final LookupItem item = (LookupItem)LookupItemUtil.objectToLookupItem(s);
         if (isInline) {
-          item.setInsertHandler(new InlineInsertHandler());
+          result.addElement(TailTypeDecorator.withInsertHandler(LookupElementBuilder.create(s), new InlineInsertHandler()));
+        } else {
+          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SPACE));
         }
-        result.addElement(item);
       }
     }
 
@@ -149,8 +150,8 @@ public class JavaDocCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static class InlineInsertHandler implements InsertHandler<LookupItem> {
-    public void handleInsert(InsertionContext context, LookupItem item) {
+  private static class InlineInsertHandler implements InsertHandler<LookupElement> {
+    public void handleInsert(InsertionContext context, LookupElement item) {
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final Project project = context.getProject();
         PsiDocumentManager.getInstance(project).commitAllDocuments();

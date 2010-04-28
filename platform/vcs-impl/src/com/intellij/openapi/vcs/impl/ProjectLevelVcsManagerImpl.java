@@ -237,6 +237,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Nullable
+  public VcsRoot getVcsRootObjectFor(final VirtualFile file) {
+    final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
+    if (mapping == null) {
+      return null;
+    }
+    final String directory = mapping.getDirectory();
+    final AbstractVcs vcs = findVcsByName(mapping.getVcs());
+    if (directory.length() == 0) {
+      return new VcsRoot(vcs, myDefaultVcsRootPolicy.getVcsRootFor(file));
+    }
+    return new VcsRoot(vcs, LocalFileSystem.getInstance().findFileByPath(directory));
+  }
+
+  @Nullable
   public VirtualFile getVcsRootFor(final FilePath file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Nullable
@@ -244,6 +258,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
           return getVcsRootFor(vFile);
+        }
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public VcsRoot getVcsRootObjectFor(final FilePath file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<VcsRoot>() {
+      @Nullable
+      public VcsRoot compute() {
+        VirtualFile vFile = ChangesUtil.findValidParent(file);
+        if (vFile != null) {
+          return getVcsRootObjectFor(vFile);
         }
         return null;
       }

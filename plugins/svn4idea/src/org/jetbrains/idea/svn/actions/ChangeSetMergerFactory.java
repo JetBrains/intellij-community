@@ -18,7 +18,7 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.integrate.Merger;
+import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.PointMerger;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
@@ -37,7 +37,7 @@ public class ChangeSetMergerFactory implements MergerFactory {
     mySelectedChanges = new ArrayList<Change>(selectedChanges);
   }
 
-  public Merger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+  public IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
     return new PointMerger(vcs, mySelectedList, target, handler, currentBranchUrl, mySelectedChanges);
   }
 }

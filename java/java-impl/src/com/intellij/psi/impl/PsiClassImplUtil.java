@@ -324,7 +324,7 @@ public class PsiClassImplUtil {
   };
 
   public static Icon getClassIcon(final int flags, final PsiClass aClass) {
-    Icon base = aClass.getUserData(Iconable.LAST_COMPUTED_ICON);
+    Icon base = Iconable.LastComputedIcon.get(aClass, flags);
     if (base == null) {
       Icon symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, 0);

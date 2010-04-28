@@ -137,6 +137,7 @@
     <lookup.charFilter implementation="org.jetbrains.plugins.groovy.lang.completion.GroovyReferenceCharFilter"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
+    <classNameInsertHandler language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyClassNameInsertHandler"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
     <stackFrameFilter implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>

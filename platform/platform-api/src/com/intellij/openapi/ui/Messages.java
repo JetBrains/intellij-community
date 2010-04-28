@@ -90,8 +90,7 @@ public class Messages {
   }
 
   public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
@@ -101,9 +100,13 @@ public class Messages {
     }
   }
 
-  public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+  private static boolean isApplicationInUnitTestOrHeadless(){
     final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()  || application.isHeadlessEnvironment()) {
+    return (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment()));
+  }
+
+  public static int showDialog(Component parent, String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
@@ -120,9 +123,7 @@ public class Messages {
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
   public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
-
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
@@ -291,8 +292,7 @@ public class Messages {
                                        Icon icon,
                                        @NonNls String initialValue,
                                        @Nullable InputValidator validator) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
     else {
@@ -310,8 +310,7 @@ public class Messages {
                                        @NonNls String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
     else {
@@ -341,8 +340,7 @@ public class Messages {
                                        Icon icon,
                                        @NonNls String initialValue,
                                        InputValidator validator) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
     else {
@@ -361,8 +359,7 @@ public class Messages {
    */
   @Nullable
   public static String showInputDialog(String message, String title, Icon icon, @NonNls String initialValue, InputValidator validator) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
     else {
@@ -379,8 +376,7 @@ public class Messages {
                                                 String[] values,
                                                 String initialValue,
                                                 InputValidator validator) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
     else {
@@ -395,8 +391,7 @@ public class Messages {
   }
 
   public static int showChooseDialog(String message, String title, String[] values, String initialValue, Icon icon) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
@@ -407,8 +402,7 @@ public class Messages {
   }
 
   public static int showChooseDialog(Component parent, String message, String title, String[] values, String initialValue, Icon icon) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
@@ -422,8 +416,7 @@ public class Messages {
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
   public static int showChooseDialog(Project project, String message, String title, Icon icon, String[] values, String initialValue) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
@@ -458,8 +451,7 @@ public class Messages {
    * Shows dialog with text area to edit long strings that don't fit in text field 
    */
   public static void showTextAreaDialog(final JTextField textField, final String title, @NonNls final String dimensionServiceKey) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()  || application.isHeadlessEnvironment()) {
+    if (isApplicationInUnitTestOrHeadless()) {
       ourTestImplementation.show(title);
     }
     else {

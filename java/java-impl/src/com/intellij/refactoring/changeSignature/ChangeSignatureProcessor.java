@@ -31,6 +31,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.usageView.UsageInfo;
@@ -137,9 +138,15 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(refUsages.get()));
+    final UsageInfo[] usagesIn = refUsages.get();
+    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+    RenameUtil.removeConflictUsages(usagesSet);
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflictDescriptions.isEmpty()) {
-      ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions);
+      ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions, new Runnable(){
+        public void run() {
+          execute(usagesIn);
+        }
+      });
       dialog.show();
       if (!dialog.isOK()) {
         if (dialog.isShowConflicts()) prepareSuccessful();

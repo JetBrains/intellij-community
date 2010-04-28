@@ -31,13 +31,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.basic.BasicTreeUI;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
+import javax.swing.tree.AbstractLayoutCache;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
@@ -1034,7 +1036,34 @@ public class UIUtil {
     c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
   }
 
-  public static class LeglessTreeUi extends BasicTreeUI {
+  public static class MacTreeUI extends BasicTreeUI {
+
+    private static final Color SELECTION_COLOR = new Color(115, 132, 153);
+    private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
+
+    private static final Icon TREE_COLLAPSED_ICON = (Icon) UIManager.get("Tree.collapsedIcon");
+    private static final Icon TREE_EXPANDED_ICON = (Icon) UIManager.get("Tree.expandedIcon");
+    private static final Icon TREE_SELECTED_COLLAPSED_ICON = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
+    private static final Icon TREE_SELECTED_EXPANDED_ICON = IconLoader.getIcon("/mac/tree_white_down_arrow.png");
+
+    @Override
+    protected void completeUIInstall() {
+      super.completeUIInstall();
+
+      tree.setOpaque(false);
+      tree.setLargeModel(true);
+      tree.setRootVisible(false);
+      tree.setShowsRootHandles(true);
+    }
+
+    @Override
+    protected void installKeyboardActions() {
+      super.installKeyboardActions();
+
+      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse");
+      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
+    }
+
     @Override
     protected void paintHorizontalPartOfLeg(final Graphics g,
                                             final Rectangle clipBounds,
@@ -1055,6 +1084,84 @@ public class UIUtil {
 
     @Override
     protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
+    }
+
+    @Override
+    protected void paintHorizontalLine(Graphics g, JComponent c, int y, int left, int right) {
+    }
+
+    @Override
+    public void paint(Graphics g, JComponent c) {
+      final TreeSelectionModel selectionModel = getSelectionModel();
+      final int[] selectedRows = selectionModel.getSelectionRows();
+      if (selectedRows != null) {
+        for (final int row : selectedRows) {
+          Rectangle bounds = tree.getRowBounds(row);
+          Graphics2D selectionBackgroundGraphics = (Graphics2D)g.create();
+          selectionBackgroundGraphics.translate(0, bounds.y);
+
+          selectionBackgroundGraphics.setColor(tree.hasFocus() ? SELECTION_COLOR : UNFOCUSED_SELECTION_COLOR);
+          selectionBackgroundGraphics.fillRect(0, 0, c.getWidth(), bounds.height - 1);
+          selectionBackgroundGraphics.dispose();
+        }
+      }
+
+      super.paint(g, c);
+    }
+
+    @Override
+    protected void paintExpandControl(Graphics g,
+                                      Rectangle clipBounds,
+                                      Insets insets,
+                                      Rectangle bounds,
+                                      TreePath path,
+                                      int row,
+                                      boolean isExpanded,
+                                      boolean hasBeenExpanded,
+                                      boolean isLeaf) {
+      boolean isPathSelected = tree.getSelectionModel().isPathSelected(path);
+
+      Icon expandIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_EXPANDED_ICON
+                                       : TREE_EXPANDED_ICON;
+      Icon collapseIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_COLLAPSED_ICON
+                                         : TREE_COLLAPSED_ICON;
+
+
+      if (!isLeaf(row)) {
+        setExpandedIcon(expandIcon);
+        setCollapsedIcon(collapseIcon);
+      }
+
+      super.paintExpandControl(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+    }
+
+    @Override
+    protected AbstractLayoutCache.NodeDimensions createNodeDimensions() {
+      return new NodeDimensionsHandler() {
+        @Override
+        public Rectangle getNodeDimensions(
+          Object value, int row, int depth, boolean expanded, Rectangle size) {
+          Rectangle dimensions = super.getNodeDimensions(value, row, depth, expanded, size);
+          int containerWidth = tree.getParent() instanceof JViewport
+                               ? tree.getParent().getWidth() : tree.getWidth();
+
+          if (containerWidth > 0) {
+            dimensions.width = containerWidth - getRowX(row, depth);
+          }
+
+          return dimensions;
+        }
+      };
+    }
+
+    @Override
+    public Rectangle getPathBounds(JTree tree, TreePath path) {
+        Rectangle bounds = super.getPathBounds(tree, path);
+        if (bounds != null) {
+            bounds.x = 0;
+            bounds.width = tree.getWidth();
+        }
+        return bounds;
     }
   }
 

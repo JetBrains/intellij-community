@@ -28,6 +28,7 @@ import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,7 +41,7 @@ public class CompletionLookupArranger extends LookupArranger {
   static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
   public static final Key<Comparable[]> WEIGHT = Key.create("WEIGHT");
-  private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>();
+  private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
 
   public CompletionLookupArranger(final CompletionParameters parameters) {
     myLocation = new CompletionLocation(parameters);

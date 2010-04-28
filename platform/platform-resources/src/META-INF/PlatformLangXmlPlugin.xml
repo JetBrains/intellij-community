@@ -8,6 +8,7 @@
   <xi:include href="/META-INF/PlatformLangPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/XmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/ImagesPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/RegExpPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <module value="com.intellij.modules.xml"/>
 </idea-plugin>

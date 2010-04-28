@@ -17,7 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +31,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -67,28 +66,28 @@ public class AllClassesGetter {
       final PsiFile file = context.getFile();
       if (file.findElementAt(endOffset - 1) == null) return;
 
-      boolean checkReference = true;
-      if (file.getLanguage() == StdLanguages.JAVA) {
-        if (PsiTreeUtil.findElementOfClassAtOffset(file, endOffset - 1, PsiImportStatementBase.class, false) != null) {
-          checkReference = false;
-        } else {
-          final OffsetKey key = OffsetKey.create("endOffset", false);
-          context.getOffsetMap().addOffset(key, endOffset);
-          JavaPsiClassReferenceElement.JAVA_CLASS_INSERT_HANDLER.handleInsert(context, item);
-          final int newOffset = context.getOffsetMap().getOffset(key);
-          if (newOffset >= 0) {
-            endOffset = newOffset;
-          } else {
-            LOG.error(endOffset + " became invalid: " + context.getOffsetMap() + "; inserting " + qname);
-          }
-        }
+      final OffsetKey key = OffsetKey.create("endOffset", false);
+      context.getOffsetMap().addOffset(key, endOffset);
+      ClassNameInsertHandler handler = ClassNameInsertHandler.EP_NAME.forLanguage(file.getLanguage());
+      ClassNameInsertHandlerResult checkReference = ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE;
+      if (handler != null) {
+        checkReference = handler.handleInsert(context, item);
+      }
+
+      final int newOffset = context.getOffsetMap().getOffset(key);
+      if (newOffset >= 0) {
+        endOffset = newOffset;
+      }
+      else {
+        LOG.error(endOffset + " became invalid: " + context.getOffsetMap() + "; inserting " + qname);
       }
 
       final RangeMarker toDelete = DefaultInsertHandler.insertSpace(endOffset, document);
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
-      boolean insertFqn = true;
-      if (checkReference && psiReference != null) {
+
+      boolean insertFqn=checkReference!=ClassNameInsertHandlerResult.REFERENCE_CORRECTED;
+      if (checkReference == ClassNameInsertHandlerResult.CHECK_FOR_CORRECT_REFERENCE && psiReference != null) {
         final PsiManager psiManager = file.getManager();
         if (psiManager.areElementsEquivalent(psiClass, DefaultInsertHandler.resolveReference(psiReference))) {
           insertFqn = false;
@@ -145,7 +144,7 @@ public class AllClassesGetter {
   }
 
   public void getClasses(final PsiElement context, final CompletionResultSet set, final int offset, final boolean filterByScope) {
-    if(context == null || !context.isValid()) return;
+    if (context == null || !context.isValid()) return;
 
     final String packagePrefix = getPackagePrefix(context, offset);
 
@@ -229,6 +228,18 @@ public class AllClassesGetter {
         return new JavaPsiClassReferenceElement(psiClass).setInsertHandler(INSERT_HANDLER);
       }
     });
+  }
+
+
+  public interface ClassNameInsertHandler {
+    LanguageExtension<ClassNameInsertHandler> EP_NAME =
+      new LanguageExtension<ClassNameInsertHandler>("com.intellij.classNameInsertHandler");
+
+    ClassNameInsertHandlerResult handleInsert(InsertionContext context, JavaPsiClassReferenceElement item);
+  }
+
+  public enum ClassNameInsertHandlerResult {
+    INSERT_FQN, REFERENCE_CORRECTED, CHECK_FOR_CORRECT_REFERENCE
   }
 
 }

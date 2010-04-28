@@ -159,6 +159,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return myRange;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myText;
   }

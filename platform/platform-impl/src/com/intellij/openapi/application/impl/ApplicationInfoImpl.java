@@ -284,9 +284,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     if (ourShadowInstance == null) {
       ourShadowInstance = new ApplicationInfoImpl();
       try {
-        Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class.getResourceAsStream(IDEA_PATH +
-                                                                                           ApplicationNamesInfo.getComponentName() +
-                                                                                           XML_EXTENSION));
+        Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH +
+                                                                        ApplicationNamesInfo.getComponentName() +
+                                                                        XML_EXTENSION);
         ourShadowInstance.readExternal(doc.getRootElement());
       }
       catch (Exception e) {

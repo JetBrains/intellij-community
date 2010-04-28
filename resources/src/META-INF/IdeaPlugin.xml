@@ -162,6 +162,8 @@
     <extensionPoint name="attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider"/>
 
     <extensionPoint name="java.compiler" area="IDEA_PROJECT" interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
+
+    <extensionPoint name="classNameInsertHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -238,6 +240,7 @@
                             order="last, before javaSmart"/>
     <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaSmartCompletionContributor" id="javaSmart"
                             order="last, before default"/>
+    <classNameInsertHandler language="JAVA" implementationClass="com.intellij.codeInsight.completion.JavaClassNameInsertHandler"/> 
 
     <packaging.sourceItemProvider implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModulesAndLibrariesSourceItemsProvider"/>
     <packaging.sourceItemProvider implementation="com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ArtifactsSourceItemsProvider"/>
