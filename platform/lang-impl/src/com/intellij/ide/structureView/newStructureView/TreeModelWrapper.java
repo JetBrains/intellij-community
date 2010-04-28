@@ -109,4 +109,8 @@ public class TreeModelWrapper implements StructureViewModel {
   public void removeModelListener(ModelListener modelListener) {
     myModel.removeModelListener(modelListener);
   }
+
+  public StructureViewModel getModel() {
+    return myModel;
+  }
 }
