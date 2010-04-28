@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +27,7 @@ import java.awt.*;
  *
  * @see ActionManager#createActionToolbar(String, ActionGroup, boolean)
  */
-public interface ActionToolbar extends SwitchProvider {
+public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   /**
    * This is default layout policy for the toolbar. It defines that
    * all toolbar component are in one row / column and they are not wrapped

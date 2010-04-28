@@ -2829,6 +2829,11 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
+    public String toString() {
+      return myInfo.getText();
+    }
+
+    @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myInfo};
     }

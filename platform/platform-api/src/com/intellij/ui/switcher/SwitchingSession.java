@@ -20,10 +20,12 @@ import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +42,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private SwitchProvider myProvider;
   private KeyEvent myInitialEvent;
   private boolean myFinished;
-  private java.util.List<SwitchTarget> myTargets;
+  private LinkedHashSet<SwitchTarget> myTargets = new LinkedHashSet<SwitchTarget>();
   private IdeGlassPane myGlassPane;
 
   private Map<SwitchTarget, TargetPainer> myPainters = new Hashtable<SwitchTarget, TargetPainer>();
@@ -51,14 +53,25 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   private boolean mySelectionWasMoved;
 
-  public SwitchingSession(SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
+  private Alarm myAutoApply = new Alarm();
+  private Runnable myAutoApplyRunnable = new Runnable() {
+    public void run() {
+      if (myManager.canApplySwitch()) {
+        myManager.applySwitch();
+      }
+    }
+  };
+  private SwitchManager myManager;
+
+  public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
+    myManager = mgr;
     myProvider = provider;
     myInitialEvent = e;
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
 
 
-    myTargets = myProvider.getTargets(true, true);
+    myTargets.addAll(myProvider.getTargets(true, true));
 
     Component eachParent = myProvider.getComponent();
     eachParent = eachParent.getParent();
@@ -103,7 +116,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   public boolean dispatchKeyEvent(KeyEvent e) {
     KeyEvent event = myInitialEvent;
-    if ((e.getModifiers() & event.getModifiers()) == 0) {
+    if (event == null || ((e.getModifiers() & event.getModifiers()) == 0)) {
       finish();
       return false;
     }
@@ -193,6 +206,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   private void setSelection(SwitchTarget target) {
+    if (target == null) return;
+
     mySelection = target;
 
     mySelectionWasMoved = !mySelection.equals(myStartSelection);
@@ -200,6 +215,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     for (TargetPainer each : myPainters.values()) {
       each.setNeedsRepaint(true);
     }
+
+    myAutoApply.cancelAllRequests();
+    myAutoApply.addRequest(myAutoApplyRunnable, Registry.intValue("actionSystem.autoSelectTimeout"));
   }
 
   private SwitchTarget getNextTarget(Direction direction) {
@@ -321,19 +339,15 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       }
     }
 
-    return distance.values().iterator().next();
-  }
 
-  private void selectNext() {
-    int index = myTargets.indexOf(getSelection());
+    if (myTargets.size() == 0) return null;
+
+    List<SwitchTarget> all = Arrays.asList(myTargets.toArray(new SwitchTarget[myTargets.size()]));
+    int index = all.indexOf(getSelection());
     if (index + 1 < myTargets.size()) {
-      mySelection = myTargets.get(index + 1);
+      return all.get(index + 1);
     } else {
-      mySelection = myTargets.get(0);
-    }
-
-    for (TargetPainer each : myPainters.values()) {
-      each.setNeedsRepaint(true);
+      return all.get(0);
     }
   }
 
@@ -343,6 +357,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   }
 
   public AsyncResult<SwitchTarget> finish() {
+    myAutoApply.cancelAllRequests();
+
     final AsyncResult<SwitchTarget> result = new AsyncResult<SwitchTarget>();
     final SwitchTarget selection = getSelection();
     if (selection != null) {

@@ -1,33 +1,27 @@
 package com.intellij.psi.formatter;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-import java.io.File;
 
-
+/**
+ * <b>Note:</b> this class is too huge and hard to use. It's tests are intended to be split in multiple more fine-grained
+ * java formatting test classes.
+ */
 @SuppressWarnings({"Deprecation"})
-public class JavaFormatterTest extends LightIdeaTestCase {
-  private TextRange myTextRange;
-  private TextRange myLineRange;
-  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
+public class JavaFormatterTest extends AbstractJavaFormattingTest {
 
   public void testForEach() throws Exception {
     doTest("ForEach.java", "ForEach_after.java");
@@ -192,42 +186,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     settings.ALIGN_MULTILINE_BINARY_OPERATION = true;
     settings.ALIGN_MULTILINE_FOR = true;
     doTest();
-  }
-
-  public void testChainedMethodsAlignment() throws Exception {
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    getSettings().METHOD_CALL_CHAIN_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
-    doTest();
-  }
-
-  public void testNestedMethodsIndentation() throws Exception {
-    // Inspired by IDEA-43962
-
-    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 4;
-
-    doMethodTest(
-      "BigDecimal.ONE\n" +
-      "      .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      ".add(BigDecimal.ONE\n" +
-      " .add(BigDecimal.ONE\n" +
-      "  .add(BigDecimal.ONE\n" +
-      " .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE)))))))));",
-      "BigDecimal.ONE\n" +
-      "    .add(BigDecimal.ONE\n" +
-      "        .add(BigDecimal.ONE\n" +
-      "            .add(BigDecimal.ONE\n" +
-      "                .add(BigDecimal.ONE\n" +
-      "                    .add(BigDecimal.ONE\n" +
-      "                        .add(BigDecimal.ONE\n" +
-      "                            .add(BigDecimal.ONE\n" +
-      "                                .add(BigDecimal.ONE\n" +
-      "                                    .add(BigDecimal.ONE)))))))));"
-    );
   }
 
   public void testSwitch() throws Exception {
@@ -452,98 +410,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     doTextTest("class Foo {\n" + "    static{\n" + "foo();\n" + "}" + "}",
                "class Foo {\n" + "    static\n" + "    {\n" + "        foo();\n" + "    }\n" + "}");
 
-  }
-
-  public void testFlyingGeeseBraces() {
-    // Inspired by IDEA-52305
-
-    getSettings().USE_FLYING_GEESE_BRACES = true;
-    getSettings().FLYING_GEESE_BRACES_GAP = 1;
-    getSettings().BLANK_LINES_AROUND_METHOD = 0; // controls number of blank lines between instance initialization block and field. Very strange
-    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true; // allow methods like 'void foo() {}'
-    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 2;
-
-    // Flying gees style for class initialization and instance initialization block when there are no fields/methods.
-    doTextTest(
-      "class FormattingTest {\n" +
-      "  {\n" +
-      "  } \n" +
-      "}",
-      "class FormattingTest { {\n" +
-      "} }"
-    );
-
-    // Flying gees style for class initialization and instance initialization block when there are fields after the block.
-    doTextTest(
-      "class FormattingTest {\n" +
-      "  {\n" +
-      "  } \n" +
-      "  int i;\n" +
-      "}",
-      "class FormattingTest {\n" +
-      "  {\n" +
-      "  } \n" +
-      "  int i;\n" +
-      "}"
-    );
-
-    // Flying gees style for class initialization and instance initialization block when there are fields before the block.
-    doTextTest(
-      "class FormattingTest {\n" +
-      "  int i;\n" +
-      "  {\n" +
-      "  } \n" +
-      "}",
-      "class FormattingTest {\n" +
-      "  int i;\n" +
-      "  {\n" +
-      "  } \n" +
-      "}"
-    );
-
-    // Flying gees style for class initialization and instance initialization block when there are methods after the block.
-    doTextTest(
-      "class FormattingTest {\n" +
-      "  {\n" +
-      "  } \n" +
-      "  void foo() {}\n" +
-      "}",
-      "class FormattingTest {\n" +
-      "  {\n" +
-      "  } \n" +
-      "  void foo() {}\n" +
-      "}"
-    );
-
-    // Flying gees style for class initialization and instance initialization block when there are methods before the block.
-    doTextTest(
-      "class FormattingTest {\n" +
-      "  void foo() {}\n" +
-      "  {\n" +
-      "  } \n" +
-      "}",
-      "class FormattingTest {\n" +
-      "  void foo() {}\n" +
-      "  {\n" +
-      "  } \n" +
-      "}"
-    );
-
-    // Flying gees style for class initialization and multiple instance initialization blocks.
-    doTextTest(
-      "class FormattingTest {\n" +
-      "  {\n" +
-      "  } \n" +
-      "  {\n" +
-      "  }\n" +
-      "}",
-      "class FormattingTest {\n" +
-      "  {\n" +
-      "  } \n" +
-      "  {\n" +
-      "  }\n" +
-      "}"
-    );
   }
 
   public void testExtendsList() throws Exception {
@@ -995,10 +861,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     doTextTest("public class Foo {\n" + "    public void foo(   ) {\n" + "        foo(   );\n" + "    }\n" + "}",
                "public class Foo {\n" + "    public void foo() {\n" + "        foo();\n" + "    }\n" + "}");
 
-  }
-
-  private static CodeStyleSettings getSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
   }
 
   public void testElseOnNewLine() throws Exception {
@@ -2109,47 +1971,6 @@ public class JavaFormatterTest extends LightIdeaTestCase {
     settings.getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
     settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
     doTest();
-  }
-
-  public void testIDEADEV_20878_1() throws Exception {
-    doMethodTest("checking(new Expectations() {{\n" +
-                 "one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
-                 "}});", "checking(new Expectations() {{\n" +
-                         "    one(tabConfiguration).addFilter(with(equal(PROPERTY)), with(aListContaining(\"a-c\")));\n" +
-                         "}});");
-  }
-
-  public void testIDEADEV_20878_2() throws Exception {
-    doTextTest("class Class {\n" + "    private Type field; {\n" + "    }\n" + "}",
-               "class Class {\n" + "    private Type field; {\n" + "    }\n" + "}");
-
-    doTextTest("class T {\n" +
-               "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
-               "        fmt.setGroupingUsed(false);\n" +
-               "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-               "    }\n" +
-               "}", "class T {\n" +
-                    "    private final DecimalFormat fmt = new DecimalFormat(); {\n" +
-                    "        fmt.setGroupingUsed(false);\n" +
-                    "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-                    "    }\n" +
-                    "}");
-
-    doTextTest("class T {\n" +
-               "    private final DecimalFormat fmt = new DecimalFormat();\n" +
-               "    {\n" +
-               "        fmt.setGroupingUsed(false);\n" +
-               "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-               "    }\n" +
-               "}", "class T {\n" +
-                    "    private final DecimalFormat fmt = new DecimalFormat();\n" +
-                    "\n" +
-                    "    {\n" +
-                    "        fmt.setGroupingUsed(false);\n" +
-                    "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
-                    "    }\n" +
-                    "}");
-
   }
 
   public void testIDEADEV_3666() throws Exception {
@@ -3403,123 +3224,4 @@ public void testSCR260() throws Exception {
         "}");
   }
   */
-
-  // ------------------------------------------------
-  //              Util stuff
-  // ------------------------------------------------
-
-  private void doTest() throws Exception {
-    doTest(getTestName(false) + ".java", getTestName(false) + "_after.java");
-  }
-
-  private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
-
-    doTextTest(loadFile(fileNameBefore), loadFile(fileNameAfter));
-
-
-  }
-
-  private void doTextTest(final String text, String textAfter) throws IncorrectOperationException {
-    final PsiFile file = createPseudoPhysicalFile("A.java", text);
-
-    if (myLineRange != null) {
-      final DocumentImpl document = new DocumentImpl(text);
-      myTextRange =
-        new TextRange(document.getLineStartOffset(myLineRange.getStartOffset()), document.getLineEndOffset(myLineRange.getEndOffset()));
-    }
-
-    /*
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            performFormatting(file);
-          }
-        });
-      }
-    }, null, null);
-
-    assertEquals(prepareText(textAfter), prepareText(file.getText()));
-
-
-    */
-
-    final PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
-    final Document document = manager.getDocument(file);
-
-
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            document.replaceString(0, document.getTextLength(), text);
-            manager.commitDocument(document);
-            try {
-              if (myTextRange != null) {
-                CodeStyleManager.getInstance(getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
-              }
-              else {
-                CodeStyleManager.getInstance(getProject())
-                  .reformatText(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
-              }
-            }
-            catch (IncorrectOperationException e) {
-              assertTrue(e.getLocalizedMessage(), false);
-            }
-          }
-        });
-      }
-    }, "", "");
-
-
-    if (document == null) {
-      fail("Don't expect the document to be null");
-      return;
-    }
-    assertEquals(prepareText(textAfter), prepareText(document.getText()));
-    manager.commitDocument(document);
-    assertEquals(prepareText(textAfter), prepareText(file.getText()));
-
-  }
-
-
-
-  private void doMethodTest(final String before, final String after) throws Exception {
-    doTextTest("class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + StringUtil.shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}");
-  }
-
-  private void doClassTest(final String before, final String after) throws Exception {
-    doTextTest("class Foo{\n" + before + '\n' + "}", "class Foo {\n" + StringUtil.shiftIndentInside(after, 4, false) + '\n' + "}");
-  }
-
-  private static String prepareText(String actual) {
-    if (actual.startsWith("\n")) {
-      actual = actual.substring(1);
-    }
-    if (actual.startsWith("\n")) {
-      actual = actual.substring(1);
-    }
-
-    // Strip trailing spaces
-    final Document doc = EditorFactory.getInstance().createDocument(actual);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ((DocumentEx)doc).stripTrailingSpaces(false);
-          }
-        });
-      }
-    }, "formatting", null);
-
-    return doc.getText();
-  }
-
-  private static String loadFile(String name) throws Exception {
-    String fullName = BASE_PATH + File.separatorChar + name;
-    String text = new String(FileUtil.loadFileText(new File(fullName)));
-    text = StringUtil.convertLineSeparators(text);
-    return text;
-  }
 }
