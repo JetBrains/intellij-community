@@ -69,7 +69,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
   @NonNls private static final String ourHelpID = "viewingStructure.fileStructureView";
 
-  private AbstractTreeBuilder myAbstractTreeBuilder;
+  private StructureTreeBuilder myAbstractTreeBuilder;
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
@@ -759,12 +759,32 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public boolean isAlwaysShowPlus() {
+      if (getElementInfoProvider() != null) {
+        return getElementInfoProvider().isAlwaysShowsPlus((StructureViewTreeElement)getValue());
+      }
       return getValue().getChildren().length > 0;
     }
 
     @Override
     public boolean isAlwaysLeaf() {
+      if (getElementInfoProvider() != null) {
+        return getElementInfoProvider().isAlwaysLeaf((StructureViewTreeElement)getValue());
+      }
+
       return getValue().getChildren().length == 0;
+    }
+
+    private StructureViewModel.ElementInfoProvider getElementInfoProvider() {
+      if (myTreeModel instanceof StructureViewModel.ElementInfoProvider) {
+        return ((StructureViewModel.ElementInfoProvider)myTreeModel);
+      } else if (myTreeModel instanceof TreeModelWrapper) {
+        StructureViewModel model = ((TreeModelWrapper)myTreeModel).getModel();
+        if (model instanceof StructureViewModel.ElementInfoProvider) {
+          return (StructureViewModel.ElementInfoProvider)model;
+        }
+      }
+
+      return null;
     }
 
     protected TreeElementWrapper createChildNode(final TreeElement child) {

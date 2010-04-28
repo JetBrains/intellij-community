@@ -18,10 +18,12 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -31,7 +33,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,27 +47,36 @@ import java.util.List;
 /**
  * @author yole
  */
-public class DefaultHighlightVisitor extends PsiElementVisitor implements HighlightVisitor, DumbAware {
-  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
-  private HighlightInfoHolder myHolder;
+public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
+  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl() {
+    @Override
+    protected synchronized Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
+      return super.createAnnotation(range, severity, message);
+    }
+  };
 
   public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
+  private final boolean myDumb;
 
   public DefaultHighlightVisitor(Project project) {
     myProject = project;
     myErrorFilters = Extensions.getExtensions(FILTER_EP_NAME, project);
+    myDumb = DumbService.getInstance(myProject).isDumb();
   }
-
+                                                     
   public boolean suitableForFile(final PsiFile file) {
     return true;
   }
 
-  public void visit(final PsiElement element, final HighlightInfoHolder holder) {
-    myHolder = holder;
-    assert !myAnnotationHolder.hasAnnotations() : myAnnotationHolder;
-    element.accept(this);
+  public void visit(PsiElement element, HighlightInfoHolder holder) {
+    if (element instanceof PsiErrorElement) {
+      visitErrorElement((PsiErrorElement)element, holder);
+    }
+    else {
+      runAnnotators(element, holder, myAnnotationHolder);
+    }
   }
 
   public boolean analyze(final Runnable action, final boolean updateWholeFile, final PsiFile file) {
@@ -69,8 +84,9 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
       action.run();
     }
     finally {
-      myAnnotationHolder.clear();
-      myHolder = null;
+      synchronized (myAnnotationHolder) {
+        myAnnotationHolder.clear();
+      }
     }
     return true;
   }
@@ -81,10 +97,6 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
 
   public int order() {
     return 2;
-  }
-
-  public void visitElement(final PsiElement element) {
-    runAnnotators(element);
   }
 
   private static final PerThreadMap<Annotator,Language> cachedAnnotators = new PerThreadMap<Annotator, Language>() {
@@ -107,29 +119,32 @@ public class DefaultHighlightVisitor extends PsiElementVisitor implements Highli
     });
   }
 
-  private void runAnnotators(final PsiElement element) {
+  private void runAnnotators(final PsiElement element, HighlightInfoHolder holder, final AnnotationHolderImpl annotationHolder) {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
-    if (!annotators.isEmpty()) {
-      final boolean dumb = DumbService.getInstance(myProject).isDumb();
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < annotators.size(); i++) {
-        Annotator annotator = annotators.get(i);
-        if (dumb && !(annotator instanceof DumbAware)) {
-          continue;
+    if (annotators.isEmpty()) return;
+
+    JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
+      public boolean process(Annotator annotator) {
+        if (myDumb && !(annotator instanceof DumbAware)) {
+          return true;
         }
 
-        annotator.annotate(element, myAnnotationHolder);
+        annotator.annotate(element, annotationHolder);
+        return true;
       }
-      if (myAnnotationHolder.hasAnnotations()) {
-        for (Annotation annotation : myAnnotationHolder) {
-          myHolder.add(HighlightInfo.fromAnnotation(annotation));
+    }, "annotators");
+
+    synchronized (annotationHolder) {
+      if (annotationHolder.hasAnnotations()) {
+        for (Annotation annotation : annotationHolder) {
+          holder.add(HighlightInfo.fromAnnotation(annotation));
         }
-        myAnnotationHolder.clear();
+        annotationHolder.clear();
       }
     }
   }
 
-  public void visitErrorElement(final PsiErrorElement element) {
+  private void visitErrorElement(final PsiErrorElement element, HighlightInfoHolder myHolder) {
     for(HighlightErrorFilter errorFilter: myErrorFilters) {
       if (!errorFilter.shouldHighlightErrorElement(element)) return;
     }

@@ -28,11 +28,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiPackageStatementImpl extends CompositePsiElement implements PsiPackageStatement, Constants {
+public class PsiPackageStatementImpl extends CompositePsiElement implements PsiPackageStatement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiPackageStatementImpl");
 
   public PsiPackageStatementImpl() {
-    super(PACKAGE_STATEMENT);
+    super(Constants.PACKAGE_STATEMENT);
   }
 
   public PsiJavaCodeReferenceElement getPackageReference() {
@@ -41,7 +41,7 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
 
   public String getPackageName() {
     PsiJavaCodeReferenceElement ref = getPackageReference();
-    return SourceUtil.getTextSkipWhiteSpaceAndComments(SourceTreeToPsiMap.psiElementToTree(ref));
+    return ref == null ? null : SourceUtil.getTextSkipWhiteSpaceAndComments(SourceTreeToPsiMap.psiElementToTree(ref));
   }
 
   public PsiModifierList getAnnotationList() {
@@ -55,32 +55,32 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
         return null;
 
       case ChildRole.PACKAGE_KEYWORD:
-        return findChildByType(PACKAGE_KEYWORD);
+        return findChildByType(Constants.PACKAGE_KEYWORD);
 
       case ChildRole.PACKAGE_REFERENCE:
-        return findChildByType(JAVA_CODE_REFERENCE);
+        return findChildByType(Constants.JAVA_CODE_REFERENCE);
 
       case ChildRole.CLOSING_SEMICOLON:
-        return TreeUtil.findChildBackward(this, SEMICOLON);
+        return TreeUtil.findChildBackward(this, Constants.SEMICOLON);
 
       case ChildRole.MODIFIER_LIST:
-        return findChildByType(MODIFIER_LIST);
+        return findChildByType(Constants.MODIFIER_LIST);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
-    if (i == PACKAGE_KEYWORD) {
+    if (i == Constants.PACKAGE_KEYWORD) {
       return ChildRole.PACKAGE_KEYWORD;
     }
-    else if (i == JAVA_CODE_REFERENCE) {
+    else if (i == Constants.JAVA_CODE_REFERENCE) {
       return ChildRole.PACKAGE_REFERENCE;
     }
-    else if (i == SEMICOLON) {
+    else if (i == Constants.SEMICOLON) {
       return ChildRole.CLOSING_SEMICOLON;
     }
-    else if (i == MODIFIER_LIST) {
+    else if (i == Constants.MODIFIER_LIST) {
       return ChildRole.MODIFIER_LIST;
     }
     else {
