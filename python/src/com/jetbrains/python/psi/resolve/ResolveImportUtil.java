@@ -196,7 +196,7 @@ public class ResolveImportUtil {
           return resolveModulesInRoots(qualifiedName, source_file);
         }
         else {
-          PsiElement module = resolveModuleAt(source_file.getContainingDirectory(), source_file, qualifiedName);
+          PsiElement module = resolveModuleAt(source_file.getOriginalFile().getContainingDirectory(), source_file, qualifiedName);
           if (module != null) {
             return Collections.singletonList(module);
           }
