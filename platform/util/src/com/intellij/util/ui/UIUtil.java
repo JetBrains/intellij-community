@@ -1083,7 +1083,6 @@ public class UIUtil {
 
       tree.setOpaque(false);
       tree.setLargeModel(true);
-      tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
 
       tree.addMouseListener(mySelectionListener);
