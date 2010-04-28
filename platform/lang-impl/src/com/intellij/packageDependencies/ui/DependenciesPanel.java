@@ -975,6 +975,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         group.add(new AnAction(provider.getDisplayName()) {
           public void actionPerformed(final AnActionEvent e) {
             mySettings.SCOPE_TYPE = provider.getShortName();
+            DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             rebuild();
           }
         });

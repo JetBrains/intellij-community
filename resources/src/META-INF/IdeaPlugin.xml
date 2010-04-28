@@ -900,7 +900,7 @@
 
     <directoryIndexExcludePolicy implementation="com.intellij.openapi.roots.impl.ExcludeCompilerOutputPolicy"/>
 
-    <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider"/>
+    <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider" id="package" order="before file" />
     <scopeDescriptorProvider implementation="com.intellij.ide.util.scopeChooser.HierarchyScopeDescriptorProvider"/>
 
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>
