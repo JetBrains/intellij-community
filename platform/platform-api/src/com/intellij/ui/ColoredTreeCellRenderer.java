@@ -65,7 +65,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
     else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof UIUtil.MacTreeUI) {
       setPaintFocusBorder(false);
-      setBackground(null);
+      //setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
     else {
       if (selected) {
@@ -115,7 +115,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     myOpaque = isOpaque;
     super.setOpaque(isOpaque);
   }
-
+  
   /**
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.

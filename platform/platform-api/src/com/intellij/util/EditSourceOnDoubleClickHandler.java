@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -105,7 +106,11 @@ public class EditSourceOnDoubleClickHandler {
 
     public void mouseClicked(MouseEvent e) {
       if (MouseEvent.BUTTON1 != e.getButton() || e.getClickCount() != 2) return;
-      if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
+
+      if (myTree.getUI() instanceof UIUtil.MacTreeUI) {
+        if (myTree.getClosestPathForLocation(e.getX(), e.getY()) == null) return;
+      } else if (myTree.getPathForLocation(e.getX(), e.getY()) == null) return;
+
       DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
