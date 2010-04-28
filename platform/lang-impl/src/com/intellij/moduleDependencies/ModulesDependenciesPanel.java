@@ -40,6 +40,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -241,7 +242,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
         else if (!(node2.getUserObject() instanceof MyUserObject)){
           return -1;
         }
-        return (node1.getUserObject().toString().compareTo(node2.getUserObject().toString()));
+        return (node1.getUserObject().toString().compareToIgnoreCase(node2.getUserObject().toString()));
       }
     });
   }
@@ -369,7 +370,11 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     TreeToolTipHandler.install(tree);
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree);
+    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
+      public String convert(TreePath o) {
+        return o.getLastPathComponent().toString();
+      }
+    }, true);
     PopupHandler.installUnknownPopupHandler(tree, createTreePopupActions(isRightTree, tree), ActionManager.getInstance());
   }
 
