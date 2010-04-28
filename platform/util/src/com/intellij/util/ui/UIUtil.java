@@ -1054,8 +1054,6 @@ public class UIUtil {
               return;
           }
           
-          completeEditing();
-
           final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
           if (tree.isPathSelected(pressedPath)) return;
 
@@ -1175,8 +1173,8 @@ public class UIUtil {
         @Override
         public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
           if (c instanceof JComponent) {
-            ((JComponent)c).setOpaque(false);
           }
+          ((JComponent)c).setOpaque(false);
 
           super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
         }
