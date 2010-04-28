@@ -37,7 +37,6 @@ import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.AbstractLayoutCache;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -1037,14 +1036,48 @@ public class UIUtil {
   }
 
   public static class MacTreeUI extends BasicTreeUI {
-
-    private static final Color SELECTION_COLOR = new Color(115, 132, 153);
-    private static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
+    public static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
 
     private static final Icon TREE_COLLAPSED_ICON = (Icon) UIManager.get("Tree.collapsedIcon");
     private static final Icon TREE_EXPANDED_ICON = (Icon) UIManager.get("Tree.expandedIcon");
     private static final Icon TREE_SELECTED_COLLAPSED_ICON = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
     private static final Icon TREE_SELECTED_EXPANDED_ICON = IconLoader.getIcon("/mac/tree_white_down_arrow.png");
+
+    private MouseListener mySelectionListener = new MouseAdapter() {
+      @Override
+      public void mousePressed(@NotNull final MouseEvent e) {
+        final JTree tree = (JTree) e.getSource();
+        if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
+          // if we can't stop any ongoing editing, do nothing
+          if (isEditing(tree) && tree.getInvokesStopCellEditing()
+                              && !stopEditing(tree)) {
+              return;
+          }
+          
+          completeEditing();
+
+          final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
+          if (tree.isPathSelected(pressedPath)) return;
+
+          if (pressedPath != null) {
+            Rectangle bounds = getPathBounds(tree, pressedPath);
+
+            if(e.getY() >= (bounds.y + bounds.height)) {
+                return;
+            }
+
+            if (isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
+              return;
+            }
+
+            if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
+               selectPathForEvent(pressedPath, e);
+            }
+          }
+
+        }
+      }
+    };
 
     @Override
     protected void completeUIInstall() {
@@ -1054,6 +1087,8 @@ public class UIUtil {
       tree.setLargeModel(true);
       tree.setRootVisible(false);
       tree.setShowsRootHandles(true);
+
+      tree.addMouseListener(mySelectionListener);
     }
 
     @Override
@@ -1095,18 +1130,50 @@ public class UIUtil {
       final TreeSelectionModel selectionModel = getSelectionModel();
       final int[] selectedRows = selectionModel.getSelectionRows();
       if (selectedRows != null) {
+        int containerWidth;
+        int xOffset;
+        if (tree.getParent() instanceof JViewport) {
+          final JViewport viewport = (JViewport) tree.getParent();
+          containerWidth = viewport.getWidth();
+          xOffset = viewport.getViewPosition().x;
+        } else {
+          containerWidth = tree.getWidth();
+          xOffset = 0;
+        }
+        
         for (final int row : selectedRows) {
           Rectangle bounds = tree.getRowBounds(row);
           Graphics2D selectionBackgroundGraphics = (Graphics2D)g.create();
-          selectionBackgroundGraphics.translate(0, bounds.y);
 
-          selectionBackgroundGraphics.setColor(tree.hasFocus() ? SELECTION_COLOR : UNFOCUSED_SELECTION_COLOR);
-          selectionBackgroundGraphics.fillRect(0, 0, c.getWidth(), bounds.height - 1);
+          final Shape oldClip = selectionBackgroundGraphics.getClip();
+          final Rectangle clip = new Rectangle(xOffset, bounds.y, containerWidth, bounds.height);
+          if (oldClip.getBounds().height == getRowHeight()) {
+            selectionBackgroundGraphics.setClip(clip);
+          }
+
+          selectionBackgroundGraphics.setColor(tree.hasFocus() ? getTreeSelectionBackground() : UNFOCUSED_SELECTION_COLOR);
+          selectionBackgroundGraphics.fillRect(0, bounds.y, c.getWidth(), bounds.height - 1);
+
+          final TreePath path = getPathForRow(tree, row);
+          final boolean expanded = tree.isExpanded(row);
+          final boolean beenExpanded = tree.hasBeenExpanded(path);
+          final boolean leaf = isLeaf(row);
+          if (shouldPaintExpandControl(path, row, expanded, beenExpanded, leaf)) {
+            paintExpandControl(selectionBackgroundGraphics, clip, c.getInsets(), bounds, path, row, expanded, beenExpanded, leaf);
+          }
+
           selectionBackgroundGraphics.dispose();
         }
       }
 
       super.paint(g, c);
+    }
+
+    @Override
+    public void uninstallUI(JComponent c) {
+      super.uninstallUI(c);
+
+      c.removeMouseListener(mySelectionListener);
     }
 
     @Override
@@ -1133,35 +1200,6 @@ public class UIUtil {
       }
 
       super.paintExpandControl(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
-    }
-
-    @Override
-    protected AbstractLayoutCache.NodeDimensions createNodeDimensions() {
-      return new NodeDimensionsHandler() {
-        @Override
-        public Rectangle getNodeDimensions(
-          Object value, int row, int depth, boolean expanded, Rectangle size) {
-          Rectangle dimensions = super.getNodeDimensions(value, row, depth, expanded, size);
-          int containerWidth = tree.getParent() instanceof JViewport
-                               ? tree.getParent().getWidth() : tree.getWidth();
-
-          if (containerWidth > 0) {
-            dimensions.width = containerWidth - getRowX(row, depth);
-          }
-
-          return dimensions;
-        }
-      };
-    }
-
-    @Override
-    public Rectangle getPathBounds(JTree tree, TreePath path) {
-        Rectangle bounds = super.getPathBounds(tree, path);
-        if (bounds != null) {
-            bounds.x = 0;
-            bounds.width = tree.getWidth();
-        }
-        return bounds;
     }
   }
 

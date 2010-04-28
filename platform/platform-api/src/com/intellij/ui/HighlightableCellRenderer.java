@@ -39,10 +39,13 @@ public class HighlightableCellRenderer extends HighlightableComponent implements
       setOpaque(false);
       myIsSelected = false;
       myHasFocus = false;
+      setDoNotHighlight(selected);
+      setForeground(selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
     } else {
       setOpaque(true);
       myIsSelected = selected;
       myHasFocus = hasFocus;
+      setDoNotHighlight(false);
     }
     
     myHasFocus = hasFocus;

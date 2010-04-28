@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,6 @@ public class CheckboxTreeBase extends Tree {
   }
 
   public CheckboxTreeBase(final CheckboxTreeCellRendererBase cellRenderer, CheckedTreeNode root, CheckPolicy checkPolicy) {
-
     myCheckPolicy = checkPolicy;
 
     setCellRenderer(cellRenderer);
@@ -338,6 +338,12 @@ public class CheckboxTreeBase extends Tree {
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
+
+      if (tree.getUI() instanceof UIUtil.MacTreeUI) {
+        myTextRenderer.setOpaque(false);
+        setOpaque(false);
+      }
+
       return this;
     }
 

@@ -37,6 +37,7 @@ public class HighlightableComponent extends JComponent {
   protected boolean myIsSelected;
   protected boolean myHasFocus;
   protected boolean myPaintUnfocusedSelection = false;
+  private boolean myDoNotHighlight = false;
 
   public HighlightableComponent() {
     myIconTextGap = 4;
@@ -199,6 +200,10 @@ public class HighlightableComponent extends JComponent {
     myEnforcedBackground = bg;
   }
 
+  protected void setDoNotHighlight(final boolean b) {
+    myDoNotHighlight = b;
+  }
+
   protected void paintComponent(Graphics g) {
 
     // determine color of background
@@ -218,6 +223,10 @@ public class HighlightableComponent extends JComponent {
       fgColor = getForeground();
       paintHighlightsBackground = isOpaque();
       paintHighlightsForeground = true;
+    }
+
+    if (myDoNotHighlight) {
+      paintHighlightsForeground = false;
     }
 
     // paint background
