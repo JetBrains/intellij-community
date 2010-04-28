@@ -205,7 +205,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         }
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usages);
   }
 
   private static boolean isAccessedForWriting (PsiExpression expr) {

@@ -109,7 +109,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
-    return showConflicts(getConflicts(refUsages.get()));
+    final UsageInfo[] usages = refUsages.get();
+    return showConflicts(getConflicts(usages), usages);
   }
 
   protected void refreshElements(final PsiElement[] elements) {

@@ -42,6 +42,7 @@ public abstract class StringLiteralReference implements PsiReference {
     return ElementManipulators.getValueTextRange(myValue);
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myValue.getText();
   }

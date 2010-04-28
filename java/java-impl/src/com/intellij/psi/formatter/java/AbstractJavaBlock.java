@@ -166,7 +166,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
     }
 
-    final ASTNode prevElement = FormattingAstUtil.getPrevElement(child);
+    final ASTNode prevElement = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
     if (prevElement != null && prevElement.getElementType() == JavaElementType.MODIFIER_LIST) {
       return Indent.getNoneIndent();
     }
@@ -561,6 +561,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return role == ChildRole.OPERATION_SIGN || role == ChildRole.COLON;
   }
 
+  @SuppressWarnings({"ConstantConditions"})
   private Block createMethodCallExpressionBlock(final ASTNode node, final Wrap blockWrap, final Alignment alignment) {
     final ArrayList<ASTNode> nodes = new ArrayList<ASTNode>();
     final ArrayList<Block> subBlocks = new ArrayList<Block>();

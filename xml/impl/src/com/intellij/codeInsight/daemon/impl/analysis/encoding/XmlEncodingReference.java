@@ -71,6 +71,7 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     return XmlErrorMessages.message("unknown.encoding.0");
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myCharsetName;
   }

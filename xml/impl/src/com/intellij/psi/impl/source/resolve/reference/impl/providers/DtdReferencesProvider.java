@@ -113,6 +113,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       return null;
     }
 
+    @NotNull
     public String getCanonicalText() {
       final XmlElement nameElement = myNameElement;
       return nameElement != null ? nameElement.getText() : "";
@@ -210,6 +211,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       return xmlEntityDecl;
     }
 
+    @NotNull
     public String getCanonicalText() {
       return myRange.substring(myElement.getText());
     }

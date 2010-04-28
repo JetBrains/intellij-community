@@ -64,6 +64,7 @@ public interface PsiReference {
    *
    * @return the canonical text of the reference.
    */
+  @NotNull
   String getCanonicalText();
 
   /**

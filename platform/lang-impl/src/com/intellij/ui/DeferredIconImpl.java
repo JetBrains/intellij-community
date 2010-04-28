@@ -106,11 +106,8 @@ public class DeferredIconImpl<T> implements DeferredIcon {
                 if (target instanceof JTree) {
                   final TreeUI ui = ((JTree)target).getUI();
                   if (ui instanceof BasicTreeUI) {
-                    // yep, reset size cache
-                    int indent = ((Integer)UIManager.get("Tree.leftChildIndent")).intValue();
-                    if (((BasicTreeUI)ui).getLeftChildIndent() != indent) {
-                      ((BasicTreeUI)ui).setLeftChildIndent(indent);
-                    }
+                    // this call is "fake" and only need to reset tree layout cache
+                    ((BasicTreeUI)ui).setLeftChildIndent(((Integer)UIManager.get("Tree.leftChildIndent")).intValue());
                   }
                 }
               }

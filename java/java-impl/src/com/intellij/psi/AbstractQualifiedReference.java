@@ -87,6 +87,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
 
+  @NotNull
   public  String getCanonicalText() {
     return getText();
   }

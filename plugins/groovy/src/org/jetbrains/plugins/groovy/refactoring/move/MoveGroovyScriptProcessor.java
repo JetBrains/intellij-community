@@ -78,7 +78,7 @@ public class MoveGroovyScriptProcessor extends MoveClassesOrPackagesProcessor {
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    return showConflicts(new MultiMap<PsiElement, String>());
+    return showConflicts(new MultiMap<PsiElement, String>(), refUsages.get());
   }
 
   @Override

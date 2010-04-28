@@ -1,0 +1,40 @@
+class Foo extends foo.SuperClass {
+  protected Foo(Foo p) {
+    this("");
+  }
+  protected Foo(String s) {
+    super(s);
+  }
+}
+
+-----
+public class Foo extends foo.SuperClass implements groovy.lang.GroovyObject {
+  public Foo(Foo p) throws java.io.IOException {
+    this((java.lang.String)null);
+  }
+
+  public Foo(java.lang.String s) throws java.io.IOException {
+    super((java.lang.String)null);
+  }
+
+  public groovy.lang.MetaClass getMetaClass() {
+    return null;
+  }
+
+  public void setMetaClass(groovy.lang.MetaClass mc) {
+    return ;
+  }
+
+  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+    return null;
+  }
+
+  public java.lang.Object getProperty(java.lang.String propertyName) {
+    return null;
+  }
+
+  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+    return ;
+  }
+}
+---

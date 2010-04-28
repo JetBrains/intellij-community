@@ -22,6 +22,7 @@ import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -43,6 +44,7 @@ public abstract class XmlValueReference implements PsiReference {
     return myRange;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myRange.substring(myTag.getText());
   }

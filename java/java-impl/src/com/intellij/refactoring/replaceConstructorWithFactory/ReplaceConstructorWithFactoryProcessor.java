@@ -172,7 +172,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     }
 
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usages);
   }
 
   private PsiClass getConstructorContainingClass() {

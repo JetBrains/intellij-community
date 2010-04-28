@@ -115,7 +115,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) return extractDependencies();
 
-    return null;
+    return super.getData(dataId);
   }
 
   private VirtualFile extractVirtualFile() {

@@ -108,6 +108,7 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
     return results[0].getElement();
   }
 
+  @NotNull
   public String getCanonicalText() {
     return getName();
   }

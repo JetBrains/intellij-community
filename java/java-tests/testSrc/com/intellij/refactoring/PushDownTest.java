@@ -11,6 +11,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.JavaTestUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class PushDownTest extends LightCodeInsightTestCase {
 
     new PushDownProcessor(getProject(), membersToMove.toArray(new MemberInfo[membersToMove.size()]), currentClass, new DocCommentPolicy(DocCommentPolicy.ASIS)){
       @Override
-      protected boolean showConflicts(MultiMap<PsiElement,String> conflicts) {
+      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         if (failure ? conflicts.isEmpty() : !conflicts.isEmpty()) {
           fail(failure ? "Conflict was not detected" : "False conflict was detected");
         }

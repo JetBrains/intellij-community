@@ -15,10 +15,8 @@
  */
 package com.intellij.patterns;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,24 +32,31 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   public PsiClassPattern inheritorOf(final boolean strict, final PsiClassPattern pattern) {
     return with(new PatternCondition<PsiClass>("inheritorOf") {
       public boolean accepts(@NotNull PsiClass psiClass, final ProcessingContext context) {
-        return isInheritor(strict ? psiClass.getSuperClass() : psiClass, pattern, context);
+        return isInheritor(psiClass, pattern, context, !strict);
       }
     });
   }
 
-  private static boolean isInheritor(PsiClass psiClass, ElementPattern pattern, final ProcessingContext matchingContext) {
+  private static boolean isInheritor(PsiClass psiClass, ElementPattern pattern, final ProcessingContext matchingContext, boolean checkThisClass) {
     if (psiClass == null) return false;
-    if (pattern.getCondition().accepts(psiClass, matchingContext)) return true;
-    if (isInheritor(psiClass.getSuperClass(), pattern, matchingContext)) return true;
+    if (checkThisClass && pattern.getCondition().accepts(psiClass, matchingContext)) return true;
+    if (isInheritor(psiClass.getSuperClass(), pattern, matchingContext, true)) return true;
     for (final PsiClass aClass : psiClass.getInterfaces()) {
-      if (isInheritor(aClass, pattern, matchingContext)) return true;
+      if (isInheritor(aClass, pattern, matchingContext, true)) return true;
     }
     return false;
   }
 
-
   public PsiClassPattern inheritorOf(final boolean strict, final String className) {
-    return inheritorOf(strict, PsiJavaPatterns.psiClass().withQualifiedName(className));
+    return with(new PatternCondition<PsiClass>("inheritorOf") {
+      public boolean accepts(@NotNull PsiClass psiClass, final ProcessingContext context) {
+        final PsiClass baseClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(className, psiClass.getResolveScope());
+        if (baseClass == null) {
+          return false;
+        }
+        return strict ? psiClass.isInheritor(baseClass, true) : InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, true);
+      }
+    });
   }
 
   public PsiClassPattern isInterface() {

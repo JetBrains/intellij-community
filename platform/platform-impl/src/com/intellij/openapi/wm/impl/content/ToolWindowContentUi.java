@@ -483,6 +483,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     }
 
     @Override
+    public String toString() {
+      return myContent.getDisplayName();
+    }
+
+    @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myContent};
     }

@@ -121,6 +121,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return new TextRange(0, getTextLength());
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myPatternExpression.getCanonicalText();
   }

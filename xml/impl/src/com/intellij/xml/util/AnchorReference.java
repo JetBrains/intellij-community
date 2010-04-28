@@ -175,6 +175,7 @@ class AnchorReference implements PsiReference, EmptyResolveMessageProvider {
     return null;
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myAnchor;
   }

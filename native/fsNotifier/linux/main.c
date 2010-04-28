@@ -148,9 +148,10 @@ static void init_log() {
 
 void userlog(int priority, const char* format, ...) {
   va_list ap;
-  va_start(ap, format);
 
+  va_start(ap, format);
   vsyslog(priority, format, ap);
+  va_end(ap);
 
   if (self_test) {
     const char* level = "debug";
@@ -160,11 +161,13 @@ void userlog(int priority, const char* format, ...) {
       case LOG_INFO:  level = " info"; break;
     }
     printf("fsnotifier[%d] %s: ", getpid(), level);
+
+    va_start(ap, format);
     vprintf(format, ap);
+    va_end(ap);
+
     printf("\n");
   }
-
-  va_end(ap);
 }
 
 

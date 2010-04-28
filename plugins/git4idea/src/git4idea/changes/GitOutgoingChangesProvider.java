@@ -18,6 +18,7 @@ package git4idea.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
@@ -25,14 +26,17 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.Convertor;
+import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.history.GitHistoryUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
   private final static Logger LOG = Logger.getInstance("#git4idea.changes.GitOutgoingChangesProvider");
@@ -79,5 +83,35 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     final GitRevisionNumber base = searcher.getLocal().getMergeBase(myProject, root, searcher.getRemote());
     LOG.debug("found base: " + ((base == null) ? null : base.asString()));
     return base;
+  }
+
+  @NotNull
+  public <U> Collection<U> whichAreOutgoingChanges(Collection<U> revisions,
+                                                   Convertor<U, VcsRevisionNumber> convertor,
+                                                   Convertor<U, FilePath> filePatchConvertor, VirtualFile vcsRoot) throws VcsException {
+    final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
+    final GitBranch target = searcher.getRemote();
+    if (searcher.getLocal() == null || target == null) {
+      return revisions; // no information, better strict approach
+    }
+    // get branches with commit
+    final Collection<U> result = new ArrayList<U>(revisions);
+    for (Iterator<U> iterator = result.iterator(); iterator.hasNext();) {
+      final U t = iterator.next();
+      final LinkedList<String> branches = new LinkedList<String>();
+      // we do not use passed revision convertor since it returns just recent commit on repo
+      final VcsRevisionNumber revision = GitHistoryUtils.getCurrentRevision(myProject, filePatchConvertor.convert(t));
+      GitBranch.listAsStrings(myProject, vcsRoot, true, false, branches, revision == null ? convertor.convert(t).asString() : revision.asString());
+
+      if (branches.contains(target.getName())) {
+        iterator.remove();
+      }
+    }
+
+    return result;
+  }
+
+  public Date getRevisionDate(VcsRevisionNumber revision) {
+    return revision instanceof GitRevisionNumber ? ((GitRevisionNumber) revision).getTimestamp() : null;
   }
 }

@@ -20,18 +20,25 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 public class ReplaceInstanceVariableIncrementDecrement extends FixableUsageInfo {
   private final PsiExpression reference;
-  private final String setterName;
-  private final String getterName;
+  private final @Nullable String setterName;
+  private final @Nullable String getterName;
   private final String delegateName;
+  private final String fieldName;
 
-  public ReplaceInstanceVariableIncrementDecrement(PsiExpression reference, String delegateName, String setterName, String getterName) {
+  public ReplaceInstanceVariableIncrementDecrement(PsiExpression reference,
+                                                   String delegateName,
+                                                   String setterName,
+                                                   String getterName,
+                                                   String name) {
     super(reference);
     this.getterName = getterName;
     this.setterName = setterName;
     this.delegateName = delegateName;
+    fieldName = name;
     final PsiPrefixExpression prefixExpr = PsiTreeUtil.getParentOfType(reference, PsiPrefixExpression.class);
     if (prefixExpr != null) {
       this.reference = prefixExpr;
@@ -56,29 +63,24 @@ public class ReplaceInstanceVariableIncrementDecrement extends FixableUsageInfo 
     final PsiElement qualifier = lhs.getQualifier();
     final String operator = sign.getText();
     final String newExpression;
+    final String strippedOperator = getStrippedOperator(operator);
     if (qualifier != null) {
       final String qualifierText = qualifier.getText();
-      final String strippedOperator = getStrippedOperator(operator);
-      newExpression = qualifierText +
-                      '.' +
-                      delegateName +
-                      '.' +
-                      setterName +
-                      '(' +
-                      qualifierText +
-                      '.' +
-                      delegateName +
-                      '.' +
-                      getterName +
-                      "()" +
-                      strippedOperator +
-                      "1)";
+      newExpression = qualifierText + '.' + delegateName + '.' +
+                      callSetter(qualifierText + '.' + delegateName + '.' + callGetter() + strippedOperator + "1");
     }
     else {
-      final String strippedOperator = getStrippedOperator(operator);
-      newExpression = delegateName + '.' + setterName + '(' + delegateName + '.' + getterName + "()" + strippedOperator + "1)";
+      newExpression = delegateName + '.' + callSetter(delegateName + '.' + callGetter() + strippedOperator + "1");
     }
     MutationUtils.replaceExpression(newExpression, reference);
+  }
+
+  private String callGetter() {
+    return (getterName != null ? getterName + "()" : fieldName);
+  }
+
+  private String callSetter(String rhsText) {
+    return setterName != null ? setterName + "(" + rhsText + ")" : fieldName + "=" + rhsText;
   }
 
   private static String getStrippedOperator(String operator) {

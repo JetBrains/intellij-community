@@ -182,6 +182,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return new TextRange(startOffset, startOffset + nameChild.getTextLength());
   }
 
+  @NotNull
   public String getCanonicalText() {
     String canonicalText = myCanonicalText;
     if (canonicalText == null) {

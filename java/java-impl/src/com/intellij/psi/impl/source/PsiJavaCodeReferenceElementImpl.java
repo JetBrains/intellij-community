@@ -263,6 +263,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
+  @NotNull
   public String getCanonicalText() {
     switch (getKind()) {
       case CLASS_NAME_KIND:

@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenUIModifiableModelsProvider;
@@ -231,8 +232,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState();
   }
 
+  @NotNull
   private Project getProject() {
-    return isUpdate() ? getProjectToUpdate() : ProjectManager.getInstance().getDefaultProject();
+    Project result = isUpdate() ? getProjectToUpdate() : null;
+    if (result == null) result = ProjectManager.getInstance().getDefaultProject();
+    return result;
   }
 
   public void setFiles(List<VirtualFile> files) {

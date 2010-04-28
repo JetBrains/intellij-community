@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -77,6 +78,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
    * @return          last child block that contains line feeds and starts before the given block if any;
    *                  <code>null</code> otherwise
    */
+  @Nullable
   public AbstractBlockWrapper getPrevIndentedSibling(final AbstractBlockWrapper current) {
     AbstractBlockWrapper candidate = null;
     for (AbstractBlockWrapper child : myChildren) {

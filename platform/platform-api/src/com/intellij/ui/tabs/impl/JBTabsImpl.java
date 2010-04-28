@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.switcher.SwitchProvider;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
@@ -60,7 +61,7 @@ import java.util.*;
 import java.util.List;
 
 public class JBTabsImpl extends JComponent
-  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable {
+  implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable, QuickActionProvider {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
@@ -2602,9 +2603,29 @@ public class JBTabsImpl extends JComponent
       return this;
     }
 
+    if (QuickActionProvider.KEY.getName().equals(dataId)) {
+      return this;
+    }
+
     return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
   }
 
+  public List<AnAction> getActions(boolean originalProvider) {
+    ArrayList<AnAction> result = new ArrayList<AnAction>();
+
+    TabInfo selection = getSelectedInfo();
+    if (selection != null) {
+      ActionGroup group = selection.getGroup();
+      if (group != null) {
+        AnAction[] children = group.getChildren(null);
+        for (int i = 0; i < children.length; i++) {
+          result.add(children[i]);
+        }
+      }
+    }
+
+    return result;
+  }
 
   public DataProvider getDataProvider() {
     return myDataProvider;
@@ -2805,6 +2826,11 @@ public class JBTabsImpl extends JComponent
 
     public Component getComponent() {
       return myInfo2Label.get(myInfo);
+    }
+
+    @Override
+    public String toString() {
+      return myInfo.getText();
     }
 
     @Override

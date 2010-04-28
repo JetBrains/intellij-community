@@ -204,7 +204,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
 
     refUsages.set(filteredUsages.toArray(new UsageInfo[filteredUsages.size()]));
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usages);
   }
 
   private boolean isInsideMoved(PsiElement place) {
