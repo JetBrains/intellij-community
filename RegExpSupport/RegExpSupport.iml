@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="Jaxen" level="project" />
+    <orderEntry type="module" module-name="platform-ultimate" scope="TEST" />
   </component>
 </module>
 
