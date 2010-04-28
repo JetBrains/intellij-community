@@ -175,28 +175,36 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    if (getQualifier() == null) {
-      String name = getReferencedName();
-      if (PyNames.NONE.equals(name)) {
-        return PyNoneType.INSTANCE;
-      }
-    }
-    else {
-      PyType maybe_type = PyUtil.getSpecialAttributeType(this);
-      if (maybe_type != null) return maybe_type;
-    }
-    PyType pyType = getTypeFromProviders(context);
-    if (pyType != null) {
-      return pyType;
-    }
-
-    ResolveResult[] targets = getReference(PyResolveContext.noImplicits()).multiResolve(false);
-    if (targets.length == 0) return null;
-    PsiElement target = targets[0].getElement();
-    if (target == this) {
+    if (!TypeEvalStack.mayEvaluate(this)) {
       return null;
     }
-    return getTypeFromTarget(target, context, this);
+    try {
+      if (getQualifier() == null) {
+        String name = getReferencedName();
+        if (PyNames.NONE.equals(name)) {
+          return PyNoneType.INSTANCE;
+        }
+      }
+      else {
+        PyType maybe_type = PyUtil.getSpecialAttributeType(this);
+        if (maybe_type != null) return maybe_type;
+      }
+      PyType pyType = getTypeFromProviders(context);
+      if (pyType != null) {
+        return pyType;
+      }
+
+      ResolveResult[] targets = getReference(PyResolveContext.noImplicits()).multiResolve(false);
+      if (targets.length == 0) return null;
+      PsiElement target = targets[0].getElement();
+      if (target == this) {
+        return null;
+      }
+      return getTypeFromTarget(target, context, this);
+    }
+    finally {
+      TypeEvalStack.evaluated(this);
+    }
   }
 
   @Nullable
