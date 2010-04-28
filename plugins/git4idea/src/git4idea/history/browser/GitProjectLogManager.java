@@ -166,9 +166,11 @@ public class GitProjectLogManager implements ProjectComponent {
       if (baseDir.equals(root)) {
         result = "<Project root>";
       } else {
-        final String variant = VfsUtil.getRelativePath(baseDir, root, '/');
-        if ((variant != null) && (variant.length() < result.length())) {
-          result = variant;
+        if (VfsUtil.isAncestor(baseDir, root, true)) {
+          final String variant = VfsUtil.getRelativePath(root, baseDir, '/');
+          if (variant != null) {
+            result = variant;
+          }
         }
       }
     }
