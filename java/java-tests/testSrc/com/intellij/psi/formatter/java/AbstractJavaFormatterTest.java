@@ -41,7 +41,7 @@ import java.io.File;
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:26:29 PM
  */
-public abstract class AbstractJavaFormattingTest extends LightIdeaTestCase {
+public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
 
