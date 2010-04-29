@@ -7,6 +7,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 
 /**
@@ -18,15 +19,13 @@ public class PyJavaSuperMethodsSearchExecutor implements QueryExecutor<PsiElemen
     PyClass containingClass = func.getContainingClass();
     if (containingClass != null) {
       PsiElement[] superClassElements = containingClass.getSuperClassElements();
-      if (superClassElements != null) {
-        for(PsiElement element: superClassElements) {
-          if (element instanceof PsiClass) {
-            PsiClass psiClass = (PsiClass) element;
-            PsiMethod[] methods = psiClass.findMethodsByName(func.getName(), true);
-            // the Python method actually does override/implement all of Java super methods with the same name
-            for(PsiMethod method: methods) {
-              if (!consumer.process(method)) return false;
-            }
+      for(PsiElement element: superClassElements) {
+        if (element instanceof PsiClass) {
+          PsiClass psiClass = (PsiClass) element;
+          PsiMethod[] methods = psiClass.findMethodsByName(func.getName(), true);
+          // the Python method actually does override/implement all of Java super methods with the same name
+          for(PsiMethod method: methods) {
+            if (!consumer.process(method)) return false;
           }
         }
       }
