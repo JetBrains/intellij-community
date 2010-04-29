@@ -30,7 +30,6 @@ public abstract class HighlighterList {
   private final SortedList<RangeHighlighterImpl> mySegmentHighlighters = new SortedList<RangeHighlighterImpl>(MY_RANGE_COMPARATOR) {
     @Override
     protected void sort(List<RangeHighlighterImpl> delegate) {
-      assertDispatchThread();
       Iterator<RangeHighlighterImpl> it = delegate.iterator();
       boolean needSort = false;
       RangeHighlighterImpl lastHighlighter = null;
