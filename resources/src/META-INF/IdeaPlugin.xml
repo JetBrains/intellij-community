@@ -724,6 +724,7 @@
     <console.folding implementation="com.intellij.execution.filters.AuxiliaryCallsFolding"/>
 
     <stackFrameFilter implementation="com.intellij.execution.filters.ReflectionStackFrameFilter"/>
+    <stackFrameFilter implementation="com.intellij.execution.filters.RmiStackFrameFilter"/>
 
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
