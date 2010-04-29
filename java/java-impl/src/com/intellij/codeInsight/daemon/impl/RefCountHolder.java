@@ -221,7 +221,9 @@ public class RefCountHolder {
 
   public boolean analyze(Runnable analyze, final TextRange dirtyScope, final PsiFile file) {
     myState.compareAndSet(State.READY, State.VIRGIN);
-    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) return false;
+    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
+      return false;
+    }
 
     try {
       if (dirtyScope != null) {

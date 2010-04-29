@@ -23,7 +23,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 public class SelectGitBranchesPopup {
@@ -59,8 +58,7 @@ public class SelectGitBranchesPopup {
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof String) {
-        final Color color = (myTags) ? Color.blue : Color.green;
-        append((String) value, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
+        append((String) value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
   }

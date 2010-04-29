@@ -55,7 +55,7 @@ public class MavenEmbedderUtilEx extends MavenEmbedderUtil {
     File lib = resolveMavenLib(overrideMavenHome);
     if (lib == null) return null;
 
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(lib);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(lib);
     if (file == null) return null;
 
     VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(file);

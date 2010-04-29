@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
@@ -385,6 +386,26 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     assertEquals(getProjectPath() + "/target",
                  FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")));
+  }
+
+  public void testPluginConfigurationWithColons() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>group</groupId>" +
+                  "      <artifactId>id</artifactId>" +
+                  "      <version>1</version>" +
+                  "      <configuration>" +
+                  "        <two:three>xxx</two:three>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertNull(findPluginConfig("group", "id", "two:three"));
   }
 
   public void testMergingPluginConfigurationFromBuildAndProfiles() throws Exception {

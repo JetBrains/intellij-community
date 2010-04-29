@@ -51,12 +51,12 @@ public class IdeaTextPatchBuilder {
     final MultiMap<VcsRoot,Change> byRoots = new SortByVcsRoots<Change>(project, beforePrefferingConvertor).sort(changes);
 
     for (VcsRoot root : byRoots.keySet()) {
-      final VcsOutgoingChangesProvider<?> provider = root.vcs.getOutgoingChangesProvider();
       final Collection<Change> rootChanges = byRoots.get(root);
-      if (provider == null) {
+      if (root.vcs == null || root.vcs.getOutgoingChangesProvider() == null) {
         addConvertChanges(rootChanges, result);
         continue;
       }
+      final VcsOutgoingChangesProvider<?> provider = root.vcs.getOutgoingChangesProvider();
       final Collection<Change> outGoingOnly = provider.whichAreOutgoingChanges(rootChanges, new Convertor<Change, VcsRevisionNumber>() {
         public VcsRevisionNumber convert(Change ch) {
           return (ch.getBeforeRevision() == null ? ch.getAfterRevision() : ch.getBeforeRevision()).getRevisionNumber();

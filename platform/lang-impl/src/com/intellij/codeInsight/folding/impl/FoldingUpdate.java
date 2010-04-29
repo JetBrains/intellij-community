@@ -132,19 +132,16 @@ public class FoldingUpdate {
       getFoldingsFor(injectedFile, injectedDocument, map, false);
     }
 
-
-    final Runnable operation = new Runnable() {
+    return new Runnable() {
       public void run() {
         for (int i = 0; i < injectedEditors.size(); i++) {
           EditorWindow injectedEditor = injectedEditors.get(i);
+          if (!injectedEditor.getDocument().isValid()) continue;
           Map<PsiElement, FoldingDescriptor> map = maps.get(i);
-          new UpdateFoldRegionsOperation(project, injectedEditor, map, applyDefaultState, true).run();
+          UpdateFoldRegionsOperation op = new UpdateFoldRegionsOperation(project, injectedEditor, map, applyDefaultState, true);
+          editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(op);
         }
-      }
-    };
-    return new Runnable() {
-      public void run() {
-        editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
+
         editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, timeStamp);
       }
     };

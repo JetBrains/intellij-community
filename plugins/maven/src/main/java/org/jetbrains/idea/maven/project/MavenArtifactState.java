@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.project;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * @author Konstantin Bulenkov
+ */
 public enum MavenArtifactState {
-  ADDED, EXCLUDED, CONFLICT, DUPLICATE, CYCLE;
+  ADDED, EXCLUDED, CONFLICT, DUPLICATE, CYCLE
 }
