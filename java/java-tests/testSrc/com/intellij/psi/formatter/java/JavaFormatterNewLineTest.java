@@ -24,7 +24,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
  * @author Denis Zhdanov
  * @since Apr 28, 2010 12:12:13 PM
  */
-public class JavaFormatterNewLineTest extends AbstractJavaFormattingTest {
+public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
 
   public void testAutomaticElseWrapping() throws Exception {
     getSettings().ELSE_ON_NEW_LINE = true;
@@ -157,5 +157,10 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormattingTest {
       "    }\n" +
       "};"
     );
+  }
+
+  public void testBlockOfMethodWithAnnotatedParameter() throws Exception {
+    // Inspired by IDEA-17870
+    doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
   }
 }
