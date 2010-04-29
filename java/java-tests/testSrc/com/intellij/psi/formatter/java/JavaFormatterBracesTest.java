@@ -24,7 +24,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:39:24 PM
  */
-public class JavaFormattingBracesTest extends AbstractJavaFormattingTest {
+public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
 
   public void testFlyingGeeseBraces() {
     // Inspired by IDEA-52305
@@ -116,5 +116,41 @@ public class JavaFormattingBracesTest extends AbstractJavaFormattingTest {
       "  }\n" +
       "}"
     );
+  }
+
+  public void testBracePositioningAtPreviousLine() throws Exception {
+    // Inspired by IDEADEV-18529
+    doTextTest(
+      "public class TestBed\n" +
+      "{\n" +
+      "    public void methodOne()\n" +
+      "    {\n" +
+      "        //code...\n" +
+      "    }\n" +
+      "\n" +
+      "    @SomeAnnotation\n" +
+      "            <T extends Comparable> void methodTwo(T item) {\n" +
+      "        //code...\n" +
+      "    }\n" +
+      "\n" +
+      "    private void methodThree(String s) {\n" +
+      "        //code...\n" +
+      "    }\n" +
+      "}",
+
+      "public class TestBed {\n" +
+      "    public void methodOne() {\n" +
+      "        //code...\n" +
+      "    }\n" +
+      "\n" +
+      "    @SomeAnnotation\n" +
+      "    <T extends Comparable> void methodTwo(T item) {\n" +
+      "        //code...\n" +
+      "    }\n" +
+      "\n" +
+      "    private void methodThree(String s) {\n" +
+      "        //code...\n" +
+      "    }\n" +
+      "}");
   }
 }
