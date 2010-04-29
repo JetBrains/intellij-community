@@ -184,6 +184,20 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     }
   }
 
+  private static class Py3kFilter implements ElementFilter {
+    public boolean isAcceptable(Object element, PsiElement context) {
+      if (!(element instanceof PsiElement)) {
+        return false;
+      }
+      final PsiFile containingFile = ((PsiElement)element).getContainingFile();
+      return containingFile instanceof PyFile && ((PyFile) containingFile).getLanguageLevel().isPy3K();
+    }
+
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
+    }
+  }
+
   // ====== conditions
 
   private static final PsiElementPattern.Capture<PsiElement> IN_COMMENT =
@@ -289,6 +303,8 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     psiElement(PyExpression.class).afterLeaf("if")
   ));
 
+  private static final FilterPattern PY3K = new FilterPattern(new Py3kFilter());
+
 
   /**
    * Tail type that adds a space and a colon and puts cursor before colon. Used in things like "if".
@@ -382,14 +398,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .andNot(IN_ARG_LIST)
         .andOr(IN_LOOP, AFTER_LOOP_NO_ELSE)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] strings = {"break"};
-          putKeywords(strings, TailType.NONE, result);
-        }
-      }
+      new PyKeywordCompletionProvider(TailType.NONE, "break")
     );
   }
 
@@ -404,14 +413,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .andNot(IN_FINALLY_NO_LOOP)
         .andOr(IN_LOOP, AFTER_LOOP_NO_ELSE)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] strings = {"continue"};
-          putKeywords(strings, TailType.NONE, result);
-        }
-      }
+      new PyKeywordCompletionProvider(TailType.NONE, "continue")
     );
   }
 
@@ -423,14 +425,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .and(IN_BEGIN_STMT)
         .andNot(AFTER_QUALIFIER)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] space_strings = {"global", "return", "yield"};
-          putKeywords(space_strings, TailType.SPACE, result);
-        }
-      }
+      new PyKeywordCompletionProvider("global", "return", "yield")
     );
   }
 
@@ -503,13 +498,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .andNot(IN_DEFINITION)
         .andNot(AFTER_QUALIFIER)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] space_strings = {"and", "or", "is", "in"};
-          putKeywords(space_strings, TailType.SPACE, result);
-        }
-      }
+      new PyKeywordCompletionProvider("and", "or", "is", "in")
     );
   }
 
@@ -523,13 +512,22 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .andNot(IN_DEFINITION)
         .andNot(AFTER_QUALIFIER)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] space_strings = {"not"};
-          putKeywords(space_strings, TailType.SPACE, result);
-        }
-      }
+      new PyKeywordCompletionProvider("not")
+    );
+  }
+
+  private void addPy3kLiterals() {
+    extend(
+      CompletionType.BASIC, psiElement()
+        .withLanguage(PythonLanguage.getInstance())
+        .and(PY3K)
+        .andNot(IN_COMMENT)
+        .andNot(IN_IMPORT_STMT)
+        .andNot(IN_PARAM_LIST)
+        .andNot(IN_DEFINITION)
+        .andNot(AFTER_QUALIFIER)
+      ,
+      new PyKeywordCompletionProvider(TailType.NONE, "True", "False", "None")
     );
   }
 
@@ -540,14 +538,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .andOr(IN_IMPORT_AFTER_REF, IN_WITH_AFTER_REF) 
         .andNot(AFTER_QUALIFIER)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] space_strings = {"as"};
-          putKeywords(space_strings, TailType.SPACE, result);
-        }
-      }
+      new PyKeywordCompletionProvider("as")
     );
   }
 
@@ -558,14 +549,7 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
         .and(IN_FROM_IMPORT_AFTER_REF)
         .andNot(AFTER_QUALIFIER)
       ,
-      new CompletionProvider<CompletionParameters>() {
-        protected void addCompletions(
-          @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result
-        ) {
-          final @NonNls String[] space_strings = {"import"};
-          putKeywords(space_strings, TailType.SPACE, result);
-        }
-      }
+      new PyKeywordCompletionProvider("import")
     );
   }
 
@@ -624,7 +608,27 @@ public class PyKeywordCompletionContributor extends PySeeingOriginalCompletionCo
     addNot();
     addAs();
     addImportInFrom();
+    addPy3kLiterals();
     //addExprIf();
     //addExprElse();
+  }
+
+  private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
+    private final String[] myKeywords;
+    private final TailType myTailType;
+
+    private PyKeywordCompletionProvider(String... keywords) {
+      this(TailType.SPACE, keywords);
+    }
+
+    private PyKeywordCompletionProvider(TailType tailType, String... keywords) {
+      myKeywords = keywords;
+      myTailType = tailType;
+    }
+
+    protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context,
+                                  @NotNull final CompletionResultSet result) {
+      putKeywords(myKeywords, myTailType, result);
+    }
   }
 }
