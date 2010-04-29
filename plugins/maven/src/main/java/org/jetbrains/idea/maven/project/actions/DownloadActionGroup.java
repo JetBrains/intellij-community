@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
-public class ReimportAction extends MavenProjectsManagerAction {
+public class DownloadActionGroup extends DefaultActionGroup {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
-    return true;
-  }
-
-  @Override
-  protected void perform(MavenProjectsManager manager) {
-    manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
+  public void update(AnActionEvent e) {
+    super.update(e);
+    if (MavenActionUtil.getProject(e) == null) return; // todo: remove this when kirill fixes the problem
+    e.getPresentation().setEnabled(MavenActionUtil.getProjectsManager(e).isMavenizedProject());
   }
 }

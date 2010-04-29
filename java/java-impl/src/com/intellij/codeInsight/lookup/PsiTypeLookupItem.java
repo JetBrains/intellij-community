@@ -101,4 +101,14 @@ public class PsiTypeLookupItem extends LookupItem {
     item.setAttribute(TYPE, original);
     return item;
   }
+  
+  public static @Nullable PsiTypeLookupItem from(LookupElement element) {
+    if (element instanceof PsiTypeLookupItem) return (PsiTypeLookupItem)element;
+    else if (element instanceof LookupElementDecorator) {
+      element = ((LookupElementDecorator)element).getDelegate();
+      if (element instanceof PsiTypeLookupItem) return (PsiTypeLookupItem)element;
+    }
+    
+    return null;
+  }
 }

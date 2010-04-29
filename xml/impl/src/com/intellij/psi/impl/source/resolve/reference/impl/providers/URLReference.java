@@ -106,10 +106,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
       final XmlTag rootTag = document.getRootTag();
 
      if (rootTag == null) {
-        if (containingFile.getFileType() == StdFileTypes.DTD) {
-          return ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, null);
-        }
-        return null;
+        return ExternalResourceManager.getInstance().getResourceLocation(canonicalText, containingFile, null);
       }
       final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(canonicalText, true);
       if (nsDescriptor != null) return nsDescriptor.getDescriptorFile();

@@ -210,7 +210,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           final CompletionService service = CompletionService.getCompletionService();
           new BasicExpressionCompletionContributor().fillCompletionVariants(parameters, service.createResultSet(parameters, new Consumer<LookupElement>() {
             public void consume(final LookupElement lookupElement) {
-              final TypedLookupItem typed = lookupElement.as(TypedLookupItem.class);
+              final TypedLookupItem typed = JavaCompletionUtil.typedFrom(lookupElement);
               if (typed != null) {
                 final PsiType psiType = typed.getType();
                 if (psiType != null && type.isAssignableFrom(psiType)) {
