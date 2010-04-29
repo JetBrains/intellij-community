@@ -56,6 +56,8 @@ public abstract class PsiManagerEx extends PsiManager {
 
   public abstract void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event);
 
+  public abstract void beforeChildReplacement(@NotNull PsiTreeChangeEventImpl event);
+
   @NotNull
   public abstract CacheManager getCacheManager();
 

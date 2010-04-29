@@ -121,8 +121,8 @@ class XmlZenCodingInterpreter {
         case OPERATION:
           if (templateToken != null) {
             if (token instanceof MarkerToken || token instanceof OperationToken) {
-              final char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-              if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
+              final char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : ZenCodingTemplate.MARKER;
+              if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
                 final Object key = new Object();
                 myCallback.fixStartOfTemplate(key);
                 invokeTemplate(templateToken, myCallback, 0);
@@ -135,7 +135,7 @@ class XmlZenCodingInterpreter {
                 }
                 templateToken = null;
               }
-              else if (sign == '>' || (mySurroundedText != null && sign == XmlZenCodingTemplate.MARKER)) {
+              else if (sign == '>' || (mySurroundedText != null && sign == ZenCodingTemplate.MARKER)) {
                 startTemplateAndGotoChild(templateToken);
                 templateToken = null;
               }
@@ -168,8 +168,8 @@ class XmlZenCodingInterpreter {
           break;
         case AFTER_NUMBER:
           if (token instanceof MarkerToken || token instanceof OperationToken) {
-            char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-            if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
+            char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : ZenCodingTemplate.MARKER;
+            if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
               invokeTemplateSeveralTimes(templateToken, 0, number);
               templateToken = null;
             }

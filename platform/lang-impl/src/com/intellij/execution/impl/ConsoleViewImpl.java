@@ -41,12 +41,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -902,7 +902,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (oStart > 0) oStart--;
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
-      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, prevFolding.getPlaceholderText(toFold), null));
+      FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null);
+      toAdd.add(region); 
     }
   }
 

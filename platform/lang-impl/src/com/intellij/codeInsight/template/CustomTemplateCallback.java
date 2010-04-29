@@ -18,12 +18,14 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -61,8 +63,7 @@ public class CustomTemplateCallback {
 
   @Nullable
   public PsiElement getContext() {
-    int offset = myStartOffset;
-    return myFile.findElementAt(offset > 0 ? offset - 1 : offset);
+    return getContext(myFile, myStartOffset > 0 ? myStartOffset - 1 : myStartOffset);
   }
 
   public void fixInitialState() {
@@ -228,5 +229,19 @@ public class CustomTemplateCallback {
   public void deleteTemplateKey(String key) {
     int caretAt = myEditor.getCaretModel().getOffset();
     myEditor.getDocument().deleteString(caretAt - key.length(), caretAt);
+  }
+
+  public static PsiElement getContext(PsiFile file, int offset) {
+    PsiElement element = null;
+    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+    }
+    if (element == null) {
+      element = file.findElementAt(offset > 0 ? offset - 1 : offset);
+      if (element == null) {
+        element = file;
+      }
+    }
+    return element;
   }
 }

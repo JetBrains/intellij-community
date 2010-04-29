@@ -30,7 +30,7 @@ import java.util.RandomAccess;
  * at least as large as the list size.  As elements are added to an ArrayList,
  * its capacity grows automatically.  The details of the growth policy are not
  * specified beyond the fact that adding an element has constant amortized
- * time cost.<p>
+ * time cost.<p> 
  *
  * An application can increase the capacity of an <tt>ArrayList</tt> instance
  * before adding a large number of elements using the <tt>ensureCapacity</tt>
@@ -63,12 +63,12 @@ import java.util.RandomAccess;
  * Note that the fail-fast behavior of an iterator cannot be guaranteed
  * as it is, generally speaking, impossible to make any hard guarantees in the
  * presence of unsynchronized concurrent modification.  Fail-fast iterators
- * throw <tt>ConcurrentModificationException</tt> on a best-effort basis.
+ * throw <tt>ConcurrentModificationException</tt> on a best-effort basis. 
  * Therefore, it would be wrong to write a program that depended on this
  * exception for its correctness: <i>the fail-fast behavior of iterators
  * should be used only to detect bugs.</i><p>
  *
- * This class is a member of the
+ * This class is a member of the 
  * <a href="{@docRoot}/../guide/collections/index.html">
  * Java Collections Framework</a>.
  *
@@ -136,7 +136,7 @@ public class Bar<E> extends AbstractList<E>
         size = c.size();
         // Allow 10% room for growth
         elementData = (E[])new Object[
-                      (int)Math.min((size*110L)/100,Integer.MAX_VALUE)];
+                      (int)Math.min((size*110L)/100,Integer.MAX_VALUE)]; 
         c.toArray(elementData);
     }
 
@@ -158,7 +158,7 @@ public class Bar<E> extends AbstractList<E>
     /**
      * Increases the capacity of this <tt>ArrayList</tt> instance, if
      * necessary, to ensure  that it can hold at least the number of elements
-     * specified by the minimum capacity argument.
+     * specified by the minimum capacity argument. 
      *
      * @param   minCapacity   the desired minimum capacity.
      */
@@ -206,8 +206,8 @@ public class Bar<E> extends AbstractList<E>
     }
 
     /**
-     * Searches for the first occurence of the given argument, testing
-     * for equality using the <tt>equals</tt> method.
+     * Searches for the first occurence of the given argument, testing 
+     * for equality using the <tt>equals</tt> method. 
      *
      * @param   elem   an object.
      * @return  the index of the first occurrence of the argument in this
@@ -255,13 +255,13 @@ public class Bar<E> extends AbstractList<E>
      * @return  a clone of this <tt>ArrayList</tt> instance.
      */
     public Object clone() {
-	try {
+	try { 
 	    Bar<E> v = (Bar<E>) super.clone();
 	    v.elementData = (E[])new Object[size];
 	    System.arraycopy(elementData, 0, v.elementData, 0, size);
 	    v.modCount = 0;
 	    return v;
-	} catch (CloneNotSupportedException e) {
+	} catch (CloneNotSupportedException e) { 
 	    // this shouldn't happen, since we are Cloneable
 	    throw new InternalError();
 	}
@@ -441,7 +441,7 @@ public class Bar<E> extends AbstractList<E>
         modCount++;
         int numMoved = size - index - 1;
         if (numMoved > 0)
-            System.arraycopy(elementData, index+1, elementData, index,
+            System.arraycopy(elementData, index+1, elementData, index, 
                              numMoved);
         elementData[--size] = null; // Let gc do its work
     }

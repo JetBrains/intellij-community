@@ -62,6 +62,15 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
 
       TreeUtil.ensureParsed(oldNode);
 
+      final PsiElement psiParent = parent.getPsi();
+      final PsiElement psiChild = myIsPhysicalScope ? oldNode.getPsi() : null;
+      if (psiParent != null && psiChild != null) {
+        final PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myPsiManager);
+        event.setParent(psiParent);
+        event.setChild(psiChild);
+        myPsiManager.beforeChildReplacement(event);
+      }
+
       ((TreeElement)newNode).rawRemove();
       ((TreeElement)oldNode).rawReplaceWithList((TreeElement)newNode);
 
