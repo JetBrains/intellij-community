@@ -17,9 +17,13 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 
 public class MavenCustomRepositoryHelper {
   private final File myTempDir;
@@ -38,7 +42,9 @@ public class MavenCustomRepositoryHelper {
   }
 
   public void addTestData(String relativePath) throws IOException {
-    FileUtil.copyDir(new File(getOriginalTestDataPath(), relativePath), new File(myWorkingData, relativePath));
+    File to = new File(myWorkingData, relativePath);
+    FileUtil.copyDir(new File(getOriginalTestDataPath(), relativePath), to);
+    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to));
   }
 
   private String getOriginalTestDataPath() {
@@ -60,7 +66,8 @@ public class MavenCustomRepositoryHelper {
   }
 
   public void copy(String fromRelativePath, String toRelativePath) throws IOException {
-    FileUtil.copyDir(new File(getTestDataPath(fromRelativePath)),
-                     new File(getTestDataPath(toRelativePath)));
+    File to = new File(getTestDataPath(toRelativePath));
+    FileUtil.copyDir(new File(getTestDataPath(fromRelativePath)), to);
+    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to));
   }
 }
