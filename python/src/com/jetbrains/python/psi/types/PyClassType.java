@@ -69,7 +69,7 @@ public class PyClassType implements PyType {
       return classMember;
     }
 
-    final PsiElement[] superClasses = myClass.getSuperClassElements();
+    final PsiElement[] superClasses = myClass.getSuperClassExpressions();
     if (superClasses.length > 0) {
       for (PyClass superClass : myClass.iterateAncestors()) {
         PsiElement superMember = resolveClassMember(superClass, name);
