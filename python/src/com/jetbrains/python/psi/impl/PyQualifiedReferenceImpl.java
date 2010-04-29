@@ -76,7 +76,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         }
       }
       else if (qualifier instanceof PyReferenceExpression) {
-        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference().resolve();
+        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference(myContext).resolve();
         if (qual_object instanceof PyDocStringOwner) {
           docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
         }
