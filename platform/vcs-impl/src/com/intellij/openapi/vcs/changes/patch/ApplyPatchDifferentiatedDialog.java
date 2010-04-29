@@ -306,7 +306,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       group.add(new MapDirectory());
 
       final MyShowDiff diffAction = new MyShowDiff();
-      diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myCenterPanel);
+      diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), getRootPane());
       group.add(diffAction);
 
       group.add(new StripUp());
@@ -833,6 +833,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
       int selectedIdx = 0;
       final ArrayList<DiffRequestPresentable> diffRequestPresentables = new ArrayList<DiffRequestPresentable>(changes.size());
+      if (selectedChanges.isEmpty()) {
+        selectedChanges.addAll(changes);
+      }
       if (! selectedChanges.isEmpty()) {
         final FilePatchInProgress.PatchChange c = selectedChanges.get(0);
         for (FilePatchInProgress.PatchChange change : changes) {
