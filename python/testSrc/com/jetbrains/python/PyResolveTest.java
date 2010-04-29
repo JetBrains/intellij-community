@@ -240,6 +240,11 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);
   }
+
+  public void testLambdaWithParens() {  // PY-882
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyParameter);
+  }
   
   public void testTextBasedResolve() {
     ResolveResult[] resolveResults = multiResolve();

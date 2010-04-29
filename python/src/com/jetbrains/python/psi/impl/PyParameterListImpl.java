@@ -5,8 +5,9 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
-import com.jetbrains.python.toolbox.ArrayIterable;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
 
 /**
  * @author yole
@@ -140,7 +141,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    return new ArrayIterable<PyElement>(getParameters());
+    return new ArrayList<PyElement>(ParamHelper.collectNamedParameters(this));
   }
 
   public PyElement getElementNamed(final String the_name) {
