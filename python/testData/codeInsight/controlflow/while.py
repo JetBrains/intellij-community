@@ -1,4 +1,4 @@
-while condition
+while condition:
     print("Alloha!")
 else:
     print("Bye")

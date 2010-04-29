@@ -30,9 +30,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference {
   protected final PyQualifiedExpression myElement;
+  protected final PyResolveContext myContext;
 
-  public PyReferenceImpl(PyQualifiedExpression element) {
+  public PyReferenceImpl(PyQualifiedExpression element, @NotNull PyResolveContext context) {
     myElement = element;
+    myContext = context;
   }
 
   public TextRange getRangeInElement() {
@@ -423,6 +425,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PyReferenceImpl that = (PyReferenceImpl)o;
 
     if (!myElement.equals(that.myElement)) return false;
+    if (!myContext.equals(that.myContext)) return false;
 
     return true;
   }

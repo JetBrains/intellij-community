@@ -130,6 +130,8 @@ public interface PyElementTypes {
                                         PyTokenTypes.IN_KEYWORD, PyTokenTypes.IS_KEYWORD, PyTokenTypes.NOT_KEYWORD, PyTokenTypes.PLUS,
                                         PyTokenTypes.MINUS, PyTokenTypes.MULT, PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC);
 
+  TokenSet UNARY_OPS = TokenSet.create(PyTokenTypes.NOT_KEYWORD, PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.TILDE);
+
   // Parts
   PyElementType IF_PART_IF = new PyElementType("IF_IF", PyIfPartIfImpl.class);
   PyElementType IF_PART_ELIF = new PyElementType("IF_ELIF", PyIfPartElifImpl.class);

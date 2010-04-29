@@ -28,8 +28,8 @@ import java.util.HashSet;
 public class PyImportReferenceImpl extends PyReferenceImpl {
   private final PyReferenceExpressionImpl myElement;
 
-  public PyImportReferenceImpl(PyReferenceExpressionImpl element) {
-    super(element);
+  public PyImportReferenceImpl(PyReferenceExpressionImpl element, PyResolveContext context) {
+    super(element, context);
     myElement = element;
   }
 

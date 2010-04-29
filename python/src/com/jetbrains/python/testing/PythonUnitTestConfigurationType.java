@@ -142,6 +142,9 @@ public class PythonUnitTestConfigurationType extends ConfigurationTypeBase imple
   }
 
   private static boolean isPythonModule(Module module) {
+    if (module == null) {
+      return false;
+    }
     if (module.getModuleType() instanceof PythonModuleTypeBase) {
       return true;
     }

@@ -106,7 +106,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
     for (UsageInfo usage : usages) {
        conflicts.checkTargetClassConflicts((PyClass)usage.getElement());
     }
-    return showConflicts(conflicts.getConflicts());
+    return showConflicts(conflicts.getConflicts(), usages);
   }
 
   @Override

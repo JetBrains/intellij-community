@@ -47,6 +47,7 @@ public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyS
    */
   boolean isTopLevel();
 
+  @Nullable
   PyType getReturnType();
 
   /**

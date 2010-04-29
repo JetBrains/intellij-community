@@ -1,6 +1,7 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.lang.ASTNode;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author yole
  */
-public class PyLineMarkerProvider implements LineMarkerProvider {
+public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
   private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
   private static final Icon OVERRIDDEN_ICON = IconLoader.getIcon("/gutter/overridenMethod.png");
 
@@ -123,7 +124,14 @@ public class PyLineMarkerProvider implements LineMarkerProvider {
       final PyFunction function = (PyFunction)element.getParent();
       return getMethodMarker(element, function);
     }
+    if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS && isSeparatorAllowed(element)) {
+      return PyLineSeparatorUtil.addLineSeparatorIfNeeded(this, element);
+    }
     return null;
+  }
+
+  public boolean isSeparatorAllowed(PsiElement element) {
+    return element instanceof PyFunction || element instanceof PyClass;
   }
 
   @Nullable

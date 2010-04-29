@@ -14,7 +14,7 @@ import com.jetbrains.python.console.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -35,8 +35,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     super(astNode);
   }
 
+  @Override
   @NotNull
   public PsiPolyVariantReference getReference() {
+    return getReference(PyResolveContext.defaultContext());
+  }
+
+  @NotNull
+  public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PsiFile file = getContainingFile();
     final PyExpression qualifier = getQualifier();
     if (file != null) {
@@ -52,14 +58,14 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     // Handle import reference
     if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
-      return new PyImportReferenceImpl(this);
+      return new PyImportReferenceImpl(this, context);
     }
 
     if (qualifier != null) {
-      return new PyQualifiedReferenceImpl(this);
+      return new PyQualifiedReferenceImpl(this, context);
     }
 
-    return new PyReferenceImpl(this);
+    return new PyReferenceImpl(this, context);
   }
 
   @Override
@@ -169,28 +175,36 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    if (getQualifier() == null) {
-      String name = getReferencedName();
-      if (PyNames.NONE.equals(name)) {
-        return PyNoneType.INSTANCE;
-      }
-    }
-    else {
-      PyType maybe_type = PyUtil.getSpecialAttributeType(this);
-      if (maybe_type != null) return maybe_type;
-    }
-    PyType pyType = getTypeFromProviders(context);
-    if (pyType != null) {
-      return pyType;
-    }
-
-    ResolveResult[] targets = getReference().multiResolve(false);
-    if (targets.length == 0 || targets [0] instanceof ImplicitResolveResult) return null;
-    PsiElement target = targets[0].getElement();
-    if (target == this) {
+    if (!TypeEvalStack.mayEvaluate(this)) {
       return null;
     }
-    return getTypeFromTarget(target, context, this);
+    try {
+      if (getQualifier() == null) {
+        String name = getReferencedName();
+        if (PyNames.NONE.equals(name)) {
+          return PyNoneType.INSTANCE;
+        }
+      }
+      else {
+        PyType maybe_type = PyUtil.getSpecialAttributeType(this);
+        if (maybe_type != null) return maybe_type;
+      }
+      PyType pyType = getTypeFromProviders(context);
+      if (pyType != null) {
+        return pyType;
+      }
+
+      ResolveResult[] targets = getReference(PyResolveContext.noImplicits()).multiResolve(false);
+      if (targets.length == 0) return null;
+      PsiElement target = targets[0].getElement();
+      if (target == this) {
+        return null;
+      }
+      return getTypeFromTarget(target, context, this);
+    }
+    finally {
+      TypeEvalStack.evaluated(this);
+    }
   }
 
   @Nullable
@@ -215,27 +229,40 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (pyType != null) {
       return pyType;
     }
-    if (target instanceof PyTargetExpression && PyNames.NONE.equals(((PyTargetExpression) target).getName())) {
-      return PyNoneType.INSTANCE;
+    if (target instanceof PyTargetExpression) {
+      final String name = ((PyTargetExpression)target).getName();
+      if (PyNames.NONE.equals(name)) {
+        return PyNoneType.INSTANCE;
+      }
+      if (PyNames.TRUE.equals(name) || PyNames.FALSE.equals(name)) {
+        return PyBuiltinCache.getInstance(target).getBoolType();
+      }
     }
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile) target);
     }
     if (target instanceof PyTargetExpression && context.allowDataFlow() && anchor != null) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(anchor, ScopeOwner.class);
-      if (scopeOwner != null) {
-        final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyTargetExpression) target, anchor);
-        if (defs.length > 0) {
-          PyType type = getTypeIfExpr(defs [0], context);
-          for (int i = 1; i < defs.length; i++) {
-            type = PyUnionType.union(type, getTypeIfExpr(defs [i], context));
+      if (scopeOwner != null && scopeOwner == PsiTreeUtil.getParentOfType(target, ScopeOwner.class)) {
+        PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
+        try {
+          final PyElement[] defs = PyDefUseUtil.getLatestDefs(scopeOwner, (PyTargetExpression) target,
+                                                              augAssignment != null ? augAssignment : anchor);
+          if (defs.length > 0) {
+            PyType type = getTypeIfExpr(defs [0], context);
+            for (int i = 1; i < defs.length; i++) {
+              type = PyUnionType.union(type, getTypeIfExpr(defs [i], context));
+            }
+            return type;
           }
-          return type;
+        }
+        catch (PyDefUseUtil.InstructionNotFoundException e) {
+          // ignore
         }
       }
     }
     if (target instanceof PyExpression) {
-      return ((PyExpression) target).getType(context);
+      return context.getType((PyExpression) target);
     }
     if (target instanceof PyClass) {
       return new PyClassType((PyClass) target, true);
@@ -249,7 +276,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   private static PyType getTypeIfExpr(PyElement def, TypeEvalContext context) {
-    return def instanceof PyExpression ? ((PyExpression)def).getType(context) : null;
+    return def instanceof PyExpression ? context.getType((PyExpression)def) : null;
   }
 
   @Nullable

@@ -6,10 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.AssignmentCollectProcessor;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -23,8 +20,8 @@ import java.util.*;
  * @author yole
  */
 public class PyQualifiedReferenceImpl extends PyReferenceImpl {
-  public PyQualifiedReferenceImpl(PyQualifiedExpression element) {
-    super(element);
+  public PyQualifiedReferenceImpl(PyQualifiedExpression element, PyResolveContext context) {
+    super(element, context);
   }
 
   @NotNull
@@ -57,7 +54,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
       PsiElement ref_elt = PyUtil.turnDirIntoInit(qualifierType.resolveMember(referencedName));
       if (ref_elt != null) ret.poke(ref_elt, RatedResolveResult.RATE_NORMAL);
     }
-    else {
+    else if (myContext.allowImplicits()) {
       final Collection<PyFunction> functions = PyFunctionNameIndex.find(referencedName, myElement.getProject());
       for (PyFunction function : functions) {
         if (function.getContainingClass() != null) {

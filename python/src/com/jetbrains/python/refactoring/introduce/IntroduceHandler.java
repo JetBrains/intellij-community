@@ -21,6 +21,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.NameSuggestorUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,17 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
+  private static void replaceExpression(PyExpression newExpression, Project project, PsiElement expression) {
+    PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
+    if (statement != null) {
+      if (statement.getExpression() == expression) {
+        expression.delete();
+        return;
+      }
+    }
+    PyPsiUtils.replaceExpression(project, expression, newExpression);
+  }
+
   private final IntroduceValidator myValidator;
   private final String myDialogTitle;
 
@@ -59,7 +71,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         }
       }
     }
-    PyType type = expression.getType(null);
+    PyType type = expression.getType(TypeEvalContext.fast());
     if (type != null) {
       final String typeName = type.getName();
       if (typeName != null) {
@@ -114,7 +126,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final PyExpression expression = (PyExpression)element1;
 
     final List<PsiElement> occurrences;
-    if (expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null) {
+    if (expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null && !(expression instanceof PyCallExpression)) {
       occurrences = getOccurrences(expression);
     }
     else {
@@ -139,7 +151,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     performReplace(project, declaration, expression, occurrences, name, replaceAll, initInConstructor);
   }
 
-  protected abstract String getHelpId();  
+  protected abstract String getHelpId();
 
   protected PyAssignmentStatement createDeclaration(Project project, String assignmentText) {
     return PyElementGenerator.getInstance(project).createFromText(PyAssignmentStatement.class, assignmentText);
@@ -181,11 +193,11 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
 
         if (replaceAll) {
           for (PsiElement occurrence : occurrences) {
-            PyPsiUtils.replaceExpression(project, occurrence, newExpression);
+            replaceExpression(newExpression, project, occurrence);
           }
         }
         else {
-          PyPsiUtils.replaceExpression(project, expression, newExpression);
+          replaceExpression(newExpression, project, expression);
         }
       }
     }.execute();

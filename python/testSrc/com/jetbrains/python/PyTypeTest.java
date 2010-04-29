@@ -56,6 +56,15 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertTrue(type.getElementType(1) instanceof PyUnionType);
   }
 
+  public void testAugAssignment() {
+    PyClassType type = (PyClassType) doTest("def x():\n" +
+                                            "    count = 0\n" +
+                                            "    count += 1\n" +
+                                            "    return count\n" +
+                                            "expr = x()");
+    assertEquals("int", type.getName());
+  }
+
   private PyType doTest(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

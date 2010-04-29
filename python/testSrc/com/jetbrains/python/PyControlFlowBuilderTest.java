@@ -1,14 +1,15 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.intellij.codeInsight.controlflow.ControlFlow;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,6 +109,15 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
 
   public void testExit() throws Exception {
     doTest();
+  }
+
+  public void testSelf() throws Exception {
+    final String testName = getTestName(false).toLowerCase();
+    configureByFile(testName + ".py");
+    final String fullPath = getTestDataPath() + testName + ".txt";
+    final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
+    final ControlFlow flow = pyClass.getMethods() [0].getControlFlow();
+    check(fullPath, flow);
   }
 
   public void testTryBreak() throws Exception {

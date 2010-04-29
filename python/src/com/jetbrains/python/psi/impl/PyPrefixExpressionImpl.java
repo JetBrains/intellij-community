@@ -24,11 +24,11 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @NotNull
   public PyElementType getOperationSign() {
-    return (PyElementType)getNode().findChildByType(PyElementTypes.BINARY_OPS).getElementType();
+    return (PyElementType)getNode().findChildByType(PyElementTypes.UNARY_OPS).getElementType();
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
-    String op = getNode().findChildByType(PyElementTypes.BINARY_OPS).getText();
+    String op = getNode().findChildByType(PyElementTypes.UNARY_OPS).getText();
     if (op.equals("-")) {
       final PyExpression operand = getOperand();
       if (operand != null) {

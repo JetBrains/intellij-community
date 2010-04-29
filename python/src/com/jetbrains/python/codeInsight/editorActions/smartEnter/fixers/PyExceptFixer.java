@@ -25,17 +25,14 @@ public class PyExceptFixer implements PyFixer {
         int offset = PyUtil.getChildByFilter(exceptPart,
                                              TokenSet.create(PyTokenTypes.EXCEPT_KEYWORD), 0).getTextRange().getEndOffset();
         final PyExpression exceptClass = exceptPart.getExceptClass();
-        String text = " :";
         if (exceptClass != null) {
           offset = exceptClass.getTextRange().getEndOffset();
-          text = ":";
         }
         final PyExpression target = exceptPart.getTarget();
         if (target != null) {
           offset = target.getTextRange().getEndOffset();
-          text = ":";
         }
-        editor.getDocument().insertString(offset, text);
+        editor.getDocument().insertString(offset, ":");
       }
     }
   }

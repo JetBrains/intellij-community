@@ -64,35 +64,15 @@ public class PyClassType implements PyType {
   @Nullable
   public PsiElement resolveMember(final String name) {
     if (myClass == null) return null;
-    for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-      final PsiElement resolveResult = provider.resolveMember(myClass, name);
-      if (resolveResult != null) return resolveResult;
+    final PsiElement classMember = resolveClassMember(myClass, name);
+    if (classMember != null) {
+      return classMember;
     }
-    ResolveProcessor processor = new ResolveProcessor(name);
-    myClass.processDeclarations(processor, ResolveState.initial(), null, myClass); // our members are strictly within us.
-    final PsiElement resolveResult = processor.getResult();
-    //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
-    if (resolveResult != null && resolveResult != myClass) {
-      return resolveResult;
-    }
-    /*
-    PyExpression[] superClassExpressions = myClass.getSuperClassExpressions();
-    if (superClassExpressions.length > 0) {
-      for(PyExpression expr: superClassExpressions) {
-        PyType superType = expr.getType();
-        if (superType != null) {
-          PsiElement superMember = superType.resolveMember(name);
-          if (superMember != null) {
-            return superMember;
-          }
-        }
-      }
-    }
-    */
-    final PyClass[] superClasses = myClass.getSuperClasses();
+
+    final PsiElement[] superClasses = myClass.getSuperClassElements();
     if (superClasses.length > 0) {
-      for (PyClass superClass : superClasses) {
-        final PsiElement superMember = new PyClassType(superClass, true).resolveMember(name);
+      for (PyClass superClass : myClass.iterateAncestors()) {
+        PsiElement superMember = resolveClassMember(superClass, name);
         if (superMember != null) {
           return superMember;
         }
@@ -117,6 +97,22 @@ public class PyClassType implements PyType {
           }
         }
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolveClassMember(PyClass aClass, String name) {
+    for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      final PsiElement resolveResult = provider.resolveMember(aClass, name);
+      if (resolveResult != null) return resolveResult;
+    }
+    ResolveProcessor processor = new ResolveProcessor(name);
+    aClass.processDeclarations(processor, ResolveState.initial(), null, aClass); // our members are strictly within us.
+    final PsiElement resolveResult = processor.getResult();
+    //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
+    if (resolveResult != null && resolveResult != aClass) {
+      return resolveResult;
     }
     return null;
   }
