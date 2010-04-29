@@ -28,6 +28,7 @@ public class SortByVcsRoots<T> {
   private final Project myProject;
   private final Convertor<T, FilePath> myConvertor;
   private ProjectLevelVcsManager myVcsManager;
+  public static final VcsRoot ourFictiveValue = new VcsRoot(null, null);
 
   public SortByVcsRoots(Project project, final Convertor<T, FilePath> convertor) {
     myProject = project;
@@ -41,6 +42,8 @@ public class SortByVcsRoots<T> {
       final VcsRoot root = myVcsManager.getVcsRootObjectFor(myConvertor.convert(t));
       if (root != null) {
         result.putValue(root, t);
+      } else {
+        result.putValue(ourFictiveValue, t);
       }
     }
     return result;
