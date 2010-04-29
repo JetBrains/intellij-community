@@ -44,8 +44,6 @@ public class StartupActionScriptManager {
     List<ActionCommand> commands = loadActionScript();
 
     for (ActionCommand actionCommand : commands) {
-      //noinspection HardCodedStringLiteral
-      LOG.info("Execute " + actionCommand);
       actionCommand.execute();
     }
     if (commands.size() > 0) {
@@ -78,7 +76,7 @@ public class StartupActionScriptManager {
         // problem with scrambled code
         // fas fixed, but still appear because corrupted file still exists
         // return empty list.
-        LOG.error("Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.", e);        
+        LOG.error("Internal file was corrupted. Problem is fixed.\nIf some plugins has been installed/uninstalled, please re-install/-uninstall them.", e);
 
         return new ArrayList<ActionCommand>();
       }
@@ -147,7 +145,7 @@ public class StartupActionScriptManager {
 
       if (!mySource.exists()) {
         //noinspection HardCodedStringLiteral
-        LOG.error("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
+        System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
@@ -186,7 +184,7 @@ public class StartupActionScriptManager {
     public void execute() throws IOException {
       if (!mySource.exists()) {
         //noinspection HardCodedStringLiteral
-        LOG.error("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
+        System.err.println("Source file " + mySource.getAbsolutePath() + " does not exist for action " + this);
       }
       else if (!canCreateFile(myDestination)) {
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
@@ -224,7 +222,7 @@ public class StartupActionScriptManager {
     public void execute() throws IOException {
       if (mySource != null && mySource.exists() && !FileUtil.delete(mySource)) {
         //noinspection HardCodedStringLiteral
-        LOG.error("Action " + this + " failed.");
+        System.err.println("Action " + this + " failed.");
         JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                       MessageFormat.format("<html>Cannot delete {0}<br>Please, check your access rights on folder <br>{1}",
                                                            mySource.getAbsolutePath(), mySource.getAbsolutePath()),
