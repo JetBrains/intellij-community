@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;

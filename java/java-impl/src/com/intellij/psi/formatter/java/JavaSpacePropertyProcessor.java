@@ -281,7 +281,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.CLASS_INITIALIZER) {
       if (myRole2 == ChildRole.RBRACE) {
-        myResult = myBraceSpacingProcessor.getRBraceSpacing(mySettings, myChild1, isInsideAnonimusClass());
+        myResult = myBraceSpacingProcessor.getRBraceSpacing(mySettings, myChild1);
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
@@ -378,12 +378,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing
         .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
     }
-
-
-  }
-
-  private boolean isInsideAnonimusClass() {
-    return myParent instanceof PsiAnonymousClass;
   }
 
   private int getLinesAroundMethod() {

@@ -17,9 +17,11 @@ package com.intellij.psi.formatter.java.spacing;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.java.FormattingAstUtil;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 
 /**
  * Utility class that encapsulates algorithm of defining {@link Spacing} to use for the target code block containing brace.
@@ -61,13 +63,12 @@ public class JavaBraceSpacingProcessor {
    * @return              spacing to use for the right curly brace and it's given left sibling
    */
   @SuppressWarnings({"MethodMayBeStatic"})
-  public Spacing getRBraceSpacing(CodeStyleSettings settings, ASTNode leftNode, boolean insideAnonymousClass) {
+  public Spacing getRBraceSpacing(CodeStyleSettings settings, ASTNode leftNode) {
     if (shouldUseFlyingGeeseStyleForRightBrace(settings, leftNode)) {
       return getFlyingGeesSpacing(settings);
     }
-    return Spacing.createSpacing(
-      0, Integer.MAX_VALUE, insideAnonymousClass ? 0 : 1, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_BEFORE_RBRACE
-    );
+    int minLineFeeds = getMinLineFeedsBetweenRBraces(leftNode);
+    return Spacing.createSpacing(0, Integer.MAX_VALUE, minLineFeeds, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_BEFORE_RBRACE);
   }
 
   private static boolean shouldUseFlyingGeeseStyleForLeftBrace(CodeStyleSettings settings, ASTNode rightNode) {
@@ -90,5 +91,28 @@ public class JavaBraceSpacingProcessor {
 
   private static Spacing getFlyingGeesSpacing(CodeStyleSettings settings) {
     return Spacing.createSpacing(settings.FLYING_GEESE_BRACES_GAP, settings.FLYING_GEESE_BRACES_GAP, 0, false, 0);
+  }
+
+  /**
+   * Allows to calculate <code>'min line feed'</code> setting of the {@link Spacing} to be used between two closing braces
+   * (assuming that left AST node that ends with closing brace is given to this method).
+   *
+   * @param leftNode    left AST node that ends with closing brace
+   * @return            <code>'min line feed'</code> setting of {@link Spacing} object to use for the given AST node and
+   *                    closing brace
+   */
+  private static int getMinLineFeedsBetweenRBraces(ASTNode leftNode) {
+
+    // The general idea is to return zero in situation when opening curly braces goes one after other, e.g.
+    //     new Expectations() {{
+    //         foo();}}
+    // We don't want line feed between closing curly braces here.
+
+    if (leftNode == null || leftNode.getElementType() != JavaElementType.CLASS_INITIALIZER) {
+      return 1;
+    }
+
+    ASTNode lbraceCandidate = leftNode.getTreePrev();
+    return (lbraceCandidate != null && lbraceCandidate.getElementType() == JavaTokenType.LBRACE) ? 0 : 1;
   }
 }
