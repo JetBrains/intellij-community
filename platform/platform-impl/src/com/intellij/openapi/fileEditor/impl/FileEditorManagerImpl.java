@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
+import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
@@ -31,6 +32,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -44,6 +46,8 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FileStatus;
@@ -164,7 +168,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public boolean isProblem(@NotNull final VirtualFile file) {
     return false;
   }
-  
+
   public String getFileTooltipText(VirtualFile file) {
     return file.getPresentableUrl();
   }
@@ -369,7 +373,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public void closeFile(@NotNull final VirtualFile file) {
     closeFile(file, true);
   }
-  
+
   public void closeFile(@NotNull final VirtualFile file, final boolean moveFocus) {
     assertDispatchThread();
 
@@ -499,7 +503,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       newEditorCreated = true;
 
       getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER).beforeFileOpened(this, file);
-      
+
       editors = new FileEditor[providers.length];
       for (int i = 0; i < providers.length; i++) {
         try {
@@ -977,6 +981,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       fileStatusManager.addFileStatusListener(myFileStatusListener, myProject);
     }
     connection.subscribe(AppTopics.FILE_TYPES, new MyFileTypeListener());
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootsListener());
+
     /**
      * Updates tabs names
      */
@@ -1262,6 +1268,8 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     }
   }
 
+
+
   /**
    * Gets events from VCS and updates color of myEditor tabs
    */
@@ -1311,6 +1319,40 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
         final VirtualFile file = openFiles[i];
         LOG.assertTrue(file != null);
         updateFileIcon(file);
+      }
+    }
+  }
+
+  private class MyRootsListener implements ModuleRootListener {
+    public void beforeRootsChange(ModuleRootEvent event) {
+    }
+
+    public void rootsChanged(ModuleRootEvent event) {
+      EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
+
+      for (EditorWindow eachWindow : getWindows()) {
+        VirtualFile selected = eachWindow.getSelectedFile();
+        VirtualFile[] files = eachWindow.getFiles();
+        for (int i = 0; i < files.length - 1 + 1; i++) {
+          VirtualFile eachFile = files[i];
+          VirtualFile newFile = null;
+          for (EditorFileSwapper each : swappers) {
+            newFile = each.getFileToSwapTo(myProject, eachFile);
+          }
+          if (newFile == null) continue;
+
+          // already open
+          if (eachWindow.findFileIndex(newFile) != -1) continue;
+
+          closeFile(eachFile, eachWindow);
+          try {
+            newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, i);
+            openFile(newFile, eachFile == selected);
+          }
+          finally {
+            newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
+          }
+        }
       }
     }
   }
@@ -1365,6 +1407,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
           updateFileColor(file);
           updateFileBackgroundColor(file);
         }
+
       }
     });
   }
