@@ -109,7 +109,7 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
   }
 
   protected String getHelpID() {
-    return null;
+    return getCurrentStepObject().getHelpId();
   }
 
   protected void updateStep() {
