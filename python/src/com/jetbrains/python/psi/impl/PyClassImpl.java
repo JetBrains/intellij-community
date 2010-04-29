@@ -22,6 +22,7 @@ import com.jetbrains.python.codeInsight.controlflow.PyControlFlowBuilder;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -104,7 +105,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     for(PyExpression expr: superExpressions) {
       if (expr instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression) expr;
-        final PsiElement result = ref.getReference().resolve();
+        final PsiElement result = ref.getReference(PyResolveContext.noImplicits()).resolve();
         if (result != null) {
           superClasses.add(result);
         }
