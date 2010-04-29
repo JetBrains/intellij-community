@@ -44,6 +44,7 @@ import java.util.regex.Pattern;
 
 public class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider");
+  private final static Pattern ourTsPattern = Pattern.compile("\\(date ([0-9]+)\\)");
 
   private final Project myProject;
   private final VirtualFile myFile;
@@ -85,7 +86,14 @@ public class DefaultPatchBaseVersionProvider {
     Date versionDate = null;
     if (revision == null) {
       try {
-        versionDate = new Date(myVersionId);
+        final Matcher tsMatcher = ourTsPattern.matcher(myVersionId);
+        if (tsMatcher.find()) {
+          final Long fromTsPattern = getFromTsPattern();
+          if (fromTsPattern == null) return;
+          versionDate = new Date(fromTsPattern);
+        } else {
+          versionDate = new Date(myVersionId);
+        }
       }
       catch (IllegalArgumentException ex) {
         return;
@@ -109,7 +117,7 @@ public class DefaultPatchBaseVersionProvider {
         }
         else {
           final Date date = fileRevision.getRevisionDate();
-          found = (date != null) && date.before(versionDate);
+          found = (date != null) && (date.before(versionDate) || date.equals(versionDate));
         }
 
         if (found) {
@@ -132,6 +140,7 @@ public class DefaultPatchBaseVersionProvider {
     if ((myRevisionPattern != null) && myRevisionPattern.matcher(myVersionId).matches()) {
       return true;
     }
+    if (ourTsPattern.matcher(myVersionId).matches()) return true;
     try {
       Date.parse(myVersionId);
     }
@@ -139,5 +148,22 @@ public class DefaultPatchBaseVersionProvider {
       return false;
     }
     return true;
+  }
+
+  private Long getFromTsPattern() {
+    final String trimmed = myVersionId.trim();
+    final String startPattern = "(date";
+    final int start = trimmed.indexOf(startPattern);
+    if (start >= 0) {
+      String number = trimmed.substring(startPattern.length() + start);
+      number = number.endsWith(")") ? number.substring(0, number.length() - 1) : number;
+      try {
+        return Long.parseLong(number.trim());
+      }
+      catch (NumberFormatException e) {
+        return null;
+      }
+    }
+    return null;
   }
 }

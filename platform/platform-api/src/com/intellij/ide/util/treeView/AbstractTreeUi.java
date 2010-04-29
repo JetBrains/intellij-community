@@ -2588,6 +2588,7 @@ public class AbstractTreeUi {
         builder.runBackgroundLoading(new Runnable() {
           public void run() {
             assertNotDispatchThread();
+            if (isReleased()) return;
 
             try {
               bgBuildAction.run();
@@ -2597,6 +2598,7 @@ public class AbstractTreeUi {
                   public void run() {
                     try {
                       assertIsDispatchThread();
+                      if (isReleased()) return;
 
                       edtPostRunnable.run();
                     } catch (ProcessCanceledException e) {

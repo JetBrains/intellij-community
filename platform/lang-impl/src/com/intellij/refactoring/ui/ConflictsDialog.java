@@ -50,10 +50,18 @@ public class ConflictsDialog extends DialogWrapper{
   private String[] myConflictDescriptions;
   private MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
+  private Runnable myDoRefactoringRunnable;
 
   public ConflictsDialog(Project project, MultiMap<PsiElement, String> conflictDescriptions) {
+    this(project, conflictDescriptions, null);
+  }
+
+  public ConflictsDialog(Project project,
+                         MultiMap<PsiElement, String> conflictDescriptions,
+                         Runnable doRefactoringRunnable) {
     super(project, true);
     myProject = project;
+    myDoRefactoringRunnable = doRefactoringRunnable;
     final LinkedHashSet<String> conflicts = new LinkedHashSet<String>();
 
     for (String conflict : conflictDescriptions.values()) {
@@ -141,6 +149,7 @@ public class ConflictsDialog extends DialogWrapper{
       presentation.setCodeUsagesString(codeUsagesString);
       presentation.setTabName(codeUsagesString);
       presentation.setTabText(codeUsagesString);
+      presentation.setShowCancelButton(true);
 
       final Usage[] usages = new Usage[myElementConflictDescription.size()];
       int i = 0;
@@ -176,7 +185,12 @@ public class ConflictsDialog extends DialogWrapper{
           }
         };
       }
-      UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, usages, presentation);
+      final UsageView usageView = UsageViewManager.getInstance(myProject).showUsages(UsageTarget.EMPTY_ARRAY, usages, presentation);
+      if (myDoRefactoringRunnable != null) {
+        usageView.addPerformOperationAction(
+          myDoRefactoringRunnable,
+          RefactoringBundle.message("retry.command"), "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
+      }
       close(SHOW_CONFLICTS_EXIT_CODE);
     }
 

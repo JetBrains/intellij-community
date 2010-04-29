@@ -234,7 +234,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     g.fillRect(0, 0, width, height);
     g.translate(-(visibleRect.x + visibleRect.width - cellLocation.x), 0);
     //rComponent.paint(g);
-    myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, height, true);
+    doPaintTooltipImage(rComponent, cellBounds, height, g, key);
 
     g.translate((visibleRect.x + visibleRect.width - cellLocation.x), 0);
     g.setColor(Color.black);
@@ -247,6 +247,10 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     myComponent.remove(rComponent);
 
     return visibleRightTop;
+  }
+
+  protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, int height, Graphics2D g, KeyType key) {
+    myRendererPane.paintComponent(g, rComponent, myComponent, 0, 0, cellBounds.width, height, true);
   }
 
   protected Rectangle getVisibleRect(KeyType key) {

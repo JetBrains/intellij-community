@@ -46,6 +46,7 @@ public class AntEntityReference implements PsiReference {
     return myXmlRef.resolve();
   }
 
+  @NotNull
   public String getCanonicalText() {
     return myXmlRef.getCanonicalText();
   }

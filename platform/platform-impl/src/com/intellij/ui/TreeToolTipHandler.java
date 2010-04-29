@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -22,7 +24,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
-public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree>{
+public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree> {
   protected TreeToolTipHandler(JTree tree) {
     super(tree);
     tree.getSelectionModel().addTreeSelectionListener(
@@ -62,23 +64,41 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
     TreeCellRenderer renderer = myComponent.getCellRenderer();
     if (renderer == null) {
       rComponent = null;
-    } else {
+    }
+    else {
       TreePath path = myComponent.getPathForRow(rowIndex);
       if (path == null) {
         rComponent = null;
-      } else {
-      Object node = path.getLastPathComponent();
+      }
+      else {
+        Object node = path.getLastPathComponent();
         rComponent = renderer.getTreeCellRendererComponent(
-            myComponent,
-            node,
-            myComponent.isRowSelected(rowIndex),
-            myComponent.isExpanded(rowIndex),
-            myComponent.getModel().isLeaf(node),
-            rowIndex,
-            myComponent.hasFocus()
+          myComponent,
+          node,
+          myComponent.isRowSelected(rowIndex),
+          myComponent.isExpanded(rowIndex),
+          myComponent.getModel().isLeaf(node),
+          rowIndex,
+          myComponent.hasFocus()
         );
+
       }
     }
     return rComponent;
+  }
+
+  @Override
+  protected void doPaintTooltipImage(final Component rComponent, final Rectangle cellBounds, final int height, final Graphics2D g, Integer key) {
+    if (myComponent.isRowSelected(key) && rComponent instanceof JComponent) {
+      if (myComponent.hasFocus()) {
+        ((JComponent)rComponent).setOpaque(true);
+        rComponent.setBackground(UIUtil.getTreeSelectionBackground());
+      } else if (myComponent.getUI() instanceof UIUtil.MacTreeUI) {
+        ((JComponent)rComponent).setOpaque(true);
+        rComponent.setBackground(UIUtil.MacTreeUI.UNFOCUSED_SELECTION_COLOR);
+      }
+    }
+
+    super.doPaintTooltipImage(rComponent, cellBounds, height, g, key);
   }
 }

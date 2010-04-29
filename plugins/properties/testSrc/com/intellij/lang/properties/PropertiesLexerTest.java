@@ -18,12 +18,18 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.parsing.PropertiesLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author max
  */
 public class PropertiesLexerTest extends LightPlatformTestCase {
+
+  public PropertiesLexerTest() {
+    PlatformTestCase.initPlatformLangPrefix();    
+  }
+
   private static void doTest(@NonNls String text, @NonNls String[] expectedTokens) {
     Lexer lexer = new PropertiesLexer();
     doTest(text, expectedTokens, lexer);

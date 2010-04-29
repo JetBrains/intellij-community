@@ -49,6 +49,11 @@ public class BackwardDependenciesAction extends BaseAnalysisAction {
   }
 
   @Override
+  protected boolean acceptNonProjectDirectories() {
+    return true;
+  }
+
+  @Override
   protected void canceled() {
     super.canceled();
     dispose();

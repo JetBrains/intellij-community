@@ -46,7 +46,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public void loadCommits(final @NotNull List<String> startingPoints, @NotNull final List<String> endPoints,
+  public void loadCommits(final @NotNull Collection<String> startingPoints, @NotNull final Collection<String> endPoints,
                           @NotNull final Collection<ChangesFilter.Filter> filters,
                           @NotNull final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt)
     throws VcsException {

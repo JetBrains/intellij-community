@@ -151,6 +151,10 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
+  public Change getByPath(final String path) {
+    return myListsHolder.getByPath(path);
+  }
+
   public String getCommitterName() {
     return myAuthor;
   }
@@ -188,7 +192,7 @@ public class SvnChangeList implements CommittedChangeList {
       } else {
         addedChange = new Change(null, myListsHolder.createRevisionLazily(path, false));
       }
-      myListsHolder.add(addedChange);
+      myListsHolder.add(path, addedChange);
     }
     for(String path: myDeletedPaths) {
       final Change deletedChange;
@@ -204,7 +208,7 @@ public class SvnChangeList implements CommittedChangeList {
       } else {
         deletedChange = new Change(myListsHolder.createDeletedItemRevision(path, true), null);
       }
-      myListsHolder.add(deletedChange);
+      myListsHolder.add(path, deletedChange);
     }
     for(String path: myChangedPaths) {
       boolean moveAndChange = false;
@@ -231,7 +235,7 @@ public class SvnChangeList implements CommittedChangeList {
             renamedChange.setCopied(false);
           }
 
-          myListsHolder.add(renamedChange);
+          myListsHolder.add(path, renamedChange);
           break;
         }
       }
@@ -241,7 +245,7 @@ public class SvnChangeList implements CommittedChangeList {
                                       null);
         renamedChange.setIsReplaced(replaced);
         renamedChange.setCopied(false);
-        myListsHolder.add(renamedChange);
+        myListsHolder.add(path, renamedChange);
       }
     }
   }
@@ -265,6 +269,7 @@ public class SvnChangeList implements CommittedChangeList {
    */
   private class ChangesListCreationHelper {
     private final List<Change> myList;
+    private final Map<String, Change> myPathToChangeMapping;
     private List<Change> myDetailedList;
     private final List<Pair<Integer, Boolean>> myWithoutDirStatus;
     private SVNRepository myRepository;
@@ -272,10 +277,16 @@ public class SvnChangeList implements CommittedChangeList {
     private ChangesListCreationHelper() {
       myList = new ArrayList<Change>();
       myWithoutDirStatus = new ArrayList<Pair<Integer, Boolean>>();
+      myPathToChangeMapping = new HashMap<String, Change>();
     }
 
-    public void add(final Change change) {
+    public void add(final String path, final Change change) {
       myList.add(change);
+      myPathToChangeMapping.put(path, change);
+    }
+
+    public Change getByPath(final String path) {
+      return myPathToChangeMapping.get(path);
     }
 
     private FilePath localDeletedPath(final String fullPath) {

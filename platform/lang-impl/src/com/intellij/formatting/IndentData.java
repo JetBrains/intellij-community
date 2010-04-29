@@ -33,16 +33,8 @@ public class IndentData {
     return myIndentSpaces;
   }
 
-  public void setIndentSpaces(final int indentSpaces) {
-    myIndentSpaces = indentSpaces;
-  }
-
   public int getSpaces() {
     return mySpaces;
-  }
-
-  public void setSpaces(final int spaces) {
-    mySpaces = spaces;
   }
 
   public IndentData add(final IndentData childOffset) {
@@ -59,5 +51,10 @@ public class IndentData {
 
   public IndentInfo createIndentInfo() {
     return new IndentInfo(0, myIndentSpaces, mySpaces);
+  }
+
+  @Override
+  public String toString() {
+    return "spaces=" + mySpaces + ", indent spaces=" + myIndentSpaces;
   }
 }

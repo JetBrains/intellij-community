@@ -311,6 +311,9 @@ public class FSRecords implements Disposable, Forceable {
 
     public static void flushSome() {
       synchronized (lock) {
+        if (myFlushingFuture == null) {
+          return; // avoid NPE when close has already taken place
+        }
         myNames.force();
 
         final boolean attribsFlushed = myAttributes.flushSome();

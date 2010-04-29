@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Alexey
  */
 public abstract class IGInspectionTestCase extends InspectionTestCase {
+
   protected String getTestDataPath() {
       return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
   }

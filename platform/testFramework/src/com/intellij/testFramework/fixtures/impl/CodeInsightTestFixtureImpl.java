@@ -92,6 +92,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.stubs.StubUpdatingIndex;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -545,6 +546,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }.execute().throwException();
   }
 
+  public <T extends PsiElement> T findElementByText(String text, Class<T> elementClass) {
+    int pos = PsiDocumentManager.getInstance(getProject()).getDocument(getFile()).getText().indexOf(text);
+    assert pos >= 0: "text not found in file";
+    return PsiTreeUtil.getParentOfType(getFile().findElementAt(pos), elementClass);
+  }
+
   public void type(final char c) {
     assertInitialized();
     new WriteCommandAction(getProject()) {
@@ -812,6 +819,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+    DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool){
@@ -1124,6 +1132,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    codeAnalyzer.setUpdateByTimerEnabled(false);
     FileStatusMap fileStatusMap = codeAnalyzer.getFileStatusMap();
     for (int ignoreId : toIgnore) {
       fileStatusMap.markFileUpToDate(editor.getDocument(), file, ignoreId);

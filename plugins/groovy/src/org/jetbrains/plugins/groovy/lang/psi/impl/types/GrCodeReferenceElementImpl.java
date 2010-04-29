@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -156,26 +157,26 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
     return CLASS;
   }
 
-  @Nullable
+  @NotNull
   public String getCanonicalText() {
     PsiElement resolved = resolve();
     if (resolved instanceof PsiClass) {
-      return ((PsiClass) resolved).getQualifiedName();
+      final String qname = ((PsiClass)resolved).getQualifiedName();
+      if (qname != null) {
+        return qname;
+      }
     }
     if (resolved instanceof PsiPackage) {
       return ((PsiPackage) resolved).getQualifiedName();
     }
-    if (getKind(false) == STATIC_MEMBER_FQ) {
-      final GrCodeReferenceElement qualifier = getQualifier();
-      if (qualifier != null) {
-        final String qualifierText = qualifier.getCanonicalText();
-        if (qualifierText != null) {
-          return qualifierText + "." + getReferenceName();
-        }
-      }
+
+    final GrCodeReferenceElement qualifier = getQualifier();
+    final String referenceName = StringUtil.notNullize(getReferenceName());
+    if (qualifier != null) {
+      return qualifier.getCanonicalText() + "." + referenceName;
     }
 
-    return null;
+    return referenceName;
   }
 
   protected boolean bindsCorrectly(PsiElement element) {

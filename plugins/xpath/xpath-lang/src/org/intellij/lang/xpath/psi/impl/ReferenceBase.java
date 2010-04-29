@@ -49,6 +49,7 @@ public abstract class ReferenceBase implements PsiReference {
         return null;
     }
 
+    @NotNull
     public String getCanonicalText() {
         return nameNode.getText();
     }

@@ -2,6 +2,7 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -10,6 +11,10 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 
 public class TrailingSpacesInPropertyInspectionTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
+
+  public TrailingSpacesInPropertyInspectionTest() {
+    PlatformTestCase.initPlatformLangPrefix();    
+  }
 
   @Override
   protected void setUp() throws Exception {

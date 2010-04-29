@@ -186,7 +186,7 @@ public class MavenGeneralSettings implements Cloneable {
   @Nullable
   public VirtualFile getEffectiveUserSettingsFile() {
     File file = getEffectiveUserSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
   public List<VirtualFile> getEffectiveSettingsFiles() {
@@ -201,7 +201,7 @@ public class MavenGeneralSettings implements Cloneable {
   @Nullable
   public VirtualFile getEffectiveGlobalSettingsFile() {
     File file = getEffectiveGlobalSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
   }
 
   @NotNull

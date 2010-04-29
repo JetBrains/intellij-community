@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -624,13 +624,13 @@ mGSTRING_LITERAL = \"\"
                                              return(mASSIGN);  }
 "<=>"                                     {  yybegin(WAIT_FOR_REGEX);
                                              return(mCOMPARE_TO);  }
-"=="                                      {  yybegin(WAIT_FOR_REGEX);
+"=="|"==="                                {  yybegin(WAIT_FOR_REGEX);
                                              return(mEQUAL);  }
 "!"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mLNOT);  }
 "~"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mBNOT);  }
-"!="                                      {  yybegin(WAIT_FOR_REGEX);
+"!="|"!=="                                {  yybegin(WAIT_FOR_REGEX);
                                              return(mNOT_EQUAL);  }
 "+"                                       {  yybegin(WAIT_FOR_REGEX);
                                              return(mPLUS);  }

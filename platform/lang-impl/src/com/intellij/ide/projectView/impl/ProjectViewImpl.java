@@ -77,6 +77,8 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.switcher.QuickAccessProvider;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -113,7 +115,7 @@ import java.util.List;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public final class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable {
+public final class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
@@ -285,11 +287,94 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     myTopPanel.add(myActionGroupPanel, new GridBagConstraints(1, 0, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     myViewContentPanel = new JPanel();
-    myPanel = new SimpleToolWindowPanel(true);
+    myPanel = new SimpleToolWindowPanel(true).setProvideQuickActions(false);
     myPanel.setToolbar(myTopPanel);
     myPanel.setContent(myViewContentPanel);
 
     myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
+  }
+
+  public String getName() {
+    return "Project";
+  }
+
+  public List<AnAction> getActions(boolean originalProvider) {
+    ArrayList<AnAction> result = new ArrayList<AnAction>();
+
+    DefaultActionGroup views = new DefaultActionGroup("Change View", true);
+    boolean lastWasHeader = false;
+    boolean lastHeaderHadKids = false;
+    for (int i = 0; i < myCombo.getModel().getSize(); i++) {
+      Object each = myCombo.getModel().getElementAt(i);
+      if (each instanceof Pair) {
+        Pair<String, String> eachPair = (Pair<String, String>)each;
+
+        if (eachPair.getSecond() == null) {
+          if (lastHeaderHadKids) {
+            views.add(new Separator());
+          } else {
+            if (i + 1 < myCombo.getModel().getSize()) {
+              Object next = myCombo.getModel().getElementAt(i + 1);
+              if (next instanceof Pair) {
+                if (((Pair)next).getSecond() != null) {
+                  views.add(new Separator());
+                }
+              }
+            }
+          }
+        } else {
+          lastHeaderHadKids = true;
+        }
+
+        lastWasHeader = eachPair.getSecond() == null;
+
+        views.add(new ChangeViewAction(eachPair.getFirst(), eachPair.getSecond()));
+      }
+    }
+    result.add(views);
+    result.add(new Separator());
+
+
+    ArrayList<AnAction> secondary = new ArrayList<AnAction>();
+    if (myActionGroup != null) {
+      AnAction[] kids = myActionGroup.getChildren(null);
+      for (AnAction each : kids) {
+        if (myActionGroup.isPrimary(each)) {
+          result.add(each);
+        } else {
+          secondary.add(each);
+        }
+      }
+    }
+    result.add(new Separator());
+    result.addAll(secondary);
+
+    return result;
+  }
+
+  private class ChangeViewAction extends AnAction {
+    private String myId;
+    private String mySubId;
+
+    private ChangeViewAction(String id, String subId) {
+      myId = id;
+      mySubId = subId;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      AbstractProjectViewPane pane = getProjectViewPaneById(myId);
+      e.getPresentation().setText(pane.getTitle() + (mySubId != null ? (" - " + pane.getPresentableSubIdName(mySubId)) : ""));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      changeView(myId, mySubId);
+    }
+  }
+
+  public boolean isCycleRoot() {
+    return false;
   }
 
   public synchronized void addProjectPane(final AbstractProjectViewPane pane) {
@@ -740,7 +825,7 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
     myConnection.disconnect();
   }
 
-  private JComponent getComponent() {
+  public JComponent getComponent() {
     return myDataProvider;
   }
 
@@ -1084,6 +1169,11 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
         final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
       }
+
+      if (QuickActionProvider.KEY.is(dataId)) {
+        return ProjectViewImpl.this;
+      }
+
       return null;
     }
 

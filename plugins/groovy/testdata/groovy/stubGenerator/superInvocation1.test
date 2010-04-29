@@ -35,7 +35,7 @@ public class Base implements groovy.lang.GroovyObject {
 }
 ---
 public class Derived extends Base implements groovy.lang.GroovyObject {
-  public Derived()  throws java.lang.Exception{
+  public Derived() throws java.lang.Exception {
     super((java.lang.String)null, (int)0);
   }
 

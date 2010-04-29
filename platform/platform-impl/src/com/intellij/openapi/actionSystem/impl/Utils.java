@@ -113,9 +113,11 @@ public class Utils{
       if (child instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)child;
         if (actionGroup.isPopup()) { // popup menu has its own presentation
-          // disable group if it contains no visible actions
-          final boolean enabled = actionGroup.canBePerformed(context) || hasVisibleChildren(actionGroup, presentationFactory, context, place);
-          presentation.setEnabled(enabled);
+          if (presentation.isEnabled()) {
+            // disable group if it contains no visible actions
+            final boolean enabled = actionGroup.canBePerformed(context) || hasVisibleChildren(actionGroup, presentationFactory, context, place);
+            presentation.setEnabled(enabled);
+          }
           list.add(child);
         }
         else {

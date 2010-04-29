@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -140,8 +141,13 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
 
     final DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    final boolean previousUpdate;
     if (daemonCodeAnalyzer != null) {
+      previousUpdate = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).isUpdateByTimerEnabled();
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
+    }
+    else {
+      previousUpdate = false;
     }
     myActiveLookup = new LookupImpl(myProject, editor, arranger);
     myActiveLookupEditor = editor;
@@ -164,7 +170,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
       private void dispose() {
         alarm.cancelAllRequests();
         if (daemonCodeAnalyzer != null) {
-          daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+          daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
         }
         if (myActiveLookup == null) return;
         myActiveLookup.removeLookupListener(this);
@@ -183,6 +189,8 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         myActiveLookup.addItem(item);
       }
       myActiveLookup.refreshUi();
+    } else {
+      alarm.cancelAllRequests(); // no items -> no doc
     }
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);

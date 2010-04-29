@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.SeparatorFactory;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -57,6 +56,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   public void setChangesToDisplay(final List<Change> changes) {
     myChangesToDisplay = changes;
     myViewer.setChangesToDisplay(changes);
+  }
+
+  public void setDecorator(final ChangeNodeDecorator decorator) {
+    myViewer.setChangeDecorator(decorator);
   }
 
   public ChangesBrowser(final Project project, List<? extends ChangeList> changeLists, final List<Change> changes,

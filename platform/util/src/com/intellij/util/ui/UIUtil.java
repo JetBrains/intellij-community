@@ -31,12 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.basic.BasicTreeUI;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
@@ -1034,7 +1034,97 @@ public class UIUtil {
     c.putClientProperty(FOCUS_PROXY_KEY, isProxy ? Boolean.TRUE : null);
   }
 
-  public static class LeglessTreeUi extends BasicTreeUI {
+  public static class MacTreeUI extends BasicTreeUI {
+    public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
+
+    public static final Color UNFOCUSED_SELECTION_COLOR = new Color(212, 212, 212);
+
+    private static final Icon TREE_COLLAPSED_ICON = (Icon) UIManager.get("Tree.collapsedIcon");
+    private static final Icon TREE_EXPANDED_ICON = (Icon) UIManager.get("Tree.expandedIcon");
+    private static final Icon TREE_SELECTED_COLLAPSED_ICON = IconLoader.getIcon("/mac/tree_white_right_arrow.png");
+    private static final Icon TREE_SELECTED_EXPANDED_ICON = IconLoader.getIcon("/mac/tree_white_down_arrow.png");
+
+    private static final Border LIST_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListBackgroundPainter");
+    private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListSelectionBackgroundPainter");
+    private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = (Border) UIManager.get("List.sourceListFocusedSelectionBackgroundPainter");
+
+    private MouseListener mySelectionListener = new MouseAdapter() {
+      @Override
+      public void mousePressed(@NotNull final MouseEvent e) {
+        final JTree tree = (JTree) e.getSource();
+        if (SwingUtilities.isLeftMouseButton(e) && !e.isPopupTrigger()) {
+          // if we can't stop any ongoing editing, do nothing
+          if (isEditing(tree) && tree.getInvokesStopCellEditing()
+                              && !stopEditing(tree)) {
+              return;
+          }
+          
+          final TreePath pressedPath = getClosestPathForLocation(tree, e.getX(), e.getY());
+          if (tree.isPathSelected(pressedPath)) return;
+
+          if (pressedPath != null) {
+            Rectangle bounds = getPathBounds(tree, pressedPath);
+
+            if(e.getY() >= (bounds.y + bounds.height)) {
+                return;
+            }
+
+            if (isLocationInExpandControl(pressedPath, e.getX(), e.getY())) {
+              return;
+            }
+
+            if (tree.getDragEnabled() || !startEditing(pressedPath, e)) {
+               selectPathForEvent(pressedPath, e);
+            }
+          }
+
+        }
+      }
+    };
+
+    @Override
+    protected void completeUIInstall() {
+      super.completeUIInstall();
+
+      tree.setOpaque(false);
+      tree.setLargeModel(true);
+      tree.setShowsRootHandles(true);
+
+      tree.addMouseListener(mySelectionListener);
+    }
+
+    @Override
+    protected void installKeyboardActions() {
+      super.installKeyboardActions();
+
+      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed LEFT"), "collapse_or_move_up");
+      tree.getInputMap().put(KeyStroke.getKeyStroke("pressed RIGHT"), "expand");
+
+      tree.getActionMap().put("collapse_or_move_up", new AbstractAction() {
+        public void actionPerformed(final ActionEvent e) {
+          final Object source = e.getSource();
+          if (source instanceof JTree) {
+            final JTree tree = (JTree)source;
+            final int selectionRow = tree.getLeadSelectionRow();
+            final TreePath path = tree.getPathForRow(selectionRow);
+            if (isLeaf(selectionRow) || tree.isCollapsed(selectionRow)) {
+              final TreePath parentPath = tree.getPathForRow(selectionRow).getParentPath();
+              if (parentPath != null) {
+                if (parentPath.getParentPath() != null || tree.isRootVisible()) {
+                  final int parentRow = tree.getRowForPath(parentPath);
+                  tree.scrollRowToVisible(parentRow);
+                  tree.setSelectionInterval(parentRow, parentRow);
+                }
+              }
+            }
+            else {
+              tree.collapseRow(selectionRow);
+            }
+          }
+        }
+      });
+    }
+
     @Override
     protected void paintHorizontalPartOfLeg(final Graphics g,
                                             final Rectangle clipBounds,
@@ -1055,6 +1145,120 @@ public class UIUtil {
 
     @Override
     protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
+    }
+
+    @Override
+    protected void paintHorizontalLine(Graphics g, JComponent c, int y, int left, int right) {
+    }
+
+    @Override
+    protected void paintRow(final Graphics g,
+                            final Rectangle clipBounds,
+                            final Insets insets,
+                            final Rectangle bounds,
+                            final TreePath path,
+                            final int row,
+                            final boolean isExpanded,
+                            final boolean hasBeenExpanded,
+                            final boolean isLeaf) {
+      final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
+      final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
+
+      if (path != null && tree.isPathSelected(path)) {
+        Graphics2D rowGraphics = (Graphics2D)g.create();
+        rowGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
+
+        final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
+        if (sourceList != null && ((Boolean)sourceList)) {
+          if (tree.hasFocus()) {
+            LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+          }
+          else {
+            LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+          }
+        } else {
+          if(tree.hasFocus()) {
+            rowGraphics.setColor(getTreeSelectionBackground());
+            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
+          } else {
+            rowGraphics.setColor(UNFOCUSED_SELECTION_COLOR);
+            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
+          }
+        }
+
+        if (shouldPaintExpandControl(path, row, isExpanded, hasBeenExpanded, isLeaf)) {
+          paintExpandControl(rowGraphics, bounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+        }
+
+        rowGraphics.dispose();
+      }
+
+      super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+    }
+
+    @Override
+    public void paint(Graphics g, JComponent c) {
+      final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
+      final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
+      final Rectangle bounds = g.getClipBounds();
+
+      // draw background for the given clip bounds
+      final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
+      if (sourceList != null && ((Boolean)sourceList)) {
+        Graphics2D backgroundGraphics = (Graphics2D) g.create();
+        backgroundGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
+        LIST_BACKGROUND_PAINTER.paintBorder(tree, backgroundGraphics, xOffset, bounds.y, containerWidth, bounds.height);
+        backgroundGraphics.dispose();
+      }
+
+      super.paint(g, c);
+    }
+
+    @Override
+    protected CellRendererPane createCellRendererPane() {
+      return new CellRendererPane() {
+        @Override
+        public void paintComponent(Graphics g, Component c, Container p, int x, int y, int w, int h, boolean shouldValidate) {
+          if (c instanceof JComponent) {
+          }
+          ((JComponent)c).setOpaque(false);
+
+          super.paintComponent(g, c, p, x, y, w, h, shouldValidate);
+        }
+      };
+    }
+
+    @Override
+    public void uninstallUI(JComponent c) {
+      super.uninstallUI(c);
+
+      c.removeMouseListener(mySelectionListener);
+    }
+
+    @Override
+    protected void paintExpandControl(Graphics g,
+                                      Rectangle clipBounds,
+                                      Insets insets,
+                                      Rectangle bounds,
+                                      TreePath path,
+                                      int row,
+                                      boolean isExpanded,
+                                      boolean hasBeenExpanded,
+                                      boolean isLeaf) {
+      boolean isPathSelected = tree.getSelectionModel().isPathSelected(path);
+
+      Icon expandIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_EXPANDED_ICON
+                                       : TREE_EXPANDED_ICON;
+      Icon collapseIcon = isPathSelected && tree.hasFocus() ? TREE_SELECTED_COLLAPSED_ICON
+                                         : TREE_COLLAPSED_ICON;
+
+
+      if (!isLeaf(row)) {
+        setExpandedIcon(expandIcon);
+        setCollapsedIcon(collapseIcon);
+      }
+
+      super.paintExpandControl(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
     }
   }
 

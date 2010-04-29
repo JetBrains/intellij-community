@@ -91,8 +91,9 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return new TextRange(offsetInParent, offsetInParent + refNameElement.getTextLength());
   }
 
+  @NotNull
   public String getCanonicalText() {
-    return null;
+    return getRangeInElement().substring(getElement().getText());
   }
 
   public boolean isSoft() {

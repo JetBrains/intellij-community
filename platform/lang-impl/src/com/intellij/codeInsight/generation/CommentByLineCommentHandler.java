@@ -484,7 +484,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       else {
         endOffset = CharArrayUtil.shiftBackward(chars, endOffset, " \t");
       }
-      if (endOffset <= offset) return;
+      if (endOffset < offset || offset == textLength - 1) return;
       final String text = chars.subSequence(offset, endOffset).toString();
       final IntArrayList prefixes = new IntArrayList();
       final IntArrayList suffixes = new IntArrayList();

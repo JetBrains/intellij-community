@@ -83,6 +83,7 @@ class ExternalResourceReference implements PsiReference, QuickFixProvider<Extern
         return null;
     }
 
+    @NotNull
     public String getCanonicalText() {
         return myAttribute.getValue();
     }

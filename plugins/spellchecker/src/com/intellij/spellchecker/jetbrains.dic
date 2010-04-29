@@ -1,4 +1,5 @@
 rubymine
+jetbrains
 noinspection
 noinspections
 impl
@@ -109,3 +110,4 @@ charset
 vertices
 commandline
 cmdline
+multi

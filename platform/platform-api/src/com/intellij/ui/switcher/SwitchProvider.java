@@ -20,15 +20,12 @@ import com.intellij.openapi.actionSystem.DataKey;
 import javax.swing.*;
 import java.util.List;
 
-public interface SwitchProvider {
+public interface SwitchProvider extends QuickAccessProvider {
 
   DataKey<SwitchProvider> KEY = DataKey.create("SwitchProvider");
 
   List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider);
   SwitchTarget getCurrentTarget();
 
-  JComponent getComponent();
-
-  boolean isCycleRoot();
 
 }

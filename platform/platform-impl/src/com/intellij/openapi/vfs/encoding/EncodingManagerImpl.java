@@ -107,7 +107,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
   }
 
-  public void updateEncodingFromContent(Document document) {
+  public void updateEncodingFromContent(@NotNull Document document) {
     myChangedDocuments.offer(document);
     addCacheEncodingAlarm();
   }

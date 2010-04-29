@@ -23,19 +23,21 @@ import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceInstanceVariableAccess extends FixableUsageInfo {
     private final PsiReferenceExpression expression;
+    private final String fieldName;
     private final String getterName;
     private final String delegateName;
 
-    public ReplaceInstanceVariableAccess(PsiReferenceExpression expression, String delegateName, String getterName) {
+    public ReplaceInstanceVariableAccess(PsiReferenceExpression expression, String delegateName, String getterName, String name) {
         super(expression);
         this.getterName = getterName;
         this.delegateName = delegateName;
         this.expression = expression;
+        fieldName = name;
     }
 
     public void fixUsage() throws IncorrectOperationException {
         final PsiElement qualifier = expression.getQualifier();
-        final String callString = delegateName + '.' + getterName + "()";
+        final String callString = delegateName + '.' + (getterName != null ? getterName + "()" : fieldName);
         if (qualifier != null) {
             final String qualifierText = qualifier.getText();
             MutationUtils.replaceExpression(qualifierText + '.' + callString, expression);

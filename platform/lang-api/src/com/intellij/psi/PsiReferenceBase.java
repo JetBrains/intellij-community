@@ -87,6 +87,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return manipulator.getRangeInElement(myElement);
   }
 
+  @NotNull
   public String getCanonicalText() {
     return getValue();
   }

@@ -3,6 +3,6 @@ class Test<T> {
 
     void foo(T t){}
   void bar(){
-    foo(extracted.getMyT());
+    foo(extracted.myT);
   }
 }

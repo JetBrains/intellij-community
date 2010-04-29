@@ -41,6 +41,8 @@ public class Foundation {
     myFoundationLibrary = (FoundationLibrary)Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
   }
 
+  public static void init() { /* fake method to init foundation */ }
+
   private Foundation() {
   }
 
@@ -57,6 +59,10 @@ public class Foundation {
 
   public static ID invoke(final ID id, final Pointer selector, Object... args) {
     return myFoundationLibrary.objc_msgSend(id, selector, args);
+  }
+
+  public static ID invoke(final String cls, final String selector, Object... args) {
+    return invoke(getClass(cls), createSelector(selector), args);
   }
 
   public static ID registerObjcClass(ID superCls, String name) {

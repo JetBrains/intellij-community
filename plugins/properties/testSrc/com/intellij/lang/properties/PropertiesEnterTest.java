@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -28,6 +29,10 @@ import org.jetbrains.annotations.NonNls;
  */
 public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/propertiesFile/enter/";
+
+  public PropertiesEnterTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   @Override
   protected String getTestDataPath() {
