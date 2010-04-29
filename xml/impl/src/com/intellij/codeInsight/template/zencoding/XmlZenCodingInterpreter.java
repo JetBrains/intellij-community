@@ -79,7 +79,7 @@ class XmlZenCodingInterpreter {
     PsiFile file = myCallback.parseCurrentText(StdFileTypes.XML);
 
     PsiElement element = file.findElementAt(offset);
-    if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {
+    if (offset < endOfTemplate && element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_END_TAG_START) {
       return;
     }
 
@@ -94,7 +94,9 @@ class XmlZenCodingInterpreter {
     }
 
     if (newOffset >= 0) {
-      myCallback.fixEndOffset();
+      if (offset < endOfTemplate) {
+        myCallback.fixEndOffset();
+      }
       myCallback.moveToOffset(newOffset);
     }
   }
@@ -231,8 +233,10 @@ class XmlZenCodingInterpreter {
     final Object key = new Object();
     myCallback.fixStartOfTemplate(key);
     for (int i = startIndex; i < count; i++) {
+      Object iterKey = new Object();
+      myCallback.fixStartOfTemplate(iterKey);
       invokeTemplate(templateToken, myCallback, i);
-      gotoChild(key);
+      gotoChild(iterKey);
       interpret(myTokens, tailStart, myCallback, State.WORD, mySurroundedText);
       if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
         myCallback.fixEndOffset();
