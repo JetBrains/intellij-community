@@ -79,9 +79,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST); 
   }
 
-  @NotNull
   public PyStatementList getStatementList() {
-    return childToPsiNotNull(PyElementTypes.STATEMENT_LIST);
+    return childToPsi(PyElementTypes.STATEMENT_LIST);
   }
 
   public PyClass getContainingClass() {
@@ -116,20 +115,37 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Nullable
   public PyType getReturnType() {
-    final PyStringLiteralExpression docString = getDocStringExpression();
-    if (docString != null) {
-      PyType result = getReturnTypeFromDocString(docString.getStringValue());
-      if (result != null) {
-        return result;
-      }
+    final PyType docStringType = getReturnTypeFromDocString();
+    if (docStringType != null) {
+      return docStringType;
     }
-
     ReturnVisitor visitor = new ReturnVisitor();
     getStatementList().accept(visitor);
     if (isGeneratedStub() && !visitor.myHasReturns) {
       return null;
     }
     return visitor.result();
+  }
+
+  public PyType getReturnTypeFromDocString() {
+    String typeName;
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      typeName = stub.getReturnTypeFromDocString();
+    }
+    else {
+      typeName = extractDocStringReturnType();
+    }
+    return getTypeByName(typeName);
+  }
+
+  @Nullable
+  public String extractDocStringReturnType() {
+    final PyStringLiteralExpression docString = getDocStringExpression();
+    if (docString != null) {
+      return extractReturnType(docString.getStringValue());
+    }
+    return null;
   }
 
   private boolean isGeneratedStub() {
@@ -147,7 +163,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private PyType getReturnTypeFromDocString(String docString) {
+  private static String extractReturnType(String docString) {
     final List<String> lines = StringUtil.split(docString, "\n");
     while (lines.size() > 0 && lines.get(0).trim().length() == 0) {
       lines.remove(0);
@@ -156,29 +172,37 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       String firstLine = lines.get(0);
       int pos = firstLine.lastIndexOf("->");
       if (pos >= 0) {
-        String returnType = firstLine.substring(pos+2).trim();
-        final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
-
-        if (returnType.equals("string")) {
-          return builtinCache.getStrType();
-        }
-        if (returnType.equals("file object")) {
-          return builtinCache.getObjectType("file");
-        }
-        if (returnType.equals("dictionary")) {
-          return builtinCache.getObjectType("dict");
-        }
-        if (returnType.startsWith("list of")) {
-          return builtinCache.getObjectType("list");
-        }
-        if (returnType.equals("integer")) {
-          return builtinCache.getIntType();
-        }
-        final PyClassType type = builtinCache.getObjectType(returnType);
-        if (type != null) {
-          return type;
-        }
+        return firstLine.substring(pos+2).trim();
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private PyType getTypeByName(String returnType) {
+    if (returnType == null) {
+      return null;
+    }
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
+
+    if (returnType.equals("string")) {
+      return builtinCache.getStrType();
+    }
+    if (returnType.equals("file object")) {
+      return builtinCache.getObjectType("file");
+    }
+    if (returnType.equals("dictionary")) {
+      return builtinCache.getObjectType("dict");
+    }
+    if (returnType.startsWith("list of")) {
+      return builtinCache.getObjectType("list");
+    }
+    if (returnType.equals("integer")) {
+      return builtinCache.getIntType();
+    }
+    final PyClassType type = builtinCache.getObjectType(returnType);
+    if (type != null) {
+      return type;
     }
     return null;
   }
@@ -240,7 +264,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   public PyStringLiteralExpression getDocStringExpression() {
-    return PythonDocStringFinder.find(getStatementList());
+    final PyStatementList stmtList = getStatementList();
+    return stmtList != null ? PythonDocStringFinder.find(stmtList) : null;
   }
 
   protected String getElementLocation() {

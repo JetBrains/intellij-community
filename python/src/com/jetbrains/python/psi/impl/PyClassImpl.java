@@ -130,7 +130,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PyDecoratorList getDecoratorList() {
-    return childToPsi(this, PyElementTypes.DECORATOR_LIST);
+    return childToPsi(PyElementTypes.DECORATOR_LIST);
   }
 
   public String getQualifiedName() {
