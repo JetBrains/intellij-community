@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.formatter;
+package com.intellij.psi.formatter.java;
 
 /**
  * Is intended to hold specific java formatting tests for 'blank lines' settings.
