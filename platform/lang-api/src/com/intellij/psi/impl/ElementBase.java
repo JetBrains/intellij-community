@@ -18,7 +18,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,6 +42,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   public static final int FLAGS_LOCKED = 0x800;
   private Icon myBaseIcon;
+
+  private static final Icon VISIBILITY_ICON_PLACHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
+  private static final Icon ICON_PLACHOLDER = new EmptyIcon(Icons.CLASS_ICON);
 
   @Nullable
   public Icon getIcon(int flags) {
@@ -70,7 +72,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     Icon baseIcon = LastComputedIcon.get(psiElement, flags);
     if (baseIcon == null) {
       if (myBaseIcon == null) {
-        myBaseIcon = computeBaseIcon();
+        myBaseIcon = computeBaseIcon(flags);
       }
       baseIcon = myBaseIcon;
     }
@@ -88,8 +90,28 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     });
   }
 
-  protected Icon computeBaseIcon() {
-    return new EmptyIcon(IconLoader.getIcon("/nodes/class.png"));
+  protected Icon computeBaseIcon(int flags) {
+    return isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
+  }
+
+  protected Icon getBaseIcon() {
+    return ICON_PLACHOLDER;
+  }
+
+  protected Icon getAdjustedBaseIcon(Icon icon, int flags) {
+    Icon result = icon;
+    if ((flags & Iconable.ICON_FLAG_VISIBILITY) > 0) {
+      RowIcon rowIcon = new RowIcon(2);
+      rowIcon.setIcon(icon, 0);
+      rowIcon.setIcon(VISIBILITY_ICON_PLACHOLDER, 1);
+      result = rowIcon;
+    }
+
+    return result;
+  }
+
+  protected boolean isVisibilitySupported() {
+    return false;
   }
 
   public static class ElementIconRequest extends ComparableObject.Impl {
