@@ -66,8 +66,12 @@ public class MavenCustomRepositoryHelper {
   }
 
   public void copy(String fromRelativePath, String toRelativePath) throws IOException {
+    File from = new File(getTestDataPath(fromRelativePath));
     File to = new File(getTestDataPath(toRelativePath));
-    FileUtil.copyDir(new File(getTestDataPath(fromRelativePath)), to);
+
+    if (from.isDirectory()) FileUtil.copyDir(from, to);
+    else FileUtil.copy(from, to);
+
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to));
   }
 }
