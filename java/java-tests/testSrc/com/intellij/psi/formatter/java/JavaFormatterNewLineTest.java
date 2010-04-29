@@ -26,6 +26,21 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
  */
 public class JavaFormatterNewLineTest extends AbstractJavaFormattingTest {
 
+  public void testAutomaticElseWrapping() throws Exception {
+    getSettings().ELSE_ON_NEW_LINE = true;
+
+    doMethodTest(
+      "if (b) {\n" +
+      "} else {\n" +
+      "}",
+
+      "if (b) {\n" +
+      "}\n" +
+      "else {\n" +
+      "}"
+    );
+  }
+
   public void testAutomaticElseUnwrapping() throws Exception {
     getSettings().ELSE_ON_NEW_LINE = false;
     getSettings().KEEP_LINE_BREAKS = true;
@@ -43,6 +58,21 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormattingTest {
     );
   }
 
+  public void testAutomaticCatchWrapping() throws Exception {
+    getSettings().CATCH_ON_NEW_LINE = true;
+
+    doMethodTest(
+      "try {\n" +
+      "} catch (Exception e) {\n" +
+      "}",
+
+      "try {\n" +
+      "}\n" +
+      "catch (Exception e) {\n" +
+      "}"
+    );
+  }
+
   public void testAutomaticCatchUnwrapping() throws Exception {
     getSettings().CATCH_ON_NEW_LINE = false;
     getSettings().KEEP_LINE_BREAKS = true;
@@ -56,6 +86,21 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormattingTest {
 
       "try {\n" +
       "} catch (Exception e) {\n" +
+      "}"
+    );
+  }
+
+  public void testAutomaticFinallyWrapping() throws Exception {
+    getSettings().FINALLY_ON_NEW_LINE = true;
+
+    doMethodTest(
+      "try {\n" +
+      "} finally {\n" +
+      "}",
+
+      "try {\n" +
+      "}\n" +
+      "finally {\n" +
       "}"
     );
   }
