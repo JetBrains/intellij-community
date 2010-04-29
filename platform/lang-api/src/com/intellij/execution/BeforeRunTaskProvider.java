@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME = new ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>>("com.intellij.stepsBeforeRunProvider");
 
+  public static final String RUNNER_ID = "RunnerId";
+
   public abstract Key<T> getId();
 
   public abstract String getDescription(final RunConfiguration runConfiguration, T task);
@@ -49,4 +51,14 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   public abstract boolean configureTask(final RunConfiguration runConfiguration, T task);
 
   public abstract boolean executeTask(DataContext context, RunConfiguration configuration, T task);
+
+  /**
+   * Get runner id that current run is about to be made by
+   * @param context data context that is passed to <code>{@link #executeTask(com.intellij.openapi.actionSystem.DataContext, com.intellij.execution.configurations.RunConfiguration, BeforeRunTask)}</code>
+   * @return runner id
+   */
+  @Nullable
+  public static String getRunnerId(DataContext context) {
+    return (String)context.getData(RUNNER_ID);
+  }
 }
