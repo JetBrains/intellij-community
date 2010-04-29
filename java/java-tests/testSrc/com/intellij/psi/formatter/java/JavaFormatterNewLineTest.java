@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.openapi.fileTypes.StdFileTypes;
+
 /**
  * Is intended to hold specific java formatting tests for <code>'Place on New Line'</code> settings (
  * <code>Project Settings - Code Style - Alignment and Braces - Place on New Line</code>).
@@ -24,79 +26,91 @@ package com.intellij.psi.formatter.java;
  */
 public class JavaFormatterNewLineTest extends AbstractJavaFormattingTest {
 
-    public void testAutomaticElseUnwrapping() throws Exception {
-        getSettings().ELSE_ON_NEW_LINE = false;
-        getSettings().KEEP_LINE_BREAKS = true;
+  public void testAutomaticElseUnwrapping() throws Exception {
+    getSettings().ELSE_ON_NEW_LINE = false;
+    getSettings().KEEP_LINE_BREAKS = true;
 
-        // Inspired by IDEA-47809
-        doMethodTest(
-                
-                "if (b) {\n" +
-                "}\n" +
-                "else {\n" +
-                "}",
+    // Inspired by IDEA-47809
+    doMethodTest(
+      "if (b) {\n" +
+      "}\n" +
+      "else {\n" +
+      "}",
 
-                "if (b) {\n" +
-                "} else {\n" +
-                "}"
-        );
-    }
-    
-    public void testAutomaticCatchUnwrapping() throws Exception {
-        getSettings().CATCH_ON_NEW_LINE = false;
-        getSettings().KEEP_LINE_BREAKS = true;
+      "if (b) {\n" +
+      "} else {\n" +
+      "}"
+    );
+  }
 
-        // Inspired by IDEA-47809
-        doMethodTest(
+  public void testAutomaticCatchUnwrapping() throws Exception {
+    getSettings().CATCH_ON_NEW_LINE = false;
+    getSettings().KEEP_LINE_BREAKS = true;
 
-                "try {\n" +
-                "}\n" +
-                "catch (Exception e) {\n" +
-                "}",
+    // Inspired by IDEA-47809
+    doMethodTest(
+      "try {\n" +
+      "}\n" +
+      "catch (Exception e) {\n" +
+      "}",
 
-                "try {\n" +
-                "} catch (Exception e) {\n" +
-                "}"
-        );
-    }
+      "try {\n" +
+      "} catch (Exception e) {\n" +
+      "}"
+    );
+  }
 
-    public void testAutomaticFinallyUnwrapping() throws Exception {
-        getSettings().FINALLY_ON_NEW_LINE = false;
-        getSettings().KEEP_LINE_BREAKS = true;
+  public void testAutomaticFinallyUnwrapping() throws Exception {
+    getSettings().FINALLY_ON_NEW_LINE = false;
+    getSettings().KEEP_LINE_BREAKS = true;
 
-        // Inspired by IDEA-47809
-        doMethodTest(
+    // Inspired by IDEA-47809
+    doMethodTest(
+      "try {\n" +
+      "}\n" +
+      "finally {\n" +
+      "}",
 
-                "try {\n" +
-                "}\n" +
-                "finally {\n" +
-                "}",
+      "try {\n" +
+      "} finally {\n" +
+      "}"
+    );
+  }
 
-                "try {\n" +
-                "} finally {\n" +
-                "}"
-        );
-    }
-    
-    public void testAutomaticCatchFinallyUnwrapping() throws Exception {
-        getSettings().CATCH_ON_NEW_LINE = false;
-        getSettings().FINALLY_ON_NEW_LINE = false;
-        getSettings().KEEP_LINE_BREAKS = true;
+  public void testAutomaticCatchFinallyUnwrapping() throws Exception {
+    // Inspired by IDEA-47809
+    getSettings().CATCH_ON_NEW_LINE = false;
+    getSettings().FINALLY_ON_NEW_LINE = false;
+    getSettings().KEEP_LINE_BREAKS = true;
 
-        // Inspired by IDEA-47809
-        doMethodTest(
+    doMethodTest(
+      "try {\n" +
+      "}\n" +
+      "catch (Exception e) {\n" +
+      "}\n" +
+      "finally {\n" +
+      "}",
 
-                "try {\n" +
-                "}\n" +
-                "catch (Exception e) {\n" +
-                "}\n" +
-                "finally {\n" +
-                "}",
+      "try {\n" +
+      "} catch (Exception e) {\n" +
+      "} finally {\n" +
+      "}"
+    );
+  }
+  
+  public void testClassInitializationBlockBracesPlacement() throws Exception {
+    // Inspired by IDEA-54191
+    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
+    doMethodTest(
+      "new Expectations() {\n" +
+      "    {foo();}};",
 
-                "try {\n" +
-                "} catch (Exception e) {\n" +
-                "} finally {\n" +
-                "}"
-        );
-    }
+      "new Expectations() {\n" +
+      "    {\n" +
+      "        foo();\n" +
+      "    }\n" +
+      "};"
+    );
+  }
 }
