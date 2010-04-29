@@ -228,8 +228,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       public void run() {
+        EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
         for (FoldRegion region : regions) {
-          PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
+          PsiElement element = foldingInfo.getPsiElement(region);
           if (element != null) {
             region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
           }

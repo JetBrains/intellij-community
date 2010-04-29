@@ -41,11 +41,20 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
   }
 
   public void doCollectInformation(ProgressIndicator progress) {
-    final boolean firstTime = myFile.getUserData(THE_FIRST_TIME) == null || myEditor.getUserData(THE_FIRST_TIME) == null;
+    final boolean firstTime = isFirstTime(myFile, myEditor, THE_FIRST_TIME);
     Runnable runnable = CodeFoldingManager.getInstance(myProject).updateFoldRegionsAsync(myEditor, firstTime);
     synchronized (this) {
       myRunnable = runnable;
     }
+  }
+
+  static boolean isFirstTime(PsiFile file, Editor editor, Key<Boolean> key) {
+    return file.getUserData(key) == null || editor.getUserData(key) == null;
+  }
+
+  static void clearFirstTimeFlag(PsiFile file, Editor editor, Key<Boolean> key) {
+    file.putUserData(key, Boolean.FALSE);
+    editor.putUserData(key, Boolean.FALSE);
   }
 
   public void doApplyInformationToEditor() {
@@ -57,13 +66,12 @@ class CodeFoldingPass extends TextEditorHighlightingPass implements DumbAware {
       try {
         runnable.run();
       }
-      catch (IndexNotReadyException e) {
+      catch (IndexNotReadyException ignored) {
       }
     }
 
     if (InjectedLanguageUtil.getTopLevelFile(myFile) == myFile) {
-      myFile.putUserData(THE_FIRST_TIME, Boolean.FALSE);
-      myEditor.putUserData(THE_FIRST_TIME, Boolean.FALSE);
+      clearFirstTimeFlag(myFile, myEditor, THE_FIRST_TIME);
     }
   }
 }
