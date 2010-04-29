@@ -154,16 +154,6 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   protected boolean checkTemplateKey(String key, CustomTemplateCallback callback) {
     List<Token> tokens = parse(key, callback);
     if (tokens != null && check(tokens)) {
-      // !! required if Zen Coding if invoked by TemplateManagerImpl action
-      /*if (tokens.size() == 2) {
-        Token token = tokens.get(0);
-        if (token instanceof TemplateToken) {
-          if (key.equals(((TemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
-            // do not activate only live template
-            return null;
-          }
-        }
-      }*/
       return true;
     }
     return false;

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.xml.XmlTag;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ class TemplateToken extends Token {
   final String myKey;
   final List<Pair<String, String>> myAttribute2Value;
   TemplateImpl myTemplate;
+  public XmlTag myTag;
 
   TemplateToken(String key, List<Pair<String, String>> attribute2value) {
     myKey = key;
