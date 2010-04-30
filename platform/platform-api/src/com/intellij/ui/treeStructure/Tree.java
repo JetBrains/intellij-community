@@ -429,7 +429,7 @@ public class Tree extends JTree implements Autoscroll, Queryable {
             TreePath[] selectionPaths = getSelectionModel().getSelectionPaths();
             if (selectionPaths != null) {
               for (TreePath selectionPath : selectionPaths) {
-                if (selectionPath == treepath) return;
+                if (selectionPath != null && selectionPath.equals(treepath)) return;
               }
             }
           }
