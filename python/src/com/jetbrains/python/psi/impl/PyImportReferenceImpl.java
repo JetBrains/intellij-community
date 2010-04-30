@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -13,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -112,18 +114,24 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
         }
       }
-      // in "import _" or "from _ import"
-      if (from_import != null) addImportedNames(from_import.getImportElements(), names_already, underscore_filter);
-      else {
-        names_already.add(PyNames.FUTURE_MODULE); // never add it to "import ..."
-        PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
-        if (import_stmt != null) {
-          addImportedNames(import_stmt.getImportElements(), names_already, underscore_filter);
+      else { // in "import _" or "from _ import"
+        ASTNode n = myElement.getNode().getTreePrev();
+        while (n != null && n.getElementType() == PyTokenTypes.DOT) {
+          relative_level += 1;
+          n = n.getTreePrev();
         }
-      }
-      // look at current dir
-      if (current_file != null && relative_level == 0 && ! ResolveImportUtil.isAbsoluteImportEnabledFor(current_file)) {
-        fillFromDir(current_file.getParent(), current_file, underscore_filter, variants);
+        if (from_import != null) addImportedNames(from_import.getImportElements(), names_already, underscore_filter);
+        else {
+          names_already.add(PyNames.FUTURE_MODULE); // never add it to "import ..."
+          PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
+          if (import_stmt != null) {
+            addImportedNames(import_stmt.getImportElements(), names_already, underscore_filter);
+          }
+        }
+        // look at dir by level
+        if (current_file != null && (relative_level > 0 || ! ResolveImportUtil.isAbsoluteImportEnabledFor(current_file))) {
+          fillFromDir(ResolveImportUtil.stepBackFrom(current_file, relative_level), current_file, underscore_filter, variants);
+        }
       }
       if (relative_level == 0) {
         // look in SDK
@@ -136,6 +144,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           }
         }
       }
+
 
       return ArrayUtil.toObjectArray(variants);
     }
