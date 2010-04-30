@@ -19,6 +19,7 @@ package com.intellij.execution.impl;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -110,9 +111,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           if (!activeProviders.isEmpty()) {
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
               public void run() {
-                final DataContext dataContext = SimpleDataContext
-                  .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, state.getConfigurationSettings().getRunnerId(),
-                                    SimpleDataContext.getProjectContext(myProject));
+                ConfigurationPerRunnerSettings configurationSettings = state.getConfigurationSettings();
+                DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
+
+                final DataContext dataContext = configurationSettings != null ? SimpleDataContext
+                  .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
                 for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
                   if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
                     return;
