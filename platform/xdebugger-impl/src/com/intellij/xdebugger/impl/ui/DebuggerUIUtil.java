@@ -93,31 +93,36 @@ public class DebuggerUIUtil {
 
   public static void showValuePopup(@NotNull XFullValueEvaluator text, @NotNull MouseEvent event, @NotNull Project project) {
     final JTextArea textArea = new JTextArea("Evaluating...");
-    text.startEvaluation(new FullValueEvaluationCallbackImpl(textArea));
-
     textArea.setEditable(false);
     textArea.setBackground(HintUtil.INFORMATION_COLOR);
     textArea.setLineWrap(false);
+
     final JScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
     final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
     final Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
     component.setPreferredSize(size);
     component.setBorder(null);
+
     final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, "XDebugger.FullValuePopup", false)
       .setRequestFocus(false)
       .createPopup();
+
+    text.startEvaluation(new FullValueEvaluationCallbackImpl(popup, textArea));
+
     final Component parentComponent = event.getComponent();
     RelativePoint point = new RelativePoint(parentComponent, new Point(event.getX()-size.width, event.getY()-size.height));
     popup.show(point);
   }
 
   private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {
+    private final JBPopup myPopup;
     private final JTextArea myTextArea;
 
-    public FullValueEvaluationCallbackImpl(JTextArea textArea) {
+    public FullValueEvaluationCallbackImpl(final JBPopup popup, final JTextArea textArea) {
+      myPopup = popup;
       myTextArea = textArea;
     }
 
@@ -137,6 +142,10 @@ public class DebuggerUIUtil {
           myTextArea.setText(errorMessage);
         }
       });
+    }
+
+    public boolean isObsolete() {
+      return myPopup.isDisposed();
     }
   }
 }
