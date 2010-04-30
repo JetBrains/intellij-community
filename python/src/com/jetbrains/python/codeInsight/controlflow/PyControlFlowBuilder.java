@@ -467,7 +467,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
       public void process(final PsiElement pendingScope, final Instruction instruction) {
         final PsiElement pendingElement = instruction.getElement();
-        if (pendingElement == null){
+        if (pendingElement == null || !PsiTreeUtil.isAncestor(tryPart, pendingElement, false)){
           myBuilder.addPendingEdge(pendingScope, instruction);
           return;
         }

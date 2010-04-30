@@ -1,0 +1,20 @@
+0(1) element: null
+1(2) element: PyTryExceptStatement
+2(3) element: PyTryPart
+3(4) element: PyFromImportStatement
+4(5) READ ACCESS: mercurial
+5(6,10) READ ACCESS: lsprof
+6(7) element: PyExceptPart
+7(8) READ ACCESS: ImportError
+8(9) element: PyRaiseStatement
+9(19) READ ACCESS: Error
+10(11) element: PyAssignmentStatement
+11(12) WRITE ACCESS: p
+12(13) element: PyTryExceptStatement
+13(14) element: PyTryPart
+14(15) element: PyReturnStatement
+15(16) READ ACCESS: foo
+16(17) element: PyFinallyPart
+17(18) element: PyPrintStatement
+18(19) READ ACCESS: p
+19() element: null
