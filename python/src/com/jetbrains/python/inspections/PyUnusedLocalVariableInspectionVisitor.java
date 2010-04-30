@@ -14,6 +14,7 @@ import com.jetbrains.python.codeInsight.controlflow.PyControlFlowUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -44,7 +45,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
   class DontPerformException extends RuntimeException {}
 
   private void processScope(final ScopeOwner owner) {
-    if (owner.getContainingFile() instanceof PyExpressionCodeFragment){
+    if (owner.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(owner)){
       return;
     }
     // Check for locals() call

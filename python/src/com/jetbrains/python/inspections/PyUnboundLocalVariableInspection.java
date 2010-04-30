@@ -13,6 +13,7 @@ import com.jetbrains.python.actions.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
+import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import org.jetbrains.annotations.Nls;
@@ -52,6 +53,9 @@ public class PyUnboundLocalVariableInspection extends LocalInspectionTool {
     return new PyInspectionVisitor(holder){
       @Override
       public void visitPyReferenceExpression(final PyReferenceExpression node) {
+        if (node.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(node)){
+          return;
+        }
         // Ignore callee expressions
         if (PyCallExpressionNavigator.getPyCallExpressionByCallee(node) != null){
           return;
