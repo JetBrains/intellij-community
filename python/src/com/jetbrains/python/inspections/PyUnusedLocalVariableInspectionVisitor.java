@@ -46,13 +46,22 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     if (owner.getContainingFile() instanceof PyExpressionCodeFragment){
       return;
     }
-    // Do not perform inspection if locals() call is found
+    final Set<String> globals = new HashSet<String>();
+
+    // Check for locals() call and collect globals information
     try {
       owner.accept(new PyRecursiveElementVisitor(){
         @Override
         public void visitPyCallExpression(final PyCallExpression node) {
           if ("locals".equals(node.getCallee().getText())){
             throw new DontPerformException();
+          }
+        }
+
+        @Override
+        public void visitPyGlobalStatement(final PyGlobalStatement node) {
+          for (PyReferenceExpression expression : node.getGlobals()) {
+            globals.add(expression.getName());
           }
         }
       });
@@ -75,8 +84,8 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
       final Instruction instruction = instructions[i];
       if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
-        // Ignore empty or wildcards names
-        if (name == null || "_".equals(name)) {
+        // Ignore empty, wildcards or global names
+        if (name == null || "_".equals(name) || globals.contains(name)) {
           continue;
         }
         final PsiElement element = instruction.getElement();
