@@ -35,13 +35,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
   public static final int FLAGS_LOCKED = 0x800;
-  private Icon myBaseIcon;
+  private Map<Integer, Icon> myBaseIcon;
 
   private static final Icon VISIBILITY_ICON_PLACHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
   private static final Icon ICON_PLACHOLDER = new EmptyIcon(Icons.CLASS_ICON);
@@ -72,9 +74,12 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     Icon baseIcon = LastComputedIcon.get(psiElement, flags);
     if (baseIcon == null) {
       if (myBaseIcon == null) {
-        myBaseIcon = computeBaseIcon(flags);
+        myBaseIcon = new HashMap<Integer, Icon>(3);
       }
-      baseIcon = myBaseIcon;
+      if (!myBaseIcon.containsKey(flags)) {
+        myBaseIcon.put(flags, computeBaseIcon(flags));
+      }
+      baseIcon = myBaseIcon.get(flags);
     }
 
     return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement,flags), new Function<ElementIconRequest, Icon>() {
