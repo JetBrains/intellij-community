@@ -164,6 +164,8 @@ public class PluginInstaller {
       if (downloader.prepareToInstall(ProgressManager.getInstance().getProgressIndicator())) {
         downloader.install();
         pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
+      } else {
+        return false;
       }
     }
 
