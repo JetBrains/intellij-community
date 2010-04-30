@@ -13,6 +13,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
@@ -46,22 +47,13 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
     if (owner.getContainingFile() instanceof PyExpressionCodeFragment){
       return;
     }
-    final Set<String> globals = new HashSet<String>();
-
-    // Check for locals() call and collect globals information
+    // Check for locals() call
     try {
       owner.accept(new PyRecursiveElementVisitor(){
         @Override
         public void visitPyCallExpression(final PyCallExpression node) {
           if ("locals".equals(node.getCallee().getText())){
             throw new DontPerformException();
-          }
-        }
-
-        @Override
-        public void visitPyGlobalStatement(final PyGlobalStatement node) {
-          for (PyReferenceExpression expression : node.getGlobals()) {
-            globals.add(expression.getName());
           }
         }
       });
@@ -76,6 +68,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
       parametersCanBeUnused = PySuperMethodsSearch.search(((PyFunction)owner)).findFirst() != null;
     }
 
+    final Scope scope = owner.getScope();
     final ControlFlow flow = owner.getControlFlow();
     final Instruction[] instructions = flow.getInstructions();
 
@@ -85,7 +78,7 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
       if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
         // Ignore empty, wildcards or global names
-        if (name == null || "_".equals(name) || globals.contains(name)) {
+        if (name == null || "_".equals(name) || scope.isGlobal(name)) {
           continue;
         }
         final PsiElement element = instruction.getElement();
