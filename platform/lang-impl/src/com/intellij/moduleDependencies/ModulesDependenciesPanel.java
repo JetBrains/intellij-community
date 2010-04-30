@@ -36,10 +36,12 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -77,6 +79,8 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
   private Graph<Module> myModulesGraph;
   private final Module[] myModules;
+
+  private JTextField myPathField = new JTextField();
 
   private final Splitter mySplitter;
   @NonNls private static final String ourHelpID = "module.dependencies.tool.window";
@@ -154,7 +158,10 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     group.add(new ContextHelpAction(ourHelpID));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    return toolbar.getComponent();
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(toolbar.getComponent(), BorderLayout.NORTH);
+    panel.add(myPathField, BorderLayout.SOUTH);
+    return panel;
   }
 
   private boolean isForwardDirection() {
@@ -310,6 +317,17 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath selectionPath = myLeftTree.getSelectionPath();
         if (selectionPath != null) {
+
+          myPathField.setText(StringUtil.join(selectionPath.getPath(), new Function<Object, String>() {
+            public String fun(Object o) {
+              final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
+              if (userObject instanceof MyUserObject) {
+                return ((MyUserObject)userObject).getModule().getName();
+              }
+              return "";
+            }
+          }, ":"));
+
           final DefaultMutableTreeNode selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
           if (selection != null){
             TreeUtil.traverseDepth(selection, new TreeUtil.Traverse() {
