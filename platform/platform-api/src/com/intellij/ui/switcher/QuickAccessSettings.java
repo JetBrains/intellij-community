@@ -16,6 +16,8 @@
 package com.intellij.ui.switcher;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.Nls;
@@ -43,9 +46,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class QuickAccessSettings implements ApplicationComponent, Configurable, KeymapManagerListener, Disposable {
 
@@ -153,7 +154,9 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
 
   private void reassignActionShortcut(String actionId, int modifiers, int actionCode) {
     removeShortcuts(actionId);
-    myKeymap.addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(actionCode, modifiers), null));
+    if (modifiers > 0) {
+      myKeymap.addShortcut(actionId, new KeyboardShortcut(KeyStroke.getKeyStroke(actionCode, modifiers), null));
+    }
   }
 
   private void removeShortcuts(String actionId) {
@@ -272,16 +275,13 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
     private ModifierBox myAlt;
     private ModifierBox myShift;
     private ModifierBox myMeta;
-    private VerticalBox myConflicts;
+    private JPanel myConflicts;
     private JFormattedTextField myHoldTime;
 
+    
+
     private Ui() {
-      JPanel north = new JPanel(new BorderLayout()) {
-        @Override
-        public Dimension getMaximumSize() {
-          return super.getPreferredSize();
-        }
-      };
+      JPanel north = new JPanel(new BorderLayout());
       north.add(myBox, BorderLayout.NORTH);
 
       setLayout(new BorderLayout());
@@ -298,11 +298,18 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
 
       VerticalBox kbConfig = new VerticalBox();
 
-      JPanel modifiers = new JPanel(new FlowLayout(FlowLayout.CENTER));
-      myCtrl = new ModifierBox("control", "Control");
-      myAlt = new ModifierBox("alt", "Alt");
-      myShift = new ModifierBox("shift", "Shift");
-      myMeta = new ModifierBox("meta", "Meta");
+      JPanel modifiers = new JPanel(new FlowLayout(FlowLayout.CENTER)) {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension size = super.getPreferredSize();
+          size.width *= 1.5;
+          return size;
+        }
+      };
+      myCtrl = new ModifierBox("control", KeyEvent.getKeyModifiersText(KeyEvent.CTRL_MASK));
+      myAlt = new ModifierBox("alt", KeyEvent.getKeyModifiersText(KeyEvent.ALT_MASK));
+      myShift = new ModifierBox("shift", KeyEvent.getKeyModifiersText(KeyEvent.SHIFT_MASK));
+      myMeta = new ModifierBox("meta", KeyEvent.getKeyModifiersText(KeyEvent.META_MASK));
 
       modifiers.add(new JLabel("Modifiers:"));
       modifiers.add(myCtrl);
@@ -315,6 +322,8 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
       JPanel hold = new JPanel(new FlowLayout(FlowLayout.CENTER));
       hold.add(new JLabel("Hold time:"));
       myHoldTime = new JFormattedTextField(NumberFormat.getIntegerInstance());
+      myHoldTime.setColumns(5);
+      myHoldTime.setHorizontalAlignment(JTextField.RIGHT);
       myHoldTime.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
@@ -339,9 +348,11 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
 
       myBox.add(kbConfig);
 
-      myConflicts = new VerticalBox();
+      myConflicts = new JPanel();
 
       myBox.add(myConflicts);
+
+      updateConflicts();
     }
 
     public void reset(boolean isEnabled, Set<String> modifiers, int delay) {
@@ -359,6 +370,92 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
       myHoldTime.setText(Integer.valueOf(delay).toString());
 
       processEnabled();
+
+      updateConflicts();
+    }
+
+    private void updateConflicts() {
+      myConflicts.removeAll();
+      myConflicts.setBorder(null);
+
+      if (!myQaEnabled) {
+        return;
+      }
+
+      if (myModifiers.size() == 0) {
+        myConflicts.setLayout(new BorderLayout());
+        myConflicts.add(getSmallLabel("Without assigning modifier keys Quick Access will not function"), BorderLayout.NORTH);
+        return;
+      }
+
+      myConflicts.setLayout(new GridBagLayout());
+      GridBagConstraints c = new GridBagConstraints();
+      c.insets = new Insets(0, 4, 0, 4);
+
+      boolean hasConflicts = printConflict(c, KeyEvent.VK_UP, SWITCH_UP);
+      hasConflicts |= printConflict(c, KeyEvent.VK_DOWN, SWITCH_DOWN);
+      hasConflicts |= printConflict(c, KeyEvent.VK_LEFT, SWITCH_LEFT);
+      hasConflicts |= printConflict(c, KeyEvent.VK_RIGHT, SWITCH_RIGHT);
+      hasConflicts |= printConflict(c, KeyEvent.VK_ENTER, SWITCH_APPLY);
+
+      if (hasConflicts) {
+        myConflicts.setBorder(new TitledBorder("Conflicts"));
+        c.gridx = 0;
+        c.gridy++;
+        c.gridwidth = 2;
+        myConflicts.add(new SeparatorWithText(), c);
+
+        c.gridx = 0;
+        c.gridy++;
+        myConflicts.add(getSmallLabel("These conflicting actions may be not what you use a lot"), c);
+      }
+    }
+
+    private JLabel getSmallLabel(final String text) {
+      JLabel message = new JLabel(text, null, JLabel.CENTER);
+      message.setFont(message.getFont().deriveFont(message.getFont().getStyle(), message.getFont().getSize() - 2));
+      return message;
+    }
+
+    private boolean printConflict(GridBagConstraints c, int actionKey, String actionId) {
+      boolean hasConflicts = false;
+
+      int mask = getModiferMask(myModifiers);
+
+      KeyboardShortcut sc = new KeyboardShortcut(KeyStroke.getKeyStroke(actionKey, mask), null);
+
+      Map<String,ArrayList<KeyboardShortcut>> conflictMap = myKeymap.getConflicts(actionId, sc);
+      if (conflictMap.size() > 0) {
+        hasConflicts = true;
+
+        JLabel scText = new JLabel(sc.toString());
+        c.gridy++;
+        c.gridx = 0;
+        myConflicts.add(scText, c);
+
+        Iterator<String> actions = conflictMap.keySet().iterator();
+        while (actions.hasNext()) {
+          String each = actions.next();
+          AnAction eachAnAction = ActionManager.getInstance().getAction(each);
+          if (eachAnAction != null) {
+            String text = eachAnAction.getTemplatePresentation().getText();
+            JLabel eachAction = new JLabel(text != null && text.length() > 0 ? text : each);
+            c.gridx = 1;
+            myConflicts.add(eachAction, c);
+            c.gridy++;
+          }
+        }
+      }
+
+      c.gridx = 0;
+      c.gridwidth = 2;
+      c.gridy++;
+
+      myConflicts.add(new SeparatorWithText(), c);
+      c.gridwidth = 1;
+
+      return hasConflicts;
+
     }
 
     private void processEnabled() {
@@ -395,6 +492,7 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
         addItemListener(new ItemListener() {
           public void itemStateChanged(ItemEvent e) {
             applyMask();
+            updateConflicts();
           }
         });
       }
