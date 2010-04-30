@@ -383,4 +383,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
   public PsiType getReturnTypeNoResolve() {
     return getReturnType();
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
 }

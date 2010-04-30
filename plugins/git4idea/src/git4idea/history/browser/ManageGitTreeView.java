@@ -15,16 +15,19 @@
  */
 package git4idea.history.browser;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 interface ManageGitTreeView extends RepositoryCommonData {
   void init();
+
   boolean hasNext(@Nullable final TravelTicket ticket);
   boolean hasPrevious(@Nullable final TravelTicket ticket);
   void next(@Nullable final TravelTicket ticket);
   void previous(@Nullable final TravelTicket ticket);
+  void navigateTo(@NotNull final String reference);
 
   void refresh();
 

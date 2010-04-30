@@ -326,7 +326,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       //noinspection HardCodedStringLiteral
       return "find.todoList";
     }
-    return null;
+    return super.getData(dataId);
   }
 
   @Nullable

@@ -15,16 +15,24 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 public interface LowLevelAccess {
   GitCommit getCommitByHash(final SHAHash hash);
-  // todo define signature
-  void loadCommits(final List<String> startingPoints, final List<String> endPoints, final Collection<ChangesFilter.Filter> filters,
+
+  List<Pair<SHAHash,Date>> loadCommitHashes(final @NotNull Collection<String> startingPoints,
+                                                   @NotNull final Collection<String> endPoints,
+                                                   @NotNull final Collection<ChangesFilter.Filter> filters,
+                                                   int useMaxCnt) throws VcsException;
+  
+  void loadCommits(final Collection<String> startingPoints, final Collection<String> endPoints, final Collection<ChangesFilter.Filter> filters,
                    final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt) throws VcsException;
 
   Collection<String> getBranchesWithCommit(final SHAHash hash) throws VcsException;

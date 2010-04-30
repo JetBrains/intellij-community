@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.codeEditor.JavaEditorFileSwapper;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -83,10 +84,10 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
     if (library == null) return null;
 
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    final String fqn = getFQN(psiFile);
+    final String fqn = JavaEditorFileSwapper.getFQN(psiFile);
     if (fqn == null) return null;
 
-    if (findSourceFile(file) != null) return null;
+    if (JavaEditorFileSwapper.findSourceFile(myProject, file) != null) return null;
 
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(ProjectBundle.message("library.sources.not.found"));
@@ -118,80 +119,23 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
 
           panel.setText(each.getBusyText());
 
+          Runnable onFinish = new Runnable() {
+            public void run() {
+              SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                  panel.setText(ProjectBundle.message("library.sources.not.found"));
+                }
+              });
+            }
+          };
           ActionCallback callback = each.perform();
-          callback.doWhenRejected(new Runnable() {
-            public void run() {
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  panel.setText(ProjectBundle.message("library.sources.not.found"));
-                }
-              });
-            }
-          });
-
-          callback.doWhenDone(new Runnable() {
-            public void run() {
-              SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                  panel.setText(ProjectBundle.message("library.sources.not.found"));
-
-                  if (myProject.isDisposed()) return;
-
-                  FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
-                  EditorWindow[] windows = manager.getWindows();
-                  for (EditorWindow eachWindow : windows) {
-                    VirtualFile[] files = eachWindow.getFiles();
-                    for (int i = 0; i < files.length - 1 + 1; i++) {
-                      VirtualFile eachFile = files[i];
-                      VirtualFile newFile = findSourceFile(eachFile);
-                      if (newFile == null) continue;
-
-                      // already open
-                      if (eachWindow.findFileIndex(newFile) != 0) continue;
-
-                      manager.closeFile(eachFile, eachWindow);
-                      try {
-                        newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, i);
-                        manager.openFile(newFile, eachFile == file);
-                      }
-                      finally {
-                        newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
-                      }
-                    }
-                  }
-                }
-              });
-            }
-          });
+          callback.doWhenRejected(onFinish);
+          callback.doWhenDone(onFinish);
         }
       });
     }
 
     return panel;
-  }
-
-  private VirtualFile findSourceFile(VirtualFile eachFile) {
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(eachFile);
-    if (!(psiFile instanceof ClsFileImpl)) return null;
-
-    PsiClass clsClass = JavaPsiFacade.getInstance(myProject).findClass(getFQN(psiFile), GlobalSearchScope.allScope(myProject));
-    if (!(clsClass instanceof ClsClassImpl)) return null;
-
-    PsiClass sourceClass = ((ClsClassImpl)clsClass).getSourceMirrorClass();
-    if (sourceClass == null || sourceClass == clsClass) return null;
-
-    VirtualFile result = sourceClass.getContainingFile().getVirtualFile();
-    assert result != null;
-    return result;
-  }
-
-  private String getFQN(PsiFile psiFile) {
-    if (!(psiFile instanceof PsiJavaFile)) return null;
-    PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-    if (classes.length == 0) return null;
-    final String fqn = classes[0].getQualifiedName();
-    if (fqn == null) return null;
-    return fqn;
   }
 
   private AttachSourcesProvider.AttachSourcesAction createDefaultAction(final Library library, final VirtualFile file) {

@@ -23,12 +23,11 @@ import java.io.Serializable;
 import java.util.List;
 
 public class MavenArtifactNode implements Serializable {
-  public enum State { ADDED, EXCLUDED, CONFLICT, DUPLICATE, CYCLE}
 
   private MavenArtifactNode myParent;
 
   private MavenArtifact myArtifact;
-  private State myState;
+  private MavenArtifactState myState;
   private MavenArtifact myRelatedArtifact;
 
   private String myOriginalScope;
@@ -43,7 +42,7 @@ public class MavenArtifactNode implements Serializable {
 
   public MavenArtifactNode(MavenArtifactNode parent,
                            MavenArtifact artifact,
-                           State state,
+                           MavenArtifactState state,
                            MavenArtifact relatedArtifact,
                            String originalScope,
                            String premanagedVersion,
@@ -68,7 +67,7 @@ public class MavenArtifactNode implements Serializable {
     return myArtifact;
   }
 
-  public State getState() {
+  public MavenArtifactState getState() {
     return myState;
   }
 
@@ -103,7 +102,7 @@ public class MavenArtifactNode implements Serializable {
   @Override
   public String toString() {
     String result =myArtifact.getDisplayStringWithTypeAndClassifier();
-    if (myState != State.ADDED) result += "[" + myState + ":" + myRelatedArtifact.getDisplayStringWithTypeAndClassifier() + "]";
+    if (myState != MavenArtifactState.ADDED) result += "[" + myState + ":" + myRelatedArtifact.getDisplayStringWithTypeAndClassifier() + "]";
     return result += "->(" + formatNodesList(myDependencies) + ")";
   }
 

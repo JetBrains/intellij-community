@@ -654,4 +654,10 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       ((Queryable)file).putInfo(info);
     }
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
 }

@@ -141,9 +141,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (toInitializeDaemon) {
       daemonCodeAnalyzer.projectOpened();
     }
+    daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runStartupActivities();
     ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+
 
     myRunCommandForTest = wrapInCommand();
   }

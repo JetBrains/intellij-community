@@ -763,8 +763,9 @@ public class HighlightUtil {
     else if (modifierOwner instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)modifierOwner;
       isAllowed = !(method.isConstructor() && ourConstructorNotAllowedModifiers.contains(modifier));
+      PsiClass containingClass = method.getContainingClass();
       if ((method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED)) && method.isConstructor() &&
-          method.getContainingClass() != null && method.getContainingClass().isEnum()) {
+          containingClass != null && containingClass.isEnum()) {
         isAllowed = false;
       }
 

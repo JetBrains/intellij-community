@@ -30,7 +30,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
-public abstract class MultilineTreeCellRenderer extends JComponent implements javax.swing.tree.TreeCellRenderer {
+public abstract class MultilineTreeCellRenderer extends JComponent implements TreeCellRenderer {
 
   private boolean myWrapsCalculated = false;
   private boolean myTooSmall = false;
@@ -52,6 +52,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
   private int myTextLength;
   private int myPrefixWidth;
   @NonNls protected static final String FONT_PROPERTY_NAME = "font";
+  private JTree myTree;
 
 
   public MultilineTreeCellRenderer() {
@@ -127,13 +128,15 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
     }
 
     // fill background
-    g.setColor(bgColor);
-    g.fillRect(borderX, borderY, borderW, borderH);
+    if (!(myTree.getUI() instanceof UIUtil.MacTreeUI)) {
+      g.setColor(bgColor);
+      g.fillRect(borderX, borderY, borderW, borderH);
 
-    // draw border
-    if (mySelected) {
-      g.setColor(UIUtil.getTreeSelectionBorderColor());
-      UIUtil.drawDottedRectangle(g, borderX, borderY, borderX + borderW - 1, borderY + borderH - 1);
+      // draw border
+      if (mySelected) {
+        g.setColor(UIUtil.getTreeSelectionBorderColor());
+        UIUtil.drawDottedRectangle(g, borderX, borderY, borderX + borderW - 1, borderY + borderH - 1);
+      }
     }
 
     // paint text
@@ -342,6 +345,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements ja
 
     mySelected = selected;
     myHasFocus = hasFocus;
+
+    myTree = tree;
 
     int availWidth = getAvailableWidth(value, tree);
     if (availWidth > 0) {

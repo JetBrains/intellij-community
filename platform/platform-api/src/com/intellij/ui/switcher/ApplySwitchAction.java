@@ -52,6 +52,7 @@ public class ApplySwitchAction extends AnAction {
     if (switchManager.canApplySwitch()) {
       switchManager.applySwitch();
     } else {
+      switchManager.resetSession();
       QuickActionManager.getInstance(project).showQuickActions();
     }
     

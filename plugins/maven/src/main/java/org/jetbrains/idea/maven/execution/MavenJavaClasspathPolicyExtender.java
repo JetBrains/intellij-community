@@ -70,7 +70,8 @@ public class MavenJavaClasspathPolicyExtender implements JavaClasspathPolicyExte
 
             if (!isTestClasspath && MavenConstants.SCOPE_PROVIDEED.equals(each.getScope())) continue;
             if (isTestClasspath || !MavenConstants.SCOPE_TEST.equals(each.getScope())) {
-              addOutput(ownerModule, MavenConstants.TYPE_TEST_JAR.equals(each.getType()), state);
+              boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(each.getType()) || "tests".equals(each.getClassifier());
+              addOutput(ownerModule, isTestJar, state);
             }
           }
         }

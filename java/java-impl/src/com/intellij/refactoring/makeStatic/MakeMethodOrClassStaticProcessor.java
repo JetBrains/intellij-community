@@ -70,12 +70,16 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return new MakeMethodOrClassStaticViewDescriptor(myMember);
   }
 
-  protected final boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
+  protected final boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       MultiMap<PsiElement, String> conflicts = getConflictDescriptions(usagesIn);
       if (conflicts.size() > 0) {
-        ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
+        ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, new Runnable(){
+          public void run() {
+            execute(refUsages.get());
+          }
+        });
         conflictsDialog.show();
         if (!conflictsDialog.isOK()) {
           if (conflictsDialog.isShowConflicts()) prepareSuccessful();

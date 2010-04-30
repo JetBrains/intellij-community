@@ -42,7 +42,6 @@ public class CheckboxTreeBase extends Tree {
   }
 
   public CheckboxTreeBase(final CheckboxTreeCellRendererBase cellRenderer, CheckedTreeNode root, CheckPolicy checkPolicy) {
-
     myCheckPolicy = checkPolicy;
 
     setCellRenderer(cellRenderer);
@@ -61,6 +60,8 @@ public class CheckboxTreeBase extends Tree {
         cellRenderer.setBounds(rowBounds);
         Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
         checkBounds.setLocation(rowBounds.getLocation());
+
+        if (checkBounds.height == 0) checkBounds.height = rowBounds.height;
 
         final CheckedTreeNode node = (CheckedTreeNode)o;
         if (checkBounds.contains(e.getPoint())) {
@@ -338,6 +339,8 @@ public class CheckboxTreeBase extends Tree {
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       customizeRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
       revalidate();
+
+
       return this;
     }
 

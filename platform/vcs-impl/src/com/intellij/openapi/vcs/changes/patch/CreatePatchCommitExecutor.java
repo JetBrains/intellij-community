@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.TextPatchBuilder;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -151,9 +151,10 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
         final File file = new File(fileName).getAbsoluteFile();
         PATCH_PATH = file.getParent();
         REVERSE_PATCH = myPanel.isReversePatch();
+        
         Writer writer = new OutputStreamWriter(new FileOutputStream(fileName));
         try {
-          List<FilePatch> patches = TextPatchBuilder.buildPatch(changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
+          List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), REVERSE_PATCH);
           final String lineSeparator = CodeStyleFacade.getInstance(myProject).getLineSeparator();
           UnifiedDiffWriter.write(patches, writer, lineSeparator);
         }

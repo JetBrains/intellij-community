@@ -240,9 +240,14 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   private static boolean checkRefsInAugmentedAssignmentOrUnaryModified(final PsiElement[] refsToInline, final Project project, final Editor editor,
                                                         final String localName) {
     for (PsiElement element : refsToInline) {
-      final PsiElement parent = element.getParent();
 
-      if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression() || 
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiArrayAccessExpression) {
+        element = parent;
+        parent = parent.getParent();
+      }
+
+      if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression() ||
           parent instanceof PsiPrefixExpression || parent instanceof PsiPostfixExpression ) {
 
         EditorColorsManager manager = EditorColorsManager.getInstance();

@@ -78,7 +78,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Git VCS implementation
  */
-public class GitVcs extends AbstractVcs {
+public class GitVcs extends AbstractVcs<CommittedChangeList> {
   /**
    * the logger
    */
@@ -684,10 +684,10 @@ public class GitVcs extends AbstractVcs {
     return VcsType.distibuted;
   }
 
-  private final GitOutgoingChangesProvider myOutgoingChangesProvider;
+  private final VcsOutgoingChangesProvider<CommittedChangeList> myOutgoingChangesProvider;
 
   @Override
-  protected VcsOutgoingChangesProvider getOutgoingProviderImpl() {
+  protected VcsOutgoingChangesProvider<CommittedChangeList> getOutgoingProviderImpl() {
     return myOutgoingChangesProvider;
   }
 

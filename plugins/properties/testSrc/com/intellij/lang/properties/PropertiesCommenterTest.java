@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 
 /**
  * @author cdr
@@ -28,6 +29,10 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
   public void testProp1() throws Exception { doTest(); }
   public void testUncomment() throws Exception { doTest(); }
+
+  public PropertiesCommenterTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   @Override
   protected String getTestDataPath() {

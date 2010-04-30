@@ -819,6 +819,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+    DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
   }
 
   private void enableInspectionTool(InspectionProfileEntry tool){
@@ -1131,6 +1132,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     Project project = file.getProject();
     ensureIndexesUpToDate(project);
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+    codeAnalyzer.setUpdateByTimerEnabled(false);
     FileStatusMap fileStatusMap = codeAnalyzer.getFileStatusMap();
     for (int ignoreId : toIgnore) {
       fileStatusMap.markFileUpToDate(editor.getDocument(), file, ignoreId);

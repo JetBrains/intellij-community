@@ -23,14 +23,8 @@ import com.intellij.openapi.diff.impl.processing.DiffCorrection;
 import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.BeforeAfter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -48,6 +41,7 @@ import java.util.List;
 public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
+  @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
 
   private final String myBasePath;
   private final boolean myIsReversePath;
@@ -67,18 +61,6 @@ public class TextPatchBuilder {
     if (myCancelChecker != null) {
       myCancelChecker.run();
     }
-  }
-
-  public static List<FilePatch> buildPatch(final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
-    final Collection<BeforeAfter<AirContentRevision>> revisions = new ArrayList<BeforeAfter<AirContentRevision>>(changes.size());
-    for (Change change : changes) {
-      revisions.add(new BeforeAfter<AirContentRevision>(convertRevision(change.getBeforeRevision()), convertRevision(change.getAfterRevision())));
-    }
-    return buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive, new Runnable() {
-      public void run() {
-        ProgressManager.checkCanceled();
-      }
-    });
   }
 
   public static List<FilePatch> buildPatch(final Collection<BeforeAfter<AirContentRevision>> changes, final String basePath,
@@ -191,55 +173,6 @@ public class TextPatchBuilder {
     return result;
   }
 
-  @Nullable
-  private static AirContentRevision convertRevision(final ContentRevision cr) {
-    if (cr == null) return null;
-    final StaticPathDescription description = fromFilePath(cr.getFile());
-    if (cr instanceof BinaryContentRevision) {
-      return new AirContentRevision() {
-        public boolean isBinary() {
-          return true;
-        }
-        public String getContentAsString() {
-          throw new IllegalStateException();
-        }
-        public byte[] getContentAsBytes() throws VcsException {
-          return ((BinaryContentRevision) cr).getBinaryContent();
-        }
-        public String getRevisionNumber() {
-          return cr.getRevisionNumber().asString();
-        }
-        @NotNull
-        public PathDescription getPath() {
-          return description;
-        }
-      };
-    } else {
-      return new AirContentRevision() {
-        public boolean isBinary() {
-          return false;
-        }
-        public String getContentAsString() throws VcsException {
-          return cr.getContent();
-        }
-        public byte[] getContentAsBytes() throws VcsException {
-          throw new IllegalStateException();
-        }
-        public String getRevisionNumber() {
-          return cr.getRevisionNumber().asString();
-        }
-        @NotNull
-        public PathDescription getPath() {
-          return description;
-        }
-      };
-    }
-  }
-
-  private static StaticPathDescription fromFilePath(@NotNull final FilePath fp) {
-    return new StaticPathDescription(fp.isDirectory(), fp.getIOFile().lastModified(), fp.getPath());
-  }
-
   private FilePatch buildBinaryPatch(final String basePath,
                                             final AirContentRevision beforeRevision,
                                             final AirContentRevision afterRevision) throws VcsException {
@@ -340,7 +273,7 @@ public class TextPatchBuilder {
     if (revisionName != null) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
-    return new Date(revision.getPath().lastModified()).toString();
+    return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));
   }
 
   private TextFilePatch buildPatchHeading(final String basePath, final AirContentRevision beforeRevision, final AirContentRevision afterRevision) {

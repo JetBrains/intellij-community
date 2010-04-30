@@ -17,6 +17,7 @@ package git4idea.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -32,7 +33,9 @@ import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
+import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -279,6 +282,38 @@ public class GitChangeUtils {
     }
   }
 
+  @Nullable
+  public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference) {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--max-count=1", "--pretty=%H", "--encoding=UTF-8", "\"" + anyReference + "\"", "--");
+    try {
+      final String output = h.run().trim();
+      if (StringUtil.isEmptyOrSpaces(output)) return null;
+      return new SHAHash(output);
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static SHAHash commitExistsByComment(final Project project, final VirtualFile root, final String anyReference) {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    final String grepParam = "--grep=" + StringUtil.escapeQuotes(anyReference);
+    h.addParameters("--max-count=1", "--pretty=%H", "--all", "--encoding=UTF-8", grepParam, "--");
+    try {
+      final String output = h.run().trim();
+      if (StringUtil.isEmptyOrSpaces(output)) return null;
+      return new SHAHash(output);
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
 
   /**
    * Parse changelist

@@ -115,7 +115,7 @@ public abstract class PassExecutorService implements Disposable {
         if (dumb && !(pass instanceof DumbAware)) {
           continue;
         }
-        
+
         TextEditorHighlightingPass textEditorHighlightingPass;
         if (pass instanceof TextEditorHighlightingPass) {
           textEditorHighlightingPass = (TextEditorHighlightingPass)pass;
@@ -147,7 +147,7 @@ public abstract class PassExecutorService implements Disposable {
 
         List<FileEditor> editors = documentToEditors.get(document);
         if (editors == null) {
-          editors= new SmartList<FileEditor>();
+          editors = new SmartList<FileEditor>();
           documentToEditors.put(document, editors);
         }
         if (!editors.contains(fileEditor)) editors.add(fileEditor);
@@ -161,7 +161,7 @@ public abstract class PassExecutorService implements Disposable {
       threadsToStartCountdown.addAndGet(passes.size());
 
       // create one scheduled pass per unique id (possibly for multiple fileeditors. they all will be applied at the pass finish)
-      ContainerUtil.quickSort(passes, new Comparator<TextEditorHighlightingPass>(){
+      ContainerUtil.quickSort(passes, new Comparator<TextEditorHighlightingPass>() {
         public int compare(final TextEditorHighlightingPass o1, final TextEditorHighlightingPass o2) {
           return o1.getId() - o2.getId();
         }
@@ -175,13 +175,14 @@ public abstract class PassExecutorService implements Disposable {
           newId = currentPass.getId();
         }
         if (newId != passId) {
-          createScheduledPass(fileEditors, currentPass, toBeSubmitted, passes, freePasses, updateProgress, threadsToStartCountdown, jobPriority);
+          createScheduledPass(fileEditors, currentPass, toBeSubmitted, passes, freePasses, updateProgress, threadsToStartCountdown,
+                              jobPriority);
           passId = newId;
         }
       }
     }
 
-    log(updateProgress, null, "---------------------starting------------------------ "+threadsToStartCountdown.get());
+    log(updateProgress, null, "---------------------starting------------------------ " + threadsToStartCountdown.get());
 
     for (ScheduledPass freePass : freePasses) {
       submit(freePass);

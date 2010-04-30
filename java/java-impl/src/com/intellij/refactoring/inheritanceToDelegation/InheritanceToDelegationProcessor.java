@@ -186,7 +186,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    UsageInfo[] usagesIn = refUsages.get();
+    final UsageInfo[] usagesIn = refUsages.get();
     ArrayList<UsageInfo> oldUsages = new ArrayList<UsageInfo>();
     addAll(oldUsages, usagesIn);
     final ObjectUpcastedUsageInfo[] objectUpcastedUsageInfos = objectUpcastedUsages(usagesIn);
@@ -202,7 +202,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       analyzeConflicts(usagesIn, conflicts);
       if (!conflicts.isEmpty()) {
         ConflictsDialog conflictsDialog =
-                new ConflictsDialog(myProject, conflicts);
+          new ConflictsDialog(myProject, conflicts, new Runnable() {
+            public void run() {
+              execute(usagesIn);
+            }
+          });
         conflictsDialog.show();
         if (!conflictsDialog.isOK()){
           if (conflictsDialog.isShowConflicts()) prepareSuccessful();

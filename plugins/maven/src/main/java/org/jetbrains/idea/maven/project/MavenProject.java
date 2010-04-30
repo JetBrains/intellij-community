@@ -265,18 +265,18 @@ public class MavenProject {
       Artifact a = each.getArtifact();
       MavenArtifact ma = convertArtifact(a, nativeToConvertedMap, localRepository);
 
-      MavenArtifactNode.State state = MavenArtifactNode.State.ADDED;
+      MavenArtifactState state = MavenArtifactState.ADDED;
       switch (each.getState()) {
         case DependencyNode.INCLUDED:
           break;
         case DependencyNode.OMITTED_FOR_CONFLICT:
-          state = MavenArtifactNode.State.CONFLICT;
+          state = MavenArtifactState.CONFLICT;
           break;
         case DependencyNode.OMITTED_FOR_DUPLICATE:
-          state = MavenArtifactNode.State.DUPLICATE;
+          state = MavenArtifactState.DUPLICATE;
           break;
         case DependencyNode.OMITTED_FOR_CYCLE:
-          state = MavenArtifactNode.State.CYCLE;
+          state = MavenArtifactState.CYCLE;
           break;
         default:
           MavenLog.LOG.error("unknown dependency node state: " + each.getState());

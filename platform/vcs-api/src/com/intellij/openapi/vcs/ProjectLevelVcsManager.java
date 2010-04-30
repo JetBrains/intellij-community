@@ -15,14 +15,14 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +124,12 @@ public abstract class ProjectLevelVcsManager {
    */
   @Nullable
   public abstract VirtualFile getVcsRootFor(FilePath file);
+
+  @Nullable
+  public abstract VcsRoot getVcsRootObjectFor(final VirtualFile file);
+  
+  @Nullable
+  public abstract VcsRoot getVcsRootObjectFor(FilePath file);
 
   /**
    * Checks if the specified VCS is used by any of the modules in the project.
