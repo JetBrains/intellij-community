@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.formatter;
+package com.intellij.psi.formatter.java;
 
 /**
  * Is intended to hold specific java formatting tests for 'blank lines' settings.
@@ -21,7 +21,7 @@ package com.intellij.psi.formatter;
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:33:00 PM
  */
-public class JavaFormattingBlankLinesTest extends AbstractJavaFormattingTest {
+public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
 
   public void testBlankLinesAroundClassInitializationBlock() throws Exception {
     getSettings().BLANK_LINES_AROUND_METHOD = 3;

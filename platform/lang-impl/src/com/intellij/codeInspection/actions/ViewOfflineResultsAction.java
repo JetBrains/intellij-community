@@ -174,6 +174,12 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
         public boolean isEditable() {
           return false;
         }
+
+        @NotNull
+        @Override
+        public String getDisplayName() {
+          return getName();
+        }
       };
     }
     return showOfflineView(project, resMap, inspectionProfile, title);

@@ -23,6 +23,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JTree> {
   protected TreeToolTipHandler(JTree tree) {
@@ -52,10 +53,9 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
   }
 
   protected Rectangle getCellBounds(Integer key, Component rendererComponent) {
-    int rowIndex = key.intValue();
-    TreePath path = myComponent.getPathForRow(rowIndex);
-    Rectangle cellBounds = myComponent.getPathBounds(path);
-    return cellBounds;
+    final int rowIndex = key.intValue();
+    final TreePath path = myComponent.getPathForRow(rowIndex);
+    return myComponent.getPathBounds(path);
   }
 
   protected Component getRendererComponent(Integer key) {
@@ -85,6 +85,21 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
       }
     }
     return rComponent;
+  }
+
+  @Override
+  protected BufferedImage createImage(int height, int width) {
+    return super.createImage(myComponent.getUI() instanceof UIUtil.MacTreeUI ? height - 1 : height, width);
+  }
+
+  @Override
+  protected void doFillBackground(final int height, final int width, final Graphics2D g) {
+    super.doFillBackground(myComponent.getUI() instanceof UIUtil.MacTreeUI ? height - 1 : height, width, g);
+  }
+
+  @Override
+  protected boolean doPaintBorder(final Integer row) {
+    return !(myComponent.getUI() instanceof UIUtil.MacTreeUI) || !myComponent.isRowSelected(row);
   }
 
   @Override

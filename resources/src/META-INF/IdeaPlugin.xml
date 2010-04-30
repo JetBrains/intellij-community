@@ -679,6 +679,7 @@
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
+    <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
 
     <lang.psiStructureViewFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaStructureViewBuilderFactory"/>
 
@@ -724,6 +725,7 @@
     <console.folding implementation="com.intellij.execution.filters.AuxiliaryCallsFolding"/>
 
     <stackFrameFilter implementation="com.intellij.execution.filters.ReflectionStackFrameFilter"/>
+    <stackFrameFilter implementation="com.intellij.execution.filters.RmiStackFrameFilter"/>
 
     <quoteHandler fileType="JAVA" className="com.intellij.codeInsight.editorActions.JavaQuoteHandler"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
@@ -900,7 +902,7 @@
 
     <directoryIndexExcludePolicy implementation="com.intellij.openapi.roots.impl.ExcludeCompilerOutputPolicy"/>
 
-    <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider"/>
+    <patternDialectProvider implementation="com.intellij.packageDependencies.ui.PackagePatternProvider" id="package" order="before file" />
     <scopeDescriptorProvider implementation="com.intellij.ide.util.scopeChooser.HierarchyScopeDescriptorProvider"/>
 
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>

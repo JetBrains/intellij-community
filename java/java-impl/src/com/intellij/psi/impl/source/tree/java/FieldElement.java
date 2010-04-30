@@ -117,4 +117,10 @@ public class FieldElement extends CompositeElement{
     final PsiClass psiClass = ((PsiField)getPsi()).getContainingClass();
     return psiClass != null ? ChangeUtil.copyElement(this, psiClass.getTypeParameterList(), table) : super.copyElement();
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+  
 }

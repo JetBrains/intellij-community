@@ -525,4 +525,10 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   public void putInfo(Map<String, String> info) {
     PsiClassImpl.putInfo(this, info);
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
 }

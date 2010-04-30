@@ -9,8 +9,8 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="testFramework-java" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="Ant" level="project" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="java-runtime" />
@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="xml-openapi" />
+    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

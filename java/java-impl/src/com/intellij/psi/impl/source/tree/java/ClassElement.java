@@ -429,4 +429,10 @@ public class ClassElement extends CompositeElement implements Constants {
       return -1;
     }
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
 }

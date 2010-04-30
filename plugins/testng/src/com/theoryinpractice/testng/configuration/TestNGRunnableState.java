@@ -23,7 +23,6 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.ExtensionPoints;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -37,15 +36,12 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -54,46 +50,32 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PackageScope;
-import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.util.PathUtil;
+import com.intellij.util.net.NetUtils;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
-import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.testng.TestNG;
-import org.testng.TestNGCommandLineArgs;
 import org.testng.IDEATestNGListener;
 import org.testng.RemoteTestNGStarter;
+import org.testng.TestNGCommandLineArgs;
 import org.testng.annotations.AfterClass;
 import org.testng.remote.strprotocol.MessageHelper;
-import org.testng.xml.LaunchSuite;
-import org.testng.xml.Parser;
-import org.testng.xml.SuiteGenerator;
-import org.testng.xml.XmlSuite;
 
 import javax.swing.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
-import java.util.*;
 
 public class TestNGRunnableState extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("TestNG Runner");
@@ -135,9 +117,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
     console.initUI();
     OSProcessHandler processHandler = startProcess();
-    for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.handleStartProcess(config, processHandler);
-      }
+    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      ext.handleStartProcess(config, processHandler);
+    }
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
@@ -156,8 +138,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
             if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
               toolWindowManager.notifyByBalloon(testRunDebugId,
                                                 resultsView == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
-                                                  ? MessageType.WARNING
-                                                  : (resultsView.getStatus() == MessageHelper.FAILED_TEST ? MessageType.ERROR : MessageType.INFO),
+                                                ? MessageType.WARNING
+                                                : (resultsView.getStatus() == MessageHelper.FAILED_TEST
+                                                   ? MessageType.ERROR
+                                                   : MessageType.INFO),
                                                 resultsView == null ? "Tests were not started" : resultsView.getStatusLine(), null, null);
             }
           }
@@ -250,7 +234,13 @@ public class TestNGRunnableState extends JavaCommandLineState {
       JavaParametersUtil.configureModule(config.getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
     }
-    calculateServerPort();
+
+    try {
+      port = NetUtils.findAvailableSocketPort();
+    }
+    catch (IOException e) {
+      throw new ExecutionException("Unable to bind to port " + port, e);
+    }
 
     final TestData data = config.getPersistantData();
 
@@ -310,151 +300,13 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
       javaParameters.getProgramParametersList().add(TestNGCommandLineArgs.SRC_COMMAND_OPT, sb.toString());
     }
-
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        Map<PsiClass, Collection<PsiMethod>> classes = new HashMap<PsiClass, Collection<PsiMethod>>();
-        try {
-          fillTestObjects(classes, project, is15);
-
-
-          //if we have testclasses, then we're not running a suite and we have to create one
-          //LaunchSuite suite = null;
-          //
-          //if(testPackage != null) {
-          //    List<String> packages = new ArrayList<String>(1);
-          //    packages.add(testPackage.getQualifiedName());
-          //    suite = SuiteGenerator.createCustomizedSuite(config.project.getName(), packages, null, null, null, data.TEST_PROPERTIES, is15 ? null : "javadoc", 0);
-          //} else
-          if (classes.size() > 0) {
-            Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
-            for (final Map.Entry<PsiClass, Collection<PsiMethod>> entry : classes.entrySet()) {
-              Collection<String> methods = new HashSet<String>(entry.getValue().size());
-              for (PsiMethod method : entry.getValue()) {
-                methods.add(method.getName());
-              }
-              map.put(ApplicationManager.getApplication().runReadAction(
-                  new Computable<String>() {
-                    @Nullable
-                    public String compute() {
-                      return entry.getKey().getQualifiedName();
-                    }
-                  }
-              ), methods);
-            }
-            // We have groups we wish to limit to.
-            Collection<String> groupNames = null;
-            if (TestType.GROUP.getType().equals(data.TEST_OBJECT)) {
-              String groupName = data.getGroupName();
-              if (groupName != null && groupName.length() > 0) {
-                groupNames = new HashSet<String>(1);
-                groupNames.add(groupName);
-              }
-            }
-
-            Map<String, String> testParams = buildTestParameters(data);
-
-            String annotationType = data.ANNOTATION_TYPE;
-            if (annotationType == null || "".equals(annotationType)) {
-              annotationType = is15 ? TestNG.JDK_ANNOTATION_TYPE : TestNG.JAVADOC_ANNOTATION_TYPE;
-            }
-
-            LOG.info("Using annotationType of " + annotationType);
-
-            int logLevel = 1;
-            try {
-              final Properties properties = new Properties();
-              properties.load(new ByteArrayInputStream(config.getPersistantData().VM_PARAMETERS.getBytes()));
-              final String verbose = properties.getProperty("-Dtestng.verbose");
-              if (verbose != null) {
-                logLevel = Integer.parseInt(verbose);
-              }
-            }
-            catch (Exception e) { //not a number
-              logLevel = 1;
-            }
-
-            LaunchSuite suite = SuiteGenerator.createSuite(project.getName(), null, map, groupNames, testParams, annotationType, logLevel);
-
-            File xmlFile = suite.save(new File(PathManager.getSystemPath()));
-            String path = xmlFile.getAbsolutePath() + "\n";
-            try {
-              FileUtil.writeToFile(myTempFile, path.getBytes(), true);
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-          }
-          else if (TestType.SUITE.getType().equals(data.TEST_OBJECT)) {
-            // Running a suite, make a local copy of the suite and apply our custom parameters to it and run that instead.
-
-            try {
-              Collection<XmlSuite> suites;
-              FileInputStream in = new FileInputStream(data.getSuiteName());
-              try {
-                suites = new Parser(in).parse();
-              }
-              finally {
-                in.close();
-              }
-              for (XmlSuite suite : suites) {
-                Map<String, String> params = suite.getParameters();
-
-                params.putAll(buildTestParameters(data));
-
-                String annotationType = data.ANNOTATION_TYPE;
-                if (annotationType != null && !"".equals(annotationType)) {
-                  suite.setAnnotations(annotationType);
-                }
-                LOG.info("Using annotationType of " + annotationType);
-
-                final String fileId =
-                  (project.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml")
-                    .replace(' ', '_');
-                final File suiteFile = new File(PathManager.getSystemPath(), fileId);
-                FileWriter fileWriter = new FileWriter(suiteFile);
-                try {
-                  fileWriter.write(suite.toXml());
-                }
-                finally {
-                  fileWriter.close();
-                }
-                String path = suiteFile.getAbsolutePath() + "\n";
-                FileUtil.writeToFile(myTempFile, path.getBytes(), true);
-              }
-            }
-            catch (Exception e) {
-              throw new CantRunException("Unable to parse suite: " + e.getMessage());
-            }
-          }
-
-          try {
-            FileUtil.writeToFile(myTempFile, "end".getBytes(), true);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-        catch (CantRunException e) {
-          try {
-            final String message = "CantRunException" + e.getMessage();
-            FileUtil.writeToFile(myTempFile, message.getBytes());
-          }
-          catch (IOException e1) {
-            LOG.error(e1);
-          }
-        }
-      }
-    };
     try {
+      final ServerSocket serverSocket = new ServerSocket(0);
+      javaParameters.getProgramParametersList().add("-socket" + serverSocket.getLocalPort());
       myTempFile = File.createTempFile("idea_testng", ".tmp");
       myTempFile.deleteOnExit();
       javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching For Tests ...", true) {
-        public void run(@NotNull ProgressIndicator indicator) {
-          runnable.run();
-        }
-      });
+      ProgressManager.getInstance().run(new SearchingForTestsTask(serverSocket, is15, config, myTempFile));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -475,225 +327,5 @@ public class TestNGRunnableState extends JavaCommandLineState {
     }
 
     return javaParameters;
-  }
-
-  protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes, final Project project, boolean is15) throws CantRunException {
-    final TestData data = config.getPersistantData();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
-      final String packageName = data.getPackageName();
-      PsiPackage psiPackage = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiPackage>() {
-            @Nullable
-            public PsiPackage compute() {
-              return JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
-            }
-          }
-      );
-      if (psiPackage == null) {
-        throw CantRunException.packageNotFound(packageName);
-      }
-      else {
-        TestSearchScope scope = config.getPersistantData().getScope();
-        //TODO we should narrow this down by module really, if that's what's specified
-        TestClassFilter projectFilter = new TestClassFilter(scope.getSourceScope(config).getGlobalSearchScope(), config.getProject(), true);
-        TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
-        classes.putAll(calculateDependencies(null, is15, TestNGUtil.getAllTestClasses(filter, false)));
-        if (classes.size() == 0) {
-          throw new CantRunException("No tests found in the package \"" + packageName + '\"');
-        }
-      }
-    }
-    else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
-      //it's a class
-      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiClass>() {
-            @Nullable
-            public PsiClass compute() {
-              return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(data.getMainClassName(), getSearchScope());
-            }
-          }
-      );
-      if (psiClass == null) {
-        throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
-      }
-      if (null == ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Nullable
-        public String compute() {
-          return psiClass.getQualifiedName();
-        }
-      })) {
-        throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
-      }
-      classes.putAll(calculateDependencies(null, is15, psiClass));
-    }
-    else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
-      //it's a method
-      final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiClass>() {
-            @Nullable
-            public PsiClass compute() {
-              return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(data.getMainClassName(), getSearchScope());
-            }
-          }
-      );
-      if (psiClass == null) {
-        throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
-      }
-      if (null == ApplicationManager.getApplication().runReadAction(
-          new Computable<String>() {
-            @Nullable
-            public String compute() {
-              return psiClass.getQualifiedName();
-            }
-          }
-      )) {
-        throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
-      }
-      final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiMethod[]>() {
-            public PsiMethod[] compute() {
-              return psiClass.findMethodsByName(data.getMethodName(), true);
-            }
-          }
-      );
-      classes.putAll(calculateDependencies(methods, is15, psiClass));
-      Collection<PsiMethod> psiMethods = classes.get(psiClass);
-      if (psiMethods == null) {
-        psiMethods = new LinkedHashSet<PsiMethod>();
-        classes.put(psiClass, psiMethods);
-      }
-      psiMethods.addAll(Arrays.asList(methods));
-    }
-    else if (data.TEST_OBJECT.equals(TestType.GROUP.getType())) {
-      //for a group, we include all classes
-      PsiClass[] testClasses = TestNGUtil
-        .getAllTestClasses(new TestClassFilter(data.getScope().getSourceScope(config).getGlobalSearchScope(), project, true), false);
-      for (PsiClass c : testClasses) {
-        classes.put(c, new HashSet<PsiMethod>());
-      }
-    }
-  }
-
-  private static Map<String, String> buildTestParameters(TestData data) {
-    Map<String, String> testParams = new HashMap<String, String>();
-
-    // Override with those from the test runner configuration
-    testParams.putAll(convertPropertiesFileToMap(data.PROPERTIES_FILE));
-    testParams.putAll(data.TEST_PROPERTIES);
-
-    return testParams;
-  }
-
-  private static Map<String, String> convertPropertiesFileToMap(String properties_file) {
-    Map<String, String> params = new HashMap<String, String>();
-
-    if (properties_file != null) {
-      File propertiesFile = new File(properties_file);
-      if (propertiesFile.exists()) {
-
-        Properties properties = new Properties();
-        try {
-          properties.load(new FileInputStream(propertiesFile));
-          for (Map.Entry entry : properties.entrySet()) {
-            params.put((String) entry.getKey(), (String) entry.getValue());
-          }
-
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-    }
-    return params;
-  }
-
-  private void calculateServerPort() throws ExecutionException {
-    port = 5000;
-    int counter = 0;
-    IOException exception = null;
-    ServerSocket socket = null;
-    while (counter++ < 10) {
-      try {
-        socket = new ServerSocket(port);
-        break;
-      }
-      catch (IOException ex) {
-        //we keep trying
-        exception = ex;
-        port = 5000 + (int) (Math.random() * 5000);
-      }
-      finally {
-        if (socket != null) {
-          try {
-            socket.close();
-          }
-          catch (IOException e) {
-          }
-        }
-      }
-    }
-
-    if (socket == null) {
-      throw new ExecutionException("Unable to bind to port " + port, exception);
-    }
-  }
-
-  private Map<PsiClass, Collection<PsiMethod>> calculateDependencies(PsiMethod[] methods, final boolean is15, @Nullable final PsiClass... classes) {
-    //we build up a list of dependencies
-    final Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
-    if (classes != null && classes.length > 0) {
-      final Set<String> dependencies = new HashSet<String>();
-      TestNGUtil.collectAnnotationValues(dependencies, "dependsOnGroups", methods, classes);
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run(){
-              if (!dependencies.isEmpty()) {
-              final Project project = classes[0].getProject();
-              //we get all classes in the module to figure out which are in the groups we depend on
-              Collection<PsiClass> allClasses;
-              if (!is15) {
-                allClasses = AllClassesSearch.search(getSearchScope(), project).findAll();
-                Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
-                //we now have a list of dependencies, and a list of classes that match those dependencies
-                results.putAll(filteredClasses);
-              }
-              else {
-                final PsiClass testAnnotation =
-                  JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
-                LOG.assertTrue(testAnnotation != null);
-                for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
-                  if (TestNGUtil
-                    .isAnnotatedWithParameter(AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN), "groups", dependencies)) {
-                    final PsiClass psiClass = psiMember instanceof PsiClass ? ((PsiClass)psiMember) : psiMember.getContainingClass();
-                    Collection<PsiMethod> psiMethods = results.get(psiClass);
-                    if (psiMethods == null) {
-                      psiMethods = new LinkedHashSet<PsiMethod>();
-                      results.put(psiClass, psiMethods);
-                    }
-                    if (psiMember instanceof PsiMethod) {
-                      psiMethods.add((PsiMethod)psiMember);
-                    }
-                  }
-                }
-              }
-            }
-          }
-      });
-
-      if (methods == null) {
-        for (PsiClass c : classes) {
-          results.put(c, new LinkedHashSet<PsiMethod>());
-        }
-      }
-    }
-    return results;
-  }
-
-  private GlobalSearchScope getSearchScope() {
-    final TestData data = config.getPersistantData();
-    final Module module = config.getConfigurationModule().getModule();
-    return data.TEST_OBJECT.equals(TestType.PACKAGE.getType())
-           ? config.getPersistantData().getScope().getSourceScope(config).getGlobalSearchScope()
-           : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(config.getProject());
   }
 }

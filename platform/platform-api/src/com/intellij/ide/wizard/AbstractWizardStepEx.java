@@ -94,5 +94,9 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
 
   @Nullable
   public abstract JComponent getPreferredFocusedComponent();
-  
+
+  public String getHelpId() {
+    return null;
+  }
+
 }

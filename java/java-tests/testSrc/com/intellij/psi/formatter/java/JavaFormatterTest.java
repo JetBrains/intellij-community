@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -21,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
  * java formatting test classes.
  */
 @SuppressWarnings({"Deprecation"})
-public class JavaFormatterTest extends AbstractJavaFormattingTest {
+public class JavaFormatterTest extends AbstractJavaFormatterTest {
 
   public void testForEach() throws Exception {
     doTest("ForEach.java", "ForEach_after.java");
@@ -1971,137 +1971,6 @@ public class JavaFormatterTest extends AbstractJavaFormattingTest {
     settings.getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
     settings.getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 2;
     doTest();
-  }
-
-  public void testIDEADEV_3666() throws Exception {
-    getSettings().SPACE_AFTER_COMMA = true;
-
-    doTextTest("class Foo {\n" + "Map<String,String> map() {}\n" + "}",
-               "class Foo {\n" + "    Map<String, String> map() {\n" + "    }\n" + "}");
-  }
-
-  public void testIDEADEV_18529() throws Exception {
-    doTextTest("public class TestBed\n" +
-               "{\n" +
-               "    public void methodOne()\n" +
-               "    {\n" +
-               "        //code...\n" +
-               "    }\n" +
-               "\n" +
-               "    @SomeAnnotation\n" +
-               "            <T extends Comparable> void methodTwo(T item) {\n" +
-               "        //code...\n" +
-               "    }\n" +
-               "\n" +
-               "    private void methodThree(String s) {\n" +
-               "        //code...\n" +
-               "    }\n" +
-               "}", "public class TestBed {\n" +
-                    "    public void methodOne() {\n" +
-                    "        //code...\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    @SomeAnnotation\n" +
-                    "    <T extends Comparable> void methodTwo(T item) {\n" +
-                    "        //code...\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    private void methodThree(String s) {\n" +
-                    "        //code...\n" +
-                    "    }\n" +
-                    "}");
-  }
-
-
- public void testIDEA_18299() throws Exception {
-   getSettings().RIGHT_MARGIN = 80;
-   getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
-   doTextTest(
-     "@AttributeOverrides( { @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\"))," +
-     "@AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\"))," +
-     "@AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\"))," +
-     "@AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\"))," +
-     "@AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\"))," +
-     "@AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\"))," +
-     "@AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false))," +
-     "@AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\"))," +
-     "@AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\")) })\n" +
-     "class Foo {\n" +
-     "}",
-     "@AttributeOverrides({\n" +
-     "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
-     "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
-     "        @AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\")),\n" +
-     "        @AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\")),\n" +
-     "        @AttributeOverride(name = \"currency\", column = @Column(name = \"local_currency\")),\n" +
-     "        @AttributeOverride(name = \"exchangeRate\", column = @Column(name = \"exchange_rate\")),\n" +
-     "        @AttributeOverride(name = \"exchangeRateDate\", column = @Column(name = \"recovery_date\", insertable = false, updatable = false)),\n" +
-     "        @AttributeOverride(name = \"exchangeRateAlterationJustification\", column = @Column(name = \"exchange_rate_justification\")),\n" +
-     "        @AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\"))})\n" +
-     "class Foo {\n" +
-     "}"
-   );
- }
-
-  public void testIDEA_18051() throws Exception {
-    getSettings().RIGHT_MARGIN = 80;
-    doTextTest("package formatting;\n" +
-               "\n" +
-               "public class EnumInAnnotationFormatting {\n" +
-               "\n" +
-               "    public enum TheEnum {\n" +
-               "\n" +
-               "        FIRST,\n" +
-               "        SECOND,\n" +
-               "        THIRD,\n" +
-               "\n" +
-               "    }\n" +
-               "\n" +
-               "    public @interface TheAnnotation {\n" +
-               "\n" +
-               "        TheEnum[] value();\n" +
-               "\n" +
-               "        String comment();\n" +
-               "\n" +
-               "    }\n" +
-               "\n" +
-               "\n" +
-               "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
-               "    public class Test {\n" +
-               "\n" +
-               "    }\n" +
-               "\n" +
-               "}", "package formatting;\n" +
-                    "\n" +
-                    "public class EnumInAnnotationFormatting {\n" +
-                    "\n" +
-                    "    public enum TheEnum {\n" +
-                    "\n" +
-                    "        FIRST,\n" +
-                    "        SECOND,\n" +
-                    "        THIRD,\n" +
-                    "\n" +
-                    "    }\n" +
-                    "\n" +
-                    "    public @interface TheAnnotation {\n" +
-                    "\n" +
-                    "        TheEnum[] value();\n" +
-                    "\n" +
-                    "        String comment();\n" +
-                    "\n" +
-                    "    }\n" +
-                    "\n" +
-                    "\n" +
-                    "    @TheAnnotation(value = {TheEnum.FIRST, TheEnum.SECOND}, comment = \"some long comment that goes longer that right margin 012345678901234567890\")\n" +
-                    "    public class Test {\n" +
-                    "\n" +
-                    "    }\n" +
-                    "\n" +
-                    "}");
-  }
-
-  public void testIDEA_17870() throws Exception {
-    doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
   }
 
   public void testIDEA_16151() throws Exception {

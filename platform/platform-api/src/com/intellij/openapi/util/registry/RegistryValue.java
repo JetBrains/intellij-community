@@ -140,6 +140,10 @@ public class RegistryValue {
     setValue(Boolean.valueOf(value).toString());
   }
 
+  public void setValue(int value) {
+    setValue(Integer.valueOf(value).toString());
+  }
+
   public void setValue(String value) {
     resetCache();
 
