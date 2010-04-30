@@ -257,6 +257,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return myList.getSelectedIndex();
   }
 
+  protected Rectangle getCellBounds(int i) {
+    return myList.getCellBounds(i, i);
+  }
+
   public void disposeChildren() {
     setIndexForShowingChild(-1);
     super.disposeChildren();
@@ -368,21 +372,24 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     @Override
     public void mousePressed(MouseEvent e) {
       if (!isActionClick(e)) return;
-
-      boolean handleFinalChoices = true;
       final Object selectedValue = myList.getSelectedValue();
       final ListPopupStep<Object> listStep = getListStep();
-      if (selectedValue != null && listStep.hasSubstep(selectedValue) && listStep.isSelectable(selectedValue)) {
-        final int index = myList.getSelectedIndex();
-        final Rectangle bounds = myList.getCellBounds(index, index);
-        final Point point = e.getPoint();
-        if (point.getX() > bounds.width + bounds.getX() - PopupIcons.HAS_NEXT_ICON.getIconWidth()) { //press on handle icon
-          handleFinalChoices = false;
-        }
-      }
-      handleSelect(handleFinalChoices, e);
+      handleSelect(handleFinalChoices(e, selectedValue, listStep), e);
       stopTimer();
     }
+  }
+
+  protected boolean handleFinalChoices(MouseEvent e, Object selectedValue, ListPopupStep<Object> listStep) {
+    boolean handleFinalChoices = true;
+    if (selectedValue != null && listStep.hasSubstep(selectedValue) && listStep.isSelectable(selectedValue)) {
+      final int index = myList.getSelectedIndex();
+      final Rectangle bounds = myList.getCellBounds(index, index);
+      final Point point = e.getPoint();
+      if (point.getX() > bounds.width + bounds.getX() - PopupIcons.HAS_NEXT_ICON.getIconWidth()) { //press on handle icon
+        handleFinalChoices = false;
+      }
+    }
+    return handleFinalChoices;
   }
 
   protected void process(KeyEvent aEvent) {
