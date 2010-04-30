@@ -75,7 +75,8 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
       final Instruction instruction = instructions[i];
       if (instruction instanceof ReadWriteInstruction) {
         final String name = ((ReadWriteInstruction)instruction).getName();
-        if (name == null) {
+        // Ignore empty or wildcards names
+        if (name == null || "_".equals(name)) {
           continue;
         }
         final PsiElement element = instruction.getElement();
