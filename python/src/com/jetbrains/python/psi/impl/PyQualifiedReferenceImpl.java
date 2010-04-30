@@ -8,10 +8,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -37,7 +34,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
 
     // regular attributes
     PyType qualifierType = qualifier.getType(TypeEvalContext.fast());
-    if (qualifierType != null) {
+    if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
       if (qualifier instanceof PyQualifiedExpression) {
         // enrich the type info with any fields assigned nearby
         List<PyQualifiedExpression> qualifier_path = PyResolveUtil.unwindQualifiers((PyQualifiedExpression)qualifier);
@@ -76,7 +73,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
         }
       }
       else if (qualifier instanceof PyReferenceExpression) {
-        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference().resolve();
+        PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference(myContext).resolve();
         if (qual_object instanceof PyDocStringOwner) {
           docstring = ((PyDocStringOwner)qual_object).getDocStringExpression();
         }

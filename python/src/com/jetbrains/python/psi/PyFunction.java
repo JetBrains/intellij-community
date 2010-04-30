@@ -31,7 +31,6 @@ public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyS
   @NotNull
   PyParameterList getParameterList();
 
-  @NotNull
   PyStatementList getStatementList();
 
   @Nullable
@@ -49,6 +48,9 @@ public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyS
 
   @Nullable
   PyType getReturnType();
+
+  @Nullable
+  PyType getReturnTypeFromDocString();
 
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().

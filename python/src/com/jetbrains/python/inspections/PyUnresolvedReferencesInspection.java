@@ -249,6 +249,14 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     }
 
     @Override
+    public void visitPyTargetExpression(PyTargetExpression node) {
+      final PyExpression qualifier = node.getQualifier();
+      if (qualifier != null) {
+        qualifier.accept(this);
+      }
+    }
+
+    @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
       for (final PsiReference reference : node.getReferences()) {

@@ -6,7 +6,6 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.ImplicitResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyReturnTypeReference;
@@ -96,8 +95,13 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             return providedType;
           }
           if (target instanceof PyFunction) {
+            final PyFunction function = (PyFunction)target;
             if (context.allowReturnTypes()) {
-              return ((PyFunction) target).getReturnType();
+              return function.getReturnType();
+            }
+            final PyType docStringType = function.getReturnTypeFromDocString();
+            if (docStringType != null) {
+              return docStringType;
             }
             return new PyReturnTypeReference((PyFunction)target);
           }

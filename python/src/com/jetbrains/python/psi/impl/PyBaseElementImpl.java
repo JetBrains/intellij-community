@@ -78,8 +78,8 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   }
 
   @Nullable
-  protected static <T extends PyElement> T childToPsi(final PyElement element, IElementType elType) {
-    final ASTNode node = element.getNode().findChildByType(elType);
+  protected <T extends PyElement> T childToPsi(IElementType elType) {
+    final ASTNode node = getNode().findChildByType(elType);
     if (node == null) {
       return null;
     }
@@ -100,7 +100,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
   @NotNull
   protected <T extends PyElement> T childToPsiNotNull(IElementType elType) {
-    final PyElement child = childToPsi(this, elType);
+    final PyElement child = childToPsi(elType);
     if (child == null) {
       throw new RuntimeException("child must not be null");
     }

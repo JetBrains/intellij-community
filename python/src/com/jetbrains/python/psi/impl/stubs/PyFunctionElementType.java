@@ -32,17 +32,19 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   }
 
   public PyFunctionStub createStub(final PyFunction psi, final StubElement parentStub) {
-    return new PyFunctionStubImpl(psi.getName(), parentStub);
+    return new PyFunctionStubImpl(psi.getName(), ((PyFunctionImpl) psi).extractDocStringReturnType(), parentStub);
   }
 
   public void serialize(final PyFunctionStub stub, final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
+    dataStream.writeName(stub.getReturnTypeFromDocString());
   }
 
   public PyFunctionStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
-    return new PyFunctionStubImpl(name, parentStub);
+    StringRef returnType = dataStream.readName();
+    return new PyFunctionStubImpl(name, returnType != null ? returnType.getString() : null, parentStub);
   }
 
   public void indexStub(final PyFunctionStub stub, final IndexSink sink) {

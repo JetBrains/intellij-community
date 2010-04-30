@@ -11,14 +11,19 @@ import com.jetbrains.python.psi.stubs.PyFunctionStub;
 
 public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFunctionStub {
   private final String myName;
+  private final String myReturnTypeFromDocString;
 
-  public PyFunctionStubImpl(final String name, final StubElement parent) {
+  public PyFunctionStubImpl(final String name, final String returnTypeFromDocString, final StubElement parent) {
     super(parent, PyElementTypes.FUNCTION_DECLARATION);
     myName = name;
+    myReturnTypeFromDocString = returnTypeFromDocString;
   }
 
   public String getName() {
     return myName;
   }
 
+  public String getReturnTypeFromDocString() {
+    return myReturnTypeFromDocString;
+  }
 }
