@@ -6,20 +6,27 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.util.Function;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.ListPopupModel;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -27,11 +34,54 @@ import java.util.List;
  * @author ven
  */
 public class SwitchCoverageSuiteAction extends AnAction {
+  public static final Icon CLEAN_ICON = IconLoader.getIcon("/actions/clean.png");
+
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final DefaultListModel model = new DefaultListModel();
-    final CoverageDataManagerImpl coverageManager = (CoverageDataManagerImpl)CoverageDataManager.getInstance(project);
-    coverageManager.fireBeforeSuiteChosen();
+    final CoverageDataManager coverageManager = CoverageDataManager.getInstance(project);
+    final ArrayList<CoverageSuite> model = new ArrayList<CoverageSuite>();
+    final List<CoverageSuite> firstInGroup = new ArrayList<CoverageSuite>();
+    fillCoverageSuites(model, firstInGroup, coverageManager);
+    final ListPopupImpl listPopup = new DeletableItemsListPopup(new CoverageSuitesListPopupStep(model, coverageManager)){
+
+      @Override
+      protected void removeSelectedItem(final JList list) {
+        final Object value = list.getSelectedValue();
+        if (value != null) {
+          final CoverageSuite suite = (CoverageSuite)value;
+          JBPopupFactory.getInstance()
+            .createConfirmation(CodeInsightBundle.message("prompt.remove.coverage", suite.getPresentableName()), new Runnable() {
+              public void run() {
+                coverageManager.removeCoverageSuite(suite);
+                ((ListPopupModel)list.getModel()).deleteItem(value);
+              }
+            }, 0).showInCenterOf(list);
+        }
+      }
+
+      @Override
+      protected ListCellRenderer getListElementRenderer() {
+        return new MyCellRenderer(coverageManager) {
+          @Override
+          protected boolean hasSeparatorAbove(CoverageSuite suite) {
+            return suite == null || (suite != model.get(0) && firstInGroup.contains(suite));
+          }
+        };
+      }
+    };
+
+    listPopup.showCenteredInCurrentWindow(project);
+  }
+
+  public void update(AnActionEvent e) {
+    super.update(e);
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    e.getPresentation().setEnabled(project != null && CoverageDataManager.getInstance(project).getSuites().length > 0);
+  }
+
+  private static void fillCoverageSuites(final ArrayList<CoverageSuite> model,
+                                         final List<CoverageSuite> firstInGroup,
+                                         final CoverageDataManager coverageManager) {
     final CoverageSuite[] suites = coverageManager.getSuites();
     final Map<String, List<CoverageSuite>> grouped = new TreeMap<String, List<CoverageSuite>>();
     for (CoverageSuite suite : suites) {
@@ -49,7 +99,7 @@ public class SwitchCoverageSuiteAction extends AnAction {
       }
     }
 
-    final List<CoverageSuite> firstInGroup = new ArrayList<CoverageSuite>();
+
     for (String provider : grouped.keySet()) {
       final List<CoverageSuite> toSort = grouped.get(provider);
       if (toSort.isEmpty()) continue;
@@ -59,54 +109,11 @@ public class SwitchCoverageSuiteAction extends AnAction {
         }
       });
       for (CoverageSuite suite : toSort) {
-        model.addElement(suite);
+        model.add(suite);
       }
       firstInGroup.add(toSort.get(0));
     }
-    model.addElement(null);
-
-    final JList list = new JList(model);
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(new MyCellRenderer(coverageManager) {
-      protected boolean hasSeparatorAbove(final CoverageSuite suite) {
-        return suite == null || (suite != model.getElementAt(0) && firstInGroup.contains(suite));
-      }
-    });
-
-    final Runnable chosen = new Runnable(){
-      public void run() {
-        final CoverageSuite suite = (CoverageSuite)list.getSelectedValue();
-        coverageManager.chooseSuite(suite);
-      }
-    };
-
-    final JBPopup popup = new PopupChooserBuilder(list).
-      setTitle(CodeInsightBundle.message("title.popup.show.coverage")).
-      setMovable(true).
-      setItemChoosenCallback(chosen).  
-      setFilteringEnabled(new Function<Object, String>() {
-        public String fun(Object o) {
-          if (o instanceof CoverageSuite) {
-            return ((CoverageSuite)o).getPresentableName();
-          }
-          return CodeInsightBundle.message("no.coverage");
-        }
-      }).
-      createPopup();
-
-    list.registerKeyboardAction(
-      new RemoveSuiteAction(list, coverageManager, model, popup, chosen),
-      KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
-      JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
-    );
-
-    popup.showCenteredInCurrentWindow(project);
-  }
-
-  public void update(AnActionEvent e) {
-    super.update(e);
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    e.getPresentation().setEnabled(project != null && CoverageDataManager.getInstance(project).getSuites().length > 0);
+    model.add(null);
   }
 
   private static abstract class MyCellRenderer extends ColoredListCellRenderer {
@@ -121,13 +128,20 @@ public class SwitchCoverageSuiteAction extends AnAction {
     public Component getListCellRendererComponent(final JList list,
                                                   final Object value, final int index, final boolean isSelected, final boolean cellHasFocus) {
       final Component coloredComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      CoverageSuite suite = (CoverageSuite)value;
-      JPanel panel = new JPanel(new BorderLayout());
+      setPaintFocusBorder(false);
+      final CoverageSuite suite = (CoverageSuite)value;
+      final JPanel panel = new JPanel(new BorderLayout());
       panel.add(coloredComponent, BorderLayout.CENTER);
       if (hasSeparatorAbove(suite)) {
         final TitledSeparator titledSeparator = new TitledSeparator();
         titledSeparator.setOpaque(false);
         panel.add(titledSeparator, BorderLayout.NORTH);
+      }
+      if (isSelected && suite != null) {
+        final JLabel label = new JLabel(CLEAN_ICON);
+        label.setOpaque(true);
+        label.setBackground(UIUtil.getListSelectionBackground());
+        panel.add(label, BorderLayout.EAST);
       }
       panel.setBackground(UIUtil.getListBackground());
       return panel;
@@ -145,41 +159,113 @@ public class SwitchCoverageSuiteAction extends AnAction {
         append(date, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension preferredSize = super.getPreferredSize();
+      return new Dimension(preferredSize.width + CLEAN_ICON.getIconWidth(), preferredSize.height);
+    }
   }
 
-  private static class RemoveSuiteAction extends AbstractAction {
-    private final JList myList;
-    private final CoverageDataManager myCoverageManager;
-    private final DefaultListModel myModel;
-    private final JBPopup myPopup;
-    private final Runnable myChooseSuiteRunnable;
+  private static class CoverageSuitesListPopupStep extends BaseListPopupStep<CoverageSuite> {
+    private final CoverageDataManager myCoverageDataManager;
 
-    public RemoveSuiteAction(final JList list, final CoverageDataManager coverageManager,
-                             final DefaultListModel model,
-                             final JBPopup popup, final Runnable chooseSuite) {
-      myList = list;
-      myCoverageManager = coverageManager;
-      myModel = model;
-      myPopup = popup;
-      myChooseSuiteRunnable = chooseSuite;
+    public CoverageSuitesListPopupStep(List<CoverageSuite> aValues, CoverageDataManager coverageDataManager) {
+      super(CodeInsightBundle.message("title.popup.show.coverage"), aValues);
+      myCoverageDataManager = coverageDataManager;
     }
 
-    public void actionPerformed(ActionEvent e) {
-      final Object value = myList.getSelectedValue();
-      if (value != null) {
-        final CoverageSuite suite = (CoverageSuite)value;
-        JBPopupFactory.getInstance()
-          .createConfirmation(CodeInsightBundle.message("prompt.remove.coverage", suite.getPresentableName()), new Runnable() {
-            public void run() {
-              myCoverageManager.removeCoverageSuite(suite);
-              myModel.removeElement(value);
-              if (myModel.getSize() == 1) {
-                myPopup.cancel();
-                myChooseSuiteRunnable.run();
-              }
-            }
-          }, 0).showInCenterOf(myList);
+    @Override
+    public boolean isSpeedSearchEnabled() {
+      return true;
+    }
+
+    @Override
+    public PopupStep onChosen(CoverageSuite selectedValue, boolean finalChoice) {
+      ((CoverageDataManagerImpl)myCoverageDataManager).fireBeforeSuiteChosen();
+      myCoverageDataManager.chooseSuite(selectedValue);
+      return FINAL_CHOICE;
+    }
+
+    @Override
+    public boolean isAutoSelectionEnabled() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getTextFor(CoverageSuite suite) {
+      if (suite != null) {
+        return suite.getPresentableName();
       }
+      return CodeInsightBundle.message("no.coverage");
+    }
+  }
+
+  private static abstract class DeletableItemsListPopup extends ListPopupImpl {
+
+    public DeletableItemsListPopup(ListPopupStep step) {
+      super(step);
+      setAdText("Press DEL to delete");
+    }
+
+    @Override
+    protected JComponent createContent() {
+      final JList content = (JList)super.createContent();
+      content.registerKeyboardAction(
+        new AbstractAction() {
+          public void actionPerformed(ActionEvent e) {
+            removeSelectedItem(content);
+          }
+        },
+        KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
+        JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT
+      );
+      return content;
+    }
+
+    @Override
+    public void handleSelect(final boolean handleFinalChoices, final InputEvent e) {
+      if (!handleFinalChoices) {
+        removeSelectedItem((JList)e.getComponent());
+        disposeAllParents(e);
+        return;
+      }
+      super.handleSelect(handleFinalChoices, e);
+    }
+
+    @Override
+    protected boolean handleFinalChoices(MouseEvent e, Object selectedValue, ListPopupStep<Object> listStep) {
+      if (selectedValue != null) {
+        final Rectangle bounds = getCellBounds(getSelectedIndex());
+        if (e.getPoint().getX() > bounds.width + bounds.getX() - CLEAN_ICON.getIconWidth()) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    protected abstract void removeSelectedItem(final JList list);
+
+    @Override
+    protected ListCellRenderer getListElementRenderer() {
+      return new PopupListElementRenderer(this) {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          final Component component = super.getListCellRendererComponent(list, value, index, isSelected,
+                                                                         cellHasFocus);
+          final JPanel panel = new JPanel(new BorderLayout());
+          panel.add(component, BorderLayout.CENTER);
+          if (isSelected) {
+            final JLabel label = new JLabel(CLEAN_ICON);
+            label.setOpaque(true);
+            label.setBackground(UIUtil.getListSelectionBackground());
+            panel.add(label, BorderLayout.EAST);
+          }
+          panel.setBackground(UIUtil.getListBackground());
+          return panel;
+        }
+      };
     }
   }
 }
