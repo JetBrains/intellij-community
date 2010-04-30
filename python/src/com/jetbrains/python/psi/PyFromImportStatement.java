@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Describes "from ... import" statements.
  */
-public interface PyFromImportStatement extends PyStatement, StubBasedPsiElement<PyFromImportStatementStub> {
+public interface PyFromImportStatement extends PyImportStatementBase, StubBasedPsiElement<PyFromImportStatementStub> {
   boolean isStarImport();
 
   /**
@@ -19,11 +19,6 @@ public interface PyFromImportStatement extends PyStatement, StubBasedPsiElement<
 
   @Nullable
   PyQualifiedName getImportSourceQName();
-
-  /**
-   * @return elements that constitute the "import" clause
-   */
-  PyImportElement[] getImportElements();
 
   /**
    * @return the star in "from ... import *"

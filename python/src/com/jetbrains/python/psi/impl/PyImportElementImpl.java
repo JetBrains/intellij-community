@@ -226,4 +226,9 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   public boolean mustResolveOutside() {
     return true; // formally
   }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyImportElement(this);
+  }
 }

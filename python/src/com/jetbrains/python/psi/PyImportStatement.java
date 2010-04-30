@@ -6,6 +6,5 @@ import com.jetbrains.python.psi.stubs.PyImportStatementStub;
 /**
  * @author yole
  */
-public interface PyImportStatement extends PyStatement, StubBasedPsiElement<PyImportStatementStub> {
-  PyImportElement[] getImportElements();
+public interface PyImportStatement extends PyImportStatementBase, StubBasedPsiElement<PyImportStatementStub> {
 }

@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElementVisitor;
-import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl;
 
 /**
  * Visitor for python-specific nodes.
@@ -213,5 +212,9 @@ public class PyElementVisitor extends PsiElementVisitor {
 
   public void visitPySubscriptionExpression(PySubscriptionExpression node) {
     visitPyExpression(node);
+  }
+
+  public void visitPyImportElement(PyImportElement node) {
+    visitPyElement(node);
   }
 }

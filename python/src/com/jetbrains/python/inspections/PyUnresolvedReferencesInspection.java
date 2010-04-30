@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.patterns.Matcher;
 import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
+import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -39,6 +40,8 @@ import java.util.*;
  * Date: Nov 15, 2008
  */
 public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
+  private final ThreadLocal<Visitor> myLastVisitor = new ThreadLocal<Visitor>();
+
   @Nls
   @NotNull
   public String getGroupDisplayName() {
@@ -81,10 +84,22 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new Visitor(holder);
+    final Visitor visitor = new Visitor(holder);
+    myLastVisitor.set(visitor);
+    return visitor;
+  }
+
+  @Override
+  public void inspectionFinished(LocalInspectionToolSession session) {
+    final Visitor visitor = myLastVisitor.get();
+    assert visitor != null;
+    visitor.highlightUnusedImports();
+    myLastVisitor.remove();
   }
 
   public static class Visitor extends PyInspectionVisitor {
+    private Set<NameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
+    private Set<PyImportElement> myAllImports = Collections.synchronizedSet(new HashSet<PyImportElement>());
 
     public Visitor(final ProblemsHolder holder) {
       super(holder);
@@ -257,6 +272,12 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     }
 
     @Override
+    public void visitPyImportElement(PyImportElement node) {
+      super.visitPyImportElement(node);
+      myAllImports.add(node);
+    }
+
+    @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
       for (final PsiReference reference : node.getReferences()) {
@@ -269,13 +290,23 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
         boolean unresolved;
         if (reference instanceof PsiPolyVariantReference) {
           final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
-          unresolved = (poly.multiResolve(false).length == 0);
+          final ResolveResult[] resolveResults = poly.multiResolve(false);
+          unresolved = (resolveResults.length == 0);
+          for (ResolveResult resolveResult : resolveResults) {
+            if (resolveResult instanceof ImportedResolveResult) {
+              myUsedImports.addAll(((ImportedResolveResult)resolveResult).getNameDefiners());
+            }
+          }
         }
         else {
           unresolved = (reference.resolve() == null);
         }
         if (unresolved) {
           registerUnresolvedReferenceProblem(node, reference, severity);
+          // don't highlight unresolved imports as unused
+          if (node.getParent() instanceof PyImportElement) {
+            myAllImports.remove(node.getParent());
+          }
         }
       }
     }
@@ -408,6 +439,35 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           }
         });
       }
+    }
+
+    public void highlightUnusedImports() {
+      myAllImports.removeAll(myUsedImports);
+      final NameDefiner[] unusedImports = myAllImports.toArray(new NameDefiner[myAllImports.size()]);
+
+      Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
+      for (NameDefiner unusedImport : unusedImports) {
+        PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
+        if (importStatement != null && !unusedStatements.contains(importStatement)) {
+          if (areAllImportsUnused(importStatement)) {
+            unusedStatements.add(importStatement);
+            registerProblem(importStatement, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+          }
+          else {
+            registerProblem(unusedImport, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+          }
+        }
+      }
+    }
+
+    private boolean areAllImportsUnused(PyImportStatementBase importStatement) {
+      final PyImportElement[] elements = importStatement.getImportElements();
+      for (PyImportElement element : elements) {
+        if (!myAllImports.contains(element)) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 }

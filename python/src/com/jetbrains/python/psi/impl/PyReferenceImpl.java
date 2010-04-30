@@ -103,28 +103,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           PyFunction init = cls.findMethodByName(PyNames.INIT, false);
           if (init != null) {
             // replace
-            final PyFunction the_init = init;
-            it.set(new RatedResolveResult(){
-              public int getRate() { return rrr.getRate(); }
-
-              public PsiElement getElement() { return the_init; }
-
-              public boolean isValidResult() { return true; }
-            });
+            it.set(rrr.replace(init));
           }
           else { // init not found; maybe it's ancestor's
             for (PyClass ancestor : cls.iterateAncestors()) {
               init = ancestor.findMethodByName(PyNames.INIT, false);
               if (init != null) {
-                final PyFunction the_init = init;
                 // add to resuls as low priority
-                it.add(new RatedResolveResult(){
-                  public int getRate() { return RATE_LOW; }
-
-                  public PsiElement getElement() { return the_init; }
-
-                  public boolean isValidResult() { return true; }
-                });
+                it.add(new RatedResolveResult(RatedResolveResult.RATE_LOW, init));
                 break;
               }
             }
@@ -148,18 +134,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // Allows to add non-null elements and discard nulls in a hassle-free way.
     public boolean poke(final PsiElement what, final int rate) {
       if (what == null) return false;
-      super.add(new RatedResolveResult() {
-        public int getRate() { return rate; }
-
-        public PsiElement getElement() { return what; }
-
-        public boolean isValidResult() { return true; }
-      });
+      super.add(new RatedResolveResult(rate, what));
       return true;
-    }
-
-    public void pokeAll(Collection<PsiElement> elts, int rate) {
-      for (PsiElement elt : elts) poke(elt, rate);
     }
   }
 
@@ -213,7 +189,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       uexpr = PyResolveUtil.scanOuterContext(new ResolveProcessor(referencedName), realContext);
     }
     uexpr = PyUtil.turnDirIntoInit(uexpr); // treeCrawlUp might have found a dir
-    if (uexpr != null) ret.poke(uexpr, getRate(uexpr));
+    if (uexpr != null) {
+      ret.add(new ImportedResolveResult(uexpr, getRate(uexpr), processor.getDefiners()));
+    }
     return ret;
   }
 
