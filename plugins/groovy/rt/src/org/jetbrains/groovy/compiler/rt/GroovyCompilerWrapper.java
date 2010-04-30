@@ -50,7 +50,13 @@ public class GroovyCompilerWrapper {
       processException(e, collector, forStubs);
     }
     catch (NoClassDefFoundError e) {
-      addMessageWithoutLocation(collector, "Groovyc error: " + e.getMessage() + " class not found, try compiling it explicitly", !forStubs);
+      final String className = e.getMessage();
+      if (className.startsWith("org/apache/ivy/")) {
+        addMessageWithoutLocation(collector, "Cannot @Grab without Ivy, please add it to your module dependencies (NoClassDefFoundError: " + className + ")", true);
+      } else {
+        addMessageWithoutLocation(collector, "Groovyc error: " + className + " class not found, try compiling it explicitly", !forStubs);
+      }
+
     }
     finally {
       addWarnings(unit.getErrorCollector(), collector);
