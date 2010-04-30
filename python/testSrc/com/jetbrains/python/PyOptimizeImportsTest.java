@@ -24,6 +24,10 @@ public class PyOptimizeImportsTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testTryExcept() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.configureByFile("optimizeImports/" + getTestName(true) + ".py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));

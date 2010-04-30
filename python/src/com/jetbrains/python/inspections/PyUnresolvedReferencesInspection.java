@@ -464,6 +464,10 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
       for (NameDefiner unusedImport : unusedImports) {
         PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
         if (importStatement != null && !unusedStatements.contains(importStatement)) {
+          // don't remove as unused imports in try/except statements
+          if (PsiTreeUtil.getParentOfType(importStatement, PyTryExceptStatement.class) != null) {
+            continue;            
+          }
           if (unusedImport instanceof PyStarImportElement || areAllImportsUnused(importStatement, unusedImports)) {
             unusedStatements.add(importStatement);
             result.add(importStatement);
