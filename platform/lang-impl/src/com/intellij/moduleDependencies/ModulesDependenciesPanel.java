@@ -161,6 +161,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(toolbar.getComponent(), BorderLayout.NORTH);
     panel.add(myPathField, BorderLayout.SOUTH);
+    myPathField.setEditable(false);
     return panel;
   }
 
