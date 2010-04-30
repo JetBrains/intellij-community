@@ -79,4 +79,9 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
       }
     };
   }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyStarImportElement(this);
+  }
 }

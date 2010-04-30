@@ -139,4 +139,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     }
     return true;
   }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    PyPsiUtils.deleteAdjacentComma(this, child, getImportElements());
+    super.deleteChildInternal(child);
+  }
 }

@@ -163,6 +163,8 @@
 
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.RenamePyFunctionProcessor" order="last" />
 
+    <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.PyImportOptimizer"/>
+
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>

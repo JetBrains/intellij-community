@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -252,6 +254,18 @@ public class PyPsiUtils {
         LOG.debug("PyPsiUtil.getRealContext(" + element + ") is called. Returned " + element +".");
       }
       return element;
+    }
+  }
+
+  static void deleteAdjacentComma(ASTDelegatePsiElement pyImportStatement, ASTNode child, final PyElement[] elements) {
+    if (ArrayUtil.contains(child.getPsi(), elements)) {
+      ASTNode next = getNextComma(child);
+      if (next == null) {
+        next = getPrevComma(child);
+      }
+      if (next != null) {
+        pyImportStatement.deleteChildInternal(next);
+      }
     }
   }
 }

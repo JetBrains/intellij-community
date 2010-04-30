@@ -53,7 +53,8 @@ public class PythonAllTestsSuite {
     PyFindUsagesTest.class,
     PyTypeTest.class,
     PyControlFlowBuilderTest.class,
-    PyCodeFragmentTest.class
+    PyCodeFragmentTest.class,
+    PyOptimizeImportsTest.class
   };
 
   public static TestSuite suite() {

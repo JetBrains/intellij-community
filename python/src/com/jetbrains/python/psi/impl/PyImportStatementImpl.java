@@ -57,4 +57,10 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyImportStatement(this);
   }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    PyPsiUtils.deleteAdjacentComma(this, child, getImportElements());
+    super.deleteChildInternal(child);
+  }
 }

@@ -13,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
  * A copy of Ruby's visitor helper.
  */
 public class PyInspectionVisitor extends PyElementVisitor {
-  private final ProblemsHolder myHolder;
+  @Nullable private final ProblemsHolder myHolder;
 
-  public PyInspectionVisitor(final ProblemsHolder holder) {
+  public PyInspectionVisitor(@Nullable final ProblemsHolder holder) {
     myHolder = holder;
   }
 
-  public ProblemsHolder getHolder() {
+  protected ProblemsHolder getHolder() {
     return myHolder;
   }
 
@@ -28,7 +28,9 @@ public class PyInspectionVisitor extends PyElementVisitor {
     if (element == null || element.getTextLength() == 0){
       return;
     }
-    myHolder.registerProblem(element, message);
+    if (myHolder != null) {
+      myHolder.registerProblem(element, message);
+    }
   }
 
   protected final void registerProblem(@Nullable final PsiElement element,
@@ -37,7 +39,9 @@ public class PyInspectionVisitor extends PyElementVisitor {
       if (element == null || element.getTextLength() == 0){
           return;
       }
+    if (myHolder != null) {
       myHolder.registerProblem(element, message, quickFix);
+    }
   }
 
   protected final void registerProblem(final PsiElement element,
@@ -47,7 +51,9 @@ public class PyInspectionVisitor extends PyElementVisitor {
     if (element == null || element.getTextLength() == 0){
         return;
     }
-    myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type,  action, myHolder.isOnTheFly()));
+    if (myHolder != null) {
+      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type,  action, myHolder.isOnTheFly()));
+    }
   }
 
   /**
@@ -61,7 +67,9 @@ public class PyInspectionVisitor extends PyElementVisitor {
     final HintAction hintAction,
     final LocalQuickFix... fixes)
   {
-    myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(psiElement, descriptionTemplate, highlightType, hintAction,
-                                                                           myHolder.isOnTheFly(), fixes));
+    if (myHolder != null) {
+      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(psiElement, descriptionTemplate, highlightType, hintAction,
+                                                                             myHolder.isOnTheFly(), fixes));
+    }
   }
 }

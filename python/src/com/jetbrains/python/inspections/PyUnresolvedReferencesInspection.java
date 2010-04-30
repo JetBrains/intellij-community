@@ -35,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * Marks references that fail to resolve.
+ * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  * User: dcheryasov
  * Date: Nov 15, 2008
  */
@@ -99,7 +99,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
 
   public static class Visitor extends PyInspectionVisitor {
     private Set<NameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
-    private Set<PyImportElement> myAllImports = Collections.synchronizedSet(new HashSet<PyImportElement>());
+    private Set<NameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<NameDefiner>());
 
     public Visitor(final ProblemsHolder holder) {
       super(holder);
@@ -278,6 +278,12 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     }
 
     @Override
+    public void visitPyStarImportElement(PyStarImportElement node) {
+      super.visitPyStarImportElement(node);
+      myAllImports.add(node);
+    }
+
+    @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
       for (final PsiReference reference : node.getReferences()) {
@@ -442,32 +448,49 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     }
 
     public void highlightUnusedImports() {
-      myAllImports.removeAll(myUsedImports);
-      final NameDefiner[] unusedImports = myAllImports.toArray(new NameDefiner[myAllImports.size()]);
+      final List<PsiElement> unused = collectUnusedImportElements();
+      for (PsiElement element : unused) {
+        registerProblem(element, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+      }
+    }
+
+    private List<PsiElement> collectUnusedImportElements() {
+      List<PsiElement> result = new ArrayList<PsiElement>();
+
+      Set<NameDefiner> unusedImports = new HashSet<NameDefiner>(myAllImports);
+      unusedImports.removeAll(myUsedImports);
 
       Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
       for (NameDefiner unusedImport : unusedImports) {
         PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
         if (importStatement != null && !unusedStatements.contains(importStatement)) {
-          if (areAllImportsUnused(importStatement)) {
+          if (unusedImport instanceof PyStarImportElement || areAllImportsUnused(importStatement, unusedImports)) {
             unusedStatements.add(importStatement);
-            registerProblem(importStatement, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+            result.add(importStatement);
           }
           else {
-            registerProblem(unusedImport, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+            result.add(unusedImport);
           }
         }
       }
+      return result;
     }
 
-    private boolean areAllImportsUnused(PyImportStatementBase importStatement) {
+    private static boolean areAllImportsUnused(PyImportStatementBase importStatement, Set<NameDefiner> unusedImports) {
       final PyImportElement[] elements = importStatement.getImportElements();
       for (PyImportElement element : elements) {
-        if (!myAllImports.contains(element)) {
+        if (!unusedImports.contains(element)) {
           return false;
         }
       }
       return true;
+    }
+
+    public void optimizeImports() {
+      final List<PsiElement> elementsToDelete = collectUnusedImportElements();
+      for (PsiElement element : elementsToDelete) {
+        element.delete();
+      }
     }
   }
 }
