@@ -27,7 +27,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.formatter.java.spacing.JavaBraceSpacingProcessor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -42,13 +41,12 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor");
-
-  private final JavaBraceSpacingProcessor myBraceSpacingProcessor;
 
   private PsiElement myParent;
   private int myRole1;
@@ -65,14 +63,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private ImportHelper myImportHelper;
 
   private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<JavaSpacePropertyProcessor>();
-
-  private JavaSpacePropertyProcessor() {
-    this(JavaBraceSpacingProcessor.INSTANCE);
-  }
-
-  public JavaSpacePropertyProcessor(JavaBraceSpacingProcessor braceSpacingProcessor) {
-    myBraceSpacingProcessor = braceSpacingProcessor;
-  }
 
   private void doInit(final ASTNode child, final CodeStyleSettings settings) {
     init(child);
@@ -127,7 +117,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private static boolean shouldKeepSpace(final PsiElement parent) {
-    final IElementType type = parent.getNode().getElementType();
+    ASTNode node = parent.getNode();
+    if (node == null) {
+      return true;
+    }
+    final IElementType type = node.getElementType();
     if (type == JavaDocTokenType.DOC_TAG_VALUE_TOKEN) {
       return PsiTreeUtil.getParentOfType(parent, PsiDocMethodOrFieldRef.class) != null;
     }
@@ -213,7 +207,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LBRACE) {
       if (!(aClass instanceof PsiAnonymousClass)) {
-        myResult = myBraceSpacingProcessor.getLBraceSpacing(mySettings, myChild2);
+        myResult = Spacing.createSpacing(
+          0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS
+        );
       } else {
         if (myRole2 == ChildRole.CLASS_INITIALIZER && isTheOnlyClassMember(myChild2)) {
           myResult = Spacing.createSpacing(0, 0, 0,
@@ -242,15 +238,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myChild1 instanceof JspJavaComment || myChild2 instanceof JspJavaComment) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
-    else if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == JavaElementType.METHOD) {
-      if (myRole1 == ChildRole.LBRACE) {
-        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
-      }
-      else {
-        final int blankLines = getLinesAroundMethod() + 1;
-        myResult = Spacing
-          .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
-      }
+    else if (processMethod()) {
     }
     else if (myRole2 == ChildRole.CLASS_INITIALIZER) {
       if (myRole1 == ChildRole.LBRACE) {
@@ -266,22 +254,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing
           .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
-
-    }
-    else if (myRole1 == ChildRole.METHOD || myChild1.getElementType() == JavaElementType.METHOD) {
-      if (myRole2 == ChildRole.RBRACE) {
-        myResult = Spacing
-          .createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
-      }
-      else {
-        final int blankLines = getLinesAroundMethod() + 1;
-        myResult = Spacing
-          .createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
-      }
     }
     else if (myRole1 == ChildRole.CLASS_INITIALIZER) {
       if (myRole2 == ChildRole.RBRACE) {
-        myResult = myBraceSpacingProcessor.getRBraceSpacing(mySettings, myChild1);
+        int minLineFeeds = getMinLineFeedsBetweenRBraces(myChild1);
+        myResult = Spacing.createSpacing(
+          0, Integer.MAX_VALUE, minLineFeeds, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE
+        );
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
@@ -380,6 +359,62 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  private boolean processMethod() {
+    if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == JavaElementType.METHOD) {
+      if (myRole1 == ChildRole.LBRACE) {
+        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
+      }
+      else {
+        final int blankLines = getLinesAroundMethod() + 1;
+        myResult = Spacing
+          .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+    }
+    else if (myRole1 == ChildRole.METHOD || myChild1.getElementType() == JavaElementType.METHOD) {
+      if (myRole1 == ChildRole.LBRACE) {
+        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
+      }
+      else {
+        final int blankLines = getLinesAroundMethod() + 1;
+        myResult = Spacing
+          .createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+      if (myRole2 == ChildRole.RBRACE) {
+        myResult = Spacing
+          .createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
+      }
+      else {
+        final int blankLines = getLinesAroundMethod() + 1;
+        myResult = Spacing
+          .createSpacing(0, Integer.MAX_VALUE, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+    }
+    return myResult != null;
+  }
+
+  /**
+   * Allows to calculate <code>'min line feed'</code> setting of the {@link Spacing} to be used between two closing braces
+   * (assuming that left AST node that ends with closing brace is given to this method).
+   *
+   * @param leftNode    left AST node that ends with closing brace
+   * @return            <code>'min line feed'</code> setting of {@link Spacing} object to use for the given AST node and
+   *                    closing brace
+   */
+  private static int getMinLineFeedsBetweenRBraces(ASTNode leftNode) {
+
+    // The general idea is to return zero in situation when opening curly braces goes one after other, e.g.
+    //     new Expectations() {{
+    //         foo();}}
+    // We don't want line feed between closing curly braces here.
+
+    if (leftNode == null || leftNode.getElementType() != JavaElementType.CLASS_INITIALIZER) {
+      return 1;
+    }
+
+    ASTNode lbraceCandidate = leftNode.getTreePrev();
+    return (lbraceCandidate != null && lbraceCandidate.getElementType() == JavaTokenType.LBRACE) ? 0 : 1;
+  }
+
   private int getLinesAroundMethod() {
     if (isClass(myParent)) {
       return mySettings.BLANK_LINES_AROUND_METHOD;
@@ -413,6 +448,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
     if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST) {
       createSpaceInCode(true);
+    } else {
+      processMethod();
     }
   }
 
@@ -743,6 +780,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Nullable
   private static ASTNode getPrevElementType(final ASTNode child) {
     return FormatterUtil.getLeafNonSpaceBefore(child);
   }
@@ -1053,7 +1091,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-
+  @Nullable
   private static ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
     while (current != null) {
       if (current.getElementType() == expected) return current;
@@ -1353,6 +1391,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @SuppressWarnings({"ConstantConditions"})
   public static Spacing getSpacing(ASTNode node, CodeStyleSettings settings) {
     JavaSpacePropertyProcessor spacePropertyProcessor = mySharedProcessorAllocator.get();
     try {
