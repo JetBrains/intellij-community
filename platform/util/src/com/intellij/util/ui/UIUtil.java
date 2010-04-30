@@ -1166,7 +1166,14 @@ public class UIUtil {
 
       if (path != null && tree.isPathSelected(path)) {
         Graphics2D rowGraphics = (Graphics2D)g.create();
-        rowGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
+        if (clipBounds.height >= bounds.height) {
+          // fill the row only if clip bounds intersects actual node bounds
+          rowGraphics.setClip(xOffset, bounds.y, containerWidth, bounds.height);
+        }
+        else {
+          // just paint inside clip bounds otherwise
+          rowGraphics.setClip(clipBounds);
+        }
 
         final Object sourceList = tree.getClientProperty(SOURCE_LIST_CLIENT_PROPERTY);
         if (sourceList != null && ((Boolean)sourceList)) {
@@ -1177,13 +1184,8 @@ public class UIUtil {
             LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
           }
         } else {
-          if(tree.hasFocus()) {
-            rowGraphics.setColor(getTreeSelectionBackground());
-            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
-          } else {
-            rowGraphics.setColor(UNFOCUSED_SELECTION_COLOR);
-            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
-          }
+          rowGraphics.setColor(tree.hasFocus() ? getTreeSelectionBackground() : UNFOCUSED_SELECTION_COLOR);
+          rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
         }
 
         if (shouldPaintExpandControl(path, row, isExpanded, hasBeenExpanded, isLeaf)) {

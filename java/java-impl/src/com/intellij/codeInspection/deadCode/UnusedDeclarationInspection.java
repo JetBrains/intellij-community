@@ -730,7 +730,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
-        if (myFilter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
+        if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
         psiElements.add(psiElement);
       }
 
@@ -798,7 +798,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
-        if (myFilter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
+        if (getFilter().getElementProblemCount((RefJavaElement)refElement) == 0) continue;
         commentOutDead(psiElement);
         refElement.getRefManager().removeRefElement(refElement, deletedRefs);
       }

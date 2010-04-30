@@ -349,20 +349,20 @@ public final class TreeUtil {
 
   public static ActionCallback moveDown(final JTree tree) {
     final int size = tree.getRowCount();
-    int row = getSelectedRow(tree);
+    int row = tree.getLeadSelectionRow();
     if (row < size - 1) {
       row++;
-      return showAndSelect(tree, row, row + 2, row, getSelectedRow(tree));
+      return showAndSelect(tree, row, row + 2, row, getSelectedRow(tree), false, true, true);
     } else {
       return new ActionCallback.Done();
     }
   }
 
   public static ActionCallback moveUp(final JTree tree) {
-    int row = getSelectedRow(tree);
+    int row = tree.getLeadSelectionRow();
     if (row > 0) {
       row--;
-      return showAndSelect(tree, row - 2, row, row, getSelectedRow(tree));
+      return showAndSelect(tree, row - 2, row, row, getSelectedRow(tree), false, true, true);
     } else {
       return new ActionCallback.Done();
     }
@@ -414,7 +414,7 @@ public final class TreeUtil {
 
     final int top = visible > 0 ? row - (visible - 1)/ 2 : row;
     final int bottom = visible > 0 ? top + visible - 1 : row;
-    return showAndSelect(tree, top, bottom, row, -1, false, scroll);
+    return showAndSelect(tree, top, bottom, row, -1, false, scroll, false);
   }
 
   public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous) {
@@ -422,10 +422,14 @@ public final class TreeUtil {
   }
 
   public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, boolean addToSelection) {
-    return showAndSelect(tree, top, bottom, row, previous, addToSelection, true);
+    return showAndSelect(tree, top, bottom, row, previous, addToSelection, true, false);
   }
 
   public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll) {
+    return showAndSelect(tree, top, bottom, row, previous, addToSelection, scroll, false);
+  }
+
+  public static ActionCallback showAndSelect(final JTree tree, int top, int bottom, final int row, final int previous, final boolean addToSelection, final boolean scroll, final boolean resetSelection) {
     final TreePath path = tree.getPathForRow(row);
 
     if (path == null) return new ActionCallback.Done();
@@ -461,7 +465,7 @@ public final class TreeUtil {
           } else {
             tree.setSelectionRow(row);
           }
-        } else {
+        } else if (resetSelection) {
           if (!addToSelection) {
             tree.setSelectionRow(row);
           }
@@ -556,8 +560,9 @@ public final class TreeUtil {
   }
 
 
+  // this method returns FIRST selected row but not LEAD
   private static int getSelectedRow(final JTree tree) {
-    return tree.getRowForPath(tree.getLeadSelectionPath());
+    return tree.getRowForPath(tree.getSelectionPath());
   }
 
   private static int getFirstVisibleRow(final JTree tree) {
