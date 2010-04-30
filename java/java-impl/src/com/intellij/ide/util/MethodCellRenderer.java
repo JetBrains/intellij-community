@@ -23,16 +23,21 @@ import javax.swing.*;
 public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
   private final boolean myShowMethodNames;
   private final PsiClassListCellRenderer myClassListCellRenderer = new PsiClassListCellRenderer();
+  private final int myOptions;
+
   public MethodCellRenderer(boolean showMethodNames) {
+    this(showMethodNames, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS);
+  }
+  public MethodCellRenderer(boolean showMethodNames, int options) {
     myShowMethodNames = showMethodNames;
+    myOptions = options;
   }
 
   public String getElementText(PsiMethod element) {
     final PsiNamedElement container = fetchContainer(element);
     String text = container instanceof PsiClass ? myClassListCellRenderer.getElementText((PsiClass)container) : container.getName();
     if (myShowMethodNames) {
-      final int options = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS;
-      text += "."+PsiFormatUtil.formatMethod(element, PsiSubstitutor.EMPTY, options, PsiFormatUtil.SHOW_TYPE);
+      text += "."+PsiFormatUtil.formatMethod(element, PsiSubstitutor.EMPTY, myOptions, PsiFormatUtil.SHOW_TYPE);
     }
     return text;
   }
@@ -43,16 +48,11 @@ public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
 
   private static PsiNamedElement fetchContainer(PsiMethod element){
     PsiClass aClass = element.getContainingClass();
-    if (aClass == null) {
-      return element.getContainingFile();
-    }
-    else {
-      return aClass;
-    }
+    return aClass == null ? element.getContainingFile() : aClass;
   }
 
   public String getContainerText(final PsiMethod element, final String name) {
-    return myClassListCellRenderer.getContainerTextStatic(element);
+    return PsiClassListCellRenderer.getContainerTextStatic(element);
   }
 
   public int getIconFlags() {
