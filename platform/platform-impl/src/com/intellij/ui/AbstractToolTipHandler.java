@@ -226,27 +226,42 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     int width = rightLimit - visibleRightTop.x;
     if (width <= 0 || height <= 0) return null;
 
-    myImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    myImage = createImage(height, width);
 
     Graphics2D g = myImage.createGraphics();
     g.setClip(null);
-    g.setColor(myComponent.getBackground());
-    g.fillRect(0, 0, width, height);
+    doFillBackground(height, width, g);
     g.translate(-(visibleRect.x + visibleRect.width - cellLocation.x), 0);
     //rComponent.paint(g);
     doPaintTooltipImage(rComponent, cellBounds, height, g, key);
 
-    g.translate((visibleRect.x + visibleRect.width - cellLocation.x), 0);
-    g.setColor(Color.black);
-    int rightX = myImage.getWidth() - 1;
-    UIUtil.drawLine(g, 0, 0, rightX, 0);
-    UIUtil.drawLine(g, rightX, 0, rightX, height);
-    UIUtil.drawLine(g, 0, height - 1, rightX, height - 1);
+    if (doPaintBorder()) {
+      g.translate((visibleRect.x + visibleRect.width - cellLocation.x), 0);
+      g.setColor(Color.black);
+      int rightX = myImage.getWidth() - 1;
+      UIUtil.drawLine(g, 0, 0, rightX, 0);
+      UIUtil.drawLine(g, rightX, 0, rightX, height);
+      UIUtil.drawLine(g, 0, height - 1, rightX, height - 1);
+    }
+
     g.dispose();
 
     myComponent.remove(rComponent);
 
     return visibleRightTop;
+  }
+
+  protected BufferedImage createImage(final int height, final int width) {
+    return new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+  }
+
+  protected void doFillBackground(int height, int width, Graphics2D g) {
+    g.setColor(myComponent.getBackground());
+    g.fillRect(0, 0, width, height);
+  }
+
+  protected boolean doPaintBorder() {
+    return true;
   }
 
   protected void doPaintTooltipImage(Component rComponent, Rectangle cellBounds, int height, Graphics2D g, KeyType key) {
