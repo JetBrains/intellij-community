@@ -1,6 +1,13 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -20,6 +27,7 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.HashSet;
@@ -74,6 +82,8 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       String ref_name = myElement.getName();
       Condition<PsiElement> node_filter = new PyResolveUtil.FilterNameNotIn(names_already);
       Condition<String> underscore_filter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(ref_name));
+      boolean is_importing_from_a_module = false;
+
       // are we in "import _" or "from foo import _"?
       PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(myElement, PyFromImportStatement.class);
       if (from_import != null && myElement.getParent() != from_import) { // in "from foo import _"
@@ -84,6 +94,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
             addImportedNames(from_import.getImportElements(), names_already, underscore_filter); // don't propose already imported items
             // collect what's within module file
             final VariantsProcessor processor = new VariantsProcessor(myElement, node_filter, underscore_filter);
+            processor.setPlainNamesOnly(true); // we don't want parens after functions, etc
             PyResolveUtil.treeCrawlUp(processor, true, mod_candidate);
             variants.addAll(processor.getResultList());
             // try to collect submodules
@@ -109,7 +120,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
             PsiDirectory relative_dir = ResolveImportUtil.stepBackFrom(current_file, relative_level);
             if (relative_dir != null) {
               addImportedNames(from_import.getImportElements(), names_already, underscore_filter);
-              fillFromDir(relative_dir, current_file, underscore_filter, variants);
+              fillFromDir(relative_dir, current_file, underscore_filter, variants, null);
             }
           }
         }
@@ -120,7 +131,10 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           relative_level += 1;
           n = n.getTreePrev();
         }
-        if (from_import != null) addImportedNames(from_import.getImportElements(), names_already, underscore_filter);
+        if (from_import != null) {
+          addImportedNames(from_import.getImportElements(), names_already, underscore_filter);
+          is_importing_from_a_module = true;
+        }
         else {
           names_already.add(PyNames.FUTURE_MODULE); // never add it to "import ..."
           PyImportStatement import_stmt = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
@@ -130,7 +144,11 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         }
         // look at dir by level
         if (current_file != null && (relative_level > 0 || ! ResolveImportUtil.isAbsoluteImportEnabledFor(current_file))) {
-          fillFromDir(ResolveImportUtil.stepBackFrom(current_file, relative_level), current_file, underscore_filter, variants);
+          fillFromDir(
+            ResolveImportUtil.stepBackFrom(current_file, relative_level),
+            current_file, underscore_filter, variants,
+            is_importing_from_a_module? ImportKeywordHandler.INSTANCE : null
+          );
         }
       }
       if (relative_level == 0) {
@@ -139,8 +157,11 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         final Module module = ModuleUtil.findModuleForPsiElement(myElement);
         if (module != null) {
           ModuleRootManager.getInstance(module).processOrder(new ResolveImportUtil.SdkRootVisitingPolicy(visitor), null);
-          for (String name : visitor.getResult()) {
-            if (PyNames.isIdentifier(name) && underscore_filter.value(name)) variants.add(name); // to thwart stuff like "__phello__.foo"
+          for (String name : visitor.getResult()) { // to thwart stuff like "__phello__.foo"
+            if (PyNames.isIdentifier(name) && underscore_filter.value(name)) {
+              if (is_importing_from_a_module) variants.add(LookupElementBuilder.create(name).setInsertHandler(ImportKeywordHandler.INSTANCE));
+              else variants.add(name);
+            }
           }
         }
       }
@@ -164,7 +185,13 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
   }
 
   // adds variants found under given dir
-  private static void fillFromDir(PsiDirectory target_dir, PsiFile source_file, Condition<String> filter, List<Object> variants) {
+  private static void fillFromDir(
+    PsiDirectory target_dir,
+    PsiFile source_file,
+    Condition<String> filter,
+    @NotNull List<Object> variants,
+    @Nullable InsertHandler<LookupElement> handler
+  ) {
     if (target_dir != null) {
       for (PsiElement dir_item : target_dir.getChildren()) {
         if (dir_item != source_file) {
@@ -172,14 +199,18 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
             final PsiDirectory dir = (PsiDirectory)dir_item;
             if (dir.findFile(PyNames.INIT_DOT_PY) != null) {
               final String name = dir.getName();
-              if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name);
+              if (PyNames.isIdentifier(name) && filter.value(name)) {
+                variants.add(LookupElementBuilder.create(name).setInsertHandler(handler));
+              }
             }
           }
           else if (dir_item instanceof PsiFile) { // plain file
             String filename = ((PsiFile)dir_item).getName();
             if (!PyNames.INIT_DOT_PY.equals(filename) && filename.endsWith(PyNames.DOT_PY)) {
               final String name = filename.substring(0, filename.length() - PyNames.DOT_PY.length());
-              if (PyNames.isIdentifier(name) && filter.value(name)) variants.add(name);
+              if (PyNames.isIdentifier(name) && filter.value(name)) {
+                variants.add(LookupElementBuilder.create(name).setInsertHandler(handler));
+              }
             }
           }
         }
@@ -216,6 +247,21 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
 
     public Collection<String> getResult() {
       return result;
+    }
+  }
+
+  /** Adds ' import ' text after the item. */
+  private static class ImportKeywordHandler implements InsertHandler<LookupElement> {
+    public static final InsertHandler<LookupElement> INSTANCE = new ImportKeywordHandler();
+    
+    private static final String IMPORT_KWD = " import ";
+
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      final Editor editor = context.getEditor();
+      final Document document = editor.getDocument();
+      int tailOffset = context.getTailOffset();
+      document.insertString(tailOffset, IMPORT_KWD);
+      editor.getCaretModel().moveToOffset(tailOffset + IMPORT_KWD.length());
     }
   }
 }

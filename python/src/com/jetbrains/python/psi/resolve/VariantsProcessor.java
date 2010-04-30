@@ -24,6 +24,8 @@ public class VariantsProcessor implements PsiScopeProcessor {
   protected Condition<PsiElement> myNodeFilter;
   protected Condition<String> myNameFilter;
 
+  protected boolean myPlainNamesOnly = false; // if true, add insert handlers to known things like functions
+
   public VariantsProcessor(PsiElement context) {
     // empty
     myContext = context;
@@ -44,8 +46,17 @@ public class VariantsProcessor implements PsiScopeProcessor {
     myNotice = notice;
   }
 
+  public boolean isPlainNamesOnly() {
+    return myPlainNamesOnly;
+  }
+
+  public void setPlainNamesOnly(boolean plainNamesOnly) {
+    myPlainNamesOnly = plainNamesOnly;
+  }
+
+
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
-    if (item.getObject() instanceof PyFunction) {
+    if (! myPlainNamesOnly && item.getObject() instanceof PyFunction) {
       item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
     }
     if (myNotice != null) {
