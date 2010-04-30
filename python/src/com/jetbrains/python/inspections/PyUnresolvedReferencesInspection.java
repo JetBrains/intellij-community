@@ -450,7 +450,7 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
     public void highlightUnusedImports() {
       final List<PsiElement> unused = collectUnusedImportElements();
       for (PsiElement element : unused) {
-        registerProblem(element, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+        registerProblem(element, "Unused import statement", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new OptimizeImportsQuickFix());
       }
     }
 
