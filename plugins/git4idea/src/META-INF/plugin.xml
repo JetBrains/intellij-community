@@ -99,8 +99,8 @@
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
     <applicationService
-        serviceInterface="org.jetbrains.git4idea.ssh.GitSSHService"
-        serviceImplementation="org.jetbrains.git4idea.ssh.GitSSHService"/>
+        serviceInterface="git4idea.commands.GitSSHIdeaService"
+        serviceImplementation="git4idea.commands.GitSSHIdeaService"/>
     <applicationService
         serviceInterface="git4idea.rebase.GitRebaseEditorService"
         serviceImplementation="git4idea.rebase.GitRebaseEditorService"/>

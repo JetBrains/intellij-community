@@ -461,6 +461,10 @@ public final class TreeUtil {
           } else {
             tree.setSelectionRow(row);
           }
+        } else {
+          if (!addToSelection) {
+            tree.setSelectionRow(row);
+          }
         }
       }
     };
@@ -553,7 +557,7 @@ public final class TreeUtil {
 
 
   private static int getSelectedRow(final JTree tree) {
-    return tree.getRowForPath(tree.getSelectionPath());
+    return tree.getRowForPath(tree.getLeadSelectionPath());
   }
 
   private static int getFirstVisibleRow(final JTree tree) {

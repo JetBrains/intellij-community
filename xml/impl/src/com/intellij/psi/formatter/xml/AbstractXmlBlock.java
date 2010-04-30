@@ -260,6 +260,18 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         }
       );
     }
+    else if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
+      //
+      // Fix for EA-19269:
+      // Split XML attribute value to the value itself and delimiters (needed for the case when it contains
+      // template language tags inside).
+      //
+      ASTNode node = child.getFirstChildNode();
+      while (node != null) {
+        result.add(createSimpleChild(node, null, null, null));
+        node = node.getTreeNext();
+      }
+    }
     else {
       result.add(createSimpleChild(child, indent, wrap, alignment));
     }

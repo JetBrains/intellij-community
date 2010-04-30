@@ -18,9 +18,9 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.components.ProjectComponent;
@@ -41,6 +41,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,11 +242,15 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
 
     Color scrollmarkColor = getScrollMarkColor(attributes);
+    if (editor instanceof EditorWindow) {
+      editor = ((EditorWindow)editor).getDelegate();
+    }
 
     for (PsiElement element : elements) {
       TextRange range = element.getTextRange();
-      int start = range.getStartOffset();
-      int end = range.getEndOffset();
+      int offset = PsiUtilBase.findInjectedElementOffsetInRealDocument(element);
+      int start = range.getStartOffset() + offset;
+      int end = range.getEndOffset() + offset;
       addOccurrenceHighlight(editor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
     }
   }

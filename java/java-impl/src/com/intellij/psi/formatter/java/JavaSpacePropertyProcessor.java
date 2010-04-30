@@ -529,7 +529,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole2 == ChildRole.FINALLY_KEYWORD || myRole2 == ChildRole.CATCH_SECTION) {
       boolean putRightChildOnNewLine = myRole2 == ChildRole.FINALLY_KEYWORD ? mySettings.FINALLY_ON_NEW_LINE : mySettings.CATCH_ON_NEW_LINE;
       if (putRightChildOnNewLine) {
-        processOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE);
+        processOnNewLineCondition(true);
       } else {
         createSpaceProperty(true, false, 0);
       }

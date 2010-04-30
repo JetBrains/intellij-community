@@ -19,6 +19,7 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
@@ -42,17 +43,19 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Override
   public void processKeyEvent(final KeyEvent e) {
-    TreePath path = getSelectionPath();
-    if (path != null) {
-      if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-        if (isExpanded(path)) {
-          collapsePath(path);
-          return;
-        }
-      } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-        if (isCollapsed(path)) {
-          expandPath(path);
-          return;
+    if (!(getUI() instanceof UIUtil.MacTreeUI)) {
+      TreePath path = getSelectionPath();
+      if (path != null) {
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+          if (isExpanded(path)) {
+            collapsePath(path);
+            return;
+          }
+        } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+          if (isCollapsed(path)) {
+            expandPath(path);
+            return;
+          }
         }
       }
     }

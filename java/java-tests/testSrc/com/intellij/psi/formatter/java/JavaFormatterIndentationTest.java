@@ -24,7 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:29:25 PM
  */
-public class JavaFormattingIndentationTest extends AbstractJavaFormattingTest {
+public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
   public void testClassInitializationBlockIndentation() throws Exception {
     // Checking that initialization block body is correctly indented.

@@ -21,7 +21,7 @@ package com.intellij.psi.formatter.java;
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:33:00 PM
  */
-public class JavaFormattingBlankLinesTest extends AbstractJavaFormattingTest {
+public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
 
   public void testBlankLinesAroundClassInitializationBlock() throws Exception {
     getSettings().BLANK_LINES_AROUND_METHOD = 3;
