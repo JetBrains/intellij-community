@@ -82,10 +82,7 @@ public class JavaColorSettingsPage implements ColorSettingsPage, InspectionColor
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), CodeInsightColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
   };
 
-  private static final ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[]{
-    new ColorDescriptor(OptionsBundle.message("options.java.color.descriptor.method.separator.color"), CodeInsightColors.METHOD_SEPARATORS_COLOR, ColorDescriptor.Kind.FOREGROUND)
-
-  };
+  private static final ColorDescriptor[] ourColorDescriptors = new ColorDescriptor[0];
 
   @NonNls private static final Map<String, TextAttributesKey> ourTags = new HashMap<String, TextAttributesKey>();
   static {
