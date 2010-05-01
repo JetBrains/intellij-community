@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="openapi" />
   </component>
 </module>
 
