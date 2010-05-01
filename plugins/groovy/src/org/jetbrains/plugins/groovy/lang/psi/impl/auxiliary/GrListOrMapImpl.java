@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
@@ -32,12 +33,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
@@ -111,68 +117,48 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
     @Nullable
     private static PsiClassType inferMapInitializerType(GrListOrMapImpl listOrMap, JavaPsiFacade facade, GlobalSearchScope scope) {
-      PsiClass mapClass = facade.findClass("java.util.LinkedHashMap", scope);
-      if (mapClass == null) {
-        mapClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, scope);
-      }
-      PsiElementFactory factory = facade.getElementFactory();
-      if (mapClass != null) {
-        PsiTypeParameter[] typeParameters = mapClass.getTypeParameters();
-        if (typeParameters.length == 2) {
-          GrNamedArgument[] namedArgs = listOrMap.getNamedArguments();
-          GrExpression[] values = new GrExpression[namedArgs.length];
-          GrArgumentLabel[] labels = new GrArgumentLabel[namedArgs.length];
+      final HashMap<String, PsiType> stringEntries = new HashMap<String, PsiType>();
+      final ArrayList<Pair<PsiType, PsiType>> otherEntries = new ArrayList<Pair<PsiType, PsiType>>();
+      GrNamedArgument[] namedArgs = listOrMap.getNamedArguments();
+      for (GrNamedArgument namedArg : namedArgs) {
+        final GrArgumentLabel label = namedArg.getLabel();
+        final GrExpression expression = namedArg.getExpression();
+        if (label == null || expression == null) {
+          continue;
+        }
 
-          for (int i = 0; i < values.length; i++) {
-            GrExpression expr = namedArgs[i].getExpression();
-            if (expr == null) return null;
-            values[i] = expr;
-            GrArgumentLabel label = namedArgs[i].getLabel();
-            if (label == null) return null;
-            labels[i] = label;
+        final PsiElement nameElement = label.getNameElement();
+        if (nameElement instanceof GrLiteral) {
+          final Object value = ((GrLiteral)nameElement).getValue();
+          if (value instanceof String) {
+            stringEntries.put((String)value, expression.getType());
+            continue;
           }
+        }
 
-          PsiType initializerType = getInitializerType(values);
-          PsiType labelType = getLabelsType(labels);
-          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.
-            put(typeParameters[0], labelType).
-            put(typeParameters[1], initializerType);
-          return factory.createType(mapClass, substitutor);
-        }
-        else {
-          return facade.getElementFactory().createType(mapClass);
-        }
+        otherEntries.add(Pair.create(getLabelType(label), expression.getType()));
       }
-      return null;
+
+      return new GrMapType(facade, scope, stringEntries, otherEntries);
     }
 
     @Nullable
-    private static PsiType getLabelsType(GrArgumentLabel[] labels) {
-      if (labels.length == 0) return null;
-      PsiType result = null;
-      PsiManager manager = labels[0].getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(labels[0].getProject());
-      for (GrArgumentLabel label : labels) {
-        PsiElement el = label.getNameElement();
-        PsiType other;
-        if (el instanceof GrParenthesizedExpression) {
-          other = ((GrParenthesizedExpression)el).getType();
-        }
-        else {
-          final ASTNode node = el.getNode();
-          if (node != null) {
-            other = TypesUtil.getPsiType(el, node.getElementType());
-            if (other == null) {
-              other = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, el.getResolveScope());
-            }
-          }
-          else {
-            other = null;
-          }
-        }
-        result = getLeastUpperBound(result, other, manager);
+    private static PsiType getLabelType(GrArgumentLabel label) {
+      PsiElement el = label.getNameElement();
+      if (el instanceof GrParenthesizedExpression) {
+        return ((GrParenthesizedExpression)el).getType();
       }
-      return result;
+
+      final ASTNode node = el.getNode();
+      if (node == null) {
+        return null;
+      }
+
+      PsiType nodeType = TypesUtil.getPsiType(el, node.getElementType());
+      if (nodeType != null) {
+        return nodeType;
+      }
+      return PsiType.getJavaLangString(PsiManager.getInstance(el.getProject()), el.getResolveScope());
     }
 
     private static PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
@@ -182,29 +168,6 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         result[i] = isLValue ? initializers[i].getNominalType() : initializers[i].getType();
       }
       return new GrTupleType(result, JavaPsiFacade.getInstance(listOrMap.getProject()), listOrMap.getResolveScope());
-    }
-
-    @Nullable
-    private static PsiType getInitializerType(GrExpression[] initializers) {
-      if (initializers.length == 0) return null;
-      PsiManager manager = initializers[0].getManager();
-      PsiType result = initializers[0].getType();
-      for (int i = 1; i < initializers.length; i++) {
-        result = getLeastUpperBound(result, initializers[i].getType(), manager);
-      }
-
-      return result;
-    }
-
-    @Nullable
-    private static PsiType getLeastUpperBound(PsiType result, PsiType other, PsiManager manager) {
-      if (other == null) return result;
-      if (result == null) result = other;
-      if (result.isAssignableFrom(other)) return result;
-      if (other.isAssignableFrom(result)) result = other;
-
-      result = TypesUtil.getLeastUpperBound(result, other, manager);
-      return result;
     }
 
   }
