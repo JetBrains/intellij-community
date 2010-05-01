@@ -55,7 +55,7 @@ public class GppTypeConverter extends GrTypeConverter {
       final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
 
       final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
-      if (expectedComponent != null && allTypesAssignable(componentTypes, expectedComponent, context)) {
+      if (expectedComponent != null && allTypesAssignable(componentTypes, expectedComponent, context) && hasDefaultConstructor(lType)) {
         return true;
       }
 
@@ -68,18 +68,45 @@ public class GppTypeConverter extends GrTypeConverter {
     else if (rType instanceof GrMapType) {
       final PsiType expectedKey = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false);
       final PsiType expectedValue = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
-      if (expectedKey != null && expectedValue != null) {
+      if (expectedKey != null && expectedValue != null && hasDefaultConstructor(lType)) {
         final GrMapType mapType = (GrMapType)rType;
         if (allTypesAssignable(mapType.getAllKeyTypes(), expectedKey, context) &&
             allTypesAssignable(mapType.getAllValueTypes(), expectedValue, context)) {
           return true;
         }
+        return null;
       }
 
+      if (hasDefaultConstructor(lType)) {
+        // maps are casted to any objects
+        // todo check for unimlemented abstract methods
+        return true;
+      }
+
+      return null;
     }
 
     
     return null;
+  }
+
+  private static boolean hasDefaultConstructor(PsiType type) {
+    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    if (psiClass == null) {
+      return false;
+    }
+
+    final PsiMethod[] constructors = psiClass.getConstructors();
+    if (constructors.length == 0) {
+      return true;
+    }
+    for (PsiMethod constructor : constructors) {
+      if (constructor.getParameterList().getParametersCount() == 0) {
+        return true;
+      }
+      //todo Groovy constructors with an (empty) Map argument
+    }
+    return false;
   }
 
   private static boolean hasConstructor(PsiClassType lType, PsiType[] argTypes, GroovyPsiElement context) {
