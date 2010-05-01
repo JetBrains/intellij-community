@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -64,6 +65,19 @@ public class GppTypeConverter extends GrTypeConverter {
 
       return null;
     }
+    else if (rType instanceof GrMapType) {
+      final PsiType expectedKey = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false);
+      final PsiType expectedValue = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
+      if (expectedKey != null && expectedValue != null) {
+        final GrMapType mapType = (GrMapType)rType;
+        if (allTypesAssignable(mapType.getAllKeyTypes(), expectedKey, context) &&
+            allTypesAssignable(mapType.getAllValueTypes(), expectedValue, context)) {
+          return true;
+        }
+      }
+
+    }
+
     
     return null;
   }

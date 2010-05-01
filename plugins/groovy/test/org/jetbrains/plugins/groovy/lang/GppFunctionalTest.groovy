@@ -37,6 +37,13 @@ File f2 = <warning descr="Cannot assign 'List' to 'File'">['path', 2, true, 42]<
 """
   }
 
+  public void testCastMapToAnotherMap() throws Exception {
+    testAssignability """
+HashMap<String, File> m1 = ['a':['b']]
+HashMap<String, File> m2 = <warning descr="Cannot assign 'Map' to 'HashMap<String, File>'">['a':'b']</warning>
+"""
+  }
+
   void testAssignability(String text) {
     myFixture.enableInspections new GroovyAssignabilityCheckInspection()
     PsiFile file = configureTyped(text)
