@@ -132,17 +132,17 @@ public class PsiUtil {
       final PsiType type = argumentTypes[0];
       final PsiClassType mapType = JavaPsiFacade.getElementFactory(method.getProject())
         .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, method.getResolveScope());
-      return TypesUtil.isAssignable(mapType, type, method.getManager(), method.getResolveScope());
+      return TypesUtil.isAssignable(mapType, type, method);
     }
     LOG.assertTrue(signature != null);
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method);
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiManager manager) {
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiElement context) {
     if (argumentTypes == null) return true;
 
     GrClosureSignature signature = type.getSignature();
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, manager, type.getResolveScope());
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, context);
   }
 
   public static PsiClassType createMapType(PsiManager manager, GlobalSearchScope scope) {

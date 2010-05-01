@@ -349,7 +349,7 @@ public class GrClassImplUtil {
         else {
           return args.length == 1 &&
                  TypesUtil
-                   .isAssignableByMethodCallConversion(aField.getType(), args[0].getType(), place.getManager(), place.getResolveScope());
+                   .isAssignableByMethodCallConversion(aField.getType(), args[0].getType(), place);
         }
       }
     }
