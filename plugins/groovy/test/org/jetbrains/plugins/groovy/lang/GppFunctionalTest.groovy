@@ -4,6 +4,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import com.intellij.psi.PsiFile
 
 /**
  * @author peter
@@ -29,13 +30,24 @@ X unassignable = <warning descr="Cannot assign 'List' to 'X'">['aaa']</warning>
 """
   }
 
+  public void testCastListToAnything() throws Exception {
+    testAssignability """
+File f1 = ['path']
+File f2 = <warning descr="Cannot assign 'List' to 'File'">['path', 2, true, 42]</warning>
+"""
+  }
+
   void testAssignability(String text) {
     myFixture.enableInspections new GroovyAssignabilityCheckInspection()
-    def file = myFixture.configureByText("a.groovy", """
+    PsiFile file = configureTyped(text)
+    myFixture.testHighlighting(true, false, false, file.virtualFile)
+  }
+
+  private PsiFile configureTyped(String text) {
+    return myFixture.configureByText("a.groovy", """
 @Typed def foo() {
   $text
 }""")
-    myFixture.testHighlighting(true, false, false, file.virtualFile)
   }
 
 }

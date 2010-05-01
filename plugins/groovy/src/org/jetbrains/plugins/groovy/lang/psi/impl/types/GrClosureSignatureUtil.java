@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
@@ -50,7 +51,7 @@ public class GrClosureSignatureUtil {
     return new GrClosureSignatureImpl(parameters, returnType);
   }
 
-  public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, PsiElement context) {
+  public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
     if (isApplicable(signature, args, context)) return true;
 
     if (args.length == 1) {
@@ -63,7 +64,7 @@ public class GrClosureSignatureUtil {
     return false;
   }
 
-  private static boolean isApplicable(GrClosureSignature signature, PsiType[] args, PsiElement context) {
+  private static boolean isApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs()) return false;
     int optional = getOptionalParamCount(signature, false);
@@ -84,7 +85,7 @@ public class GrClosureSignatureUtil {
                                       PsiType[] args,
                                       int paramCount,
                                       int argCount,
-                                      PsiElement context) {
+                                      GroovyPsiElement context) {
     int optional = getOptionalParamCount(params, false);
     int notOptional = paramCount - optional;
     int optionalArgs = argCount - notOptional;
@@ -101,13 +102,13 @@ public class GrClosureSignatureUtil {
   }
 
   private static class ApplicabilityVerifierForVararg {
-    private PsiElement context;
+    private GroovyPsiElement context;
     GrClosureParameter[] params;
     PsiType[] args;
     PsiType vararg;
     private int paramLength;
 
-    private ApplicabilityVerifierForVararg(PsiElement context, GrClosureParameter[] params, PsiType[] args) {
+    private ApplicabilityVerifierForVararg(GroovyPsiElement context, GrClosureParameter[] params, PsiType[] args) {
       this.context = context;
       this.params = params;
       this.args = args;
