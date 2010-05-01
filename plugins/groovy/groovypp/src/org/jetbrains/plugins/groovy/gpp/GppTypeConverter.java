@@ -79,7 +79,7 @@ public class GppTypeConverter extends GrTypeConverter {
 
       if (hasDefaultConstructor(lType)) {
         // maps are casted to any objects
-        // todo check for unimlemented abstract methods
+        // todo maybe check for not implemented abstract methods
         return true;
       }
 
