@@ -44,6 +44,13 @@ HashMap<String, File> m2 = <warning descr="Cannot assign 'Map' to 'HashMap<Strin
 """
   }
 
+  public void testCastMapToObject() throws Exception {
+    myFixture.addClass("class Foo { String name; void foo() {} }")
+    testAssignability """
+Foo f = [name: 'aaa', foo: { println 'hi' }, anotherProperty: 42 ]
+"""
+  }
+
   void testAssignability(String text) {
     myFixture.enableInspections new GroovyAssignabilityCheckInspection()
     PsiFile file = configureTyped(text)
