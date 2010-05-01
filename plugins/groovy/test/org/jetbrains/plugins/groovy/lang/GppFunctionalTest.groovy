@@ -64,4 +64,31 @@ Foo f = [name: 'aaa', foo: { println 'hi' }, anotherProperty: 42 ]
 }""")
   }
 
+  public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne() throws Exception {
+    configureTyped("""
+File f = ['path']
+f.mk<caret>
+""")
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "mkdir", "mkdirs"
+  }
+  
+  public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne2() throws Exception {
+    myFixture.addClass """
+public class Some {
+    public int prop
+
+    public void f_foo() {}
+    public void f_bar() {}
+}
+"""
+
+    configureTyped("""
+Some s = [prop: 239]
+s.f_<caret>
+""")
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "f_foo", "f_bar"
+  }
+
 }
