@@ -191,7 +191,7 @@ class GrChangeInfoImpl implements JavaChangeInfo {
     return false;
   }
 
-  public PsiMethod getMethod() {
+  public GrMethod getMethod() {
     return method;
   }
 

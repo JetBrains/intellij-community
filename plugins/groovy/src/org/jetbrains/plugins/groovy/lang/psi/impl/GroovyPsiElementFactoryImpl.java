@@ -236,20 +236,26 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createDummyFile(s, false);
   }
 
-  public GrParameter createParameter(String name, @Nullable String typeText, GroovyPsiElement context) throws IncorrectOperationException {
-    String fileText;
+  public GrParameter createParameter(String name, @Nullable String typeText, @Nullable String initializer, GroovyPsiElement context)
+    throws IncorrectOperationException {
+    StringBuilder fileText = new StringBuilder();
+    fileText.append("def foo(");
     if (typeText != null) {
-      fileText = "def foo(" + typeText + " " + name + ") {}";
-    } else {
-      fileText = "def foo(" + name + ") {}";
+      fileText.append(typeText).append(" ");
     }
-    GroovyFileImpl groovyFile = createDummyFile(fileText);
+    fileText.append(name);
+    if (initializer != null && initializer.length() > 0) {
+      fileText.append(" = ").append(initializer);
+    }
+    fileText.append("){}");
+    GroovyFileImpl groovyFile = createDummyFile(fileText.toString());
     groovyFile.setContext(context);
 
     ASTNode node = groovyFile.getFirstChild().getNode();
-    if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION)
+    if (node.getElementType() != GroovyElementTypes.METHOD_DEFINITION) {
       throw new IncorrectOperationException("Invalid all text");
-    return ((GrMethod) node.getPsi()).getParameters()[0];
+    }
+    return ((GrMethod)node.getPsi()).getParameters()[0];
   }
 
   public GrCodeReferenceElement createTypeOrPackageReference(String qName) {

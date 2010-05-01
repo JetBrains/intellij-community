@@ -86,7 +86,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
       case 1:
         return info.getNameFragment();
       case 2:
-        return info.getDefaultInitializer();
+        return info.getDefaultInitializerFragment();
       case 3:
         return info.getDefaultValueFragment();
       default:

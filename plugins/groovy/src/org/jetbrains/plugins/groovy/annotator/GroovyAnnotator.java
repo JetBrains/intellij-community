@@ -92,7 +92,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProc
 import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author ven
@@ -1225,7 +1228,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder,
                                                         PsiMethod method, PsiType[] argumentTypes) {
-    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
     if (elementToHighlight == null) {
       elementToHighlight = place;
     }
@@ -1357,7 +1360,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     final String typesString = buildArgTypesList(argumentTypes);
     String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
-    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
     if (elementToHighlight == null) elementToHighlight = place;
     holder.createWarningAnnotation(elementToHighlight, message);
   }

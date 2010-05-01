@@ -34,11 +34,10 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -202,8 +201,12 @@ class GrChageSignatureUsageSearcher {
 
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
         //todo check for applicability of arguments to method
-        if (isMethodUsage(element)) {
-          result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
+        if (PsiUtil.isMethodUsage(element)) {
+          GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method);
+          GrClosureSignatureUtil.ArgInfo[] map = GrClosureSignatureUtil
+            .mapParametersToArguments(signature, PsiUtil.getArgumentsList(element), method.getManager(), method.getResolveScope());
+          result.add(
+            new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method), isToModifyArgs, isToCatchExceptions, map));
         }
         else if (element instanceof GrDocTagValueToken) {
           result.add(new UsageInfo(ref.getElement()));
@@ -294,16 +297,4 @@ class GrChageSignatureUsageSearcher {
     }
   }
 
-  static boolean isMethodUsage(PsiElement element) {
-    if (element instanceof GrEnumConstant) return true;
-    if (!(element instanceof GrCodeReferenceElement)) return false;
-    PsiElement parent = element.getParent();
-    if (parent instanceof GrCall) {
-      return true;
-    }
-    else if (parent instanceof GrAnonymousClassDefinition) {
-      return element.equals(((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy());
-    }
-    return false;
-  }
 }

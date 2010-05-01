@@ -147,14 +147,13 @@ public class PsiUtil {
   }
 
   @Nullable
-  public static GroovyPsiElement getArgumentsElement(PsiElement methodRef) {
+  public static GrArgumentList getArgumentsList(PsiElement methodRef) {
     PsiElement parent = methodRef.getParent();
-    if (parent instanceof GrMethodCallExpression) {
-      return ((GrMethodCallExpression)parent).getArgumentList();
-    } else if (parent instanceof GrApplicationStatement) {
-      return ((GrApplicationStatement)parent).getArgumentList();
-    } else if (parent instanceof GrNewExpression) {
-      return ((GrNewExpression)parent).getArgumentList();
+    if (parent instanceof GrCall) {
+      return ((GrCall)parent).getArgumentList();
+    }
+    if (parent instanceof GrAnonymousClassDefinition) {
+      return ((GrAnonymousClassDefinition)parent).getArgumentListGroovy();
     }
     return null;
   }
@@ -750,5 +749,18 @@ public class PsiUtil {
     else {
       return method.getReturnType();
     }
+  }
+
+  public static boolean isMethodUsage(PsiElement element) {
+    if (element instanceof GrEnumConstant) return true;
+    if (!(element instanceof GrReferenceElement)) return false;
+    PsiElement parent = element.getParent();
+    if (parent instanceof GrCall) {
+      return true;
+    }
+    else if (parent instanceof GrAnonymousClassDefinition) {
+      return element.equals(((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy());
+    }
+    return false;
   }
 }

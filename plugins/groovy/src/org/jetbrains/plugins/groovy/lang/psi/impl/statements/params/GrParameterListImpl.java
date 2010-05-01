@@ -20,16 +20,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
 
@@ -103,40 +100,24 @@ public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParam
     return -1;
   }
 
-  @Nullable
-  public PsiElement removeParameter(final GrParameter toRemove) {
-    final ASTNode astNode = getNode();
-    for (GrParameter param : getParameters()) {
-      if (param == toRemove) {
-        final ASTNode paramNode = param.getNode();
-        assert paramNode != null;
-        PsiElement prevSibling = PsiUtil.getPrevNonSpace(param);
-        astNode.removeChild(paramNode);
-        if (prevSibling != null) {
-          final ASTNode prev = prevSibling.getNode();
-          if (prev != null && prev.getElementType() == mCOMMA) {
-            astNode.removeChild(prev);
-          }
-        }
-        return toRemove;
-      }
-    }
-    return null;
-  }
-
   @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     GrParameter[] params = getParameters();
-    final ASTNode astNode = getNode();
 
     if (params.length == 0) {
-      astNode.addChild(element.getNode());
+      add(element);
     }
     else {
-      astNode.addLeaf(mCOMMA, ",", (element = super.addAfter(element, anchor)).getNode());
+      element = super.addAfter(element, anchor);
+      final ASTNode astNode = getNode();
+      if (anchor != null) {
+        astNode.addLeaf(mCOMMA, ",", element.getNode());
+      }
+      else {
+        astNode.addLeaf(mCOMMA, ",", element.getNextSibling().getNode());
+      }
     }
 
-    CodeStyleManager.getInstance(getManager().getProject()).reformat(this);
     return element;
   }
 }

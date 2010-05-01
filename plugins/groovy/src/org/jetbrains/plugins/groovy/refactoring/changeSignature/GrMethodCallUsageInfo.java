@@ -26,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -34,6 +36,7 @@ public class GrMethodCallUsageInfo extends UsageInfo {
   private final boolean myToChangeArguments;
   private final boolean myToCatchExceptions;
   private final PsiMethod myReferencedMethod;
+  private GrClosureSignatureUtil.ArgInfo[] myMapToArguments;
 
   public boolean isToCatchExceptions() {
     return myToCatchExceptions;
@@ -43,10 +46,14 @@ public class GrMethodCallUsageInfo extends UsageInfo {
     return myToChangeArguments;
   }
 
-  public GrMethodCallUsageInfo(PsiElement element, boolean isToChangeArguments, boolean isToCatchExceptions) {
+  public GrMethodCallUsageInfo(PsiElement element,
+                               GrClosureSignature oldSignature,
+                               boolean isToChangeArguments,
+                               boolean isToCatchExceptions, GrClosureSignatureUtil.ArgInfo[] mapToArguments) {
     super(element);
     myToChangeArguments = isToChangeArguments;
     myToCatchExceptions = isToCatchExceptions;
+    myMapToArguments = mapToArguments;
     myReferencedMethod = resolveMethod(element);
   }
 
@@ -77,5 +84,7 @@ public class GrMethodCallUsageInfo extends UsageInfo {
     return myReferencedMethod;
   }
 
-
+  public GrClosureSignatureUtil.ArgInfo[] getMapToArguments() {
+    return myMapToArguments;
+  }
 }

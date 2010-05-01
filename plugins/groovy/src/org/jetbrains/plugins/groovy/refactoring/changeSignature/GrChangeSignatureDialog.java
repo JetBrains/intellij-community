@@ -28,7 +28,7 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -55,7 +55,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   private JRadioButton myProtectedRadioButton;
   private JRadioButton myPrivateRadioButton;
   private JPanel myParametersPanel;
-  private Table myParameterTable;
+  private JBTable myParameterTable;
   private JButton myAddButton;
   private JButton myRemoveButton;
   private JButton myMoveUpButton;
@@ -80,9 +80,12 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         int selectedColumn = myParameterTable.getSelectedColumn();
+        if (selectedColumn < 0) selectedColumn = 0;
         myParameterModel.addRow();
         myParameterTable.setRowSelectionInterval(myParameterModel.getRowCount() - 1, myParameterModel.getRowCount() - 1);
         myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
+        updateSignature();
+        myParameterTable.requestFocus();
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -96,6 +99,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
         if (myParameterModel.getRowCount() == 0) return;
         myParameterTable.setRowSelectionInterval(selectedRow, selectedRow);
         myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
+        updateSignature();
+        myParameterTable.requestFocus();
       }
     });
 
@@ -106,6 +111,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
         myParameterModel.exchangeRows(selectedRow, selectedRow - 1);
         myParameterTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
         myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
+        updateSignature();
+        myParameterTable.requestFocus();
       }
     });
 
@@ -116,6 +123,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
         myParameterModel.exchangeRows(selectedRow, selectedRow + 1);
         myParameterTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
         myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
+        updateSignature();
+        myParameterTable.requestFocus();
       }
     });
   }
@@ -157,7 +166,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
   private void createParametersModel() {
     myParameterModel = new GrParameterTableModel(myMethod, this, myProject);
-    myParameterTable = new Table(myParameterModel);
+    myParameterTable = new JBTable(myParameterModel);
     myParameterTable.setCellSelectionEnabled(true);
 
     myParameterTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
@@ -228,7 +237,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     builder.append(typeFragment != null ? typeFragment.getText().trim() : GrModifier.DEF).append(' ');
     final GroovyCodeFragment nameFragment = info.getNameFragment();
     builder.append(nameFragment != null ? nameFragment.getText().trim() : "");
-    final GroovyCodeFragment defaultInitializer = info.getDefaultInitializer();
+    final GroovyCodeFragment defaultInitializer = info.getDefaultInitializerFragment();
 
     final String defaultInitializerText = defaultInitializer != null ? defaultInitializer.getText().trim() : "";
     if (defaultInitializerText.length() > 0) {

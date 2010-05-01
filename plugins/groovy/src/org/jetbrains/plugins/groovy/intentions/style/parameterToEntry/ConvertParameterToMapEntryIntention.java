@@ -201,7 +201,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         }
 
         //Eliminate obsolete parameter from parameter list
-        list.removeParameter(param);
+        param.delete();
 
 
         //Remove old arguments from occurrences

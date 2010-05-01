@@ -23,16 +23,15 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Maxim.Medvedev
@@ -63,7 +62,30 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
     for (ChangeSignatureUsageProcessor processor : processors) {
       infos.addAll(Arrays.asList(processor.findUsages(myChangeInfo)));
     }
+
+    infos = filterUsages(infos);
     return infos.toArray(new UsageInfo[infos.size()]);
+  }
+
+  private static List<UsageInfo> filterUsages(List<UsageInfo> infos) {
+    Map<PsiElement, MoveRenameUsageInfo> moveRenameInfos = new HashMap<PsiElement, MoveRenameUsageInfo>();
+    Set<PsiElement> usedElements = new com.intellij.util.containers.hash.HashSet<PsiElement>();
+
+    List<UsageInfo> result = new ArrayList<UsageInfo>(infos.size() / 2);
+    for (UsageInfo info : infos) {
+      PsiElement element = info.getElement();
+      if (info instanceof MoveRenameUsageInfo) {
+        if (usedElements.contains(element)) continue;
+        moveRenameInfos.put(element, (MoveRenameUsageInfo)info);
+      }
+      else {
+        moveRenameInfos.remove(element);
+        usedElements.add(element);
+        result.add(info);
+      }
+    }
+    result.addAll(moveRenameInfos.values());
+    return result;
   }
 
   @Override
@@ -77,21 +99,15 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     changeMethod();
     for (UsageInfo usage : usages) {
-
-      for (ChangeSignatureUsageProcessor processor : GrChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+      for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
         if (processor.processUsage(myChangeInfo, usage, false, usages)) break;
       }
     }
   }
 
   private void changeMethod() {
-    final PsiMethod method = myChangeInfo.getMethod();
-    if (myChangeInfo.isChangeName()) {
-      method.setName(myChangeInfo.getNewName());
-    }
-
-    if (myChangeInfo.isChangeVisibility()) {
-      method.getModifierList().setModifierProperty(myChangeInfo.getVisibilityModifier(), true);
+    for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+      if (processor.processPrimaryMethod(myChangeInfo)) break;
     }
   }
 
