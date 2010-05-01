@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.Change;
@@ -49,6 +50,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.text.DateFormat;
 import java.util.*;
@@ -152,13 +154,26 @@ public class GitLogTree implements GitTreeViewI {
     }.callMe();
   }
 
-  public void refreshView(@NotNull final List<GitCommit> commitsToShow, final TravelTicket ticket) {
+  public void refreshView(@NotNull final List<GitCommit> commitsToShow, final TravelTicket ticket, final SHAHash jumpTarget) {
     new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
       public void run() {
         final boolean wasSelected = myCommitsList.getSelectedIndices().length == 0;
         myCommitsList.setListData(ArrayUtil.toObjectArray(commitsToShow));
-        if ((! commitsToShow.isEmpty()) && (wasSelected || (! Comparing.equal(myTicket, ticket)))) {
-          myCommitsList.setSelectedIndex(0);
+        if (jumpTarget != null) {
+          for (int i = 0; i < commitsToShow.size(); i++) {
+            final GitCommit commit = commitsToShow.get(i);
+            if (commit.getHash().equals(jumpTarget)) {
+              myCommitsList.setSelectedIndex(i);
+              break;
+            }
+          }
+          if (myCommitsList.getSelectedIndices().length == 0) {
+            myCommitsList.setSelectedIndex(0);
+          }
+        } else {
+          if ((! commitsToShow.isEmpty()) && (wasSelected || (! Comparing.equal(myTicket, ticket)))) {
+            myCommitsList.setSelectedIndex(0);
+          }
         }
         myTicket = ticket;
         myCommitsList.revalidate();
@@ -218,6 +233,9 @@ public class GitLogTree implements GitTreeViewI {
     final MyCherryPick cp = new MyCherryPick();
     group.add(cp);
     cp.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, KeyEvent.ALT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK)), myPanel);
+    final MyGoto gotoCommit = new MyGoto();
+    group.add(gotoCommit);
+    gotoCommit.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_G, KeyEvent.ALT_DOWN_MASK | KeyEvent.CTRL_DOWN_MASK)), myPanel);
     group.add(new MyRefreshAction());
 
     final ActionManager am = ActionManager.getInstance();
@@ -520,6 +538,65 @@ public class GitLogTree implements GitTreeViewI {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myController.refresh();
+    }
+  }
+
+  // hash, reference name, or comment mask
+  private class MyGoto extends AnAction {
+    private MyGoto() {
+      super("Goto", "Type commit hash, or reference, or regexp for commit message", IconLoader.getIcon("/general/run.png"));
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      final JTextField field = new JTextField(30);
+
+      final String[] gotoString = new String[1];
+      final JBPopup[] popup = new JBPopup[1];
+      field.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (KeyEvent.VK_ENTER == e.getKeyCode()) {
+            gotoString[0] = field.getText();
+            if (popup[0] != null) {
+              popup[0].cancel();
+            }
+          }
+        }
+      });
+      final JPanel panel = new JPanel(new BorderLayout());
+      panel.add(field, BorderLayout.CENTER);
+      final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, field);
+      popup[0] = builder.setTitle("Goto")
+        .setResizable(true)
+        .setFocusable(true)
+        .setMovable(true)
+        .setModalContext(true)
+        .setAdText("Commit hash, or reference, or regexp for commit message")
+        .setDimensionServiceKey(myProject, "Git.Log.Tree.Goto", true)
+        .setCancelOnClickOutside(true).setCancelCallback(new Computable<Boolean>() {
+          public Boolean compute() {
+            if (gotoString[0] != null) {
+              tryFind(gotoString[0]);
+            }
+            return Boolean.TRUE;
+          }
+        })
+        .addListener(new JBPopupListener() {
+          public void beforeShown(LightweightWindowEvent event) {
+            IdeFocusManager.findInstanceByContext(e.getDataContext()).requestFocus(field, true);
+          }
+          public void onClosed(LightweightWindowEvent event) {
+          }
+        })
+        .createPopup();
+      UIUtil.installPopupMenuColorAndFonts(popup[0].getContent());
+      UIUtil.installPopupMenuBorder(popup[0].getContent());
+      popup[0].showInBestPositionFor(e.getDataContext());
+    }
+
+    private void tryFind(final String s) {
+      myController.navigateTo(s);
     }
   }
 

@@ -278,7 +278,7 @@
   <dataValidator key="psi.Element.array" implementationClass="com.intellij.ide.impl.PsiElementArrayDataValidator"/>
   <dataValidator key="module" implementationClass="com.intellij.ide.impl.ModuleDataValidator"/>
 
-  <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider"/>
+  <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider" id="file"/>
   <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider"/>
 
   <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor"/>
@@ -298,7 +298,8 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameCompleteMacro"/>
 
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
-  
+  <internalFileTemplate name="Html"/>
+  <internalFileTemplate name="Xhtml"/>
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
@@ -409,7 +410,7 @@
   <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
 
-  <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>con
+  <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>

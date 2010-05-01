@@ -1032,12 +1032,8 @@ public class ClasspathPanel extends JPanel {
       final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParent));
       editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, contextModule);
       myIsOk = editor.openDialog(myParent, Collections.singletonList(library), true) != null;
-      if (myIsOk && library.getUrls(OrderRootType.CLASSES).length > 0) {
+      if (myIsOk) {
         myChosenLibrary = library;
-      }
-      else {
-        myChosenLibrary = null;
-        libraryModifiableModel.removeLibrary(library);
       }
     }
 

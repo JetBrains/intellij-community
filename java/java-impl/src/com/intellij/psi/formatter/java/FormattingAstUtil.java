@@ -52,6 +52,9 @@ public class FormattingAstUtil {
    */
   @Nullable
   public static ASTNode getPrevNonWhiteSpaceNode(final ASTNode node) {
+    if (node == null) {
+      return null;
+    }
     ASTNode result = node.getTreePrev();
     while (result != null && (result.getElementType() == TokenType.WHITE_SPACE || result.getTextLength() == 0)) {
       result = result.getTreePrev();
@@ -67,6 +70,9 @@ public class FormattingAstUtil {
    */
   @Nullable
   public static ASTNode getNextNonWhiteSpaceNode(final ASTNode node) {
+    if (node == null) {
+      return null;
+    }
     ASTNode result = node.getTreeNext();
     while (result != null && (result.getElementType() == TokenType.WHITE_SPACE || result.getTextLength() == 0)) {
       result = result.getTreeNext();

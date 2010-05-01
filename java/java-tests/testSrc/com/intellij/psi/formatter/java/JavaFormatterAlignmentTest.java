@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.formatter;
+package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:42:00 PM
  */
-public class JavaFormatterAlignmentTest extends AbstractJavaFormattingTest {
+public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   public void testChainedMethodsAlignment() throws Exception {
     // Inspired by IDEA-30369
@@ -35,4 +35,28 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormattingTest {
     doTest();
   }
 
+  public void testMultipleMethodAnnotationsCommentedInTheMiddle() throws Exception {
+    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 1;
+    getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
+
+    // Inspired by IDEA-53942
+    doTextTest(
+      "public class Test {\n" +
+      "          @Override\n" +
+      "//       @XmlElement(name = \"Document\", required = true, type = DocumentType.class)\n" +
+      "       @XmlTransient\n" +
+      "  void foo() {\n" +
+      "}\n" +
+      "}",
+
+      "public class Test {\n" +
+      "\n" +
+      "    @Override\n" +
+      "//       @XmlElement(name = \"Document\", required = true, type = DocumentType.class)\n" +
+      "    @XmlTransient\n" +
+      "    void foo() {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

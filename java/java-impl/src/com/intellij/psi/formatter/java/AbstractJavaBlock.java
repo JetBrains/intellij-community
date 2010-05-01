@@ -752,6 +752,19 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
     }
 
+    else if (child.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+      ASTNode previous = child.getTreePrev();
+      // There is a special case - comment block that is located at the very start of the line. We don't reformat such a blocks,
+      // hence, no alignment should be applied to them in order to avoid subsequent blocks aligned with the same alignment to
+      // be located at the left editor edge as well.
+      if (previous != null && previous.getElementType() == JavaTokenType.WHITE_SPACE && previous.getChars().length() > 0
+          && previous.getChars().charAt(previous.getChars().length() - 1) == '\n') {
+        return null;
+      } else {
+        return defaultAlignment;
+      }
+    }
+
     else {
       return defaultAlignment;
     }

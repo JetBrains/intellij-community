@@ -128,7 +128,6 @@
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
     <orderEntry type="module" module-name="idea-tests" scope="TEST" />
     <orderEntry type="module" module-name="maven-uml" scope="RUNTIME" />
-    <orderEntry type="module" module-name="maven-flex" scope="RUNTIME" />
     <orderEntry type="module" module-name="maven-gwt" scope="RUNTIME" />
     <orderEntry type="module" module-name="maven-jee" scope="RUNTIME" />
   </component>

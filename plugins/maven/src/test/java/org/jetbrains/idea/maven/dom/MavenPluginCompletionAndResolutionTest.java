@@ -257,6 +257,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath(pluginPath);
     VirtualFile f = VirtualFileManager.getInstance().findFileByUrl("jar://" + filePath);
 
+
     PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
     assertEquals(findPsiFile(f), resolved.getContainingFile());

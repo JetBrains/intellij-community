@@ -17,7 +17,6 @@
 package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +60,8 @@ public class CheckboxTreeBase extends Tree {
         cellRenderer.setBounds(rowBounds);
         Rectangle checkBounds = cellRenderer.myCheckbox.getBounds();
         checkBounds.setLocation(rowBounds.getLocation());
+
+        if (checkBounds.height == 0) checkBounds.height = rowBounds.height;
 
         final CheckedTreeNode node = (CheckedTreeNode)o;
         if (checkBounds.contains(e.getPoint())) {

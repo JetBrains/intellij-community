@@ -23,4 +23,6 @@ public interface RepositoryCommonData {
   List<String> getAllBranchesOrdered();
   List<String> getKnownUsers();
   void cherryPick(final Collection<SHAHash> hash);
+  // todo remove
+  SHAHash commitExists(String reference);
 }

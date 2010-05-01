@@ -12,7 +12,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="compiler-openapi" />
@@ -20,10 +20,11 @@
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="execution-impl" />
     <orderEntry type="module" module-name="lvcs-impl" />
-    <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module" module-name="compiler-impl" />
+    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
   </component>
 </module>
 

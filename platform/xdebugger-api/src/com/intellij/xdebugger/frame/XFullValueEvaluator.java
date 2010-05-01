@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -44,7 +45,7 @@ public abstract class XFullValueEvaluator {
     return myLinkText;
   }
 
-  public interface XFullValueEvaluationCallback {
+  public interface XFullValueEvaluationCallback extends Obsolescent {
     void evaluated(@NotNull String fullValue);
 
     void errorOccurred(@NotNull String errorMessage);
