@@ -36,16 +36,15 @@ public class GppTypeConverter extends GrTypeConverter {
     }
 
     final PsiFile file = member.getContainingFile();
-
-    final VirtualFile vfile = file.getVirtualFile();
-    if (vfile != null) {
-      final String extension = vfile.getExtension();
-      if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
-        return true;
-      }
-    }
-
     if (file instanceof GroovyFile) {
+      final VirtualFile vfile = file.getVirtualFile();
+      if (vfile != null) {
+        final String extension = vfile.getExtension();
+        if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
+          return true;
+        }
+      }
+
       return isTyped(JavaPsiFacade.getInstance(member.getProject()).findPackage(((GroovyFile)file).getPackageName()));
     }
     return false;
