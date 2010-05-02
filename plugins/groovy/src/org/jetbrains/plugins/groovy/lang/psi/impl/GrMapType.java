@@ -79,6 +79,7 @@ public class GrMapType extends GrLiteralClassType {
 
   public PsiType[] getAllValueTypes() {
     Set<PsiType> result = new HashSet<PsiType>();
+    result.addAll(myStringEntries.values());
     for (Pair<PsiType, PsiType> entry : myOtherEntries) {
       result.add(entry.second);
     }
