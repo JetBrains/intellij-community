@@ -2,23 +2,24 @@ package org.jetbrains.plugins.groovy.gpp;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.AbstractClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeEquals;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -30,14 +31,67 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       return null;
     }
 
-    for (TypeConstraint constraint : GroovyExpectedTypesProvider.calculateTypeConstraints(closure)) {
-      if (constraint instanceof SubtypeConstraint || constraint instanceof TypeEquals) {
-        final PsiType suggestion = getSingleMethodParameterType(constraint.getDefaultType(), index, closure);
-        if (suggestion != null) {
-          return suggestion;
+    final Pair<PsiMethod, PsiSubstitutor> pair = getOverriddenMethod(closure);
+    if (pair != null) {
+      final PsiParameter[] parameters = pair.first.getParameterList().getParameters();
+      if (parameters.length > index) {
+        return pair.second.substitute(parameters[index].getType());
+      }
+      return null;
+    }
+
+    for (PsiType constraint : getExpectedTypes(closure)) {
+      final PsiType suggestion = getSingleMethodParameterType(constraint, index, closure);
+      if (suggestion != null) {
+        return suggestion;
+      }
+    }
+    return null;
+  }
+
+  private static Set<PsiType> getExpectedTypes(GrExpression element) {
+    final LinkedHashSet<PsiType> result = new LinkedHashSet<PsiType>();
+    for (TypeConstraint constraint : GroovyExpectedTypesProvider.calculateTypeConstraints(element)) {
+      result.add(constraint.getDefaultType());
+    }
+    return result;
+  }
+
+  @Nullable
+  private static Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrClosableBlock closure) {
+    final PsiElement parent = closure.getParent();
+    if (!(parent instanceof GrNamedArgument)) {
+      return null;
+    }
+
+    final GrArgumentLabel label = ((GrNamedArgument)parent).getLabel();
+    if (label == null) {
+      return null;
+    }
+
+    final String methodName = label.getName();
+    if (methodName == null) {
+      return null;
+    }
+
+    final PsiElement map = parent.getParent();
+    if (map instanceof GrListOrMap && ((GrListOrMap)map).isMap()) {
+      for (PsiType expected : getExpectedTypes((GrExpression)map)) {
+        if (expected instanceof PsiClassType) {
+          final List<Pair<PsiMethod, PsiSubstitutor>> pairs = getMethodsToOverrideImplementInInheritor((PsiClassType)expected, false);
+          final List<Pair<PsiMethod, PsiSubstitutor>> withName =
+            ContainerUtil.findAll(pairs, new Condition<Pair<PsiMethod, PsiSubstitutor>>() {
+              public boolean value(Pair<PsiMethod, PsiSubstitutor> pair) {
+                return methodName.equals(pair.first.getName());
+              }
+            });
+          if (withName.size() == 1) {
+            return withName.get(0);
+          }
         }
       }
     }
+
     return null;
   }
 
@@ -53,49 +107,56 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   @Nullable
   public static PsiType[] findSingleAbstractMethodSignature(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
-      PsiClassType classType = (PsiClassType)type;
-      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      final PsiClass psiClass = resolveResult.getElement();
-      if (psiClass == null) {
-        return null;
-      }
-
-      final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      final Collection<MethodSignature> signatures = OverrideImplementUtil.getMethodSignaturesToImplement(psiClass);
-      for (Iterator<MethodSignature> iterator = signatures.iterator(); iterator.hasNext();) {
-        MethodSignature next = iterator.next();
-        if (next instanceof MethodSignatureBackedByPsiMethod) {
-          final PsiMethod method = ((MethodSignatureBackedByPsiMethod)next).getMethod();
-          if (hasTraitImplementation(method)) {
-            iterator.remove();
-          }
-        }
-      }
-
-      if (signatures.size() == 1) {
-        final PsiType[] parameterTypes = signatures.iterator().next().getParameterTypes();
-        return ContainerUtil.map2Array(parameterTypes, PsiType.class, new Function<PsiType, PsiType>() {
-          public PsiType fun(PsiType type) {
-            return substitutor.substitute(type);
+      List<Pair<PsiMethod, PsiSubstitutor>> result = getMethodsToOverrideImplementInInheritor((PsiClassType)type, true);
+      if (result.size() == 1) {
+        final Pair<PsiMethod, PsiSubstitutor> pair = result.get(0);
+        return ContainerUtil.map2Array(pair.first.getParameterList().getParameters(), PsiType.class, new Function<PsiParameter, PsiType>() {
+          public PsiType fun(PsiParameter psiParameter) {
+            return pair.second.substitute(psiParameter.getType());
           }
         });
-      }
-      else if (signatures.isEmpty()) {
-        final List<PsiMethod> abstractMethods = ContainerUtil.findAll(psiClass.getMethods(), new Condition<PsiMethod>() {
-          public boolean value(PsiMethod method) {
-            return method.hasModifierProperty(PsiModifier.ABSTRACT) && !hasTraitImplementation(method);
-          }
-        });
-        if (abstractMethods.size() == 1) {
-          return ContainerUtil.map2Array(abstractMethods.get(0).getParameterList().getParameters(), PsiType.class, new Function<PsiParameter, PsiType>() {
-            public PsiType fun(PsiParameter psiParameter) {
-              return substitutor.substitute(psiParameter.getType());
-            }
-          });
-        }
       }
     }
     return null;
+  }
+
+  @NotNull
+  private static List<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplementInInheritor(PsiClassType classType, boolean toImplement) {
+    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = resolveResult.getElement();
+    if (psiClass == null) {
+      return Collections.emptyList();
+    }
+
+    List<Pair<PsiMethod, PsiSubstitutor>> over = getMethodsToOverrideImplement(psiClass, false);
+    List<Pair<PsiMethod, PsiSubstitutor>> impl = getMethodsToOverrideImplement(psiClass, true);
+    
+    for (PsiMethod method : psiClass.getMethods()) {
+      (method.hasModifierProperty(PsiModifier.ABSTRACT) ? impl : over).add(Pair.create(method, PsiSubstitutor.EMPTY));
+    }
+
+    for (Iterator<Pair<PsiMethod, PsiSubstitutor>> iterator = impl.iterator(); iterator.hasNext();) {
+      Pair<PsiMethod, PsiSubstitutor> pair = iterator.next();
+      if (hasTraitImplementation(pair.first)) {
+        iterator.remove();
+        over.add(pair);
+      }
+    }
+
+    final List<Pair<PsiMethod, PsiSubstitutor>> result = toImplement ? impl : over;
+    for (int i = 0, resultSize = result.size(); i < resultSize; i++) {
+      Pair<PsiMethod, PsiSubstitutor> pair = result.get(i);
+      result.set(i, Pair.create(pair.first, resolveResult.getSubstitutor().putAll(pair.second)));
+    }
+    return result;
+  }
+
+  private static ArrayList<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplement(PsiClass psiClass, final boolean toImplement) {
+    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+    for (CandidateInfo info : OverrideImplementUtil.getMethodsToOverrideImplement(psiClass, toImplement)) {
+      result.add(Pair.create((PsiMethod) info.getElement(), info.getSubstitutor()));
+    }
+    return result;
   }
 
   private static boolean hasTraitImplementation(PsiMethod method) {

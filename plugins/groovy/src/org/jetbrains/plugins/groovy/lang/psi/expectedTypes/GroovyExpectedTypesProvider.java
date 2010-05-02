@@ -22,12 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
@@ -106,6 +104,19 @@ public class GroovyExpectedTypesProvider {
           myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
         }
 
+      }
+    }
+
+    @Override
+    public void visitOpenBlock(GrOpenBlock block) {
+      if (block.getParent() instanceof PsiMethod) {
+        final GrStatement[] statements = block.getStatements();
+        if (statements.length > 0 && myExpression.equals(statements[statements.length - 1])) {
+          final PsiType type = ((PsiMethod)block.getParent()).getReturnType();
+          if (type != null) {
+            myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
+          }
+        }
       }
     }
 
