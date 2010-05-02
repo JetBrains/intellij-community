@@ -9,8 +9,11 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.AbstractClosureParameterEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeEquals;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
 import java.util.Collection;
@@ -27,9 +30,13 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       return null;
     }
 
-    final PsiElement parent = closure.getParent();
-    if (parent instanceof GrVariable) {
-      return getSingleMethodParameterType(((GrVariable)parent).getDeclaredType(), index, closure);
+    for (TypeConstraint constraint : GroovyExpectedTypesProvider.calculateTypeConstraints(closure)) {
+      if (constraint instanceof SubtypeConstraint || constraint instanceof TypeEquals) {
+        final PsiType suggestion = getSingleMethodParameterType(constraint.getDefaultType(), index, closure);
+        if (suggestion != null) {
+          return suggestion;
+        }
+      }
     }
     return null;
   }

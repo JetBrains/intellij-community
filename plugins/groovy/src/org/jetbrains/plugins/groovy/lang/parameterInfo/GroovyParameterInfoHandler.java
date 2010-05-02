@@ -30,23 +30,20 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,31 +111,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
-    final PsiElement parent = place.getParent();
-    GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
-    if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getMethodVariants();
-    } else if (parent instanceof GrConstructorInvocation) {
-      final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
-      if (clazz != null) {
-        final PsiMethod[] constructors = clazz.getConstructors();
-        variants = getConstructorResolveResult(constructors, place);
-      }
-    } else if (parent instanceof GrAnonymousClassDefinition) {
-      final PsiElement element = ((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy().resolve();
-      if (element instanceof PsiClass) {
-        final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
-        variants = getConstructorResolveResult(constructors, place);
-      }
-    }
-    else if (parent instanceof GrApplicationStatement) {
-      final GrExpression funExpr = ((GrApplicationStatement) parent).getFunExpression();
-      if (funExpr instanceof GrReferenceExpression) {
-        variants = ((GrReferenceExpression) funExpr).getSameNameVariants();
-      }
-    } else if (place instanceof GrReferenceExpression) {
-      variants = ((GrReferenceExpression) place).getSameNameVariants();
-    }
+    GroovyResolveResult[] variants = ResolveUtil.getMethodVariants(place);
     final List<GroovyResolveResult> namedElements = ContainerUtil.findAll(variants, new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
         return groovyResolveResult.getElement() instanceof PsiNamedElement;
@@ -148,14 +121,6 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  private static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
-    GroovyResolveResult[] variants = new GroovyResolveResult[constructors.length];
-    for (int i = 0; i < constructors.length; i++) {
-      final boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(constructors[i], place, null);
-      variants[i] = new GroovyResolveResultImpl(constructors[i], isAccessible);
-    }
-    return variants;
-  }
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
     int offset = context.getEditor().getCaretModel().getOffset();
     offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");

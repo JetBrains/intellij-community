@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import junit.framework.ComparisonFailure
 
 /**
  * @author peter
@@ -166,6 +168,48 @@ Action a1 = { a = 2 -> println a }
     configureTyped "Function1<String, Object> f = { it.subs<caret> }"
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
+  }
+
+  public void testClosureParameterTypesInMethodInvocation() throws Exception {
+    myFixture.addClass """
+package groovy.lang;
+public interface Function2<T,V,R> {
+  public abstract R call(T param, V param2);
+}"""
+
+    myFixture.configureByText "a.groovy", """
+def foo(int a = 1, Function1<String, Object> f) {}
+def foo(String s) {}
+def foo(Function2<Integer, String, Object> f) {}
+
+@Typed def bar() {
+  foo { it.subsREF }
+  foo(1, { it.subsREF })
+  foo 1, { it.subsREF }
+  foo(1) { it.subsREF }
+  foo { a -> a.subsREF }
+  foo { a, int b=2 -> a.subsREF }
+  foo { a, b -> b.subsREF }
+}
+"""
+    def text = myFixture.file.text
+    def pos = 0
+    while (true) {
+      pos = text.indexOf("REF", pos+1)
+      if (pos < 0) {
+        break
+      }
+      myFixture.editor.caretModel.moveToOffset pos
+      myFixture.completeBasic()
+      try {
+        assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
+      }
+      catch (ComparisonFailure ex) {
+        println "at: " + text[0..<pos] + "<caret>" + text[pos..<text.size()]
+        throw ex
+      }
+      LookupManager.getInstance(project).hideActiveLookup()
+    }
   }
 
 }
