@@ -10,10 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -33,23 +30,23 @@ public class GppTypeConverter extends GrTypeConverter {
       return true;
     }
 
-    if (member instanceof GrMethod) {
-      return isTyped(((GrMethod)member).getContainingClass());
+    final GrMember parentMember = PsiTreeUtil.getParentOfType(member, GrMember.class);
+    if (parentMember != null) {
+      return isTyped(parentMember);
     }
-    if (member instanceof GrAnonymousClassDefinition) {
-      return isTyped(PsiTreeUtil.getParentOfType(member, GrMember.class));
-    }
-    if (member instanceof GrTypeDefinition) {
-      final PsiFile file = member.getContainingFile();
 
-      final VirtualFile vfile = file.getVirtualFile();
-      if (vfile != null && "gpp".equals(vfile.getExtension())) {
+    final PsiFile file = member.getContainingFile();
+
+    final VirtualFile vfile = file.getVirtualFile();
+    if (vfile != null) {
+      final String extension = vfile.getExtension();
+      if ("gpp".equals(extension) || "grunit".equals(vfile.getExtension())) {
         return true;
       }
+    }
 
-      if (file instanceof GroovyFile) {
-        return isTyped(JavaPsiFacade.getInstance(member.getProject()).findPackage(((GroovyFile)file).getPackageName()));
-      }
+    if (file instanceof GroovyFile) {
+      return isTyped(JavaPsiFacade.getInstance(member.getProject()).findPackage(((GroovyFile)file).getPackageName()));
     }
     return false;
   }
