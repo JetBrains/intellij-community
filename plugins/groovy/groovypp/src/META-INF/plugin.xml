@@ -10,6 +10,7 @@
   <extensions defaultExtensionNs="org.intellij.groovy">
     <libraryManager implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryManager" order="first"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
   </extensions>
 
 </idea-plugin>

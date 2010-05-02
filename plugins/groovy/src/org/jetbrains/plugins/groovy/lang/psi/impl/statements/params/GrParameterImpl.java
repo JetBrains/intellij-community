@@ -201,12 +201,4 @@ public class GrParameterImpl extends GrVariableImpl implements GrParameter {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
-  @Override
-  public PsiType getDeclaredType() {
-    PsiType type = super.getDeclaredType();
-    if (type == null) {
-      type = getTypeGroovy();
-    }
-    return type;
-  }
 }
