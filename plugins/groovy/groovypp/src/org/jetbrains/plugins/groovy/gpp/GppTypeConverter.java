@@ -15,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author peter
@@ -55,7 +54,7 @@ public class GppTypeConverter extends GrTypeConverter {
       final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
 
       final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
-      if (expectedComponent != null && allTypesAssignable(componentTypes, expectedComponent, context) && hasDefaultConstructor(lType)) {
+      if (expectedComponent != null && hasDefaultConstructor(lType)) {
         return true;
       }
 
@@ -66,20 +65,7 @@ public class GppTypeConverter extends GrTypeConverter {
       return null;
     }
     else if (rType instanceof GrMapType) {
-      final PsiType expectedKey = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false);
-      final PsiType expectedValue = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
-      if (expectedKey != null && expectedValue != null && hasDefaultConstructor(lType)) {
-        final GrMapType mapType = (GrMapType)rType;
-        if (allTypesAssignable(mapType.getAllKeyTypes(), expectedKey, context) &&
-            allTypesAssignable(mapType.getAllValueTypes(), expectedValue, context)) {
-          return true;
-        }
-        return null;
-      }
-
       if (hasDefaultConstructor(lType)) {
-        // maps are casted to any objects
-        // todo maybe check for not implemented abstract methods
         return true;
       }
 
@@ -104,7 +90,6 @@ public class GppTypeConverter extends GrTypeConverter {
       if (constructor.getParameterList().getParametersCount() == 0) {
         return true;
       }
-      //todo Groovy constructors with an (empty) Map argument
     }
     return false;
   }
@@ -125,12 +110,4 @@ public class GppTypeConverter extends GrTypeConverter {
     return candidates.length == 1;
   }
 
-  private static boolean allTypesAssignable(PsiType[] types, PsiType to, GroovyPsiElement context) {
-    for (PsiType component : types) {
-      if (!TypesUtil.isAssignable(to, component, context)) {
-        return false;
-      }
-    }
-    return true;
-  }
 }
