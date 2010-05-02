@@ -26,7 +26,6 @@ class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("class X extends java.util.ArrayList<Integer> {}")
     testAssignability """
 X ints = [239, 4.2d]
-X unassignable = <warning descr="Cannot assign 'List' to 'X'">['aaa']</warning>
 """
   }
 
@@ -38,9 +37,17 @@ File f2 = <warning descr="Cannot assign 'List' to 'File'">['path', 2, true, 42]<
   }
 
   public void testCastMapToAnotherMap() throws Exception {
+    myFixture.addClass """
+public class Y extends java.util.HashMap<String, String> {
+  public Y(initialCapacity) {
+    super(initialCapacity);
+  }
+}
+"""
+
     testAssignability """
 HashMap<String, File> m1 = ['a':['b']]
-HashMap<String, File> m2 = <warning descr="Cannot assign 'Map' to 'HashMap<String, File>'">['a':'b']</warning>
+Y y = <warning descr="Cannot assign 'Map' to 'Y'">[a:'b']</warning>
 """
   }
 
