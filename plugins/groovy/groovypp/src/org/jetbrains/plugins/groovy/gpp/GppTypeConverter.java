@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.groovy.gpp;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -9,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -34,8 +36,17 @@ public class GppTypeConverter extends GrTypeConverter {
     if (member instanceof GrMethod) {
       return isTyped(((GrMethod)member).getContainingClass());
     }
+    if (member instanceof GrAnonymousClassDefinition) {
+      return isTyped(PsiTreeUtil.getParentOfType(member, GrMember.class));
+    }
     if (member instanceof GrTypeDefinition) {
       final PsiFile file = member.getContainingFile();
+
+      final VirtualFile vfile = file.getVirtualFile();
+      if (vfile != null && "gpp".equals(vfile.getExtension())) {
+        return true;
+      }
+
       if (file instanceof GroovyFile) {
         return isTyped(JavaPsiFacade.getInstance(member.getProject()).findPackage(((GroovyFile)file).getPackageName()));
       }

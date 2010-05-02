@@ -51,6 +51,17 @@ Y y = <warning descr="Cannot assign 'Map' to 'Y'">[a:'b']</warning>
 """
   }
 
+  public void testAnonymousClass() throws Exception {
+    testAssignability """
+def x = new Object() {
+  def foo() {
+    HashMap<String, File> m1 = ['a':['b']]
+    HashMap<String, File> m2 = <warning descr="Cannot assign 'File' to 'HashMap<String, File>'">new File('aaa')</warning>
+  }
+}
+"""
+  }
+
   public void testCastMapToObject() throws Exception {
     myFixture.addClass("class Foo { String name; void foo() {} }")
     testAssignability """
