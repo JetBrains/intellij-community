@@ -787,10 +787,16 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static boolean hasDefaultConstructor(PsiClass clazz) {
+    return hasDefaultConstructor(clazz, false);
+  }
+  
+  public static boolean hasDefaultConstructor(PsiClass clazz, boolean allowProtected) {
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length > 0) {
       for (PsiMethod cls: constructors) {
-        if (cls.hasModifierProperty(PsiModifier.PUBLIC) && cls.getParameterList().getParametersCount() == 0) {
+        if ((cls.hasModifierProperty(PsiModifier.PUBLIC) ||
+             allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)) &&
+            cls.getParameterList().getParametersCount() == 0) {
           return true;
         }
       }
