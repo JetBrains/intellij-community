@@ -87,7 +87,6 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
   }
 
   public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {
-
     if (anchor == null && getRBrace() == null) {
       throw new IncorrectOperationException();
     }
@@ -98,14 +97,16 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
 
     ASTNode elemNode = element.copy().getNode();
     assert elemNode != null;
-    final ASTNode anchorNode = anchor != null ? anchor.getNode() : getRBrace().getNode();
-    getNode().addChild(elemNode, anchorNode);
+    PsiElement actualAnchor = anchor == null ? getRBrace() : anchor;
+    final ASTNode anchorNode = actualAnchor.getNode();
+    element = (GrStatement)addBefore(element, actualAnchor);
     if (mayUseNewLinesAsSeparators()) {
       getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchorNode);
-    } else {
+    }
+    else {
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
     }
-    return (GrStatement) elemNode.getPsi();
+    return element;
   }
 
   @Nullable
