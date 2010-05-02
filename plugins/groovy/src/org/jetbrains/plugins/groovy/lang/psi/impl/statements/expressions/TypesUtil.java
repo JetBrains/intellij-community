@@ -217,8 +217,15 @@ public class TypesUtil {
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
-    return isAssignableByMethodCallConversion(lType, rType, manager, scope) ||
-           _isAssignable(lType, rType, manager, scope);
+    return isAssignable(lType, rType, manager, scope, true);
+  }
+
+  public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope, boolean allowConversion) {
+    if (allowConversion && isAssignableByMethodCallConversion(lType, rType, manager, scope)) {
+      return true;
+    }
+
+    return _isAssignable(lType, rType, manager, scope);
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context) {
