@@ -259,6 +259,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
     for (int i = 0; i < params2.length; i++) {
       PsiType type1 = substitutor1.substitute(params1[i].getType());
       PsiType type2 = substitutor2.substitute(params2[i].getType());
+
+      if (myArgumentTypes != null && myArgumentTypes.length > i) {
+        PsiType argType = myArgumentTypes[i];
+        if (argType != null) {
+          final boolean converts1 = TypesUtil.isAssignable(type1, argType, manager, scope, false);
+          final boolean converts2 = TypesUtil.isAssignable(type2, argType, manager, scope, false);
+          if (converts1 != converts2) {
+            return converts2;
+          }
+        }
+      }
+
       if (!typesAgree(manager, scope, type1, type2)) return false;
     }
 

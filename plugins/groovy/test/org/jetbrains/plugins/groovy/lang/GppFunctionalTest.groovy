@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 /**
  * @author peter
@@ -107,6 +108,32 @@ s.f_<caret>
 """)
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "f_foo", "f_bar"
+  }
+
+  public void testResolveMethod() throws Exception {
+    myFixture.configureByText("a.groovy", """
+def foo(File f) {}
+@Typed def bar() {
+  fo<caret>o(['path'])
+}
+""")
+    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    def target = reference.resolve()
+    assertEquals "foo", ((GrMethod)target).name
+  }
+
+  public void testOverloadingWithConversion() throws Exception {
+    myFixture.configureByText("a.groovy", """
+def foo(List l) {}
+def foo(File f) {}
+@Typed def bar() {
+  fo<caret>o(['path'])
+}
+""")
+    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    def target = reference.resolve()
+    assertNotNull target
+    assert target.text.contains("List l")
   }
 
 }
