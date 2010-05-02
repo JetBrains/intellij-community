@@ -226,6 +226,10 @@ public class TypesUtil {
   }
 
   private static boolean _isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+    if (lType == null || rType == null) {
+      return false;
+    }
+
     //all numeric types are assignable
     if (isNumericType(lType)) {
       return isNumericType(rType) || rType.equals(PsiType.NULL);
