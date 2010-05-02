@@ -158,6 +158,7 @@ public interface Action {
 Foo f = <warning descr="Cannot assign 'Closure' to 'Foo'">{ println it }</warning>
 Function1<String, Object> f1 = { println it }
 Function1<String, Object> f2 = { x=42 -> println x }
+Function1<String, Object> f3 = <warning descr="Cannot assign 'Closure' to 'Function1<String, Object>'">{ int x -> println x }</warning>
 Runnable r = { println it }
 Action a = { println it }
 Action a1 = { a = 2 -> println a }
@@ -210,6 +211,14 @@ def foo(Function2<Integer, String, Object> f) {}
       }
       LookupManager.getInstance(project).hideActiveLookup()
     }
+  }
+
+  public void testReturnTypeOneMethodInterface() throws Exception {
+    myFixture.configureByText "a.groovy", """
+@Typed Function1<String, Integer> bar() {
+  return { it.subsREF }
+}
+"""
   }
 
 }
