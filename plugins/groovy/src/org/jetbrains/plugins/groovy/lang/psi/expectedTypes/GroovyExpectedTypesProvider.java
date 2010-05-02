@@ -38,9 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -52,7 +50,27 @@ public class GroovyExpectedTypesProvider {
   public static TypeConstraint[] calculateTypeConstraints(GrExpression expression) {
     MyCalculator calculator = new MyCalculator(expression);
     ((GroovyPsiElement)expression.getParent()).accept(calculator);
-    return calculator.getResult();
+    final TypeConstraint[] result = calculator.getResult();
+
+    List<TypeConstraint> custom = new ArrayList<TypeConstraint>();
+    for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
+      custom.addAll(contributor.calculateTypeConstraints(expression));
+    }
+
+    if (!custom.isEmpty()) {
+      custom.addAll(0, Arrays.asList(result));
+      return custom.toArray(new TypeConstraint[custom.size()]);
+    }
+
+    return result;
+  }
+
+  public static Set<PsiType> getDefaultExpectedTypes(GrExpression element) {
+    final LinkedHashSet<PsiType> result = new LinkedHashSet<PsiType>();
+    for (TypeConstraint constraint : calculateTypeConstraints(element)) {
+      result.add(constraint.getDefaultType());
+    }
+    return result;
   }
 
 
