@@ -51,10 +51,11 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
       }
     }
 
-    protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
-      myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir));
-      return myPersistentAuthenticationProviderProxy;
-    }
+  @Override
+  protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
+    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName));
+    return myPersistentAuthenticationProviderProxy;
+  }
 
   private static class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
     private final Map<SvnAuthWrapperEqualable, Long> myRewritePreventer;
