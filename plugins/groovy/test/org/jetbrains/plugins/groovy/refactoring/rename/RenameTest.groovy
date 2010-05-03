@@ -6,11 +6,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.RenameProcessor
+import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -113,6 +116,24 @@ NewClass c = new NewClass()
       newName = "set" + StringUtil.capitalize(newName);
     }
     return newName;
+  }
+
+  public void testDontAutoRenameDynamicallyTypeUsage() throws Exception {
+    myFixture.configureByText "a.groovy", """
+class Goo {
+  def pp<caret>roject() {}
+}
+
+new Goo().pproject()
+
+def foo(p) {
+  p.pproject()
+}
+"""
+    def method = PsiTreeUtil.findElementOfClassAtOffset(myFixture.file, myFixture.editor.caretModel.offset, GrMethod.class, false)
+    def usages = RenameUtil.findUsages(method, "project", false, false, [method:"project"])
+    assert !usages[0].isNonCodeUsage
+    assert usages[1].isNonCodeUsage
   }
 
 }
