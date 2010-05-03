@@ -23,6 +23,7 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -35,7 +36,7 @@ import java.util.List;
 class GrChangeInfoImpl implements JavaChangeInfo {
   GrMethod method;
   final String newName;
-  final CanonicalTypes.Type returnType;
+  @Nullable final CanonicalTypes.Type returnType;
   final String visibilityModifier;
   final List<GrParameterInfo> parameters;
   boolean changeParameters = false;
@@ -54,7 +55,7 @@ class GrChangeInfoImpl implements JavaChangeInfo {
 
   public GrChangeInfoImpl(GrMethod method,
                           String visibilityModifier,
-                          CanonicalTypes.Type returnType,
+                          @Nullable CanonicalTypes.Type returnType,
                           String newName,
                           List<GrParameterInfo> parameters) {
     this.method = method;
@@ -73,7 +74,7 @@ class GrChangeInfoImpl implements JavaChangeInfo {
     if (!method.isConstructor()) {
       PsiType oldReturnType = method.getReturnType();
       try {
-        PsiType newReturnType = returnType.getType(method, getMethod().getManager());
+        PsiType newReturnType = returnType == null ? null : returnType.getType(method, getMethod().getManager());
         if ((oldReturnType == null && newReturnType != null) || (oldReturnType != null && !oldReturnType.equals(newReturnType))) {
           myIsReturnTypeChanged = true;
         }
@@ -207,20 +208,12 @@ class GrChangeInfoImpl implements JavaChangeInfo {
     return !method.getModifierList().hasModifierProperty(visibilityModifier);
   }
 
-  public boolean isChangeName() {
-    return !method.getName().equals(newName);
-  }
-
   public String getNewName() {
     return newName;
   }
 
   public Language getLanguage() {
     return GroovyFileType.GROOVY_LANGUAGE;
-  }
-
-  public String getVisibilityModifier() {
-    return visibilityModifier;
   }
 
   @NotNull

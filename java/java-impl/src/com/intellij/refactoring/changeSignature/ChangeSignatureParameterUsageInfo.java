@@ -22,8 +22,8 @@ import com.intellij.usageView.UsageInfo;
 * @author Maxim.Medvedev
 */
 public class ChangeSignatureParameterUsageInfo extends UsageInfo {
-  final String oldParameterName;
-  final String newParameterName;
+  public final String oldParameterName;
+  public final String newParameterName;
 
   public ChangeSignatureParameterUsageInfo(PsiElement element, String oldParameterName, String newParameterName) {
     super(element);

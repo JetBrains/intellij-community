@@ -220,23 +220,28 @@ class JavaChangeSignatureUsageSearcher {
           result.add(new UsageInfo(element));
         }
         else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-          DefaultConstructorImplicitUsageInfo implicitUsageInfo =
-            new DefaultConstructorImplicitUsageInfo((PsiMethod)element, ((PsiMethod)element).getContainingClass(), method);
-          result.add(implicitUsageInfo);
+          if (StdLanguages.JAVA.equals(element.getLanguage())) {
+            DefaultConstructorImplicitUsageInfo implicitUsageInfo =
+              new DefaultConstructorImplicitUsageInfo((PsiMethod)element, ((PsiMethod)element).getContainingClass(), method);
+            result.add(implicitUsageInfo);
+          }
         }
         else if (element instanceof PsiClass) {
           LOG.assertTrue(method.isConstructor());
           final PsiClass psiClass = (PsiClass)element;
-          if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue;
-          if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
-                                                 ((JavaChangeInfoImpl)myChangeInfo).propagateParametersMethods)) {
-            continue;
+          if (StdLanguages.JAVA.equals(psiClass.getLanguage())) {
+            if (myChangeInfo instanceof JavaChangeInfoImpl) {
+              if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
+                                                     ((JavaChangeInfoImpl)myChangeInfo).propagateParametersMethods)) {
+                continue;
+              }
+              if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
+                                                     ((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods)) {
+                continue;
+              }
+            }
+            result.add(new NoConstructorClassUsageInfo(psiClass));
           }
-          if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
-                                                 ((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods)) {
-            continue;
-          }
-          result.add(new NoConstructorClassUsageInfo(psiClass));
         }
         else if (ref instanceof PsiCallReference) {
           result.add(new CallReferenceUsageInfo((PsiCallReference)ref));

@@ -24,9 +24,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -102,6 +105,10 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createDocMemberReferenceNameFromText(String idText);
 
+  public abstract GrDocMemberReference createDocMemberReferenceFromText(String className, String text);
+
+  public abstract GrDocReferenceElement createDocReferenceElementFromFQN(String qName);
+
   public abstract GrTopStatement createTopElementFromText(String text);
 
   public abstract GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException;
@@ -151,4 +158,6 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrLabel createLabel(@NotNull String name);
 
   public abstract GrDocComment createDocCommentFromText(String text) ;
+
+  public abstract GrConstructorInvocation createConstructorInvocation(String text);
 }

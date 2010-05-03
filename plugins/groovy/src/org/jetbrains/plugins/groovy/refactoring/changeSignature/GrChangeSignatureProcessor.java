@@ -97,6 +97,11 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
+    for (UsageInfo usage : usages) {
+      for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+        if (processor.processUsage(myChangeInfo, usage, true, usages)) break;
+      }
+    }
     changeMethod();
     for (UsageInfo usage : usages) {
       for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {

@@ -16,8 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -56,8 +56,47 @@ public abstract class GrDocMemberReferenceImpl extends GroovyDocPsiElementImpl i
     return getManager().areElementsEquivalent(element, resolve());
   }
 
+  @Nullable
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (isReferenceTo(element)) return this;
+
+    if (element instanceof PsiClass) {
+      GrDocReferenceElement holder = getReferenceHolder();
+      if (holder != null) {
+        return replace(holder.getReferenceElement().bindToElement(element).getParent());
+      }
+      GrDocReferenceElement ref =
+        GroovyPsiElementFactory.getInstance(getProject()).createDocReferenceElementFromFQN(((PsiClass)element).getQualifiedName());
+      return replace(ref);
+    }
+    else if (element instanceof PsiMember) {
+      PsiClass clazz = ((PsiMember)element).getContainingClass();
+      if (clazz == null) return null;
+      String qName = clazz.getQualifiedName();
+      String memberRefText;
+      if (element instanceof PsiField) {
+        memberRefText = ((PsiField)element).getName();
+      }
+      else if (element instanceof PsiMethod) {
+        PsiParameterList list = ((PsiMethod)element).getParameterList();
+        StringBuilder builder = new StringBuilder();
+        builder.append(((PsiMethod)element).getName()).append("(");
+        PsiParameter[] params = list.getParameters();
+        for (int i = 0; i < params.length; i++) {
+          PsiParameter parameter = params[i];
+          PsiType type = parameter.getType();
+          if (i > 0) builder.append(", ");
+          builder.append(type.getPresentableText());
+        }
+        builder.append(")");
+        memberRefText = builder.toString();
+      }
+      else {
+        return null;
+      }
+      GrDocMemberReference ref = GroovyPsiElementFactory.getInstance(getProject()).createDocMemberReferenceFromText(qName, memberRefText);
+      return replace(ref);
+    }
     return null;
   }
 

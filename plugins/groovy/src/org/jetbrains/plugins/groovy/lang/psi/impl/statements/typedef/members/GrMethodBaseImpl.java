@@ -45,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
@@ -55,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -235,6 +238,32 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
     finally {
       myTakingReturnTypeFromSupers.set(null);
     }
+  }
+
+  @Nullable
+  public GrTypeElement setReturnType(@Nullable PsiType newReturnType) {
+    GrTypeElement typeElement = getReturnTypeElementGroovy();
+    if (newReturnType == null) {
+      if (typeElement != null) typeElement.delete();
+      return null;
+    }
+    GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newReturnType);
+    if (typeElement == null) {
+      GrModifierList list = getModifierList();
+      newTypeElement =  (GrTypeElement)addAfter(newTypeElement, list);
+    }
+    else {
+      newTypeElement= (GrTypeElement)typeElement.replace(newTypeElement);
+    }
+
+    newTypeElement.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+        super.visitCodeReferenceElement(refElement);
+        PsiUtil.shortenReference(refElement);
+      }
+    });
+    return newTypeElement;
   }
 
   @Override

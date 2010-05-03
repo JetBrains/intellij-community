@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCodeFragment;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.CodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
@@ -62,6 +64,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   private JButton myMoveDownButton;
   private JPanel contentPane;
   private JLabel mySignatureLabel;
+  private JLabel myNameLabel;
+  private JLabel myReturnTypeLabel;
   private GrParameterTableModel myParameterModel;
   private GrMethod myMethod;
 //  private Project myProject;
@@ -162,6 +166,9 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     if (element != null) {
       myReturnTypeField.setText(element.getText());
     }
+    
+    myReturnTypeLabel.setLabelFor(myReturnTypeField);
+    myNameLabel.setLabelFor(myNameField);
   }
 
   private void createParametersModel() {
@@ -270,18 +277,14 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     catch (PsiTypeCodeFragment.TypeSyntaxException e) {
     }
     catch (PsiTypeCodeFragment.NoTypeException e) {
-      returnType = PsiType.NULL;
     }
-    if (returnType == PsiType.NULL) {
-      returnType = JavaPsiFacade.getElementFactory(myProject)
-        .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myProject));
-    }
-    //todo show warnings
 
     String newName = getNewName();
     final List<GrParameterInfo> parameterInfos = myParameterModel.getParameterInfos();
     invokeRefactoring(new GrChangeSignatureProcessor(myProject, new GrChangeInfoImpl(myMethod, modifier,
-                                                                                     CanonicalTypes.createTypeWrapper(
+                                                                                     returnType == null
+                                                                                     ? null
+                                                                                     : CanonicalTypes.createTypeWrapper(
                                                                                        returnType), newName,
                                                                                      parameterInfos)));
 
@@ -299,12 +302,19 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
     if (!checkType(myReturnTypeCodeFragment)) {
       CommonRefactoringUtil.showErrorHint(myProject, null, "Return type is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+      return false;
     }
 
     for (GrParameterInfo info : myParameterModel.getParameterInfos()) {
       if (!checkType(info.getTypeFragment())) {
         CommonRefactoringUtil
           .showErrorHint(myProject, null, "Type for parameter " + info.getName() + " is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+        return false;
+      }
+      String defaultValue = info.getDefaultValue();
+      if (info.getOldIndex() < 0 && (defaultValue == null || defaultValue.trim().length() == 0)) {
+        CommonRefactoringUtil.showErrorHint(myProject, null, "Specify default value for parameter " + info.getName(), "Incorrect data",
+                                            HelpID.CHANGE_SIGNATURE);
         return false;
       }
     }

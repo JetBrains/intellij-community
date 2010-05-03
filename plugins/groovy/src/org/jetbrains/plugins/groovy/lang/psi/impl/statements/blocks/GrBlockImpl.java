@@ -98,6 +98,12 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     ASTNode elemNode = element.copy().getNode();
     assert elemNode != null;
     PsiElement actualAnchor = anchor == null ? getRBrace() : anchor;
+    if (mayUseNewLinesAsSeparators()) {
+      PsiElement prev = actualAnchor.getPrevSibling();
+      if (!GroovyTokenTypes.mNLS.equals(prev.getNode().getElementType())) {
+        getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", actualAnchor.getNode());
+      }
+    }
     final ASTNode anchorNode = actualAnchor.getNode();
     element = (GrStatement)addBefore(element, actualAnchor);
     if (mayUseNewLinesAsSeparators()) {

@@ -188,6 +188,8 @@ public class GrClosureSignatureUtil {
   }
 
   public static class ArgInfo {
+    public static final ArgInfo[] EMPTY_ARRAY = new ArgInfo[0];
+    
     public List<PsiElement> args;
     public final boolean isMultiArg;
 

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
@@ -106,23 +107,27 @@ public class GrParameterInfo implements JavaParameterInfo {
       return null;
     }
     catch (PsiTypeCodeFragment.NoTypeException e) {
-      return null;
+      return JavaPsiFacade.getElementFactory(manager.getProject())
+        .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(manager.getProject()));
     }
   }
 
 
   public String getTypeText() {
-    if (getTypeWrapper() != null) {
-      return getTypeWrapper().getTypeText();
+    CanonicalTypes.Type type = getTypeWrapper();
+    if (type != null) {
+      return type.getTypeText();
     }
-    else {
-      return "";
-    }
+    return "";
   }
 
+  @Nullable
   public CanonicalTypes.Type getTypeWrapper() {
     if (myTypeWrapper == null) {
-      myTypeWrapper = CanonicalTypes.createTypeWrapper(createType(myType.getContext(), myType.getManager()));
+      PsiType type = createType(myType.getContext(), myType.getManager());
+      if (type != null) {
+        myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
+      }
     }
     return myTypeWrapper;
   }
@@ -150,5 +155,9 @@ public class GrParameterInfo implements JavaParameterInfo {
 
   public boolean wasWasVarArg() {
     return myWasVarArg;
+  }
+
+  public boolean hasNoType() {
+    return myType.getText().trim().length() == 0;
   }
 }

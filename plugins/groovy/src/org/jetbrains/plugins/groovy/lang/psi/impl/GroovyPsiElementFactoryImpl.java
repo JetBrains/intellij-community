@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -46,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefin
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -87,14 +89,27 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public PsiElement createDocMemberReferenceNameFromText(String idText) {
-    PsiFile file = createGroovyFile("/** @see A#" + idText + " */");
+    GrDocMemberReference reference = createDocMemberReferenceFromText("Foo", idText);
+    assert reference != null : "DocMemberReference ponts to null";
+    return reference.getReferenceNameElement();
+  }
+
+  public GrDocMemberReference createDocMemberReferenceFromText(String className, String text) {
+    PsiFile file = createGroovyFile("/** @see " + className + "#" + text + " */");
     PsiElement element = file.getFirstChild();
     assert element instanceof GrDocComment;
     GrDocTag tag = PsiTreeUtil.getChildOfType(element, GrDocTag.class);
     assert tag != null : "Doc tag points to null";
-    GrDocMemberReference reference = PsiTreeUtil.getChildOfType(tag, GrDocMemberReference.class);
-    assert reference != null : "DocMemberReference ponts to null";
-    return reference.getReferenceNameElement();
+    return PsiTreeUtil.getChildOfType(tag, GrDocMemberReference.class);
+  }
+
+  public GrDocReferenceElement createDocReferenceElementFromFQN(String qName) {
+    PsiFile file = createGroovyFile("/** @see " + qName + " */");
+    PsiElement element = file.getFirstChild();
+    assert element instanceof GrDocComment;
+    GrDocTag tag = PsiTreeUtil.getChildOfType(element, GrDocTag.class);
+    assert tag != null : "Doc tag points to null";
+    return PsiTreeUtil.getChildOfType(tag, GrDocReferenceElement.class);
   }
 
   public GrCodeReferenceElement createReferenceElementFromText(String refName) {
@@ -242,6 +257,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     fileText.append("def foo(");
     if (typeText != null) {
       fileText.append(typeText).append(" ");
+    } else {
+      fileText.append("def ");
     }
     fileText.append(name);
     if (initializer != null && initializer.length() > 0) {
@@ -541,5 +558,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     builder.append(text);
     builder.append(" def foo(){}");
     return (GrDocComment)createGroovyFile(text+"def foo(){}").getFirstChild();
+  }
+
+  @Override
+  public GrConstructorInvocation createConstructorInvocation(String text) {
+    GroovyFile file = (GroovyFile)createGroovyFile("class Foo{ def Foo(){" + text + "}}");
+    return ((GrConstructor)file.getClasses()[0].getConstructors()[0]).getChainingConstructorInvocation();
   }
 }

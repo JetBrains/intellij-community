@@ -52,7 +52,7 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   public void testInsertParameter() throws Exception {
     doTest(null, new GrParameterInfo[]{
       new SimpleInfo(0),
-      new SimpleInfo("p", -1, "5", "-3", createType("int")),
+      new SimpleInfo("p", -1, "5", "-3", PsiType.INT),
       new SimpleInfo(1)
     });
   }
@@ -61,7 +61,7 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     doTest(null, new GrParameterInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(1),
-      new SimpleInfo("p", -1, "5", "-3", createType("int"))
+      new SimpleInfo("p", -1, "5", "-3", PsiType.INT)
     });
   }
 
@@ -82,7 +82,7 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   public void testNamedParametersOrder2() throws Exception {
     doTest(null, new GrParameterInfo[]{
       new SimpleInfo(0),
-      new SimpleInfo("p", -1, "5", null, createType("int")),
+      new SimpleInfo("p", -1, "5", null, PsiType.INT),
       new SimpleInfo(2),
     });
   }
@@ -91,7 +91,7 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     doTest(null, new GrParameterInfo[] {
       new SimpleInfo(0),
       new SimpleInfo(2),
-      new SimpleInfo("p", -1, "5", null, createType("int")),
+      new SimpleInfo("p", -1, "5", null, PsiType.INT),
     });
   }
 
@@ -113,6 +113,59 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     doTest("protected", "newName", null, new GrParameterInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
   }
 
+  public void testImplicitConstructorInConstructor() throws Exception {
+    doTest(null, new GrParameterInfo[]{
+      new SimpleInfo("p", -1, "5", null, PsiType.INT)
+    });
+  }
+
+  public void testImplicitConstructorForClass() throws Exception {
+    doTest(null, new GrParameterInfo[]{
+      new SimpleInfo("p", -1, "5", null, PsiType.INT)
+    });
+  }
+
+  public void testAnonymousClassUsage() throws Exception {
+    doTest(null, new GrParameterInfo[]{
+      new SimpleInfo("p", -1, "5", null, PsiType.INT)
+    });
+  }
+
+  public void testGroovyDocReferences() throws Exception {
+    doTest(null, new GrParameterInfo[] {
+      new SimpleInfo(0),
+      new SimpleInfo(2)
+    });
+  }
+
+  public void testOverriders() throws Exception {
+    doTest("public", "bar", null, new GrParameterInfo[]{
+      new SimpleInfo(0)
+    }, new ThrownExceptionInfo[0], false);
+  }
+
+  public void testParameterRename() throws Exception {
+    doTest(null, new GrParameterInfo[]{
+      new SimpleInfo("newP", 0)
+    });
+  }
+
+  public void testAddReturnType() throws Exception {
+    doTest("int", new GrParameterInfo[]{new SimpleInfo(0)});
+  }
+
+  public void testChangeReturnType() throws Exception {
+    doTest("int", new GrParameterInfo[]{new SimpleInfo(0)});
+  }
+
+  public void testRemoveReturnType() throws Exception {
+    doTest("", new GrParameterInfo[]{new SimpleInfo(0)});
+  }
+
+  public void testChangeParameterType() throws Exception {
+    doTest("", new GrParameterInfo[]{new SimpleInfo("p", 0, null, null, PsiType.INT)});
+  }
+  
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
@@ -153,9 +206,19 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     assertTrue("<caret> is not on method name", targetElement instanceof GrMethod);
     GrMethod method = (GrMethod)targetElement;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    PsiType newType = newReturnType != null ? factory.createTypeFromText(newReturnType, method) : method.getReturnType();
+    PsiType newType;
+    if (newReturnType == null) {
+      newType = method.getReturnType();
+    }
+    else if (newReturnType.length() == 0) {
+      newType = null;
+    }
+    else {
+      newType = factory.createTypeFromText(newReturnType, method);
+    }
     GrChangeInfoImpl changeInfo =
-      new GrChangeInfoImpl(method, newVisibility, CanonicalTypes.createTypeWrapper(newType), newName != null ? newName : method.getName(),
+      new GrChangeInfoImpl(method, newVisibility, newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
+                           newName != null ? newName : method.getName(),
                            Arrays.asList(genParams.genParams(method)));
     new GrChangeSignatureProcessor(getProject(), changeInfo).run();
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
@@ -178,7 +241,23 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
       for (int i = 0, myInfosLength = myInfos.length; i < myInfosLength; i++) {
         int oldIndex = myInfos[i].getOldIndex();
         if (oldIndex > -1) {
-          myInfos[i] = new GrParameterInfo(params[oldIndex], oldIndex);
+          final String name = myInfos[i].getName();
+          final CanonicalTypes.Type wrapper = myInfos[i].getTypeWrapper();
+          myInfos[i] = new GrParameterInfo(params[oldIndex], oldIndex) {
+            @Override
+            public String getName() {
+              if (name != null) return name;
+              return super.getName();
+            }
+
+            @Override
+            public CanonicalTypes.Type getTypeWrapper() {
+              if (wrapper != null) {
+                return wrapper;
+              }
+              return super.getTypeWrapper();
+            }
+          };
         }
       }
       return myInfos;
@@ -275,6 +354,11 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     @Override
     public String getDefaultInitializer() {
       return myDefaultInitializer;
+    }
+
+    @Override
+    public boolean hasNoType() {
+      return myTypeWrapper == null;
     }
   }
 }

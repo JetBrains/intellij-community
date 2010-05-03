@@ -34,6 +34,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -219,6 +220,14 @@ class GrChageSignatureUsageSearcher {
         else if (element instanceof PsiClass) {
           LOG.assertTrue(method.isConstructor());
           final PsiClass psiClass = (PsiClass)element;
+          if (psiClass instanceof GrAnonymousClassDefinition) {
+            GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method);
+            GrClosureSignatureUtil.ArgInfo[] map = GrClosureSignatureUtil
+              .mapParametersToArguments(signature, PsiUtil.getArgumentsList(element), method.getManager(), method.getResolveScope());
+            result.add(
+              new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method), isToModifyArgs, isToCatchExceptions, map));
+            continue;
+          }
           /*if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue; todo propagate methods
           if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
                                                  ((JavaChangeInfoImpl)myChangeInfo).propagateParametersMethods)) {
