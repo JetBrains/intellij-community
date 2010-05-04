@@ -31,6 +31,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -103,35 +104,39 @@ public class GroovyPsiManager {
   @NotNull
   private Map<String, List<PsiMethod>> buildGDK() {
     final HashMap<String, List<PsiMethod>> newMap = new HashMap<String, List<PsiMethod>>();
-
-    PsiClass defaultMethodsClass =
-      JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
-    if (defaultMethodsClass != null) {
-      for (PsiMethod method : defaultMethodsClass.getMethods()) {
-        if (method.isConstructor()) continue;
-        addDefaultMethod(method, newMap, false);
+    addCategoryMethods(DEFAULT_METHODS_QNAME, newMap, new NotNullFunction<PsiMethod, PsiMethod>() {
+      @NotNull
+      public PsiMethod fun(PsiMethod method) {
+        return new GrGdkMethodImpl(method, false);
       }
-
-    }
-
-    PsiClass defaultStaticMethodsClass =
-      JavaPsiFacade.getInstance(myProject).findClass(DEFAULT_STATIC_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
-    if (defaultStaticMethodsClass != null) {
-      for (PsiMethod method : defaultStaticMethodsClass.getMethods()) {
-        if (method.isConstructor()) continue;
-        addDefaultMethod(method, newMap, true);
+    });
+    addCategoryMethods(DEFAULT_STATIC_METHODS_QNAME, newMap, new NotNullFunction<PsiMethod, PsiMethod>() {
+      @NotNull
+      public PsiMethod fun(PsiMethod method) {
+        return new GrGdkMethodImpl(method, true);
       }
-    }
+    });
 
     addSwingBuilderMethods(newMap);
     return newMap;
   }
 
-  private static void addDefaultMethod(PsiMethod method, HashMap<String, List<PsiMethod>> map, boolean isStatic) {
+  public void addCategoryMethods(String fromClass, Map<String, List<PsiMethod>> toMap, NotNullFunction<PsiMethod, PsiMethod> converter) {
+    PsiClass categoryClass = JavaPsiFacade.getInstance(myProject).findClass(fromClass, GlobalSearchScope.allScope(myProject));
+    if (categoryClass != null) {
+      for (PsiMethod method : categoryClass.getMethods()) {
+        if (method.isConstructor()) continue;
+        if (!method.hasModifierProperty(PsiModifier.STATIC) || !method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
+        addDefaultMethod(method, toMap, converter);
+      }
+    }
+  }
+
+  private static void addDefaultMethod(PsiMethod method, Map<String, List<PsiMethod>> map, NotNullFunction<PsiMethod, PsiMethod> converter) {
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return;
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    LOG.assertTrue(parameters.length > 0);
+    LOG.assertTrue(parameters.length > 0, method.getName());
     PsiType thisType = TypeConversionUtil.erasure(parameters[0].getType());
     String thisCanonicalText = thisType.getCanonicalText();
     LOG.assertTrue(thisCanonicalText != null);
@@ -140,7 +145,7 @@ public class GroovyPsiManager {
       hisMethods = new ArrayList<PsiMethod>();
       map.put(thisCanonicalText, hisMethods);
     }
-    hisMethods.add(new GrGdkMethodImpl(method, isStatic));
+    hisMethods.add(converter.fun(method));
   }
 
   private static final String[] SWING_WIDGETS_METHODS =

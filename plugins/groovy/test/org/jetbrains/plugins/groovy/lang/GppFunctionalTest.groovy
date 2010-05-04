@@ -39,15 +39,6 @@ class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
 
   protected void setUp() {
     super.setUp()
-/*
-    myFixture.addClass"package groovy.lang; public @interface Typed {}"
-    myFixture.addClass """
-package groovy.lang;
-public interface Function1<T,R> {
-  public abstract R call(T param);
-}"""
-*/
-
     myFixture.allowTreeAccessForFile JavaPsiFacade.getInstance(project).findClass(Object.name).containingFile.navigationElement.containingFile.virtualFile
   }
 
@@ -266,7 +257,7 @@ class Foo {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
-  public void testTraitHighlightin() throws Exception {
+  public void testTraitHighlighting() throws Exception {
     myFixture.configureByText "a.groovy", """
 @Trait
 abstract class Intf {
@@ -306,6 +297,17 @@ class BarImpl extends Bar {}
 
     def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).second
     assertEquals Arrays.toString(implementations), 3, implementations.size()
+  }
+
+  public void testResolveToStdLib() throws Exception {
+    configureTyped """
+@Typed def foo(List<String> l) {
+  l.ea<caret>ch { l.substring(1) }
+}
+"""
+    PsiMethod method = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve().navigationElement
+    assertEquals "each", method.name
+    assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
   }
 
 }
