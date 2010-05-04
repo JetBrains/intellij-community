@@ -249,6 +249,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, 0, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE,
                                          lines);
       }
+      else if (myRole1 == ChildRole.CLASS) {
+        setAroundClassSpacing();
+      }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
         myResult = Spacing
@@ -261,6 +264,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(
           0, Integer.MAX_VALUE, minLineFeeds, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE
         );
+      }
+      else if (myRole2 == ChildRole.CLASS) {
+        setAroundClassSpacing();
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
@@ -357,6 +363,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing
         .createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
     }
+  }
+
+  /**
+   * Initializes {@link #myResult} property with {@link Spacing} which <code>'min line feeds'</code> property is defined
+   * from {@link CodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
+   */
+  private void setAroundClassSpacing() {
+    myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, mySettings.BLANK_LINES_AROUND_CLASS + 1,
+                                     mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
 
   private boolean processMethod() {
