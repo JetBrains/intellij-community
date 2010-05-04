@@ -491,7 +491,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel implements TestFra
   private void updateCountersAndProgressOnTestCount(final int count, final boolean isCustomMessage) {
     if (!isModeConsistent(isCustomMessage)) return;
 
-    //This is for beter support groups of TestSuites
+    //This is for better support groups of TestSuites
     //Each group notifies about it's size
     myTestsTotal += count;
     updateStatusLabel();

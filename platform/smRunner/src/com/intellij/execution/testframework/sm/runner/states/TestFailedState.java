@@ -19,6 +19,8 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.ui.PrintableTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
@@ -26,14 +28,28 @@ import com.intellij.openapi.util.text.StringUtil;
 public class TestFailedState extends AbstractState {
   private final String myPresentationText;
 
-  public TestFailedState(final String localizedMessage, final String stackTrace) {
+  public TestFailedState(@Nullable final String localizedMessage,
+                         @Nullable final String stackTrace) {
+    myPresentationText = buildErrorPresentationText(localizedMessage, stackTrace);
+  }
+
+  @Nullable
+  public static String buildErrorPresentationText(@Nullable final String localizedMessage,
+                                                  @Nullable final String stackTrace) {
     final String text = (StringUtil.isEmptyOrSpaces(localizedMessage)
                            ? ""
                            : localizedMessage + PrintableTestProxy.NEW_LINE) +
                         (StringUtil.isEmptyOrSpaces(stackTrace)
                            ? ""
                            : stackTrace + PrintableTestProxy.NEW_LINE);
-    myPresentationText = StringUtil.isEmptyOrSpaces(text) ? null : text;
+    return StringUtil.isEmptyOrSpaces(text) ? null : text;
+  }
+
+  public static void printError(@NotNull final Printer printer,
+                                @NotNull final String errorPresentationText) {
+    printer.print(PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+    printer.mark();
+    printer.print(errorPresentationText, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   @Override
@@ -41,11 +57,10 @@ public class TestFailedState extends AbstractState {
     super.printOn(printer);
 
     if (myPresentationText != null) {
-      printer.print(PrintableTestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-      printer.mark();
-      printer.print(myPresentationText, ConsoleViewContentType.ERROR_OUTPUT);
+      printError(printer, myPresentationText);
     }
   }
+
 
   public boolean isDefect() {
     return true;

@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,26 +86,26 @@ public class ColumnResultsTest extends BaseColumnRenderingTest {
   }
 
   public void testValueOf_Test() {
-    assertEquals("<underfined>", myColumn.valueOf(mySimpleTest));
+    assertEquals(ColumnResults.UNDEFINED, myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setStarted();
-    assertEquals("<underfined>", myColumn.valueOf(mySimpleTest));
+    assertEquals(ColumnResults.UNDEFINED, myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setFinished();
-    assertEquals("<underfined>", myColumn.valueOf(mySimpleTest));
+    assertEquals(ColumnResults.UNDEFINED, myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_Suite() {
-    assertEquals("<underfined>", myColumn.valueOf(mySuite));
+    assertEquals(ColumnResults.UNDEFINED, myColumn.valueOf(mySuite));
 
     mySuite.setStarted();
-    assertEquals("<underfined>", myColumn.valueOf(mySuite));
+    assertEquals(ColumnResults.UNDEFINED, myColumn.valueOf(mySuite));
 
     createTestProxy(mySuite);
-    assertEquals("<underfined>", myColumn.valueOf(mySuite));
+    assertEquals(ColumnResults.UNDEFINED, myColumn.valueOf(mySuite));
 
     mySuite.setFinished();
-    assertEquals("<underfined>", myColumn.valueOf(mySuite));
+    assertEquals(ColumnResults.UNDEFINED, myColumn.valueOf(mySuite));
   }
 
   public void testPresentation_SuiteNotRun() {

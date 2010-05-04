@@ -30,7 +30,7 @@ import java.util.Comparator;
  * @author Roman Chernyatchik
 */
 public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy> {
-  @NonNls private static final String UNDERFINED = "<underfined>";
+  @NonNls public static final String UNDEFINED = SMTestsRunnerBundle.message("sm.test.runner.ui.tabs.statistics.columns.results.undefined");
 
   public ColumnResults() {
     super(SMTestsRunnerBundle.message("sm.test.runner.ui.tabs.statistics.columns.results.title"));
@@ -73,10 +73,10 @@ public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy>
   private int compareTests(final SMTestProxy test1, final SMTestProxy test2) {
     // Rule1. For tests: NotRun < Ignored, etc < Passed < Failure < Error < Progress < Terminated
 
-    final int weitht1 = test1.getMagnitudeInfo().getSortWeitht();
-    final int weitht2 = test2.getMagnitudeInfo().getSortWeitht();
+    final int weight1 = test1.getMagnitudeInfo().getSortWeight();
+    final int weight2 = test2.getMagnitudeInfo().getSortWeight();
 
-    return compareInt(weitht1, weitht2); 
+    return compareInt(weight1, weight2);
   }
 
   private int compareSuites(final SMTestProxy suite1,
@@ -117,7 +117,7 @@ public class ColumnResults extends BaseColumn implements Comparator<SMTestProxy>
   }
 
   public String valueOf(final SMTestProxy testProxy) {
-    return UNDERFINED;
+    return UNDEFINED;
   }
 
   @Override
