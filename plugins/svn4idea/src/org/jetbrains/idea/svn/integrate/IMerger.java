@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,18 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
+import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 
 import java.io.File;
 
-public interface MergerFactory {
-  IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl);
+public interface IMerger {
+  boolean hasNext();
+  void mergeNext() throws SVNException;
+  void getInfo(NotNullFunction<String, Boolean> holder, boolean getLatest);
+  String getComment();
+  @Nullable
+  File getMergeInfoHolder();
+  void afterProcessing();
 }

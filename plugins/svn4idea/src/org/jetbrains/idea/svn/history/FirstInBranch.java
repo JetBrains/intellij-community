@@ -19,8 +19,8 @@ import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.Map;
 
@@ -31,21 +31,21 @@ public class FirstInBranch implements Runnable {
   private final String myFullTrunkUrl;
   private final String myBranchUrl;
   private final String myTrunkUrl;
-  private final Consumer<Long> myConsumer;
-  private long myCopyRevision;
+  private final Consumer<CopyData> myConsumer;
+  private CopyData myResult;
   private final boolean myPrimary;
 
-  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<Long> consumer) {
+  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<CopyData> consumer) {
     this(vcs,  repositoryRoot, branchUrl, trunkUrl, consumer, true);
   }
 
-  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<Long> consumer, final boolean primary) {
+  public FirstInBranch(final SvnVcs vcs, final String repositoryRoot, final String branchUrl, final String trunkUrl, final Consumer<CopyData> consumer, final boolean primary) {
     myPrimary = primary;
     myVcs = vcs;
     myRepositoryRoot = repositoryRoot;
     myConsumer = consumer;
 
-    myCopyRevision = -1;
+    myResult = null;
 
     myFullBranchUrl = branchUrl;
     myFullTrunkUrl = trunkUrl;
@@ -74,7 +74,7 @@ public class FirstInBranch implements Runnable {
                             if ('A' == path.getType() &&
                                 (myBranchUrl.equals(localPath) || SVNPathUtil.isAncestor(localPath, myBranchUrl)) &&
                                 (myTrunkUrl.equals(copyPath)) || SVNPathUtil.isAncestor(copyPath, myTrunkUrl)) {
-                              myCopyRevision = path.getCopyRevision();
+                              myResult = new CopyData(path.getCopyRevision(), logEntry.getRevision(), myPrimary);
                               throw new MockException();
                             }
                           }
@@ -82,18 +82,42 @@ public class FirstInBranch implements Runnable {
                       });
     }
     catch (MockException e) {
-      myConsumer.consume(myCopyRevision);
+      myConsumer.consume(myResult);
       return;
     }
     catch (SVNException e) {
-      myConsumer.consume(myCopyRevision);
+      myConsumer.consume(myResult);
     }
     if (myPrimary) {
       new FirstInBranch(myVcs, myRepositoryRoot, myFullTrunkUrl, myFullBranchUrl, myConsumer, false).run();
     } else {
-      myConsumer.consume(myCopyRevision);
+      myConsumer.consume(myResult);
     }
   }
 
   private static class MockException extends RuntimeException {}
+
+  public static class CopyData {
+    private final long myCopySourceRevision;
+    private final long myCopyTargetRevision;
+    private final boolean myTrunkSupposedCorrect;
+
+    public CopyData(long copySourceRevision, long copyTargetRevision, boolean trunkSupposedCorrect) {
+      myCopySourceRevision = copySourceRevision;
+      myCopyTargetRevision = copyTargetRevision;
+      myTrunkSupposedCorrect = trunkSupposedCorrect;
+    }
+
+    public long getCopySourceRevision() {
+      return myCopySourceRevision;
+    }
+
+    public long getCopyTargetRevision() {
+      return myCopyTargetRevision;
+    }
+
+    public boolean isTrunkSupposedCorrect() {
+      return myTrunkSupposedCorrect;
+    }
+  }
 }

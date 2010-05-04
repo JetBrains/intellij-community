@@ -16,13 +16,16 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.*;
@@ -31,7 +34,6 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
-import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import org.jetbrains.idea.svn.update.SvnStatusWorker;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -55,14 +57,17 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final List<VcsException> myExceptions;
 
   private final UpdateEventHandler myHandler;
-  private final Merger myMerger;
+  private final IMerger myMerger;
   private final ResolveWorker myResolveWorker;
   private FilePathImpl myMergeTarget;
+  private final String myTitle;
+  private boolean myDryRun;
 
   public SvnIntegrateChangesTask(final SvnVcs vcs, final WorkingCopyInfo info, final MergerFactory mergerFactory,
-                                 final SVNURL currentBranchUrl) {
-    super(vcs.getProject(), SvnBundle.message("action.Subversion.integrate.changes.messages.title"), true,
-          VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
+                                 final SVNURL currentBranchUrl, final String title, final boolean dryRun) {
+    super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
+    myDryRun = dryRun;
+    myTitle = title;
 
     myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
     myVcs = vcs;
@@ -176,8 +181,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if ((! myMerger.hasNext()) || haveConflicts || (! myExceptions.isEmpty()) || myAccomulatedFiles.containErrors()) {
       initMergeTarget();
       if (myAccomulatedFiles.isEmpty() && myExceptions.isEmpty() && (myMergeTarget == null)) {
-        Messages.showMessageDialog(SvnBundle.message("action.Subversion.integrate.changes.message.files.up.to.date.text"),
-                                   SvnBundle.message("action.Subversion.integrate.changes.messages.title"),
+        Messages.showMessageDialog(SvnBundle.message("action.Subversion.integrate.changes.message.files.up.to.date.text"), myTitle,
                                    Messages.getInformationIcon());
       } else {
         if (haveConflicts) {
@@ -194,25 +198,21 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void finishActions() {
-    if ((! SvnConfiguration.getInstance(myProject).MERGE_DRY_RUN) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
+    if ((! myDryRun) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
         ((! myAccomulatedFiles.isEmpty()) || (myMergeTarget != null))) {
       if (myInfo.isUnderProjectRoot()) {
         showLocalCommit();
       } else {
         showAlienCommit();
       }
+      return;
     }
 
-    if ((! myInfo.isUnderProjectRoot()) || (myAccomulatedFiles.isEmpty())) {
-      prepareAndShowResults();
-    }
+    prepareAndShowResults();
   }
 
   // no remote operations
   private void prepareAndShowResults() {
-    if (! myExceptions.isEmpty()) {
-      AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, VcsBundle.message("message.title.vcs.update.errors"));
-    }
     // todo unite into one window??
     if (! myAccomulatedFiles.isEmpty()) {
       if (SvnConfiguration.getInstance(myVcs.getProject()).UPDATE_RUN_STATUS) {
@@ -226,14 +226,16 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         showUpdateTree();
       }
     }
+    if (! myExceptions.isEmpty()) {
+      AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, VcsBundle.message("message.title.vcs.update.errors"));
+    }
   }
 
   private void showUpdateTree() {
     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
     // action info is actually NOT used
     restoreUpdateTree.registerUpdateInformation(myAccomulatedFiles.getUpdatedFiles(), ActionInfo.INTEGRATE);
-    myProjectLevelVcsManager.showUpdateProjectInfo(myAccomulatedFiles.getUpdatedFiles(),
-                                                   SvnBundle.message("action.Subversion.integrate.changes.messages.title"), ActionInfo.INTEGRATE);
+    myProjectLevelVcsManager.showUpdateProjectInfo(myAccomulatedFiles.getUpdatedFiles(), myTitle, ActionInfo.INTEGRATE);
   }
 
   private void doStatus(final Consumer<UpdatedFiles> afterStatus) {
@@ -309,7 +311,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
         prepareAndShowResults();
       }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, SvnBundle.message("action.Subversion.integrate.changes.messages.title"),
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle,
       new Consumer<VcsDirtyScopeManager>() {
         public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
           vcsDirtyScopeManager.filePathsDirty(files, null);
@@ -337,7 +339,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       provider.getChanges(dirtyScope, clb, ProgressManager.getInstance().getProgressIndicator(), null);
     } catch (VcsException e) {
       Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.unable.to.collect.changes.text",
-                                                 e.getMessage()), SvnBundle.message("action.Subversion.integrate.changes.alien.commit.changelist.title"));
+                                                 e.getMessage()), myTitle);
       return;
     }
 

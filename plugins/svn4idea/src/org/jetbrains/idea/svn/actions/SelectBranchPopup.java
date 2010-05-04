@@ -15,12 +15,12 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -78,6 +78,11 @@ public class SelectBranchPopup {
   }
 
   public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title) {
+    showForBranchRoot(project, vcsRoot, callback, title, null);
+  }
+
+  public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title,
+                                       final Component component) {
     final SvnBranchConfigurationNew configuration;
     try {
       configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
@@ -97,7 +102,12 @@ public class SelectBranchPopup {
     items.add(CONFIGURE_MESSAGE);
 
     BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title);
-    JBPopupFactory.getInstance().createListPopup(step).showCenteredInCurrentWindow(project);
+    final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
+    if (component == null) {
+      listPopup.showCenteredInCurrentWindow(project);
+    } else {
+      listPopup.showInCenterOf(component);
+    }
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {

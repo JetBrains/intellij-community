@@ -45,10 +45,7 @@ import org.jetbrains.idea.svn.actions.RecordOnlyMergerFactory;
 import org.jetbrains.idea.svn.actions.ShowSvnMapAction;
 import org.jetbrains.idea.svn.dialogs.SvnMapDialog;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.integrate.Merger;
-import org.jetbrains.idea.svn.integrate.MergerFactory;
-import org.jetbrains.idea.svn.integrate.SelectedChangeListsChecker;
-import org.jetbrains.idea.svn.integrate.SelectedCommittedStuffChecker;
+import org.jetbrains.idea.svn.integrate.*;
 import org.jetbrains.idea.svn.mergeinfo.MergeInfoHolder;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNURL;
@@ -721,7 +718,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     protected MergerFactory createMergerFactory(final SelectedChangeListsChecker checker) {
       return new ChangeListsMergerFactory(checker.getSelectedLists()) {
             @Override
-            public Merger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+            public IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
               return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl) {
                 @Override
                 protected SVNRevisionRange createRange() {

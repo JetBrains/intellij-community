@@ -31,7 +31,8 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SvnMergeInfoCache {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache");
@@ -166,9 +167,9 @@ public class SvnMergeInfoCache {
       myRevision = -1;
 
       ApplicationManager.getApplication().executeOnPooledThread(new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl,
-                                                                                  new Consumer<Long>() {
-                                                                                    public void consume(final Long aLong) {
-                                                                                      myRevision = aLong;
+                                                                                  new Consumer<FirstInBranch.CopyData>() {
+                                                                                    public void consume(FirstInBranch.CopyData copyData) {
+                                                                                      myRevision = copyData.getCopySourceRevision();
                                                                                       if (myRevision != -1) {
                                                                                         ApplicationManager.getApplication().invokeLater(new Runnable() {
                                                                                           public void run() {

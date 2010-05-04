@@ -75,7 +75,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   private final Runnable myInclusionListener;
-  @Nullable private final ChangeNodeDecorator myChangeDecorator;
+  @Nullable private ChangeNodeDecorator myChangeDecorator;
 
   public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
                          final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
@@ -194,6 +194,10 @@ public abstract class ChangesTreeList<T> extends JPanel {
     });
 
     setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
+  }
+
+  public void setChangeDecorator(@Nullable ChangeNodeDecorator changeDecorator) {
+    myChangeDecorator = changeDecorator;
   }
 
   public void setDoubleClickHandler(final Runnable doubleClickHandler) {
