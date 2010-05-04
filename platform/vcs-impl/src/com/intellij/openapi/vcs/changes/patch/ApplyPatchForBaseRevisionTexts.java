@@ -51,14 +51,7 @@ public class ApplyPatchForBaseRevisionTexts {
 
   @Nullable
   private static ApplyPatchForBaseRevisionTexts createForAddition(final TextFilePatch patch) {
-    final StringBuilder newText = new StringBuilder();
-    try {
-      final ApplyPatchStatus status = ApplyFilePatchBase.applyModifications(patch, "", newText);
-      return new ApplyPatchForBaseRevisionTexts("", null, "", newText.toString(), status);
-    }
-    catch (ApplyPatchException e) {
-      return new ApplyPatchForBaseRevisionTexts(null, new VcsException(e), null, null, ApplyPatchStatus.FAILURE);
-    }
+    return new ApplyPatchForBaseRevisionTexts("", null, "", patch.getNewFileText(), ApplyPatchStatus.SUCCESS);
   }
 
   private ApplyPatchForBaseRevisionTexts(CharSequence base, VcsException exception,
