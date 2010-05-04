@@ -153,20 +153,30 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     if (myPaintingBgNow) return;
 
     if ((myAnimator.isRunning() || myPaintPassive || (myLastPaintWasRunning && !myAnimator.isRunning()))) {
-      try {
-        myPaintingBgNow = true;
-        Container p = getParent();
-        if (p instanceof JComponent) {
-          JComponent parentComponent = (JComponent)p;
+      Rectangle b = getBounds();
 
-          Rectangle b = getBounds();
-          RepaintManager.currentManager(p).addDirtyRegion(parentComponent, b.x, b.y, b.width, b.height);
-          parentComponent.paintImmediately(b);
+      if (!isOpaque()) {
+        try {
+          myPaintingBgNow = true;
+          Container p = getParent();
+          if (p instanceof JComponent) {
+            JComponent parentComponent = (JComponent)p;
+
+            RepaintManager.currentManager(p).addDirtyRegion(parentComponent, b.x, b.y, b.width, b.height);
+            parentComponent.paintImmediately(b);
+          }
+        }
+        finally {
+          myPaintingBgNow = false;
+        }
+      } else {
+        final Component opaque = UIUtil.findNearestOpaque(this);
+        if (opaque != null) {
+          g.setColor(opaque.getBackground());
+          g.fillRect(b.x, b.y, b.width, b.height);
         }
       }
-      finally {
-        myPaintingBgNow = false;
-      }
+
     }
 
     Icon icon;
