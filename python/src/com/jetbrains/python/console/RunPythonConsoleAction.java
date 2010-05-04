@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.PathUtil;
 import com.jetbrains.django.util.DjangoUtil;

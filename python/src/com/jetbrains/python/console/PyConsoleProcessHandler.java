@@ -11,7 +11,6 @@ import java.nio.charset.Charset;
  * @author oleg
  */
 public class PyConsoleProcessHandler extends ColoredProcessHandler {
-  private final Charset myCharset;
   private final LanguageConsoleImpl myLanguageConsole;
 
   public PyConsoleProcessHandler(final Process process,
@@ -30,13 +29,8 @@ public class PyConsoleProcessHandler extends ColoredProcessHandler {
   };
 
   @Override
-  public Charset getCharset() {
-    return myCharset != null ? myCharset : super.getCharset();
-  }
-
-  @Override
   protected void textAvailable(final String text, final Key attributes) {
-    String string = processPrompts(myLanguageConsole, StringUtil.convertLineSeparators(text));
+    final String string = processPrompts(myLanguageConsole, StringUtil.convertLineSeparators(text));
     PyConsoleHighlightingUtil.processOutput(myLanguageConsole, string, attributes);
   }
 

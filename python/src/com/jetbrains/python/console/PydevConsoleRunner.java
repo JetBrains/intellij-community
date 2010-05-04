@@ -72,8 +72,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       return;
     }
     final ArrayList<String> args = new ArrayList<String>(
-      Arrays.asList(sdk.getHomePath(), PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
-    args.add(getLocalHostString());
+      Arrays.asList(sdk.getHomePath(), "-u", PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
+    args.add(NetUtils.getLocalHostString());
     for (int port : ports) {
       args.add(String.valueOf(port));
     }
@@ -115,6 +115,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       throw new ExecutionException(e.getMessage());
     }
     return server;
+  }
+  protected PyConsoleProcessHandler createProcessHandler(final Process process) {
+    final Charset outputEncoding = EncodingManager.getInstance().getDefaultCharset();
+    return new PyConsoleProcessHandler(process, myConsoleView.getConsole(), getProviderCommandLine(myProvider), outputEncoding);
   }
 
   public void initAndRun(final String ... statements2execute) throws ExecutionException {
@@ -227,9 +231,5 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   @Nullable
   public static PydevConsoleCommunication getConsoleCommunication(final PsiElement element) {
     return element.getContainingFile().getCopyableUserData(CONSOLE_KEY);
-  }
-
-  public static String createExtendPathCommand(Module module) {
-    return "sys.path.append('" + PathUtil.getCanonicalPath(DjangoUtil.getProjectRoot(module)) + "')";
   }
 }
