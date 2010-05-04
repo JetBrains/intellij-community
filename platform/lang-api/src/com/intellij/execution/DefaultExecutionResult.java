@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,7 +79,7 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myProcessHandler;
   }
 
-  public static class StopAction extends AnAction {
+  public static class StopAction extends AnAction implements DumbAware {
     private final ProcessHandler myProcessHandler;
 
     public StopAction(final ProcessHandler processHandler) {
