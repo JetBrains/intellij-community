@@ -37,7 +37,7 @@ public class ApplyPatchForBaseRevisionTexts {
   @Nullable
   public static ApplyPatchForBaseRevisionTexts create(final Project project, final VirtualFile file, final FilePath pathBeforeRename,
                                                        final TextFilePatch patch) {
-
+    if (patch.isNewFile()) return createForAddition(patch);
     final String beforeVersionId = patch.getBeforeVersionId();
     if (beforeVersionId == null) {
       return null;
@@ -47,6 +47,29 @@ public class ApplyPatchForBaseRevisionTexts {
       return new ApplyPatchForBaseRevisionTexts(provider, pathBeforeRename, patch, file);
     }
     return null;
+  }
+
+  @Nullable
+  private static ApplyPatchForBaseRevisionTexts createForAddition(final TextFilePatch patch) {
+    final StringBuilder newText = new StringBuilder();
+    try {
+      final ApplyPatchStatus status = ApplyFilePatchBase.applyModifications(patch, "", newText);
+      return new ApplyPatchForBaseRevisionTexts("", null, "", newText.toString(), status);
+    }
+    catch (ApplyPatchException e) {
+      return new ApplyPatchForBaseRevisionTexts(null, new VcsException(e), null, null, ApplyPatchStatus.FAILURE);
+    }
+  }
+
+  private ApplyPatchForBaseRevisionTexts(CharSequence base, VcsException exception,
+                                        CharSequence local,
+                                        String patched,
+                                        ApplyPatchStatus status) {
+    myBase = base;
+    myException = exception;
+    myLocal = local;
+    myPatched = patched;
+    myStatus = status;
   }
 
   ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider, final FilePath pathBeforeRename, final TextFilePatch patch,

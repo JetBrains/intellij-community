@@ -1,6 +1,6 @@
 class Test {
     /**
-     *  @see <error>#perform(int)</error>
+     *  @see #<error>perform(int)</error>
      */
     public void i() {}
      
