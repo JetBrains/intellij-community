@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Ref resolution routines.
- * User: yole
+ * User: dcheryasov
  * Date: 14.06.2005
  */
 public class PyResolveUtil {
@@ -27,30 +27,6 @@ public class PyResolveUtil {
   private PyResolveUtil() {
   }
 
-
-  /**
-   * Tries to find nearest parent that conceals names defined inside it. Such elements are 'class' and 'def':
-   * anything defined within it does not seep to the namespace below them, but is concealed within.
-   * @param elt starting point of search.
-   * @return 'class' or 'def' element, or null if not found.
-   */
-  @Nullable
-  public static PsiElement getConcealingParent(PsiElement elt) {
-    if (elt == null) {
-      return null;
-    }
-    PsiElement parent = elt.getParent();
-    while(parent != null) {
-      if (parent instanceof PyClass || parent instanceof PyFunction) {
-        return parent;
-      }
-      if (parent instanceof PsiFile) {
-        break;
-      }
-      parent = parent.getParent();
-    }
-    return null;
-  }
 
   /**
    * Returns closest previous node of given class, as input file would have it.
@@ -108,7 +84,7 @@ public class PyResolveUtil {
   public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt, PsiElement roof) {
     if (elt == null) return null; // can't find anyway.
     PsiElement seeker = elt;
-    PsiElement cap = getConcealingParent(elt);
+    PsiElement cap = PyUtil.getConcealingParent(elt);
     final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
@@ -126,7 +102,7 @@ public class PyResolveUtil {
       }
       // maybe we're under a cap?
       while (true) {
-        PsiElement local_cap = getConcealingParent(seeker);
+        PsiElement local_cap = PyUtil.getConcealingParent(seeker);
         if (local_cap == null) break; // seeker is in global context
         if (local_cap == cap) break; // seeker is in the same context as elt
         if ((cap != null) && PsiTreeUtil.isAncestor(local_cap, cap, true)) break; // seeker is in a context above elt's
@@ -193,11 +169,11 @@ public class PyResolveUtil {
    * @param inner an element presumably inside a method within a class, or a method itself.
    * @param outer an element presumably in the class context.
    * @return true if an outer element is in a class context, while the inner is a method or function inside it.
-   * @see PyResolveUtil#getConcealingParent(com.intellij.psi.PsiElement)
+   * @see com.jetbrains.python.psi.PyUtil#getConcealingParent(com.intellij.psi.PsiElement)
    */
   protected static boolean refersFromMethodToClass(final PsiElement inner, final PsiElement outer) {
     return (
-      (getConcealingParent(outer) instanceof PyClass) && // outer is in a class context
+      (PyUtil.getConcealingParent(outer) instanceof PyClass) && // outer is in a class context
       (PsiTreeUtil.getParentOfType(inner, PyFunction.class, false) != null) // inner is a function or method within the class
     );
   }

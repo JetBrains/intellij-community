@@ -699,6 +699,38 @@ public class PyUtil {
     return underscores;
   }
 
+  /**
+   * Tries to find nearest parent that conceals names defined inside it. Such elements are 'class' and 'def':
+   * anything defined within it does not seep to the namespace below them, but is concealed within.
+   * @param elt starting point of search.
+   * @return 'class' or 'def' element, or null if not found.
+   */
+  @Nullable
+  public static PsiElement getConcealingParent(PsiElement elt) {
+    if (elt == null) {
+      return null;
+    }
+    PsiElement parent = elt.getParent();
+    while(parent != null) {
+      if (parent instanceof PyClass || parent instanceof PyFunction) {
+        return parent;
+      }
+      if (parent instanceof PsiFile) {
+        break;
+      }
+      parent = parent.getParent();
+    }
+    return null;
+  }
+
+  /**
+   * @param name
+   * @return true iff the name looks like a class-private one, starting with two underscores but not ending with two underscores.
+   */
+  public static boolean isClassPrivateName(String name) {
+    return name.startsWith("__") && !name.endsWith("__");
+  }
+
   public static class UnderscoreFilter implements Condition<String> {
     private int myAllowed; // how many starting underscores is allowed: 0 is none, 1 is only one, 2 is two and more.
 

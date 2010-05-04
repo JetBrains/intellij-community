@@ -10,8 +10,8 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 
 /**
  * Marks built-in names.
@@ -27,7 +27,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
       // things like __len__
       if (
         (node.getQualifier() != null) // foo.__len__
-        || (PyResolveUtil.getConcealingParent(node) instanceof PyClass) // class Foo: ... __len__ = myLenImpl
+        || (PyUtil.getConcealingParent(node) instanceof PyClass) // class Foo: ... __len__ = myLenImpl
       ) {
         final ASTNode astNode = node.getNode();
         if (astNode != null) {

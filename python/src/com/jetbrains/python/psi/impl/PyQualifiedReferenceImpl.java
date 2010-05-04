@@ -6,6 +6,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.types.*;
@@ -34,6 +35,14 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
 
     // regular attributes
     PyType qualifierType = qualifier.getType(TypeEvalContext.fast());
+    // is it a class-private name qualified by a different class?
+    if (PyUtil.isClassPrivateName(referencedName) && qualifierType instanceof PyClassType) {
+      final List<? extends PsiElement> match = SyntaxMatchers.IN_METHOD.search(qualifier);
+      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(1))) {
+        return Collections.emptyList();
+      }
+    }
+    //
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
       if (qualifier instanceof PyQualifiedExpression) {
         // enrich the type info with any fields assigned nearby

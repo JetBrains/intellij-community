@@ -12,7 +12,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +68,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
 
     @Override
     public void visitPyFunction(final PyFunction node) {
-      PsiElement cap = PyResolveUtil.getConcealingParent(node);
+      PsiElement cap = PyUtil.getConcealingParent(node);
       if (cap instanceof PyClass) {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();

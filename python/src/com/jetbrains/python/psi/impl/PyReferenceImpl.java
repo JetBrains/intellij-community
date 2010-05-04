@@ -15,6 +15,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.patterns.Matcher;
+import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -139,6 +141,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
   }
 
+
   /**
    * Does actual resolution of resolve().
    * @return resolution result.
@@ -157,7 +160,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
-    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, realContext.getContainingFile());
+    PsiElement roof = null;
+    if (PyUtil.isClassPrivateName(referencedName)) {
+      // a class-private name; limited by either class or this file
+      PsiElement one = myElement;
+      do {
+        one = PyUtil.getConcealingParent(one);
+      } while (one instanceof PyFunction);
+      if (one instanceof PyClass) roof = one;
+    }
+    if (roof == null) roof = realContext.getContainingFile();
+    PsiElement uexpr = PyResolveUtil.treeCrawlUp(processor, false, realContext, roof);
     if ((uexpr != null)) {
       if ((uexpr instanceof PyClass)) {
         // is it a case of the bizarre "class Foo(Foo)" construct?
