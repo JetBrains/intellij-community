@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.indexing.IndexedRootsProvider;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Set;
-
-/**
- * @author peter
- */
-public class StandardDslIndexedRootsProvider extends AbstractDslIndexedRootsProvider {
+public interface GroovyDslIndexedRootProvider extends IndexedRootsProvider {
 
 }
