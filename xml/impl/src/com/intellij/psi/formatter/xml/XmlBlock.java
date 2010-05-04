@@ -73,7 +73,7 @@ public class XmlBlock extends AbstractXmlBlock {
     }
 
     if (myNode.getElementType() == XmlElementType.XML_COMMENT) {
-      return EMPTY;
+      return splitComment();
     }
 
     if (myNode.getElementType() == XmlElementType.XML_TEXT) {
@@ -125,6 +125,26 @@ public class XmlBlock extends AbstractXmlBlock {
     return result;
   }
 
+
+  private List<Block> splitComment() {
+    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return null;
+    //
+    // Do not build subblocks for comment-only node.
+    if (myNode.getFirstChildNode() != null &&
+        myNode.getFirstChildNode().getElementType() == XmlElementType.XML_COMMENT_START &&
+        myNode.getLastChildNode().getElementType() == XmlElementType.XML_COMMENT_END) {
+      return EMPTY;
+    }
+    final ArrayList<Block> result = new ArrayList<Block>(3);
+    final ArrayList<Block> commentBlocks = new ArrayList<Block>(3);
+    ASTNode child = myNode.getFirstChildNode();
+    while (child != null) {
+      IElementType childType = child.getElementType();
+      result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
+      child = child.getTreeNext();
+    }
+    return result;
+  }
 
   protected @Nullable Wrap getDefaultWrap(ASTNode node) {
     return null;
