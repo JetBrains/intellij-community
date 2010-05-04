@@ -36,13 +36,10 @@ public class PyNames {
     _UnderscoredAttributes.add("__all__");
     _UnderscoredAttributes.add("__author__");
     _UnderscoredAttributes.add("__bases__");
-    //_UnderscoredAttributes.add("__builtins__");
-    //_UnderscoredAttributes.add("__debug__");
     _UnderscoredAttributes.add("__dict__");
+    _UnderscoredAttributes.add("__doc__");
     _UnderscoredAttributes.add("__docformat__");
     _UnderscoredAttributes.add("__file__");
-    //_UnderscoredAttributes.add("__future__");
-    //_UnderscoredAttributes.add("__import__");
     _UnderscoredAttributes.add("__members__");
     _UnderscoredAttributes.add("__metaclass__");
     _UnderscoredAttributes.add("__mod__");
