@@ -163,4 +163,87 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
     // Inspired by IDEA-17870
     doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
   }
+
+  public void testBlankLinesAroundClassMethods() {
+    // Inspired by IDEA-19408
+    getSettings().BLANK_LINES_AROUND_METHOD = 3;
+
+    doTextTest(
+      "class Test {\n" +
+      "    public boolean flag1() {\n" +
+      "        return false;\n" +
+      "    }public boolean flag2() {\n" +
+      "        return false;\n" +
+      "    }public boolean flag3() {\n" +
+      "        return false;\n" +
+      "    }public boolean flag4() {\n" +
+      "        return false;\n" +
+      "    }\n" +
+      "}",
+      "class Test {\n" +
+      "    public boolean flag1() {\n" +
+      "        return false;\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    public boolean flag2() {\n" +
+      "        return false;\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    public boolean flag3() {\n" +
+      "        return false;\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    public boolean flag4() {\n" +
+      "        return false;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+  
+  public void testBlankLinesAroundEnumMethods() {
+    // Inspired by IDEA-19408
+    getSettings().BLANK_LINES_AROUND_METHOD = 2;
+
+    doTextTest(
+      "public enum Wrapping {\n" +
+      "    WRAPPING {public boolean flag1() {\n" +
+      "        return false;\n" +
+      "    }public boolean flag2() {\n" +
+      "        return false;\n" +
+      "    }public boolean flag3() {\n" +
+      "        return false;\n" +
+      "    }public boolean flag4() {\n" +
+      "        return false;\n" +
+      "    }}\n" +
+      "}",
+      "public enum Wrapping {\n" +
+      "    WRAPPING {\n" +
+      "        public boolean flag1() {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "\n" +
+      "\n" +
+      "        public boolean flag2() {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "\n" +
+      "\n" +
+      "        public boolean flag3() {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "\n" +
+      "\n" +
+      "        public boolean flag4() {\n" +
+      "            return false;\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

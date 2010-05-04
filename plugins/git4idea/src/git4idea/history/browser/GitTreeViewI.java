@@ -23,7 +23,7 @@ import java.util.Set;
 
 public interface GitTreeViewI {
   void controllerReady();
-  void refreshView(@NotNull final List<GitCommit> commitsToShow, final TravelTicket ticket);
+  void refreshView(@NotNull final List<GitCommit> commitsToShow, final TravelTicket ticket, SHAHash jumpTarget);
   void showStatusMessage(@NotNull final String message);
 
   void refreshStarted();

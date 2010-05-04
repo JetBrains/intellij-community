@@ -235,13 +235,14 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     //rComponent.paint(g);
     doPaintTooltipImage(rComponent, cellBounds, height, g, key);
 
-    if (doPaintBorder()) {
+    if (doPaintBorder(key)) {
       g.translate((visibleRect.x + visibleRect.width - cellLocation.x), 0);
-      g.setColor(Color.black);
+      g.setColor(Color.GRAY);
       int rightX = myImage.getWidth() - 1;
+      final int h = myImage.getHeight();
       UIUtil.drawLine(g, 0, 0, rightX, 0);
-      UIUtil.drawLine(g, rightX, 0, rightX, height);
-      UIUtil.drawLine(g, 0, height - 1, rightX, height - 1);
+      UIUtil.drawLine(g, rightX, 0, rightX, h);
+      UIUtil.drawLine(g, 0, h - 1, rightX, h - 1);
     }
 
     g.dispose();
@@ -260,7 +261,7 @@ abstract public class AbstractToolTipHandler <KeyType, ComponentType extends JCo
     g.fillRect(0, 0, width, height);
   }
 
-  protected boolean doPaintBorder() {
+  protected boolean doPaintBorder(final KeyType row) {
     return true;
   }
 

@@ -19,10 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.popup.ListSeparator;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
@@ -101,13 +98,9 @@ public class SelectBranchPopup {
     }
     items.add(CONFIGURE_MESSAGE);
 
-    BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title);
+    BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title, component);
     final ListPopup listPopup = JBPopupFactory.getInstance().createListPopup(step);
-    if (component == null) {
-      listPopup.showCenteredInCurrentWindow(project);
-    } else {
-      listPopup.showInCenterOf(component);
-    }
+    step.showPopupAt(listPopup);
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
@@ -116,22 +109,31 @@ public class SelectBranchPopup {
     private final SvnBranchConfigurationNew myConfiguration;
     private final boolean myTopLevel;
     private BranchSelectedCallback myCallback;
+    private final Component myComponent;
 
     private static final String REFRESH_MESSAGE = SvnBundle.message("refresh.branches.item");
 
-    protected BranchBasesPopupStep(final Project project, final VirtualFile vcsRoot, final SvnBranchConfigurationNew configuration, boolean topLevel,
-                                   final BranchSelectedCallback callback) {
+    protected BranchBasesPopupStep(final Project project,
+                                   final VirtualFile vcsRoot,
+                                   final SvnBranchConfigurationNew configuration,
+                                   boolean topLevel,
+                                   final BranchSelectedCallback callback,
+                                   Component component) {
       myProject = project;
       myVcsRoot = vcsRoot;
       myConfiguration = configuration;
       myTopLevel = topLevel;
       myCallback = callback;
+      myComponent = component;
     }
 
     public BranchBasesPopupStep(final Project project, final VirtualFile vcsRoot,
-                                final SvnBranchConfigurationNew configuration, final BranchSelectedCallback callback, final List<String> items,
-                                final String title) {
-      this(project, vcsRoot, configuration, true, callback);
+                                final SvnBranchConfigurationNew configuration,
+                                final BranchSelectedCallback callback,
+                                final List<String> items,
+                                final String title,
+                                Component component) {
+      this(project, vcsRoot, configuration, true, callback, component);
       init(title, items, null);
     }
 
@@ -232,23 +234,32 @@ public class SelectBranchPopup {
 
       final JList branchList = new JList(items);
       branchList.setCellRenderer(new BranchRenderer());
-      JBPopupFactory.getInstance().createListPopupBuilder(branchList)
-              .setTitle(SVNPathUtil.tail(selectedValue))
-              .setResizable(true)
-              .setDimensionServiceKey("Svn.CompareWithBranchPopup")
-              .setItemChoosenCallback(new Runnable() {
-                public void run() {
-                  if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
-                    showBranchPopup(selectedValue, false);
-                    return;
-                  }
-                  SvnBranchItem item = (SvnBranchItem) branchList.getSelectedValue();
-                  if (item != null) {
-                    myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
-                  }
-                }
-              })
-              .createPopup().showCenteredInCurrentWindow(myProject);
+      final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
+        .setTitle(SVNPathUtil.tail(selectedValue))
+        .setResizable(true)
+        .setDimensionServiceKey("Svn.CompareWithBranchPopup")
+        .setItemChoosenCallback(new Runnable() {
+          public void run() {
+            if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
+              showBranchPopup(selectedValue, false);
+              return;
+            }
+            SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
+            if (item != null) {
+              myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
+            }
+          }
+        })
+        .createPopup();
+      showPopupAt(popup);
+    }
+
+    public void showPopupAt(final JBPopup listPopup) {
+      if (myComponent == null) {
+        listPopup.showCenteredInCurrentWindow(myProject);
+      } else {
+        listPopup.showInCenterOf(myComponent);
+      }
     }
   }
 

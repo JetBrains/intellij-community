@@ -55,13 +55,7 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
   protected Rectangle getCellBounds(Integer key, Component rendererComponent) {
     final int rowIndex = key.intValue();
     final TreePath path = myComponent.getPathForRow(rowIndex);
-    final Rectangle cellBounds = myComponent.getPathBounds(path);
-
-    if (myComponent.getUI() instanceof UIUtil.MacTreeUI) {
-      //cellBounds.height;
-    }
-
-    return cellBounds;
+    return myComponent.getPathBounds(path);
   }
 
   protected Component getRendererComponent(Integer key) {
@@ -100,12 +94,12 @@ public final class TreeToolTipHandler extends AbstractToolTipHandler<Integer, JT
 
   @Override
   protected void doFillBackground(final int height, final int width, final Graphics2D g) {
-    super.doFillBackground(doPaintBorder() ? height : height - 1, width, g);
+    super.doFillBackground(myComponent.getUI() instanceof UIUtil.MacTreeUI ? height - 1 : height, width, g);
   }
 
   @Override
-  protected boolean doPaintBorder() {
-    return !(myComponent.getUI() instanceof UIUtil.MacTreeUI);
+  protected boolean doPaintBorder(final Integer row) {
+    return !(myComponent.getUI() instanceof UIUtil.MacTreeUI) || !myComponent.isRowSelected(row);
   }
 
   @Override
