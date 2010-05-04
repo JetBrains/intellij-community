@@ -202,6 +202,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     }
 
     protected void doOKAction() {
+      myEnvVariablesTable.stopEditing();
       final Map<String, String> envs = new LinkedHashMap<String, String>();
       for (EnvironmentVariable variable : myEnvVariablesTable.getEnvironmentVariables()) {
         envs.put(variable.getName(), variable.getValue());
