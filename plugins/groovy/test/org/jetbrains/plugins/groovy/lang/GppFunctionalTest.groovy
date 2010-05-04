@@ -1,34 +1,52 @@
 package org.jetbrains.plugins.groovy.lang
 
+import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.navigation.ImplementationSearcher
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.JarFileSystem
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import junit.framework.ComparisonFailure
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import junit.framework.ComparisonFailure
-import com.intellij.psi.JavaPsiFacade
+import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil
+import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.navigation.GotoImplementationHandler
 
 /**
  * @author peter
  */
 class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
+  static def descriptor = new GppProjectDescriptor()
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyHighlightingTest.GROOVY_17_PROJECT_DESCRIPTOR;
+    return descriptor;
   }
 
   protected void setUp() {
     super.setUp()
+/*
     myFixture.addClass"package groovy.lang; public @interface Typed {}"
     myFixture.addClass """
 package groovy.lang;
 public interface Function1<T,R> {
   public abstract R call(T param);
 }"""
+*/
 
     myFixture.allowTreeAccessForFile JavaPsiFacade.getInstance(project).findClass(Object.name).containingFile.navigationElement.containingFile.virtualFile
   }
@@ -175,12 +193,6 @@ Action a1 = { a = 2 -> println a }
   }
 
   public void testClosureParameterTypesInMethodInvocation() throws Exception {
-    myFixture.addClass """
-package groovy.lang;
-public interface Function2<T,V,R> {
-  public abstract R call(T param, V param2);
-}"""
-
     myFixture.configureByText "a.groovy", """
 def foo(int a = 1, Function1<String, Object> f) {}
 def foo(String s) {}
@@ -254,4 +266,56 @@ class Foo {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
+  public void testTraitHighlightin() throws Exception {
+    myFixture.configureByText "a.groovy", """
+@Trait
+abstract class Intf {
+  abstract void foo()
+  void bar() {}
+}
+class <error descr="Method 'foo' is not implemented">Foo</error> implements Intf {}
+class <error descr="Method 'foo' is not implemented">Wrong</error> extends Foo {}
+class Bar implements Intf {
+  void foo() {}
+}
+"""
+    myFixture.testHighlighting(true, false, false, myFixture.file.virtualFile)
+  }
+
+  public void testTraitImplementingAndNavigation() throws Exception {
+    myFixture.configureByText "a.groovy", """
+@Trait
+abstract class <caret>Intf {
+  abstract void foo()
+  void bar() {}
+}
+class Foo implements Intf {}
+class Bar implements Intf {
+  void foo() {}
+}
+class BarImpl extends Bar {}
+"""
+    def facade = JavaPsiFacade.getInstance(getProject())
+    assertOneElement(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("Foo"), true))
+
+    GrTypeDefinition barClass = facade.findClass("Bar")
+    assertEmpty(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(barClass, true))
+    assertTrue "bar" in GroovyOverrideImplementUtil.getMethodsToOverrideImplement(barClass, false).collect { ((PsiMethod) it.element).name }
+
+    assertEmpty(GroovyOverrideImplementUtil.getMethodsToOverrideImplement(facade.findClass("BarImpl"), true))
+
+    def implementations = new GotoImplementationHandler().getSourceAndTargetElements(myFixture.editor, myFixture.file).second
+    assertEquals Arrays.toString(implementations), 3, implementations.size()
+  }
+
+}
+
+class GppProjectDescriptor extends DefaultLightProjectDescriptor {
+  @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+    final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY++").getModifiableModel();
+    modifiableModel.addRoot(JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.absoluteTestDataPath + "mockGroovypp/groovypp-0.2.3.jar!/"), OrderRootType.CLASSES);
+    modifiableModel.addRoot(JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/"), OrderRootType.CLASSES);
+    modifiableModel.commit();
+  }
 }
