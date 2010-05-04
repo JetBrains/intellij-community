@@ -3877,7 +3877,7 @@ public class AbstractTreeUi {
     return !myUnbuiltNodes.contains(node);
   }
 
-  static class LoadedChildren {
+  class LoadedChildren {
 
     private final List myElements;
     private final Map<Object, NodeDescriptor> myDescriptors = new HashMap<Object, NodeDescriptor>();
@@ -3888,7 +3888,9 @@ public class AbstractTreeUi {
     }
 
     void putDescriptor(Object element, NodeDescriptor descriptor, boolean isChanged) {
-      assert myElements.contains(element);
+      if (isUnitTestingMode()) {
+        assert myElements.contains(element);
+      }
       myDescriptors.put(element, descriptor);
       myChanges.put(descriptor, isChanged);
     }
