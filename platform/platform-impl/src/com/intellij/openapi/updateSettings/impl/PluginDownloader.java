@@ -34,6 +34,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -139,6 +140,15 @@ public class PluginDownloader {
       if (ideaPluginDescriptor != null && StringUtil.compareVersionNumbers(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return false; //was not updated
+      }
+      final BuildNumber currentBuildNumber = ApplicationInfo.getInstance().getBuild();
+      final BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild());
+      if (sinceBuild != null && sinceBuild.compareTo(currentBuildNumber) > 0) {
+        return false;
+      }
+      final BuildNumber untilBuild = BuildNumber.fromString(descriptor.getUntilBuild());
+      if (untilBuild != null && untilBuild.compareTo(currentBuildNumber) < 0) {
+        return false;
       }
     }
     return true;
