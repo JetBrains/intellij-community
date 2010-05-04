@@ -40,6 +40,7 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   private final String myName;
 
   private boolean myLastPaintWasRunning;
+  private boolean myPaintingBgNow;
 
   protected AnimatedIcon(final String name) {
     myName = name;
@@ -149,9 +150,23 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   }
 
   protected void paintComponent(Graphics g) {
-    if (isOpaque() && (myAnimator.isRunning() || myPaintPassive || (myLastPaintWasRunning && !myAnimator.isRunning()))) {
-      g.setColor(UIUtil.getBgFillColor(this));
-      g.fillRect(0, 0, getWidth(), getHeight());
+    if (myPaintingBgNow) return;
+
+    if ((myAnimator.isRunning() || myPaintPassive || (myLastPaintWasRunning && !myAnimator.isRunning()))) {
+      try {
+        myPaintingBgNow = true;
+        Container p = getParent();
+        if (p instanceof JComponent) {
+          JComponent parentComponent = (JComponent)p;
+
+          Rectangle b = getBounds();
+          RepaintManager.currentManager(p).addDirtyRegion(parentComponent, b.x, b.y, b.width, b.height);
+          parentComponent.paintImmediately(b);
+        }
+      }
+      finally {
+        myPaintingBgNow = false;
+      }
     }
 
     Icon icon;
@@ -166,9 +181,13 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     int x = (size.width - icon.getIconWidth()) / 2;
     int y = (size.height - icon.getIconHeight()) / 2;
 
-    icon.paintIcon(this, g, x, y);
+    paintIcon(g, icon, x, y);
 
     myLastPaintWasRunning = myAnimator.isRunning();
+  }
+
+  protected void paintIcon(Graphics g, Icon icon, int x, int y) {
+    icon.paintIcon(this, g, x, y);
   }
 
   protected Icon getPassiveIcon() {
