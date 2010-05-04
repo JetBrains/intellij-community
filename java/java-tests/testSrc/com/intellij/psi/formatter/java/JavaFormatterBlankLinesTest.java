@@ -33,6 +33,7 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "        fmt.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));\n" +
       "    }\n" +
       "}",
+
       "class T {\n" +
       "    private final DecimalFormat fmt = new DecimalFormat();\n" +
       "\n" +
@@ -61,6 +62,7 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "        return false;\n" +
       "    }\n" +
       "}",
+
       "class Test {\n" +
       "    public boolean flag1() {\n" +
       "        return false;\n" +
@@ -103,6 +105,7 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "        return false;\n" +
       "    }}\n" +
       "}",
+
       "public enum Wrapping {\n" +
       "    WRAPPING {\n" +
       "        public boolean flag1() {\n" +
@@ -124,6 +127,143 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "            return false;\n" +
       "        }\n" +
       "    }\n" +
+      "}"
+    );
+  }
+
+  public void testInitializationBlockAndInnerClass() {
+    // Inspired by IDEA-21191
+    getSettings().BLANK_LINES_AROUND_CLASS = 3;
+
+    doTextTest(
+      "public class FormattingTest {\n" +
+      "    {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "    class MyInnerClass1 {\n" +
+      "    }\n" +
+      "    {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "    static {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "    class MyInnerClass2 {\n" +
+      "    }\n" +
+      "    static {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "}",
+
+      "public class FormattingTest {\n" +
+      "    {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    class MyInnerClass1 {\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "\n" +
+      "    static {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    class MyInnerClass2 {\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    static {\n" +
+      "        System.out.println(\"\");\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+  
+  public void testInnerClasses() {
+    // Inspired by IDEA-21191
+    getSettings().BLANK_LINES_AROUND_CLASS = 3;
+
+    doTextTest(
+      "public class FormattingTest {\n" +
+      "    class MyInnerClass1 {\n" +
+      "    }\n" +
+      "    class MyInnerClass2 {\n" +
+      "    }\n" +
+      "    static class MyInnerClass3 {\n" +
+      "    }\n" +
+      "    static class MyInnerClass4 {\n" +
+      "    }\n" +
+      "    class MyInnerClass5 {\n" +
+      "    }\n" +
+      "}",
+
+      "public class FormattingTest {\n" +
+      "    class MyInnerClass1 {\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    class MyInnerClass2 {\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    static class MyInnerClass3 {\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    static class MyInnerClass4 {\n" +
+      "    }\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "    class MyInnerClass5 {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
+  public void testTopLevelClasses() {
+    // Inspired by IDEA-21191
+    getSettings().BLANK_LINES_AROUND_CLASS = 3;
+
+    doTextTest(
+      "class Class1 {\n" +
+      "}\n" +
+      "public class Class2 {\n" +
+      "}\n" +
+      "class Class3 {\n" +
+      "}\n" +
+      "class Class4 {\n" +
+      "}",
+
+      "class Class1 {\n" +
+      "}\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "public class Class2 {\n" +
+      "}\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "class Class3 {\n" +
+      "}\n" +
+      "\n" +
+      "\n" +
+      "\n" +
+      "class Class4 {\n" +
       "}"
     );
   }
