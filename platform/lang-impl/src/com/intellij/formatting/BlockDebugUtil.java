@@ -49,6 +49,7 @@ public class BlockDebugUtil {
     else {
       out.print(" <NO INDENT>");
     }
+    out.print(" " + block.getTextRange() + " ");
     if (block instanceof ASTBlock) {
       ASTNode node = ((ASTBlock)block).getNode();
       if (node != null) {
@@ -61,7 +62,7 @@ public class BlockDebugUtil {
         out.print(" \"" + text + "\"");
       }
     }
-    System.out.println();
+    out.println();
     List<Block> subBlocks = getSubBlocks(block);
     if (subBlocks != null && subBlocks.size() > 0) {
       out.println(indent + "{");
@@ -73,8 +74,6 @@ public class BlockDebugUtil {
   }
 
   private static List<Block> getSubBlocks(Block root) {
-    if (root instanceof AbstractBlock) return ((AbstractBlock)root).getSubBlocks();
-    if (root instanceof DataLanguageBlockWrapper) return ((DataLanguageBlockWrapper)root).getSubBlocks();
-    return null;
+    return root.getSubBlocks();
   }
 }
