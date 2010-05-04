@@ -333,6 +333,5 @@
             text="Run Django Console..." description="Allows to quickly run Django console">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    <action id="Console.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" text="Execute Current Statement"/>
   </actions>
 </idea-plugin>
