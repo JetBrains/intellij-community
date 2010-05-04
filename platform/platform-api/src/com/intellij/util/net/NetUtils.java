@@ -76,7 +76,7 @@ public class NetUtils {
     return ports;
   }
 
-  private static String getLocalHostString() {
+  public static String getLocalHostString() {
     // HACK for Windows with ipv6
     String localHostString = "localhost";
     try {

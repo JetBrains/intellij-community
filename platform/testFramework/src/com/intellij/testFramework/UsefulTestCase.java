@@ -381,11 +381,11 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSize(int expectedSize, final Object[] array) {
-    assertEquals(expectedSize, array.length);
+    assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
   }
 
   public static void assertSize(int expectedSize, final Collection<?> c) {
-    assertEquals(expectedSize, c.size());
+    assertEquals(toString(c), expectedSize, c.size());
   }
 
   protected <T extends Disposable> T disposeOnTearDown(final T disposable) {

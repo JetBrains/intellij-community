@@ -1,6 +1,6 @@
 class Test {
     /**
-     *  @see <error>A#someField</error>
+     *  @see A#<error>someField</error>
      */
      public void i() {}
 
