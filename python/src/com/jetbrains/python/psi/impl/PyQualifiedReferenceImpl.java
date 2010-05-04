@@ -134,7 +134,7 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
 
   @Override
   public boolean isReferenceTo(PsiElement element) {
-    if (super.isReferenceTo(element)) {
+    if (resolve() == element) {
       return true;
     }
     final String referencedName = myElement.getReferencedName();
