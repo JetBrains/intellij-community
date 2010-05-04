@@ -17,10 +17,10 @@ package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.execution.junit2.configuration.ClassBrowser;
-import com.intellij.execution.junit2.configuration.CommonJavaParameters;
-import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.ClassBrowser;
+import com.intellij.execution.ui.CommonJavaParameters;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -34,7 +34,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfiguration> {
-  private CommonJavaParameters myCommonJavaParameters;
+  private CommonJavaParameters myCommonProgramParameters;
   private LabeledComponent<TextFieldWithBrowseButton> myMainClass;
   private LabeledComponent<JComboBox> myModule;
   private JPanel myWholePanel;
@@ -49,14 +49,14 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
     myModule.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
+        myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
       }
     });
     ClassBrowser.createApplicationClassBrowser(project, myModuleSelector).setField(getMainClassField());
   }
 
   public void applyEditorTo(final ApplicationConfiguration configuration) throws ConfigurationException {
-    myCommonJavaParameters.applyTo(configuration);
+    myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
     configuration.MAIN_CLASS_NAME = getMainClassField().getText();
     configuration.ALTERNATIVE_JRE_PATH = myAlternativeJREPanel.getPath();
@@ -70,7 +70,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   }
 
   public void resetEditorFrom(final ApplicationConfiguration configuration) {
-    myCommonJavaParameters.reset(configuration);
+    myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME);
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
@@ -98,8 +98,8 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     return myMainClass.getComponent();
   }
 
-  public CommonJavaParameters getCommonJavaParameters() {
-    return myCommonJavaParameters;
+  public CommonJavaParameters getCommonProgramParameters() {
+    return myCommonProgramParameters;
   }
 
   @NotNull

@@ -25,6 +25,9 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.ClassBrowser;
+import com.intellij.execution.ui.CommonJavaParameters;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.module.Module;
@@ -98,6 +101,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
     configuration.getPersistentData().setEnvs(myEnvVariablesComponent.getEnvs());
     configuration.getPersistentData().PASS_PARENT_ENVS = myEnvVariablesComponent.isPassParentEnvs();
+
+    myCommonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
   }
 
   public void resetEditorFrom(final JUnitConfiguration configuration) {
