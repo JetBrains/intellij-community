@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
@@ -61,6 +62,18 @@ public class PyQualifiedName {
     return true;
   }
 
+  public boolean matchesPrefix(PyQualifiedName prefix) {
+    if (getComponentCount() < prefix.getComponentCount()) {
+      return false;
+    }
+    for (int i = 0; i < prefix.getComponentCount(); i++) {
+      if (!getComponents().get(i).equals(prefix.getComponents().get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static void serialize(@Nullable PyQualifiedName qName, StubOutputStream dataStream) throws IOException {
     if (qName == null) {
       dataStream.writeVarInt(0);
@@ -96,5 +109,10 @@ public class PyQualifiedName {
       return null;
     }
     return myComponents.get(myComponents.size()-1);
+  }
+
+  @Override
+  public String toString() {
+    return StringUtil.join(myComponents, ".");
   }
 }

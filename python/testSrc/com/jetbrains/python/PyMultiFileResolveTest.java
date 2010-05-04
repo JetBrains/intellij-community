@@ -168,7 +168,8 @@ public class PyMultiFileResolveTest extends PyLightFixtureTestCase {
 
   public void testNestedPackageElement() throws Exception {
     PsiElement element = doResolve();
-    assertTrue(element instanceof PyFile);
+    element = element.getNavigationElement();
+    assertInstanceOf(element, PyFile.class);
     assertEquals("__init__.py", ((PyFile) element).getName());
   }
 
