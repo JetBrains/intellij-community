@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -240,6 +241,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   private boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
     if (!method1.getName().equals(method2.getName())) return false;
+
+    if (method1 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method1).dominates(substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
+      return true;
+    }
 
     //hack for default gdk methods
     if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {

@@ -19,8 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
  */
 public class GppTypeConverter extends GrTypeConverter {
 
-  public static boolean hasTypedContext(GroovyPsiElement context) {
-    return isTyped(PsiTreeUtil.getParentOfType(context, GrMember.class));
+  public static boolean hasTypedContext(PsiElement context) {
+    return isTyped(PsiTreeUtil.getContextOfType(context, GrMember.class, true));
   }
 
   private static boolean isTyped(@Nullable PsiModifierListOwner member) {
@@ -33,7 +33,7 @@ public class GppTypeConverter extends GrTypeConverter {
       return true;
     }
 
-    final GrMember parentMember = PsiTreeUtil.getParentOfType(member, GrMember.class);
+    final GrMember parentMember = PsiTreeUtil.getContextOfType(member, GrMember.class, true);
     if (parentMember != null) {
       return isTyped(parentMember);
     }
