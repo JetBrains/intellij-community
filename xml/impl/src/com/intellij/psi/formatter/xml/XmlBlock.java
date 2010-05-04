@@ -63,7 +63,16 @@ public class XmlBlock extends AbstractXmlBlock {
 
   protected List<Block> buildChildren() {
 
-    if (myNode.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE || myNode.getElementType() == XmlElementType.XML_COMMENT) {
+    //
+    // Fix for EA-19269:
+    // Split XML attribute value to the value itself and delimiters (needed for the case when it contains
+    // template language tags inside).
+    //
+    if (myNode.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
+      return splitAttribute(myNode, myXmlFormattingPolicy);
+    }
+
+    if (myNode.getElementType() == XmlElementType.XML_COMMENT) {
       return EMPTY;
     }
 
@@ -99,6 +108,23 @@ public class XmlBlock extends AbstractXmlBlock {
       return EMPTY;
     }
   }
+
+  private static List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
+    final ArrayList<Block> result = new ArrayList<Block>(3);
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
+          child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+        result.add(new XmlBlock(child, null, null, formattingPolicy, null, null));
+      }
+      else {
+        result.add(new ReadOnlyBlock(child));
+      }
+      child = child.getTreeNext();
+    }
+    return result;
+  }
+
 
   protected @Nullable Wrap getDefaultWrap(ASTNode node) {
     return null;
