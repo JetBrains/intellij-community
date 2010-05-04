@@ -150,6 +150,23 @@ public class ChangesFilter {
     public void applyToCommandLine(List<String> sink) {
       sink.add("--author=" + myRegexp);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Author author = (Author)o;
+
+      if (myRegexp != null ? !myRegexp.equals(author.myRegexp) : author.myRegexp != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myRegexp != null ? myRegexp.hashCode() : 0;
+    }
   }
 
   public static class Committer implements Filter {
@@ -168,6 +185,23 @@ public class ChangesFilter {
     public void applyToCommandLine(List<String> sink) {
       sink.add("--committer=" + myRegexp);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Committer committer = (Committer)o;
+
+      if (myRegexp != null ? !myRegexp.equals(committer.myRegexp) : committer.myRegexp != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myRegexp != null ? myRegexp.hashCode() : 0;
+    }
   }
 
   public static class BeforeDate implements Filter {
@@ -184,6 +218,23 @@ public class ChangesFilter {
     public void applyToCommandLine(List<String> sink) {
       sink.add("--before=" + formatDate(myDate));
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      BeforeDate that = (BeforeDate)o;
+
+      if (myDate != null ? !myDate.equals(that.myDate) : that.myDate != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myDate != null ? myDate.hashCode() : 0;
+    }
   }
 
   public static class AfterDate implements Filter {
@@ -199,6 +250,23 @@ public class ChangesFilter {
 
     public void applyToCommandLine(final List<String> sink) {
       sink.add("--after=" + formatDate(myDate));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      AfterDate afterDate = (AfterDate)o;
+
+      if (myDate != null ? !myDate.equals(afterDate.myDate) : afterDate.myDate != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myDate != null ? myDate.hashCode() : 0;
     }
   }
 
@@ -222,6 +290,23 @@ public class ChangesFilter {
 
     public void applyToCommandLine(final List<String> sink) {
       sink.add("--grep=" + myRegexp);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Comment comment = (Comment)o;
+
+      if (myRegexp != null ? !myRegexp.equals(comment.myRegexp) : comment.myRegexp != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myRegexp != null ? myRegexp.hashCode() : 0;
     }
   }
 }

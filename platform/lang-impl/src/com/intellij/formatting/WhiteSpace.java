@@ -92,9 +92,9 @@ class WhiteSpace {
    * <ol>
    *   <li>Checks if new end offset can be applied, return in case of negative answer;</li>
    *   <li>
-   *          Processes all new symbols introduced by the new end offset value, calculates number of line feeds, white spaces and tabulations
-   *          between them and updates {@link #getLineFeeds() lineFeeds}, {@link #getSpaces() spaces}, {@link #getIndentSpaces() indentSpaces}
-   *          and {@link #getTotalSpaces() totalSpaces} properties accordingly;
+   *          Processes all new symbols introduced by the new end offset value, calculates number of line feeds,
+   *          white spaces and tabulations between them and updates {@link #getLineFeeds() lineFeeds}, {@link #getSpaces() spaces},
+   *          {@link #getIndentSpaces() indentSpaces} and {@link #getTotalSpaces() totalSpaces} properties accordingly;
    *    </li>
    * </ol>
    *
@@ -152,7 +152,8 @@ class WhiteSpace {
    * </ul>
    *
    * @param model     formatting model that is used to provide access to the <code>PSI API</code> if necessary
-   * @return               <code>true</code> if <code>'myInitial'</code> property value stands for white space; <code>false</code> otherwise
+   * @return          <code>true</code> if <code>'myInitial'</code> property value stands for white space;
+   *                  <code>false</code> otherwise
    */
   private boolean coveredByBlock(final FormattingDocumentModel model) {
     if (myInitial == null) return true;
@@ -204,7 +205,8 @@ class WhiteSpace {
       }
     }
 
-    // There are no line feeds at remained text, hence, we can just subtract number of spaces and indent spaces from removed text and finish.
+    // There are no line feeds at remained text, hence, we can just subtract number of spaces and indent spaces
+    // from removed text and finish.
     if (getLineFeeds() - lineFeedsNumberAtRemovedText <= 0) {
       setLineFeeds(0);
       mySpaces -= spacesNumberAtRemovedText;
@@ -212,7 +214,8 @@ class WhiteSpace {
       return;
     }
 
-    // There are white spaces at remained text, hence, we need to calculate number of spaces and indent spaces between last line feed and new end offset.
+    // There are white spaces at remained text, hence, we need to calculate number of spaces and indent spaces between
+    // last line feed and new end offset.
     int newLineFeedsNumber = getLineFeeds() - lineFeedsNumberAtRemovedText;
     assert newLineFeedsNumber >= 0;
     newLineFeedsNumber = newLineFeedsNumber < 0 ? 0 : newLineFeedsNumber; // Never expect the defense to be triggered. 
@@ -231,7 +234,8 @@ class WhiteSpace {
    * Builds string that contains line feeds, white spaces and tabulation symbols known to the current {@link WhiteSpace} object.
    *
    * @param options     indentation formatting options
-   * @return                 string that contains line feeds, white spaces and tabulation symbols known to the current {@link WhiteSpace} object
+   * @return            string that contains line feeds, white spaces and tabulation symbols known to the current
+   *                    {@link WhiteSpace} object
    */
   public String generateWhiteSpace(CodeStyleSettings.IndentOptions options) {
     return new IndentInfo(getLineFeeds(), myIndentSpaces, mySpaces).generateNewWhiteSpace(options);
@@ -240,14 +244,14 @@ class WhiteSpace {
   /**
    * Tries to apply given values to {@link #getSpaces() spaces} and {@link #getIndentSpaces() indentSpaces} properties accordingly.
    * <p/>
-   * The action is not guaranteed to be executed (i.e. the it's not guaranteed that target properties return given values after this method call
-   * - see {@link #performModification(Runnable)} for more details).
+   * The action is not guaranteed to be executed (i.e. the it's not guaranteed that target properties return given values after
+   * this method call - see {@link #performModification(Runnable)} for more details).
    * <p/>
-   * Moreover, the action is guaranteed to be <b>not</b> executed  if {@link #isKeepFirstColumn() keepFirstColumn} property is unset and target
-   * document string doesn't contain spaces.
+   * Moreover, the action is guaranteed to be <b>not</b> executed  if {@link #isKeepFirstColumn() keepFirstColumn} property
+   * is unset and target document string doesn't contain spaces.
    *
    * @param spaces      new value for the {@link #getSpaces() spaces} property
-   * @param indent       new value for the {@link #getIndentSpaces()}  indentSpaces} property
+   * @param indent      new value for the {@link #getIndentSpaces()}  indentSpaces} property
    */
   public void setSpaces(final int spaces, final int indent) {
     performModification(new Runnable() {
@@ -278,12 +282,16 @@ class WhiteSpace {
    * <code>'Safe manner'</code> here means the following:
    * <ul>
    *   <li>don't execute the action if {@link #isIsReadOnly() isReadOnly} property value is set to <code>true</code>;</li>
-   *   <li>ensure that number of line feeds after action execution is preserved if line feeds are {@link #isLineFeedsAreReadOnly() read only};</li>
+   *   <li>
+   *        ensure that number of line feeds after action execution is preserved if line feeds are
+   *        {@link #isLineFeedsAreReadOnly() read only};
+   *   </li>
    *   <li>
    *        ensure the following if {@link #isIsSafe() isSafe} property is set to <code>true</code>:
    *        <ul>
    *          <li>
-   *            cut all white spaces and line feeds appeared after given action execution to single white space if there were no line feeds and white spaces before;
+   *            cut all white spaces and line feeds appeared after given action execution to single white space if there
+   *            were no line feeds and white spaces before;
    *          </li>
    *        </ul>
    *    </li>
@@ -427,9 +435,9 @@ class WhiteSpace {
   }
 
   /**
-   * @param ws     char sequence to check
-   * @return          <code>true</code> if given char sequence is equal to the target document text identified by start/end offsets managed by the
-   *                         current {@link WhiteSpace} object; <code>false</code> otherwise
+   * @param ws      char sequence to check
+   * @return        <code>true</code> if given char sequence is equal to the target document text identified by
+   *                start/end offsets managed by the current {@link WhiteSpace} object; <code>false</code> otherwise
    */
   public boolean equalsToString(CharSequence ws) {
     if (myInitial == null) return ws.length() == 0;
@@ -496,10 +504,11 @@ class WhiteSpace {
   }
 
   /**
-   * Allows to get information about number of 'pure' white space symbols at the last line of continuous white space document text fragment represented
-   * by the current {@link WhiteSpace} object.
+   * Allows to get information about number of 'pure' white space symbols at the last line of continuous white space document
+   * text fragment represented by the current {@link WhiteSpace} object.
    * <p/>
-   * <b>Note:</b> pay special attention to <code>'last line'</code> qualification here. Consider the following target continuous white space document fragment:
+   * <b>Note:</b> pay special attention to <code>'last line'</code> qualification here. Consider the following target continuous
+   * white space document fragment:
    * <pre>
    *        ' ws<sub>11</sub>ws<sub>12</sub>
    *        'ws<sub>21</sub>'
@@ -625,21 +634,24 @@ class WhiteSpace {
   }
 
   /**
-   * Provides access to the information about indent white spaces at last line of continuous white space text document fragment represented by the current
-   * {@link WhiteSpace} object.
+   * Provides access to the information about indent white spaces at last line of continuous white space text document
+   * fragment represented by the current {@link WhiteSpace} object.
    * <p/>
-   * <code>'Indent white space'</code> here is a white space representation of tabulation symbol. User may define that he or she wants to use particular
-   * number of white spaces instead of tabulation ({@link CodeStyleSettings.IndentOptions#TAB_SIZE}). So, {@link WhiteSpace} object uses corresponding
+   * <code>'Indent white space'</code> here is a white space representation of tabulation symbol. User may define that
+   * he or she wants to use particular number of white spaces instead of tabulation
+   * ({@link CodeStyleSettings.IndentOptions#TAB_SIZE}). So, {@link WhiteSpace} object uses corresponding
    * number of 'indent white spaces' for each tabulation symbol encountered at target continuous white space text document fragment.
    * <p/>
-   * <b>Note:</b> pay special attention to <code>'last line'</code> qualification here. Consider the following target continuous white space document fragment:
+   * <b>Note:</b> pay special attention to <code>'last line'</code> qualification here. Consider the following target
+   * continuous white space document fragment:
    * <pre>
    *        ' \t\t
    *        '\t'
    * </pre>
    * <p/>
-   * Let's consider that <code>'tab size'</code> is defined as four white spaces (default setting). <code>'IndentSpaces'</code> property of
-   * {@link WhiteSpace} object for such white-space text has a value not <b>8</b> or <b>12</b> but <b>4</b>, i.e. tabulation symbols from last line
+   * Let's consider that <code>'tab size'</code> is defined as four white spaces (default setting).
+   * <code>'IndentSpaces'</code> property of {@link WhiteSpace} object for such white-space text has a value not
+   * <b>8</b> or <b>12</b> but <b>4</b>, i.e. tabulation symbols from last line
    * only are counted.
    *
    * @return        number of indent spaces at the last line of target continuous white space text document fragment
@@ -653,7 +665,8 @@ class WhiteSpace {
   }
 
   /**
-   * Provides access to the line feed symbols number at continuous white space text document fragment represented by the current {@link WhiteSpace} object.
+   * Provides access to the line feed symbols number at continuous white space text document fragment represented
+   * by the current {@link WhiteSpace} object.
    *
    * @return      line feed symbols number
    */

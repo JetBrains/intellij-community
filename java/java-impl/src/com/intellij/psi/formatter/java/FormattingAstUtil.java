@@ -51,10 +51,31 @@ public class FormattingAstUtil {
    * @return        left non-white space sibling of the given node if any; <code>null</code> otherwise
    */
   @Nullable
-  public static ASTNode getPrevElement(final ASTNode node) {
+  public static ASTNode getPrevNonWhiteSpaceNode(final ASTNode node) {
+    if (node == null) {
+      return null;
+    }
     ASTNode result = node.getTreePrev();
-    while (result != null && result.getElementType() == TokenType.WHITE_SPACE) {
+    while (result != null && (result.getElementType() == TokenType.WHITE_SPACE || result.getTextLength() == 0)) {
       result = result.getTreePrev();
+    }
+    return result;
+  }
+
+  /**
+   * Tries to get next non-white space <code>AST</code> node for the given one.
+   *
+   * @param node    base node which right non-white space sibling is to be found
+   * @return        right non-white space sibling of the given node if any; <code>null</code> otherwise
+   */
+  @Nullable
+  public static ASTNode getNextNonWhiteSpaceNode(final ASTNode node) {
+    if (node == null) {
+      return null;
+    }
+    ASTNode result = node.getTreeNext();
+    while (result != null && (result.getElementType() == TokenType.WHITE_SPACE || result.getTextLength() == 0)) {
+      result = result.getTreeNext();
     }
     return result;
   }

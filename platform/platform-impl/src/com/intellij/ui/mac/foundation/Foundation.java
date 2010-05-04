@@ -61,6 +61,10 @@ public class Foundation {
     return myFoundationLibrary.objc_msgSend(id, selector, args);
   }
 
+  public static ID invoke(final String cls, final String selector, Object... args) {
+    return invoke(getClass(cls), createSelector(selector), args);
+  }
+
   public static ID registerObjcClass(ID superCls, String name) {
     return myFoundationLibrary.objc_allocateClassPair(superCls, name, 0);
   }

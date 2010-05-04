@@ -141,7 +141,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (!myInlineThisOnly) {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myMethod)) return false;
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, usagesIn);
   }
 
   private void addInaccessibleSuperCallsConflicts(final UsageInfo[] usagesIn, final MultiMap<PsiElement, String> conflicts) {
@@ -725,18 +725,31 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           parent = parent.getParent();
         }
         if (parent instanceof PsiClass) {
-          final PsiClass parentClass = (PsiClass)parent;
+          PsiClass parentClass = (PsiClass)parent;
           final PsiClass containingClass = myMethod.getContainingClass();
           if (InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
             qualifier = myFactory.createExpressionFromText("this", null);
           }
           else {
-            String name = containingClass.getName();
-            if (name != null) {
-              qualifier = myFactory.createExpressionFromText(name + ".this", null);
-            }
-            else { //?
-              qualifier = myFactory.createExpressionFromText("this", null);
+            if (PsiTreeUtil.isAncestor(containingClass, parent, false)) {
+              String name = containingClass.getName();
+              if (name != null) {
+                qualifier = myFactory.createExpressionFromText(name + ".this", null);
+              }
+              else { //?
+                qualifier = myFactory.createExpressionFromText("this", null);
+              }
+            } else { // we are inside the inheritor
+              do {
+                parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
+                if (InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
+                  LOG.assertTrue(parentClass != null);
+                  final String childClassName = parentClass.getName();
+                  qualifier = myFactory.createExpressionFromText(childClassName != null ? childClassName + ".this" : "this", null);
+                  break;
+                }
+              }
+              while (parentClass != null);
             }
           }
         }
@@ -1103,7 +1116,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiClassInitializer classInitializer = myFactory.createClassInitializer();
           final PsiClass containingClass = field.getContainingClass();
           classInitializer = (PsiClassInitializer)containingClass.addAfter(classInitializer, field);
-          containingClass.addAfter(CodeEditUtil.createLineFeed(field.getManager()), field);          
+          containingClass.addAfter(CodeEditUtil.createLineFeed(field.getManager()), field);
           final PsiCodeBlock body = classInitializer.getBody();
           PsiExpressionStatement statement = (PsiExpressionStatement)myFactory.createStatementFromText(field.getName() + " = 0;", body);
           statement = (PsiExpressionStatement)body.add(statement);

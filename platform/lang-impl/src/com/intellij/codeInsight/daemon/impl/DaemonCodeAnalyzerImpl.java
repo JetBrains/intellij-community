@@ -220,6 +220,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void updateVisibleHighlighters(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!myUpdateByTimerEnabled) return;
     //if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     final TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
@@ -253,6 +254,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   public void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
     stopProcess(true);
+  }
+
+  public boolean isUpdateByTimerEnabled() {
+    return myUpdateByTimerEnabled;
   }
 
   public void setImportHintsEnabled(PsiFile file, boolean value) {

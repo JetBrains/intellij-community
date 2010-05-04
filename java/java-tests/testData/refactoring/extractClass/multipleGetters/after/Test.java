@@ -1,10 +1,9 @@
 class Test {
-    final Extracted extracted = new Extracted();
-
-    public int getMyT() {
-    return extracted.getMyT();
+  int myT;
+  public int getMyT() {
+    return myT;
   }
   void bar(){
-    int i = extracted.getMyT();
+    int i = myT;
   }
 }

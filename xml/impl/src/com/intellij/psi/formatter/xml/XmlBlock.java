@@ -63,8 +63,17 @@ public class XmlBlock extends AbstractXmlBlock {
 
   protected List<Block> buildChildren() {
 
-    if (myNode.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE || myNode.getElementType() == XmlElementType.XML_COMMENT) {
-      return EMPTY;
+    //
+    // Fix for EA-19269:
+    // Split XML attribute value to the value itself and delimiters (needed for the case when it contains
+    // template language tags inside).
+    //
+    if (myNode.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE) {
+      return splitAttribute(myNode, myXmlFormattingPolicy);
+    }
+
+    if (myNode.getElementType() == XmlElementType.XML_COMMENT) {
+      return splitComment();
     }
 
     if (myNode.getElementType() == XmlElementType.XML_TEXT) {
@@ -98,6 +107,43 @@ public class XmlBlock extends AbstractXmlBlock {
     else {
       return EMPTY;
     }
+  }
+
+  private static List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
+    final ArrayList<Block> result = new ArrayList<Block>(3);
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
+          child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+        result.add(new XmlBlock(child, null, null, formattingPolicy, null, null));
+      }
+      else {
+        result.add(new ReadOnlyBlock(child));
+      }
+      child = child.getTreeNext();
+    }
+    return result;
+  }
+
+
+  private List<Block> splitComment() {
+    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return null;
+    //
+    // Do not build subblocks for comment-only node.
+    if (myNode.getFirstChildNode() != null &&
+        myNode.getFirstChildNode().getElementType() == XmlElementType.XML_COMMENT_START &&
+        myNode.getLastChildNode().getElementType() == XmlElementType.XML_COMMENT_END) {
+      return EMPTY;
+    }
+    final ArrayList<Block> result = new ArrayList<Block>(3);
+    final ArrayList<Block> commentBlocks = new ArrayList<Block>(3);
+    ASTNode child = myNode.getFirstChildNode();
+    while (child != null) {
+      IElementType childType = child.getElementType();
+      result.add(new XmlBlock(child, null, null, myXmlFormattingPolicy, getChildIndent(), null));
+      child = child.getTreeNext();
+    }
+    return result;
   }
 
   protected @Nullable Wrap getDefaultWrap(ASTNode node) {

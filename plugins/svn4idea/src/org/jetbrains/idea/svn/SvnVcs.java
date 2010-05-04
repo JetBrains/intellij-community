@@ -98,7 +98,7 @@ import java.util.*;
 import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-public class SvnVcs extends AbstractVcs {
+public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
   private final static int ourLogUsualInterval = 20 * 1000;
@@ -885,7 +885,8 @@ public class SvnVcs extends AbstractVcs {
     for (RootUrlInfo info : infoList) {
       final File file = info.getIoFile();
       infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
-        SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType()));
+        SvnFormatSelector.getWorkingCopyFormat(file), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType(),
+        SvnUtil.getDepth(this, file)));
     }
     return infos;
   }

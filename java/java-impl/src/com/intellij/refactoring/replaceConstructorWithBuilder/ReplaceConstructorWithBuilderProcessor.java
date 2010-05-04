@@ -285,7 +285,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       conflicts.putValue(null, "Found constructors are not reducible to simple chain");
     }
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   protected String getCommandName() {

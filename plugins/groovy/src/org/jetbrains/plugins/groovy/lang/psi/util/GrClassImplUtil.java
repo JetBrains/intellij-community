@@ -333,30 +333,6 @@ public class GrClassImplUtil {
     return isPlaceGroovy || !(method instanceof GrGdkMethod);
   }
 
-  private static boolean isPropertyReference(PsiElement place, PsiField aField, boolean isGetter) {
-    //filter only in groovy, todo: analyze java place
-    if (place.getLanguage() != GroovyFileType.GROOVY_FILE_TYPE.getLanguage()) return true;
-
-    if (place instanceof GrReferenceExpression) {
-      final PsiElement parent = place.getParent();
-      if (parent instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression call = (GrMethodCallExpression)parent;
-        if (call.getNamedArguments().length > 0 || call.getClosureArguments().length > 0) return false;
-        final GrExpression[] args = call.getExpressionArguments();
-        if (isGetter) {
-          return args.length == 0;
-        }
-        else {
-          return args.length == 1 &&
-                 TypesUtil
-                   .isAssignableByMethodCallConversion(aField.getType(), args[0].getType(), place.getManager(), place.getResolveScope());
-        }
-      }
-    }
-
-    return false;
-  }
-
   @Nullable
   public static PsiMethod findMethodBySignature(GrTypeDefinition grType, PsiMethod patternMethod, boolean checkBases) {
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);

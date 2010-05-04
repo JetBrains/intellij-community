@@ -201,14 +201,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       conflicts.put(element, conflictsMap.get(element));
     }
     checkConflicts(refUsages, conflicts);
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   protected void performRefactoring(final UsageInfo[] usages) {
     new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(DocCommentPolicy.ASIS)){
       //push down conflicts are already collected
       @Override
-      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts) {
+      protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
         return true;
       }
     }.run();

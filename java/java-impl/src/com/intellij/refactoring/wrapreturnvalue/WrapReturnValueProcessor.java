@@ -228,7 +228,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         conflicts.putValue(existingClass, RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"));
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   protected void performRefactoring(UsageInfo[] usageInfos) {

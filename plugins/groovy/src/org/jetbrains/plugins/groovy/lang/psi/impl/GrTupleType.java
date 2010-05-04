@@ -20,35 +20,25 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ven
  */
-public class GrTupleType extends PsiClassType {
-  private final GlobalSearchScope myScope;
-  private final JavaPsiFacade myFacade;
+public class GrTupleType extends GrLiteralClassType {
   private final PsiType[] myComponentTypes;
-  @NonNls
-  private static final String JAVA_UTIL_LIST = "java.util.List";
-
 
   public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope) {
     this(componentTypes, facade, scope,LanguageLevel.JDK_1_5);
   }
   public GrTupleType(PsiType[] componentTypes, JavaPsiFacade facade, GlobalSearchScope scope,LanguageLevel languageLevel) {
-    super(languageLevel);
+    super(languageLevel, scope, facade);
     myComponentTypes = componentTypes;
-    myFacade = facade;
-    myScope = scope;
   }
 
-  @Nullable
-  public PsiClass resolve() {
-    return myFacade.findClass(JAVA_UTIL_LIST, getResolveScope());
+  @Override
+  protected String getJavaClassName() {
+    return CommonClassNames.JAVA_UTIL_LIST;
   }
 
   public String getClassName() {
@@ -58,73 +48,7 @@ public class GrTupleType extends PsiClassType {
   @NotNull
   public PsiType[] getParameters() {
     if (myComponentTypes.length == 0) return PsiType.EMPTY_ARRAY;
-    PsiType result = myComponentTypes[0];
-    for (int i = 1; i < myComponentTypes.length; i++) {
-      final PsiType other = myComponentTypes[i];
-      if (other == null) continue;
-      if (result == null) result = other;
-      if (result.isAssignableFrom(other)) continue;
-      if (other.isAssignableFrom(result)) result = other;
-      result = TypesUtil.getLeastUpperBound(result, other, PsiManager.getInstance(myFacade.getProject()));
-    }
-
-    return new PsiType[]{result};
-  }
-
-  @NotNull
-  public ClassResolveResult resolveGenerics() {
-    return new ClassResolveResult() {
-      private final PsiClass myListClass = resolve();
-
-      public PsiClass getElement() {
-        return myListClass;
-      }
-
-      public PsiSubstitutor getSubstitutor() {
-        PsiSubstitutor result = PsiSubstitutor.EMPTY;
-        PsiType[] typeArgs = getParameters();
-        if (myListClass != null && myListClass.getTypeParameters().length == 1 && typeArgs.length == 1) {
-          result = result.put(myListClass.getTypeParameters()[0], typeArgs[0]);
-        }
-        return result;
-      }
-
-      public boolean isPackagePrefixPackageReference() {
-        return false;
-      }
-
-      public boolean isAccessible() {
-        return true;
-      }
-
-      public boolean isStaticsScopeCorrect() {
-        return true;
-      }
-
-      public PsiElement getCurrentFileResolveScope() {
-        return null;
-      }
-
-      public boolean isValidResult() {
-        return isStaticsScopeCorrect() && isAccessible();
-      }
-    };
-  }
-
-  @NotNull
-  public PsiClassType rawType() {
-    return myFacade.getElementFactory().createTypeByFQClassName(JAVA_UTIL_LIST, myScope);
-  }
-
-  public String getPresentableText() {
-    return "List";
-  }
-
-  @Nullable
-  public String getCanonicalText() {
-    PsiClass resolved = resolve();
-    if (resolved == null) return null;
-    return resolved.getQualifiedName();
+    return new PsiType[]{getLeastUpperBound(myComponentTypes)};
   }
 
   public String getInternalCanonicalText() {
@@ -132,9 +56,7 @@ public class GrTupleType extends PsiClassType {
     builder.append("[");
     for (int i = 0; i < myComponentTypes.length; i++) {
       if (i > 0) builder.append(", ");
-      PsiType type = myComponentTypes[i];
-      @NonNls String componentText = type == null ? "java.lang.Object" : type.getInternalCanonicalText();
-      builder.append(componentText);
+      builder.append(getInternalCanonicalText(myComponentTypes[i]));
     }
     builder.append("]");
     return builder.toString();
@@ -147,23 +69,8 @@ public class GrTupleType extends PsiClassType {
     return true;
   }
 
-  public boolean equalsToText(@NonNls String text) {
-    return text.equals(JAVA_UTIL_LIST);
-  }
-
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
-    return myScope;
-  }
-
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
-  }
-
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    GrTupleType copy = new GrTupleType(myComponentTypes, myFacade, myScope,languageLevel);
-    return copy;
+    return new GrTupleType(myComponentTypes, myFacade, myScope,languageLevel);
   }
 
   public boolean equals(Object obj) {
@@ -197,7 +104,4 @@ public class GrTupleType extends PsiClassType {
     return myComponentTypes;
   }
 
-  public GlobalSearchScope getScope() {
-    return myScope;
-  }
 }

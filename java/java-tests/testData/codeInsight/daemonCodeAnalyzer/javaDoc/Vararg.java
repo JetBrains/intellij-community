@@ -1,7 +1,7 @@
 public class Test {
    /**
      * @see Test#test(String, int...)
-     * @see <error>Test#test(String, long...)</error>
+     * @see Test#<error>test(String, long...)</error>
    **/
     void foo() {}
 

@@ -1,3 +1,41 @@
+== version 1.3.3 ==
+
++ Changes made in Subversion since version 1.6.6 implemented, 
+  all Subversion 1.6.11 features are supported.
+  
++ HTTP Negotiate authentication improvements.
++ Support of MSCAPI SSL certificates added.
++ SQLJet library upgraded to version 1.0.2
++ File externals support improved
+    
++ Other bugfixes
+
+== version 1.3.2 ==
+
++ Changes made in Subversion since version 1.6.5 implemented, 
+  all Subversion 1.6.6 features are supported.
+   
+   * Negotiate authorization mechanism was not used when multiple authorization 
+     schemes were offered to client by server. 
+   * SQLJet library upgraded to version 1.0.1.
+   * JNA library upgraded to version 3.2.3.
+      
++ Bugfixes and performance improvements.
+
+== version 1.3.1 ==
+
++ Changes made in Subversion since version 1.6.2 implemented, 
+  all Subversion 1.6.5 features are supported.
+   
+   * Representation cache DB support, using SQLJet (http://sqljet.com) library.
+   * Added implementations for couple of missing JavaHL methods.
+   * Fixed 'svn: Checksum mismatch while reading representation' exception on
+     reading vdelta from local repositories.
+   * Several dump and load operation issues fixed.
+   * JNA library upgraded to version 3.1.0.
+      
++ Other bugfixes and performance improvements.
+
 == version 1.3.0
 
 + Changes made in Subversion since version 1.5.6 implemented, 

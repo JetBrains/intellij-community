@@ -403,7 +403,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 //    if (myInnerClass.hasModifierProperty(PsiModifier.)) {
     myOuterClass.accept(new Visitor());
 
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   private static boolean isInPackage(final PsiFile containingFile, PsiPackage aPackage) {

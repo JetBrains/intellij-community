@@ -29,6 +29,7 @@ public class MavenActionGroup extends DefaultActionGroup {
   }
 
   protected boolean isAvailable(AnActionEvent e) {
-    return !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
+    return MavenActionUtil.hasProject(e.getDataContext())
+           && !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
   }
 }

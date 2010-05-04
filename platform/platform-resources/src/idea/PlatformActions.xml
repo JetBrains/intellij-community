@@ -103,6 +103,7 @@
       <action id="SwitchDown" class="com.intellij.ui.switcher.SwitchAction$Down"/>
       <action id="SwitchLeft" class="com.intellij.ui.switcher.SwitchAction$Left"/>
       <action id="SwitchRight" class="com.intellij.ui.switcher.SwitchAction$Right"/>
+      <action id="SwitchApply" class="com.intellij.ui.switcher.ApplySwitchAction"/>
     </group>
 
     <group id="MainMenu">
@@ -401,6 +402,12 @@
     <group id="MaintenanceGroup">
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
+    </group>
+
+    <action id="Console.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" text="Execute Current Statement"/>
+    <group id="Console.HistoryActions">
+      <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction" text="Previous"/>
+      <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction" text="Next"/>
     </group>
 
     <group id="Internal" text="Internal Actions" internal="true" popup="true">

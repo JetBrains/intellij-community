@@ -4,22 +4,6 @@
       <keyboard-shortcut first-keystroke="meta P"/>
     </action>
 
-    <action id="SwitchUp">
-      <keyboard-shortcut first-keystroke="control alt UP"/>
-    </action>
-
-    <action id="SwitchDown">
-      <keyboard-shortcut first-keystroke="control alt DOWN"/>
-    </action>
-
-    <action id="SwitchLeft">
-      <keyboard-shortcut first-keystroke="control alt LEFT"/>
-    </action>
-
-    <action id="SwitchRight">
-      <keyboard-shortcut first-keystroke="control alt RIGHT"/>
-    </action>
-
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="alt TAB"/>
     </action>

@@ -63,6 +63,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (UIUtil.isFullRowSelectionLAF()) {
         setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
+    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof UIUtil.MacTreeUI) {
+      setPaintFocusBorder(false);
+      //setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+    }
     else {
       if (selected) {
         setPaintFocusBorder(true);
@@ -91,6 +95,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
+    else if (UIUtil.isUnderAquaLookAndFeel() && tree.getUI() instanceof UIUtil.MacTreeUI) {
+      super.setOpaque(false);  // avoid erasing Nimbus focus frame
+      super.setIconOpaque(false);
+    }
     else {
       super.setOpaque(myOpaque || selected && hasFocus || selected && tree.hasFocus()); // draw selection background even for non-opaque tree
     }
@@ -107,7 +115,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     myOpaque = isOpaque;
     super.setOpaque(isOpaque);
   }
-
+  
   /**
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.

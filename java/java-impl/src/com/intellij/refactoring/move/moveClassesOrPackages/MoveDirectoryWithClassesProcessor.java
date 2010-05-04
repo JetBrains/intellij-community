@@ -146,7 +146,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         conflicts.putValue(psiFile, e.getMessage());
       }
     }
-    return showConflicts(conflicts);
+    return showConflicts(conflicts, refUsages.get());
   }
 
   @Override

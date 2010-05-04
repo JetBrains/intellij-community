@@ -341,4 +341,10 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   public void putInfo(Map<String, String> info) {
     info.put("methodName", getName());
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -58,8 +59,8 @@ public class HoverHyperlinkLabel extends JLabel {
     myOriginalText = text;
   }
 
-  @NonNls private String underlineTextInHtml(final String text) {
-    return "<html><u>" + text + "</u></html>";
+  @NonNls private static String underlineTextInHtml(final String text) {
+    return "<html><u>" + StringUtil.escapeXml(text) + "</u></html>";
   }
 
   public String getOriginalText() {

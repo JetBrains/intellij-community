@@ -47,8 +47,17 @@
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.ui.switcher.QuickAccessSettings</implementation-class>
+    </component>
   </application-components>
   <project-components>
+    <component>
+      <implementation-class>com.intellij.ui.switcher.SwitchManager</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
+    </component>
     <component>
       <interface-class>com.intellij.execution.ui.RunnerLayoutUi$Factory</interface-class>
       <implementation-class>com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl</implementation-class>
@@ -57,9 +66,6 @@
     <component>
       <implementation-class>com.intellij.openapi.actionSystem.impl.ActionPreloader</implementation-class>
       <skipForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ui.switcher.SwitchManager</implementation-class>
     </component>
   </project-components>
 </components>

@@ -56,7 +56,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
     if (result == null) {
       File parentIoFile = MavenArtifactUtil.getArtifactFile(generalSettings.getEffectiveLocalRepository(),
                                                             parentDesc.getParentId(), "pom");
-      parentFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentIoFile);
+      parentFile = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
       if (parentFile != null) {
         result = processRepositoryParent(parentFile);
       }

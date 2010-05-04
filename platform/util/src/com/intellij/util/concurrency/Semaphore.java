@@ -47,7 +47,11 @@ public class Semaphore {
 
   private final Sync sync = new Sync();
 
-  public boolean up() {
+  public void up() {
+    tryUp();
+  }
+
+  public boolean tryUp() {
     return sync.releaseShared(1);
   }
 

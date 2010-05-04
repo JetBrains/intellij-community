@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -59,10 +60,17 @@ public class PsiImplUtil {
   @NotNull
   public static PsiMethod[] getConstructors(@NotNull PsiClass aClass) {
     final List<PsiMethod> constructorsList = new SmartList<PsiMethod>();
+
     final PsiMethod[] methods = aClass.getMethods();
     for (final PsiMethod method : methods) {
       if (method.isConstructor()) constructorsList.add(method);
     }
+
+    final List<PsiMethod> augments = PsiAugmentProvider.collectAugments(aClass, PsiMethod.class);
+    for (final PsiMethod method : augments) {
+      if (method.isConstructor()) constructorsList.add(method);
+    }
+
     return constructorsList.toArray(new PsiMethod[constructorsList.size()]);
   }
 

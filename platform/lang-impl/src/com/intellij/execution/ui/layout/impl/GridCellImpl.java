@@ -47,6 +47,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Set;
 
 public class GridCellImpl implements GridCell, Disposable {
@@ -248,6 +249,8 @@ public class GridCellImpl implements GridCell, Disposable {
   }
 
   public java.util.List<SwitchTarget> getTargets(boolean onlyVisible) {
+    if (myTabs.getPresentation().isHideTabs()) return new ArrayList<SwitchTarget>();
+
     return myTabs.getTargets(onlyVisible, false);
   }
 

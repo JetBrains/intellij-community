@@ -80,6 +80,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
     setCellRenderer(new NodeRenderer());
   }
 
+  @Override
+  public void setUI(final TreeUI ui) {
+    TreeUI actualUI = ui;
+    if (SystemInfo.isMac && !isCustomUI() && UIUtil.isUnderAquaLookAndFeel() && !(ui instanceof UIUtil.MacTreeUI)) {
+      actualUI = new UIUtil.MacTreeUI();
+    }
+
+    super.setUI(actualUI);
+  }
+
+  protected boolean isCustomUI() {
+    return false;
+  }
+
   public String getEmptyText() {
     return myEmptyTextHelper.getEmptyText();
   }
@@ -166,7 +180,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString());
+        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(true);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
       }
@@ -434,7 +448,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
             TreePath[] selectionPaths = getSelectionModel().getSelectionPaths();
             if (selectionPaths != null) {
               for (TreePath selectionPath : selectionPaths) {
-                if (selectionPath == treepath) return;
+                if (selectionPath != null && selectionPath.equals(treepath)) return;
               }
             }
           }

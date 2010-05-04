@@ -66,6 +66,8 @@ class GitTreeController implements ManageGitTreeView {
   private Alarm myAlarm;
   private Portion myFiltered;
 
+  private SHAHash myJumpTarget;
+
   private final SLRUCache<SHAHash, CommittedChangeList> myListsCache = new SLRUCache<SHAHash, CommittedChangeList>(128, 64) {
     @NotNull
     @Override
@@ -78,6 +80,7 @@ class GitTreeController implements ManageGitTreeView {
       }
     }
   };
+  private Runnable myRefresher;
 
   GitTreeController(final Project project, final VirtualFile root, final GitTreeViewI treeView) {
     myProject = project;
@@ -92,19 +95,20 @@ class GitTreeController implements ManageGitTreeView {
     myBranches = new AtomicReference<List<String>>(Collections.<String>emptyList());
     myUsers = new AtomicReference<List<String>>(Collections.<String>emptyList());
 
-    // todo !!!!! dispose
     myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, project);
-    myFilterRequestsMerger = new RequestsMerger(new Runnable() {
+    myRefresher = new Runnable() {
       public void run() {
         try {
           if (myFilterHolder.isDirty()) {
+            final SHAHash target = myJumpTarget;
+            myJumpTarget = null;
             final Portion filtered = loadPortion(myFilterHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(), null,
                                                  myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
             if (filtered == null) return;
 
             final List<GitCommit> commitList = filtered.getXFrom(0, PageSizes.VISIBLE_PAGE_SIZE);
             myFiltered = filtered;
-            myTreeView.refreshView(commitList, new TravelTicket(filtered.isStartFound(), filtered.getLast().getDate()));
+            myTreeView.refreshView(commitList, new TravelTicket(filtered.isStartFound(), filtered.getLast().getDate()), target);
 
             myFilterHolder.setDirty(false);
           }
@@ -121,7 +125,8 @@ class GitTreeController implements ManageGitTreeView {
           myProject.getMessageBus().syncPublisher(GitProjectLogManager.CHECK_CURRENT_BRANCH).consume(myRoot);
         }
       }
-    }, new Consumer<Runnable>() {
+    };
+    myFilterRequestsMerger = new RequestsMerger(myRefresher, new Consumer<Runnable>() {
       public void consume(Runnable runnable) {
         myTreeView.refreshStarted();
         myAlarm.addRequest(runnable, 50);
@@ -165,7 +170,7 @@ class GitTreeController implements ManageGitTreeView {
 
   // !!!! after point is included! (should be)
   @Nullable
-  private Portion loadPortion(final List<String> startingPoints, final Date beforePoint, final Date afterPoint,
+  private Portion loadPortion(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
                               final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) {
     try {
       final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
@@ -184,6 +189,29 @@ class GitTreeController implements ManageGitTreeView {
       myTreeView.acceptError(e.getMessage());
       return null;
     }
+  }
+
+  private List<Pair<SHAHash, Date>> loadLine(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
+                              final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) {
+    final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
+    if (beforePoint != null) {
+      filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
+    }
+    if (afterPoint != null) {
+      filters.add(new ChangesFilter.AfterDate(afterPoint));
+    }
+
+    try {
+      return myAccess.loadCommitHashes(startingPoints, Collections.<String>emptyList(), filters, maxCnt);
+    }
+    catch (VcsException e) {
+      myTreeView.acceptError(e.getMessage());
+      return null;
+    }
+  }
+
+  public SHAHash commitExists(String reference) {
+    return GitChangeUtils.commitExists(myProject, myRoot, reference);
   }
 
   private String getStatusMessage() {
@@ -270,6 +298,47 @@ class GitTreeController implements ManageGitTreeView {
   public void previous(final TravelTicket ticket) {
     myFilterHolder.popContinuationPoint();
     myFilterRequestsMerger.request();
+  }
+
+  public void navigateTo(@NotNull String reference) {
+    SHAHash hash = GitChangeUtils.commitExists(myProject, myRoot, reference);
+    if (hash == null) {
+      hash = GitChangeUtils.commitExistsByComment(myProject, myRoot, reference);
+    }
+    if (hash == null) {
+      ChangesViewBalloonProblemNotifier.showMe(myProject, "Nothing found for: \"" + reference + "\"", MessageType.WARNING);
+    } else {
+      final SHAHash finalHash = hash;
+      myAlarm.addRequest(new Runnable() {
+        public void run() {
+          // start from beginning
+          final List<Date> wayList = new LinkedList<Date>();
+
+          while (true) {
+            final Date startFrom = wayList.isEmpty() ? null : wayList.get(wayList.size() - 1);
+            final List<Pair<SHAHash, Date>> pairs =
+              loadLine(myFilterHolder.getStartingPoints(), startFrom, null, myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
+            if (pairs.isEmpty()) return;
+            for (Pair<SHAHash, Date> pair : pairs) {
+              if (finalHash.equals(pair.getFirst())) {
+                // select this page
+                while (myFilterHolder.getCurrentPoint() != null) {
+                  myFilterHolder.popContinuationPoint();
+                }
+                for (Date date : wayList) {
+                  myFilterHolder.addContinuationPoint(date);
+                }
+                myJumpTarget = finalHash;
+                myFilterHolder.setDirty(true);
+                myRefresher.run();
+                return;
+              }
+            }
+            wayList.add(pairs.get(pairs.size() - 1).getSecond());
+          }
+        }
+      }, 10);
+    }
   }
 
   public void refresh() {
@@ -507,7 +576,7 @@ class GitTreeController implements ManageGitTreeView {
       requestRefresh();
     }
 
-    public List<String> getStartingPoints() {
+    public Collection<String> getStartingPoints() {
       return myState.getStartingPoints();
     }
 
@@ -522,7 +591,7 @@ class GitTreeController implements ManageGitTreeView {
 
   private static class MyFiltersStateHolder implements GitTreeFiltering {
     private final Object myLock;
-    private final List<String> myStartingPoints;
+    private final Set<String> myStartingPoints;
     private boolean myDirty;
 
     private final List<Date> myContinuationPoints;
@@ -533,8 +602,8 @@ class GitTreeController implements ManageGitTreeView {
 
     private MyFiltersStateHolder() {
       myLock = new Object();
-      myStartingPoints = new LinkedList<String>();
-      myFilters = new LinkedList<ChangesFilter.Filter>();
+      myStartingPoints = new HashSet<String>();
+      myFilters = new HashSet<ChangesFilter.Filter>();
       myContinuationPoints = new LinkedList<Date>();
     }
 
@@ -621,7 +690,7 @@ class GitTreeController implements ManageGitTreeView {
     }
 
     @Nullable
-    public List<String> getStartingPoints() {
+    public Collection<String> getStartingPoints() {
       synchronized (myLock) {
         return myStartingPoints;
       }

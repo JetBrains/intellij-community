@@ -399,9 +399,9 @@ public class JDParser {
     },
     new TagParser() {
       boolean parse(String tag, String line, JDComment c) {
-        boolean isMyTag = c instanceof JDMethodComment && PARAM_TAG.equals(tag);
+        boolean isMyTag = c instanceof JDParamListOwnerComment && PARAM_TAG.equals(tag);
         if (isMyTag) {
-          JDMethodComment mc = (JDMethodComment)c;
+          JDParamListOwnerComment mc = (JDParamListOwnerComment)c;
           int idx;
           for (idx = 0; idx < line.length(); idx++) {
             char ch = line.charAt(idx);

@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.ErrorUtil;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -83,26 +81,7 @@ class IndexingMethodConversionPredicate implements PsiElementPredicate {
   }
 
   private static boolean isMap(PsiType type) {
-    if (type == null) {
-      return false;
-    }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClass referentClass = ((PsiClassType) type).resolve();
-    return isSubclass(referentClass, "java.util.Map");
-  }
-
-  public static boolean isSubclass(@Nullable PsiClass aClass,
-                                   @NonNls String ancestorName) {
-    if (aClass == null) {
-      return false;
-    }
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(aClass.getProject());
-    final Project project = facade.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass ancestorClass = facade.findClass(ancestorName, scope);
-    return InheritanceUtil.isCorrectDescendant(aClass, ancestorClass, true);
+    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
   }
 
 }

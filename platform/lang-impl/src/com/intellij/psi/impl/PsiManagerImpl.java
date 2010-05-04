@@ -450,7 +450,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     fireEvent(event);
   }
 
-  public void beforeChildReplacement(PsiTreeChangeEventImpl event) {
+  public void beforeChildReplacement(@NotNull PsiTreeChangeEventImpl event) {
     event.setCode(BEFORE_CHILD_REPLACEMENT);
     if (LOG.isDebugEnabled()) {
       LOG.debug(

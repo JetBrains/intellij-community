@@ -146,7 +146,9 @@ public class TestDataReferenceCollector {
         }
       }
     }
-    myLogMessages.add("Failed to evaluate " + expression.getText());
+    if (expression != null) {
+      myLogMessages.add("Failed to evaluate " + expression.getText());
+    }
     return null;
   }
 

@@ -17,6 +17,7 @@ package git4idea.history.browser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,10 +28,7 @@ import git4idea.commands.GitFileUtils;
 import git4idea.history.GitHistoryUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class LowLevelAccessImpl implements LowLevelAccess {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.LowLevelAccessImpl");
@@ -46,7 +44,35 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     return null;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
-  public void loadCommits(final @NotNull List<String> startingPoints, @NotNull final List<String> endPoints,
+  public List<Pair<SHAHash,Date>> loadCommitHashes(final @NotNull Collection<String> startingPoints,
+                                                   @NotNull final Collection<String> endPoints,
+                                                   @NotNull final Collection<ChangesFilter.Filter> filters,
+                                                   int useMaxCnt) throws VcsException {
+    final List<String> parameters = new LinkedList<String>();
+    if (useMaxCnt > 0) {
+      parameters.add("--max-count=" + useMaxCnt);
+    }
+
+    for (ChangesFilter.Filter filter : filters) {
+      filter.applyToCommandLine(parameters);
+    }
+
+    if (! startingPoints.isEmpty()) {
+      for (String startingPoint : startingPoints) {
+        parameters.add(startingPoint);
+      }
+    } else {
+      parameters.add("--all");
+    }
+
+    for (String endPoint : endPoints) {
+      parameters.add("^" + endPoint);
+    }
+
+    return GitHistoryUtils.onlyHashesHistory(myProject, new FilePathImpl(myRoot), parameters.toArray(new String[parameters.size()]));
+  }
+
+  public void loadCommits(final @NotNull Collection<String> startingPoints, @NotNull final Collection<String> endPoints,
                           @NotNull final Collection<ChangesFilter.Filter> filters,
                           @NotNull final Consumer<GitCommit> consumer, final Collection<String> branches, int useMaxCnt)
     throws VcsException {

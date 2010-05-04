@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     else{
       if ((options & SHOW_NAME) != 0){
         String name = variable.getName();
-        if (name != null){
+        if (StringUtil.isNotEmpty(name)){
           appendSpaceIfNeeded(buffer);
           buffer.append(name);
         }
