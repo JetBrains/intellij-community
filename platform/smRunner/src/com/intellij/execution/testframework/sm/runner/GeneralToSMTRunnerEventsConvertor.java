@@ -175,17 +175,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   public void onUncapturedOutput(final String text, final Key outputType) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
-        //if we can locate test - we will send outout to it, otherwise to current test suite
-        final SMTestProxy currentProxy;
-        if (myRunningTestsFullNameToProxy.size() == 1) {
-          //current test
-          currentProxy = myRunningTestsFullNameToProxy.values().iterator().next();
-        } else {
-          //current suite
-          //
-          // ProcessHandler can fire output available event before processStarted event
-          currentProxy = mySuitesStack.isEmpty() ? myTestsRootNode : getCurrentSuite();
-        }
+        final SMTestProxy currentProxy = findCurrentTestOrSuite();
 
         if (ProcessOutputTypes.STDERR.equals(outputType)) {
           currentProxy.addStdErr(text);
@@ -194,6 +184,16 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         } else {
           currentProxy.addStdOutput(text, outputType);
         }
+      }
+    });
+  }
+
+  public void onError(@NotNull final String localizedMessage,
+                      @Nullable final String stackTrace) {
+    SMRunnerUtil.addToInvokeLater(new Runnable() {
+      public void run() {
+        final SMTestProxy currentProxy = findCurrentTestOrSuite();
+        currentProxy.addError(localizedMessage, stackTrace);
       }
     });
   }
@@ -454,5 +454,21 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         mySuitesStack.clear();
       }
     });
+  }
+
+
+  private SMTestProxy findCurrentTestOrSuite() {
+    //if we can locate test - we will send output to it, otherwise to current test suite
+    final SMTestProxy currentProxy;
+    if (myRunningTestsFullNameToProxy.size() == 1) {
+      //current test
+      currentProxy = myRunningTestsFullNameToProxy.values().iterator().next();
+    } else {
+      //current suite
+      //
+      // ProcessHandler can fire output available event before processStarted event
+      currentProxy = mySuitesStack.isEmpty() ? myTestsRootNode : getCurrentSuite();
+    }
+    return currentProxy;
   }
 }
