@@ -120,7 +120,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);
     Collection<PsiReference> refs;
 
-    // in case of injected file, use host file to highlight all occurences of the target in each injected file
+    // in case of injected file, use host file to highlight all occurrences of the target in each injected file
     PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
     if (handler != null) {

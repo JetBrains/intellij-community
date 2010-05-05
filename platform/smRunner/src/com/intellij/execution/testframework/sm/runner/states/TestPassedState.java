@@ -21,7 +21,7 @@ package com.intellij.execution.testframework.sm.runner.states;
 public class TestPassedState extends AbstractState {
   //This state is common for all instances and doesn't contains
   //instance-specific information
-  public static final TestPassedState INSTACE = new TestPassedState();
+  public static final TestPassedState INSTANCE = new TestPassedState();
 
   private TestPassedState() {
   }

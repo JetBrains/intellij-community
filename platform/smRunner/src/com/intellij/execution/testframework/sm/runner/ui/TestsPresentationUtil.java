@@ -34,6 +34,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcons.*;
+
 /**
  * @author Roman Chernyatchik
  */
@@ -201,29 +203,37 @@ public class TestsPresentationUtil {
 
   }
 
+  @Nullable
   private static Icon getIcon(final SMTestProxy testProxy,
                               final TestConsoleProperties consoleProperties) {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
+
+    final boolean hasErrors = testProxy.hasErrors();
+
     switch (magnitude) {
       case ERROR_INDEX:
-        return PoolOfTestIcons.ERROR_ICON;
+        return ERROR_ICON;
       case FAILED_INDEX:
-        return PoolOfTestIcons.FAILED_ICON;
+        return hasErrors ? FAILED_E_ICON : FAILED_ICON;
       case IGNORED_INDEX:
-        return PoolOfTestIcons.IGNORED_ICON;
+        return hasErrors ? IGNORED_E_ICON : IGNORED_ICON;
       case NOT_RUN_INDEX:
-        return PoolOfTestIcons.NOT_RAN;
+        return NOT_RAN;
       case COMPLETE_INDEX:
       case PASSED_INDEX:
-        return PoolOfTestIcons.PASSED_ICON;
+        return hasErrors ? PASSED_E_ICON : PASSED_ICON;
       case RUNNING_INDEX:
-        return !consoleProperties.isPaused()
-               ? TestsProgressAnimator.getCurrentFrame()
-               : TestsProgressAnimator.PAUSED_ICON;
+        if (consoleProperties.isPaused()) {
+          return hasErrors ? PAUSED_E_ICON : TestsProgressAnimator.PAUSED_ICON;
+        }
+        else {
+          final int frameIndex = TestsProgressAnimator.getCurrentFrameIndex();
+          return hasErrors ? FRAMES_E[frameIndex] : TestsProgressAnimator.FRAMES[frameIndex];
+        }
       case SKIPPED_INDEX:
-        return PoolOfTestIcons.SKIPPED_ICON;
+        return hasErrors ? SKIPPED_E_ICON : SKIPPED_ICON;
       case TERMINATED_INDEX:
-        return PoolOfTestIcons.TERMINATED_ICON;
+        return hasErrors ? TERMINATED_E_ICON : TERMINATED_ICON;
     }
     return null;
   }

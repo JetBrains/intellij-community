@@ -41,10 +41,6 @@ public class TreeElementWrapper extends CachingChildrenTreeNode<TreeElement>{
     }
   }
 
-  protected TreeElementWrapper createChildNode(final TreeElement child) {
-    return new TreeElementWrapper(getProject(), child, myTreeModel);
-  }
-
   protected void performTreeActions() {
     filterChildren(myTreeModel.getFilters());
     groupChildren(myTreeModel.getGroupers());

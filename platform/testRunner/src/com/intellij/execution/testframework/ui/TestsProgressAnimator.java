@@ -46,9 +46,12 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
       FRAMES[i] = TestsUIUtil.loadIcon("testInProgress" + (i + 1));
   }
 
+  public static int getCurrentFrameIndex() {
+    return (int) ((System.currentTimeMillis() % MOVIE_TIME) / FRAME_TIME);
+  }
+
   public static Icon getCurrentFrame() {
-    final int frameIndex = (int) ((System.currentTimeMillis() % MOVIE_TIME) / FRAME_TIME);
-    return FRAMES[frameIndex];
+    return FRAMES[getCurrentFrameIndex()];
   }
 
   /**

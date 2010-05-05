@@ -64,7 +64,8 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     for (ASTNode childNode = getNode().getFirstChildNode(); childNode != null; childNode = childNode.getTreeNext()) {
       if (FormatterUtil.containsWhiteSpacesOnly(childNode)) continue;
       if (shouldBuildBlockFor(childNode)) {
-        final TemplateLanguageBlock childBlock = myBlockFactory.createTemplateLanguageBlock(childNode, createChildWrap(childNode), null, mySettings);
+        final TemplateLanguageBlock childBlock = myBlockFactory
+          .createTemplateLanguageBlock(childNode, createChildWrap(childNode), createChildAlignment(childNode), null, mySettings);
         childBlock.setParent(this);
         tlChildren.add(childBlock);
       }
@@ -132,6 +133,10 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
 
   protected Wrap createChildWrap(ASTNode child) {
     return Wrap.createWrap(Wrap.NONE, false);
+  }
+
+  protected Alignment createChildAlignment(ASTNode child) {
+    return null;
   }
 }
 

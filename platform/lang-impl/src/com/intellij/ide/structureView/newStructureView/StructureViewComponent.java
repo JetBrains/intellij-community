@@ -734,6 +734,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return value == null ? this : value;
     }
 
+
+
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
       if (ourSettingsModificationCount != modificationCountForChildren) {
@@ -762,7 +764,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (getElementInfoProvider() != null) {
         return getElementInfoProvider().isAlwaysShowsPlus((StructureViewTreeElement)getValue());
       }
-      return getValue().getChildren().length > 0;
+      return true;
     }
 
     @Override
@@ -771,7 +773,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         return getElementInfoProvider().isAlwaysLeaf((StructureViewTreeElement)getValue());
       }
 
-      return getValue().getChildren().length == 0;
+      return false;
     }
 
     private StructureViewModel.ElementInfoProvider getElementInfoProvider() {
@@ -789,6 +791,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     protected TreeElementWrapper createChildNode(final TreeElement child) {
       return new StructureViewTreeElementWrapper(myProject, child, myTreeModel);
+    }
+
+    @Override
+    protected GroupWrapper createGroupWrapper(final Project project, Group group, final TreeModel treeModel) {
+      return new StructureViewGroup(project, group, treeModel);
     }
 
     public boolean equals(Object o) {
@@ -819,6 +826,28 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       final Object o = unwrapValue(getValue());
 
       return o != null ? o.hashCode() : 0;
+    }
+
+    private class StructureViewGroup extends GroupWrapper {
+      public StructureViewGroup(Project project, Group group, TreeModel treeModel) {
+        super(project, group, treeModel);
+      }
+
+      @Override
+      protected TreeElementWrapper createChildNode(TreeElement child) {
+        return new StructureViewTreeElementWrapper(getProject(), child, myTreeModel);
+      }
+
+
+      @Override
+      protected GroupWrapper createGroupWrapper(Project project, Group group, TreeModel treeModel) {
+        return new StructureViewGroup(project, group, treeModel);
+      }
+
+      @Override
+      public boolean isAlwaysShowPlus() {
+        return true;
+      }
     }
   }
 

@@ -43,7 +43,7 @@ public abstract class BaseColumn extends ColumnInfo<SMTestProxy, String> {
 
   @Override
   public void sort(@NotNull final List<SMTestProxy> testProxies) {
-    //Invariant: comparator should left Total(initally at row = 0) row as uppermost element!
+    //Invariant: comparator should left Total(initially at row = 0) row as uppermost element!
     StatisticsTableModel.applySortOperation(testProxies, oldSortFun);
   }
 }
