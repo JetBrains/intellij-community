@@ -567,7 +567,6 @@ public class ResolveImportUtil {
                                         final PsiFile containingFile, boolean fileOnly) {
     PsiDirectory dir = null;
     PsiElement ret = null;
-    ResolveProcessor processor = null;
     if (parent instanceof PyFile) {
       if (parent.getCopyableUserData(PyFile.KEY_IS_DIRECTORY) == Boolean.TRUE) {
         // the file was a fake __init__.py covering a reference to dir
@@ -586,13 +585,13 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for(PsiDirectory childDir: container.getDirectories()) {
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, processor, fileOnly);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, fileOnly);
         //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      final PsiElement result =  resolveInDirectory(referencedName, containingFile, dir, processor, fileOnly);
+      final PsiElement result =  resolveInDirectory(referencedName, containingFile, dir, fileOnly);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       return result;
     }
@@ -600,9 +599,8 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveInDirectory(
-    final String referencedName, final PsiFile containingFile, final PsiDirectory dir, ResolveProcessor processor, boolean isFileOnly
-  ) {
+  private static PsiElement resolveInDirectory(final String referencedName, final PsiFile containingFile,
+                                               final PsiDirectory dir, boolean isFileOnly) {
     if (referencedName == null) return null;
     final PsiFile file = dir.findFile(referencedName + PyNames.DOT_PY);
     // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
@@ -610,7 +608,9 @@ public class ResolveImportUtil {
       return file;
     }
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
-    if (subdir != null) return subdir;
+    if (subdir != null && subdir.findFile(PyNames.INIT_DOT_PY) != null) {
+      return subdir;
+    }
     else if (! isFileOnly) {
       // not a subdir, not a file; could be a name in parent/__init__.py
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
