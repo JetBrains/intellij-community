@@ -40,10 +40,9 @@ public class MatchingVisitor {
   private final PsiElementVisitor myXmlVisitor = new MyXmlVisitor();
   private final PsiElementVisitor myJavaVisitor = new MyJavaVisitor();
 
-  public static final String[] MODIFIERS = { PsiModifier.PUBLIC, PsiModifier.ABSTRACT, PsiModifier.FINAL, PsiModifier.STATIC,
-    PsiModifier.PRIVATE,PsiModifier.PROTECTED, PsiModifier.ABSTRACT,
-    PsiModifier.FINAL,PsiModifier.SYNCHRONIZED, PsiModifier.NATIVE,
-    PsiModifier.VOLATILE, PsiModifier.STRICTFP
+  public static final String[] MODIFIERS = {
+    PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC, PsiModifier.ABSTRACT, PsiModifier.FINAL,
+    PsiModifier.NATIVE, PsiModifier.SYNCHRONIZED, PsiModifier.STRICTFP, PsiModifier.TRANSIENT, PsiModifier.VOLATILE     
   };
   static { Arrays.sort(MODIFIERS); }
 
