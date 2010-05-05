@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.keymap.Keymap;
@@ -125,6 +126,9 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
   }
 
   private void applyModifiersFromRegistry() {
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.isUnitTestMode()) return;
+
     String text = getModifierRegistryValue();
     String[] vks = text.split(" ");
 
