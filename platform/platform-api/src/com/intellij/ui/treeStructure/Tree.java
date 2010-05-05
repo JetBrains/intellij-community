@@ -180,7 +180,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(true);
+        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
       }
