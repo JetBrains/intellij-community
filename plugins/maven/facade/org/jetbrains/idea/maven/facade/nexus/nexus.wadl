@@ -1,0 +1,51 @@
+<wa:application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:wa="http://research.sun.com/wadl/2006/10"
+             xmlns:html="http://www.w3.org/1999/xhtml"
+             xsi:schemaLocation="https://wadl.dev.java.net/wadl20061109.xsd nexus.xsd">
+    <wa:grammars>
+        <wa:include href="nexus.xsd"/>
+    </wa:grammars>
+    <wa:resources base="http://repository.sonatype.org/service/local/">
+        <wa:resource path="repositories">
+            <wa:method name="GET" id="ListRepositories">
+                <wa:request/>
+                <wa:response>
+                    <wa:representation href="#RepoList"/>
+                </wa:response>
+            </wa:method>
+        </wa:resource>
+        <wa:resource path="data_index">
+            <wa:method name="GET" id="FindArtifacts">
+                <wa:request>
+                    <wa:param name="q" style="query" type="xsd:string"/>
+                    <wa:param name="g" style="query" type="xsd:string"/>
+                    <wa:param name="a" style="query" type="xsd:string"/>
+                    <wa:param name="v" style="query" type="xsd:string"/>
+                    <wa:param name="c" style="query" type="xsd:string"/>
+                </wa:request>
+                <wa:response>
+                    <wa:representation href="#ArtifactList"/>
+                </wa:response>
+            </wa:method>
+        </wa:resource>
+        <wa:resource path="data_index/{repository}">
+            <wa:param name="repository" style="template" type="xsd:string"/>
+            <wa:method name="GET" id="FindArtifactsIn">
+                <wa:request>
+                    <wa:param name="q" style="query" type="xsd:string"/>
+                    <wa:param name="g" style="query" type="xsd:string"/>
+                    <wa:param name="a" style="query" type="xsd:string"/>
+                    <wa:param name="v" style="query" type="xsd:string"/>
+                    <wa:param name="c" style="query" type="xsd:string"/>
+                </wa:request>
+                <wa:response>
+                    <wa:representation href="#ArtifactList"/>
+                </wa:response>
+            </wa:method>
+        </wa:resource>
+    </wa:resources>
+    <wa:representation mediaType="application/xml" element="repositories" id="RepoList" status="200"/>
+    <wa:representation mediaType="application/xml" element="repositoryMetaData" id="RepoMetaData" status="200"/>
+    <wa:representation mediaType="application/xml" element="search-results" id="ArtifactList" status="200"/>
+</wa:application>
