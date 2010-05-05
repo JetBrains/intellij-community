@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
 
 /**
  * @author yole
@@ -263,5 +261,28 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       document.insertString(tailOffset, IMPORT_KWD);
       editor.getCaretModel().moveToOffset(tailOffset + IMPORT_KWD.length());
     }
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    PyImportReferenceImpl that = (PyImportReferenceImpl)o;
+
+    if (!myElement.equals(that.myElement)) return false;
+    if (!myContext.equals(that.myContext)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + myElement.hashCode();
+    result = 31 * result + myContext.hashCode();
+    return result;
   }
 }
