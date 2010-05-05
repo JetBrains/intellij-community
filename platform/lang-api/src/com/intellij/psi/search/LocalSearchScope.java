@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -137,9 +138,12 @@ public class LocalSearchScope extends SearchScope {
     return ((GlobalSearchScope)scope2).intersectWith(this);
   }
 
+  @Nullable
   private static PsiElement intersectScopeElements(PsiElement element1, PsiElement element2) {
     if (PsiTreeUtil.isContextAncestor(element1, element2, false)) return element2;
     if (PsiTreeUtil.isContextAncestor(element2, element1, false)) return element1;
+    if (PsiTreeUtil.isAncestor(element1, element2, false)) return element2;
+    if (PsiTreeUtil.isAncestor(element2, element1, false)) return element1;
     return null;
   }
 
