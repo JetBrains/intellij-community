@@ -39,7 +39,7 @@ public class TeamCityLogger {
 
   public static void info(String message) {
     if (isUnderTC) {
-      tcLog(message, "INFO");
+      tcLog(message, null);
     }
     else {
       LOG.info(message);
@@ -66,7 +66,8 @@ public class TeamCityLogger {
 
   private static void tcLog(String message, String level) {
     try {
-      FileUtil.appendToFile(reportFile(), level + ": " + message + "\n");
+      if (level != null) message = level + ": " + message;
+      FileUtil.appendToFile(reportFile(), message + "\n");
     }
     catch (IOException e) {
       LOG.error(e);
