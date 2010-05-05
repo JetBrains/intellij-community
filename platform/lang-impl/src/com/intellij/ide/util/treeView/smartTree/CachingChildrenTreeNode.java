@@ -153,12 +153,16 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       GroupWrapper groupWrapper = groupNodes.get(group);
       Collection<TreeElement> children = group.getChildren();
       for (TreeElement node : children) {
-        CachingChildrenTreeNode child = new TreeElementWrapper(getProject(), node, myTreeModel);
+        CachingChildrenTreeNode child = createChildNode(node);
         groupWrapper.addSubElement(child);
         AbstractTreeNode abstractTreeNode = ungroupedObjects.get(node);
         abstractTreeNode.setParent(groupWrapper);
       }
     }
+  }
+
+  protected TreeElementWrapper createChildNode(final TreeElement child) {
+    return new TreeElementWrapper(getProject(), child, myTreeModel);
   }
 
   private static Map<TreeElement, AbstractTreeNode> collectValues(List<AbstractTreeNode<TreeElement>> ungrouped) {
@@ -172,9 +176,13 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   private Map<Group, GroupWrapper> createGroupNodes(Collection<Group> groups) {
     Map<Group, GroupWrapper> result = new THashMap<Group, GroupWrapper>();
     for (Group group : groups) {
-      result.put(group, new GroupWrapper(getProject(), group, myTreeModel));
+      result.put(group, createGroupWrapper(getProject(), group, myTreeModel));
     }
     return result;
+  }
+
+  protected GroupWrapper createGroupWrapper(final Project project, Group group, final TreeModel treeModel) {
+    return new GroupWrapper(project, group, treeModel);
   }
 
 
