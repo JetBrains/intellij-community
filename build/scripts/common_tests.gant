@@ -8,6 +8,7 @@ target(compile: "Compile project") {
   loadProject()
   project["javac"] = "$jdk/bin/javac"
   project.targetFolder = out
+  ant.delete(dir: "$home/reports")
   project.clean()
   project.makeAll()
 }

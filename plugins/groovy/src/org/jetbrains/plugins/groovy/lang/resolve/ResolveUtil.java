@@ -37,13 +37,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -418,5 +422,43 @@ public class ResolveUtil {
     }
 
     return true;
+  }
+
+  public static GroovyResolveResult[] getMethodVariants(GroovyPsiElement place) {
+    final PsiElement parent = place.getParent();
+    GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
+    if (parent instanceof GrCallExpression) {
+      variants = ((GrCallExpression) parent).getMethodVariants();
+    } else if (parent instanceof GrConstructorInvocation) {
+      final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
+      if (clazz != null) {
+        final PsiMethod[] constructors = clazz.getConstructors();
+        variants = getConstructorResolveResult(constructors, place);
+      }
+    } else if (parent instanceof GrAnonymousClassDefinition) {
+      final PsiElement element = ((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy().resolve();
+      if (element instanceof PsiClass) {
+        final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
+        variants = getConstructorResolveResult(constructors, place);
+      }
+    }
+    else if (parent instanceof GrApplicationStatement) {
+      final GrExpression funExpr = ((GrApplicationStatement) parent).getFunExpression();
+      if (funExpr instanceof GrReferenceExpression) {
+        variants = ((GrReferenceExpression) funExpr).getSameNameVariants();
+      }
+    } else if (place instanceof GrReferenceExpression) {
+      variants = ((GrReferenceExpression) place).getSameNameVariants();
+    }
+    return variants;
+  }
+
+  public static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
+    GroovyResolveResult[] variants = new GroovyResolveResult[constructors.length];
+    for (int i = 0; i < constructors.length; i++) {
+      final boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(constructors[i], place, null);
+      variants[i] = new GroovyResolveResultImpl(constructors[i], isAccessible);
+    }
+    return variants;
   }
 }

@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ven
@@ -53,7 +54,11 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
 
   @Nullable
   public PsiType getTypeGroovy() {
-    return GrVariableEnhancer.getEnhancedType(this);
+    PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(this);
+    if (typeGroovy instanceof PsiIntersectionType) {
+      return ((PsiIntersectionType)typeGroovy).getRepresentative();
+    }
+    return typeGroovy;
   }
 
   @Nullable
@@ -83,11 +88,7 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
   @NotNull
   @Override
   public PsiType getType() {
-    PsiType typeGroovy = getTypeGroovy();
-    if (typeGroovy instanceof PsiIntersectionType) {
-      typeGroovy=((PsiIntersectionType)typeGroovy).getRepresentative();
-    }
-    return typeGroovy != null ? typeGroovy : super.getType();
+    return TypesUtil.getJavaLangObject(this);
   }
 
   @Override

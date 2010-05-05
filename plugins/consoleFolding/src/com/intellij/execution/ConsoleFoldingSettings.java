@@ -25,14 +25,12 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
   }
 
   public boolean shouldFoldLine(String line) {
-    positive:
-    for (String pattern : myPositivePatterns) {
+    return containsAny(line, myPositivePatterns) && !containsAny(line, myNegativePatterns);
+  }
+
+  private static boolean containsAny(String line, List<String> patterns) {
+    for (String pattern : patterns) {
       if (line.contains(pattern)) {
-        for (String negativePattern : myNegativePatterns) {
-          if (line.contains(negativePattern)) {
-            continue positive;
-          }
-        }
         return true;
       }
     }
