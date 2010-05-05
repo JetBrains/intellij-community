@@ -22,7 +22,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.GlassPanel;
@@ -321,11 +323,16 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       myConfigurable2LoadCallback.put(configurable, result);
       myLoadingDecorator.startLoading(false);
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      final Application app = ApplicationManager.getApplication();
+      app.executeOnPooledThread(new Runnable() {
         public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          app.runReadAction(new Runnable() {
             public void run() {
-              initConfigurable(configurable).notifyWhenDone(result);
+              ((ApplicationEx)app).runEdtSafeAction(new Runnable() {
+                public void run() {
+                  initConfigurable(configurable).notifyWhenDone(result);
+                }
+              });
             }
           });
         }

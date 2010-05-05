@@ -141,6 +141,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private Boolean myActive;
 
+  private static ThreadLocal<Integer> ourEdtSafe = new ThreadLocal<Integer>();
+
   protected void boostrapPicoContainer() {
     super.boostrapPicoContainer();
     getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
@@ -857,10 +859,30 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
     if (ourDispatchThread == currentThread) return;
 
+    Integer safeCounter = ourEdtSafe.get();
+    if (safeCounter != null && safeCounter < 1) return;
+
     LOG.error(message,
               "Current thread: " + describe(Thread.currentThread()),
               "Our dispatch thread:" + describe(ourDispatchThread),
               "SystemEventQueueThread: " + describe(getEventQueueThread()));
+  }
+
+  public void runEdtSafeAction(@NotNull Runnable runnable) {
+    Integer value = ourEdtSafe.get();
+    if (value == null) {
+      value = Integer.valueOf(0);
+    }
+
+    ourEdtSafe.set(value + 1);
+
+    try {
+      runnable.run();
+    }
+    finally {
+      int newValue = ourEdtSafe.get() - 1;
+      ourEdtSafe.set(newValue >= 1 ? newValue : null);
+    }
   }
 
   public void assertIsDispatchThread(@Nullable final JComponent component) {
