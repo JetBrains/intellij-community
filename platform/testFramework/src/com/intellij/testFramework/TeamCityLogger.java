@@ -29,7 +29,7 @@ import java.io.IOException;
 public class TeamCityLogger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.TeamCityLogger");
 
-  private final static boolean isUnderTC = System.getProperty("teamcity.build.tempDir") != null;
+  private final static boolean isUnderTC = System.getProperty("bootstrap.testcases") != null;
 
   private TeamCityLogger() {}
 
