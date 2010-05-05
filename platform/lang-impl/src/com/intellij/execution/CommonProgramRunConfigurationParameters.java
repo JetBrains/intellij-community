@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,15 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
 
-public interface RunJavaConfiguration {
-  int VM_PARAMETERS_PROPERTY = 0;
-  int PROGRAM_PARAMETERS_PROPERTY = 1;
-  int WORKING_DIRECTORY_PROPERTY = 2;
-
-  void setProperty(int property, String value);
-  String getProperty(int property);
-
+public interface CommonProgramRunConfigurationParameters {
   Project getProject();
 
-  boolean isAlternativeJrePathEnabled();
+  void setProgramParameters(String value);
 
-  void setAlternativeJrePathEnabled(boolean enabled);
+  String getProgramParameters();
 
-  String getAlternativeJrePath();
+  void setWorkingDirectory(String value);
 
-  void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH);
-
-  @Nullable
-  String getRunClass();
-
-  @Nullable
-  String getPackage();
-
+  String getWorkingDirectory();
 }

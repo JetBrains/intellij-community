@@ -23,7 +23,6 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,20 +30,14 @@ import java.util.Map;
 /**
  * @author Gregory.Shrago
  */
-public class SimpleJavaParameters {
+public class SimpleJavaParameters extends SimpleProgramParameters {
   private Sdk myJdk;
   private final PathsList myClassPath = new PathsList();
   private String myMainClass;
   private final ParametersList myVmParameters = new ParametersList();
-  private final ParametersList myProgramParameters = new ParametersList();
-  private String myWorkingDirectory;
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private Map<String, String> myEnv;
   private boolean myPassParentEnvs = true;
-
-  public String getWorkingDirectory() {
-    return myWorkingDirectory;
-  }
 
   public String getMainClass() {
     return myMainClass;
@@ -68,21 +61,8 @@ public class SimpleJavaParameters {
     myMainClass = mainClass;
   }
 
-  public void setWorkingDirectory(final File path) {
-    setWorkingDirectory(path.getPath());
-  }
-
-  public void setWorkingDirectory(@NonNls final String path) {
-    myWorkingDirectory = path;
-  }
-
-
   public ParametersList getVMParametersList() {
     return myVmParameters;
-  }
-
-  public ParametersList getProgramParametersList() {
-    return myProgramParameters;
   }
 
   public Charset getCharset() {

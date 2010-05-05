@@ -15,17 +15,17 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
 
 import java.awt.*;
 
-public class CommonJavaParameters extends CommonProgramParameters {
+public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
 
-  public CommonJavaParameters() {
+  public CommonJavaParametersPanel() {
     super();
   }
 
@@ -42,12 +42,6 @@ public class CommonJavaParameters extends CommonProgramParameters {
     super.addComponents(c);
   }
 
-  public void applyTo(RunJavaConfiguration configuration) {
-    configuration.setProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY, getVMParameters());
-    configuration.setProperty(RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY, getProgramParameters());
-    configuration.setProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY, getWorkingDirectory());
-  }
-
   public void setVMParameters(String text) {
     myVMParameters.getComponent().setText(text);
   }
@@ -56,9 +50,13 @@ public class CommonJavaParameters extends CommonProgramParameters {
     return myVMParameters.getComponent().getText();
   }
 
-  public void reset(final RunJavaConfiguration configuration) {
-    setVMParameters(configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY));
-    setProgramParameters(configuration.getProperty(RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY));
-    setWorkingDirectory(configuration.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY));
+  public void applyTo(CommonJavaRunConfigurationParameters configuration) {
+    super.applyTo(configuration);
+    configuration.setVMParameters(getVMParameters());
+  }
+
+  public void reset(CommonJavaRunConfigurationParameters configuration) {
+    super.reset(configuration);
+    setVMParameters(configuration.getVMParameters());
   }
 }

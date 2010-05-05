@@ -28,7 +28,7 @@ import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
-import com.intellij.execution.ui.CommonJavaParameters;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -98,7 +98,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JButton removeListener;
   private LabeledComponent<JComboBox> annotationType;
   private JCheckBox myUseDefaultReportersCheckBox;
-  private final CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
+  private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private ArrayList<Map.Entry> propertiesList;
   private TestNGListenersTableModel listenerModel;
 

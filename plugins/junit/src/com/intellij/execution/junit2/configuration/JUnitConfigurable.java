@@ -26,7 +26,7 @@ import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
-import com.intellij.execution.ui.CommonJavaParameters;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
@@ -64,7 +64,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   // Fields
   private JPanel myWholePanel;
   private LabeledComponent<JComboBox> myModule;
-  private CommonJavaParameters myCommonJavaParameters;
+  private CommonJavaParametersPanel myCommonJavaParameters;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;

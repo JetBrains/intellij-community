@@ -19,7 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
-import com.intellij.execution.ui.CommonJavaParameters;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,8 +33,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfiguration> {
-  private CommonJavaParameters myCommonProgramParameters;
+public class ApplicationConfigurable extends SettingsEditor<ApplicationConfiguration> {
+  private CommonJavaParametersPanel myCommonProgramParameters;
   private LabeledComponent<TextFieldWithBrowseButton> myMainClass;
   private LabeledComponent<JComboBox> myModule;
   private JPanel myWholePanel;
@@ -45,7 +45,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
 
-  public ApplicationConfigurable2(final Project project) {
+  public ApplicationConfigurable(final Project project) {
     myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
     myModule.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -98,7 +98,7 @@ public class ApplicationConfigurable2 extends SettingsEditor<ApplicationConfigur
     return myMainClass.getComponent();
   }
 
-  public CommonJavaParameters getCommonProgramParameters() {
+  public CommonJavaParametersPanel getCommonProgramParameters() {
     return myCommonProgramParameters;
   }
 

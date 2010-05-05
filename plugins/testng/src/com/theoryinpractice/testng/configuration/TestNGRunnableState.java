@@ -207,7 +207,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     javaParameters.setupEnvs(config.getPersistantData().getEnvs(), config.getPersistantData().PASS_PARENT_ENVS);
     javaParameters.getVMParametersList().add("-ea");
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
-    javaParameters.setWorkingDirectory(config.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY));
+    javaParameters.setWorkingDirectory(config.getWorkingDirectory());
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!

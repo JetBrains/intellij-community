@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.PathMacros;
@@ -39,7 +40,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommonProgramParameters extends JPanel {
+public class CommonProgramParametersPanel extends JPanel {
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/variables.png");
 
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
@@ -48,7 +49,7 @@ public class CommonProgramParameters extends JPanel {
 
   private Module myModuleContext = null;
 
-  public CommonProgramParameters() {
+  public CommonProgramParametersPanel() {
     super(new GridBagLayout());
     initComponents();
     copyDialogCaption(myProgramParametersComponent);
@@ -77,7 +78,7 @@ public class CommonProgramParameters extends JPanel {
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final List<String> macros = new ArrayList<String>(PathMacros.getInstance().getUserMacroNames());
-        macros.add("MODULE_DIR");
+        if (myModuleContext != null) macros.add("MODULE_DIR");
 
         final JList list = new JList(ArrayUtil.toStringArray(macros));
         final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
@@ -144,5 +145,15 @@ public class CommonProgramParameters extends JPanel {
 
   public void setModuleContext(Module module) {
     myModuleContext = module;
+  }
+
+  public void applyTo(CommonProgramRunConfigurationParameters configuration) {
+    configuration.setProgramParameters(getProgramParameters());
+    configuration.setWorkingDirectory(getWorkingDirectory());
+  }
+
+  public void reset(CommonProgramRunConfigurationParameters configuration) {
+    setProgramParameters(configuration.getProgramParameters());
+    setWorkingDirectory(configuration.getWorkingDirectory());
   }
 }

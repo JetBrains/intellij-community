@@ -16,13 +16,12 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CantRunException;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -33,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.PathUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,21 +42,20 @@ import java.util.Map;
  * Time: 10:38:01 PM
  */
 public class JavaParametersUtil {
-  public static void configureConfiguration(final JavaParameters parameters, final RunJavaConfiguration configuration) {
-    final Project project = configuration.getProject();
-    parameters.getProgramParametersList().addParametersString(configuration.getProperty(RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY));
-    Module module = null;
-    if (configuration instanceof ModuleBasedConfiguration) {
-      module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
-    }
-    String vmParameters = configuration.getProperty(RunJavaConfiguration.VM_PARAMETERS_PROPERTY);
+  public static void configureConfiguration(SimpleJavaParameters parameters, CommonJavaRunConfigurationParameters configuration) {
+    ProgramParametersUtil.configureConfiguration(parameters, configuration);
+
+    Project project = configuration.getProject();
+    Module module = ProgramParametersUtil.getModule(configuration);
+
+    String vmParameters = configuration.getVMParameters();
     if (vmParameters != null) {
-      vmParameters = expandPath(vmParameters, module, project);
+      vmParameters = ProgramParametersUtil.expandPath(vmParameters, module, project);
     }
     if (parameters.getEnv() != null) {
       final Map<String, String> envs = new HashMap<String, String>();
       for (String env : parameters.getEnv().keySet()) {
-        final String value = expandPath(parameters.getEnv().get(env), module, project);
+        final String value = ProgramParametersUtil.expandPath(parameters.getEnv().get(env), module, project);
         envs.put(env, value);
         if (vmParameters != null) {
           vmParameters = StringUtil.replace(vmParameters, "$" + env + "$", value, false); //replace env usages
@@ -67,20 +64,6 @@ public class JavaParametersUtil {
       parameters.setEnv(envs);
     }
     parameters.getVMParametersList().addParametersString(vmParameters);
-    String workingDirectory = configuration.getProperty(RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY);
-    if (workingDirectory == null || workingDirectory.trim().length() == 0) {
-      workingDirectory = PathUtil.getLocalPath(project.getBaseDir());
-    }
-    parameters.setWorkingDirectory(expandPath(workingDirectory, module, project));
-  }
-
-  private static String expandPath(String path, Module module, Project project) {
-    path = PathMacroManager.getInstance(project).expandPath(path);
-    if (module != null) {
-      path = PathMacroManager.getInstance(module).expandPath(path);
-    }
-    return path;
-
   }
 
   public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
