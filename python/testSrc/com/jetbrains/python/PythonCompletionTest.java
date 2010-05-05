@@ -104,4 +104,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.completeBasic();
     myFixture.checkResultByFile(testName + ".after.py");
   }
+
+  public void testClassMethod() throws Exception {  // PY-833
+    doTest();
+  }
 }

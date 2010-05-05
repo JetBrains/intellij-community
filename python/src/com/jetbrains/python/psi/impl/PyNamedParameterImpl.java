@@ -139,11 +139,11 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       if (parameterList.getParent() instanceof PyFunction) {
         PyFunction func = (PyFunction) parameterList.getParent();
         final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(func);
-        if (params [0] == this && !flags.contains(PyFunction.Flag.CLASSMETHOD) && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
-          // must be 'self'
+        if (params [0] == this && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
+          // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
-            return new PyClassType(containingClass, false);
+            return new PyClassType(containingClass, flags.contains(PyFunction.Flag.CLASSMETHOD));
           }
         }
         if (isKeywordContainer()) {
