@@ -139,6 +139,8 @@
     <codeInsight.gotoSuper language="Python" implementationClass="com.jetbrains.python.codeInsight.PyGotoSuperHandler"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
     <lang.smartEnterProcessor language="Python" implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
+    <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.StatementMover" id="statement"
+                          order="before line"/>
 
     <filePropertyPusher implementation="com.jetbrains.python.psi.impl.PythonLanguageLevelPusher"/>
 
