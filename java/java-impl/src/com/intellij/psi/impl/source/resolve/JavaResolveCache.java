@@ -98,7 +98,12 @@ public class JavaResolveCache {
       type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
     }
     if (!type.isValid()) {
-      LOG.error("Type is invalid: " + type+"; expr: '"+expr+"' is "+(expr.isValid() ? "valid":"invalid"));
+      if (expr.isValid()) {
+        LOG.error("Type is invalid: " + type + "; expr: '" + expr + "' is valid");
+      }
+      else {
+        LOG.error("Expression: '"+expr+"' is invalid, must not be used for getType()");
+      }
     }
     return type == NULL_TYPE ? null : type;
   }
