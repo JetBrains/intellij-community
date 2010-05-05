@@ -1,0 +1,75 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:element name="repositories">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="data" minOccurs="1" maxOccurs="1">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="repositories-item" type="repositoryType" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="search-results">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="totalCount" minOccurs="1" maxOccurs="1" type="xsd:integer"/>
+                <xsd:element name="from" minOccurs="1" maxOccurs="1" type="xsd:integer"/>
+                <xsd:element name="count" minOccurs="1" maxOccurs="1" type="xsd:integer"/>
+                <xsd:element name="tooManyResults" minOccurs="1" maxOccurs="1" type="xsd:boolean"/>
+                <xsd:element name="data" minOccurs="0" maxOccurs="1">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="artifact" type="artifactType" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:element name="repositoryMetaData">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="id" type="xsd:string"/>
+                <xsd:element name="repoType" type="xsd:string"/>
+                <xsd:element name="effectiveLocalStorageUrl" type="xsd:string"/>
+                <xsd:element name="proxyUrl" type="xsd:string"/>
+                <xsd:element name="sizeOnDisk" type="xsd:integer"/>
+                <xsd:element name="numArtifacts" type="xsd:integer"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    <xsd:complexType name="repositoryType">
+        <xsd:sequence>
+            <xsd:element name="resourceURI" type="xsd:string"/>
+            <xsd:element name="contentResourceURI" type="xsd:string"/>
+            <xsd:element name="id" type="xsd:string"/>
+            <xsd:element name="name" type="xsd:string"/>
+            <xsd:element name="repoType" type="xsd:string"/>
+            <xsd:element name="repoPolicy" type="xsd:string"/>
+            <xsd:element name="provider" type="xsd:string"/>
+            <xsd:element name="providerRole" type="xsd:string"/>
+            <xsd:element name="format" type="xsd:string"/>
+            <xsd:element name="userManaged" type="xsd:string"/>
+            <xsd:element name="exposed" type="xsd:string"/>
+            <xsd:element name="effectiveLocalStorageUrl" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="artifactType">
+        <xsd:sequence>
+            <xsd:element name="resourceUri" type="xsd:string"/>
+            <xsd:element name="groupId" type="xsd:string"/>
+            <xsd:element name="artifactId" type="xsd:string"/>
+            <xsd:element name="version" type="xsd:string"/>
+            <xsd:element name="classifier" type="xsd:string"/>
+            <xsd:element name="packaging" type="xsd:string"/>
+            <xsd:element name="extension" type="xsd:string"/>
+            <xsd:element name="repoId" type="xsd:string"/>
+            <xsd:element name="contextId" type="xsd:string"/>
+            <xsd:element name="pomLink" type="xsd:string"/>
+            <xsd:element name="artifactLink" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>
