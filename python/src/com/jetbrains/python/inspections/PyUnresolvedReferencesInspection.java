@@ -93,7 +93,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
   public void inspectionFinished(LocalInspectionToolSession session) {
     final Visitor visitor = myLastVisitor.get();
     assert visitor != null;
-    visitor.highlightUnusedImports();
+    if (PyCodeInsightSettings.getInstance().HIGHLIGHT_UNUSED_IMPORTS) {
+      visitor.highlightUnusedImports();
+    }
     myLastVisitor.remove();
   }
 

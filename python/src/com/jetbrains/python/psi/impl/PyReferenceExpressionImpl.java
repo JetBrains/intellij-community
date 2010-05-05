@@ -241,6 +241,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyFile) {
       return new PyModuleType((PyFile) target);
     }
+    if (target instanceof PyImportedModule) {
+      return new PyImportedModuleType((PyImportedModule) target);
+    }
     if (target instanceof PyTargetExpression && context.allowDataFlow() && anchor != null) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(anchor, ScopeOwner.class);
       if (scopeOwner != null && scopeOwner == PsiTreeUtil.getParentOfType(target, ScopeOwner.class)) {

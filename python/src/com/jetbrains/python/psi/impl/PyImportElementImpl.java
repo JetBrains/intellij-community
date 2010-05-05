@@ -219,7 +219,10 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       if (qName == null || qName.getComponentCount() == 0 || !qName.getComponents().get(0).equals(the_name)) {
         return null;
       }
-      return ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(the_name));
+      if (qName.getComponentCount() == 1) {
+        return ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(the_name));
+      }
+      return new PyImportedModule((PyFile) getContainingFile(), PyQualifiedName.fromComponents(the_name));
     }
   }
 

@@ -68,6 +68,9 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiDirectory stepBackFrom(PsiFile base, int depth) {
+    if (depth == 0) {
+      return base.getContainingDirectory();
+    }
     PsiDirectory result;
     if (base != null) {
       base = base.getOriginalFile(); // just to make sure 
