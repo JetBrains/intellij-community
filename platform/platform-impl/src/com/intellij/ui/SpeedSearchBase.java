@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.AttributeSet;
@@ -41,6 +42,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Arrays;
+import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -91,6 +94,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
   protected abstract String getElementText(Object element);
 
   protected abstract void selectElement(Object element, String selectedText);
+
+  protected ListIterator<Object> getElementIterator(int startingIndex) {
+    final Object[] allElements = getAllElements();
+    return Arrays.asList(allElements).listIterator(startingIndex < 0? allElements.length : startingIndex);
+  }
 
   public void addChangeListener(PropertyChangeListener listener) {
     myChangeSupport.addPropertyChangeListener(listener);
@@ -191,62 +199,80 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     }
   }
 
+  @Nullable
   private Object findNextElement(String s) {
-    String _s = s.trim();
-    Object[] elements = getAllElements();
-    if (elements.length == 0) return null;
-    int selectedIndex = getSelectedIndex();
-    for (int i = selectedIndex + 1; i < elements.length; i++) {
-      Object element = elements[i];
+    final String _s = s.trim();
+    final int selectedIndex = getSelectedIndex();
+    final ListIterator<?> it = getElementIterator(selectedIndex + 1);
+    final Object current;
+    if (it.hasPrevious()) {
+      current = it.previous();
+      it.next();
+    }
+    else current = null;
+    while (it.hasNext()) {
+      final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
-    return selectedIndex != -1 ? elements[selectedIndex] : null; // return current
+    return current;
   }
 
+  @Nullable
   private Object findPreviousElement(String s) {
-    String _s = s.trim();
-    Object[] elements = getAllElements();
-    if (elements.length == 0) return null;
-    int selectedIndex = getSelectedIndex();
-    for (int i = selectedIndex - 1; i >= 0; i--) {
-      Object element = elements[i];
+    final String _s = s.trim();
+    final int selectedIndex = getSelectedIndex();
+    if (selectedIndex < 0) return null;
+    final ListIterator<?> it = getElementIterator(selectedIndex);
+    final Object current;
+    if (it.hasNext()) {
+      current = it.next();
+      it.previous();
+    }
+    else current = null;
+    while (it.hasPrevious()) {
+      final Object element = it.previous();
       if (isMatchingElement(element, _s)) return element;
     }
-    return selectedIndex != -1 ? elements[selectedIndex] : null; // return current
+    return selectedIndex != -1? current : null;
   }
 
+  @Nullable
   private Object findElement(String s) {
-    String _s = s.trim();
-    Object[] elements = getAllElements();
+    final String _s = s.trim();
     int selectedIndex = getSelectedIndex();
     if (selectedIndex < 0) {
       selectedIndex = 0;
     }
-    for (int i = selectedIndex; i < elements.length; i++) {
-      Object element = elements[i];
+    final ListIterator<Object> it = getElementIterator(selectedIndex);
+    while (it.hasNext()) {
+      final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
-    for (int i = 0; i < selectedIndex; i++) {
-      Object element = elements[i];
-      if (isMatchingElement(element, _s)) return element;
+    if (selectedIndex > 0) {
+      while (it.hasPrevious()) it.previous();
+      while (it.hasNext() && it.nextIndex() != selectedIndex) {
+        final Object element = it.next();
+        if (isMatchingElement(element, _s)) return element;
+      }
     }
     return null;
   }
 
+  @Nullable
   private Object findFirstElement(String s) {
-    String _s = s.trim();
-    Object[] elements = getAllElements();
-    for (Object element : elements) {
+    final String _s = s.trim();
+    for (ListIterator<?> it = getElementIterator(0); it.hasNext();) {
+      final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
     return null;
   }
 
+  @Nullable
   private Object findLastElement(String s) {
-    String _s = s.trim();
-    Object[] elements = getAllElements();
-    for (int i = elements.length - 1; i >= 0; i--) {
-      Object element = elements[i];
+    final String _s = s.trim();
+    for (ListIterator<?> it = getElementIterator(-1); it.hasPrevious();) {
+      final Object element = it.previous();
       if (isMatchingElement(element, _s)) return element;
     }
     return null;
@@ -279,6 +305,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> {
     return true;
   }
 
+  @Nullable
   public String getEnteredPrefix() {
     return mySearchPopup != null ? mySearchPopup.mySearchField.getText() : null;
   }

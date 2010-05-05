@@ -49,15 +49,17 @@ public class TableUtil {
     ListSelectionModel selectionModel = table.getSelectionModel();
     int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
-    if(maxSelectionIndex == -1){
+    final int maxColumnSelectionIndex = table.getColumnModel().getSelectionModel().getMinSelectionIndex();
+    final int minColumnSelectionIndex = table.getColumnModel().getSelectionModel().getMaxSelectionIndex();
+    if(maxSelectionIndex == -1 || maxColumnSelectionIndex == -1){
       return;
     }
-    Rectangle minCellRect = table.getCellRect(minSelectionIndex, 0, false);
-    Rectangle maxCellRect = table.getCellRect(maxSelectionIndex, 0, false);
+    Rectangle minCellRect = table.getCellRect(minSelectionIndex, minColumnSelectionIndex, false);
+    Rectangle maxCellRect = table.getCellRect(maxSelectionIndex, maxColumnSelectionIndex, false);
     Point selectPoint = minCellRect.getLocation();
     int allHeight = maxCellRect.y + maxCellRect.height - minCellRect.y;
     allHeight = Math.min(allHeight, table.getVisibleRect().height);
-    table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(1,allHeight)));
+    table.scrollRectToVisible(new Rectangle(selectPoint, new Dimension(minCellRect.width / 2,allHeight)));
   }
 
   public static List<Object[]> removeSelectedItems(JTable table, ItemChecker applyable) {
