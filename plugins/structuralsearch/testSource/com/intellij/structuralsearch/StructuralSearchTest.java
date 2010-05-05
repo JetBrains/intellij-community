@@ -2392,6 +2392,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Finding all classes",4,findMatchesCount(s5,s6_2));
   }
 
+  public void testSearchTransientFieldsWithModifier() {
+    String source =
+      "public class TestClass {\n" +
+      "  transient private String field1;\n" +
+      "  transient String field2;\n" +
+      "  String field3;\n" +
+      "}";
+
+    String template = "transient @Modifier(\"packageLocal\") '_Type '_Variable = '_Value?;";
+
+    assertEquals("Finding package-local transient fields", 1, findMatchesCount(source, template));
+  }
+
   public void test() {
     String s1 = "if (LOG.isDebugEnabled()) {\n" +
                 "  int a = 1;\n" +
