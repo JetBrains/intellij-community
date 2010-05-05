@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
 
-class GroupWrapper extends CachingChildrenTreeNode<Group> {
+public class GroupWrapper extends CachingChildrenTreeNode<Group> {
   public GroupWrapper(Project project, Group value, TreeModel treeModel) {
     super(project, value, treeModel);
     clearChildren();
@@ -41,11 +41,10 @@ class GroupWrapper extends CachingChildrenTreeNode<Group> {
     clearChildren();
     Collection<TreeElement> children = getValue().getChildren();
     for (TreeElement child : children) {
-      TreeElementWrapper childNode = new TreeElementWrapper(getProject(), child, myTreeModel);
+      TreeElementWrapper childNode = createChildNode(child);
       addSubElement(childNode);
     }
   }
-
 
   protected void performTreeActions() {
     filterChildren(myTreeModel.getFilters());
