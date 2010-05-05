@@ -20,8 +20,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageRunner;
 import com.intellij.coverage.CoverageSuite;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +55,7 @@ import java.util.List;
  * </code>
  * @author ven
  */
-public class CoverageConfigurable<T extends ModuleBasedConfiguration & RunJavaConfiguration> extends SettingsEditor<T> {
+public class CoverageConfigurable<T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> extends SettingsEditor<T> {
   private static final Logger LOG = Logger.getInstance("#" + CoverageConfigurable.class.getName());
 
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
