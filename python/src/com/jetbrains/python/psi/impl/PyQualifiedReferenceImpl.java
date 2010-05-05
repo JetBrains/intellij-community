@@ -37,8 +37,8 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     PyType qualifierType = qualifier.getType(TypeEvalContext.fast());
     // is it a class-private name qualified by a different class?
     if (PyUtil.isClassPrivateName(referencedName) && qualifierType instanceof PyClassType) {
-      final List<? extends PsiElement> match = SyntaxMatchers.IN_METHOD.search(qualifier);
-      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(1))) {
+      final List<? extends PsiElement> match = SyntaxMatchers.DEEP_IN_METHOD.search(qualifier);
+      if (match == null || (match.size() > 1 && ((PyClassType)qualifierType).getPyClass() != match.get(match.size()-1))) {
         return Collections.emptyList();
       }
     }

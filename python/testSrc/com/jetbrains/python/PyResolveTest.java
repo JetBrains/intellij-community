@@ -53,7 +53,6 @@ public class PyResolveTest extends PyResolveTestCase {
     assertNotNull(cls);
     assertEquals(cls.getName(), "Foo");
   }
-
   // NOTE: maybe this test does not belong exactly here; still it's the best place currently.
   public void testComplexCallee() {
     PsiElement targetElement = resolve();
@@ -250,5 +249,39 @@ public class PyResolveTest extends PyResolveTestCase {
     ResolveResult[] resolveResults = multiResolve();
     assertEquals(1, resolveResults.length);
     assertTrue(resolveResults [0].getElement() instanceof PyFunction);
+  }
+
+  public void testClassPrivateInClass() {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
+  public void testClassPrivateInMethod() {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
+  public void testClassPrivateInMethodNested() {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
+  public void testClassPrivateInherited() {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+  }
+
+  public void testClassPrivateOutsideClass() {
+    PsiElement targetElement = resolve();
+    assertNull(targetElement);
+  }
+
+  public void testClassPrivateOutsideInstance() {
+    PsiElement targetElement = resolve();
+    assertNull(targetElement);
   }
 }
