@@ -87,7 +87,7 @@ public class TestAll implements Test {
     if ((ourMode & START_GUARD) != 0) {
       Thread timeAndMemoryGuard = new Thread() {
         public void run() {
-          System.out.println("Starting Time and Memory Guard");
+          log("Starting Time and Memory Guard");
           while (true) {
             try {
               try {
@@ -104,7 +104,7 @@ public class TestAll implements Test {
                 if (!mySavingMemorySnapshot) {
                   if (secondsSpent > PlatformTestCase.ourTestTime * myLastTestTestMethodCount) {
                     UsefulTestCase.printThreadDump();
-                    System.out.println("Interrupting current Test (out of time)! Test class: "+ myLastTestClass +" Seconds spent = " + secondsSpent);
+                    log("Interrupting current Test (out of time)! Test class: "+ myLastTestClass +" Seconds spent = " + secondsSpent);
                     myInterruptedByOutOfTime = true;
                     if (currentThread != null) {
                       currentThread.interrupt();
@@ -122,7 +122,7 @@ public class TestAll implements Test {
               e.printStackTrace();
             }
           }
-          System.out.println("Time and Memory Guard finished.");
+          log("Time and Memory Guard finished.");
         }
       };
       timeAndMemoryGuard.setDaemon(true);
@@ -201,8 +201,7 @@ public class TestAll implements Test {
       }
     }
 
-    System.out.println("\nRunning " + testCaseClass.getName());
-    LOG.info("Running " + testCaseClass.getName());
+    log("\nRunning " + testCaseClass.getName());
     final Test test = getTest(testCaseClass);
 
     if (test == null) return;
@@ -253,10 +252,10 @@ public class TestAll implements Test {
         if ((ourMode & SAVE_MEMORY_SNAPSHOT) != 0) {
           try {
             mySavingMemorySnapshot = true;
-            System.out.println("OutOfMemoryError detected. Saving memory snapshot started");
+            log("OutOfMemoryError detected. Saving memory snapshot started");
           }
           finally {
-            System.out.println("Saving memory snapshot finished");
+            log("Saving memory snapshot finished");
             mySavingMemorySnapshot = false;
           }
         }
@@ -273,7 +272,7 @@ public class TestAll implements Test {
       tryGc(5);
       possibleOutOfMemoryError = possibleOutOfMemory(neededMemory);
       if (possibleOutOfMemoryError) {
-        System.out.println("OutOfMemoryError: dumping memory");
+        log("OutOfMemoryError: dumping memory");
         Runtime runtime = Runtime.getRuntime();
         long total = runtime.totalMemory();
         long free = runtime.freeMemory();
@@ -364,7 +363,11 @@ public class TestAll implements Test {
       myTestCaseLoader.clearClasses();
     }
 
-    System.out.println("Number of test classes found: " + myTestCaseLoader.getClasses().size());
+    log("Number of test classes found: " + myTestCaseLoader.getClasses().size());
+  }
+
+  private static void log(String message) {
+    TeamCityLogger.info(message);
   }
 
   // [myakovlev] Do not delete - it is for debugging
@@ -380,7 +383,7 @@ public class TestAll implements Test {
       }
       System.gc();
       //long mem = Runtime.getRuntime().totalMemory();
-      System.out.println("Runtime.getRuntime().totalMemory() = " + Runtime.getRuntime().totalMemory());
+      log("Runtime.getRuntime().totalMemory() = " + Runtime.getRuntime().totalMemory());
     }
   }
 

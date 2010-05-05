@@ -66,7 +66,7 @@ public class TeamCityLogger {
 
   private static void tcLog(String message, String level) {
     try {
-      FileUtil.appendToFile(reportFile(), level + ": " + message);
+      FileUtil.appendToFile(reportFile(), level + ": " + message + "\n");
     }
     catch (IOException e) {
       LOG.error(e);
