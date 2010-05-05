@@ -129,7 +129,7 @@ public class GroovyStaticImportMethodFix implements IntentionAction {
           //do not show methods from default package
           && ((PsiClassOwner)file).getPackageName().length() != 0 && PsiUtil.isAccessible(element, method)) {
         list.add(method);
-        if (PsiUtil.isApplicable(PsiUtil.getArgumentTypes(element, true), method, PsiSubstitutor.EMPTY, false)) {
+        if (PsiUtil.isApplicable(PsiUtil.getArgumentTypes(element, true), method, PsiSubstitutor.EMPTY, false, element)) {
           applicableList.add(method);
         }
       }

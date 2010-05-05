@@ -35,16 +35,7 @@ public class GrClosureParameterImpl implements GrClosureParameter {
   public GrClosureParameterImpl(PsiType type, boolean optional, GrExpression defaultInitializer) {
     myType = type;
     myOptional = optional;
-    if (myOptional) {
-      myDefaultInitializer = defaultInitializer;
-    }
-    else {
-      myDefaultInitializer = null;
-    }
-  }
-
-  public GrClosureParameterImpl(PsiParameter parameter) {
-    this(parameter, PsiSubstitutor.EMPTY);
+    myDefaultInitializer = optional ? defaultInitializer : null;
   }
 
   public GrClosureParameterImpl(PsiParameter parameter, PsiSubstitutor substitutor) {

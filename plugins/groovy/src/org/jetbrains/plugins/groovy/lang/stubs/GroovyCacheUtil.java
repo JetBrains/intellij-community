@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -46,15 +47,15 @@ public abstract class GroovyCacheUtil {
   }
 
   @NotNull
-  public static GrTypeDefinition[] getDeriverCandidates(PsiClass clazz, GlobalSearchScope scope) {
+  public static PsiClass[] getDeriverCandidates(PsiClass clazz, GlobalSearchScope scope) {
     final String name = clazz.getName();
     if (name == null) return GrTypeDefinition.EMPTY_ARRAY;
-    final ArrayList<GrTypeDefinition> inheritors = new ArrayList<GrTypeDefinition>();
+    final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
     final Collection<GrReferenceList> refLists = StubIndex.getInstance().get(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope);
     for (GrReferenceList list : refLists) {
       final PsiElement parent = list.getParent();
       if (parent instanceof GrTypeDefinition) {
-        inheritors.add(((GrTypeDefinition)parent));
+        inheritors.add(GrClassSubstitutor.getSubstitutedClass(((GrTypeDefinition)parent)));
       }
     }
     final Collection<GrAnonymousClassDefinition> classes =
@@ -62,7 +63,7 @@ public abstract class GroovyCacheUtil {
     for (GrAnonymousClassDefinition aClass : classes) {
       inheritors.add(aClass);
     }
-    return inheritors.toArray(new GrTypeDefinition[inheritors.size()]);
+    return inheritors.toArray(new PsiClass[inheritors.size()]);
   }
 
 

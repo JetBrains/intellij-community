@@ -23,7 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -39,11 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -135,7 +131,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
     if (getNamedArguments().length > 0 && getArgumentList().getExpressionArguments().length == 0) {
-      GroovyResolveResult[] constructorResults = getCandidates(ref, classResults, new PsiType[]{PsiUtil.createMapType(getManager(), getResolveScope())}); //one Map parameter, actually
+      GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classResults, new PsiType[]{PsiUtil.createMapType(getManager(), getResolveScope())}); //one Map parameter, actually
       for (GroovyResolveResult result : constructorResults) {
         if (result.getElement() instanceof PsiMethod) {
           PsiMethod constructor = (PsiMethod)result.getElement();
@@ -145,44 +141,17 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
           }
         }
       }
-      final GroovyResolveResult[] emptyConstructors = getCandidates(ref, classResults, PsiType.EMPTY_ARRAY);
+      final GroovyResolveResult[] emptyConstructors = PsiUtil.getConstructorCandidates(ref, classResults, PsiType.EMPTY_ARRAY);
       if (emptyConstructors.length > 0) {
         return emptyConstructors;
       }
     }
 
-    return getCandidates(ref, classResults, PsiUtil.getArgumentTypes(ref, false));
+    return PsiUtil.getConstructorCandidates(ref, classResults, PsiUtil.getArgumentTypes(ref, false));
   }
 
   public GroovyResolveResult[] multiResolveClass() {
     return getReferenceElement().multiResolve(false);
-  }
-
-  private GroovyResolveResult[] getCandidates(GrCodeReferenceElement ref, GroovyResolveResult[] classResults, PsiType[] argTypes) {
-    List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
-    for (GroovyResolveResult classResult : classResults) {
-      final PsiElement element = classResult.getElement();
-      if (element instanceof PsiClass) {
-        final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
-        PsiClass clazz = (PsiClass)element;
-        String className = clazz.getName();
-        PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
-        final MethodResolverProcessor processor = new MethodResolverProcessor(className, ref, true, thisType, argTypes, PsiType.EMPTY_ARRAY)
-          ;
-        processor.setCurrentFileResolveContext(context);
-        PsiSubstitutor substitutor = classResult.getSubstitutor();
-        final boolean toBreak =
-          element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, ref);
-
-        for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
-          if (!membersProcessor.processNonCodeMembers(thisType, processor, this, true)) break;
-        }
-        constructorResults.addAll(Arrays.asList(processor.getCandidates()));
-        if (!toBreak) break;
-      }
-    }
-
-    return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
   }
 
   public PsiMethod resolveConstructor() {

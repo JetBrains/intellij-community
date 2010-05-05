@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -119,7 +120,7 @@ public class PsiUtil {
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
                                      PsiMethod method,
                                      PsiSubstitutor substitutor,
-                                     boolean isInUseCategory) {
+                                     boolean isInUseCategory, GroovyPsiElement place) {
     if (argumentTypes == null) return true;
 
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
@@ -132,17 +133,17 @@ public class PsiUtil {
       final PsiType type = argumentTypes[0];
       final PsiClassType mapType = JavaPsiFacade.getElementFactory(method.getProject())
         .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, method.getResolveScope());
-      return TypesUtil.isAssignable(mapType, type, method.getManager(), method.getResolveScope());
+      return TypesUtil.isAssignable(mapType, type, place);
     }
     LOG.assertTrue(signature != null);
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, place);
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiManager manager) {
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, GroovyPsiElement context) {
     if (argumentTypes == null) return true;
 
     GrClosureSignature signature = type.getSignature();
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, manager, type.getResolveScope());
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, context);
   }
 
   public static PsiClassType createMapType(PsiManager manager, GlobalSearchScope scope) {
@@ -753,5 +754,32 @@ public class PsiUtil {
     else {
       return method.getReturnType();
     }
+  }
+
+  public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place, GroovyResolveResult[] classCandidates, PsiType[] argTypes) {
+    List<GroovyResolveResult> constructorResults = new ArrayList<GroovyResolveResult>();
+    for (GroovyResolveResult classResult : classCandidates) {
+      final PsiElement element = classResult.getElement();
+      if (element instanceof PsiClass) {
+        final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
+        PsiClass clazz = (PsiClass)element;
+        String className = clazz.getName();
+        PsiType thisType = JavaPsiFacade.getInstance(place.getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
+        final MethodResolverProcessor processor = new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY)
+          ;
+        processor.setCurrentFileResolveContext(context);
+        PsiSubstitutor substitutor = classResult.getSubstitutor();
+        final boolean toBreak =
+          element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, place);
+
+        for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
+          if (!membersProcessor.processNonCodeMembers(thisType, processor, place, true)) break;
+        }
+        constructorResults.addAll(Arrays.asList(processor.getCandidates()));
+        if (!toBreak) break;
+      }
+    }
+
+    return constructorResults.toArray(new GroovyResolveResult[constructorResults.size()]);
   }
 }

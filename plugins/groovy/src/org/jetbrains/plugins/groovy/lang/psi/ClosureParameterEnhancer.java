@@ -5,70 +5,33 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
-
-import java.util.Arrays;
 
 /**
  * @author peter
  */
-public class ClosureParameterEnhancer extends GrVariableEnhancer {
-  @Override
-  public PsiType getVariableType(GrVariable variable) {
-    if (!(variable instanceof GrParameter)) {
-      return null;
-    }
+public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
 
-    GrClosableBlock closure = variable instanceof ClosureSyntheticParameter ? ((ClosureSyntheticParameter)variable).getClosure() : findClosureWithArgument(variable.getParent());
-    if (closure == null) {
-      return null;
-    }
+  @Override
+  @Nullable
+  protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
     final PsiElement parent = closure.getParent();
     if (!(parent instanceof GrMethodCallExpression)) {
       return null;
     }
-
-    final PsiParameter[] parameters = closure.getAllParameters();
-    @SuppressWarnings({"SuspiciousMethodCalls"})
-    int index = Arrays.asList(parameters).indexOf(variable);
-    assert index >= 0;
-
-    return findClosureParameterType(closure, index, variable, (GrMethodCallExpression)parent, parameters.length);
-  }
-
-  @Nullable
-  private static GrClosableBlock findClosureWithArgument(@NotNull PsiElement parent) {
-    if (parent instanceof GrParameterList) {
-      GrParameterList list = (GrParameterList)parent;
-      if (list.getParent() instanceof GrClosableBlock) {
-        return (GrClosableBlock)list.getParent();
-      }
-    }
-    return null;
-  }
-
-
-  @Nullable
-  private static PsiType findClosureParameterType(@NotNull GrClosableBlock closure,
-                                                  int index, PsiElement context,
-                                                  final GrMethodCallExpression methodCall, int paramCount) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(closure.getProject()).getElementFactory();
-    String methodName = findMethodName(methodCall);
+    String methodName = findMethodName((GrMethodCallExpression)parent);
     //final GrExpression invokedExpression = methodCall.getInvokedExpression();
     //PsiType type = findQualifierType(methodCall);
 
-    GrExpression expression = methodCall.getInvokedExpression();
+    GrExpression expression = ((GrMethodCallExpression)parent).getInvokedExpression();
     if (!(expression instanceof GrReferenceExpression)) return null;
 
     GrExpression qualifier = ((GrReferenceExpression)expression).getQualifierExpression();
@@ -85,14 +48,14 @@ public class ClosureParameterEnhancer extends GrVariableEnhancer {
         "find".equals(methodName) ||
         "findAll".equals(methodName) ||
         "findIndexOf".equals(methodName)) {
-      PsiType res = findTypeForCollection(qualifier, factory, context);
+      PsiType res = findTypeForCollection(qualifier, factory, closure);
       if (closure.getParameters().length <= 1 && res != null) {
         return res;
       }
 
       if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
         if (closure.getParameters().length <= 1) {
-          return getEntryForMap(type, factory, context);
+          return getEntryForMap(type, factory, closure);
         }
         if (closure.getParameters().length == 2) {
           if (index == 0) {
@@ -105,47 +68,51 @@ public class ClosureParameterEnhancer extends GrVariableEnhancer {
     else if ("with".equals(methodName) && closure.getParameters().length <= 1) {
       return type;
     }
-    else if ("eachWithIndex".equals(methodName)) {
-      PsiType res = findTypeForCollection(qualifier, factory, context);
-      if (closure.getParameters().length == 2 && res != null) {
+    else {
+      final PsiParameter[] paramCount = closure.getAllParameters();
+      if ("eachWithIndex".equals(methodName)) {
+        PsiType res = findTypeForCollection(qualifier, factory, closure);
+        if (closure.getParameters().length == 2 && res != null) {
+          if (index == 0) {
+            return res;
+          }
+          return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, closure);
+        }
+        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+          if (paramCount.length == 2) {
+            if (index == 0) {
+              return getEntryForMap(type, factory, closure);
+            }
+            return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, closure);
+          }
+          if (paramCount.length == 3) {
+            if (index == 0) {
+              return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
+            }
+            if (index == 1) {
+              return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
+            }
+            return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, closure);
+          }
+        }
+      }
+      else if ("inject".equals(methodName) && paramCount.length == 2) {
         if (index == 0) {
+          return factory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, closure);
+        }
+
+        PsiType res = findTypeForCollection(qualifier, factory, closure);
+        if (res != null) {
           return res;
         }
-        return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, context);
-      }
-      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        if (paramCount == 2) {
-          if (index == 0) {
-            return getEntryForMap(type, factory, context);
-          }
-          return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, context);
+        if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
+          return getEntryForMap(type, factory, closure);
         }
-        if (paramCount == 3) {
-          if (index == 0) {
-            return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, true);
-          }
-          if (index == 1) {
-            return PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, true);
-          }
-          return factory.createTypeFromText(CommonClassNames.JAVA_LANG_INTEGER, context);
-        }
-      }
-    }
-    else if ("inject".equals(methodName) && paramCount == 2) {
-      if (index == 0) {
-        return factory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, context);
-      }
-
-      PsiType res = findTypeForCollection(qualifier, factory, context);
-      if (res != null) {
-        return res;
-      }
-      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) {
-        return getEntryForMap(type, factory, context);
       }
     }
     return null;
   }
+
 
   @Nullable
   private static PsiType getEntryForMap(PsiType map, PsiElementFactory factory, PsiElement context) {

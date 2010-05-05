@@ -29,6 +29,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -611,6 +612,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       handler.processElementUsages(psiElement, processor, options);
     }
     return processor.getResults();
+  }
+
+  public RangeHighlighter[] testHighlightUsages(final String... files) {
+    configureByFiles(files);
+    final Editor editor = getEditor();
+    HighlightUsagesHandler.invoke(getProject(), editor, getFile());
+    return editor.getMarkupModel().getAllHighlighters();
   }
 
   public void moveFile(@NonNls final String filePath, @NonNls final String to, final String... additionalFiles) throws Exception {

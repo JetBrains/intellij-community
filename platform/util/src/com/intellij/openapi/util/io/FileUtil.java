@@ -968,6 +968,10 @@ public class FileUtil {
     }
   }
 
+  public static void appendToFile(File file, String text) throws IOException {
+    writeToFile(file, text.getBytes("UTF-8"), true);
+  }
+
   public static void writeToFile(final File file, final byte[] text) throws IOException {
     writeToFile(file, text, false);
   }
@@ -981,8 +985,9 @@ public class FileUtil {
     finally {
       stream.close();
     }
-
   }
+
+  
 
   public static boolean processFilesRecursively(final File root, final Processor<File> processor) {
     final LinkedList<File> queue = new LinkedList<File>();

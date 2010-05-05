@@ -168,7 +168,7 @@ public final class DomManagerImpl extends DomManager {
               return;
             }
 
-            if (StdFileTypes.XML.equals(file.getFileType())) {
+            if (file.isValid() && StdFileTypes.XML.equals(file.getFileType())) {
               final PsiFile psiFile = psiManager.findFile(file);
               if (psiFile instanceof XmlFile) {
                 myDeletedFiles.add((XmlFile)psiFile);
