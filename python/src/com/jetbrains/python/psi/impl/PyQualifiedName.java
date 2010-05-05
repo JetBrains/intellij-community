@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -96,5 +97,13 @@ public class PyQualifiedName {
       return null;
     }
     return myComponents.get(myComponents.size()-1);
+  }
+
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    Iterator<String> it = myComponents.iterator();
+    if (it.hasNext()) sb.append(it.next());
+    while(it.hasNext()) sb.append(".").append(it.next());
+    return sb.toString();
   }
 }
