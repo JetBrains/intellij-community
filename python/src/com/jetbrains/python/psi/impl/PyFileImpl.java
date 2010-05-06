@@ -39,12 +39,8 @@ import java.util.List;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
-  private ThreadLocal<List<String>> myNameResolveStack = new ThreadLocal<List<String>>() {
-    @Override
-    protected List<String> initialValue() {
-      return new ArrayList<String>();
-    }
-  };
+  private ThreadLocal<List<String>> myFindExportedNameStack = new ArrayListThreadLocal();
+  private ThreadLocal<List<String>> myGetElementNamedStack = new ArrayListThreadLocal();
 
   public PyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, PythonLanguage.getInstance());
@@ -192,7 +188,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   }
 
   public PsiElement findExportedName(String name) {
-    final List<String> stack = myNameResolveStack.get();
+    final List<String> stack = myFindExportedNameStack.get();
     if (stack.contains(name)) {
       return null;
     }
@@ -271,17 +267,27 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Nullable
   public PsiElement getElementNamed(String name) {
-    PsiElement exportedName = findExportedName(name);
-    if (exportedName == null) {
-      final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
-      if (builtins != null && builtins != this) {
-        exportedName = builtins.findExportedName(name);
+    final List<String> stack = myGetElementNamedStack.get();
+    if (stack.contains(name)) {
+      return null;
+    }
+    stack.add(name);
+    try {
+      PsiElement exportedName = findExportedName(name);
+      if (exportedName == null) {
+        final PyFile builtins = PyBuiltinCache.getInstance(this).getBuiltinsFile();
+        if (builtins != null && builtins != this) {
+          exportedName = builtins.findExportedName(name);
+        }
       }
+      if (exportedName instanceof PyImportElement) {
+        return ((PyImportElement) exportedName).getElementNamed(name);
+      }
+      return exportedName;
     }
-    if (exportedName instanceof PyImportElement) {
-      return ((PyImportElement) exportedName).getElementNamed(name);
+    finally {
+      stack.remove(name);
     }
-    return exportedName;
   }
 
   @NotNull
@@ -405,5 +411,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Override
   public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
     return super.addAfter(PyPsiUtils.removeIndentation(element), anchor);
+  }
+
+  private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
+    @Override
+    protected List<String> initialValue() {
+      return new ArrayList<String>();
+    }
   }
 }
