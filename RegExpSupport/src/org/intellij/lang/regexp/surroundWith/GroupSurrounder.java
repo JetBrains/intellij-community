@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -84,6 +85,7 @@ class GroupSurrounder implements Surrounder {
 
         if (isInsideStringLiteral(e)) {
             final Document doc = editor.getDocument();
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
             final TextRange tr = e.getTextRange();
             doc.replaceString(tr.getStartOffset(), tr.getEndOffset(),
                     StringUtil.escapeStringCharacters(element.getText()));
