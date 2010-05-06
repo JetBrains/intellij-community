@@ -111,7 +111,7 @@ public class ParametersFolder {
   public boolean isParameterFoldable(@NotNull ParameterTablePanel.VariableData data,
                                      @NotNull LocalSearchScope scope,
                                      @NotNull final List<? extends PsiVariable> inputVariables) {
-    final List<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope);
+    final List<PsiExpression> mentionedInExpressions = getMentionedExpressions(data.variable, scope, inputVariables);
     if (mentionedInExpressions == null) return false;
 
     int currentRank = 0;
@@ -174,7 +174,7 @@ public class ParametersFolder {
   }
 
   @Nullable
-  private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope) {
+  private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope, final List<? extends PsiVariable> inputVariables) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
     final PsiElement[] scopeElements = scope.getScope();
     List<PsiExpression> expressions = null;
@@ -194,6 +194,9 @@ public class ParametersFolder {
 
           final PsiType expressionType = ((PsiExpression)expression).getType();
           if (expressionType != null && expressionType != PsiType.VOID && !(expression.getParent() instanceof PsiExpressionStatement)) {
+            if (dependsOnLocals(expression, inputVariables)) {
+              break;
+            }
             expressions.add((PsiExpression)expression);
           }
           expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
@@ -209,6 +212,25 @@ public class ParametersFolder {
     }
     myMentionedInExpressions.put(var, expressions);
     return expressions;
+  }
+
+  private static boolean dependsOnLocals(final PsiElement expression, final List<? extends PsiVariable> inputVariables) {
+    final boolean[] localVarsUsed = new boolean[]{false};
+    expression.accept(new JavaRecursiveElementWalkingVisitor(){
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        final PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiVariable) {
+          final PsiVariable variable = (PsiVariable)resolved;
+          if (!inputVariables.contains(variable)) {
+            localVarsUsed[0] = true;
+            return;
+          }
+        }
+        super.visitReferenceExpression(expression);
+      }
+    });
+    return localVarsUsed[0];
   }
 
   @NotNull

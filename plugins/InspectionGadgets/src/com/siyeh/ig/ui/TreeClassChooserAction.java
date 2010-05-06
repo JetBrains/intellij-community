@@ -22,33 +22,61 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NonNls;
 
-import javax.swing.AbstractAction;
-import javax.swing.ListSelectionModel;
-import java.awt.EventQueue;
-import java.awt.Rectangle;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class TreeClassChooserAction extends AbstractAction {
 
     private final IGTable table;
     private final String chooserTitle;
+    private final String[] ancestorClasses;
 
-    public TreeClassChooserAction(IGTable table, String chooserTitle) {
+    public TreeClassChooserAction(IGTable table, String chooserTitle,
+                                  @NonNls String... ancestorClasses) {
         this.table = table;
         this.chooserTitle = chooserTitle;
+        this.ancestorClasses = ancestorClasses;
         putValue(NAME, InspectionGadgetsBundle.message("button.add"));
     }
 
     public void actionPerformed(ActionEvent e) {
         final DataManager dataManager = DataManager.getInstance();
-        final DataContext dataContext = dataManager.getDataContext();
+        final Object source = e.getSource();
+        if (!(source instanceof Component)) {
+            return;
+        }
+        final DataContext dataContext =
+                dataManager.getDataContext((Component) source);
         final Project project = DataKeys.PROJECT.getData(dataContext);
+        if (project == null) {
+            return;
+        }
         final TreeClassChooserFactory chooserFactory =
                 TreeClassChooserFactory.getInstance(project);
+        final TreeClassChooser.ClassFilter filter;
+        if (ancestorClasses.length == 0) {
+            filter = TreeClassChooser.ClassFilter.ALL;
+        } else {
+            filter = new TreeClassChooser.ClassFilter() {
+                public boolean isAccepted(PsiClass aClass) {
+                    for (String ancestorClass : ancestorClasses) {
+                        if (ClassUtils.isSubclass(aClass, ancestorClass)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            };
+        }
         final TreeClassChooser classChooser =
-                chooserFactory.createAllProjectScopeChooser(chooserTitle);
+                chooserFactory.createWithInnerClassesScopeChooser(chooserTitle,
+                        GlobalSearchScope.allScope(project), filter, null);
         classChooser.showDialog();
         final PsiClass selectedClass = classChooser.getSelectedClass();
         if (selectedClass == null) {

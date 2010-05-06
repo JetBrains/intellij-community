@@ -23,13 +23,29 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-class TemplateToken extends Token {
-  final String myKey;
-  final List<Pair<String, String>> myAttribute2Value;
-  TemplateImpl myTemplate;
+public class TemplateToken extends Token {
+  private final String myKey;
+  private final List<Pair<String, String>> myAttribute2Value;
+  private TemplateImpl myTemplate;
 
-  TemplateToken(String key, List<Pair<String, String>> attribute2value) {
+  public TemplateToken(String key, List<Pair<String, String>> attribute2value) {
     myKey = key;
     myAttribute2Value = attribute2value;
+  }
+
+  public String getKey() {
+    return myKey;
+  }
+
+  public List<Pair<String, String>> getAttribute2Value() {
+    return myAttribute2Value;
+  }
+
+  public void setTemplate(TemplateImpl template) {
+    myTemplate = template;
+  }
+
+  public TemplateImpl getTemplate() {
+    return myTemplate;
   }
 }
