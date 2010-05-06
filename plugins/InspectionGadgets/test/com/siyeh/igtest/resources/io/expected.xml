@@ -50,39 +50,6 @@
     <description>'FileInputStream' should be opened in front of a try block and closed in the corresponding finally block #loc</description>
   </problem>
 
-
-  <problem>
-    <file>IOResourceInspection.java</file>
-    <line>32</line>
-    <method>
-      <name>void foo3()</name>
-      <display_name>foo3()</display_name>
-      <package>com.siyeh.igtest.resources</package>
-      <class>
-        <name>IOResourceInspection</name>
-        <display_name>IOResourceInspection</display_name>
-      </class>
-    </method>
-    <problem_class>I/O resource opened but not safely closed</problem_class>
-    <description>'FileInputStream' should be opened in front of a try block and closed in the corresponding finally block #loc</description>
-  </problem>
-
-  <problem>
-    <file>IOResourceInspection.java</file>
-    <line>39</line>
-    <method>
-      <name>void foo4()</name>
-      <display_name>foo4()</display_name>
-      <package>com.siyeh.igtest.resources</package>
-      <class>
-        <name>IOResourceInspection</name>
-        <display_name>IOResourceInspection</display_name>
-      </class>
-    </method>
-    <problem_class>I/O resource opened but not safely closed</problem_class>
-    <description>'FileInputStream' should be opened in front of a try block and closed in the corresponding finally block #loc</description>
-  </problem>
-  
   <problem>
     <file>IOResourceInspection.java</file>
     <line>57</line>
