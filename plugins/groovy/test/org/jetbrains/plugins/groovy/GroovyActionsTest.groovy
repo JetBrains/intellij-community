@@ -56,6 +56,8 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 "a.<selection>foo(b)</selection>"
   }
 
+  public void testSWInCodeBlock() throws Exception {doTestForSelectWord 3}
+
   private void doTestForSelectWord(int count, String input, String expected) throws Exception {
     myFixture.configureByText("a.groovy", input);
     selectWord(count)
