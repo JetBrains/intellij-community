@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.NameDefiner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyImportedModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +88,11 @@ public class ResolveProcessor implements PyAsScopeProcessor {
         if (!PsiTreeUtil.isAncestor(element, by_name, true)) {
           addNameDefiner(definer);
         }
-        return false;
+        // we can have same module imported directly and as part of chain (import os; import os.path)
+        // direct imports always take precedence over imported modules
+        if (!(myResult instanceof PyImportedModule)) {
+          return false;
+        }
       }
     }
 
