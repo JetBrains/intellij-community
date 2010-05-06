@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 
-public class IntroduceConstantAction extends BaseRefactoringAction {
+public class IntroduceConstantAction extends BasePlatformRefactoringAction {
   public IntroduceConstantAction() {
     setInjectedContext(true);
   }
