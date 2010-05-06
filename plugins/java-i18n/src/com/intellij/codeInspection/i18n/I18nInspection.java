@@ -40,10 +40,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
@@ -689,19 +686,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (parent instanceof PsiExpressionList) {
       final PsiElement grParent = parent.getParent();
       if (grParent instanceof PsiMethodCallExpression) {
-        final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)grParent).getMethodExpression();
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier instanceof PsiReferenceExpression) {
-          final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
-          if (resolved instanceof PsiModifierListOwner) {
-            final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
-            if (annotatedAsNonNls(modifierListOwner)) {
-              return true;
-            }
-            nonNlsTargets.add(modifierListOwner);
-            return false;
-          }
-        }
+        return isNonNlsCall((PsiMethodCallExpression)grParent, nonNlsTargets);
       }
       else if (grParent instanceof PsiNewExpression) {
         final PsiElement parentOfNew = grParent.getParent();
@@ -730,6 +715,28 @@ public class I18nInspection extends BaseLocalInspectionTool {
       }
     }
 
+    return false;
+  }
+
+  private static boolean isNonNlsCall(PsiMethodCallExpression grParent, Set<PsiModifierListOwner> nonNlsTargets) {
+    final PsiReferenceExpression methodExpression = grParent.getMethodExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (qualifier instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
+      if (resolved instanceof PsiModifierListOwner) {
+        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
+        if (annotatedAsNonNls(modifierListOwner)) {
+          return true;
+        }
+        nonNlsTargets.add(modifierListOwner);
+        return false;
+      }
+    } else if (qualifier instanceof PsiMethodCallExpression) {
+      final PsiType type = qualifier.getType();
+      if (type != null && type.equals(methodExpression.getType())) {
+        return isNonNlsCall((PsiMethodCallExpression)qualifier, nonNlsTargets);
+      }
+    }
     return false;
   }
 

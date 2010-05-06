@@ -122,6 +122,9 @@ public abstract class Icons {
   public static final Icon SOURCE_FOLDERS_ICON = IconLoader.getIcon("/nodes/sourceFolder.png");
   public static final Icon TEST_SOURCE_FOLDER = IconLoader.getIcon("/nodes/testSourceFolder.png");
 
+  public static final Icon MODULES_SOURCE_FOLDERS_ICON = IconLoader.getIcon("/modules/sourceRootClosed.png");
+  public static final Icon MODULES_TEST_SOURCE_FOLDER = IconLoader.getIcon("/modules/testRootClosed.png");
+
   public static final Icon CONTENT_ROOT_ICON_OPEN = IconLoader.getIcon("/nodes/ModuleOpen.png");
   public static final Icon CONTENT_ROOT_ICON_CLOSED = IconLoader.getIcon("/nodes/ModuleClosed.png");
 
