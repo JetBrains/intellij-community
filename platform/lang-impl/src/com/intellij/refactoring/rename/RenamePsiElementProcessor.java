@@ -93,7 +93,7 @@ public abstract class RenamePsiElementProcessor {
     if (element instanceof PsiFile) {
       return "refactoring.renameFile";
     }
-    return null;
+    return "refactoring.renameDialogs";
   }
 
   public boolean isToSearchInComments(final PsiElement element) {
