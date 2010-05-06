@@ -27,7 +27,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 
 
-public class PushDownAction extends BaseRefactoringAction {
+public class PushDownAction extends BasePlatformRefactoringAction {
 
   public PushDownAction() {
     setInjectedContext(true);
