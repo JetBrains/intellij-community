@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.HashMap;
@@ -1161,7 +1162,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     updateSize();
   }
 
-  private class CloseAnnotationsAction extends AnAction {
+  private class CloseAnnotationsAction extends DumbAwareAction {
     public CloseAnnotationsAction() {
       super(EditorBundle.message("close.editor.annotations.action.name"));
     }
