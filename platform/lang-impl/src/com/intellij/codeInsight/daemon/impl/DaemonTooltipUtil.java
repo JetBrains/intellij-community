@@ -41,8 +41,8 @@ public class DaemonTooltipUtil {
   public static void showInfoTooltip(@NotNull final HighlightInfo info, final Editor editor, final int defaultOffset, final int currentWidth) {
     if (info.toolTip == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    int endOffset = info.highlighter.getEndOffset();
-    int startOffset = info.highlighter.getStartOffset();
+    int startOffset = info.getActualStartOffset();
+    int endOffset = info.getActualEndOffset();
 
     Point top = editor.logicalPositionToXY(editor.offsetToLogicalPosition(startOffset));
     Point bottom = editor.logicalPositionToXY(editor.offsetToLogicalPosition(endOffset));
