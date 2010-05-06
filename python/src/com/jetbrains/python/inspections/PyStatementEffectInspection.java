@@ -72,6 +72,11 @@ public class PyStatementEffectInspection extends LocalInspectionTool {
           }
         }
       }
+      else if (expression instanceof PyListCompExpression) {
+        if (((PyListCompExpression)expression).getResultExpression() instanceof PyCallExpression) {
+          return;
+        }
+      }
 
       final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
       if (tryPart != null) {
