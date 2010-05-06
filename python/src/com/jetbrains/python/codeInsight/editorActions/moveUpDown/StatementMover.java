@@ -174,6 +174,9 @@ public class StatementMover extends LineMover {
     myStatementListToRemovePass = null;
     myElementsToDecreaseIndent = PsiElement.EMPTY_ARRAY;
     myElementsToIncreaseIndent = PsiElement.EMPTY_ARRAY;
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
     if (!super.checkAvailable(editor, file, info, down)) {
       return false;
     }
