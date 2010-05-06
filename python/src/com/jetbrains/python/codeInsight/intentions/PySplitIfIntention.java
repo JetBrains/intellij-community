@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
@@ -25,7 +26,23 @@ public class PySplitIfIntention extends BaseIntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
+    PsiElement elementAtOffset = file.findElementAt(editor.getCaretModel().getOffset());
+    if (elementAtOffset == null) {
+      return false;
+    }
+
+    // PY-745
+    final IElementType elementType = elementAtOffset.getNode().getElementType();
+    if (elementType == PyTokenTypes.COLON) {
+      elementAtOffset = elementAtOffset.getPrevSibling();
+      elementAtOffset = PyUtil.getFirstNonCommentBefore(elementAtOffset);
+    }
+    else if (elementType == PyTokenTypes.IF_KEYWORD) {
+      elementAtOffset = elementAtOffset.getNextSibling();
+      elementAtOffset = PyUtil.getFirstNonCommentAfter(elementAtOffset);
+    }
+
+    PsiElement element = PsiTreeUtil.getParentOfType(elementAtOffset, PyBinaryExpression.class, false);
     if (element == null) {
       return false;
     }
@@ -46,7 +63,19 @@ public class PySplitIfIntention extends BaseIntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyBinaryExpression element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class);
+    PsiElement elementAtOffset = file.findElementAt(editor.getCaretModel().getOffset());
+    // PY-745
+    final IElementType elementType = elementAtOffset.getNode().getElementType();
+    if (elementType == PyTokenTypes.COLON) {
+      elementAtOffset = elementAtOffset.getPrevSibling();
+      elementAtOffset = PyUtil.getFirstNonCommentBefore(elementAtOffset);
+    }
+    else if (elementType == PyTokenTypes.IF_KEYWORD) {
+      elementAtOffset = elementAtOffset.getNextSibling();
+      elementAtOffset = PyUtil.getFirstNonCommentAfter(elementAtOffset);
+    }
+
+    PyBinaryExpression element = PsiTreeUtil.getParentOfType(elementAtOffset, PyBinaryExpression.class, false);
     while (element.getParent() instanceof PyBinaryExpression) {
       element = (PyBinaryExpression)element.getParent();
     }

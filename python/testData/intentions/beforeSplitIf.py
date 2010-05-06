@@ -1,5 +1,5 @@
 def foo():
-    if a + 2 > 3<caret> and b < 4:
+    i<caret>f a + 2 > 3 and b < 4:
         a = a and b
         b = 4
     elif a > 20:
