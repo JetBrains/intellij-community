@@ -191,6 +191,22 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return data.getWorkingDirectory(project);
   }
 
+  public void setEnvs(Map<String, String> envs) {
+    data.setEnvs(envs);
+  }
+
+  public Map<String, String> getEnvs() {
+    return data.getEnvs();
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    data.PASS_PARENT_ENVS = passParentEnvs;
+  }
+
+  public boolean isPassParentEnvs() {
+    return data.PASS_PARENT_ENVS;
+  }
+
   public boolean isAlternativeJrePathEnabled() {
      return ALTERNATIVE_JRE_PATH_ENABLED;
    }

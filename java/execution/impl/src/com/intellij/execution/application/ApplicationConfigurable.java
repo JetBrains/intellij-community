@@ -16,7 +16,6 @@
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.ui.AlternativeJREPanel;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
@@ -42,7 +41,6 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private final ConfigurationModuleSelector myModuleSelector;
   private AlternativeJREPanel myAlternativeJREPanel;
   private JCheckBox myShowSwingInspectorCheckbox;
-  private EnvironmentVariablesComponent myEnvVariablesComponent;
   private final JreVersionDetector myVersionDetector = new JreVersionDetector();
 
   public ApplicationConfigurable(final Project project) {
@@ -63,9 +61,6 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     configuration.ALTERNATIVE_JRE_PATH_ENABLED = myAlternativeJREPanel.isPathEnabled();
     configuration.ENABLE_SWING_INSPECTOR = myVersionDetector.isJre50Configured(configuration) && myShowSwingInspectorCheckbox.isSelected();
 
-    configuration.setEnvs(myEnvVariablesComponent.getEnvs());
-    configuration.PASS_PARENT_ENVS = myEnvVariablesComponent.isPassParentEnvs();
-
     updateShowSwingInspector(configuration);
   }
 
@@ -74,9 +69,6 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myModuleSelector.reset(configuration);
     getMainClassField().setText(configuration.MAIN_CLASS_NAME);
     myAlternativeJREPanel.init(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
-
-    myEnvVariablesComponent.setEnvs(configuration.getEnvs());
-    myEnvVariablesComponent.setPassParentEnvs(configuration.PASS_PARENT_ENVS);
 
     updateShowSwingInspector(configuration);
   }

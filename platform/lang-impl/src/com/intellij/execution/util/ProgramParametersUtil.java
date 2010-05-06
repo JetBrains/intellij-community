@@ -26,6 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ProgramParametersUtil {
   public static void configureConfiguration(SimpleProgramParameters parameters, CommonProgramRunConfigurationParameters configuration) {
     Project project = configuration.getProject();
@@ -44,6 +47,14 @@ public class ProgramParametersUtil {
       workingDirectory = baseDir.getPath() + "/" + workingDirectory;
     }
     parameters.setWorkingDirectory(workingDirectory);
+
+    if (parameters.getEnv() != null) {
+      Map<String, String> expanded = new HashMap<String, String>();
+      for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
+        expanded.put(each.getKey(), expandPath(each.getValue(), module, project));
+      }
+      parameters.setEnv(expanded);
+    }
   }
 
   protected static String expandPath(String path, Module module, Project project) {

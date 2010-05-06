@@ -155,6 +155,49 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return myData.getWorkingDirectory();
   }
 
+  public void setEnvs(Map<String, String> envs) {
+    myData.setEnvs(envs);
+  }
+
+  public Map<String, String> getEnvs() {
+    return myData.getEnvs();
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    myData.PASS_PARENT_ENVS = passParentEnvs;
+  }
+
+  public boolean isPassParentEnvs() {
+    return myData.PASS_PARENT_ENVS;
+  }
+
+  public boolean isAlternativeJrePathEnabled() {
+    return ALTERNATIVE_JRE_PATH_ENABLED;
+  }
+
+  public void setAlternativeJrePathEnabled(boolean enabled) {
+    this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+  }
+
+  public String getAlternativeJrePath() {
+    return ALTERNATIVE_JRE_PATH;
+  }
+
+  public void setAlternativeJrePath(String path) {
+    this.ALTERNATIVE_JRE_PATH = path;
+  }
+
+  public String getRunClass() {
+    final Data data = getPersistentData();
+    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
+  }
+
+  public String getPackage() {
+    final Data data = getPersistentData();
+    return data.TEST_OBJECT != TEST_PACKAGE ? null : data.getPackageName();
+  }
+
+
   public void beClassConfiguration(final PsiClass testClass) {
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
@@ -255,32 +298,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     else {
       JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
     }
-  }
-
-  public boolean isAlternativeJrePathEnabled() {
-    return ALTERNATIVE_JRE_PATH_ENABLED;
-  }
-
-  public void setAlternativeJrePathEnabled(boolean enabled) {
-    this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
-  }
-
-  public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH;
-  }
-
-  public void setAlternativeJrePath(String path) {
-    this.ALTERNATIVE_JRE_PATH = path;
-  }
-
-  public String getRunClass() {
-    final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
-  }
-
-  public String getPackage() {
-    final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_PACKAGE ? null : data.getPackageName();
   }
 
   public static class Data implements Cloneable {

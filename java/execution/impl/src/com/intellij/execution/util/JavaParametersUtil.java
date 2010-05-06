@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -51,18 +50,14 @@ public class JavaParametersUtil {
     String vmParameters = configuration.getVMParameters();
     if (vmParameters != null) {
       vmParameters = ProgramParametersUtil.expandPath(vmParameters, module, project);
-    }
-    if (parameters.getEnv() != null) {
-      final Map<String, String> envs = new HashMap<String, String>();
-      for (String env : parameters.getEnv().keySet()) {
-        final String value = ProgramParametersUtil.expandPath(parameters.getEnv().get(env), module, project);
-        envs.put(env, value);
-        if (vmParameters != null) {
-          vmParameters = StringUtil.replace(vmParameters, "$" + env + "$", value, false); //replace env usages
+
+      if (parameters.getEnv() != null) {
+        for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
+          vmParameters = StringUtil.replace(vmParameters, "$" + each.getKey() + "$", each.getValue(), false); //replace env usages
         }
       }
-      parameters.setEnv(envs);
     }
+
     parameters.getVMParametersList().addParametersString(vmParameters);
   }
 
@@ -71,8 +66,8 @@ public class JavaParametersUtil {
     final Module module = configurationModule.getModule();
     if (module == null) throw CantRunException.noModuleConfigured(configurationModule.getModuleName());
     final PsiClass psiClass = JavaExecutionUtil.findMainClass(module, mainClassName);
-    if (psiClass == null)  {
-      if ( ! classMustHaveSource ) return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
+    if (psiClass == null) {
+      if (!classMustHaveSource) return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
       throw CantRunException.classNotFound(mainClassName, module);
     }
     final PsiFile psiFile = psiClass.getContainingFile();
@@ -96,7 +91,8 @@ public class JavaParametersUtil {
     parameters.configureByModule(module, classPathType, createModuleJdk(module, jreHome));
   }
 
-  public static void configureProject(Project project, final JavaParameters parameters, final int classPathType, final String jreHome) throws CantRunException {
+  public static void configureProject(Project project, final JavaParameters parameters, final int classPathType, final String jreHome)
+    throws CantRunException {
     parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
   }
 

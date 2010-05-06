@@ -16,11 +16,17 @@
 
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SimpleProgramParameters {
   private final ParametersList myProgramParameters = new ParametersList();
   private String myWorkingDirectory;
+  private Map<String, String> myEnv;
+  private boolean myPassParentEnvs = true;
 
   public String getWorkingDirectory() {
     return myWorkingDirectory;
@@ -36,5 +42,30 @@ public class SimpleProgramParameters {
 
   public ParametersList getProgramParametersList() {
     return myProgramParameters;
+  }
+
+  public Map<String, String> getEnv() {
+    return myEnv;
+  }
+
+  public void setEnv(final Map<String, String> env) {
+    myEnv = env;
+  }
+
+  public boolean isPassParentEnvs() {
+    return myPassParentEnvs;
+  }
+
+  public void setPassParentEnvs(final boolean passDefaultEnvs) {
+    myPassParentEnvs = passDefaultEnvs;
+  }
+
+  public void setupEnvs(Map<String, String> envs, boolean passDefault) {
+    if (!envs.isEmpty()) {
+      final HashMap<String, String> map = new HashMap<String, String>(envs);
+      EnvironmentVariablesComponent.inlineParentOccurrences(map);
+      setEnv(map);
+      setPassParentEnvs(passDefault);
+    }
   }
 }

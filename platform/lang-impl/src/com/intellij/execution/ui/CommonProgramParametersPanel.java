@@ -17,6 +17,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -46,11 +47,14 @@ public class CommonProgramParametersPanel extends JPanel {
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
   private LabeledComponent<JPanel> myWorkingDirectoryComponent;
   private TextFieldWithBrowseButton myWorkingDirectoryField;
+  private EnvironmentVariablesComponent myEnvVariablesComponent;
 
   private Module myModuleContext = null;
 
   public CommonProgramParametersPanel() {
-    super(new GridBagLayout());
+    super();
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    
     initComponents();
     copyDialogCaption(myProgramParametersComponent);
   }
@@ -95,21 +99,17 @@ public class CommonProgramParametersPanel extends JPanel {
     panel.add(button, BorderLayout.EAST);
 
     myWorkingDirectoryComponent = LabeledComponent.create(panel, ExecutionBundle.message("run.configuration.working.directory.label"));
+    myEnvVariablesComponent = new EnvironmentVariablesComponent();
 
-    GridBagConstraints c = new GridBagConstraints();
-    c.weightx = 1;
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.anchor = GridBagConstraints.LINE_START;
-    c.gridx = 0;
+    addComponents();
 
-    addComponents(c);
+    setPreferredSize(new Dimension(10, 10));
   }
 
-  protected void addComponents(GridBagConstraints c) {
-    c.gridy++;
-    add(myProgramParametersComponent, c);
-    c.gridy++;
-    add(myWorkingDirectoryComponent, c);
+  protected void addComponents() {
+    add(myProgramParametersComponent);
+    add(myWorkingDirectoryComponent);
+    add(myEnvVariablesComponent);
   }
 
   protected void copyDialogCaption(final LabeledComponent<RawCommandLineEditor> component) {
@@ -118,42 +118,40 @@ public class CommonProgramParametersPanel extends JPanel {
     component.getLabel().setLabelFor(rawCommandLineEditor.getTextField());
   }
 
-  public String getProgramParametersLabel() {
-    return myProgramParametersComponent.getText();
-  }
-
   public void setProgramParametersLabel(String textWithMnemonic) {
     myProgramParametersComponent.setText(textWithMnemonic);
     copyDialogCaption(myProgramParametersComponent);
   }
 
-  public String getProgramParameters() {
-    return myProgramParametersComponent.getComponent().getText();
+  public String getProgramParametersLabel() {
+    return myProgramParametersComponent.getText();
   }
 
-  public void setProgramParameters(String text) {
-    myProgramParametersComponent.getComponent().setText(text);
+  public void setProgramParameters(String params) {
+    myProgramParametersComponent.getComponent().setText(params);
   }
 
-  public String getWorkingDirectory() {
-    return myWorkingDirectoryField.getText();
+  public void setWorkingDirectory(String dir) {
+    myWorkingDirectoryField.setText(dir);
   }
 
-  public void setWorkingDirectory(String text) {
-    myWorkingDirectoryField.setText(text);
-  }
-
-  public void setModuleContext(Module module) {
-    myModuleContext = module;
+  public void setModuleContext(Module moduleContext) {
+    myModuleContext = moduleContext;
   }
 
   public void applyTo(CommonProgramRunConfigurationParameters configuration) {
-    configuration.setProgramParameters(getProgramParameters());
-    configuration.setWorkingDirectory(getWorkingDirectory());
+    configuration.setProgramParameters(myProgramParametersComponent.getComponent().getText());
+    configuration.setWorkingDirectory(myWorkingDirectoryField.getText());
+
+    configuration.setEnvs(myEnvVariablesComponent.getEnvs());
+    configuration.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
   }
 
   public void reset(CommonProgramRunConfigurationParameters configuration) {
     setProgramParameters(configuration.getProgramParameters());
     setWorkingDirectory(configuration.getWorkingDirectory());
+
+    myEnvVariablesComponent.setEnvs(configuration.getEnvs());
+    myEnvVariablesComponent.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 }

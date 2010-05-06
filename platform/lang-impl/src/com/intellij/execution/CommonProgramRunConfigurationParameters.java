@@ -17,6 +17,8 @@ package com.intellij.execution;
 
 import com.intellij.openapi.project.Project;
 
+import java.util.Map;
+
 public interface CommonProgramRunConfigurationParameters {
   Project getProject();
 
@@ -27,4 +29,12 @@ public interface CommonProgramRunConfigurationParameters {
   void setWorkingDirectory(String value);
 
   String getWorkingDirectory();
+
+  void setEnvs(Map<String, String> envs);
+
+  Map<String, String> getEnvs();
+
+  void setPassParentEnvs(boolean passParentEnvs);
+
+  boolean isPassParentEnvs();
 }

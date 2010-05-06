@@ -169,6 +169,22 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
   }
 
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    PASS_PARENT_ENVS = passParentEnvs;
+  }
+
+  public Map<String, String> getEnvs() {
+    return myEnvs;
+  }
+
+  public void setEnvs(final Map<String, String> envs) {
+    this.myEnvs = envs;
+  }
+
+  public boolean isPassParentEnvs() {
+    return PASS_PARENT_ENVS;
+  }
+
   @Nullable
   public String getRunClass() {
     return MAIN_CLASS_NAME;
@@ -219,14 +235,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     writeModule(element);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
-  }
-
-  public Map<String, String> getEnvs() {
-    return myEnvs;
-  }
-
-  public void setEnvs(final Map<String, String> envs) {
-    this.myEnvs = envs;
   }
 
   private class MyJavaCommandLineState extends JavaCommandLineState {

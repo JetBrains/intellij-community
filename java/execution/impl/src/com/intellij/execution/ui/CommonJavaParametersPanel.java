@@ -20,8 +20,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.RawCommandLineEditor;
 
-import java.awt.*;
-
 public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   private LabeledComponent<RawCommandLineEditor> myVMParameters;
 
@@ -30,16 +28,13 @@ public class CommonJavaParametersPanel extends CommonProgramParametersPanel {
   }
 
   @Override
-  protected void addComponents(GridBagConstraints c) {
+  protected void addComponents() {
     myVMParameters = LabeledComponent.create(new RawCommandLineEditor(),
                                              ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
     copyDialogCaption(myVMParameters);
 
-
-    c.gridy++;
-    add(myVMParameters, c);
-
-    super.addComponents(c);
+    add(myVMParameters);
+    super.addComponents();
   }
 
   public void setVMParameters(String text) {
