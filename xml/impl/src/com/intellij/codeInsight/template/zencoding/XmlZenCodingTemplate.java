@@ -189,13 +189,13 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     if (token == null) {
       return null;
     }
-    if (useDefaultTag && token.myAttribute2Value.size() == 0) {
+    if (useDefaultTag && token.getAttribute2Value().size() == 0) {
       return null;
     }
-    if (template != null && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
-      assert prefix.equals(token.myKey);
-      token.myTemplate = template;
-      if (token.myAttribute2Value.size() > 0) {
+    if (template != null && (token.getAttribute2Value().size() > 0 || isTrueXml(callback))) {
+      assert prefix.equals(token.getKey());
+      token.setTemplate(template);
+      if (token.getAttribute2Value().size() > 0) {
         XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, false);
         if (tag == null) {
           return null;

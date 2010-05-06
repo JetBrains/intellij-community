@@ -321,21 +321,21 @@ class XmlZenCodingInterpreter {
   private static void invokeTemplate(TemplateToken token,
                                      final CustomTemplateCallback callback,
                                      int numberInIteration) {
-    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
-    if (callback.isLiveTemplateApplicable(token.myKey)) {
+    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.getAttribute2Value());
+    if (callback.isLiveTemplateApplicable(token.getKey())) {
       invokeExistingLiveTemplate(token, callback, numberInIteration, attr2value);
     }
     else {
       TemplateImpl template = new TemplateImpl("", "");
-      template.addTextSegment('<' + token.myKey);
+      template.addTextSegment('<' + token.getKey());
       if (attr2value.size() > 0) {
         template.addVariable(ATTRS, "", "", false);
         template.addVariableSegment(ATTRS);
       }
       template.addTextSegment(">");
-      if (XmlZenCodingTemplate.isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(token.myKey)) {
+      if (XmlZenCodingTemplate.isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(token.getKey())) {
         template.addVariableSegment(TemplateImpl.END);
-        template.addTextSegment("</" + token.myKey + ">");
+        template.addTextSegment("</" + token.getKey() + ">");
       }
       template.setToReformat(true);
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
@@ -347,10 +347,10 @@ class XmlZenCodingInterpreter {
                                                  CustomTemplateCallback callback,
                                                  int numberInIteration,
                                                  List<Pair<String, String>> attr2value) {
-    if (token.myTemplate != null) {
+    if (token.getTemplate() != null) {
       if (attr2value.size() > 0 || XmlZenCodingTemplate.isTrueXml(callback)) {
-        TemplateImpl modifiedTemplate = token.myTemplate.copy();
-        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback, true);
+        TemplateImpl modifiedTemplate = token.getTemplate().copy();
+        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.getTemplate().getString(), callback, true);
         if (tag != null) {
           for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
             Pair<String, String> pair = iterator.next();
@@ -386,11 +386,11 @@ class XmlZenCodingInterpreter {
           return;
         }
       }
-      callback.expandTemplate(token.myTemplate, null);
+      callback.expandTemplate(token.getTemplate(), null);
     }
     else {
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-      callback.expandTemplate(token.myKey, predefinedValues);
+      callback.expandTemplate(token.getKey(), predefinedValues);
     }
   }
 
