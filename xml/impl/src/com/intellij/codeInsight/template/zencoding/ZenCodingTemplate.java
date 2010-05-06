@@ -182,7 +182,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       if (tokens.size() == 2) {
         Token token = tokens.get(0);
         if (token instanceof TemplateToken) {
-          if (key.equals(((TemplateToken)token).myKey) && callback.findApplicableTemplates(key).size() > 1) {
+          if (key.equals(((TemplateToken)token).getKey()) && callback.findApplicableTemplates(key).size() > 1) {
             callback.startTemplate();
             return;
           }
