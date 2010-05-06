@@ -2,6 +2,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyHighlighter;
 import com.jetbrains.python.PyNames;
@@ -37,10 +38,21 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
       Annotation ann = getHolder().createInfoAnnotation(name_node, null);
       final String name = node.getName();
       if (PyNames.UnderscoredAttributes.contains(name) || PyNames.BuiltinMethods.containsKey(name)) {
-        boolean new_style_class = false;
         PyClass cls = node.getContainingClass();
-        if (cls != null) new_style_class = cls.isNewStyleClass();
-        if (!PyNames.NEW.equals(name) || new_style_class) ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+        if (PyNames.NEW.equals(name)) {
+          boolean new_style_class = false;
+          try {
+            if (cls != null) new_style_class = cls.isNewStyleClass();
+          }
+          catch (IndexNotReadyException ignored) {
+          }
+          if (new_style_class) {
+            ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+          }
+        }
+        else {
+          ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_DEFINITION);
+        }
       }
       else ann.setTextAttributes(PyHighlighter.PY_FUNC_DEFINITION);
     }
