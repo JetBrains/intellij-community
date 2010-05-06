@@ -36,11 +36,21 @@ public class BlockDebugUtil {
    */
   public static void dumpBlockTree(PrintStream out, Block block) {
     out.println("--- BLOCK TREE DUMP ---");
-    dumpBlockTree(out, block, "");
+    dumpBlockTree(out, block, "", true);
     out.println("--- END OF DUMP ---\n\n");
   }
 
-  private static void dumpBlockTree(PrintStream out, Block block, String indent) {
+
+  /**
+   * Print out a single block info without child blocks.
+   * @param out   The output stream.
+   * @param block The block to print the info for.
+   */
+  public static void dumpBlock(PrintStream out, Block block) {
+    dumpBlockTree(out, block, "", false);
+  }
+
+  private static void dumpBlockTree(PrintStream out, Block block, String indent, boolean withChildren) {
     if (block == null) return;
     out.print(indent + block.getClass().getSimpleName());
     if (block.getIndent() != null) {
@@ -63,13 +73,15 @@ public class BlockDebugUtil {
       }
     }
     out.println();
-    List<Block> subBlocks = getSubBlocks(block);
-    if (subBlocks != null && subBlocks.size() > 0) {
-      out.println(indent + "{");
-      for (Block child : subBlocks) {
-        dumpBlockTree(out, child, indent + "    ");
+    if (withChildren) {
+      List<Block> subBlocks = getSubBlocks(block);
+      if (subBlocks != null && subBlocks.size() > 0) {
+        out.println(indent + "{");
+        for (Block child : subBlocks) {
+          dumpBlockTree(out, child, indent + "    ", true);
+        }
+        out.println(indent + "}");
       }
-      out.println(indent + "}");
     }
   }
 
