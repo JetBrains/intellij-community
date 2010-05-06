@@ -404,6 +404,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testArrayAccessWithLocalIndex() throws Exception {
+    doTest();
+  }
+
   public void testArrayAccessWithDuplicates() throws Exception {
     doDuplicatesTest();
   }
