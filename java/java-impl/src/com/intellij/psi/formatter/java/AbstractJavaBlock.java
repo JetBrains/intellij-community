@@ -730,7 +730,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return defaultAlignment;
       if (myIsAfterClassKeyword) return null;
       if (role == ChildRole.MODIFIER_LIST) return defaultAlignment;
-      if (role == ChildRole.DOC_COMMENT) return defaultAlignment;
       return null;
     }
 
