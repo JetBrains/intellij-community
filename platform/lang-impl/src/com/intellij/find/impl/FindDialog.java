@@ -942,6 +942,7 @@ class FindDialog extends DialogWrapper {
       model.setModuleName(null);
       model.setCustomScopeName(null);
       model.setCustomScope(null);
+      model.setCustomScope(false);
 
       if (myRbDirectory.isSelected()) {
         String directory = getDirectory();
@@ -957,6 +958,7 @@ class FindDialog extends DialogWrapper {
         String customScopeName = selectedScope == null ? null : selectedScope.getDisplayName();
         model.setCustomScopeName(customScopeName);
         model.setCustomScope(selectedScope == null ? null : selectedScope);
+        model.setCustomScope(true);
         findSettings.setCustomScope(customScopeName);
       }
     }
@@ -983,8 +985,17 @@ class FindDialog extends DialogWrapper {
           }
         }
       }
+      if (myModel.isCustomScope()) {
+        myRbCustomScope.setSelected(true);
 
-      if (myModel.isProjectScope()) {
+        myScopeCombo.setEnabled(true);
+        myScopeCombo.init(myProject, true, true, myModel.getCustomScopeName());
+
+        myCbWithSubdirectories.setEnabled(false);
+        myDirectoryComboBox.setEnabled(false);
+        mySelectDirectoryButton.setEnabled(false);
+        myModuleComboBox.setEnabled(false);
+      } else if (myModel.isProjectScope()) {
         myRbProject.setSelected(true);
 
         myCbWithSubdirectories.setEnabled(false);
@@ -1014,17 +1025,6 @@ class FindDialog extends DialogWrapper {
         // force showing even if we have only one module
         myRbModule.setVisible(true);
         myModuleComboBox.setVisible(true);
-      }
-      else if (myModel.getCustomScopeName() != null) {
-        myRbCustomScope.setSelected(true);
-
-        myScopeCombo.setEnabled(true);
-        myScopeCombo.init(myProject, true, true, myModel.getCustomScopeName());
-
-        myCbWithSubdirectories.setEnabled(false);
-        myDirectoryComboBox.setEnabled(false);
-        mySelectDirectoryButton.setEnabled(false);
-        myModuleComboBox.setEnabled(false);
       }
       else {
         assert false;
