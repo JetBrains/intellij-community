@@ -77,10 +77,6 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           element.acceptChildren(this);
         }
       }
-
-      public void visitPyParameter(final PyNamedParameter node) {
-        // Do not add parameters to structure view
-      }
     });
 
     StructureViewTreeElement[] children = new StructureViewTreeElement[childrenElements.size()];
@@ -153,15 +149,13 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         return myElement.getName();
       }
 
-      public
       @Nullable
-      TextAttributesKey getTextAttributesKey() {
+      public TextAttributesKey getTextAttributesKey() {
         return null;
       }
 
-      public
       @Nullable
-      String getLocationString() {
+      public String getLocationString() {
         return null;
       }
 
