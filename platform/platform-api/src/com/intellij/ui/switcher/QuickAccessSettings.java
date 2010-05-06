@@ -28,6 +28,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -49,7 +50,7 @@ import java.awt.event.*;
 import java.text.NumberFormat;
 import java.util.*;
 
-public class QuickAccessSettings implements ApplicationComponent, Configurable, KeymapManagerListener, Disposable {
+public class QuickAccessSettings implements ApplicationComponent, SearchableConfigurable, KeymapManagerListener, Disposable {
 
   private Set<Integer> myModifierVks = new HashSet<Integer>();
   private Keymap myKeymap;
@@ -107,6 +108,14 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
   public JComponent createComponent() {
     myUi = new Ui();
     return myUi;
+  }
+
+  public String getId() {
+    return "QuickAccess";
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
   }
 
   public void activeKeymapChanged(Keymap keymap) {
