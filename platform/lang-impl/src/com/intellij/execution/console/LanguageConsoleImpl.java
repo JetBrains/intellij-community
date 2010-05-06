@@ -201,7 +201,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     editorSettings.setAdditionalLinesCount(0);
     editorSettings.setAdditionalColumnsCount(1);
     editorSettings.setRightMarginShown(false);
-    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setFoldingOutlineShown(true);
     editorSettings.setLineNumbersShown(false);
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setIndentGuidesShown(false);
