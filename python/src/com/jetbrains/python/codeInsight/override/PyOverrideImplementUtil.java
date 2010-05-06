@@ -149,8 +149,17 @@ public class PyOverrideImplementUtil {
   @NotNull
   private static String generateNewMethod(@NotNull final PsiElement element) {
     assert (element instanceof PyFunction);
-    PyFunction function = (PyFunction)element;
-    return "def " + function.getName() + function.getParameterList().getText() + ":";
+    final PyFunction function = (PyFunction)element;
+    final StringBuilder newMethodText = new StringBuilder();
+    final PyDecoratorList decoratorList = function.getDecoratorList();
+    if (decoratorList != null) {
+      for (PyDecorator decorator: decoratorList.getDecorators()) {
+        if ("classmethod".equals(decorator.getCallee().getText())) {
+          newMethodText.append("@classmethod\n");
+        }
+      }
+    }
+    return newMethodText.append("def ").append(function.getName()).append(function.getParameterList().getText()).append(":").toString();
   }
 
   @NotNull

@@ -14,7 +14,7 @@ import java.util.List;
  * @author yole
  */
 public class PyOverrideTest extends PyLightFixtureTestCase {
-  public void testSimple() throws Exception {
+  private void doTest() throws Exception {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
     PyFile file = (PyFile) myFixture.getFile();
     List<PyClass> classes = file.getTopLevelClasses();
@@ -22,5 +22,13 @@ public class PyOverrideTest extends PyLightFixtureTestCase {
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), classes.get(1),
                                             Collections.singletonList(new PyMethodMember(toOverride)));
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py");
+  }
+
+  public void testSimple() throws Exception {
+    doTest();
+  }
+
+  public void testClassmethod() throws Exception {
+    doTest();
   }
 }
