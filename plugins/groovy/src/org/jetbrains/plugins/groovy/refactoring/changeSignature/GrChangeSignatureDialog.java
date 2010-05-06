@@ -33,7 +33,6 @@ import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -46,6 +45,8 @@ import javax.swing.event.TableModelListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message;
 
 /**
  * @author Maxim.Medvedev
@@ -166,8 +167,11 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     if (element != null) {
       myReturnTypeField.setText(element.getText());
     }
-    
+
+    myReturnTypeLabel = new JLabel();
     myReturnTypeLabel.setLabelFor(myReturnTypeField);
+
+    myNameLabel = new JLabel();
     myNameLabel.setLabelFor(myNameField);
   }
 
@@ -241,7 +245,9 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
   private static void generateParameterText(GrParameterInfo info, StringBuilder builder) {
     final PsiTypeCodeFragment typeFragment = info.getTypeFragment();
-    builder.append(typeFragment != null ? typeFragment.getText().trim() : GrModifier.DEF).append(' ');
+    String typeText = typeFragment != null ? typeFragment.getText().trim() : GrModifier.DEF;
+    if (typeText.length() == 0) typeText = GrModifier.DEF;
+    builder.append(typeText).append(' ');
     final GroovyCodeFragment nameFragment = info.getNameFragment();
     builder.append(nameFragment != null ? nameFragment.getText().trim() : "");
     final GroovyCodeFragment defaultInitializer = info.getDefaultInitializerFragment();
@@ -295,25 +301,32 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   }
 
   private boolean validateInputData() {
-    if (!checkName()) {
-      CommonRefactoringUtil.showErrorHint(myProject, null, "Name is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+    if (!StringUtil.isJavaIdentifier(getNewName())) {
+      CommonRefactoringUtil
+        .showErrorHint(myProject, null, message("name.is.wrong", getNewName()), message("incorrect.data"), HelpID.CHANGE_SIGNATURE);
       return false;
     }
 
     if (!checkType(myReturnTypeCodeFragment)) {
-      CommonRefactoringUtil.showErrorHint(myProject, null, "Return type is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+      CommonRefactoringUtil
+        .showErrorHint(myProject, null, message("return.type.is.wrong"), message("incorrect.data"), HelpID.CHANGE_SIGNATURE);
       return false;
     }
 
     for (GrParameterInfo info : myParameterModel.getParameterInfos()) {
+      if (!StringUtil.isJavaIdentifier(info.getName())) {
+        CommonRefactoringUtil
+          .showErrorHint(myProject, null, message("name.is.wrong", info.getName()), message("incorrect.data"), HelpID.CHANGE_SIGNATURE);
+      }
       if (!checkType(info.getTypeFragment())) {
         CommonRefactoringUtil
-          .showErrorHint(myProject, null, "Type for parameter " + info.getName() + " is wrong", "Incorrect data", HelpID.CHANGE_SIGNATURE);
+          .showErrorHint(myProject, null, message("type.for.parameter.is.incorrect", info.getName()), message("incorrect.data"),
+                         HelpID.CHANGE_SIGNATURE);
         return false;
       }
       String defaultValue = info.getDefaultValue();
       if (info.getOldIndex() < 0 && (defaultValue == null || defaultValue.trim().length() == 0)) {
-        CommonRefactoringUtil.showErrorHint(myProject, null, "Specify default value for parameter " + info.getName(), "Incorrect data",
+        CommonRefactoringUtil.showErrorHint(myProject, null, message("specify.default.value", info.getName()), message("incorrect.data"),
                                             HelpID.CHANGE_SIGNATURE);
         return false;
       }
@@ -321,7 +334,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     return true;
   }
 
-  private boolean checkType(PsiTypeCodeFragment typeCodeFragment) {
+  private static boolean checkType(PsiTypeCodeFragment typeCodeFragment) {
     try {
       typeCodeFragment.getType();
     }
@@ -334,15 +347,4 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     return true;
   }
 
-  private boolean checkName() {
-    final String newName = getNewName();
-    if (StringUtil.isJavaIdentifier(newName)) return true;
-    try {
-      GroovyPsiElementFactory.getInstance(myProject).createMethodFromText("def " + newName + "(){}");
-    }
-    catch (Throwable e) {
-      return false;
-    }
-    return true;
-  }
 }

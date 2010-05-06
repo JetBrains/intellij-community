@@ -10,7 +10,7 @@
     </properties>
     <border type="none"/>
     <children>
-      <component id="de28c" class="javax.swing.JLabel" binding="myNameLabel">
+      <component id="de28c" class="javax.swing.JLabel" binding="myNameLabel" custom-create="true">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -18,7 +18,7 @@
           <text value="&amp;Name:"/>
         </properties>
       </component>
-      <component id="c4b75" class="javax.swing.JLabel" binding="myReturnTypeLabel">
+      <component id="c4b75" class="javax.swing.JLabel" binding="myReturnTypeLabel" custom-create="true">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

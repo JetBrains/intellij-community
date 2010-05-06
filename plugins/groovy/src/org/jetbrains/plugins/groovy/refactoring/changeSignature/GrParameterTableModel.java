@@ -98,19 +98,6 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   public void setValueAt(Object value, int rowIndex, int columnIndex) {
     if (rowIndex < 0 || rowIndex >= infos.size()) return;
     if (columnIndex < 0 || columnIndex > 3) return;
-    /*String s = value instanceof String ? (String)value : "";
-    s = s.trim();
-    final GrParameterInfo info = infos.get(rowIndex);
-    switch (columnIndex) {
-      case 0:
-        info.setType(s);
-      case 1:
-        info.setName(s);
-      case 2:
-        info.setDefaultInitializer(s);
-      case 3:
-        info.setDefaultValue(s);
-    }*/
     fireTableCellUpdated(rowIndex, columnIndex);
   }
 
@@ -147,7 +134,9 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
 
   @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
-    return true;
+    if (columnIndex < 3) return true;
+    GrParameterInfo info = infos.get(rowIndex);
+    return info.getOldIndex() < 0;
   }
 
   public List<GrParameterInfo> getParameterInfos() {
