@@ -232,7 +232,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     }
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
         Collections.sort(myClassesToImport, new PsiProximityComparator(referenceElement.getElement()));

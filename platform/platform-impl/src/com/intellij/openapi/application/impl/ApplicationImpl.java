@@ -860,7 +860,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     if (ourDispatchThread == currentThread) return;
 
     Integer safeCounter = ourEdtSafe.get();
-    if (safeCounter != null && safeCounter < 1) return;
+    if (safeCounter != null && safeCounter > 0) return;
 
     LOG.error(message,
               "Current thread: " + describe(Thread.currentThread()),
