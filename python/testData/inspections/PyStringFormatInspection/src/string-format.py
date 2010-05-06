@@ -70,3 +70,7 @@ for i in range(0,3):
 
 for item in my_list:
     print '%s %s' % item   # ok (PY-734)
+
+def bar():
+    return None
+"%s %s" % bar()   #Too few arguments for format string

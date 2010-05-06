@@ -100,12 +100,12 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (myFormatSpec.get("1") != null) {
             assert rightExpression != null;
-            checkType(rightExpression, myFormatSpec.get("1"));
+            checkExpressionType(rightExpression, myFormatSpec.get("1"));
           }
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
-          PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain().getElement();
+          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain().getElement();
           if (pyElement == null) {
             return -1;
           }
@@ -116,7 +116,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           return inspectArguments((PyExpression)element);
         }
         else if (rightExpression instanceof PyCallExpression) {
-          PyCallExpression.PyMarkedFunction markedFunction = ((PyCallExpression)rightExpression).resolveCallee();
+          final PyCallExpression.PyMarkedFunction markedFunction = ((PyCallExpression)rightExpression).resolveCallee();
           if (markedFunction != null) {
             PyStatementList statementList = markedFunction.getFunction().getStatementList();
             PyReturnStatement[] returnStatements = PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
@@ -146,7 +146,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
           for (PyExpression expression : expressions) {
             final String formatSpec = myFormatSpec.get(Integer.toString(i));
             if (formatSpec != null) {
-              checkType(expression, formatSpec);
+              checkExpressionType(expression, formatSpec);
             }
             ++i;
           }
@@ -168,7 +168,7 @@ public class PyStringFormatInspection extends LocalInspectionTool {
                 myUsedMappingKeys.put(name, true);
                 final PyExpression value = expression.getValue();
                 if (value != null) {
-                  checkType(value, myFormatSpec.get(name));
+                  checkExpressionType(value, myFormatSpec.get(name));
                 }
               }
             }
@@ -183,19 +183,19 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         }
         else if (rightExpression instanceof PyListLiteralExpression) {
           if (myFormatSpec.get("1") != null) {
-            simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+            checkTypeCompatible(rightExpression, "str", myFormatSpec.get("1"));
             return 1;
           }
         }
         else if (rightExpression instanceof PySliceExpression) {
           if (myFormatSpec.get("1") != null) {
-            simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+            checkTypeCompatible(rightExpression, "str", myFormatSpec.get("1"));
             return 1;
           }
         }
         else if (rightExpression instanceof PyListCompExpression) {
           if (myFormatSpec.get("1") != null) {
-            simpleCheckType(rightExpression, "str", myFormatSpec.get("1"));
+            checkTypeCompatible(rightExpression, "str", myFormatSpec.get("1"));
             return 1;
           }
         }
@@ -210,17 +210,17 @@ public class PyStringFormatInspection extends LocalInspectionTool {
         myVisitor.registerProblem(expression, message);
       }
 
-      private void checkType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName) {
+      private void checkExpressionType(@NotNull final PyExpression expression, @NotNull final String expectedTypeName) {
         final PyType type = expression.getType(TypeEvalContext.fast());
         if (type != null && !(type instanceof PyTypeReference)) {
           final String typeName = type.getName();
-          simpleCheckType(expression, typeName, expectedTypeName);
+          checkTypeCompatible(expression, typeName, expectedTypeName);
         }
       }
 
-      private void simpleCheckType(@NotNull final PyExpression expression,
-                                   @Nullable final String typeName,
-                                   @NotNull final String expectedTypeName) {
+      private void checkTypeCompatible(@NotNull final PyExpression expression,
+                                       @Nullable final String typeName,
+                                       @NotNull final String expectedTypeName) {
         if ("str".equals(expectedTypeName)) {
           return;
         }
