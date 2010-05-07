@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import junit.framework.ComparisonFailure
+import com.intellij.psi.JavaPsiFacade
 
 /**
  * @author peter
@@ -28,6 +29,8 @@ package groovy.lang;
 public interface Function1<T,R> {
   public abstract R call(T param);
 }"""
+
+    myFixture.allowTreeAccessForFile JavaPsiFacade.getInstance(project).findClass(Object.name).containingFile.navigationElement.containingFile.virtualFile
   }
 
   public void testCastListToIterable() throws Exception {
@@ -216,9 +219,25 @@ def foo(Function2<Integer, String, Object> f) {}
   public void testReturnTypeOneMethodInterface() throws Exception {
     myFixture.configureByText "a.groovy", """
 @Typed Function1<String, Integer> bar() {
-  return { it.subsREF }
+   { it.subs<caret> }
 }
 """
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
+  }
+
+  public void testClosureInMapInstantiation() throws Exception {
+    myFixture.configureByText "a.groovy", """
+class Foo<T> {
+  int foo(T a) {}
+}
+
+@Typed Foo<String> bar() {
+    return [foo: { it.subs<caret> }]
+}
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
 }
