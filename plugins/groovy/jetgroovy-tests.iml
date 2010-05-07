@@ -23,6 +23,7 @@
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="groovypp" />
   </component>
 </module>
 
