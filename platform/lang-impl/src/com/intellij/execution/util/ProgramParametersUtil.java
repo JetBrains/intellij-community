@@ -48,6 +48,7 @@ public class ProgramParametersUtil {
     }
     parameters.setWorkingDirectory(workingDirectory);
 
+    parameters.setupEnvs(configuration.getEnvs(), configuration.isPassParentEnvs());
     if (parameters.getEnv() != null) {
       Map<String, String> expanded = new HashMap<String, String>();
       for (Map.Entry<String, String> each : parameters.getEnv().entrySet()) {
