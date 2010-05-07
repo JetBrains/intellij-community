@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl.rules;
 
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,29 +47,51 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
     if (virtualFile == null) {
       return null;
     }
-    boolean isInTest = ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInTestSourceContent(virtualFile);
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+    boolean isInLib = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
+    if (isInLib) return LIBRARY;
+    boolean isInTest = fileIndex.isInTestSourceContent(virtualFile);
     return isInTest ? TEST : PRODUCTION;
   }
 
-  private static final UsageScopeGroup TEST = new UsageScopeGroup(true);
-  private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(false);
-  private static class UsageScopeGroup implements UsageGroup {
-    private final boolean isTest;
-
-    private UsageScopeGroup(boolean isTest) {
-      this.isTest = isTest;
-    }
-
-    public void update() {
-    }
-
+  private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     public Icon getIcon(boolean isOpen) {
-      return isTest ? Icons.TEST_SOURCE_FOLDER : Icons.SOURCE_FOLDERS_ICON;
+      return Icons.TEST_SOURCE_FOLDER;
     }
 
     @NotNull
     public String getText(UsageView view) {
-      return isTest ? "Test" : "Production";
+      return "Test";
+    }
+  };
+  private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
+    public Icon getIcon(boolean isOpen) {
+      return Icons.SOURCE_FOLDERS_ICON ;
+    }
+
+    @NotNull
+    public String getText(UsageView view) {
+      return "Production";
+    }
+  };
+  private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
+    public Icon getIcon(boolean isOpen) {
+      return Icons.LIBRARY_ICON ;
+    }
+
+    @NotNull
+    public String getText(UsageView view) {
+      return "Library";
+    }
+  };
+  private abstract static class UsageScopeGroup implements UsageGroup {
+    private final int myCode;
+
+    private UsageScopeGroup(int code) {
+      myCode = code;
+    }
+
+    public void update() {
     }
 
     public FileStatus getFileStatus() {
@@ -91,11 +114,11 @@ public class UsageScopeGroupingRule implements UsageGroupingRule {
       if (this == o) return true;
       if (!(o instanceof UsageScopeGroup)) return false;
       final UsageScopeGroup usageTypeGroup = (UsageScopeGroup)o;
-      return isTest == usageTypeGroup.isTest;
+      return myCode == usageTypeGroup.myCode;
     }
 
     public int hashCode() {
-      return isTest ? 0 : 1;
+      return myCode;
     }
   }
 }
