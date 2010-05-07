@@ -288,9 +288,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                   if (cause instanceof ProcessCanceledException) {
                     throw (ProcessCanceledException)cause;
                   }
+                  if (cause instanceof OutOfMemoryError) {
+                    throw (OutOfMemoryError)cause;
+                  }
                   handleDslError(e, project, dslFile);
                 }
                 catch (ProcessCanceledException e) {
+                  throw e;
+                }
+                catch (OutOfMemoryError e) {
                   throw e;
                 }
                 catch (Throwable e) { // To handle exceptions in definition script
