@@ -258,7 +258,7 @@ public class PyBlock implements ASTBlock {
     if (isAround(type1, type2, PyTokenTypes.AUG_ASSIGN_OPERATIONS)) {
       return getSpacingForOption(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);      
     }
-    if (isAround(type1, type2, PyTokenTypes.ADDITIVE_OPERATIONS)) {
+    if (isAround(type1, type2, PyTokenTypes.ADDITIVE_OPERATIONS) && parentType != PyElementTypes.PREFIX_EXPRESSION) {
       return getSpacingForOption(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
     }
     if (isAround(type1, type2, PyTokenTypes.MULTIPLICATIVE_OPERATIONS)) {
