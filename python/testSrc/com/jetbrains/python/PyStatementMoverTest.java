@@ -19,7 +19,7 @@ public class PyStatementMoverTest extends PyLightFixtureTestCase {
     myFixture.configureByFile("mover/" + testName + ".py");
     performAction(new MoveStatementUpAction().getHandler());
     myFixture.checkResultByFile("mover/" + testName + "_afterUp.py", true);
-    
+
     FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.getFile()));
     myFixture.configureByFile("mover/" + getTestName(true) + ".py");
     performAction(new MoveStatementDownAction().getHandler());
@@ -58,6 +58,18 @@ public class PyStatementMoverTest extends PyLightFixtureTestCase {
   }
 
   public void testSelection() throws Exception {
+    doTest();
+  }
+
+  public void testSimpleBlankLines() throws Exception {
+    doTest();
+  }
+
+  public void testPY950() throws Exception {
+    doTest();
+  }
+
+  public void testIndent() throws Exception {
     doTest();
   }
 }

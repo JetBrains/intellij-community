@@ -129,6 +129,9 @@ public class PyResolveUtil {
         }
       }
     } while (seeker != null);
+    if (processor instanceof ResolveProcessor) {
+      return ((ResolveProcessor) processor).getResult();
+    }
     return null;
   }
 

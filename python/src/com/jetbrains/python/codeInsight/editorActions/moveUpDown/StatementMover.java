@@ -106,7 +106,9 @@ public class StatementMover extends LineMover {
   }
 
   @Nullable
-  private static LineRange expandLineRange(LineRange range, Editor editor, PsiFile file) {
+  private static LineRange expandLineRange(@NotNull final LineRange range,
+                                           @NotNull final Editor editor,
+                                           @NotNull final PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     Pair<PsiElement, PsiElement> psiRange;
     if (selectionModel.hasSelection()) {
@@ -136,11 +138,14 @@ public class StatementMover extends LineMover {
       return null;
     }
 
-    if (elementRange.getFirst() == elementRange.getSecond() && elementRange.getFirst() instanceof PyPassStatement) {
+    final PsiElement first = elementRange.getFirst();
+    final PsiElement second = elementRange.getSecond();
+    if (first == second && first instanceof PyPassStatement) {
       return null;
     }
 
-    final int endOffset = elementRange.getSecond().getTextRange().getEndOffset();
+    int startOffset = first.getTextOffset();
+    int endOffset = second.getTextRange().getEndOffset();
     final Document document = editor.getDocument();
     if (endOffset > document.getTextLength()) {
       LOG.assertTrue(!PsiDocumentManager.getInstance(file.getProject()).isUncommited(document));
@@ -156,14 +161,14 @@ public class StatementMover extends LineMover {
       endLine = Math.min(endLine, document.getLineCount());
     }
     endLine = Math.max(endLine, range.endLine);
-    final int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line);
+    final int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(startOffset).line);
     return new LineRange(startLine, endLine);
   }
 
   private @Nullable PyStatementList myStatementListToAddPass;
   private @Nullable PyStatementList myStatementListToRemovePass;
-  private @NotNull PsiElement[] myElementsToDecreaseIndent;
-  private @NotNull PsiElement[] myElementsToIncreaseIndent;
+  private @NotNull PsiElement[] myElementsToChangeIndent;
+  private int myIndentLevel;
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor,
@@ -172,8 +177,9 @@ public class StatementMover extends LineMover {
                                 boolean down) {
     myStatementListToAddPass = null;
     myStatementListToRemovePass = null;
-    myElementsToDecreaseIndent = PsiElement.EMPTY_ARRAY;
-    myElementsToIncreaseIndent = PsiElement.EMPTY_ARRAY;
+    myElementsToChangeIndent = PsiElement.EMPTY_ARRAY;
+    myIndentLevel = 0;
+
     if (!(file instanceof PyFile)) {
       return false;
     }
@@ -224,19 +230,27 @@ public class StatementMover extends LineMover {
             myStatementListToRemovePass = nextStatementPart.getStatementList();
           }
           else {
-            final PyStatement parentStatement = PsiTreeUtil.getParentOfType(statementList, PyStatement.class);
-            if (parentStatement == null) {
-              return false;
+            PsiElement parent = statementList;
+            PyStatement nextStatement;
+            while (true) {
+              parent = PsiTreeUtil.getParentOfType(parent, PyStatement.class);
+              if (parent == null) {
+                return false;
+              }
+              nextStatement = PsiTreeUtil.getNextSiblingOfType(parent, PyStatement.class);
+              if (nextStatement instanceof PyFunction || nextStatement instanceof PyClass) {
+                return false;
+              }
+              if (nextStatement == null) {
+                continue;
+              }
+              break;
             }
-            final PyStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(parentStatement, PyStatement.class);
-            if (nextStatement == null) {
-              return false;
-            }
-            final int startLine = editor.offsetToLogicalPosition(parentStatement.getTextRange().getEndOffset()).line;
+            final int startLine = editor.offsetToLogicalPosition(parent.getTextRange().getEndOffset()).line;
             final int endLine = editor.offsetToLogicalPosition(nextStatement.getTextRange().getEndOffset()).line;
             info.toMove2 = new LineRange(startLine + 1, endLine + 1);
-
-            myElementsToDecreaseIndent = statements;
+            calculateIndent(editor, statementList, nextStatement);
+            myElementsToChangeIndent = statements;
           }
         }
         else {
@@ -245,7 +259,8 @@ public class StatementMover extends LineMover {
             myStatementListToRemovePass = prevStatementPart.getStatementList();
           }
           else {
-            myElementsToDecreaseIndent = statements;
+            myIndentLevel = -1;
+            myElementsToChangeIndent = statements;
             info.toMove2 = new LineRange(range.startLine - 1, range.startLine);
           }
         }
@@ -257,32 +272,61 @@ public class StatementMover extends LineMover {
     }
 
     info.toMove2 = new LineRange(statement, statement, document);
-
     final PyStatementPart[] statementParts = PsiTreeUtil.getChildrenOfType(statement, PyStatementPart.class);
+
     // next/previous statement has a statement parts
+    // move inside statement part
     if (statementParts != null) {
-      // move inside statement part
+      int startLineNumber;
+      int endLineNumber;
+      PyStatementPart statementPart;
       if (down) {
-        final PyStatementPart statementPart = statementParts[0];
-        final int lineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
-        info.toMove2 = new LineRange(lineNumber, lineNumber + 1);
-        myStatementListToRemovePass = statementPart.getStatementList();
-        myElementsToIncreaseIndent = statements;
+        statementPart = statementParts[0];
+        startLineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
+        endLineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
       }
       else {
-        final PyStatementPart statementPart = statementParts[statementParts.length - 1];
-        final int lineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
-        info.toMove2 = new LineRange(lineNumber, lineNumber + 1);
+        statementPart = statementParts[statementParts.length - 1];
+        startLineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
+        endLineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
+      }
+
+      if (startLineNumber != endLineNumber) {
+        info.toMove2 = new LineRange(startLineNumber, startLineNumber + 1);
         myStatementListToRemovePass = statementPart.getStatementList();
-        myElementsToIncreaseIndent = statements;
+        calculateIndent(editor, range.firstElement, myStatementListToRemovePass);
+        myElementsToChangeIndent = statements;
       }
     }
     return true;
   }
 
+
+  private void calculateIndent(final Editor editor, final PsiElement firstElement, final PsiElement secondElement) {
+    final PsiFile file = firstElement.getContainingFile();
+    final int firstIndent = getIndent(editor, file, editor.offsetToLogicalPosition(firstElement.getTextRange().getStartOffset()).line);
+    final int secondIndent = getIndent(editor, file, editor.offsetToLogicalPosition(secondElement.getTextRange().getEndOffset()).line);
+    myIndentLevel = (secondIndent - firstIndent) >> 2;
+  }
+
+  private static int getIndent(final Editor editor, final PsiFile file, final int lineNumber) {
+    int indent = 0;
+    final int offset = editor.logicalPositionToOffset(new LogicalPosition(lineNumber, 0));
+    PsiElement element = file.findElementAt(offset);
+    if (element instanceof PsiWhiteSpace) {
+      final String text = element.getText();
+      String[] lines = text.split("\n");
+      if (lines.length == 0) {
+        return 0;
+      }
+      indent = lines[lines.length - 1].length();
+    }
+    return indent;
+  }
+
   private void decreaseIndent(final Editor editor) {
     final Document document = editor.getDocument();
-    for (PsiElement statement : myElementsToDecreaseIndent) {
+    for (PsiElement statement : myElementsToChangeIndent) {
       final int startOffset = statement.getTextRange().getStartOffset() - 1;
       PsiElement element = statement.getContainingFile().findElementAt(startOffset);
       assert element instanceof PsiWhiteSpace;
@@ -295,9 +339,10 @@ public class StatementMover extends LineMover {
       final int startLine = editor.offsetToLogicalPosition(startOffset).line;
       final int endLine = editor.offsetToLogicalPosition(statement.getTextRange().getEndOffset()).line;
       for (int line = startLine; line <= endLine; ++line) {
-        if (indent >= 4) {
+        final int indentLevel = myIndentLevel * -4;
+        if (indent >= 4 && indentLevel <= indent) {
           final int lineStartOffset = document.getLineStartOffset(line);
-          document.deleteString(lineStartOffset, lineStartOffset + 4);
+          document.deleteString(lineStartOffset, lineStartOffset + indentLevel);
         }
       }
     }
@@ -305,14 +350,23 @@ public class StatementMover extends LineMover {
 
   private void increaseIndent(final Editor editor) {
     final Document document = editor.getDocument();
-    for (PsiElement statement : myElementsToIncreaseIndent) {
+    String indent = makeIndent();
+    for (PsiElement statement : myElementsToChangeIndent) {
       final int startLine = editor.offsetToLogicalPosition(statement.getTextRange().getStartOffset()).line;
       final int endLine = editor.offsetToLogicalPosition(statement.getTextRange().getEndOffset()).line;
       for (int line = startLine; line <= endLine; ++line) {
         final int offset = document.getLineStartOffset(line);
-        document.insertString(offset, "    ");
+        document.insertString(offset, indent);
       }
     }
+  }
+
+  private String makeIndent() {
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < myIndentLevel; ++i) {
+      result.append("    ");
+    }
+    return result.toString();
   }
 
   @Override
@@ -327,8 +381,12 @@ public class StatementMover extends LineMover {
         info.toMove2 = new LineRange(info.toMove2.startLine, info.toMove2.endLine + 1);
       }
     }
-    decreaseIndent(editor);
-    increaseIndent(editor);
+    if (myIndentLevel < 0) {
+      decreaseIndent(editor);
+    }
+    else {
+      increaseIndent(editor);
+    }
   }
 
   @Override

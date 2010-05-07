@@ -212,15 +212,71 @@ public class PyBlock implements ASTBlock {
     if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
       return Spacing.createSpacing(1, Integer.MAX_VALUE, 0, true, 0);
     }
+    if (type2 == PyTokenTypes.COLON) {
+      return getSpacingForOption(getPySettings().SPACE_BEFORE_COLON);
+    }
 
     if (type1 == PyTokenTypes.COMMA) {
       return getSpacingForOption(mySettings.SPACE_AFTER_COMMA);
     }
-/*
-        if (type1 == PyTokenTypes.COLON && type2 == PyElementTypes.STATEMENT_LIST) {
-            return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
-        }
-*/
+    if (type2 == PyTokenTypes.COMMA) {
+      return getSpacingForOption(mySettings.SPACE_BEFORE_COMMA);
+    }
+    if (type2 == PyTokenTypes.SEMICOLON) {
+      return getSpacingForOption(mySettings.SPACE_BEFORE_SEMICOLON);
+    }
+
+    if (type1 == PyTokenTypes.LPAR || type2 == PyTokenTypes.RPAR) {
+      if (parentType == PyElementTypes.ARGUMENT_LIST) {
+        return getSpacingForOption(mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+      }
+    }
+    if (type2 == PyTokenTypes.LBRACKET) {
+      return getSpacingForOption(getPySettings().SPACE_BEFORE_LBRACKET);
+    }
+    if (type1 == PyTokenTypes.LBRACKET || type2 == PyTokenTypes.RBRACKET) {
+      return getSpacingForOption(mySettings.SPACE_WITHIN_BRACKETS);
+    }
+    if (type1 == PyTokenTypes.LBRACE || type2 == PyTokenTypes.RBRACE) {
+      return getSpacingForOption(getPySettings().SPACE_WITHIN_BRACES);
+    }
+    if (type2 == PyElementTypes.ARGUMENT_LIST) {
+      return getSpacingForOption(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+    }
+
+    if (type1 == PyTokenTypes.EQ || type2 == PyTokenTypes.EQ) {
+      if (parentType == PyElementTypes.ASSIGNMENT_STATEMENT) {
+        return getSpacingForOption(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
+      }
+      if (parentType == PyElementTypes.NAMED_PARAMETER) {
+        return getSpacingForOption(getPySettings().SPACE_AROUND_EQ_IN_NAMED_PARAMETER);
+      }
+      if (parentType == PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION) {
+        return getSpacingForOption(getPySettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT);
+      }
+    }
+    if (isAround(type1, type2, PyTokenTypes.AUG_ASSIGN_OPERATIONS)) {
+      return getSpacingForOption(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);      
+    }
+    if (isAround(type1, type2, PyTokenTypes.ADDITIVE_OPERATIONS)) {
+      return getSpacingForOption(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
+    }
+    if (isAround(type1, type2, PyTokenTypes.MULTIPLICATIVE_OPERATIONS)) {
+      return getSpacingForOption(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
+    }
+    if (isAround(type1, type2, PyTokenTypes.SHIFT_OPERATIONS)) {
+      return getSpacingForOption(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
+    }
+    if (isAround(type1, type2, PyTokenTypes.BITWISE_OPERATIONS)) {
+      return getSpacingForOption(mySettings.SPACE_AROUND_BITWISE_OPERATORS);
+    }
+    if (isAround(type1, type2, PyTokenTypes.EQUALITY_OPERATIONS)) {
+      return getSpacingForOption(mySettings.SPACE_AROUND_EQUALITY_OPERATORS);
+    }
+    if (isAround(type1, type2, PyTokenTypes.RELATIONAL_OPERATIONS)) {
+      return getSpacingForOption(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
+    }
+
 
     //if (parentType == PyElementTypes.ARGUMENT_LIST
     //    || parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
@@ -238,6 +294,14 @@ public class PyBlock implements ASTBlock {
     //return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
 
     return null;
+  }
+
+  private static boolean isAround(IElementType type1, IElementType type2, final TokenSet tokenSet) {
+    return tokenSet.contains(type1) || tokenSet.contains(type2);
+  }
+
+  private PyCodeStyleSettings getPySettings() {
+    return mySettings.getCustomSettings(PyCodeStyleSettings.class);
   }
 
   private Spacing getSpacingForOption(boolean isOptionSet) {
