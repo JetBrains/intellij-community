@@ -106,7 +106,9 @@ public class StatementMover extends LineMover {
   }
 
   @Nullable
-  private static LineRange expandLineRange(LineRange range, Editor editor, PsiFile file) {
+  private static LineRange expandLineRange(@NotNull final LineRange range,
+                                           @NotNull final Editor editor,
+                                           @NotNull final PsiFile file) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     Pair<PsiElement, PsiElement> psiRange;
     if (selectionModel.hasSelection()) {
@@ -136,11 +138,14 @@ public class StatementMover extends LineMover {
       return null;
     }
 
-    if (elementRange.getFirst() == elementRange.getSecond() && elementRange.getFirst() instanceof PyPassStatement) {
+    final PsiElement first = elementRange.getFirst();
+    final PsiElement second = elementRange.getSecond();
+    if (first == second && first instanceof PyPassStatement) {
       return null;
     }
 
-    final int endOffset = elementRange.getSecond().getTextRange().getEndOffset();
+    int startOffset = first.getTextOffset();
+    int endOffset = second.getTextRange().getEndOffset();
     final Document document = editor.getDocument();
     if (endOffset > document.getTextLength()) {
       LOG.assertTrue(!PsiDocumentManager.getInstance(file.getProject()).isUncommited(document));
@@ -156,7 +161,7 @@ public class StatementMover extends LineMover {
       endLine = Math.min(endLine, document.getLineCount());
     }
     endLine = Math.max(endLine, range.endLine);
-    final int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line);
+    final int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(startOffset).line);
     return new LineRange(startLine, endLine);
   }
 
@@ -257,22 +262,27 @@ public class StatementMover extends LineMover {
     }
 
     info.toMove2 = new LineRange(statement, statement, document);
-
     final PyStatementPart[] statementParts = PsiTreeUtil.getChildrenOfType(statement, PyStatementPart.class);
+
     // next/previous statement has a statement parts
+    // move inside statement part
     if (statementParts != null) {
-      // move inside statement part
+      int startLineNumber;
+      int endLineNumber;
+      PyStatementPart statementPart;
       if (down) {
-        final PyStatementPart statementPart = statementParts[0];
-        final int lineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
-        info.toMove2 = new LineRange(lineNumber, lineNumber + 1);
-        myStatementListToRemovePass = statementPart.getStatementList();
-        myElementsToIncreaseIndent = statements;
+        statementPart = statementParts[0];
+        startLineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
+        endLineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
       }
       else {
-        final PyStatementPart statementPart = statementParts[statementParts.length - 1];
-        final int lineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
-        info.toMove2 = new LineRange(lineNumber, lineNumber + 1);
+        statementPart = statementParts[statementParts.length - 1];
+        startLineNumber = document.getLineNumber(statementPart.getTextRange().getEndOffset());
+        endLineNumber = document.getLineNumber(statementPart.getTextRange().getStartOffset());
+      }
+
+      if (startLineNumber != endLineNumber) {
+        info.toMove2 = new LineRange(startLineNumber, startLineNumber + 1);
         myStatementListToRemovePass = statementPart.getStatementList();
         myElementsToIncreaseIndent = statements;
       }
