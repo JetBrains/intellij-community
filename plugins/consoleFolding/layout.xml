@@ -1,0 +1,13 @@
+<project name="Layout ConsoleFolding plugin distribution" default="layout">
+  <target name="layout">
+    <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
+      <dir name="ConsoleFolding">
+        <dir name="lib">
+          <jar name="ConsoleFolding.jar">
+            <module name="consoleFolding"/>
+          </jar>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+</project>
