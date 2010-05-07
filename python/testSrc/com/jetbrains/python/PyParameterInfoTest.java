@@ -271,6 +271,33 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self,one", new String[]{"one"}, new String[]{"self,"});
   }
 
+
+  public void testBoundMethodSimple() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self,a,b", new String[]{"a,"}, new String[]{"self,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a,b", new String[]{"b"}, new String[]{"self,"});
+  }
+
+  public void testBoundMethodReassigned() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self,a,b", new String[]{"a,"}, new String[]{"self,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self,a,b", new String[]{"b"}, new String[]{"self,"});
+  }
+
+  public void testBoundMethodStatic() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a,b", new String[]{"a,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a,b", new String[]{"b"});
+  }
+
+
+
   // TODO: add method tests with decorators when a mock SDK is available
 
   /**
@@ -433,7 +460,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       disabled_set.addAll(Arrays.asList(disabled));
       for (int i=0; i < myTexts.length; i += 1) {
         if (myFlags[i].contains(Flag.DISABLE) && !disabled_set.contains(myTexts[i])) {
-          wrongs.append("Highlighted unexpected '").append(myTexts[i]).append("'. ");
+          wrongs.append("Highlighted a disabled '").append(myTexts[i]).append("'. ");
         }
       }
       for (int i=0; i < myTexts.length; i += 1) {

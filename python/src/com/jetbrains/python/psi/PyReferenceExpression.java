@@ -4,6 +4,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ public interface PyReferenceExpression extends PyQualifiedExpression {
    * <i>Note: will return null if the assignment chain ends in a target of a non-assignment statement such as 'for'.</i>
    */
   @NotNull
-  ResolveResult followAssignmentsChain();
+  QualifiedResolveResult followAssignmentsChain();
 
   @Nullable
   PyQualifiedName asQualifiedName();

@@ -16,6 +16,7 @@ import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
@@ -97,10 +98,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
 
+  private final QualifiedResolveResult EMPTY_RESULT = new QualifiedResolveResultEmpty();
+
   @NotNull
-  public ResolveResult followAssignmentsChain() {
+  public QualifiedResolveResult followAssignmentsChain() {
     PyReferenceExpression seeker = this;
-    ResolveResult ret = null;
+    QualifiedResolveResult ret = null;
+    PyExpression last_qualifier = null;
     SEARCH:
     while (ret == null) {
       ResolveResult[] targets = seeker.getReference().multiResolve(false);
@@ -110,28 +114,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           PyExpression assigned_from = ((PyTargetExpression)elt).findAssignedValue();
           if (assigned_from instanceof PyReferenceExpression) {
             seeker = (PyReferenceExpression)assigned_from;
+            if (seeker.getQualifier() != null) last_qualifier = seeker.getQualifier();
             continue SEARCH;
           }
-          else if (assigned_from != null) ret = new PsiElementResolveResult(assigned_from);
+          else if (assigned_from != null) ret = new QualifiedResolveResultImpl(assigned_from, last_qualifier);
         }
         else if (ret == null && elt instanceof PyElement) { // remember this result, but a further reference may be the next resolve result
-          ret = target;
+          ret = new QualifiedResolveResultImpl(target.getElement(), target.isValidResult(), last_qualifier);
         }
       }
       // all resolve results checked, reassignment not detected, nothing more to do
       break;
     }
-    if (ret == null) {
-      ret = new ResolveResult() {
-        public PsiElement getElement() {
-          return null;
-        }
-
-        public boolean isValidResult() {
-          return false;
-        }
-      };
-    }
+    if (ret == null) ret = EMPTY_RESULT;
     return ret;
   }
 
@@ -291,4 +286,44 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     return null;
   }
+
+  private static class QualifiedResolveResultImpl extends PsiElementResolveResult implements QualifiedResolveResult {
+    // a trivial implementation
+    private PyExpression myLastQualifier;
+
+    QualifiedResolveResultImpl(@NotNull PsiElement element, PyExpression lastQualifier) {
+      super(element);
+      myLastQualifier = lastQualifier;
+    }
+
+    public QualifiedResolveResultImpl(@NotNull PsiElement element, boolean validResult, PyExpression lastQualifier) {
+      super(element, validResult);
+      myLastQualifier = lastQualifier;
+    }
+
+    public PyExpression getLastQualifier() {
+      return myLastQualifier;
+    }
+  }
+
+  private static class QualifiedResolveResultEmpty implements QualifiedResolveResult {
+    // a trivial implementation
+
+    public QualifiedResolveResultEmpty() {
+    }
+
+    public PyExpression getLastQualifier() {
+      return null;
+    }
+
+    public PsiElement getElement() {
+      return null;
+    }
+
+    public boolean isValidResult() {
+      return false;
+    }
+  }
+
 }
+
