@@ -137,6 +137,9 @@ public class PyTokenTypes {
   public static final TokenSet ADDITIVE_OPERATIONS = TokenSet.create(PLUS, MINUS);
   public static final TokenSet MULTIPLICATIVE_OPERATIONS = TokenSet.create(MULT, FLOORDIV, DIV, PERC);
   public static final TokenSet UNARY_OPERATIONS = TokenSet.create(PLUS, MINUS, TILDE);
+  public static final TokenSet BITWISE_OPERATIONS = TokenSet.create(AND, OR, XOR); 
+  public static final TokenSet EQUALITY_OPERATIONS = TokenSet.create(EQEQ, NE, NE_OLD);
+  public static final TokenSet RELATIONAL_OPERATIONS = TokenSet.create(LT, GT, LE, GE);
   public static final TokenSet END_OF_STATEMENT = TokenSet.create(STATEMENT_BREAK, SEMICOLON);
   public static final TokenSet WHITESPACE = TokenSet.create(SPACE, TAB, FORMFEED);
   public static final TokenSet WHITESPACE_OR_LINEBREAK = TokenSet.create(SPACE, TAB, FORMFEED, LINE_BREAK);

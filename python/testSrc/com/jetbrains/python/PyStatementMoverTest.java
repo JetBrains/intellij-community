@@ -60,4 +60,12 @@ public class PyStatementMoverTest extends PyLightFixtureTestCase {
   public void testSelection() throws Exception {
     doTest();
   }
+
+  public void testSimpleBlankLines() throws Exception {
+    doTest();
+  }
+
+  public void testPY950() throws Exception {
+    doTest();
+  }
 }

@@ -20,6 +20,18 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testPep8ExtraneousWhitespace() throws Exception {
+    doTest();
+  }
+
+  public void testPep8Operators() throws Exception {
+    doTest();
+  }
+
+  public void testPep8KeywordArguments() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
