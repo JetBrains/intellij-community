@@ -787,10 +787,13 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
 
 //----------------- ORDER OF MEMBERS ------------------
 
-  public int FIELDS_ORDER_WEIGHT = 1;
-  public int CONSTRUCTORS_ORDER_WEIGHT = 2;
-  public int METHODS_ORDER_WEIGHT = 3;
-  public int INNER_CLASSES_ORDER_WEIGHT = 4;
+  public int STATIC_FIELDS_ORDER_WEIGHT = 1;
+  public int FIELDS_ORDER_WEIGHT = 2;
+  public int CONSTRUCTORS_ORDER_WEIGHT = 3;
+  public int STATIC_METHODS_ORDER_WEIGHT = 4;
+  public int METHODS_ORDER_WEIGHT = 5;
+  public int STATIC_INNER_CLASSES_ORDER_WEIGHT = 6;
+  public int INNER_CLASSES_ORDER_WEIGHT = 7;
 
 //----------------- WRAPPING ---------------------------
   public int RIGHT_MARGIN = 120;
