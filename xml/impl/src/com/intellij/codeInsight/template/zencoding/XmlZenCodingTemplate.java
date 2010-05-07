@@ -208,7 +208,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
         addMissingAttributes(tag, token.getAttribute2Value());
       }
-      token.myTag = tag;
+      token.setTag(tag);
     }
     return token;
   }

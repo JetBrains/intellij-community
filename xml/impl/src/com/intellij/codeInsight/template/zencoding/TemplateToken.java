@@ -28,7 +28,7 @@ public class TemplateToken extends Token {
   private final String myKey;
   private final List<Pair<String, String>> myAttribute2Value;
   private TemplateImpl myTemplate;
-  public XmlTag myTag;
+  private XmlTag myTag;
 
   public TemplateToken(String key, List<Pair<String, String>> attribute2value) {
     myKey = key;
@@ -49,5 +49,13 @@ public class TemplateToken extends Token {
 
   public TemplateImpl getTemplate() {
     return myTemplate;
+  }
+
+  public XmlTag getTag() {
+    return myTag;
+  }
+
+  public void setTag(XmlTag tag) {
+    myTag = tag;
   }
 }

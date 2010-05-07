@@ -118,7 +118,7 @@ class XmlZenCodingInterpreter {
         case OPERATION:
           if (templateToken != null) {
             if (token instanceof MarkerToken || token instanceof OperationToken) {
-              final char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : ZenCodingTemplate.MARKER;
+              final char sign = token instanceof OperationToken ? ((OperationToken)token).getSign() : ZenCodingTemplate.MARKER;
               if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
                 final Object key = new Object();
                 myCallback.fixStartOfTemplate(key);
@@ -156,7 +156,7 @@ class XmlZenCodingInterpreter {
           break;
         case NUMBER:
           if (token instanceof NumberToken) {
-            number = ((NumberToken)token).myNumber;
+            number = ((NumberToken)token).getNumber();
             myState = State.AFTER_NUMBER;
           }
           else {
@@ -165,7 +165,7 @@ class XmlZenCodingInterpreter {
           break;
         case AFTER_NUMBER:
           if (token instanceof MarkerToken || token instanceof OperationToken) {
-            char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : ZenCodingTemplate.MARKER;
+            char sign = token instanceof OperationToken ? ((OperationToken)token).getSign() : ZenCodingTemplate.MARKER;
             if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
               invokeTemplateSeveralTimes(templateToken, 0, number);
               templateToken = null;
@@ -310,7 +310,7 @@ class XmlZenCodingInterpreter {
     if (token.getTemplate() != null) {
       if (attr2value.size() > 0 || XmlZenCodingTemplate.isTrueXml(callback)) {
         TemplateImpl modifiedTemplate = token.getTemplate().copy();
-        XmlTag tag = token.myTag;
+        XmlTag tag = token.getTag();
         if (tag != null) {
           for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
             Pair<String, String> pair = iterator.next();

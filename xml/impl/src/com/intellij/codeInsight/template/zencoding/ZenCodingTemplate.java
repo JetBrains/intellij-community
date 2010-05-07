@@ -96,7 +96,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       switch (state) {
         case OPERATION:
           if (token instanceof OperationToken) {
-            state = ((OperationToken)token).mySign == '*' ? State.NUMBER : State.WORD;
+            state = ((OperationToken)token).getSign() == '*' ? State.NUMBER : State.WORD;
           }
           else {
             return false;
@@ -119,7 +119,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
           }
           break;
         case AFTER_NUMBER:
-          if (token instanceof OperationToken && ((OperationToken)token).mySign != '*') {
+          if (token instanceof OperationToken && ((OperationToken)token).getSign() != '*') {
             state = State.WORD;
           }
           else {
