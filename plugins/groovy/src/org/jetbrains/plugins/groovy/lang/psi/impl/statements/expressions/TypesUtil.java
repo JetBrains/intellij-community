@@ -220,7 +220,7 @@ public class TypesUtil {
            _isAssignable(lType, rType, manager, scope);
   }
 
-  public static boolean isAssignable(PsiType lType, PsiType rType, PsiElement context) {
+  public static boolean isAssignable(PsiType lType, PsiType rType, GroovyPsiElement context) {
     return isAssignableByMethodCallConversion(lType, rType, context) ||
            _isAssignable(lType, rType, context.getManager(), context.getResolveScope());
   }
@@ -240,7 +240,7 @@ public class TypesUtil {
     return lType.isAssignableFrom(rType);
   }
 
-  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiElement context) {
+  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, GroovyPsiElement context) {
     if (lType == null || rType == null) return false;
 
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {

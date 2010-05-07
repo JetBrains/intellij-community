@@ -7,10 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
@@ -41,25 +44,52 @@ public class GppTypeConverter extends GrTypeConverter {
   }
 
   @Override
-  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull PsiElement context) {
+  public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
     if (!isTyped(PsiTreeUtil.getParentOfType(context, GrMember.class))) {
       return null;
     }
 
-    final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
-    if (expectedComponent == null) {
-      return null;
-    }
 
     if (rType instanceof GrTupleType) {
-      for (PsiType component : ((GrTupleType)rType).getComponentTypes()) {
-        if (!TypesUtil.isAssignable(expectedComponent, component, context)) {
-          return null;
-        }
+      final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
+
+      final PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(lType, false);
+      if (expectedComponent != null && allTypesAssignable(componentTypes, expectedComponent, context)) {
+        return true;
       }
-      return true;
+
+      if (lType instanceof PsiClassType && hasConstructor((PsiClassType)lType, componentTypes, context)) {
+        return true;
+      }
+
+      return null;
     }
     
     return null;
+  }
+
+  private static boolean hasConstructor(PsiClassType lType, PsiType[] argTypes, GroovyPsiElement context) {
+    final PsiClassType.ClassResolveResult resolveResult = lType.resolveGenerics();
+    final PsiClass psiClass = resolveResult.getElement();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (psiClass == null) {
+      return false;
+    }
+
+    final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
+                                         ? (GroovyResolveResult)resolveResult
+                                         : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
+    final GroovyResolveResult[] candidates = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates(
+      context, new GroovyResolveResult[]{grResult}, argTypes);
+    return candidates.length == 1;
+  }
+
+  private static boolean allTypesAssignable(PsiType[] types, PsiType to, GroovyPsiElement context) {
+    for (PsiType component : types) {
+      if (!TypesUtil.isAssignable(to, component, context)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

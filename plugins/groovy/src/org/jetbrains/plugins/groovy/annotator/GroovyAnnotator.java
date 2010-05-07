@@ -477,7 +477,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitConstructorInvocation(GrConstructorInvocation invocation) {
     final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
     if (resolveResult != null && resolveResult.getElement() != null) {
-      checkMethodApplicability(resolveResult, invocation.getThisOrSuperKeyword(), myHolder);
+      checkMethodApplicability(resolveResult, invocation, myHolder);
     }
     else {
       final GroovyResolveResult[] results = invocation.multiResolveConstructor();
@@ -1159,7 +1159,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkMethodApplicability(GroovyResolveResult methodResolveResult, PsiElement place, AnnotationHolder holder) {
+  private static void checkMethodApplicability(GroovyResolveResult methodResolveResult, GroovyPsiElement place, AnnotationHolder holder) {
     final PsiElement element = methodResolveResult.getElement();
     if (!(element instanceof PsiMethod)) return;
 
@@ -1170,7 +1170,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (qualifierExpression != null) {
         final PsiType type = qualifierExpression.getType();
         if (type instanceof GrClosureType) {
-          if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element)) {
+          if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) {
             highlightInapplicableMethodUsage(methodResolveResult, place, holder, method, argumentTypes);
             return;
           }
@@ -1179,7 +1179,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     if (argumentTypes != null &&
              !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                                   methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression)) {
+                                   methodResolveResult.getCurrentFileResolveContext() instanceof GrMethodCallExpression, place)) {
       highlightInapplicableMethodUsage(methodResolveResult, place, holder, method, argumentTypes);
     }
   }
@@ -1306,7 +1306,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void checkClosureApplicability(GroovyResolveResult resolveResult, PsiType type, PsiElement place, AnnotationHolder holder) {
+  private static void checkClosureApplicability(GroovyResolveResult resolveResult, PsiType type, GroovyPsiElement place, AnnotationHolder holder) {
     final PsiElement element = resolveResult.getElement();
     if (!(element instanceof GrVariable)) return;
     if (!(type instanceof GrClosureType)) return;
@@ -1314,13 +1314,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
     if (argumentTypes == null) return;
 
-    if (!PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, element)) {
-      final String typesString = buildArgTypesList(argumentTypes);
-      String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
-      PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
-      if (elementToHighlight == null) elementToHighlight = place;
-      holder.createWarningAnnotation(elementToHighlight, message);
-    }
+    if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return;
+
+    final String typesString = buildArgTypesList(argumentTypes);
+    String message = GroovyBundle.message("cannot.apply.method.or.closure", variable.getName(), typesString);
+    PsiElement elementToHighlight = PsiUtil.getArgumentsElement(place);
+    if (elementToHighlight == null) elementToHighlight = place;
+    holder.createWarningAnnotation(elementToHighlight, message);
   }
 
   private static void registerAddImportFixes(GrReferenceElement refElement, Annotation annotation) {
