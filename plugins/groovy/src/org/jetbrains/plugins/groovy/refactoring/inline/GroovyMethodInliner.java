@@ -21,8 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.PersistentRangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -58,7 +56,10 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author ilyas
@@ -85,10 +86,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     Map<PsiElement, String> conflicts = new HashMap<PsiElement, String>();
 
     for (GroovyInlineMethodUtil.ReferenceExpressionInfo info : infos) {
-      if (!(PsiUtil.isAccessible(call, info.declaration))) {
+      if (!PsiUtil.isAccessible(call, info.declaration)) {
         if (info.declaration instanceof PsiMethod) {
           String className = info.containingClass.getName();
-          String signature = GroovyRefactoringUtil.getMethodSignature(((PsiMethod) info.declaration));
+          String signature = GroovyRefactoringUtil.getMethodSignature((PsiMethod) info.declaration);
           String name = CommonRefactoringUtil.htmlEmphasize(className + "." + signature);
           conflicts.put(info.declaration, GroovyRefactoringBundle.message("method.is.not.accessible.form.context.0", name));
         } else if (info.declaration instanceof PsiField) {
@@ -147,9 +148,9 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
               qualifier = ((GrParenthesizedExpression) qualifier).getOperand();
             }
             qualifierDeclaration = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, qualifier, null, qualName);
-            innerQualifier = ((GrReferenceExpression) factory.createExpressionFromText(qualName));
+            innerQualifier = (GrReferenceExpression) factory.createExpressionFromText(qualName);
           } else {
-            innerQualifier = ((GrReferenceExpression) qualifier);
+            innerQualifier = (GrReferenceExpression) qualifier;
           }
         }
       }
@@ -159,7 +160,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (result != null) {
         GrExpression expression = call.replaceWithExpression(result, false);
         TextRange range = expression.getTextRange();
-        return editor != null ? new PersistentRangeMarker((DocumentEx)editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
+        return editor != null ? editor.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true) : null;
       }
 
       String resultName = InlineMethodConflictSolver.suggestNewName("result", newMethod, call);
@@ -245,13 +246,13 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         assert replaced != null;
 
         TextRange range = replaced.getTextRange();
-        RangeMarker marker = editor != null ? new PersistentRangeMarker((DocumentEx)editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
+        RangeMarker marker = editor != null ? editor.getDocument().createRangeMarker(range.getStartOffset(), range.getEndOffset(), true) : null;
         reformatOwner(owner);
         return marker;
       } else {
         GrStatement stmt;
         if (isTailMethodCall && enclosingExpr.getParent() instanceof GrReturnStatement) {
-          stmt = ((GrReturnStatement) enclosingExpr.getParent());
+          stmt = (GrReturnStatement) enclosingExpr.getParent();
         } else {
           stmt = enclosingExpr;
         }
@@ -332,7 +333,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (statement instanceof GrReturnStatement) {
         expr = ((GrReturnStatement) statement).getReturnValue();
       } else {
-        expr = ((GrExpression) statement);
+        expr = (GrExpression) statement;
       }
       return expr;
     }
@@ -382,7 +383,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     if (element == null) return;
     for (PsiElement child : element.getChildren()) {
       if (child instanceof GrVariable && !(child instanceof GrParameter)) {
-        defintions.add(((GrVariable) child));
+        defintions.add((GrVariable) child);
       }
       if (!(child instanceof GrClosableBlock)) {
         collectInnerDefinitions(child, defintions);
@@ -401,10 +402,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     assert body != null;
     GrStatement[] statements = body.getStatements();
     if (statements.length == 1) {
-      if (statements[0] instanceof GrExpression) return ((GrExpression) statements[0]);
+      if (statements[0] instanceof GrExpression) return (GrExpression) statements[0];
       if (statements[0] instanceof GrReturnStatement) {
         GrExpression value = ((GrReturnStatement) statements[0]).getReturnValue();
-        if (value == null && (PsiUtil.getSmartReturnType(method) != PsiType.VOID)) {
+        if (value == null && PsiUtil.getSmartReturnType(method) != PsiType.VOID) {
           return GroovyPsiElementFactory.getInstance(method.getProject()).createExpressionFromText("null");
         }
         return value;

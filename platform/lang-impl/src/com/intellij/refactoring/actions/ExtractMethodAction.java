@@ -23,10 +23,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 
-/**
- *
- */
-public class ExtractMethodAction extends BaseRefactoringAction {
+public class ExtractMethodAction extends BasePlatformRefactoringAction {
   public ExtractMethodAction() {
     setInjectedContext(true);
   }

@@ -201,7 +201,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     });
   }
 
-  protected abstract void prepareForReformat(PsiFile psiFile);
+  protected void prepareForReformat(PsiFile psiFile) {
+  }
 
   protected PsiFile createFileFromText(Project project, String text) {
     PsiFile psiFile = PsiFileFactory.getInstance(project)
