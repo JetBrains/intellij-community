@@ -11,14 +11,17 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 
 /**
  * @author peter
  */
 public class GppTypeConverter extends GrTypeConverter {
+
+  public static boolean hasTypedContext(GroovyPsiElement context) {
+    return isTyped(PsiTreeUtil.getParentOfType(context, GrMember.class));
+  }
 
   private static boolean isTyped(@Nullable PsiModifierListOwner member) {
     if (member == null) {
@@ -52,7 +55,7 @@ public class GppTypeConverter extends GrTypeConverter {
 
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (!isTyped(PsiTreeUtil.getParentOfType(context, GrMember.class))) {
+    if (!hasTypedContext(context)) {
       return null;
     }
 
@@ -78,27 +81,23 @@ public class GppTypeConverter extends GrTypeConverter {
 
       return null;
     }
+    else if (rType instanceof GrClosureType) {
+      final PsiType[] methodParameters = GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(lType);
+      final GrClosureSignature signature = ((GrClosureType)rType).getSignature();
+      if (methodParameters != null && GrClosureSignatureUtil.isSignatureApplicable(signature, methodParameters, context)) {
+        return true;
+      }
+      return false;
+    }
 
-    
+
     return null;
   }
 
   private static boolean hasDefaultConstructor(PsiType type) {
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-    if (psiClass == null) {
-      return false;
-    }
+    return psiClass != null && PsiUtil.hasDefaultConstructor(psiClass, true);
 
-    final PsiMethod[] constructors = psiClass.getConstructors();
-    if (constructors.length == 0) {
-      return true;
-    }
-    for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() == 0) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static boolean hasConstructor(PsiClassType lType, PsiType[] argTypes, GroovyPsiElement context) {

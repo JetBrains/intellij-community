@@ -20,7 +20,12 @@ class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
 
   protected void setUp() {
     super.setUp()
-    myFixture.addClass("package groovy.lang; public @interface Typed {}")
+    myFixture.addClass"package groovy.lang; public @interface Typed {}"
+    myFixture.addClass """
+package groovy.lang;
+public interface Function1<T,R> {
+  public abstract R call(T param);
+}"""
   }
 
   public void testCastListToIterable() throws Exception {
@@ -134,6 +139,33 @@ def foo(File f) {}
     def target = reference.resolve()
     assertNotNull target
     assert target.text.contains("List l")
+  }
+
+  public void testCastClosureToOneMethodClass() throws Exception {
+    myFixture.addClass """
+public abstract class Foo {
+  public abstract void foo(String s);
+  public abstract void bar(String s);
+}
+public interface Action {
+  void act();
+}
+"""
+
+    testAssignability """
+Foo f = <warning descr="Cannot assign 'Closure' to 'Foo'">{ println it }</warning>
+Function1<String, Object> f1 = { println it }
+Function1<String, Object> f2 = { x=42 -> println x }
+Runnable r = { println it }
+Action a = { println it }
+Action a1 = { a = 2 -> println a }
+"""
+  }
+
+  public void testClosureParameterTypesInAssignment() throws Exception {
+    configureTyped "Function1<String, Object> f = { it.subs<caret> }"
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
 }
