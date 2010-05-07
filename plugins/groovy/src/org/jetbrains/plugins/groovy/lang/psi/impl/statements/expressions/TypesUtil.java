@@ -414,7 +414,7 @@ public class TypesUtil {
   }
 
   @Nullable
-  private static String getPsiTypeName(IElementType elemType) {
+  public static String getPsiTypeName(IElementType elemType) {
     return ourPrimitiveTypesToClassNames.get(elemType);
   }
 }

@@ -32,14 +32,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -127,39 +124,17 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
           continue;
         }
 
-        final PsiElement nameElement = label.getNameElement();
-        if (nameElement instanceof GrLiteral) {
-          final Object value = ((GrLiteral)nameElement).getValue();
-          if (value instanceof String) {
-            stringEntries.put((String)value, expression.getType());
-            continue;
-          }
+        final String name = label.getName();
+        if (name != null) {
+          stringEntries.put(name, expression.getType());
+        } else {
+          otherEntries.add(Pair.create(label.getLabelType(), expression.getType()));
         }
-
-        otherEntries.add(Pair.create(getLabelType(label), expression.getType()));
       }
 
       return new GrMapType(facade, scope, stringEntries, otherEntries);
     }
 
-    @Nullable
-    private static PsiType getLabelType(GrArgumentLabel label) {
-      PsiElement el = label.getNameElement();
-      if (el instanceof GrParenthesizedExpression) {
-        return ((GrParenthesizedExpression)el).getType();
-      }
-
-      final ASTNode node = el.getNode();
-      if (node == null) {
-        return null;
-      }
-
-      PsiType nodeType = TypesUtil.getPsiType(el, node.getElementType());
-      if (nodeType != null) {
-        return nodeType;
-      }
-      return PsiType.getJavaLangString(PsiManager.getInstance(el.getProject()), el.getResolveScope());
-    }
 
     private static PsiClassType getTupleType(GrExpression[] initializers, GrListOrMap listOrMap) {
       PsiType[] result = new PsiType[initializers.length];
