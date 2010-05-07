@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -46,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticMethodImplementation;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
@@ -331,30 +327,6 @@ public class GrClassImplUtil {
 
   private static boolean isMethodVisible(boolean isPlaceGroovy, PsiMethod method) {
     return isPlaceGroovy || !(method instanceof GrGdkMethod);
-  }
-
-  private static boolean isPropertyReference(PsiElement place, PsiField aField, boolean isGetter) {
-    //filter only in groovy, todo: analyze java place
-    if (place.getLanguage() != GroovyFileType.GROOVY_FILE_TYPE.getLanguage()) return true;
-
-    if (place instanceof GrReferenceExpression) {
-      final PsiElement parent = place.getParent();
-      if (parent instanceof GrMethodCallExpression) {
-        final GrMethodCallExpression call = (GrMethodCallExpression)parent;
-        if (call.getNamedArguments().length > 0 || call.getClosureArguments().length > 0) return false;
-        final GrExpression[] args = call.getExpressionArguments();
-        if (isGetter) {
-          return args.length == 0;
-        }
-        else {
-          return args.length == 1 &&
-                 TypesUtil
-                   .isAssignableByMethodCallConversion(aField.getType(), args[0].getType(), place);
-        }
-      }
-    }
-
-    return false;
   }
 
   @Nullable
