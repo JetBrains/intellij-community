@@ -192,21 +192,21 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     if (token == null) {
       return null;
     }
-    if (useDefaultTag && token.myAttribute2Value.size() == 0) {
+    if (useDefaultTag && token.getAttribute2Value().size() == 0) {
       return null;
     }
     if (template == null) {
-      template = generateTagTemplate(token.myKey, callback);
+      template = generateTagTemplate(token.getKey(), callback);
     }
-    assert prefix.equals(token.myKey);
-    token.myTemplate = template;
+    assert prefix.equals(token.getKey());
+    token.setTemplate(template);
     XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
-    if (token.myAttribute2Value.size() > 0 && tag == null) {
+    if (token.getAttribute2Value().size() > 0 && tag == null) {
       return null;
     }
     if (tag != null) {
-      if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.myAttribute2Value.size() > 0) {
-        addMissingAttributes(tag, token.myAttribute2Value);
+      if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
+        addMissingAttributes(tag, token.getAttribute2Value());
       }
       token.myTag = tag;
     }

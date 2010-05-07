@@ -37,7 +37,7 @@ public class NotRunState extends AbstractState {
     return false;
   }
 
-  //TODO[romeo] if wan't run is it deffect or not?   May be move it to settings
+  //TODO[romeo] if hasn't run is it defect or not?   May be move it to settings
   public boolean isDefect() {
     return false;
   }

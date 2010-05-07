@@ -87,6 +87,10 @@ public abstract class BaseRefactoringAction extends AnAction {
       disableAction(e);
       return;
     }
+    if (isHidden()) {
+      e.getPresentation().setVisible(false);
+      return;
+    }
 
     Editor editor = e.getData(PlatformDataKeys.EDITOR);
     PsiFile file = e.getData(LangDataKeys.PSI_FILE);
@@ -125,6 +129,10 @@ public abstract class BaseRefactoringAction extends AnAction {
         disableAction(e);
       }
     }
+  }
+
+  protected boolean isHidden() {
+    return false;
   }
 
   public static PsiElement getElementAtCaret(final Editor editor, final PsiFile file) {

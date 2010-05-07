@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
@@ -43,7 +45,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
                                  boolean isAccessible,
                                  boolean staticsOK) {
     myCurrentFileResolveContext = context;
-    myElement = element;
+    myElement = element instanceof PsiClass? GrClassSubstitutor.getSubstitutedClass((PsiClass)element) : element;
     myIsAccessible = isAccessible;
     mySubstitutor = substitutor;
     myIsStaticsOK = staticsOK;

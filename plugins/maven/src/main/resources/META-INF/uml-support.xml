@@ -1,6 +1,0 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
-<idea-plugin url="http://www.jetbrains.com/idea">  
-  <extensions xmlns="com.intellij">
-    <uml.umlProvider implementation="com.intellij.uml.maven.MavenUmlProvider" />
-  </extensions>
-</idea-plugin>

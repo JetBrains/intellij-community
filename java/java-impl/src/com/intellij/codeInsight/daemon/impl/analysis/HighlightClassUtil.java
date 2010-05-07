@@ -43,6 +43,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -747,6 +748,7 @@ public class HighlightClassUtil {
     return place == aClass;
   }
 
+  @Nullable
   public static HighlightInfo checkCreateInnerClassFromStaticContext(PsiNewExpression expression) {
     PsiType type = expression.getType();
     if (type == null || type instanceof PsiArrayType || type instanceof PsiPrimitiveType) return null;
@@ -791,19 +793,18 @@ public class HighlightClassUtil {
     return null;
   }
 
+  @Nullable
   public static HighlightInfo reportIllegalEnclosingUsage(PsiElement place,
                                                           PsiClass aClass, PsiClass outerClass,
                                                           PsiElement elementToHighlight) {
-    if (outerClass != null && !PsiTreeUtil.isAncestor(outerClass, place, false)) {
+    if (outerClass != null && !PsiTreeUtil.isContextAncestor(outerClass, place, false)) {
       String description = JavaErrorMessages.message("is.not.an.enclosing.class", HighlightUtil.formatClass(outerClass));
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
     }
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, outerClass);
     if (staticParent != null) {
       String description = JavaErrorMessages.message("cannot.be.referenced.from.static.context",
-                                                     outerClass == null
-                                                     ? ""
-                                                     : HighlightUtil.formatClass(outerClass) + "." + PsiKeyword.THIS);
+                                                     outerClass == null ? "" : HighlightUtil.formatClass(outerClass) + "." + PsiKeyword.THIS);
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, elementToHighlight, description);
       // make context not static or referenced class static
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false);

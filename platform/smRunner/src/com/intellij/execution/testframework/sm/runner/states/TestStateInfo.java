@@ -69,21 +69,21 @@ public interface TestStateInfo {
     IGNORED_INDEX(5, 2, SMTestsRunnerBundle.message("sm.test.runner.magnitude.ignored.failed.title")),
     FAILED_INDEX(6, 4, SMTestsRunnerBundle.message("sm.test.runner.magnitude.assertion.failed.title")),
     ERROR_INDEX(8, 5, SMTestsRunnerBundle.message("sm.test.runner.magnitude.testerror.title")),
-    PASSED_INDEX(COMPLETE_INDEX.getValue(), COMPLETE_INDEX.getSortWeitht(), SMTestsRunnerBundle.message("sm.test.runner.magnitude.passed.title"));
+    PASSED_INDEX(COMPLETE_INDEX.getValue(), COMPLETE_INDEX.getSortWeight(), SMTestsRunnerBundle.message("sm.test.runner.magnitude.passed.title"));
 
     private final int myValue;
-    private final int mySortWeitht;
+    private final int mySortWeight;
     private final String myTitle;
 
     /**
      * @param value Some magic parameter from legal
-     * @param sortWeitht Weight for sort comparator
+     * @param sortWeight Weight for sort comparator
      * @param title Title
      */
-    Magnitude(final int value, final int sortWeitht, final String title) {
+    Magnitude(final int value, final int sortWeight, final String title) {
       myValue = value;
       myTitle = title;
-      mySortWeitht = sortWeitht;
+      mySortWeight = sortWeight;
     }
 
     public int getValue() {
@@ -94,8 +94,8 @@ public interface TestStateInfo {
       return myTitle;
     }
 
-    public int getSortWeitht() {
-      return mySortWeitht;
+    public int getSortWeight() {
+      return mySortWeight;
     }
   }
 }

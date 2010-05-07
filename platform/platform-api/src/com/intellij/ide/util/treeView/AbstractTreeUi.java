@@ -929,7 +929,7 @@ public class AbstractTreeUi {
       forceUpdate = false;
     }
 
-    updateNodeChildren(node, pass, null, false, canSmartExpand, forceUpdate, false);
+     updateNodeChildren(node, pass, null, false, canSmartExpand, forceUpdate, false);
   }
 
   private boolean isToBuildInBackground(NodeDescriptor descriptor) {
@@ -1256,39 +1256,48 @@ public class AbstractTreeUi {
 
     final Object element = getElementFor(node);
 
-    final LoadedChildren children = loadedChildren != null ? loadedChildren : new LoadedChildren(getChildrenFor(element));
+    addToUpdating(node);
 
-    boolean processed;
+    try {
+      final LoadedChildren children = loadedChildren != null ? loadedChildren : new LoadedChildren(getChildrenFor(element));
 
-    if (children.getElements().size() == 0) {
-      removeLoading(node, true);
-      processed = true;
-    }
-    else {
-      if (isAutoExpand(node)) {
-        addNodeAction(getElementFor(node), new NodeAction() {
-          public void onReady(final DefaultMutableTreeNode node) {
-            final TreePath path = new TreePath(node.getPath());
-            if (getTree().isExpanded(path) || children.getElements().size() == 0) {
-              removeLoading(node, false);
-            }
-            else {
-              maybeYeild(new ActiveRunnable() {
-                public ActionCallback run() {
-                  expand(element, null);
-                  return new ActionCallback.Done();
-                }
-              }, pass, node);
-            }
-          }
-        }, false);
+      boolean processed;
+
+      if (children.getElements().size() == 0) {
+        removeLoading(node, true);
+        processed = true;
       }
-      processed = false;
+      else {
+        if (isAutoExpand(node)) {
+          addNodeAction(getElementFor(node), new NodeAction() {
+            public void onReady(final DefaultMutableTreeNode node) {
+              final TreePath path = new TreePath(node.getPath());
+              if (getTree().isExpanded(path) || children.getElements().size() == 0) {
+                removeLoading(node, false);
+              }
+              else {
+                maybeYeild(new ActiveRunnable() {
+                  public ActionCallback run() {
+                    expand(element, null);
+                    return new ActionCallback.Done();
+                  }
+                }, pass, node);
+              }
+            }
+          }, false);
+        }
+        processed = false;
+      }
+
+      removeFromUpdating(node);
+
+      processNodeActionsIfReady(node);
+
+      return new Pair<Boolean, LoadedChildren>(processed, children);
     }
-
-    processNodeActionsIfReady(node);
-
-    return new Pair<Boolean, LoadedChildren>(processed, children);
+    finally {
+      removeFromUpdating(node);
+    }
   }
 
   private boolean removeIfLoading(TreeNode node) {
@@ -3829,7 +3838,9 @@ public class AbstractTreeUi {
 
     DefaultMutableTreeNode parent = getParentBuiltNode(subtreeRoot);
     if (parent == null) {
-      addSubtreeToUpdate(subtreeRoot);
+      if (!getBuilder().isAlwaysShowPlus(getDescriptorFrom(subtreeRoot))) {
+        addSubtreeToUpdate(subtreeRoot);
+      }
     } else if (parent != subtreeRoot) {
       addNodeAction(getElementFor(subtreeRoot), new NodeAction() {
         public void onReady(DefaultMutableTreeNode parent) {
@@ -3877,7 +3888,7 @@ public class AbstractTreeUi {
     return !myUnbuiltNodes.contains(node);
   }
 
-  static class LoadedChildren {
+  class LoadedChildren {
 
     private final List myElements;
     private final Map<Object, NodeDescriptor> myDescriptors = new HashMap<Object, NodeDescriptor>();
@@ -3888,7 +3899,9 @@ public class AbstractTreeUi {
     }
 
     void putDescriptor(Object element, NodeDescriptor descriptor, boolean isChanged) {
-      assert myElements.contains(element);
+      if (isUnitTestingMode()) {
+        assert myElements.contains(element);
+      }
       myDescriptors.put(element, descriptor);
       myChanges.put(descriptor, isChanged);
     }

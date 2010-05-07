@@ -222,7 +222,7 @@ public class EditorWindow implements EditorEx, UserDataHolderEx {
 
   public EditorHighlighter getHighlighter() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myInjectedFile.getFileType(), scheme, getProject());
+    EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myInjectedFile.getVirtualFile(), scheme, getProject());
     highlighter.setText(getDocument().getText());
     return highlighter;
   }

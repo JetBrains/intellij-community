@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,6 +42,7 @@ public interface GeneralTestEventsProcessor extends Disposable {
   void onSuiteFinished(final String suiteName);
 
   void onUncapturedOutput(final String text, final Key outputType);
+  void onError(@NotNull final String localizedMessage, @Nullable final String stackTrace);
 
   // Custom progress statistics
 

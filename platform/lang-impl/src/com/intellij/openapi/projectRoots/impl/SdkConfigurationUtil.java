@@ -104,26 +104,26 @@ public class SdkConfigurationUtil {
 
   @Nullable
   public static Sdk setupSdk(final VirtualFile homeDir, final SdkType sdkType, final boolean silent) {
+    final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
+    final ProjectJdkImpl projectJdk;
+    try {
+      final String sdkName = createUniqueSdkName(sdkType, homeDir.getPath(), Arrays.asList(sdks));
+      projectJdk = new ProjectJdkImpl(sdkName, sdkType);
+      projectJdk.setHomePath(homeDir.getPath());
+      sdkType.setupSdkPaths(projectJdk);
+    }
+    catch (Exception e) {
+      if (!silent) {
+        Messages.showErrorDialog("Error configuring SDK: " +
+                                 e.getMessage() +
+                                 ".\nPlease make sure that " +
+                                 FileUtil.toSystemDependentName(homeDir.getPath()) +
+                                 " is a valid home path for this SDK type.", "Error configuring SDK");
+      }
+      return null;
+    }
     return ApplicationManager.getApplication().runWriteAction(new NullableComputable<Sdk>() {
         public Sdk compute() {
-          final Sdk[] sdks = ProjectJdkTable.getInstance().getAllJdks();
-          ProjectJdkImpl projectJdk;
-          try {
-            final String sdkName = createUniqueSdkName(sdkType, homeDir.getPath(), Arrays.asList(sdks));
-            projectJdk = new ProjectJdkImpl(sdkName, sdkType);
-            projectJdk.setHomePath(homeDir.getPath());
-            sdkType.setupSdkPaths(projectJdk);
-          }
-          catch (Exception e) {
-            if (!silent) {
-              Messages.showErrorDialog("Error configuring SDK: " +
-                                       e.getMessage() +
-                                       ".\nPlease make sure that " +
-                                       FileUtil.toSystemDependentName(homeDir.getPath()) +
-                                       " is a valid home path for this SDK type.", "Error configuring SDK");
-            }
-            return null;
-          }
           ProjectJdkTable.getInstance().addJdk(projectJdk);
           return projectJdk;
         }

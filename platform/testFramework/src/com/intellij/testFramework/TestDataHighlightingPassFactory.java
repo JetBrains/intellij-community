@@ -40,7 +40,9 @@ public class TestDataHighlightingPassFactory extends AbstractProjectComponent im
   public static final List<String> SUPPORTED_FILE_TYPES = Arrays.asList(
     StdFileTypes.JAVA.getDefaultExtension()
   );
-  public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES = Arrays.asList("js", "php", "css", "html", "xhtml", "jsp", "test", "py");
+  public static final List<String> SUPPORTED_IN_TEST_DATA_FILE_TYPES = Arrays.asList(
+    "js", "php", "css", "html", "xhtml", "jsp", "test", "py", "aj"
+  );
   private static final int MAX_HOPES = 3;
   private static final String TEST_DATA = "testdata";
 

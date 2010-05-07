@@ -22,17 +22,22 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * User: lex
@@ -40,6 +45,8 @@ import java.awt.event.MouseEvent;
  * Time: 11:26:44 PM
  */
 public class DebuggerUIUtil {
+  @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
+
   private DebuggerUIUtil() {
   }
 
@@ -93,21 +100,33 @@ public class DebuggerUIUtil {
 
   public static void showValuePopup(@NotNull XFullValueEvaluator text, @NotNull MouseEvent event, @NotNull Project project) {
     final JTextArea textArea = new JTextArea("Evaluating...");
-    text.startEvaluation(new FullValueEvaluationCallbackImpl(textArea));
-
+    final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
+    text.startEvaluation(callback);
     textArea.setEditable(false);
     textArea.setBackground(HintUtil.INFORMATION_COLOR);
     textArea.setLineWrap(false);
+
     final JScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
     final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
-    final Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
+    Dimension size = DimensionService.getInstance().getSize(FULL_VALUE_POPUP_DIMENSION_KEY, project);
+    if (size == null) {
+      size = new Dimension(frameSize.width / 2, frameSize.height / 2);
+    }
+
     component.setPreferredSize(size);
     component.setBorder(null);
+
     final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
       .setResizable(true)
       .setMovable(true)
-      .setDimensionServiceKey(project, "XDebugger.FullValuePopup", false)
+      .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
       .setRequestFocus(false)
+      .setCancelCallback(new Computable<Boolean>() {
+        public Boolean compute() {
+          callback.setObsolete();
+          return true;
+        }
+      })
       .createPopup();
     final Component parentComponent = event.getComponent();
     RelativePoint point = new RelativePoint(parentComponent, new Point(event.getX()-size.width, event.getY()-size.height));
@@ -115,16 +134,24 @@ public class DebuggerUIUtil {
   }
 
   private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {
+    private final AtomicBoolean myObsolete = new AtomicBoolean(false);
     private final JTextArea myTextArea;
 
-    public FullValueEvaluationCallbackImpl(JTextArea textArea) {
+    public FullValueEvaluationCallbackImpl(final JTextArea textArea) {
       myTextArea = textArea;
     }
 
     public void evaluated(@NotNull final String fullValue) {
+      evaluated(fullValue, null);
+    }
+
+    public void evaluated(@NotNull final String fullValue, @Nullable final Font font) {
       invokeOnEventDispatch(new Runnable() {
         public void run() {
           myTextArea.setText(fullValue);
+          if (font != null) {
+            myTextArea.setFont(font);
+          }
           myTextArea.setCaretPosition(0);
         }
       });
@@ -137,6 +164,14 @@ public class DebuggerUIUtil {
           myTextArea.setText(errorMessage);
         }
       });
+    }
+
+    private void setObsolete() {
+      myObsolete.set(true);
+    }
+
+    public boolean isObsolete() {
+      return myObsolete.get();
     }
   }
 }

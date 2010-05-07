@@ -58,12 +58,10 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
-  private final boolean myDumb;
 
   public DefaultHighlightVisitor(Project project) {
     myProject = project;
     myErrorFilters = Extensions.getExtensions(FILTER_EP_NAME, project);
-    myDumb = DumbService.getInstance(myProject).isDumb();
   }
                                                      
   public boolean suitableForFile(final PsiFile file) {
@@ -122,10 +120,11 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private void runAnnotators(final PsiElement element, HighlightInfoHolder holder, final AnnotationHolderImpl annotationHolder) {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
     if (annotators.isEmpty()) return;
+    final boolean dumb = DumbService.getInstance(myProject).isDumb();
 
     JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
       public boolean process(Annotator annotator) {
-        if (myDumb && !(annotator instanceof DumbAware)) {
+        if (dumb && !(annotator instanceof DumbAware)) {
           return true;
         }
 

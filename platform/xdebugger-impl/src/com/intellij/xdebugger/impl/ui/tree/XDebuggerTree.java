@@ -47,13 +47,15 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private static final Convertor<TreePath,String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
     public String convert(TreePath o) {
-      final Object node = o.getLastPathComponent();
       String text = null;
-      if (node instanceof XValueNodeImpl) {
-        text = ((XValueNodeImpl)node).getName();
-      }
-      else if (node instanceof XDebuggerTreeNode) {
-        text = ((XDebuggerTreeNode)node).getText().toString();
+      if (o != null) {
+        final Object node = o.getLastPathComponent();
+        if (node instanceof XValueNodeImpl) {
+          text = ((XValueNodeImpl)node).getName();
+        }
+        else if (node instanceof XDebuggerTreeNode) {
+          text = ((XDebuggerTreeNode)node).getText().toString();
+        }
       }
       return text != null ? text : "";
     }

@@ -8,6 +8,7 @@ target(compile: "Compile project") {
   loadProject()
   project["javac"] = "$jdk/bin/javac"
   project.targetFolder = out
+  ant.delete(dir: "$home/reports")
   project.clean()
   project.makeAll()
 }
@@ -27,6 +28,7 @@ target('default': 'The default target') {
     pass("idea.test.group")
     pass("idea.test.patterns")
     pass("idea.fast.only")
+    pass("teamcity.build.tempDir")
     pass("teamcity.tests.recentlyFailedTests.file")
     jvmarg (value: "-Didea.platform.prefix=Idea")
     jvmarg (value: "-Didea.home.path=$home")

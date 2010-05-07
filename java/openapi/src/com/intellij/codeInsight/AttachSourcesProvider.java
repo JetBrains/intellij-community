@@ -15,18 +15,19 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiFile;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface AttachSourcesProvider {
-  Collection<AttachSourcesAction> getActions(Library library, PsiFile psiFile);
+  Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, PsiFile psiFile);
 
   interface AttachSourcesAction {
     String getName();
     String getBusyText();
-    ActionCallback perform();
+    ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile);
   }
 }

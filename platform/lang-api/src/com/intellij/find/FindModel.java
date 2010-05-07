@@ -18,7 +18,6 @@ package com.intellij.find;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +56,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private String fileFilter;
   private String customScopeName;
   private SearchScope customScope;
+  private boolean isCustomScope = false;
 
   /**
    * Gets the Preserve Case flag.
@@ -107,6 +107,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     moduleName = model.moduleName;
     customScopeName = model.customScopeName;
     customScope = model.customScope;
+    isCustomScope = model.isCustomScope;
     isFindAll = model.isFindAll;
 
     isInCommentsOnly = model.isInCommentsOnly;
@@ -592,6 +593,14 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   public void setCustomScope(final SearchScope customScope) {
     this.customScope = customScope;
+  }
+
+  public boolean isCustomScope() {
+    return isCustomScope;
+  }
+
+  public void setCustomScope(boolean customScope) {
+    isCustomScope = customScope;
   }
 
   public boolean isInStringLiteralsOnly() {

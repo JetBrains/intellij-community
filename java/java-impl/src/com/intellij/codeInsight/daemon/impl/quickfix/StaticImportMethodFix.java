@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -46,6 +47,7 @@ public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
   private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
   private List<PsiMethod> candidates;
+  private static final int OPTIONS = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS  | PsiFormatUtil.SHOW_FQ_NAME;
 
   public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
@@ -55,8 +57,7 @@ public class StaticImportMethodFix implements IntentionAction {
   public String getText() {
     String text = QuickFixBundle.message("static.import.method.text");
     if (candidates.size() == 1) {
-      final int options = PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS  | PsiFormatUtil.SHOW_FQ_NAME;
-      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, options, 0)+"'";
+      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, OPTIONS, 0)+"'";
     }
     else {
       text += "...";
@@ -110,6 +111,20 @@ public class StaticImportMethodFix implements IntentionAction {
       }
     }
     List<PsiMethod> result = applicableList.isEmpty() ? list : applicableList;
+    for (int i = result.size() - 1; i >= 0; i--) {
+      PsiMethod method = result.get(i);
+      PsiClass containingClass = method.getContainingClass();
+      for (int j = i+1; j<result.size() ;j++) {
+        PsiMethod exMethod = result.get(j);
+        if (!Comparing.strEqual(exMethod.getName(), method.getName())) continue;
+        PsiClass exContainingClass = exMethod.getContainingClass();
+        if (containingClass != null && exContainingClass != null
+            && !Comparing.equal(containingClass.getQualifiedName(), exContainingClass.getQualifiedName())) continue;
+        // same named methods, drop one
+        result.remove(i);
+        break;
+      }
+    }
     Collections.sort(result, new PsiProximityComparator(argumentList));
     return result;
   }
@@ -139,7 +154,6 @@ public class StaticImportMethodFix implements IntentionAction {
             catch (IncorrectOperationException e) {
               LOG.error(e);
             }
-            
           }
         });
 
@@ -150,7 +164,7 @@ public class StaticImportMethodFix implements IntentionAction {
 
   private void chooseAndImport(Editor editor) {
     final JList list = new JList(new Vector<PsiMethod>(candidates));
-    list.setCellRenderer(new MethodCellRenderer(true));
+    list.setCellRenderer(new MethodCellRenderer(true, OPTIONS));
     new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
       setMovable(true).

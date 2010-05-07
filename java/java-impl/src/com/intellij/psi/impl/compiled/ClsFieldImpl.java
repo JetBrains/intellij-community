@@ -256,4 +256,10 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement<PsiFieldStub> implemen
   public PsiType getTypeNoResolve() {
     return getType(); //todo?
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
 }

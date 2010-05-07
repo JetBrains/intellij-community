@@ -11,11 +11,7 @@
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
-  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
-  <depends optional="true" config-file="uml-support.xml">com.intellij.uml</depends>
-  <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
-  <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
-  <depends optional="true" config-file="flex-support.xml">com.intellij.flex</depends>
+  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>  
 
   <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>

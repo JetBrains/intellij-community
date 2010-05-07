@@ -123,4 +123,36 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "    }"
     );
   }
+
+  public void testAlignedSubBlockIndentation() {
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getSettings().getIndentOptions(StdFileTypes.JAVA).CONTINUATION_INDENT_SIZE = 8;
+
+    // Inspired by IDEA-54671
+    doTextTest(
+      "class Test {\n" +
+      "    public void foo() {\n" +
+      "        test(11\n" +
+      "                     + 12\n" +
+      "                     + 13,\n" +
+      "             21\n" +
+      "                     + 22\n" +
+      "                     + 23\n" +
+      "        )" +
+      "    }\n" +
+      "}",
+
+      "class Test {\n" +
+      "    public void foo() {\n" +
+      "        test(11\n" +
+      "                     + 12\n" +
+      "                     + 13,\n" +
+      "             21\n" +
+      "                     + 22\n" +
+      "                     + 23\n" +
+      "        )\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

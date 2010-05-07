@@ -80,7 +80,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       final String beforePath = shelvedChange.getBeforePath();
       try {
         final VirtualFile f = ApplyTextFilePatch.findPatchTarget(context, beforePath, shelvedChange.getAfterPath(), FileStatus.ADDED.equals(shelvedChange.getFileStatus()));
-        if ((f == null) || (! f.exists())) {
+        if ((! FileStatus.ADDED.equals(shelvedChange.getFileStatus())) && ((f == null) || (! f.exists()))) {
           if (beforePath != null) {
             missing.add(beforePath);
           }

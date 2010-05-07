@@ -70,7 +70,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   public boolean isValid() {
-    return super.isValid() && getStartOffset() + 1 < getEndOffset();
+    return super.isValid() && myStart + 1 < myEnd;
   }
 
   public void setExpandedInternal(boolean toExpand) {

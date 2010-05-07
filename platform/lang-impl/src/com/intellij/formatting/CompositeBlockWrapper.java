@@ -57,12 +57,29 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     }
   }
 
+  @Override
   protected boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child) {
     for (AbstractBlockWrapper childBefore : myChildren) {
       if (childBefore == child) return false;
       if (childBefore.getWhiteSpace().containsLineFeeds()) return true;      
     }
     return false;
+  }
+
+  @Override
+  protected IndentData getNumberOfSymbolsBeforeBlock() {
+    if (myChildren == null || myChildren.isEmpty()) {
+      return new IndentData(0, 0);
+    }
+    return myChildren.get(0).getNumberOfSymbolsBeforeBlock();
+  }
+
+  @Override
+  protected AbstractBlockWrapper getPreviousBlock() {
+    if (myChildren == null || myChildren.isEmpty()) {
+      return null;
+    }
+    return myChildren.get(0).getPreviousBlock();
   }
 
   public void dispose() {

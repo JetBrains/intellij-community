@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -598,7 +599,23 @@ public class ExtractMethodProcessor implements MatchProvider {
         body.add(myElementFactory.createStatementFromText("return false;", null));
       }
       else if (!myHasReturnStatement && hasNormalExit && myOutputVariable != null) {
-        body.add(returnStatement);
+        final PsiReturnStatement insertedReturnStatement = (PsiReturnStatement)body.add(returnStatement);
+        if (myOutputVariables.length == 1) {
+          final PsiExpression returnValue = insertedReturnStatement.getReturnValue();
+          if (returnValue instanceof PsiReferenceExpression) {
+            final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
+            if (resolved instanceof PsiLocalVariable && Comparing.strEqual(((PsiVariable)resolved).getName(), outVariableName)) {
+              final PsiStatement statement = PsiTreeUtil.getPrevSiblingOfType(insertedReturnStatement, PsiStatement.class);
+              if (statement instanceof PsiDeclarationStatement) {
+                final PsiElement[] declaredElements = ((PsiDeclarationStatement)statement).getDeclaredElements();
+                if (ArrayUtil.find(declaredElements, resolved) != -1) {
+                  InlineUtil.inlineVariable((PsiVariable)resolved, ((PsiVariable)resolved).getInitializer(), (PsiReferenceExpression)returnValue);
+                  resolved.delete();
+                }
+              }
+            }
+          }
+        }
       }
       if (myNullConditionalCheck) {
         final String varName = myOutputVariable.getName();

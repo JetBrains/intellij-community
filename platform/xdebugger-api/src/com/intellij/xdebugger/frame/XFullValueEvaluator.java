@@ -15,7 +15,11 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 /**
  * Supports asynchronous fetching full text of a value. If full text is already computed use {@link ImmediateFullValueEvaluator}
@@ -44,8 +48,10 @@ public abstract class XFullValueEvaluator {
     return myLinkText;
   }
 
-  public interface XFullValueEvaluationCallback {
+  public interface XFullValueEvaluationCallback extends Obsolescent {
     void evaluated(@NotNull String fullValue);
+
+    void evaluated(@NotNull String fullValue, @Nullable Font font);
 
     void errorOccurred(@NotNull String errorMessage);
   }

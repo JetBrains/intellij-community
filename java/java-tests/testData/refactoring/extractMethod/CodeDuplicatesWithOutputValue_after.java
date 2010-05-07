@@ -12,8 +12,7 @@ class C {
     }
 
     private List newMethod(Object[] array) {
-        List l1 = new ArrayList(Arrays.asList(array));
-        return l1;
+        return new ArrayList(Arrays.asList(array));
     }
 
     String[] getObjects() {

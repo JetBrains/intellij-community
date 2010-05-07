@@ -18,6 +18,7 @@ package git4idea.history;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -279,6 +280,32 @@ public class GitHistoryUtils {
     return rc;
   }
 
+  public static List<Pair<SHAHash, Date>> onlyHashesHistory(Project project, FilePath path, final String... parameters) throws VcsException {
+    // adjust path using change manager
+    path = getLastCommitName(project, path);
+    final VirtualFile root = GitUtil.getGitRoot(path);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    h.setNoSSH(true);
+    h.setStdoutSuppressed(true);
+    h.addParameters(parameters);
+    h.addParameters("--name-only", "--pretty=format:%x03%H%x00%ct%x00", "--encoding=UTF-8");
+    h.endOptions();
+    h.addRelativePaths(path);
+    String output = h.run();
+    final List<Pair<SHAHash, Date>> rc = new ArrayList<Pair<SHAHash, Date>>();
+    StringTokenizer tk = new StringTokenizer(output, "\u0003", false);
+
+    while (tk.hasMoreTokens()) {
+      final String line = tk.nextToken();
+      final StringTokenizer tk2 = new StringTokenizer(line, "\u0000\n", false);
+        final String hash = tk2.nextToken("\u0000\n");
+        final String dateString = tk2.nextToken("\u0000");
+        final Date date = GitUtil.parseTimestamp(dateString);
+        rc.add(new Pair<SHAHash, Date>(new SHAHash(hash), date));
+    }
+    return rc;
+  }
+
   public static List<GitCommit> historyWithLinks(Project project, FilePath path, final Set<String> allBranchesSet, final String... parameters) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
@@ -349,34 +376,6 @@ public class GitHistoryUtils {
                              committerEmail, tags, branches));
       //}
     }
-    /*StringTokenizer tk2 = new StringTokenizer(output, "\u0000\n", false);
-    String prefix = root.getPath() + "/";
-    while (tk.hasMoreTokens()) {
-      final String hash = tk.nextToken("\u0000\n");
-      final Date date = GitUtil.parseTimestamp(tk.nextToken("\u0000"));
-      final String authorName = tk.nextToken("\u0000");
-      final String committerName = tk.nextToken("\u0000");
-      // parent hashes
-      final String parents = tk.nextToken("\u0000");
-      final String[] parentsSplit = parents.split(" "); // todo if parent = 000000
-      final Set<SHAHash> parentsHashes = new HashSet<SHAHash>();
-      for (String s : parentsSplit) {
-        parentsHashes.add(new SHAHash(s));
-      }
-      // decorate
-      final String decorate = tk.nextToken("\u0000");
-      final int startSymb = decorate.indexOf("(");
-      int idxFrom = startSymb == -1 ? 0 : startSymb;
-      final int endSymb = decorate.indexOf(")");
-      int idxTo = endSymb == -1 ? 0 : endSymb;
-      final String refs = decorate.substring(idxFrom, idxTo);
-      final String[] refNames = refs.split(", ");
-
-      final String message = tk.nextToken("\u0000").trim();
-      tk.nextToken("\u0000\u0001\u0000");
-      //final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + GitUtil.unescapePath(tk.nextToken("\u0000\n")), false);
-      rc.add(new GitCommit(new SHAHash(hash), authorName, committerName, date, message, parentsHashes, Arrays.asList(refNames)));
-    }*/
     return rc;
   }
 

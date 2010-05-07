@@ -293,7 +293,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
           public void actionPerformed(final ActionEvent e) {
             try {
               if (UpdateChecker.checkPluginsHost(getTextField().getText(), new ArrayList<PluginDownloader>())) {
-                showInfoMessage(myParentComponent, "Plugins Host was sucessfully checked", "Check Plugins Host");
+                showInfoMessage(myParentComponent, "Plugins Host was successfully checked", "Check Plugins Host");
               } else {
                 showErrorDialog(myParentComponent, "Plugin descriptions contain some errors. Please, check idea.log for details.");
               }

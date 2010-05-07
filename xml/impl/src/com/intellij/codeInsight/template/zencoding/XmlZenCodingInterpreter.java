@@ -306,10 +306,10 @@ class XmlZenCodingInterpreter {
   private static void invokeTemplate(TemplateToken token,
                                      final CustomTemplateCallback callback,
                                      int numberInIteration) {
-    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
-    if (token.myTemplate != null) {
+    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.getAttribute2Value());
+    if (token.getTemplate() != null) {
       if (attr2value.size() > 0 || XmlZenCodingTemplate.isTrueXml(callback)) {
-        TemplateImpl modifiedTemplate = token.myTemplate.copy();
+        TemplateImpl modifiedTemplate = token.getTemplate().copy();
         XmlTag tag = token.myTag;
         if (tag != null) {
           for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
@@ -326,12 +326,12 @@ class XmlZenCodingInterpreter {
           return;
         }
       }
-      callback.expandTemplate(token.myTemplate, null);
+      callback.expandTemplate(token.getTemplate(), null);
     }
     else {
       // for CSS
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-      callback.expandTemplate(token.myKey, predefinedValues);
+      callback.expandTemplate(token.getKey(), predefinedValues);
     }
   }
 

@@ -253,6 +253,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(file));
   }
 
+  @TestOnly
+  public void clearUndoRedoQueueInTests(Document document) {
+    clearUndoRedoQueue(DocumentReferenceManager.getInstance().create(document));
+  }
+
   protected void compact() {
     if (myCurrentOperationState == NONE && myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       doCompact();

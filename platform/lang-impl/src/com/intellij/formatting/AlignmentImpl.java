@@ -16,14 +16,13 @@
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 
 class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.unmodifiableList(new ArrayList<LeafBlockWrapper>(0));
   private Collection<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
-  private final int myFlags;
-  private static int ourId = 0;
-  private static final int ID_SHIFT = 1;
   private AlignmentImpl myParentAlignment;
 
   public String getId() {
@@ -36,18 +35,6 @@ class AlignmentImpl extends Alignment {
 
   public void setParent(final Alignment base) {
     myParentAlignment = (AlignmentImpl)base;
-  }
-
-  static enum Type{
-    FULL,NORMAL
-  }
-
-  public AlignmentImpl(final Type type) {
-    myFlags = ((ourId++) >> ID_SHIFT) | type.ordinal();
-  }
-
-  final Type getType() {
-    return Type.values()[myFlags & 1];
   }
 
   /**
@@ -82,7 +69,8 @@ class AlignmentImpl extends Alignment {
    * @return          block {@link #setOffsetRespBlock(LeafBlockWrapper) registered} for the current alignment object or
    *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; <code>null</code> otherwise
    */
-  LeafBlockWrapper getOffsetRespBlockBefore(final LeafBlockWrapper block) {
+  @Nullable
+  LeafBlockWrapper getOffsetRespBlockBefore(final AbstractBlockWrapper block) {
     LeafBlockWrapper result = null;
     if (myOffsetRespBlocks != EMPTY) {
       LeafBlockWrapper lastBlockAfterLineFeed = null;
@@ -116,20 +104,20 @@ class AlignmentImpl extends Alignment {
         result = lastAlignedBlock;
       }
     }
+    
     if (result == null && myParentAlignment != null) {
       return myParentAlignment.getOffsetRespBlockBefore(block);
     }
     else {
       return result;
     }
-
   }
 
   /**
    * Registers wrapped block within the current alignment in order to use it for further
-   * {@link #getOffsetRespBlockBefore(LeafBlockWrapper)} calls processing.
+   * {@link #getOffsetRespBlockBefore(AbstractBlockWrapper)} calls processing.
    *
-   * @param block   wrapped block to register within the curretn alignmnent object
+   * @param block   wrapped block to register within the current alignment object
    */
   void setOffsetRespBlock(final LeafBlockWrapper block) {
     if (myOffsetRespBlocks == EMPTY) myOffsetRespBlocks = new LinkedHashSet<LeafBlockWrapper>(1);

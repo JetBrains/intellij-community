@@ -233,10 +233,10 @@ public class DirectoryChooser extends DialogWrapper {
       if (myDirectory != null) {
         VirtualFile virtualFile = myDirectory.getVirtualFile();
         if (fileIndex.isInTestSourceContent(virtualFile)){
-          return Icons.TEST_SOURCE_FOLDER;
+          return Icons.MODULES_TEST_SOURCE_FOLDER;
         }
         else if (fileIndex.isInSourceContent(virtualFile)){
-          return Icons.SOURCE_FOLDERS_ICON;
+          return Icons.MODULES_SOURCE_FOLDERS_ICON;
         }
       }
       return Icons.FOLDER_ICON;

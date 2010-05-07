@@ -131,6 +131,10 @@ public class EnvVariablesTable extends Observable {
     return myVariables;
   }
 
+  public void stopEditing() {
+    myTableVeiw.stopEditing();
+  }
+
   public void refreshValues() {
     myTableVeiw.getComponent().repaint();
   }

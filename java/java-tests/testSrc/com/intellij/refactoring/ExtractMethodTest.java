@@ -257,6 +257,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testInlineCreated2ReturnLocalVariablesOnly() throws Exception {
+    doTest();
+  }
+
   public void testGuardMethodDuplicates() throws Exception {
     doDuplicatesTest();
   }
@@ -401,6 +405,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testArrayAccess1() throws Exception {
+    doTest();
+  }
+
+  public void testArrayAccessWithLocalIndex() throws Exception {
     doTest();
   }
 

@@ -520,29 +520,28 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void documentChanged(DocumentEvent event) {
     final Document document = event.getDocument();
     final FileViewProvider viewProvider = getCachedViewProvider(document);
-    if (viewProvider != null) {
-      if (viewProvider.getVirtualFile().getFileType().isBinary()) return;
+    if (viewProvider == null) return;
+    if (viewProvider.getVirtualFile().getFileType().isBinary()) return;
 
-      final List<PsiFile> files = viewProvider.getAllFiles();
-      boolean commitNecessary = false;
-      for (PsiFile file : files) {
-        if (file == null || file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null) continue;
-        final TextBlock textBlock = getTextBlock(document, file);
-        if (textBlock.isLocked()) continue;
+    final List<PsiFile> files = viewProvider.getAllFiles();
+    boolean commitNecessary = false;
+    for (PsiFile file : files) {
+      if (file == null || file instanceof PsiFileImpl && ((PsiFileImpl)file).getTreeElement() == null) continue;
+      final TextBlock textBlock = getTextBlock(document, file);
+      if (textBlock.isLocked()) continue;
 
-        if (mySmartPointerManager != null) { // mock tests
-          SmartPointerManagerImpl.unfastenBelts(file);
-        }
-
-        textBlock.documentChanged(event);
-        assert file instanceof PsiFileImpl : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;
-        myUncommittedDocuments.add(document);
-        commitNecessary = true;
+      if (mySmartPointerManager != null) { // mock tests
+        SmartPointerManagerImpl.unfastenBelts(file);
       }
 
-      if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null){
-        commitDocument(document);
-      }
+      textBlock.documentChanged(event);
+      assert file instanceof PsiFileImpl : event + "; file="+file+"; allFiles="+files+"; viewProvider="+viewProvider;
+      myUncommittedDocuments.add(document);
+      commitNecessary = true;
+    }
+
+    if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null){
+      commitDocument(document);
     }
   }
 

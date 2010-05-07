@@ -255,18 +255,20 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       }
     });
 
-    Frame parentFrame = null;
     final Window parent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (parent instanceof Frame) {
-      parentFrame = (Frame) parent;
+      myFakeDialog = new JDialog((Frame) parent);
+    } else if (parent instanceof JDialog) {
+      myFakeDialog = new JDialog(((JDialog)parent));
+    } else {
+      myFakeDialog = new JDialog((JFrame)null);
     }
 
-    myFakeDialog = new JDialog(parentFrame);
     myFakeDialog.setModal(true);
     myFakeDialog.setUndecorated(true);
     myFakeDialog.getRootPane().putClientProperty( "Window.shadow", Boolean.FALSE );
 
-    myFakeDialog.setBounds(0, 0, 0, 0);
+    myFakeDialog.setSize(0, 0);
     myFakeDialog.setVisible(true);
 
     try {

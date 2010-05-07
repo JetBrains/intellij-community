@@ -437,4 +437,10 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public void putInfo(Map<String, String> info) {
     info.put("fieldName", getName());
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
 }

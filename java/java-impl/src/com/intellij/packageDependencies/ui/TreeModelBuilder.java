@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -33,8 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,15 +112,7 @@ public class TreeModelBuilder {
 
   private void createMaps(ScopeType scopeType) {
     myModulePackageNodes.put(scopeType, new HashMap<Pair<Module, PsiPackage>, PackageNode>());
-    myLibraryPackageNodes.put(scopeType, new THashMap<Pair<OrderEntry, PsiPackage>, PackageNode>(new TObjectHashingStrategy<Pair<OrderEntry, PsiPackage>>() {
-      public int computeHashCode(final Pair<OrderEntry, PsiPackage> key) {
-        return key.getSecond() == null ? 0 : key.getSecond().hashCode();
-      }
-
-      public boolean equals(final Pair<OrderEntry, PsiPackage> o1, final Pair<OrderEntry, PsiPackage> o2) {
-        return Comparing.equal(o1.getSecond(), o2.getSecond());
-      }
-    }));
+    myLibraryPackageNodes.put(scopeType, new HashMap<Pair<OrderEntry, PsiPackage>, PackageNode>());
     myModuleGroupNodes.put(scopeType, new HashMap<String, ModuleGroupNode>());
     myModuleNodes.put(scopeType, new HashMap<Module, ModuleNode>());
     myLibraryNodes.put(scopeType, new HashMap<OrderEntry, LibraryNode>());

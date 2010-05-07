@@ -310,6 +310,21 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                "class A {\n" + "    void b() {\n" + "        for (c) {\n" + "            d();\n" + "        }\n" + "    }\n" + "}");
   }
 
+  public void testClassComment() throws Exception {
+    doTextTest("/**\n" +
+                "* @author smbd\n" +
+                "* @param <T> some param\n" +
+                "* @since 1.9\n" +
+                "*/\n" +
+                "class Test<T>{}",
+               "/**\n" +
+                " * @param <T> some param\n" +
+                " * @author smbd\n" +
+                " * @since 1.9\n" +
+                " */\n" +
+                "class Test<T> {\n}");
+  }
+
   public void testStringBinaryOperation() throws Exception {
     final CodeStyleSettings settings = getSettings();
 

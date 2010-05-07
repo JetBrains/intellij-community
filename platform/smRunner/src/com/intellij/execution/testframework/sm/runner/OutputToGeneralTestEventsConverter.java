@@ -78,7 +78,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   public void process(final String text, final Key outputType) {
     if (outputType != ProcessOutputTypes.STDERR && outputType != ProcessOutputTypes.SYSTEM) {
-      // we check for consistensy only std output
+      // we check for consistently only std output
       // because all events must be send to stdout
       processStdOutConsistently(text, outputType);
     } else {
@@ -268,6 +268,16 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  private void fireOnErrorMsg(@NotNull final String localizedMessage,
+                              @Nullable final String stackTrace) {
+
+    // local variable is used to prevent concurrent modification
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onError(localizedMessage, stackTrace);
+    }
+  }
+
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
     @NonNls public static final String KEY_TESTS_COUNT = "testCount";
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
@@ -276,6 +286,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_KEY_LOCATION_URL = "locationHint";
     @NonNls private static final String ATTR_KEY_LOCATION_URL_OLD = "location";
     @NonNls private static final String ATTR_KEY_STACKTRACE_DETAILS = "details";
+
+    @NonNls private static final String MESSAGE = "message";
+    @NonNls private static final String ATTR_KEY_STATUS = "status";
+    @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
+    @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
+    @NonNls private static final String ATTR_KEY_TEXT = "text";
+    @NonNls private static final String ATTR_KEY_ERROR_DETAILS = "errorDetails";
 
     @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
     @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
@@ -320,15 +337,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
       final String durationStr = testFinished.getAttributes().get(ATTR_KEY_TEST_DURATION);
 
-      // Test's duration in milliseconds
+      // Test duration in milliseconds
       int duration = 0;
 
       if (!StringUtil.isEmptyOrSpaces(durationStr)) {
-        try {
-          duration = Integer.parseInt(durationStr);
-        } catch (NumberFormatException ex) {
-          LOG.error(ex);
-        }
+        duration = convertToInt(durationStr);
       }
       
       fireOnTestFinished(testFinished.getTestName(), duration);
@@ -388,7 +401,32 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         processTestCountInSuite(msg);
       } else if (CUSTOM_STATUS.equals(name)) {
         processCustomStatus(msg);
-      } else {
+      } else if (MESSAGE.equals(name)) {
+        final Map<String, String> msgAttrs = msg.getAttributes();
+
+        final String text = msgAttrs.get(ATTR_KEY_TEXT);
+        if (!StringUtil.isEmpty(text)){
+          // msg status
+          final String status = msgAttrs.get(ATTR_KEY_STATUS);
+          if (status.equals(ATTR_VALUE_STATUS_ERROR)) {
+            // error msg
+
+            final String stackTrace = msgAttrs.get(ATTR_KEY_ERROR_DETAILS);
+            fireOnErrorMsg(text, stackTrace);
+          } else if (status.equals(ATTR_VALUE_STATUS_WARNING)) {
+            // warning msg
+
+            // let's show warning via stderr
+            fireOnUncapturedOutput(text, ProcessOutputTypes.STDERR);
+          } else {
+            // some other text
+
+            // we cannot pass output type here but it is a service message
+            // let's think that is was stdout
+            fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+          }
+        }
+      }  else {
         //Do nothing
       }
     }

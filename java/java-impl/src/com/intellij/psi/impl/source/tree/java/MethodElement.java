@@ -151,4 +151,10 @@ public class MethodElement extends CompositeElement implements Constants {
       return ChildRoleBase.NONE;
     }
   }
+
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+  
 }
