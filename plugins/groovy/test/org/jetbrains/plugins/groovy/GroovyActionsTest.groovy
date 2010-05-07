@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
@@ -54,6 +55,8 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 "a.fo<caret>o(b)",
 "a.<selection>foo(b)</selection>"
   }
+
+  public void testSWInCodeBlock() throws Exception {doTestForSelectWord 3}
 
   private void doTestForSelectWord(int count, String input, String expected) throws Exception {
     myFixture.configureByText("a.groovy", input);
