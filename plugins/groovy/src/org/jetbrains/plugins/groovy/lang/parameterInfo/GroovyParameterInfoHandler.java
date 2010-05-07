@@ -204,7 +204,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           for (int j = 0; j < currIndex; j++) {
             PsiType argType = argTypes[j];
             final PsiType paramType = substitutor.substitute(parameterTypes[j]);
-            if (!TypesUtil.isAssignable(paramType, argType, place.getManager(), place.getResolveScope())) {
+            if (!TypesUtil.isAssignable(paramType, argType, place)) {
               context.setUIComponentEnabled(i, false);
               break Outer;
             }

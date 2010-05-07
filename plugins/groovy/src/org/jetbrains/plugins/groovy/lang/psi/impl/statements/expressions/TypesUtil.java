@@ -216,9 +216,16 @@ public class TypesUtil {
   }
 
   public static boolean isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
-    if (isAssignableByMethodCallConversion(lType, rType, manager, scope)){
-      return true;
-    }
+    return isAssignableByMethodCallConversion(lType, rType, manager, scope) ||
+           _isAssignable(lType, rType, manager, scope);
+  }
+
+  public static boolean isAssignable(PsiType lType, PsiType rType, PsiElement context) {
+    return isAssignableByMethodCallConversion(lType, rType, context) ||
+           _isAssignable(lType, rType, context.getManager(), context.getResolveScope());
+  }
+
+  private static boolean _isAssignable(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
     //all numeric types are assignable
     if (isNumericType(lType)) {
       return isNumericType(rType) || rType.equals(PsiType.NULL);
@@ -233,15 +240,21 @@ public class TypesUtil {
     return lType.isAssignableFrom(rType);
   }
 
-  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiElement context) {
     if (lType == null || rType == null) return false;
 
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
-      final Boolean result = converter.isConvertible(lType, rType, manager, scope);
+      final Boolean result = converter.isConvertible(lType, rType, context);
       if (result != null) {
         return result;
       }
     }
+
+    return isAssignableByMethodCallConversion(lType, rType, context.getManager(), context.getResolveScope());
+  }
+
+  public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {
+    if (lType == null || rType == null) return false;
 
     if (rType instanceof GrTupleType) {
       final GrTupleType tuple = (GrTupleType)rType;

@@ -153,6 +153,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testUnresolvedAccess() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
+  public void testBooleanProperties() throws Exception { doTest(new GroovyUnresolvedAccessInspection()); }
   public void testUntypedAccess() throws Exception { doTest(new GroovyUntypedAccessInspection()); }
 
   public void testUnassigned1() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
@@ -234,4 +235,6 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testGenericsMethodUsage() throws Exception {
     doTest();
   }
+
+  public void testClosureCallWithTupleTypeArgument() throws Exception {doTest();}
 }

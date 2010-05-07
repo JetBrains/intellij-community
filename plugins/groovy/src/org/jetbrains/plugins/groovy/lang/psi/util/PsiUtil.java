@@ -125,12 +125,12 @@ public class PsiUtil {
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
       signature = signature.curry(1);
     }
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method.getManager(), method.getResolveScope());
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, method);
   }
 
-  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiManager manager) {
+  public static boolean isApplicable(@Nullable PsiType[] argumentTypes, GrClosureType type, PsiElement context) {
     GrClosureSignature signature = type.getSignature();
-    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, manager, type.getResolveScope());
+    return GrClosureSignatureUtil.isSignatureApplicable(signature, argumentTypes, context);
   }
 
   public static PsiClassType createMapType(PsiManager manager, GlobalSearchScope scope) {
