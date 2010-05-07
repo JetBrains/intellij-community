@@ -10,14 +10,15 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.AbstractClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 
 import java.util.*;
 
@@ -40,21 +41,43 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       return null;
     }
 
-    for (PsiType constraint : getExpectedTypes(closure)) {
+    final PsiElement parent = closure.getParent();
+    if (parent instanceof GrListOrMap) {
+      final GrListOrMap list = (GrListOrMap)parent;
+      if (!list.isMap()) {
+        final PsiType listType = list.getType();
+        final int argIndex = Arrays.asList(list.getInitializers()).indexOf(closure);
+        assert argIndex >= 0;
+        if (listType instanceof GrTupleType) {
+          for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
+            if (type instanceof PsiClassType) {
+              for (GroovyResolveResult resolveResult : GppTypeConverter
+                .getConstructorCandidates((PsiClassType)type, ((GrTupleType)listType).getComponentTypes(), closure)) {
+                final PsiElement method = resolveResult.getElement();
+                if (method instanceof PsiMethod && ((PsiMethod)method).isConstructor()) {
+                  final PsiType toCastTo =
+                    resolveResult.getSubstitutor().substitute(((PsiMethod)method).getParameterList().getParameters()[argIndex].getType());
+                  final PsiType suggestion = getSingleMethodParameterType(toCastTo, index, closure);
+                  if (suggestion != null) {
+                    return suggestion;
+                  }
+                }
+
+              }
+            }
+          }
+        }
+        return null;
+      }
+    }
+
+    for (PsiType constraint : GroovyExpectedTypesProvider.getDefaultExpectedTypes(closure)) {
       final PsiType suggestion = getSingleMethodParameterType(constraint, index, closure);
       if (suggestion != null) {
         return suggestion;
       }
     }
     return null;
-  }
-
-  private static Set<PsiType> getExpectedTypes(GrExpression element) {
-    final LinkedHashSet<PsiType> result = new LinkedHashSet<PsiType>();
-    for (TypeConstraint constraint : GroovyExpectedTypesProvider.calculateTypeConstraints(element)) {
-      result.add(constraint.getDefaultType());
-    }
-    return result;
   }
 
   @Nullable
@@ -76,7 +99,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
 
     final PsiElement map = parent.getParent();
     if (map instanceof GrListOrMap && ((GrListOrMap)map).isMap()) {
-      for (PsiType expected : getExpectedTypes((GrExpression)map)) {
+      for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes((GrExpression)map)) {
         if (expected instanceof PsiClassType) {
           final List<Pair<PsiMethod, PsiSubstitutor>> pairs = getMethodsToOverrideImplementInInheritor((PsiClassType)expected, false);
           final List<Pair<PsiMethod, PsiSubstitutor>> withName =

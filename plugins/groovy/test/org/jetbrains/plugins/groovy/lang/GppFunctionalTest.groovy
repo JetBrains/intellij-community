@@ -240,4 +240,18 @@ class Foo<T> {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
+  public void testClosureInListInstantiation() throws Exception {
+    myFixture.configureByText "a.groovy", """
+class Foo {
+  def Foo(int a, Function1<String, Integer> f) {}
+}
+
+@Typed Foo foo() {
+  [239, { s -> s.subs<caret> }]
+}
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
+  }
+
 }

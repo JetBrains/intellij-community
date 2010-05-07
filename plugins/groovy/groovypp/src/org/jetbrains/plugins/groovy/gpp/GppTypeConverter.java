@@ -101,19 +101,21 @@ public class GppTypeConverter extends GrTypeConverter {
   }
 
   private static boolean hasConstructor(PsiClassType lType, PsiType[] argTypes, GroovyPsiElement context) {
-    final PsiClassType.ClassResolveResult resolveResult = lType.resolveGenerics();
+    return getConstructorCandidates(lType, argTypes, context).length == 1;
+  }
+
+  public static GroovyResolveResult[] getConstructorCandidates(PsiClassType classType, PsiType[] argTypes, GroovyPsiElement context) {
+    final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     if (psiClass == null) {
-      return false;
+      return GroovyResolveResult.EMPTY_ARRAY;
     }
 
     final GroovyResolveResult grResult = resolveResult instanceof GroovyResolveResult
                                          ? (GroovyResolveResult)resolveResult
                                          : new GroovyResolveResultImpl(psiClass, context, substitutor, true, true);
-    final GroovyResolveResult[] candidates = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates(
-      context, new GroovyResolveResult[]{grResult}, argTypes);
-    return candidates.length == 1;
+    return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates(context, new GroovyResolveResult[]{grResult}, argTypes);
   }
 
 }
