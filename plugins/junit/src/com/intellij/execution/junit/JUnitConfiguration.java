@@ -155,10 +155,11 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return myData.getWorkingDirectory();
   }
 
-  public void setEnvs(Map<String, String> envs) {
+  public void setEnvs(@NotNull Map<String, String> envs) {
     myData.setEnvs(envs);
   }
 
+  @NotNull
   public Map<String, String> getEnvs() {
     return myData.getEnvs();
   }

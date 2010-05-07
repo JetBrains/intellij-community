@@ -16,22 +16,27 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
 public interface CommonProgramRunConfigurationParameters {
   Project getProject();
 
-  void setProgramParameters(String value);
+  void setProgramParameters(@Nullable String value);
 
+  @Nullable
   String getProgramParameters();
 
-  void setWorkingDirectory(String value);
+  void setWorkingDirectory(@Nullable String value);
 
+  @Nullable
   String getWorkingDirectory();
 
-  void setEnvs(Map<String, String> envs);
+  void setEnvs(@NotNull Map<String, String> envs);
 
+  @NotNull
   Map<String, String> getEnvs();
 
   void setPassParentEnvs(boolean passParentEnvs);

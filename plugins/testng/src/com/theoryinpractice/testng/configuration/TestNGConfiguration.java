@@ -191,10 +191,11 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return data.getWorkingDirectory(project);
   }
 
-  public void setEnvs(Map<String, String> envs) {
+  public void setEnvs(@NotNull Map<String, String> envs) {
     data.setEnvs(envs);
   }
 
+  @NotNull
   public Map<String, String> getEnvs() {
     return data.getEnvs();
   }

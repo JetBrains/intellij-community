@@ -173,11 +173,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     PASS_PARENT_ENVS = passParentEnvs;
   }
 
+  @NotNull
   public Map<String, String> getEnvs() {
     return myEnvs;
   }
 
-  public void setEnvs(final Map<String, String> envs) {
+  public void setEnvs(@NotNull final Map<String, String> envs) {
     this.myEnvs = envs;
   }
 
