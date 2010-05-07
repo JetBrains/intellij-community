@@ -1,7 +1,8 @@
-a = 1
+def foo():
+    a = 1
 
-if a:
-    pass
+    if a:
+        pass
 
-a = 4
-a = 3
+    a = 4
+    a = 3
