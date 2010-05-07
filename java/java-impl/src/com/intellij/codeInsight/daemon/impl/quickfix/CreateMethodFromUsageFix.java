@@ -59,7 +59,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
   protected boolean isAvailableImpl(int offset) {
     final PsiMethodCallExpression call = getMethodCall();
-    if (call == null) return false;
+    if (call == null || !call.isValid()) return false;
     PsiReferenceExpression ref = call.getMethodExpression();
     String name = ref.getReferenceName();
 
@@ -90,8 +90,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     PsiExpressionList argumentList = call.getArgumentList();
     List<HighlightInfo> errorsInArgList = DaemonCodeAnalyzerImpl.getHighlights(document, HighlightSeverity.ERROR, project,
-                                                                           //strictly inside arg list
-                                                                      argumentList.getTextRange().getStartOffset()+1,
+                                                     //strictly inside arg list
+                                                     argumentList.getTextRange().getStartOffset()+1,
                                                                       argumentList.getTextRange().getEndOffset()-1);
     return !errorsInArgList.isEmpty();
   }
@@ -117,7 +117,6 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   protected void invokeImpl(final PsiClass targetClass) {
-
     if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
     if (expression == null) return;
@@ -169,6 +168,9 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       }
 
       setupVisibility(parentClass, targetClass, method.getModifierList());
+
+      expression = getMethodCall();
+      LOG.assertTrue(expression.isValid());
 
       if (shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract(targetClass)) {
         PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);

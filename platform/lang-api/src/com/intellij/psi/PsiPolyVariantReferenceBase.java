@@ -41,4 +41,15 @@ public abstract class PsiPolyVariantReferenceBase<T extends PsiElement> extends 
     ResolveResult[] resolveResults = multiResolve(false);
     return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
   }
+
+  @Override
+  public boolean isReferenceTo(PsiElement element) {
+    final ResolveResult[] results = multiResolve(false);
+    for (ResolveResult result : results) {
+      if (getElement().getManager().areElementsEquivalent(result.getElement(), element)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

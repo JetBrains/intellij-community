@@ -41,7 +41,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -59,7 +60,10 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
-import com.theoryinpractice.testng.model.*;
+import com.theoryinpractice.testng.model.IDEARemoteTestRunnerClient;
+import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestNGRemoteListener;
+import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.ui.TestNGResults;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
@@ -72,9 +76,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.remote.strprotocol.MessageHelper;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class TestNGRunnableState extends JavaCommandLineState {
@@ -86,6 +92,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
   private int port;
   private String debugPort;
   private File myTempFile;
+  private BackgroundableProcessIndicator mySearchForTestIndicator;
 
   public TestNGRunnableState(ExecutionEnvironment environment, TestNGConfiguration config) {
     super(environment);
@@ -114,9 +121,18 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
   @Override
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
+    OSProcessHandler processHandler = null;
+    try {
+      processHandler = startProcess();
+    }
+    catch (ExecutionException e) {
+      if (mySearchForTestIndicator != null && !mySearchForTestIndicator.isCanceled()) {
+        mySearchForTestIndicator.cancel();
+      }
+      throw e;
+    }
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
     console.initUI();
-    OSProcessHandler processHandler = startProcess();
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.handleStartProcess(config, processHandler);
     }
@@ -306,7 +322,22 @@ public class TestNGRunnableState extends JavaCommandLineState {
       myTempFile = File.createTempFile("idea_testng", ".tmp");
       myTempFile.deleteOnExit();
       javaParameters.getProgramParametersList().add("-temp", myTempFile.getAbsolutePath());
-      ProgressManager.getInstance().run(new SearchingForTestsTask(serverSocket, is15, config, myTempFile));
+      final SearchingForTestsTask task = new SearchingForTestsTask(serverSocket, is15, config, myTempFile);
+      mySearchForTestIndicator = new BackgroundableProcessIndicator(task) {
+        @Override
+        public void cancel() {
+          try {//ensure that serverSocket.accept was interrupted
+            if (!serverSocket.isClosed()) {
+              new Socket(InetAddress.getLocalHost(), serverSocket.getLocalPort());
+            }
+          }
+          catch (Throwable e) {
+            LOG.info(e);
+          }
+          super.cancel();
+        }
+      };
+      ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestIndicator);
     }
     catch (IOException e) {
       LOG.error(e);
