@@ -160,7 +160,10 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   }
 
   public static boolean isTrueXml(CustomTemplateCallback callback) {
-    FileType type = callback.getFileType();
+    return isTrueXml(callback.getFileType());
+  }
+
+  public static boolean isTrueXml(FileType type) {
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
   }
 
@@ -265,9 +268,21 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
         return false;
       }
+      if (!findApplicableFilter(element)) {
+        return false;
+      }
       return true;
     }
     return false;
+  }
+
+  private static boolean findApplicableFilter(@NotNull PsiElement context) {
+    for (ZenCodingFilter filter : ZenCodingFilter.EP_NAME.getExtensions()) {
+      if (filter.isMyContext(context)) {
+        return true;
+      }
+    }
+    return new ZenCodingFilterImpl().isMyContext(context);
   }
 
   public static boolean startZenCoding(Editor editor, PsiFile file, String abbreviation) {
