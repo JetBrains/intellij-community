@@ -50,6 +50,7 @@ public class ResolveProcessor implements PyAsScopeProcessor {
   }
 
   public boolean execute(PsiElement element, ResolveState substitutor) {
+    if (myResult != null) return false; // we already have a result and don't want to lose it in a second invocation
     if (element instanceof PyFile) {
       final VirtualFile file = ((PyFile)element).getVirtualFile();
       if (file != null) {
