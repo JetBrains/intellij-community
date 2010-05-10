@@ -14,9 +14,7 @@ import com.jetbrains.python.console.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
@@ -117,10 +115,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             if (seeker.getQualifier() != null) last_qualifier = seeker.getQualifier();
             continue SEARCH;
           }
-          else if (assigned_from != null) ret = new QualifiedResolveResultImpl(assigned_from, last_qualifier);
+          else if (assigned_from != null) ret = new QualifiedResolveResultImpl(assigned_from, last_qualifier, false);
         }
-        else if (ret == null && elt instanceof PyElement) { // remember this result, but a further reference may be the next resolve result
-          ret = new QualifiedResolveResultImpl(target.getElement(), target.isValidResult(), last_qualifier);
+        else if (ret == null && elt instanceof PyElement && target.isValidResult()) { 
+          // remember this result, but a further reference may be the next resolve result
+          ret = new QualifiedResolveResultImpl(target.getElement(), last_qualifier, target instanceof ImplicitResolveResult);
         }
       }
       // all resolve results checked, reassignment not detected, nothing more to do
@@ -287,18 +286,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     return null;
   }
 
-  private static class QualifiedResolveResultImpl extends PsiElementResolveResult implements QualifiedResolveResult {
+  private static class QualifiedResolveResultImpl extends RatedResolveResult implements QualifiedResolveResult {
     // a trivial implementation
     private PyExpression myLastQualifier;
+    private boolean myIsImplicit;
 
-    QualifiedResolveResultImpl(@NotNull PsiElement element, PyExpression lastQualifier) {
-      super(element);
-      myLastQualifier = lastQualifier;
+    public boolean isImplicit() {
+      return myIsImplicit;
     }
 
-    public QualifiedResolveResultImpl(@NotNull PsiElement element, boolean validResult, PyExpression lastQualifier) {
-      super(element, validResult);
+    QualifiedResolveResultImpl(@NotNull PsiElement element, PyExpression lastQualifier, boolean isImplicit) {
+      super(isImplicit? RATE_LOW : RATE_NORMAL, element);
       myLastQualifier = lastQualifier;
+      myIsImplicit = isImplicit;
     }
 
     public PyExpression getLastQualifier() {
@@ -322,6 +322,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     public boolean isValidResult() {
       return false;
+    }
+
+    public boolean isImplicit() {
+      return false;  
     }
   }
 
