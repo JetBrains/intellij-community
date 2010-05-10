@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,63 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class UseOfAnotherObjectsPrivateFieldInspection
         extends BaseInspection {
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreSameClass = false;
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreEquals = false;
+
+    @Override
     @NotNull
     public String getID(){
         return "AccessingNonPublicFieldOfAnotherObject";
     }
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "accessing.non.public.field.of.another.object.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "accessing.non.public.field.of.another.object.problem.descriptor");
     }
 
+    @Override
+    public JComponent createOptionsPanel() {
+        final MultipleCheckboxOptionsPanel panel =
+                new MultipleCheckboxOptionsPanel(this);
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.accesses.from.the.same.class"), "ignoreSameClass");
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.accesses.from.equals.method"), "ignoreEquals");
+        return panel;
+    }
+
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new UseOfAnotherObjectsPrivateFieldVisitor();
     }
 
-    private static class UseOfAnotherObjectsPrivateFieldVisitor
+    private class UseOfAnotherObjectsPrivateFieldVisitor
             extends BaseInspectionVisitor{
+
         @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
@@ -54,11 +80,26 @@ public class UseOfAnotherObjectsPrivateFieldInspection
             if(qualifier == null || qualifier instanceof PsiThisExpression){
                 return;
             }
+            if(ignoreEquals) {
+                final PsiMethod method =
+                        PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
+                if (MethodUtils.isEquals(method)) {
+                    return;
+                }
+            }
             final PsiElement referent = expression.resolve();
             if(!(referent instanceof PsiField)){
                 return;
             }
             final PsiField field = (PsiField) referent;
+            if (ignoreSameClass) {
+                final PsiClass parent =
+                        PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                final PsiClass containingClass = field.getContainingClass();
+                if (parent != null && parent.equals(containingClass)) {
+                    return;
+                }
+            }
             if(!field.hasModifierProperty(PsiModifier.PRIVATE) &&
                     !field.hasModifierProperty(PsiModifier.PROTECTED)){
                 return;
@@ -68,7 +109,7 @@ public class UseOfAnotherObjectsPrivateFieldInspection
             }
             final PsiElement fieldNameElement =
                     expression.getReferenceNameElement();
-            if (fieldNameElement == null) {
+            if(fieldNameElement == null){
                 return;
             }
             registerError(fieldNameElement);
