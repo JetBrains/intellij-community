@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,21 @@ import org.jetbrains.annotations.NotNull;
 
 public class SetReplaceableByEnumSetInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "set.replaceable.by.enum.set.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "set.replaceable.by.enum.set.problem.descriptor");
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new SetReplaceableByEnumSetVisitor();
     }
@@ -46,7 +49,8 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
     private static class SetReplaceableByEnumSetVisitor
             extends BaseInspectionVisitor {
 
-        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(
+                @NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if (!(type instanceof PsiClassType)) {
@@ -65,11 +69,11 @@ public class SetReplaceableByEnumSetInspection extends BaseInspection {
                 return;
             }
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-		            "java.util.Set")) {
+                    "java.util.Set")) {
                 return;
             }
             if (TypeUtils.expressionHasTypeOrSubtype(expression,
-		            "java.util.EnumSet")) {
+                    "java.util.EnumSet")) {
                 return;
             }
             final PsiClassType argumentClassType = (PsiClassType)argumentType;
