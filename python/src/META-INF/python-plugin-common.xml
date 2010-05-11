@@ -208,6 +208,12 @@
     <annotator language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.DjangoCommentAnnotator"/>
     <colorSettingsPage implementation="com.jetbrains.django.lang.template.highlighting.DjangoTemplateColorsPage"/>
 
+    <lang.commenter language="DjangoTemplate" implementationClass="com.jetbrains.django.editor.DjangoTemplateCommenter"/>
+    
+    <basicWordSelectionFilter implementation="com.jetbrains.django.editor.DjangoTemplateWordSelectionFilter"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagNameSelectionHandler"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
