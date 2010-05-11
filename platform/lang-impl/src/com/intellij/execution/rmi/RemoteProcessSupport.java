@@ -210,7 +210,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           return RemoteUtil.castToLocal(remote, myValueClass);
         }
       }
-    }, myValueClass.getClassLoader());
+    }, getClass().getClassLoader()); // should be the loader of client plugin
   }
 
   private static <T> T narrowImpl(Remote remote, Class<T> to) {
