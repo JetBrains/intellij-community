@@ -135,6 +135,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   protected Icon getElementIcon(final int flags) {
     final PsiElement element = (PsiElement)this;
+
+    if (!element.isValid()) return null;
+
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
