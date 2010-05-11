@@ -284,4 +284,9 @@ public class PyResolveTest extends PyResolveTestCase {
     PsiElement targetElement = resolve();
     assertNull(targetElement);
   }
+
+  public void testClassNameEqualsMethodName() {
+    PsiElement targetElement = resolve();
+    assertInstanceOf(targetElement, PyFunction.class);
+  }
 }
