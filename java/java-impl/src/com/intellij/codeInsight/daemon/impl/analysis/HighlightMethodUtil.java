@@ -42,6 +42,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -768,9 +769,9 @@ public class HighlightMethodUtil {
     return errorResult;
   }
 
-
+  @Nullable
   static HighlightInfo checkDuplicateMethod(PsiClass aClass, PsiMethod method) {
-    if (aClass == null) return null;
+    if (aClass == null || method instanceof ExternallyDefinedPsiElement) return null;
     MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
     int methodCount = 0;
     final PsiMethod[] methodsByName = aClass.findMethodsByName(method.getName(), false);
