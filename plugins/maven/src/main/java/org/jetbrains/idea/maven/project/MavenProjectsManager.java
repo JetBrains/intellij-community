@@ -831,7 +831,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
     MavenUtil.runWhenInitialized(myProject, wrapper.get());
   }
 
-  private void schedulePostImportTasts(List<MavenProjectsProcessorTask> postTasks) {
+  private void schedulePostImportTasks(List<MavenProjectsProcessorTask> postTasks) {
     for (MavenProjectsProcessorTask each : postTasks) {
       myPostProcessor.scheduleTask(each);
     }
@@ -941,7 +941,7 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
 
     VirtualFileManager.getInstance().refresh(isNormalProject());
-    schedulePostImportTasts(postTasks.get());
+    schedulePostImportTasks(postTasks.get());
 
     // do not block user too often
     myImportingQueue.restartTimer();
