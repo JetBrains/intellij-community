@@ -32,13 +32,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -72,7 +71,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   }
 
   public void setLanguage(Language language) {
-    myLanguage = language;
+    setCurrLanguage(language);
     updatePreviewEditor();
   }
 
@@ -81,26 +80,32 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   @Override
   protected String getPreviewText() {
     if (myLanguage == null) return "";
-    return LanguageCodeStyleSettingsProvider.getCodeSample(myLanguage, getSettingsType());
+    String sample = LanguageCodeStyleSettingsProvider.getCodeSample(myLanguage, getSettingsType());
+    if (sample == null) return "";
+    return sample;
   }
 
   @NotNull
   @Override
   protected final FileType getFileType() {
     if (myLanguage != null) {
-      return myLanguage.getAssociatedFileType();
+      FileType assocType = myLanguage.getAssociatedFileType();
+      if (assocType != null) {
+        return assocType;
+      }
     }
-    Language langs[] = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
+    Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
     if (langs.length > 0) {
-      myLanguage = langs[0];
+      setCurrLanguage(langs[0]);
       FileType type = langs[0].getAssociatedFileType();
       if (type != null) return type;
     }
     return StdFileTypes.JAVA;
   }
 
+  @Nullable
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this.getPanel()));
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
@@ -132,7 +137,9 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
         });
       }
     }, "", "");
-    manager.commitDocument(doc);
+    if (doc != null) {
+      manager.commitDocument(doc);
+    }
     return psiFile;
   }
 
@@ -205,8 +212,12 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   }
 
 
-  private JComponent createDummy() {
+  private static JComponent createDummy() {
     return new JLabel("");
+  }
+
+  private static void setCurrLanguage(Language lang) {
+    myLanguage = lang;
   }
 
 
