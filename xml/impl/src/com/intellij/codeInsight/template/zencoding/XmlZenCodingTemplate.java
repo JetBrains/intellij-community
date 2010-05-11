@@ -71,7 +71,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   }
 
   @Nullable
-  private static TemplateToken parseSelectors(@NotNull String text) {
+  private static XmlTemplateToken parseSelectors(@NotNull String text) {
     String templateKey = null;
     List<Pair<String, String>> attributes = new ArrayList<Pair<String, String>>();
     Set<String> definedAttrs = new HashSet<String>();
@@ -143,7 +143,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       assert classAttrPosition >= 0;
       attributes.add(classAttrPosition, new Pair<String, String>(CLASS, classesAttrValue.toString()));
     }
-    return new TemplateToken(templateKey, attributes);
+    return new XmlTemplateToken(templateKey, attributes);
   }
 
   private static boolean isXML11ValidQName(String str) {
@@ -191,7 +191,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     if (template == null && !isXML11ValidQName(prefix)) {
       return null;
     }
-    TemplateToken token = parseSelectors(key);
+    XmlTemplateToken token = parseSelectors(key);
     if (token == null) {
       return null;
     }
