@@ -200,8 +200,9 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   }
 
   private static JTextField createTextField() {
-
-    return new JTextField(6);
+    JTextField field = new JTextField(6);
+    field.setMinimumSize(new Dimension(30, field.getMinimumSize().height));
+    return field;
   }
 
   protected int getRightMargin() {
