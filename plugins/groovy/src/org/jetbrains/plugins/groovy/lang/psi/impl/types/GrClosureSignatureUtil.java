@@ -24,6 +24,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -46,10 +47,6 @@ public class GrClosureSignatureUtil {
   private GrClosureSignatureUtil() {
   }
 
-  public static GrClosureSignature createSignature(PsiMethod method) {
-    return new GrClosureSignatureImpl(method);
-  }
-
   public static GrClosureSignature createSignature(GrClosableBlock block) {
     return new GrClosureSignatureImpl(block);
   }
@@ -62,20 +59,20 @@ public class GrClosureSignatureUtil {
     return new GrClosureSignatureImpl(parameters, returnType);
   }
 
-  public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, PsiManager manager, GlobalSearchScope scope) {
-    if (isApplicable(signature, args, manager, scope)) return true;
+  public static boolean isSignatureApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
+    if (isApplicable(signature, args, context)) return true;
 
     if (args.length == 1) {
       PsiType arg = args[0];
       if (arg instanceof GrTupleType) {
         args = ((GrTupleType)arg).getComponentTypes();
-        if (isApplicable(signature, args, manager, scope)) return true;
+        if (isApplicable(signature, args, context)) return true;
       }
     }
     return false;
   }
 
-  private static boolean isApplicable(GrClosureSignature signature, PsiType[] args, PsiManager manager, GlobalSearchScope scope) {
+  private static boolean isApplicable(GrClosureSignature signature, PsiType[] args, GroovyPsiElement context) {
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs()) return false;
     int optional = getOptionalParamCount(signature, false);
@@ -83,11 +80,11 @@ public class GrClosureSignatureUtil {
     if (signature.isVarargs()) notOptional--;
     if (notOptional > args.length) return false;
 
-    if (isApplicable(params, args, params.length, args.length, manager, scope)) {
+    if (isApplicable(params, args, params.length, args.length, context)) {
       return true;
     }
     if (signature.isVarargs()) {
-      return new ApplicabilityVerifierForVararg(manager, scope, params, args).isApplicable();
+      return new ApplicabilityVerifierForVararg(context, params, args).isApplicable();
     }
     return false;
   }
@@ -96,8 +93,7 @@ public class GrClosureSignatureUtil {
                                       PsiType[] args,
                                       int paramCount,
                                       int argCount,
-                                      PsiManager manager,
-                                      GlobalSearchScope scope) {
+                                      GroovyPsiElement context) {
     int optional = getOptionalParamCount(params, false);
     int notOptional = paramCount - optional;
     int optionalArgs = argCount - notOptional;
@@ -108,22 +104,20 @@ public class GrClosureSignatureUtil {
       }
       if (cur == paramCount) return false;
       if (params[cur].isOptional()) optionalArgs--;
-      if (!TypesUtil.isAssignableByMethodCallConversion(params[cur].getType(), args[i], manager, scope)) return false;
+      if (!TypesUtil.isAssignableByMethodCallConversion(params[cur].getType(), args[i], context)) return false;
     }
     return true;
   }
 
   private static class ApplicabilityVerifierForVararg {
-    private PsiManager manager;
-    GlobalSearchScope scope;
+    private GroovyPsiElement context;
     GrClosureParameter[] params;
     PsiType[] args;
     PsiType vararg;
     private int paramLength;
 
-    private ApplicabilityVerifierForVararg(PsiManager manager, GlobalSearchScope scope, GrClosureParameter[] params, PsiType[] args) {
-      this.manager = manager;
-      this.scope = scope;
+    private ApplicabilityVerifierForVararg(GroovyPsiElement context, GrClosureParameter[] params, PsiType[] args) {
+      this.context = context;
       this.params = params;
       this.args = args;
       paramLength = params.length - 1;
@@ -150,14 +144,14 @@ public class GrClosureSignatureUtil {
         if (curParam == paramLength) break;
 
         if (params[curParam].isOptional()) {
-          if (TypesUtil.isAssignable(params[curParam].getType(), args[curArg], manager, scope) &&
+          if (TypesUtil.isAssignable(params[curParam].getType(), args[curArg], context) &&
               isApplicableInternal(curParam + 1, curArg + 1, false, notOptional)) {
             return true;
           }
           skipOptionals = true;
         }
         else {
-          if (!TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), args[curArg], manager, scope)) return false;
+          if (!TypesUtil.isAssignableByMethodCallConversion(params[curParam].getType(), args[curArg], context)) return false;
           notOptional--;
           curArg++;
           curParam++;
@@ -165,7 +159,7 @@ public class GrClosureSignatureUtil {
       }
 
       for (; curArg < args.length; curArg++) {
-        if (!TypesUtil.isAssignableByMethodCallConversion(vararg, args[curArg], manager, scope)) return false;
+        if (!TypesUtil.isAssignableByMethodCallConversion(vararg, args[curArg], context)) return false;
       }
       return true;
     }

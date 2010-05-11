@@ -75,7 +75,8 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     docComment.accept(getVisitor(references, docCommentOwner, problems, manager, isOnTheFly));
     for (PsiJavaCodeReferenceElement reference : references) {
       final List<PsiClass> classesToImport = new ImportClassFix(reference).getClassesToImport();
-      problems.add(manager.createProblemDescriptor(reference, cannotResolveSymbolMessage("<code>" + reference.getText() + "</code>"),
+      final PsiElement referenceNameElement = reference.getReferenceNameElement();
+      problems.add(manager.createProblemDescriptor(referenceNameElement != null ? referenceNameElement : reference, cannotResolveSymbolMessage("<code>" + reference.getText() + "</code>"),
                                                    !isOnTheFly || classesToImport.isEmpty() ? null : new AddImportFix(classesToImport), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                                    isOnTheFly));
     }
@@ -180,9 +181,9 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
             }
             fixes.add(new RemoveTagFix(tagName, paramName, tag));
 
-            problems.add(inspectionManager.createProblemDescriptor(valueElement, cannotResolveSymbolMessage(params), onTheFly,
-                                                                   fixes.toArray(new LocalQuickFix[fixes.size()]),
-                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL));
+            problems.add(inspectionManager.createProblemDescriptor(valueElement, reference.getRangeInElement(), cannotResolveSymbolMessage(params),
+                                                                   ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly,
+                                                                   fixes.toArray(new LocalQuickFix[fixes.size()])));
           }
         }
       }
@@ -231,7 +232,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     }
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
         Collections.sort(myClassesToImport, new PsiProximityComparator(referenceElement.getElement()));

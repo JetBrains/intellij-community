@@ -104,7 +104,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameField;
+    return myNameField.getFocusableComponent();
   }
 
   public boolean isMakeStatic() {

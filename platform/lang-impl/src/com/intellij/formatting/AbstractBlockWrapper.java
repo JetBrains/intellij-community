@@ -200,7 +200,12 @@ public abstract class AbstractBlockWrapper {
         return childIndent.add(myParent.getChildOffset(this, options, tokenBlockStartOffset));
       }
     } else if (!getWhiteSpace().containsLineFeeds()) {
-      return childIndent.add(myParent.getChildOffset(this, options, tokenBlockStartOffset));
+        if (isIndentAffectedAlignment(child)) {
+          return createAlignmentIndent(childIndent, child);
+        }
+        else {
+          return childIndent.add(myParent.getChildOffset(this, options, tokenBlockStartOffset));
+        }
     } else {
       if (myParent == null) return  childIndent.add(getWhiteSpace());
       if (getIndent().isAbsolute()) {
@@ -212,7 +217,12 @@ public abstract class AbstractBlockWrapper {
         }
       }
       if ((myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0) {
-        return childIndent.add(getWhiteSpace());
+        if (isIndentAffectedAlignment(child)) {
+          return createAlignmentIndent(childIndent, child);
+        }
+        else {
+          return childIndent.add(getWhiteSpace());
+        }
       }
       else {
         return childIndent.add(myParent.getChildOffset(this, options, tokenBlockStartOffset));
@@ -228,6 +238,21 @@ public abstract class AbstractBlockWrapper {
    *                <code>false</code> otherwise
    */
   protected abstract boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child);
+
+  /**
+   * Allows to retrieve object that encapsulates information about number of symbols before the current block starting
+   * from the line start. I.e. all symbols (either white space or not) between start of the line where current block begins
+   * and the block itself are count and returned.
+   *
+   * @return    object that encapsulates information about number of symbols before the current block
+   */
+  protected abstract IndentData getNumberOfSymbolsBeforeBlock();
+
+  /**
+   * @return    previous block for the current block if any; <code>null</code> otherwise
+   */
+  @Nullable
+  protected abstract AbstractBlockWrapper getPreviousBlock();
 
   protected final void setCanUseFirstChildIndentAsBlockIndent(final boolean newValue) {
     if (newValue) myFlags |= CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
@@ -259,6 +284,89 @@ public abstract class AbstractBlockWrapper {
       return indent.add(offsetFromParent);
     }
 
+  }
+
+  /**
+   * Allows to answer if indent for the given child block should be calculated 
+   *
+   * @param child
+   * @return
+   */
+  private boolean isIndentAffectedAlignment(AbstractBlockWrapper child) {
+    if (!child.getWhiteSpace().containsLineFeeds()) {
+      return false;
+    }
+    AlignmentImpl alignment = getAlignmentAtStartOffset();
+    if (alignment == null || alignment == child.getAlignment()) {
+      return false;
+    }
+
+    LeafBlockWrapper anchorOffsetBlock = alignment.getOffsetRespBlockBefore(child);
+    return anchorOffsetBlock == null || anchorOffsetBlock.getStartOffset() >= getStartOffset();
+  }
+
+  /**
+   * Allows to retrieve alignment applied to any block that conforms to the following conditions:
+   * <p/>
+   * <ul>
+   *   <li>that block is current block or its ancestor (direct or indirect parent);</li>
+   *   <li>that block starts at the same offset as the current one;</li>
+   * </ul>
+   *
+   * @return    alignment of the current block or it's ancestor that starts at the same offset as the current if any;
+   *            <code>null</code> otherwise
+   */
+  @Nullable
+  private AlignmentImpl getAlignmentAtStartOffset() {
+    for (AbstractBlockWrapper block = this; block != null && block.getStartOffset() == getStartOffset(); block = block.getParent()) {
+      if (block.getAlignment() != null) {
+        return block.getAlignment();
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Allows to construct indent for the block that is affected by aligning rules. E.g. there is a possible case that the user
+   * configures method call arguments to be aligned and single parameter expression spans more than one line:
+   * <p/>
+   * <pre>
+   *     public void test(String s1, String s2) {}
+   *
+   *     public void foo() {
+   *         test("11"
+   *                  + "12"
+   *                  + "13",
+   *              "21"
+   *                  + "22");
+   *     }
+   * </pre>
+   * <p/>
+   * Here both composite blocks (<b>"11" + "12" + "13"</b> and <b>"21" + "22"</b>) are aligned as method call argument but their
+   * sub-blocks that are located on new lines should also be indented to the point of composite block start.
+   * <p/>
+   * This method takes care about constructing target absolute indent of the given child block assuming that it's parent
+   * (referenced by <code>'this'</code>) or it's ancestor that starts at the same offset is aligned. I.e. it assumes
+   * that {@link #isIndentAffectedAlignment(AbstractBlockWrapper)} returns <code>true</code> for the given child block.
+   *
+   * @param indentFromParent    basic indent of given child from the current parent block
+   * @param child               child block of the current aligned composite block
+   * @return                    absolute indent to use for the given child block of the current composite block
+   */
+  private IndentData createAlignmentIndent(IndentData indentFromParent, AbstractBlockWrapper child) {
+    AbstractBlockWrapper previous = child.getPreviousBlock();
+
+    // There is no point in continuing processing if given child is the first block, i.e. there is no alignment-implied
+    // offset to add to the given 'indent from parent'.
+    if (previous == null) {
+      return indentFromParent;
+    }
+
+    IndentData symbolsBeforeCurrent = getNumberOfSymbolsBeforeBlock();
+
+    // Result is calculated as a number of symbols between the current composite parent block plus given 'indent from parent'.
+    int indentSpaces = symbolsBeforeCurrent.getIndentSpaces() + indentFromParent.getSpaces() + indentFromParent.getIndentSpaces();
+    return new IndentData(indentSpaces, symbolsBeforeCurrent.getSpaces());
   }
 
   private static IndentData getIndent(final CodeStyleSettings.IndentOptions options, final int index, IndentImpl indent) {

@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -168,10 +169,10 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
       }
     }
 
-    private void checkAssignability(PsiType lType, GrExpression rExpr, PsiElement element) {
+    private void checkAssignability(PsiType lType, GrExpression rExpr, GroovyPsiElement element) {
       if (PsiUtil.isRawClassMemberAccess(rExpr)) {
         final PsiType rType = rExpr.getType();
-        if (!TypesUtil.isAssignable(lType, rType, element.getManager(), element.getResolveScope())) {
+        if (!TypesUtil.isAssignable(lType, rType, element)) {
           registerError(element, lType, rType);
         }
       }

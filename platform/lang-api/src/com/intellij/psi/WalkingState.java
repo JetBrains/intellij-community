@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-public abstract class WalkingState<T> {
+public class WalkingState<T> {
   public interface TreeGuide<T> {
     T getNextSibling(@NotNull T element);
     T getPrevSibling(@NotNull T element);
@@ -33,9 +33,9 @@ public abstract class WalkingState<T> {
   private final TreeGuide<T> myWalker;
   private boolean stopped;
 
-  public abstract void elementFinished(@NotNull T element);
+  public void elementFinished(@NotNull T element) {}
 
-  protected WalkingState(@NotNull TreeGuide<T> delegate) {
+  public WalkingState(@NotNull TreeGuide<T> delegate) {
     myWalker = delegate;
   }
 

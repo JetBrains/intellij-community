@@ -775,7 +775,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertWeightsOrder(Magnitude.NOT_RUN_INDEX, Magnitude.SKIPPED_INDEX);
     assertWeightsOrder(Magnitude.SKIPPED_INDEX, Magnitude.IGNORED_INDEX);
     assertWeightsOrder(Magnitude.IGNORED_INDEX, Magnitude.COMPLETE_INDEX);
-    assertEquals(Magnitude.COMPLETE_INDEX.getSortWeitht() , Magnitude.PASSED_INDEX.getSortWeitht());
+    assertEquals(Magnitude.COMPLETE_INDEX.getSortWeight() , Magnitude.PASSED_INDEX.getSortWeight());
     assertWeightsOrder(Magnitude.PASSED_INDEX, Magnitude.FAILED_INDEX);
     assertWeightsOrder(Magnitude.FAILED_INDEX, Magnitude.ERROR_INDEX);
     assertWeightsOrder(Magnitude.ERROR_INDEX, Magnitude.TERMINATED_INDEX);
@@ -792,6 +792,6 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
   }
 
   protected void assertWeightsOrder(final Magnitude previous, final Magnitude next) {
-    assertTrue(previous.getSortWeitht() < next.getSortWeitht());
+    assertTrue(previous.getSortWeight() < next.getSortWeight());
   }
 }

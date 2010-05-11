@@ -24,7 +24,7 @@ import java.util.ArrayList;
  *
  * @author Dmitry Skavish
  */
-public class JDClassComment extends JDComment {
+public class JDClassComment extends JDParamListOwnerComment {
   public JDClassComment(CommentFormatter formatter) {
     super(formatter);
   }
@@ -33,6 +33,7 @@ public class JDClassComment extends JDComment {
   private String version;
 
   protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
+    super.generateSpecial(prefix, sb);
     if (!isNull(authorsList)) {
       for (Object aAuthorsList : authorsList) {
         String s = (String)aAuthorsList;

@@ -30,16 +30,14 @@ public class ReadWriteAccessUsageInfo2UsageAdapter extends UsageInfo2UsageAdapte
     super(usageInfo);
     myAccessedForReading = accessedForReading;
     myAccessedForWriting = accessedForWriting;
-    if (myIcon == null) {
-      if (myAccessedForReading && myAccessedForWriting) {
-        myIcon = Icons.VARIABLE_RW_ACCESS;
-      }
-      else if (myAccessedForWriting) {
-        myIcon = Icons.VARIABLE_WRITE_ACCESS;           // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
-      }
-      else if (myAccessedForReading){
-        myIcon = Icons.VARIABLE_READ_ACCESS;            // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
-      }
+    if (myAccessedForReading && myAccessedForWriting) {
+      myIcon = Icons.VARIABLE_RW_ACCESS;
+    }
+    else if (myAccessedForWriting) {
+      myIcon = Icons.VARIABLE_WRITE_ACCESS;           // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
+    }
+    else if (myAccessedForReading){
+      myIcon = Icons.VARIABLE_READ_ACCESS;            // If icon is changed, don't forget to change UTCompositeUsageNode.getIcon();
     }
   }
 

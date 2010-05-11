@@ -16,10 +16,10 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
@@ -32,9 +32,8 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     final LafManager manager = LafManager.getInstance();
     final UIManager.LookAndFeelInfo[] lfs = manager.getInstalledLookAndFeels();
     final UIManager.LookAndFeelInfo current = manager.getCurrentLookAndFeel();
-    for (int i = 0; i < lfs.length; i++) {
-      final UIManager.LookAndFeelInfo lf = lfs[i];
-      group.add(new AnAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
+    for (final UIManager.LookAndFeelInfo lf : lfs) {
+      group.add(new DumbAwareAction(lf.getName(), "", lf == current ? ourCurrentAction : ourNotCurrentAction) {
         public void actionPerformed(AnActionEvent e) {
           manager.setCurrentLookAndFeel(lf);
           manager.updateUI();

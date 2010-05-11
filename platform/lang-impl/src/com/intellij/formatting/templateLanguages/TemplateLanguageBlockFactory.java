@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.templateLanguages;
 
+import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -31,6 +32,7 @@ import java.util.List;
 public interface TemplateLanguageBlockFactory {
   TemplateLanguageBlock createTemplateLanguageBlock(@NotNull ASTNode node,
                                                     @Nullable Wrap wrap,
+                                                    @Nullable Alignment alignment,
                                                     @Nullable List<DataLanguageBlockWrapper> foreignChildren,
                                                     @NotNull CodeStyleSettings codeStyleSettings); 
 }

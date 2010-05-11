@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -82,10 +83,16 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
   private class MyModulesListener extends ModuleAdapter implements ModuleRootListener {
+    private final List<Pair<String, VcsDirectoryMapping>> myMappingsForRemovedModules = new ArrayList<Pair<String, VcsDirectoryMapping>>();
+
     public void beforeRootsChange(ModuleRootEvent event) {
+      myMappingsForRemovedModules.clear();
     }
 
     public void rootsChanged(ModuleRootEvent event) {
+      for (Pair<String, VcsDirectoryMapping> mapping : myMappingsForRemovedModules) {
+        promptRemoveMapping(mapping.first, mapping.second);
+      }
       // the check calculates to true only before user has done any change to mappings, i.e. in case modules are detected/added automatically
       // on start etc (look inside)
       if (myVcsManager.needAutodetectMappings()) {
@@ -94,11 +101,12 @@ public class ModuleVcsDetector implements ProjectComponent {
     }
 
     public void moduleAdded(final Project project, final Module module) {
+      myMappingsForRemovedModules.removeAll(getMappings(module));
       autoDetectModuleVcsMapping(module);
     }
 
     public void beforeModuleRemoved(final Project project, final Module module) {
-      checkRemoveVcsRoot(module);
+      myMappingsForRemovedModules.addAll(getMappings(module));
     }
   }
 
@@ -183,27 +191,31 @@ public class ModuleVcsDetector implements ProjectComponent {
     }
   }
 
-  private void checkRemoveVcsRoot(final Module module) {
+  private List<Pair<String, VcsDirectoryMapping>> getMappings(final Module module) {
+    List<Pair<String, VcsDirectoryMapping>> result = new ArrayList<Pair<String, VcsDirectoryMapping>>();
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
     final String moduleName = module.getName();
     for(final VirtualFile file: files) {
       for(final VcsDirectoryMapping mapping: myVcsManager.getDirectoryMappings()) {
         if (FileUtil.toSystemIndependentName(mapping.getDirectory()).equals(file.getPath())) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (myProject.isDisposed()) return;
-              final String msg = VcsBundle.message("vcs.root.remove.prompt", FileUtil.toSystemDependentName(file.getPath()), moduleName);
-              int rc = Messages.showYesNoDialog(myProject, msg, VcsBundle.message("vcs.root.remove.title"), Messages.getQuestionIcon());
-              if (rc == 0) {
-                myVcsManager.removeDirectoryMapping(mapping);
-              }
-            }
-          }, ModalityState.NON_MODAL);
+          result.add(new Pair<String, VcsDirectoryMapping>(moduleName, mapping));
           break;
         }
       }
     }
+    return result;
   }
 
-
+  private void promptRemoveMapping(final String moduleName, final VcsDirectoryMapping mapping) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myProject.isDisposed()) return;
+        final String msg = VcsBundle.message("vcs.root.remove.prompt", FileUtil.toSystemDependentName(mapping.getDirectory()), moduleName);
+        int rc = Messages.showYesNoDialog(myProject, msg, VcsBundle.message("vcs.root.remove.title"), Messages.getQuestionIcon());
+        if (rc == 0) {
+          myVcsManager.removeDirectoryMapping(mapping);
+        }
+      }
+    }, ModalityState.NON_MODAL);
+  }
 }

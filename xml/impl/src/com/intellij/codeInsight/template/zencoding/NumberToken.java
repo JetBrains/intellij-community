@@ -19,9 +19,13 @@ package com.intellij.codeInsight.template.zencoding;
  * @author Eugene.Kudelevsky
  */
 class NumberToken extends Token {
-  final int myNumber;
+  private final int myNumber;
 
   NumberToken(int number) {
     myNumber = number;
+  }
+
+  public int getNumber() {
+    return myNumber;
   }
 }

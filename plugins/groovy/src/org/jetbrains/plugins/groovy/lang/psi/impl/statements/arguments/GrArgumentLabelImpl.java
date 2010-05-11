@@ -22,11 +22,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -34,9 +36,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -68,12 +73,29 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   @Nullable
   public String getName() {
     final PsiElement element = getNameElement();
-    if (element instanceof GrExpression) {
-      return null;
+    if (element instanceof GrLiteral) {
+      final Object value = ((GrLiteral)element).getValue();
+      if (value instanceof String) {
+        return (String) value;
+      }
     }
-    else {
+    if (element instanceof GrExpression) {
+      final Object value = JavaPsiFacade.getInstance(getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
+      if (value instanceof String) {
+        return (String)value;
+      }
+    }
+
+    final IElementType elemType = element.getNode().getElementType();
+    if (GroovyTokenTypes.mIDENT == elemType) {
+      return element.getText();
+    }
+
+    if (CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elemType))) {
       return GrStringUtil.removeQuotes(element.getText());
     }
+
+    return null;
   }
 
   public PsiElement getElement() {
@@ -213,6 +235,24 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
 
     return null;
+  }
+
+  public PsiType getLabelType() {
+    PsiElement el = getNameElement();
+    if (el instanceof GrParenthesizedExpression) {
+      return ((GrParenthesizedExpression)el).getType();
+    }
+
+    final ASTNode node = el.getNode();
+    if (node == null) {
+      return null;
+    }
+
+    PsiType nodeType = TypesUtil.getPsiType(el, node.getElementType());
+    if (nodeType != null) {
+      return nodeType;
+    }
+    return PsiType.getJavaLangString(PsiManager.getInstance(el.getProject()), el.getResolveScope());
   }
 
   public GrNamedArgument getNamedArgument() {

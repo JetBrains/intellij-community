@@ -82,7 +82,6 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     myCompoundBorder = BorderFactory.createCompoundBorder(new StatusBarImpl.SeparatorBorder.Left(), new EmptyBorder(0, 2, 0, 2));
 
     myProgressIcon = new AsyncProcessIcon("Background process");
-    myProgressIcon.setOpaque(true);
 
     myProgressIcon.addMouseListener(new MouseAdapter() {
       @Override
@@ -256,7 +255,12 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     setLayout(new InlineLayout());
     add(myInfoPanel);
 
-    final JPanel inlinePanel = new JPanel(new BorderLayout());
+    final JPanel inlinePanel = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+      }
+    };
 
     inline.getComponent().setBorder(new EmptyBorder(0, 0, 0, 2));
     inlinePanel.add(inline.getComponent(), BorderLayout.CENTER);

@@ -53,29 +53,35 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
     switch (magnitude) {
       case SKIPPED_INDEX:
       case IGNORED_INDEX:
-        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.skipped");
+        msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.skipped.with.errors")
+                                    : SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.skipped");
+
         type = MessageType.WARNING;
         break;
 
       case NOT_RUN_INDEX:
-        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.not.run");
+        msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.not.run.with.errors")
+                                    : SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.not.run");
         type = MessageType.WARNING;
         break;
 
       case FAILED_INDEX:
       case ERROR_INDEX:
-        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.failed");
+        msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.failed.with.errors")
+                                    : SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.failed");
         type = MessageType.ERROR;
         break;
       case COMPLETE_INDEX:
         if (testsRoot.getChildren().size() == 0) {
-          msg = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found");
+        msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found.with.errors")
+                                    : SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found");
           type = MessageType.ERROR;
           break;
         }
         // else same as: PASSED_INDEX 
       case PASSED_INDEX:
-        msg = SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.passed");
+        msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.passed.with.errors")
+                                    : SMTestsRunnerBundle.message("sm.test.runner.notifications.tests.passed");
         type = MessageType.INFO;
         break;
 

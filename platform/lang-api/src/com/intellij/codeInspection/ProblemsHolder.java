@@ -179,6 +179,10 @@ public class ProblemsHolder {
     return myOnTheFly;
   }
 
+  public PsiFile getFile() {
+    return myFile;
+  }
+
   public final Project getProject() {
     return myManager.getProject();
   }

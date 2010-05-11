@@ -15,7 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.ide.DataManager;
+import com.intellij.ide.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
@@ -43,11 +43,15 @@ import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.awt.*;
+import java.awt.event.InvocationEvent;
+
 
 /**
  * @author yole
@@ -183,6 +187,20 @@ public class PlatformTestUtil {
     }
   }
 
+  @TestOnly
+  public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    while (true) {
+      AWTEvent event = eventQueue.peekEvent();
+      if (event == null) break;
+        AWTEvent event1 = eventQueue.getNextEvent();
+        if (event1 instanceof InvocationEvent) {
+          IdeEventQueue.getInstance().dispatchEvent(event1);
+        }
+    }
+  }
+
   private static Date raidDate(Bombed bombed) {
     final Calendar instance = Calendar.getInstance();
     instance.set(Calendar.YEAR, bombed.year());
@@ -190,9 +208,8 @@ public class PlatformTestUtil {
     instance.set(Calendar.DAY_OF_MONTH, bombed.day());
     instance.set(Calendar.HOUR_OF_DAY, bombed.time());
     instance.set(Calendar.MINUTE, 0);
-    Date time = instance.getTime();
 
-    return time;
+    return instance.getTime();
   }
 
   public static boolean bombExplodes(Bombed bombedAnnotation) {
@@ -344,18 +361,22 @@ public class PlatformTestUtil {
     // For faster machines (expectedOnMyMachine < expected) allow nonlinear performance rating:
     // just perform better than acceptable expected
     int percentage = (int)(100.0 * (actual - expectedOnMyMachine) / expectedOnMyMachine);
-    String failMessage = message + "." +
+    String logMessage = message + "." +
                          " Operation took " + percentage + "% longer than expected." +
                          " Expected on my machine: " + expectedOnMyMachine + "." +
                          " Actual: " + actual + "." +
                          " Expected on Etalon machine: " + expected + ";" +
                          " Actual on Etalon: " + actual * ETALON_TIMING / Timings.MACHINE_TIMING;
-    if (actual > expectedOnMyMachine * acceptableChangeFactor &&
+
+    if (actual < expectedOnMyMachine) {
+      TeamCityLogger.info(logMessage);
+    }
+    else if (actual > expectedOnMyMachine * acceptableChangeFactor &&
         (expectedOnMyMachine > expected || actual > expected * acceptableChangeFactor)) {
-      Assert.fail(failMessage);
+      TeamCityLogger.warning(logMessage);
     }
     else {
-      System.out.println(failMessage);
+      TeamCityLogger.error(logMessage);
     }
   }
 
@@ -383,7 +404,7 @@ public class PlatformTestUtil {
         System.gc();
         System.gc();
         System.gc();
-        System.out.println("Another epic fail: "+e.getMessage() +"; Attempts remained: "+attempts);
+        TeamCityLogger.info("Another epic fail: "+e.getMessage() +"; Attempts remained: "+attempts);
       }
     }
   }
