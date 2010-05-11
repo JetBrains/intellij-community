@@ -164,7 +164,11 @@ public class CodeStyleMainPanel extends JPanel {
     if (selectedPanel == null) {
       return "reference.settingsdialog.IDE.globalcodestyle";
     }
-    return selectedPanel.getHelpTopic();
+    String helpTopic = selectedPanel.getHelpTopic();
+    if (helpTopic != null) {
+      return helpTopic;
+    }
+    return "";
   }
 
   private NewCodeStyleSettingsPanel ensureCurrentPanel() {

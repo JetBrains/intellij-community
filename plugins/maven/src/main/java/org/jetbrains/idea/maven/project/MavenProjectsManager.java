@@ -941,7 +941,8 @@ public class MavenProjectsManager extends SimpleProjectComponent
 
 
     VirtualFileManager.getInstance().refresh(isNormalProject());
-    schedulePostImportTasks(postTasks.get());
+    if (postTasks.get() != null /*may be null if importing is cancelled*/)
+      schedulePostImportTasks(postTasks.get());
 
     // do not block user too often
     myImportingQueue.restartTimer();
