@@ -173,6 +173,8 @@
     <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
     <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
 
+    <highlightErrorFilter implementation="com.jetbrains.django.inspection.DjangoErrorFilter"/>
+
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
