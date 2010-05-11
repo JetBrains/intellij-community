@@ -15,18 +15,9 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
 
 import javax.swing.*;
@@ -48,8 +39,6 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   private JTextField myKeepBlankLinesBeforeRBrace;
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
-
-  private static LanguageFileType myFileType = StdFileTypes.JSP; //TODO: Replace hardcoded value
 
   public CodeStyleBlankLinesPanel(CodeStyleSettings settings) {
     super(settings);
