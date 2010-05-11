@@ -80,14 +80,10 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     final GroupByModuleTypeAction groupByModuleTypeAction = new GroupByModuleTypeAction(impl);
     groupByModuleTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_DOWN_MASK)), component);
 
-    final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
-    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M,
-                                                                                                      InputEvent.CTRL_DOWN_MASK)), component);
-
+    final GroupByFileStructureAction groupByFileStructureAction = createGroupByFileStructureAction(impl);
     impl.scheduleDisposeOnClose(new Disposable() {
       public void dispose() {
         groupByModuleTypeAction.unregisterCustomShortcutSet(component);
-        groupByFileStructureAction.unregisterCustomShortcutSet(component);
       }
     });
 
@@ -121,6 +117,20 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
         groupByFileStructureAction,
       };
     }
+  }
+
+  public static GroupByFileStructureAction createGroupByFileStructureAction(UsageViewImpl impl) {
+    final JComponent component = impl.getComponent();
+    final GroupByFileStructureAction groupByFileStructureAction = new GroupByFileStructureAction(impl);
+    groupByFileStructureAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M,
+                                                                                                      InputEvent.CTRL_DOWN_MASK)), component);
+
+    impl.scheduleDisposeOnClose(new Disposable() {
+      public void dispose() {
+        groupByFileStructureAction.unregisterCustomShortcutSet(component);
+      }
+    });
+    return groupByFileStructureAction;
   }
 
   private static class GroupByUsageTypeAction extends RuleAction {
