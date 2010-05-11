@@ -8,12 +8,11 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.introduceparameterobject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.util.ParameterTablePanel;
+import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 
 public class IntroduceParameterObjectTest extends MultiFileTestCase{
@@ -30,6 +29,16 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
   }
 
   private void doTest(final boolean delegate, final boolean createInner) throws Exception {
+    doTest(delegate, createInner, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+      public ParameterTablePanel.VariableData[] fun(PsiMethod psiMethod) {
+        return generateParams(psiMethod);
+      }
+    });
+  }
+
+  private void doTest(final boolean delegate,
+                      final boolean createInner,
+                      final Function<PsiMethod, ParameterTablePanel.VariableData[]> function) throws Exception {
     doTest(new PerformAction() {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(getProject()));
@@ -37,7 +46,8 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         assertNotNull("Class Test not found", aClass);
 
         final PsiMethod method = aClass.findMethodsByName("foo", false)[0];
-        final ParameterTablePanel.VariableData[] datas = generateParams(method);
+        final ParameterTablePanel.VariableData[] datas = function.fun(method);
+
         IntroduceParameterObjectProcessor processor = new IntroduceParameterObjectProcessor("Param", "", method, datas, delegate, false,
                                                                                             createInner, null, false);
         processor.run();
@@ -102,6 +112,20 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
 
   public void testTypeParameters() throws Exception {
     doTest();
+  }
+
+  public void testTypeParametersWithChosenSubtype() throws Exception {
+    doTest(false, true, new Function<PsiMethod, ParameterTablePanel.VariableData[]>() {
+      public ParameterTablePanel.VariableData[] fun(PsiMethod psiMethod) {
+        final PsiParameter parameter = psiMethod.getParameterList().getParameters()[0];
+        final PsiClass collectionClass = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION);
+        final ParameterTablePanel.VariableData variableData =
+          new ParameterTablePanel.VariableData(parameter, JavaPsiFacade.getElementFactory(getProject()).createType(collectionClass));
+        variableData.name = parameter.getName();
+        variableData.passAsParameter = true;
+        return new ParameterTablePanel.VariableData[]{variableData};
+      }
+    });
   }
 
   public void testMultipleTypeParameters() throws Exception {
