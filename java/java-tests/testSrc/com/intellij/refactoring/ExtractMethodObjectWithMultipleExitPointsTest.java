@@ -66,4 +66,11 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
     doTest();
   }
 
+  public void testConditionalExit() throws Exception {
+    doTest();
+  }
+
+  public void testOutputVariable() throws Exception {
+    doTest();
+  }
 }
