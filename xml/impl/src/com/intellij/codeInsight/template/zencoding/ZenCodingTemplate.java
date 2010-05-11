@@ -55,6 +55,14 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
 
   @Nullable
   private List<Token> parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
+    String filter = null;
+
+    int filterDelim = text.indexOf('|');
+    if (filterDelim >= 0 && filterDelim < text.length() - 1) {
+      filter = text.substring(filterDelim + 1);
+      text = text.substring(0, filterDelim);
+    }
+
     text += MARKER;
     StringBuilder templateKeyBuilder = new StringBuilder();
     List<Token> result = new ArrayList<Token>();
@@ -80,6 +88,10 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       else {
         return null;
       }
+    }
+
+    if (filter != null) {
+      result.add(new FilterToken(filter));
     }
     return result;
   }

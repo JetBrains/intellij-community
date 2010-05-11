@@ -104,6 +104,15 @@ class XmlZenCodingInterpreter {
   }
 
   private void invoke(int startIndex) {
+    String filter = null;
+
+    if (myTokens.size() > 0) {
+      Token lastToken = myTokens.get(myTokens.size() - 1);
+      if (lastToken instanceof FilterToken) {
+        filter = ((FilterToken)lastToken).getSuffix();
+      }
+    }
+
     final int n = myTokens.size();
     TemplateToken templateToken = null;
     int number = -1;
@@ -117,7 +126,7 @@ class XmlZenCodingInterpreter {
               if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
                 final Object key = new Object();
                 myCallback.fixStartOfTemplate(key);
-                invokeTemplate(templateToken, myCallback, 0);
+                invokeTemplate(templateToken, myCallback, 0, filter);
                 myState = State.WORD;
                 if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
                   myCallback.fixEndOffset();
@@ -128,7 +137,7 @@ class XmlZenCodingInterpreter {
                 templateToken = null;
               }
               else if (sign == '>' || (mySurroundedText != null && sign == ZenCodingTemplate.MARKER)) {
-                startTemplateAndGotoChild(templateToken);
+                startTemplateAndGotoChild(templateToken, filter);
                 templateToken = null;
               }
               else if (sign == '*') {
@@ -162,16 +171,16 @@ class XmlZenCodingInterpreter {
           if (token instanceof MarkerToken || token instanceof OperationToken) {
             char sign = token instanceof OperationToken ? ((OperationToken)token).getSign() : ZenCodingTemplate.MARKER;
             if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
-              invokeTemplateSeveralTimes(templateToken, 0, number);
+              invokeTemplateSeveralTimes(templateToken, 0, number, filter);
               templateToken = null;
             }
             else if (number > 1) {
-              invokeTemplateAndProcessTail(templateToken, 0, number, i + 1);
+              invokeTemplateAndProcessTail(templateToken, 0, number, i + 1, filter);
               return;
             }
             else {
               assert number == 1;
-              startTemplateAndGotoChild(templateToken);
+              startTemplateAndGotoChild(templateToken, filter);
               templateToken = null;
             }
             myState = State.WORD;
@@ -188,21 +197,22 @@ class XmlZenCodingInterpreter {
     finish();
   }
 
-  private void startTemplateAndGotoChild(TemplateToken templateToken) {
+  private void startTemplateAndGotoChild(TemplateToken templateToken, String filter) {
     final Object key = new Object();
     myCallback.fixStartOfTemplate(key);
-    invokeTemplate(templateToken, myCallback, 0);
+    invokeTemplate(templateToken, myCallback, 0, filter);
     myState = State.WORD;
     gotoChild(key);
   }
 
   private void invokeTemplateSeveralTimes(final TemplateToken templateToken,
                                           final int startIndex,
-                                          final int count) {
+                                          final int count,
+                                          String filter) {
     final Object key = new Object();
     myCallback.fixStartOfTemplate(key);
     for (int i = startIndex; i < count; i++) {
-      invokeTemplate(templateToken, myCallback, i);
+      invokeTemplate(templateToken, myCallback, i, filter);
       myState = State.WORD;
       if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
         myCallback.fixEndOffset();
@@ -219,13 +229,14 @@ class XmlZenCodingInterpreter {
   private void invokeTemplateAndProcessTail(final TemplateToken templateToken,
                                             final int startIndex,
                                             final int count,
-                                            final int tailStart) {
+                                            final int tailStart,
+                                            String filter) {
     final Object key = new Object();
     myCallback.fixStartOfTemplate(key);
     for (int i = startIndex; i < count; i++) {
       Object iterKey = new Object();
       myCallback.fixStartOfTemplate(iterKey);
-      invokeTemplate(templateToken, myCallback, i);
+      invokeTemplate(templateToken, myCallback, i, filter);
       gotoChild(iterKey);
       interpret(myTokens, tailStart, myCallback, State.WORD, mySurroundedText);
       if (myCallback.getOffset() != myCallback.getEndOfTemplate(key)) {
@@ -288,13 +299,14 @@ class XmlZenCodingInterpreter {
         return filter.buildAttributesString(attribute2value, numberInIteration);
       }
     }
-    return new ZenCodingFilterImpl().buildAttributesString(attribute2value, numberInIteration);
+    return new XmlZenCodingFilterImpl().buildAttributesString(attribute2value, numberInIteration);
   }
 
 
   private static void invokeTemplate(TemplateToken token,
                                      final CustomTemplateCallback callback,
-                                     int numberInIteration) {
+                                     int numberInIteration,
+                                     String filter) {
     if (token instanceof XmlTemplateToken && token.getTemplate() != null) {
       XmlTemplateToken xmlTemplateToken = (XmlTemplateToken)token;
       List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
@@ -309,7 +321,7 @@ class XmlZenCodingInterpreter {
               iterator.remove();
             }
           }
-          String s = filter(tag, callback);
+          String s = filterXml(tag, callback, filter);
           assert s != null;
           modifiedTemplate.setString(s);
           removeVariablesWhichHasNoSegment(modifiedTemplate);
@@ -327,14 +339,16 @@ class XmlZenCodingInterpreter {
   }
 
   @Nullable
-  private static String filter(XmlTag tag, CustomTemplateCallback callback) {
+  private static String filterXml(XmlTag tag, CustomTemplateCallback callback, String filterSuffix) {
     PsiElement context = callback.getContext();
     for (ZenCodingFilter filter : ZenCodingFilter.EP_NAME.getExtensions()) {
-      if (filter.isMyContext(context)) {
-        return filter.toString(tag, context);
+      if ((filterSuffix == null && filter.isDefaultFilter()) || (filterSuffix != null && filterSuffix.equals(filter.getSuffix()))) {
+        if (filter instanceof XmlZenCodingFilter && filter.isDefaultFilter() && filter.isMyContext(context)) {
+          return ((XmlZenCodingFilter)filter).toString(tag, context);
+        }
       }
     }
-    return new ZenCodingFilterImpl().toString(tag, context);
+    return new XmlZenCodingFilterImpl().toString(tag, context);
   }
 
   private static void fail() {

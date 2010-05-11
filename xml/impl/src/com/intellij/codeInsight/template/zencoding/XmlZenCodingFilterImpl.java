@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class ZenCodingFilterImpl implements ZenCodingFilter {
+public class XmlZenCodingFilterImpl extends XmlZenCodingFilter {
   @NotNull
   public String toString(@NotNull XmlTag tag, @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
@@ -61,6 +61,14 @@ public class ZenCodingFilterImpl implements ZenCodingFilter {
   }
 
   public boolean isMyContext(@NotNull PsiElement context) {
+    return true;
+  }
+
+  public String getSuffix() {
+    return null;
+  }
+
+  public boolean isDefaultFilter() {
     return true;
   }
 

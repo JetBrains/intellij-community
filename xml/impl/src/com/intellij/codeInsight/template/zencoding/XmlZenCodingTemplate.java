@@ -282,7 +282,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
         return true;
       }
     }
-    return new ZenCodingFilterImpl().isMyContext(context);
+    return new XmlZenCodingFilterImpl().isMyContext(context);
   }
 
   public static boolean startZenCoding(Editor editor, PsiFile file, String abbreviation) {
