@@ -161,6 +161,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myTextToReformat = myEditor.getDocument().getText();
     }
 
+    int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
+
     final Project finalProject = getCurrentProject();
     CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
       public void run() {
@@ -169,6 +171,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     }, null, null);
     myEditor.getSettings().setRightMargin(getRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
+    myEditor.getScrollingModel().scrollVertically(currOffs);
   }
 
   private void replaceText(final Project project) {
