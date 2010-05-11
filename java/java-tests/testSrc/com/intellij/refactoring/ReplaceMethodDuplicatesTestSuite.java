@@ -16,6 +16,7 @@ public class ReplaceMethodDuplicatesTestSuite {
     testSuite.addTestSuite(ExtractMethod15Test.class);
     testSuite.addTestSuite(ExtractMethodTest.class);
     testSuite.addTestSuite(ExtractMethodObjectWithMultipleExitPointsTest.class);
+    testSuite.addTestSuite(ExtractMethodObjectTest.class);
     testSuite.addTestSuite(FindMethodDuplicatesMiscTest.class);
     testSuite.addTestSuite(FindMethodDuplicatesTest.class);
     return testSuite;

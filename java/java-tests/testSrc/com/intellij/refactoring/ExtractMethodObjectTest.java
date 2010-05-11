@@ -37,6 +37,9 @@ public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
     extractProcessor.testRun();
     processor.setCreateInnerClass(createInnerClass);
     processor.run();
+    if (createInnerClass) {
+      processor.moveUsedMethodsToInner();
+    }
     DuplicatesImpl.processDuplicates(extractProcessor, getProject(), getEditor());
     processor.getMethod().delete();
     checkResultByFile("/refactoring/extractMethodObject/" + testName + ".java" + ".after");
@@ -100,5 +103,13 @@ public class ExtractMethodObjectTest extends LightCodeInsightTestCase {
 
   public void testWrapWithObjectRecursive() throws Exception {
     doTest(false);
+  }
+  
+  public void testWithPrivateMethodUsed() throws Exception {
+    doTest();
+  }
+
+  public void testWithPrivateMethodWhichCantBeMoved() throws Exception {
+    doTest();
   }
 }

@@ -22,7 +22,7 @@
  */
 package com.intellij.execution.util;
 
-import com.intellij.execution.RunJavaConfiguration;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -34,7 +34,7 @@ public class JreVersionDetector {
   private String myLastAlternativeJrePath = null; //awful hack
   private boolean myLastIsJre50;
 
-  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> boolean isJre50Configured(final T configuration) {
+  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> boolean isJre50Configured(final T configuration) {
     if (configuration.isAlternativeJrePathEnabled()) {
       if (configuration.getAlternativeJrePath().equals(myLastAlternativeJrePath)) return myLastIsJre50;
       myLastAlternativeJrePath = configuration.getAlternativeJrePath();

@@ -553,6 +553,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.intellij.codeInspection.actions.ReplaceImplementsWithStaticImportAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ColorChooserIntentionAction</className>
       <category>Declaration</category>
     </intentionAction>

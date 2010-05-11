@@ -1104,9 +1104,10 @@ public class UIUtil {
         public void actionPerformed(final ActionEvent e) {
           final Object source = e.getSource();
           if (source instanceof JTree) {
-            final JTree tree = (JTree)source;
-            final int selectionRow = tree.getLeadSelectionRow();
-            final TreePath path = tree.getPathForRow(selectionRow);
+            JTree tree = (JTree)source;
+            int selectionRow = tree.getLeadSelectionRow();
+            if (selectionRow == -1) return;
+
             if (isLeaf(selectionRow) || tree.isCollapsed(selectionRow)) {
               final TreePath parentPath = tree.getPathForRow(selectionRow).getParentPath();
               if (parentPath != null) {
