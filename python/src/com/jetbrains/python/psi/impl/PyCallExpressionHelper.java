@@ -108,8 +108,7 @@ public class PyCallExpressionHelper {
         if (! is_constructor_call && PyNames.NEW.equals(((PyFunction)resolved).getName())) {
           implicit_offset = Math.min(implicit_offset-1, 0); // case of Class.__new__  
         }
-        return new PyCallExpression.PyMarkedFunction((PyFunction)resolved, flags, implicit_offset,
-                                                     resolveResult instanceof ImplicitResolveResult);
+        return new PyCallExpression.PyMarkedFunction((PyFunction)resolved, flags, implicit_offset, resolveResult.isImplicit());
       }
     }
     return null;

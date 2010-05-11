@@ -6,7 +6,8 @@ class A:
                     if d:
                         self.bar()
                 c<caret> = 3
-        a = 2
+        if c:
+            a = 2
 
     def bar(self):
         pass

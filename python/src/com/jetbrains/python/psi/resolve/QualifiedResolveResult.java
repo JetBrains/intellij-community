@@ -14,4 +14,9 @@ import org.jetbrains.annotations.Nullable;
 public interface QualifiedResolveResult extends ResolveResult {
   @Nullable
   PyExpression getLastQualifier();
+
+  /**
+   * @return true iff the resolve result is implicit, that is, not exact but by divination and looks reasonable. 
+   */
+  boolean isImplicit();
 }

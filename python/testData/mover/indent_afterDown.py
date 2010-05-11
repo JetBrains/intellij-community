@@ -5,8 +5,9 @@ class A:
                 if c:
                     if d:
                         self.bar()
-        a = 2
-        c = 3
+        if c:
+            a = 2
+            c = 3
 
     def bar(self):
         pass

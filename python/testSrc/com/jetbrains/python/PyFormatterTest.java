@@ -32,6 +32,10 @@ public class PyFormatterTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testUnaryMinus() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

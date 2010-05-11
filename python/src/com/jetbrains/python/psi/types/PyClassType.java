@@ -69,16 +69,15 @@ public class PyClassType implements PyType {
       return classMember;
     }
 
-    final PsiElement[] superClasses = myClass.getSuperClassExpressions();
-    if (superClasses.length > 0) {
-      for (PyClass superClass : myClass.iterateAncestors()) {
-        PsiElement superMember = resolveClassMember(superClass, name);
-        if (superMember != null) {
-          return superMember;
-        }
+    boolean hasSuperClasses = false;
+    for (PyClass superClass : myClass.iterateAncestors()) {
+      hasSuperClasses = true;
+      PsiElement superMember = resolveClassMember(superClass, name);
+      if (superMember != null) {
+        return superMember;
       }
     }
-    else {
+    if (!hasSuperClasses) {
       // no superclasses, try old-style
       // TODO: in py3k, 'object' is the default base, not <classobj>
       if (getClass() != null) {
