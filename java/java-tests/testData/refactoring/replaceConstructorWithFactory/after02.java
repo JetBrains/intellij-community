@@ -2,12 +2,12 @@ class A {
     A(int i) {
     }
 
-    A method() {
-        return newA(10);
-    }
-
     public static A newA(int i) {
         return new A(i);
+    }
+
+    A method() {
+        return newA(10);
     }
 }
 

@@ -407,7 +407,13 @@ public class ClassElement extends CompositeElement implements Constants {
           return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
         }
         else {
-          return aClass.getLBrace().getNextSibling();
+          // The main idea is to avoid to anchor to 'white space' element because that causes reformatting algorithm
+          // to perform incorrectly. The algorithm is encapsulated at PostprocessReformattingAspect.doPostponedFormattingInner().
+          PsiElement result = aClass.getLBrace().getNextSibling();
+          while (result instanceof PsiWhiteSpace) {
+            result = result.getNextSibling();
+          }
+          return result;
         }
       }
       lastMember = child;

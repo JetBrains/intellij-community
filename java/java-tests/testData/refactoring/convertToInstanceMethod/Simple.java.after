@@ -1,10 +1,10 @@
 public class Y {
-    public void foo() {
-    }
-
     void method() {
         System.out.println(this);
         foo();
+    }
+
+    public void foo() {
     }
 }
 public class X {
