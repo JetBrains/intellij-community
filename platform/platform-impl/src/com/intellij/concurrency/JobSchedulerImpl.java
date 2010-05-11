@@ -20,106 +20,70 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 @NonNls
 public class JobSchedulerImpl extends JobScheduler implements Disposable {
-  public static final int CORES_COUNT = /*1;//*/Runtime.getRuntime().availableProcessors();
+  public static final int CORES_COUNT = /*1;//*/ Runtime.getRuntime().availableProcessors();
 
   private static final ThreadFactory WORKERS_FACTORY = new ThreadFactory() {
-    int i;
-    public Thread newThread(final Runnable r) {
-      final Thread thread = new Thread(r, "JobScheduler pool " + i++ + "/" + CORES_COUNT);
+    private int threadSeq;
+
+    public synchronized Thread newThread(final Runnable r) {
+      @NonNls String name = "JobScheduler pool " + threadSeq + "/" + CORES_COUNT;
+      final Thread thread = new Thread(r, name);
       thread.setPriority(Thread.NORM_PRIORITY);
+      threadSeq++;
       return thread;
     }
   };
 
-  private static final Lock ourSuspensionLock = new ReentrantLock();
+  private static final PriorityBlockingQueue<Runnable> ourQueue = new PriorityBlockingQueue<Runnable>();
+  private static final MyExecutor ourExecutor = new MyExecutor();
 
-  private static final PriorityBlockingQueue<Runnable> ourQueue = new PriorityBlockingQueue<Runnable>() {
-    public Runnable poll() {
-      final Runnable result = super.poll();
-
-      ourSuspensionLock.lock();
-      try {
-        return result;
-      }
-      finally {
-        ourSuspensionLock.unlock();
-      }
-    }
-
-    public Runnable poll(final long timeout, final TimeUnit unit) throws InterruptedException {
-      final Runnable result = super.poll(timeout, unit);
-
-      ourSuspensionLock.lock();
-      try {
-        return result;
-      }
-      finally {
-        ourSuspensionLock.unlock();
-      }
-    }
-  };
-  private static final ThreadPoolExecutor ourExecutor = new ThreadPoolExecutor(CORES_COUNT, Integer.MAX_VALUE, 60 * 10, TimeUnit.SECONDS,
-                                                                               ourQueue, WORKERS_FACTORY) {
-    protected void beforeExecute(final Thread t, final Runnable r) {
-      PrioritizedFutureTask task = (PrioritizedFutureTask)r;
-      if (task.isParentThreadHasReadAccess()) {
-        ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
-      }
-      task.signalStarted();
-
-      // TODO: hook up JobMonitor into thread locals
-      super.beforeExecute(t, r);
-    }
-
-    protected void afterExecute(final Runnable r, final Throwable t) {
-      super.afterExecute(r, t);
-      ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
-      PrioritizedFutureTask task = (PrioritizedFutureTask)r;
-      task.signalDone();
-      // TODO: cleanup JobMonitor
-    }
-  };
-
-  private static volatile long ourJobsCounter = 0;
-
-  public static void execute(Runnable task) {
-    ourExecutor.execute(task);
-  }
-
-  public static int currentTaskIndex() {
-    final PrioritizedFutureTask topTask = (PrioritizedFutureTask)ourQueue.peek();
-    return topTask == null ? 0 : topTask.getTaskIndex();
-  }
-
-  public static long currentJobIndex() {
-    return ourJobsCounter++;
-  }
-
-  public static void suspend() {
-    ourSuspensionLock.lock();
-  }
-
-  public static void resume() {
-    ourSuspensionLock.unlock();
+  static int currentTaskIndex() {
+    return ourQueue.size();
   }
 
   public <T> Job<T> createJob(String title, int priority) {
-    return new JobImpl<T>(title, priority);
+    return new JobImpl<T>(priority);
   }
 
   public void dispose() {
     ((ThreadPoolExecutor)getScheduler()).getQueue().clear();
+  }
+
+  static boolean stealAndRunTask() {
+    Runnable task = ourQueue.poll();
+    if (task == null) return false;
+
+    task.run();
+
+    return true;
+  }
+
+  static void submitTask(PrioritizedFutureTask future, boolean callerHasReadAccess, boolean reportExceptions) {
+    future.beforeRun(callerHasReadAccess, reportExceptions);
+    ourExecutor.executeTask(future);
+  }
+
+  private static class MyExecutor extends ThreadPoolExecutor {
+    private MyExecutor() {
+      super(CORES_COUNT, Integer.MAX_VALUE, 60 * 10, TimeUnit.SECONDS, ourQueue, WORKERS_FACTORY);
+    }
+
+    private void executeTask(final PrioritizedFutureTask task) {
+      super.execute(task);
+    }
+
+    @Override
+    public void execute(Runnable command) {
+      throw new IllegalStateException("Use executeTask() to submit PrioritizedFutureTasks only");
+    }
   }
 }

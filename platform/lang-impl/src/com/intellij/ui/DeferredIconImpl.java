@@ -20,7 +20,7 @@
 package com.intellij.ui;
 
 import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.Alarm;
@@ -90,8 +90,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
 
       myLastTarget = new WeakReference<Component>(target);
 
-      final Job<Object> job = JobScheduler.getInstance().createJob("Evaluating deferred icon", Job.DEFAULT_PRIORITY);
-      job.addTask(new Runnable() {
+      JobUtil.submitToJobThread(new Runnable() {
         public void run() {
           int oldWidth = myDelegateIcon.getIconWidth();
           myDelegateIcon = evaluate();
@@ -121,9 +120,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
             }
           });
         }
-      });
-
-      job.schedule();
+      }, Job.DEFAULT_PRIORITY);
     }
   }
 

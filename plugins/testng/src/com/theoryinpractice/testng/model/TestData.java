@@ -18,7 +18,6 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.ExternalizablePath;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -98,6 +97,30 @@ public class TestData implements Cloneable
     return ANNOTATION_TYPE == null ? "" : ANNOTATION_TYPE;
   }
 
+  public void setVMParameters(String value) {
+    VM_PARAMETERS = value;
+  }
+
+  public String getVMParameters() {
+    return VM_PARAMETERS;
+  }
+
+  public void setProgramParameters(String value) {
+    PARAMETERS = value;
+  }
+
+  public String getProgramParameters() {
+    return PARAMETERS;
+  }
+
+  public void setWorkingDirectory(String value) {
+    WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+  }
+
+  public String getWorkingDirectory(Project project) {
+    return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof TestData)) {
@@ -146,50 +169,6 @@ public class TestData implements Cloneable
 
     data.setScope(getScope());
     return data;
-  }
-
-  public String getProperty(int type, Project project) {
-    switch (type) {
-      case RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY:
-        return PARAMETERS;
-
-      case RunJavaConfiguration.VM_PARAMETERS_PROPERTY:
-        return VM_PARAMETERS;
-
-      case RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY:
-        return getWorkingDirectory(project);
-    }
-    throw new RuntimeException("Unknown property: " + type);
-  }
-
-  private String getWorkingDirectory(Project project) {
-    if (WORKING_DIRECTORY != null && WORKING_DIRECTORY.length() > 0)
-      return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
-
-    return project.getBaseDir().getPath();
-  }
-
-  public void setProperty(int type, String value, Project project) {
-    switch (type) {
-      case RunJavaConfiguration.PROGRAM_PARAMETERS_PROPERTY:
-        PARAMETERS = value;
-        break;
-
-      case RunJavaConfiguration.VM_PARAMETERS_PROPERTY:
-        VM_PARAMETERS = value;
-        break;
-
-      case RunJavaConfiguration.WORKING_DIRECTORY_PROPERTY:
-        //value = value.replace('/', File.separatorChar);
-        //if(value.length() > 0 && value.charAt(0) != File.separatorChar) {
-        //    value = new File(project.getProjectFilePath()).getParent() + File.separatorChar + value;
-        //}
-        WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
-        break;
-
-      default:
-        throw new RuntimeException("Unknown property: " + type);
-    }
   }
 
   public boolean isGeneratedName(String s, JavaRunConfigurationModule config) {

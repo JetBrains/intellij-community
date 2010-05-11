@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.extensions.PluginId;
@@ -159,4 +161,10 @@ public abstract class ActionManager implements ApplicationComponent {
 
   public abstract ActionCallback tryToExecute(@NotNull AnAction action, @NotNull InputEvent inputEvent, @Nullable Component contextComponent,
                                               @Nullable String place, boolean now);
+
+  public abstract void addAnActionListener(AnActionListener listener);
+  public abstract void addAnActionListener(AnActionListener listener, Disposable parentDisposable);
+
+  public abstract void removeAnActionListener(AnActionListener listener);
+
 }

@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 
 import com.intellij.Patches;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -363,14 +362,12 @@ public class IdeEventQueue extends EventQueue {
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
-    JobSchedulerImpl.suspend();
     try {
       _dispatchEvent(e);
     }
     finally {
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
-      JobSchedulerImpl.resume();
 
       for (EventDispatcher each : myPostprocessors) {
         each.dispatch(e);
@@ -566,23 +563,23 @@ public class IdeEventQueue extends EventQueue {
                                    || queue.peekEvent(MouseEvent.MOUSE_CLICKED) != null;
 
         if (!mouseEventsAhead) {
-          Window showingWindow = mgr.getActiveWindow();
-          if (showingWindow != null) {
-            final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-            fm.doWhenFocusSettlesDown(new Runnable() {
-              public void run() {
-                if (mgr.getFocusOwner() == null) {
-                  final Application app = ApplicationManager.getApplication();
-                  if (app != null && app.isActive()) {
-                    fm.requestDefaultFocus(false);
-                  }
+        Window showingWindow = mgr.getActiveWindow();
+        if (showingWindow != null) {
+          final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
+          fm.doWhenFocusSettlesDown(new Runnable() {
+            public void run() {
+              if (mgr.getFocusOwner() == null) {
+                final Application app = ApplicationManager.getApplication();
+                if (app != null && app.isActive()) {
+                  fm.requestDefaultFocus(false);
                 }
               }
-            });
-          }
+            }
+          });
         }
       }
     }
+  }
   }
 
   private void enterSuspendModeIfNeeded(AWTEvent e) {

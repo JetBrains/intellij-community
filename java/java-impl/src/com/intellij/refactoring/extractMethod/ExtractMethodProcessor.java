@@ -116,7 +116,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private DuplicatesFinder myDuplicatesFinder;
   private List<Match> myDuplicates;
   @Modifier private String myMethodVisibility = PsiModifier.PRIVATE;
-  private boolean myGenerateConditionalExit;
+  protected boolean myGenerateConditionalExit;
   private PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
@@ -633,6 +633,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           myMethodCall =
             (PsiMethodCallExpression)((PsiAssignmentExpression)assignmentExpression.getExpression()).getRExpression().replace(myMethodCall);
         }
+        declareNecessaryVariablesAfterCall(myOutputVariable);
         PsiIfStatement ifStatement =
           (PsiIfStatement)myElementFactory.createStatementFromText(myHasReturnStatementOutput || (myGenerateConditionalExit && myFirstExitStatementCopy instanceof PsiReturnStatement &&
                                                                                                   ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null)
@@ -685,7 +686,9 @@ public class ExtractMethodProcessor implements MatchProvider {
         addToMethodCallLocation(exitStatementCopy);
       }
 
-      declareNecessaryVariablesAfterCall(myOutputVariable);
+      if (!myNullConditionalCheck) {
+        declareNecessaryVariablesAfterCall(myOutputVariable);
+      }
 
       deleteExtracted();
     }

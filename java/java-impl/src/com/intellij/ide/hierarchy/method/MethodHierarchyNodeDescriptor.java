@@ -104,7 +104,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     final Icon newRawIcon = psiClass.getIcon(flags);
     final Icon newStateIcon = calculateState(psiClass);
 
-    if (newRawIcon != myRawIcon || newStateIcon != myStateIcon) {
+    if (changes || newRawIcon != myRawIcon || newStateIcon != myStateIcon) {
       changes = true;
 
       myRawIcon = newRawIcon;

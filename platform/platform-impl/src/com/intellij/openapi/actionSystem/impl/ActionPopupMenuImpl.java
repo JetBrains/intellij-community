@@ -20,6 +20,16 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.wm.FocusCommand;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,19 +37,25 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ActionPopupMenuImpl implements ActionPopupMenu {
+final class ActionPopupMenuImpl extends ApplicationAdapter implements ActionPopupMenu {
 
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
+  private Application myApp;
+  private IdeFrame myFrame;
+
   public ActionPopupMenuImpl(String place, @NotNull ActionGroup group, ActionManagerImpl actionManager, @Nullable PresentationFactory factory) {
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
+    myApp = ApplicationManager.getApplication();
   }
 
   public JPopupMenu getComponent() {
@@ -132,18 +148,34 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
         y -= invisibleHeight;
       }
 
+      if (myApp != null) {
+        if (myApp.isActive()) {
+          Component frame = UIUtil.findUltimateParent(component);
+          if (frame instanceof IdeFrame) {
+            myFrame = (IdeFrame)frame;
+          }
+          myApp.addApplicationListener(ActionPopupMenuImpl.this);
+       }
+      }
+
       super.show(component, x, y);
     }
 
     private class MyPopupMenuListener implements PopupMenuListener {
       public void popupMenuCanceled(PopupMenuEvent e) {
-        myManager.removeActionPopup(ActionPopupMenuImpl.this);
-        MyMenu.this.removeAll();
+        disposeMenu();
       }
 
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+        disposeMenu();
+      }
+
+      private void disposeMenu() {
         myManager.removeActionPopup(ActionPopupMenuImpl.this);
         MyMenu.this.removeAll();
+        if (myApp != null) {
+          myApp.removeApplicationListener(ActionPopupMenuImpl.this);
+        }
       }
 
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -154,4 +186,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu {
       }
     }
   }
+
+  @Override
+  public void applicationDeactivated(IdeFrame ideFrame) {
+    if (myFrame == ideFrame) {
+      myMenu.setVisible(false);
+    }
+  }
+
 }
