@@ -54,10 +54,7 @@ import com.intellij.ui.TableScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
-import com.intellij.usages.impl.GroupNode;
-import com.intellij.usages.impl.NullUsage;
-import com.intellij.usages.impl.UsageNode;
-import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
@@ -110,23 +107,32 @@ public class ShowUsagesAction extends AnAction {
       hideHints();
     }
   };
+  private final UsageViewSettings myUsageViewSettings;
 
   // used from plugin.xml
   @SuppressWarnings({"UnusedDeclaration"})
   public ShowUsagesAction() {
+    this(false);
+  }
+
+  private ShowUsagesAction(boolean showDialogBefore) {
     setInjectedContext(true);
-    showSettingsDialogBefore = false;
+    showSettingsDialogBefore = showDialogBefore;
+
+    final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
+    myUsageViewSettings = new UsageViewSettings();
+    myUsageViewSettings.loadState(usageViewSettings);
+    myUsageViewSettings.GROUP_BY_FILE_STRUCTURE = false;
+    myUsageViewSettings.GROUP_BY_MODULE = false;
+    myUsageViewSettings.GROUP_BY_PACKAGE = false;
+    myUsageViewSettings.GROUP_BY_USAGE_TYPE = false;
+    myUsageViewSettings.GROUP_BY_SCOPE = false;
   }
 
   public static class ShowSettings extends ShowUsagesAction {
     public ShowSettings() {
       super(true);
     }
-  }
-
-  private ShowUsagesAction(boolean showDialogBefore) {
-    setInjectedContext(true);
-    showSettingsDialogBefore = showDialogBefore;
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -177,25 +183,18 @@ public class ShowUsagesAction extends AnAction {
     presentation.setDetachedMode(true);
 
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
-    final UsageViewSettings save = new UsageViewSettings();
+    final UsageViewSettings savedGlobalSettings = new UsageViewSettings();
 
-    save.loadState(usageViewSettings);
-    usageViewSettings.GROUP_BY_FILE_STRUCTURE = false;
-    usageViewSettings.GROUP_BY_MODULE = false;
-    usageViewSettings.GROUP_BY_PACKAGE = false;
-    usageViewSettings.GROUP_BY_USAGE_TYPE = false;
-    usageViewSettings.GROUP_BY_SCOPE = false;
+    savedGlobalSettings.loadState(usageViewSettings);
+    usageViewSettings.loadState(myUsageViewSettings);
 
     UsageViewManager manager = UsageViewManager.getInstance(handler.getProject());
     final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
 
     Disposer.register(usageView, new Disposable() {
       public void dispose() {
-        usageViewSettings.GROUP_BY_FILE_STRUCTURE = save.GROUP_BY_FILE_STRUCTURE;
-        usageViewSettings.GROUP_BY_MODULE = save.GROUP_BY_MODULE;
-        usageViewSettings.GROUP_BY_PACKAGE = save.GROUP_BY_PACKAGE;
-        usageViewSettings.GROUP_BY_USAGE_TYPE = save.GROUP_BY_USAGE_TYPE;
-        usageViewSettings.GROUP_BY_SCOPE = save.GROUP_BY_SCOPE;
+        myUsageViewSettings.loadState(usageViewSettings);
+        usageViewSettings.loadState(savedGlobalSettings);
       }
     });
 
@@ -431,10 +430,11 @@ public class ShowUsagesAction extends AnAction {
     });
     builder.setCommandButton(button);
 
-    DefaultActionGroup filters = new DefaultActionGroup();
-    usageView.addFilteringActions(filters);
+    DefaultActionGroup toolbar = new DefaultActionGroup();
+    usageView.addFilteringActions(toolbar);
 
-    filters.add(new AnAction("Open Find Usages Toolwindow", "Show all usages in a separate toolwindow", IconLoader.getIcon("/general/toolWindowFind.png")) {
+    toolbar.add(UsageGroupingRuleProviderImpl.createGroupByFileStructureAction(usageView));
+    toolbar.add(new AnAction("Open Find Usages Toolwindow", "Show all usages in a separate toolwindow", IconLoader.getIcon("/general/toolWindowFind.png")) {
       {
         AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
         setShortcutSet(action.getShortcutSet());
@@ -453,14 +453,14 @@ public class ShowUsagesAction extends AnAction {
       }
     });
 
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, filters, true);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, toolbar, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
 
     popup[0] = builder.createPopup();
-    for (AnAction action : filters.getChildren(null)) {
+    for (AnAction action : toolbar.getChildren(null)) {
       action.unregisterCustomShortcutSet(usageView.getComponent());
       action.registerCustomShortcutSet(action.getShortcutSet(), popup[0].getContent());
     }
