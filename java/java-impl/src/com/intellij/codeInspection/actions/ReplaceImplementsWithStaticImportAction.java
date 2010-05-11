@@ -24,11 +24,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class ReplaceImplementsWithStaticImportAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + ReplaceImplementsWithStaticImportAction.class.getName());
@@ -64,9 +69,19 @@ public class ReplaceImplementsWithStaticImportAction implements IntentionAction 
       return false;
     }
 
-    if (targetClass.getMethods().length > 0) return false;
-    
-    return targetClass.getFields().length > 0;
+    final PsiReferenceList extendsList = targetClass.getExtendsList();
+    LOG.assertTrue(extendsList != null);
+    if (extendsList.getReferencedTypes().length > 0) {
+      final List<PsiMethod> methods = new ArrayList<PsiMethod>(Arrays.asList(targetClass.getAllMethods()));
+      final PsiClass objectClass =
+        JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
+      if (objectClass == null) return false;
+      methods.removeAll(Arrays.asList(objectClass.getMethods()));
+      if (methods.size() > 0) return false;
+    } else if (targetClass.getMethods().length > 0){
+      return false;
+    }
+    return targetClass.getAllFields().length > 0;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -85,7 +100,7 @@ public class ReplaceImplementsWithStaticImportAction implements IntentionAction 
 
     final PsiClass targetClass = (PsiClass)target;
 
-    for (PsiField constField : targetClass.getFields()) {
+    for (PsiField constField : targetClass.getAllFields()) {
       for (PsiReference ref : ReferencesSearch.search(constField, new LocalSearchScope(psiClass))) {
         ((PsiReferenceExpressionImpl)ref).bindToElementViaStaticImport(targetClass, constField.getName(), ((PsiJavaFile)file).getImportList());
       }
