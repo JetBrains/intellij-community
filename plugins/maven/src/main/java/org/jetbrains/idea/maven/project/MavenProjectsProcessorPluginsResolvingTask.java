@@ -16,15 +16,15 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 public class MavenProjectsProcessorPluginsResolvingTask extends MavenProjectsProcessorBasicTask {
-  private final org.apache.maven.project.MavenProject myNativeMavenProject;
+  private final NativeMavenProjectHolder myNativeMavenProject;
 
   public MavenProjectsProcessorPluginsResolvingTask(MavenProject project,
-                                                    org.apache.maven.project.MavenProject nativeMavenProject,
+                                                    NativeMavenProjectHolder nativeMavenProject,
                                                     MavenProjectsTree tree) {
     super(project, tree);
     myNativeMavenProject = nativeMavenProject;

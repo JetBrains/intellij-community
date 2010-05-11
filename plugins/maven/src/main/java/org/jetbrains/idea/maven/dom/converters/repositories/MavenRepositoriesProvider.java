@@ -69,10 +69,4 @@ public class MavenRepositoriesProvider {
     RepositoryBeanInfo pair = myRepositoriesMap.get(id);
     return pair != null ? pair.getUrl() : null;
   }
-
-  @Nullable
-  public String getRepositoryLayout(@Nullable String id) {
-    RepositoryBeanInfo pair = myRepositoriesMap.get(id);
-    return pair != null ? pair.getLayout() : null;
-  }
 }

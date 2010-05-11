@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.maven;
 
-import org.jetbrains.idea.maven.embedder.MavenConsole;
-import org.jetbrains.idea.maven.embedder.MavenExecutionOptions;
 import com.intellij.execution.process.ProcessHandler;
+import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.project.MavenConsole;
 
 public class NullMavenConsole extends MavenConsole {
   public NullMavenConsole() {
@@ -38,6 +38,6 @@ public class NullMavenConsole extends MavenConsole {
   public void attachToProcess(ProcessHandler processHandler) {
   }
 
-  protected void doPrint(String text, OutputType type) {
+  protected void doPrint(String text, MavenConsole.OutputType type) {
   }
 }

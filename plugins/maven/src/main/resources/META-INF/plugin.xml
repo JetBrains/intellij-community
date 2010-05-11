@@ -11,7 +11,7 @@
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
-  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>  
+  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
@@ -19,6 +19,9 @@
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
+
+    <applicationService serviceInterface="org.jetbrains.idea.maven.facade.MavenFacadeManager"
+                        serviceImplementation="org.jetbrains.idea.maven.facade.MavenFacadeManager"/>
 
     <projectConfigurable implementation="org.jetbrains.idea.maven.utils.MavenSettings" order="last"/>
 
@@ -72,9 +75,6 @@
 
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
-
-    <projectService serviceInterface="org.jetbrains.idea.maven.facade.remote.MavenFacadeManager"
-                    serviceImplementation="org.jetbrains.idea.maven.facade.remote.MavenFacadeManagerImpl"/>
 
     <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"
                         serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
@@ -399,10 +399,10 @@
       <separator/>
       <action id="refactoring.introduce.property" text="Introduce Property"
               class="org.jetbrains.idea.maven.dom.refactorings.introduce.IntroducePropertyAction"
-              use-shortcut-of="IntroduceVariable" />
+              use-shortcut-of="IntroduceVariable"/>
 
       <action id="refactoring.extract.dependency" text="Extract Dependency (dependencyManagement)"
-              class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractDependenciesAction" >
+              class="org.jetbrains.idea.maven.dom.refactorings.extract.ExtractDependenciesAction">
       </action>
     </group>
   </actions>

@@ -18,11 +18,15 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Element;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenArtifactNode;
+import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
+import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public class MavenProjectTest extends MavenImportingTestCase {
   public void testCollectingPlugins() throws Exception {
@@ -51,7 +55,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     assertDeclaredPlugins(p("group1", "id1"), p("group1", "id2"), p("group2", "id1"));
   }
-  
+            
   public void testPluginsContainDefaultPlugins() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -616,11 +620,12 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("central", result.get(2).getId());
   }
 
-  public void testStrippingDownMavenModel() throws Exception {
+  public void testMavenModelMap() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
                   "<build>" +
+                  "  <finalName>foo</finalName>" +
                   "  <plugins>" +
                   "    <plugin>" +
                   "      <groupId>group1</groupId>" +
@@ -630,8 +635,15 @@ public class MavenProjectTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    assertTrue(getMavenProject().getMavenModel().getBuild().getPlugins().isEmpty());
-    assertTrue(getMavenProject().getMavenModel().getBuild().getPluginsAsMap().isEmpty());
+    MavenProject p = getMavenProject();
+    Map<String,String> map = p.getModelMap();
+
+    assertEquals("test", map.get("groupId"));
+    assertTrue(map.get("build"), map.get("build").startsWith("org.apache.maven.model.Build@"));
+    assertEquals("foo", map.get("build.finalName"));
+    assertEquals(new File(p.getDirectory(), "target").toString(), map.get("build.directory"));
+    assertEquals(null, map.get("build.plugins"));
+    assertEquals(null, map.get("build.pluginMap"));
   }
 
   public void testDependenciesTree() throws Exception {

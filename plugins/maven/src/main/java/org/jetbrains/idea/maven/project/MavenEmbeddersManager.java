@@ -15,32 +15,36 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
 import com.intellij.util.containers.SoftValueHashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.Map;
 import java.util.Set;
 
 public class MavenEmbeddersManager {
-  public enum EmbedderKind {
-    FOR_DEPENDENCIES_RESOLVE,
-    FOR_PLUGINS_RESOLVE,
-    FOR_FOLDERS_RESOLVE,
-    FOR_DOWNLOAD,
-    FOR_POST_PROCESSING,
-  }
+  public static final Key FOR_DEPENDENCIES_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_DEPENDENCIES_RESOLVE");
+  public static final Key FOR_PLUGINS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_PLUGINS_RESOLVE");
+  public static final Key FOR_FOLDERS_RESOLVE = Key.create(MavenEmbeddersManager.class + ".FOR_FOLDERS_RESOLVE");
+  public static final Key FOR_DOWNLOAD = Key.create(MavenEmbeddersManager.class + ".FOR_DOWNLOAD");
+  public static final Key FOR_POST_PROCESSING = Key.create(MavenEmbeddersManager.class + ".FOR_POST_PROCESSING");
 
-  private final MavenGeneralSettings myGeneralSettings;
+  private final Project myProject;
 
-  private final Map<EmbedderKind, MavenEmbedderWrapper> myPool = new SoftValueHashMap<EmbedderKind, MavenEmbedderWrapper>();
+  private final Map<Key, MavenEmbedderWrapper> myPool = new SoftValueHashMap<Key, MavenEmbedderWrapper>();
   private final Set<MavenEmbedderWrapper> myEmbeddersInUse = new THashSet<MavenEmbedderWrapper>();
   private final Set<MavenEmbedderWrapper> myEmbeddersToClear = new THashSet<MavenEmbedderWrapper>();
 
-  public MavenEmbeddersManager(MavenGeneralSettings generalSettings) {
-    myGeneralSettings = generalSettings;
+  public MavenEmbeddersManager(Project project) {
+    myProject = project;
   }
 
   public synchronized void reset() {
@@ -57,16 +61,16 @@ public class MavenEmbeddersManager {
     myEmbeddersToClear.addAll(myEmbeddersInUse);
   }
 
-  public synchronized MavenEmbedderWrapper getEmbedder(EmbedderKind kind) {
+  public synchronized MavenEmbedderWrapper getEmbedder(Key kind) {
     MavenEmbedderWrapper result = myPool.get(kind);
     if (result == null) {
-      result = MavenEmbedderWrapper.create(myGeneralSettings);
+      result = MavenFacadeManager.getInstance().createEmbedder(myProject);
       myPool.put(kind, result);
     }
 
     if (myEmbeddersInUse.contains(result)) {
       MavenLog.LOG.warn("embedder " + kind + " is already used");
-      return MavenEmbedderWrapper.create(myGeneralSettings);
+      return MavenFacadeManager.getInstance().createEmbedder(myProject);
     }
 
     myEmbeddersInUse.add(result);
@@ -80,7 +84,9 @@ public class MavenEmbeddersManager {
       return;
     }
 
+    embedder.reset();
     myEmbeddersInUse.remove(embedder);
+
     if (myEmbeddersToClear.contains(embedder)) {
       embedder.clearCaches();
       myEmbeddersToClear.remove(embedder);
@@ -111,7 +117,7 @@ public class MavenEmbeddersManager {
   }
 
   private void forEachPooled(boolean includeInUse, Function<MavenEmbedderWrapper, ?> func) {
-    for (EmbedderKind each : myPool.keySet()) {
+    for (Key each : myPool.keySet()) {
       MavenEmbedderWrapper embedder = myPool.get(each);
       if (embedder == null) continue; // collected
       if (!includeInUse && myEmbeddersInUse.contains(embedder)) continue;

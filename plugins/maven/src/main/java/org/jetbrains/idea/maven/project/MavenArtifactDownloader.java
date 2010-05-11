@@ -20,10 +20,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.apache.maven.artifact.Artifact;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.facade.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
+import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -115,7 +115,7 @@ public class MavenArtifactDownloader {
       for (MavenArtifact eachDependency : eachProject.getDependencies()) {
         if (myArtifacts != null && !myArtifacts.contains(eachDependency)) continue;
 
-        if (Artifact.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
+        if (MavenConstants.SCOPE_SYSTEM.equalsIgnoreCase(eachDependency.getScope())) continue;
         if (myProjectsTree.findProject(eachDependency.getMavenId()) != null) continue;
         if (!eachProject.isSupportedDependency(eachDependency)) continue;
 
@@ -164,8 +164,8 @@ public class MavenArtifactDownloader {
                 myProgress.checkCanceled();
                 myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 
-                MavenArtifact a = myEmbedder.resolve(id, eachElement.extension, eachElement.classifier,
-                                                new ArrayList<MavenRemoteRepository>(data.repositories));
+                MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
+                                                     new ArrayList<MavenRemoteRepository>(data.repositories));
                 File file = a.getFile();
                 if (file.exists()) {
                   synchronized (downloadedFiles) {
