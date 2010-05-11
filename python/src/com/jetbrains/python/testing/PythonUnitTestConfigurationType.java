@@ -158,7 +158,7 @@ public class PythonUnitTestConfigurationType extends ConfigurationTypeBase imple
   }
 
   @Nullable
-  private RunnerAndConfigurationSettings createConfigurationFromFile(Location location, PyElement element) {
+  private RunnerAndConfigurationSettings createConfigurationFromFile(Location location, PsiElement element) {
     PsiElement file = element.getContainingFile();
     if (file == null || !(file instanceof PyFile)) return null;
 
@@ -193,15 +193,15 @@ public class PythonUnitTestConfigurationType extends ConfigurationTypeBase imple
     if (settings != null) return settings;
 
     final PyElement pyElement = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyElement.class);
-    if (pyElement == null) return null;
+    if (pyElement != null) {
+      settings = createConfigurationFromFunction(location, pyElement);
+      if (settings != null) return settings;
 
-    settings = createConfigurationFromFunction(location, pyElement);
-    if (settings != null) return settings;
+      settings = createConfigurationFromClass(location, pyElement);
+      if (settings != null) return settings;
+    }
 
-    settings = createConfigurationFromClass(location, pyElement);
-    if (settings != null) return settings;
-
-    settings = createConfigurationFromFile(location, pyElement);
+    settings = createConfigurationFromFile(location, location.getPsiElement());
     if (settings != null) return settings;
 
     return null;
