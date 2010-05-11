@@ -16,29 +16,20 @@
 package com.intellij.codeInsight.template.zencoding;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Pair;
-
-import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class TemplateToken extends Token {
   private final String myKey;
-  private final List<Pair<String, String>> myAttribute2Value;
   private TemplateImpl myTemplate;
 
-  public TemplateToken(String key, List<Pair<String, String>> attribute2value) {
+  public TemplateToken(String key) {
     myKey = key;
-    myAttribute2Value = attribute2value;
   }
 
   public String getKey() {
     return myKey;
-  }
-
-  public List<Pair<String, String>> getAttribute2Value() {
-    return myAttribute2Value;
   }
 
   public void setTemplate(TemplateImpl template) {

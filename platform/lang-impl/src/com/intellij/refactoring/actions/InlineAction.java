@@ -33,7 +33,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import org.jetbrains.annotations.Nullable;
 
-public class InlineAction extends BaseRefactoringAction {
+public class InlineAction extends BasePlatformRefactoringAction {
 
   public boolean isAvailableInEditorOnly() {
     return false;

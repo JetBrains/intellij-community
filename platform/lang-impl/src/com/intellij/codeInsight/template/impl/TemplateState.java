@@ -893,17 +893,10 @@ public class TemplateState implements Disposable {
     TextAttributes attributes = isSelected ? new TextAttributes(null, null, Color.red, EffectType.BOXED, Font.PLAIN) : new TextAttributes();
     TextAttributes endAttributes = new TextAttributes();
 
-    RangeHighlighter segmentHighlighter;
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    if (isEnd) {
-      segmentHighlighter = myEditor.getMarkupModel()
-        .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, endAttributes, HighlighterTargetArea.EXACT_RANGE);
-    }
-    else {
-      segmentHighlighter =
-        myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
-    }
+    RangeHighlighter segmentHighlighter = myEditor.getMarkupModel()
+      .addRangeHighlighter(start, end, HighlighterLayer.LAST + 1, isEnd ? endAttributes : attributes, HighlighterTargetArea.EXACT_RANGE);
     segmentHighlighter.setGreedyToLeft(true);
     segmentHighlighter.setGreedyToRight(true);
     return segmentHighlighter;

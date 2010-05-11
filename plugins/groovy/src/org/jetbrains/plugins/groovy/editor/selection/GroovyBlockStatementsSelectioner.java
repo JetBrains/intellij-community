@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.editor.selection;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
 import java.util.List;
@@ -37,17 +37,37 @@ public class GroovyBlockStatementsSelectioner extends GroovyBasicSelectioner {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 
     if (e instanceof GrCodeBlock) {
-      GrCodeBlock block = ((GrCodeBlock) e);
-      GrStatement[] statements = block.getStatements();
-
-      if (statements.length > 0) {
-        int startOffset = statements[0].getTextRange().getStartOffset();
-        int endOffset = statements[statements.length - 1].getTextRange().getEndOffset();
-        TextRange range = new TextRange(startOffset, endOffset);
-        result.add(range);
-      }
+      GrCodeBlock block = ((GrCodeBlock)e);
+      int startOffset = findOpeningBrace(block);
+      int endOffset = findClosingBrace(block, startOffset);
+      TextRange range = new TextRange(startOffset, endOffset);
+      result.addAll(expandToWholeLine(editorText, range));
     }
     return result;
   }
 
+  private static int findOpeningBrace(GrCodeBlock block) {
+    PsiElement lbrace = block.getLBrace();
+    if (lbrace == null) return block.getTextRange().getStartOffset();
+
+    while (isWhiteSpace(lbrace.getNextSibling())) {
+      lbrace = lbrace.getNextSibling();
+    }
+    return lbrace.getTextRange().getEndOffset();
+  }
+
+  private static int findClosingBrace(GrCodeBlock block, int startOffset) {
+    PsiElement rbrace = block.getRBrace();
+    if (rbrace == null) return block.getTextRange().getEndOffset();
+
+    while (isWhiteSpace(rbrace.getPrevSibling()) && rbrace.getPrevSibling().getTextRange().getStartOffset() > startOffset) {
+      rbrace = rbrace.getPrevSibling();
+    }
+
+    return rbrace.getTextRange().getStartOffset();
+  }
+
+  private static boolean isWhiteSpace(PsiElement element) {
+    return element != null && GroovyTokenTypes.WHITE_SPACES_SET.contains(element.getNode().getElementType());
+  }
 }

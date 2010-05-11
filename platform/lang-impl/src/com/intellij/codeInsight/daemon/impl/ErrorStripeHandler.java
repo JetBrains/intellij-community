@@ -21,8 +21,6 @@ import com.intellij.openapi.editor.ex.ErrorStripeEvent;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 
-import java.util.List;
-
 public class ErrorStripeHandler extends ErrorStripeAdapter {
   private final Project myProject;
 
@@ -39,14 +37,9 @@ public class ErrorStripeHandler extends ErrorStripeAdapter {
     }
   }
 
-  private HighlightInfo findInfo(RangeHighlighter highlighter) {
-    List<HighlightInfo> highlights = DaemonCodeAnalyzerImpl.getHighlights(highlighter.getDocument(), myProject);
-    if (highlights == null) return null;
-    for (HighlightInfo info : highlights) {
-      if (info.highlighter == highlighter) {
-        return info;
-      }
-    }
+  private static HighlightInfo findInfo(final RangeHighlighter highlighter) {
+    Object o = highlighter.getErrorStripeTooltip();
+    if (o instanceof HighlightInfo) return (HighlightInfo)o;
     return null;
   }
 }

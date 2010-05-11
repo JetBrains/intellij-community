@@ -90,6 +90,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return mySymbolsAtTheLastLine;
   }
 
+  @Override
   public LeafBlockWrapper getPreviousBlock() {
     return myPreviousBlock;
   }
@@ -102,9 +103,32 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myNextBlock = nextBlock;
   }
 
+  @Override
   protected boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child) {
     return false;
   }
+
+  @Override
+  protected IndentData getNumberOfSymbolsBeforeBlock() {
+    int spaces = getWhiteSpace().getSpaces();
+    int indentSpaces = getWhiteSpace().getIndentSpaces();
+
+    if (getWhiteSpace().containsLineFeeds()) {
+      return new IndentData(indentSpaces, spaces);
+    }
+
+    for (LeafBlockWrapper current = this.getPreviousBlock(); current != null; current = current.getPreviousBlock()) {
+      spaces += current.getWhiteSpace().getSpaces();
+      spaces += current.getSymbolsAtTheLastLine();
+      indentSpaces += current.getWhiteSpace().getIndentSpaces();
+      if (current.getWhiteSpace().containsLineFeeds()) {
+        break;
+      }
+    }
+    return new IndentData(indentSpaces, spaces);
+  }
+
+
 
   public void dispose() {
     super.dispose();

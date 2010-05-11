@@ -24,6 +24,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
@@ -61,7 +62,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
 
     final GlobalSearchScope searchScope = GlobalSearchScope.moduleWithDependentsScope(module);
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
-    JobUtil.invokeConcurrentlyUnderMyProgress(properties, new Processor<Property>() {
+    if (!JobUtil.invokeConcurrentlyUnderMyProgress(properties, new Processor<Property>() {
       public boolean process(final Property property) {
         if (original != null) {
           if (original.isCanceled()) return false;
@@ -93,7 +94,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
 
         return true;
       }
-    }, "Searching properties usages");
+    }, "Searching properties usages")) throw new ProcessCanceledException();
 
     synchronized (descriptors) {
       return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);

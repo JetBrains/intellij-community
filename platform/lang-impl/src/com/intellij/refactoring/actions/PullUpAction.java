@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 
-public class PullUpAction extends BaseRefactoringAction {
+public class PullUpAction extends BasePlatformRefactoringAction {
 
   public PullUpAction() {
     setInjectedContext(true);

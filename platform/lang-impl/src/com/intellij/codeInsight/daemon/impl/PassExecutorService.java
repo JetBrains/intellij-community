@@ -21,7 +21,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobImpl;
-import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -39,7 +39,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -66,7 +65,6 @@ public abstract class PassExecutorService implements Disposable {
 
   public PassExecutorService(Project project) {
     myProject = project;
-    Disposer.register(project, this);
   }
 
   public void dispose() {
@@ -81,7 +79,8 @@ public abstract class PassExecutorService implements Disposable {
     if (waitForTermination) {
       for (Job<Void> job : mySubmittedPasses.values()) {
         try {
-          if (!job.isDone()) ((JobImpl)job).waitForTermination();
+          JobImpl ji = (JobImpl)job;
+          if (!job.isDone()) ji.waitForTermination(ji.getTasks());
         }
         catch (Throwable throwable) {
           LOG.error(throwable);
@@ -263,9 +262,7 @@ public abstract class PassExecutorService implements Disposable {
 
   private void submit(ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobScheduler.getInstance().createJob(pass.myPass.toString(), pass.myJobPriority);
-      job.addTask(pass);
-      job.schedule();
+      Job<Void> job = JobUtil.submitToJobThread(pass, pass.myJobPriority);
       mySubmittedPasses.put(pass, job);
     }
   }
@@ -440,7 +437,9 @@ public abstract class PassExecutorService implements Disposable {
   public List<TextEditorHighlightingPass> getAllSubmittedPasses() {
     ArrayList<TextEditorHighlightingPass> result = new ArrayList<TextEditorHighlightingPass>(mySubmittedPasses.size());
     for (ScheduledPass scheduledPass : mySubmittedPasses.keySet()) {
-      result.add(scheduledPass.myPass);
+      if (!scheduledPass.myUpdateProgress.isCanceled()) {
+        result.add(scheduledPass.myPass);
+      }
     }
     return result;
   }

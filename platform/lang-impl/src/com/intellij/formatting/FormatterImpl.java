@@ -61,11 +61,11 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Alignment createAlignment() {
-    return new AlignmentImpl(AlignmentImpl.Type.NORMAL);
+    return new AlignmentImpl();
   }
 
   public Alignment createChildAlignment(final Alignment base) {
-    AlignmentImpl result = new AlignmentImpl(AlignmentImpl.Type.NORMAL);
+    AlignmentImpl result = new AlignmentImpl();
     result.setParent(base);
     return result;
   }

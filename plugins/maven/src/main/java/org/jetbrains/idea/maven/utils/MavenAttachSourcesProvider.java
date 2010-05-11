@@ -20,9 +20,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiFile;
@@ -31,15 +31,13 @@ import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.project.*;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 public class MavenAttachSourcesProvider implements AttachSourcesProvider {
-  public Collection<AttachSourcesAction> getActions(final Library library, final PsiFile psiFile) {
+  public Collection<AttachSourcesAction> getActions(final List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     Collection<MavenProject> projects = getMavenProjects(psiFile);
     if (projects.isEmpty()) return Collections.emptyList();
-    if (findArtifacts(projects, library).isEmpty()) return Collections.emptyList();
+    if (findArtifacts(projects, orderEntries).isEmpty()) return Collections.emptyList();
                                       
     return Collections.<AttachSourcesAction>singleton(new AttachSourcesAction() {
       public String getName() {
@@ -50,14 +48,14 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
         return ProjectBundle.message("maven.action.download.sources.busy.text");
       }
 
-      public ActionCallback perform() {
+      public ActionCallback perform(List<LibraryOrderEntry> orderEntries) {
         // may have been changed by this time...
         Collection<MavenProject> mavenProjects = getMavenProjects(psiFile);
         if (mavenProjects.isEmpty()) return new ActionCallback.Rejected();
 
         MavenProjectsManager manager = MavenProjectsManager.getInstance(psiFile.getProject());
 
-        Collection<MavenArtifact> artifacts = findArtifacts(mavenProjects, library);
+        Collection<MavenArtifact> artifacts = findArtifacts(mavenProjects, orderEntries);
         if (artifacts.isEmpty()) return new ActionCallback.Rejected();
 
         final AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
@@ -105,16 +103,18 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
     });
   }
 
-  private Collection<MavenArtifact> findArtifacts(Collection<MavenProject> mavenProjects, Library library) {
+  private static Collection<MavenArtifact> findArtifacts(Collection<MavenProject> mavenProjects, List<LibraryOrderEntry> orderEntries) {
     Collection<MavenArtifact> artifacts = new THashSet<MavenArtifact>();
     for (MavenProject each : mavenProjects) {
-      final MavenArtifact artifact = MavenRootModelAdapter.findArtifact(each, library);
-      if (artifact != null) artifacts.add(artifact);
+      for (LibraryOrderEntry entry : orderEntries) {
+        final MavenArtifact artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary());
+        if (artifact != null) artifacts.add(artifact);
+      }
     }
     return artifacts;
   }
 
-  private Collection<MavenProject> getMavenProjects(PsiFile psiFile) {
+  private static Collection<MavenProject> getMavenProjects(PsiFile psiFile) {
     Project project = psiFile.getProject();
     Collection<MavenProject> result = new ArrayList<MavenProject>();
     for (OrderEntry each : ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(psiFile.getVirtualFile())) {

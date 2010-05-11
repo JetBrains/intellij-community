@@ -31,7 +31,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
 
-public class IntroduceParameterAction extends BaseRefactoringAction {
+public class IntroduceParameterAction extends BasePlatformRefactoringAction {
   protected boolean isAvailableInEditorOnly() {
     return true;
   }

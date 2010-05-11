@@ -21,33 +21,37 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class JobImpl<T> implements Job<T> {
-  private final String myTitle;
-  private final List<Callable<T>> myTasks = ContainerUtil.createEmptyCOWList(); 
-  private final long myJobIndex = JobSchedulerImpl.currentJobIndex();
+  private static volatile long ourJobsCounter = 0;
+  private final long myJobIndex = ourJobsCounter++;
   private final int myPriority;
-  private final List<PrioritizedFutureTask<T>> myFutures = ContainerUtil.createEmptyCOWList();
-  private volatile boolean myCanceled = false;
+  private final List<PrioritizedFutureTask<T>> myFutures = new ArrayList<PrioritizedFutureTask<T>>();
+  private volatile boolean canceled = false;
+  private final AtomicInteger runningTasks = new AtomicInteger();
+  private volatile boolean scheduled;
 
-  public JobImpl(String title, int priority) {
-    myTitle = title;
+  JobImpl(int priority) {
     myPriority = priority;
   }
 
   public String getTitle() {
-    return myTitle;
+    return null;
   }
 
   public void addTask(Callable<T> task) {
-    checkNotStarted();
+    checkNotScheduled();
 
-    myTasks.add(task);
+    synchronized (myFutures) {
+      PrioritizedFutureTask<T> future = createFuture(task, this, myJobIndex, myPriority);
+      myFutures.add(future);
+    }
+    runningTasks.incrementAndGet();
   }
 
   public void addTask(Runnable task, T result) {
@@ -63,124 +67,147 @@ public class JobImpl<T> implements Job<T> {
     final Application application = ApplicationManager.getApplication();
     boolean callerHasReadAccess = application != null && application.isReadAccessAllowed();
 
-    createFutures(callerHasReadAccess, false);
-
     // Don't bother scheduling if we only have one processor or only one task
-    if (JobSchedulerImpl.CORES_COUNT >= 2 && myFutures.size() >= 2) {
-      for (PrioritizedFutureTask<T> future : myFutures) {
-        JobSchedulerImpl.execute(future);
+    boolean reallySchedule;
+    PrioritizedFutureTask[] tasks = getTasks();
+    synchronized (myFutures) {
+      reallySchedule = JobSchedulerImpl.CORES_COUNT >= 2 && myFutures.size() >= 2;
+    }
+    scheduled = true;
+
+    if (!reallySchedule) {
+      for (PrioritizedFutureTask future : tasks) {
+        future.run();
       }
+      return null;
     }
 
-    // http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
-    for (PrioritizedFutureTask<T> future : myFutures) {
-      future.run();
+    submitTasks(tasks, callerHasReadAccess, false);
+
+    while (!isDone() && JobSchedulerImpl.stealAndRunTask()) {
+      int i = 0;
     }
 
-    return waitForTermination();
+    // in case of imbalanced tasks one huge task can stuck running and we would fall to waitForTermination instead of doing useful work
+    //// http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
+    //for (PrioritizedFutureTask task : tasks) {
+    //  task.run();
+    //}
+    //
+
+    waitForTermination(tasks);
+    return null;
   }
 
-  private void createFutures(boolean callerHasReadAccess, final boolean reportExceptions) {
-    int startTaskIndex = JobSchedulerImpl.currentTaskIndex();
-    for (final Callable<T> task : myTasks) {
-      final PrioritizedFutureTask<T> future = new PrioritizedFutureTask<T>(task, myJobIndex, startTaskIndex++, myPriority, callerHasReadAccess,
-                                                                           reportExceptions);
-      myFutures.add(future);
-    }
-  }
-
-  public List<T> waitForTermination() throws Throwable {
-    List<T> results = new ArrayList<T>(myFutures.size());
-
+  public void waitForTermination(PrioritizedFutureTask[] tasks) throws Throwable {
     Throwable ex = null;
-    for (Future<T> f : myFutures) {
-      try {
-        T result = null;
+    try {
+      for (PrioritizedFutureTask f : tasks) {
+        // this loop is for workaround of mysterious bug
+        // when sometimes future hangs inside parkAndCheckForInterrupt() during unbounded get()
         while(true) {
           try {
-            result = f.get(10, TimeUnit.MILLISECONDS);
+            f.get(10, TimeUnit.MILLISECONDS);
             break;
           }
           catch (TimeoutException e) {
-            if (f.isDone() || f.isCancelled()) break;
+            if (f.isDone()) {
+              f.get(); // does awaitTermination(), and there is no chance to hang
+              break;
+            }
           }
         }
-        results.add(result);
       }
-      catch (CancellationException ignore) {
-      }
-      catch (ExecutionException e) {
-        cancel();
+    }
+    catch (CancellationException ignore) {
+      // already cancelled
+    }
+    catch (ExecutionException e) {
+      cancel();
 
-        Throwable cause = e.getCause();
-        if (cause != null) {
-          ex = cause;
-        }
+      Throwable cause = e.getCause();
+      if (cause != null) {
+        ex = cause;
       }
     }
 
-    // Future.get() exits when currently running is canceled, thus awaiter may get control before spawned tasks actually terminated,
-    // that's why additional join logic.
-    for (PrioritizedFutureTask<T> future : myFutures) {
-      future.awaitTermination();
+    if (ex != null) {
+      throw ex;
     }
-
-    if (ex != null) throw ex;
-
-    return results;
   }
 
   public void cancel() {
     checkScheduled();
-    if (myCanceled) return;
-    myCanceled = true;
+    if (canceled) return;
+    canceled = true;
 
-    for (Future<T> future : myFutures) {
+    PrioritizedFutureTask[] tasks = getTasks();
+    for (PrioritizedFutureTask future : tasks) {
       future.cancel(false);
     }
+    runningTasks.set(0);
   }
 
   public boolean isCanceled() {
     checkScheduled();
-    return myCanceled;
+    return canceled;
   }
 
   public void schedule() {
     checkCanSchedule();
+    scheduled = true;
 
-    createFutures(false, true);
+    PrioritizedFutureTask[] tasks = getTasks();
 
-    for (PrioritizedFutureTask<T> future : myFutures) {
-      JobSchedulerImpl.execute(future);
+    submitTasks(tasks, false, true);
+  }
+
+  public PrioritizedFutureTask[] getTasks() {
+    PrioritizedFutureTask[] tasks;
+    synchronized (myFutures) {
+      tasks = myFutures.toArray(new PrioritizedFutureTask[myFutures.size()]);
     }
+    return tasks;
   }
 
   public boolean isDone() {
     checkScheduled();
 
-    for (Future<T> future : myFutures) {
-      if (!future.isDone()) return false;
-    }
-
-    return true;
+    return runningTasks.get() <= 0;
   }
 
   private void checkCanSchedule() {
-    checkNotStarted();
-    if (myTasks.isEmpty()) {
-      throw new IllegalStateException("No tasks to run. You can't schedule a job which has no tasks");
+    checkNotScheduled();
+    synchronized (myFutures) {
+      if (myFutures.isEmpty()) {
+        throw new IllegalStateException("No tasks added. You can't schedule a job which has no tasks");
+      }
     }
   }
 
-  private void checkNotStarted() {
-    if (!myFutures.isEmpty()) {
+  private void checkNotScheduled() {
+    if (scheduled) {
       throw new IllegalStateException("Already running. You can't call this method for a job which is already scheduled");
     }
   }
 
   private void checkScheduled() {
-    if (myFutures.isEmpty()) {
+    if (!scheduled) {
       throw new IllegalStateException("Cannot call this method for not yet started job");
     }
+  }
+
+  private static void submitTasks(PrioritizedFutureTask[] tasks, boolean callerHasReadAccess, boolean reportExceptions) {
+    for (final PrioritizedFutureTask future : tasks) {
+      JobSchedulerImpl.submitTask(future, callerHasReadAccess, reportExceptions);
+    }
+  }
+
+  void taskDone() {
+    runningTasks.decrementAndGet();
+  }
+
+  private static <T> PrioritizedFutureTask<T> createFuture(Callable<T> task, JobImpl<T> job, long jobIndex, int priority) {
+    return new PrioritizedFutureTask<T>(task, job, jobIndex, JobSchedulerImpl.currentTaskIndex(), priority);
   }
 }

@@ -19,112 +19,91 @@
  */
 package com.intellij.concurrency;
 
-import com.intellij.openapi.application.RuntimeInterruptedException;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
-public class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<PrioritizedFutureTask> {
+class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<PrioritizedFutureTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.PrioritizedFutureTask");
+  private final JobImpl<T> myJob;
   private final long myJobIndex;
   private final int myTaskIndex;
   private final int myPriority;
-  private final boolean myParentThreadHasReadAccess;
-  private final boolean myReportExceptions;
-  private final Lock myLock;
-  private volatile Condition myDoneCondition;
+  private volatile boolean myParentThreadHasReadAccess;
+  private volatile boolean myReportExceptions;
 
-  public PrioritizedFutureTask(final Callable<T> callable, long jobIndex, int taskIndex, int priority, final boolean parentThreadHasReadAccess, boolean reportExceptions) {
+  PrioritizedFutureTask(final Callable<T> callable, JobImpl<T> job, long jobIndex, int taskIndex, int priority) {
     super(callable);
+    myJob = job;
     myJobIndex = jobIndex;
     myTaskIndex = taskIndex;
     myPriority = priority;
+  }
+
+  public void beforeRun(boolean parentThreadHasReadAccess, boolean reportExceptions) {
     myParentThreadHasReadAccess = parentThreadHasReadAccess;
     myReportExceptions = reportExceptions;
-
-    myLock = new ReentrantLock();
-  }
-
-  public boolean isParentThreadHasReadAccess() {
-    return myParentThreadHasReadAccess;
-  }
-
-  public int compareTo(final PrioritizedFutureTask o) {
-    if (getPriority() != o.getPriority()) return getPriority() - o.getPriority();
-    if (getTaskIndex() != o.getTaskIndex()) return getTaskIndex() - o.getTaskIndex();
-    if (getJobIndex() != o.getJobIndex()) return getJobIndex() < o.getJobIndex() ? -1 : 1;
-    return 0;
-  }
-
-  public long getJobIndex() {
-    return myJobIndex;
-  }
-
-  public int getTaskIndex() {
-    return myTaskIndex;
-  }
-
-  public int getPriority() {
-    return myPriority;
-  }
-
-  public void signalStarted() {
-    myLock.lock();
-    try {
-      myDoneCondition = myLock.newCondition();
-    }
-    finally {
-      myLock.unlock();
-    }
-  }
-
-  public void signalDone() {
-    myLock.lock();
-    try {
-      myDoneCondition.signalAll();
-      myDoneCondition = null;
-    }
-    finally {
-      myLock.unlock();
-    }
-  }
-
-  public void awaitTermination() {
-    myLock.lock();
-    try {
-      if (myDoneCondition == null) return;
-      myDoneCondition.await();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeInterruptedException(e);
-    }
-    finally {
-      myLock.unlock();
-    }
   }
 
   @Override
-  protected void done() {
-    if (myReportExceptions) {
-      // let exceptions during execution manifest themselves
-      try {
-        get();
+  public void run() {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        try {
+          if (myJob.isCanceled()) {
+            //set(null);
+            cancel(false); //todo cancel or set?
+          }
+          else {
+            PrioritizedFutureTask.super.run();
+          }
+        }
+        finally {
+          try {
+            if (myReportExceptions) {
+              // let exceptions during execution manifest themselves
+              PrioritizedFutureTask.super.get();
+            }
+          }
+          catch (CancellationException ignored) {
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
+          catch (ExecutionException e) {
+            LOG.error(e);
+          }
+          finally {
+            myJob.taskDone();
+            //myDoneCondition.up();
+          }
+        }
       }
-      catch (CancellationException e) {
-        //ignore
+    };
+    if (myParentThreadHasReadAccess) {
+      if (ApplicationManagerEx.getApplicationEx().isUnitTestMode()) {
+        // all tests unfortunately are run from within write action, so they cannot really run read action in any thread
+        ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
+      // have to start "real" read action so that we cannot start write action until we are finished here
+      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {
+        myJob.cancel();
       }
     }
+    else {
+      runnable.run();
+    }
+  }
+
+  public int compareTo(final PrioritizedFutureTask o) {
+    int priorityDelta = myPriority - o.myPriority;
+    if (priorityDelta != 0) return priorityDelta;
+    if (myJobIndex != o.myJobIndex) return myJobIndex < o.myJobIndex ? -1 : 1;
+    return myTaskIndex - o.myTaskIndex;
   }
 }

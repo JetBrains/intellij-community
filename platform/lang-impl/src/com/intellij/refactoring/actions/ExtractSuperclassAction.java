@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 
-public class ExtractSuperclassAction extends BaseRefactoringAction {
+public class ExtractSuperclassAction extends BasePlatformRefactoringAction {
   public boolean isAvailableInEditorOnly() {
     return false;
   }
