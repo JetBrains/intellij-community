@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -15,8 +16,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.patterns.Matcher;
-import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -342,14 +341,22 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private static void addKeywordArgumentVariants(PyFunction def, final List<Object> ret) {
+    final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(def);
     def.getParameterList().acceptChildren(
       new PyElementVisitor() {
+        private int myIndex;
+
         @Override
         public void visitPyParameter(PyParameter par) {
+          myIndex++;
+          if (myIndex == 1 && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
+            return;
+          }
           PyNamedParameter n_param = par.getAsNamed();
           assert n_param != null;
           if (! n_param.isKeywordContainer() && ! n_param.isPositionalContainer()) {
-            ret.add(LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0)));
+            final LookupElementBuilder item = LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0));
+            ret.add(PrioritizedLookupElement.withGrouping(item, 1));
           }
         }
       }
