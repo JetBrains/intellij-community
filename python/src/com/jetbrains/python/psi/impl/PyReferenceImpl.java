@@ -17,6 +17,7 @@ import com.intellij.util.containers.SortedList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -343,26 +344,55 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private static void addKeywordArgumentVariants(PyFunction def, final List<Object> ret) {
-    final Set<PyFunction.Flag> flags = def.getContainingClass() != null ? PyUtil.detectDecorationsAndWrappersOf(def) : null;
-    def.getParameterList().acceptChildren(
-      new PyElementVisitor() {
-        private int myIndex;
+    addKeywordArgumentVariants(def, ret, new HashSet<PyFunction>());
+  }
 
-        @Override
-        public void visitPyParameter(PyParameter par) {
-          myIndex++;
-          if (myIndex == 1 && flags != null && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
-            return;
-          }
-          PyNamedParameter n_param = par.getAsNamed();
-          assert n_param != null;
-          if (! n_param.isKeywordContainer() && ! n_param.isPositionalContainer()) {
-            final LookupElementBuilder item = LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0));
-            ret.add(PrioritizedLookupElement.withGrouping(item, 1));
-          }
-        }
+  private static void addKeywordArgumentVariants(PyFunction def, List<Object> ret, Collection<PyFunction> visited) {
+    if (visited.contains(def)) {
+      return;
+    }
+    visited.add(def);
+    final Set<PyFunction.Flag> flags = def.getContainingClass() != null ? PyUtil.detectDecorationsAndWrappersOf(def) : null;
+    final KeywordArgumentCollector collector = new KeywordArgumentCollector(flags, ret);
+    def.getParameterList().acceptChildren(collector);
+    if (collector.myCount == 2 && collector.myHasSelf && collector.myHasKwArgs) {
+      // nothing interesting besides self and **kwargs, let's look at superclass (PY-778)
+      final PsiElement superMethod = PySuperMethodsSearch.search(def).findFirst();
+      if (superMethod instanceof PyFunction) {
+        addKeywordArgumentVariants((PyFunction)superMethod, ret, visited);
       }
-    );
+    }
+  }
+
+  private static class KeywordArgumentCollector extends PyElementVisitor {
+    private int myCount;
+    private final Set<PyFunction.Flag> myFlags;
+    private final List<Object> myRet;
+    private boolean myHasSelf = false;
+    private boolean myHasKwArgs = false;
+
+    public KeywordArgumentCollector(Set<PyFunction.Flag> flags, List<Object> ret) {
+      myFlags = flags;
+      myRet = ret;
+    }
+
+    @Override
+    public void visitPyParameter(PyParameter par) {
+      myCount++;
+      if (myCount == 1 && myFlags != null && !myFlags.contains(PyFunction.Flag.STATICMETHOD)) {
+        myHasSelf = true;
+        return;
+      }
+      PyNamedParameter n_param = par.getAsNamed();
+      assert n_param != null;
+      if (! n_param.isKeywordContainer() && ! n_param.isPositionalContainer()) {
+        final LookupElementBuilder item = LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0));
+        myRet.add(PrioritizedLookupElement.withGrouping(item, 1));
+      }
+      else if (n_param.isKeywordContainer()) {
+        myHasKwArgs = true;
+      }
+    }
   }
 
   public boolean isSoft() {
@@ -434,5 +464,4 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   public int hashCode() {
     return myElement.hashCode();
   }
-
 }

@@ -43,6 +43,10 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testSuperInitKwParams() throws Exception {      // PY-778
+    doTest();
+  }
+
   public void testPredefinedMethodName() throws Exception {
     doTest();
   }
