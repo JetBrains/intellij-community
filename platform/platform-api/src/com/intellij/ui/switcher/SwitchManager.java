@@ -170,6 +170,10 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
 
   public void disposeComponent() {
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
+    myActionManager.removeAnActionListener(this);
+
+    myActionManager = null;
+    myQa = null;
   }
 
   public static SwitchManager getInstance(Project project) {
