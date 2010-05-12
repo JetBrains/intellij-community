@@ -122,6 +122,10 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
     final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), VirtualFile.EMPTY_ARRAY);
     rootModel.addLibraryEntry(apiJar);
+    if (artifact != null) {
+      WebArtifactUtil.getInstance().addLibrary(apiJar, artifact, module.getProject());
+    }
+
     if (persistenceApi != null) {
       facetConfiguration.setRunEnhancerOnMake(true);
       facetConfiguration.getFilesToEnhance().addAll(AppEngineUtil.getDefaultSourceRootsToEnhance(rootModel));
@@ -156,7 +160,6 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       rootModel.addLibraryEntry(library);
       if (artifact != null) {
         WebArtifactUtil.getInstance().addLibrary(library, artifact, module.getProject());
-        WebArtifactUtil.getInstance().addLibrary(apiJar, artifact, module.getProject());
       }
     }
   }
