@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.w3.org/1999/xhtml" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.w3.org/1999/xhtml"
+           xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
   <!-- ##################################################################### -->
   <!--
@@ -8,9 +9,10 @@
   -->
   <!--  (xml:base on elements other than <html>) -->
   <!-- ##################################################################### -->
+
   <xs:attributeGroup name="common.attr.anything">
     <xs:annotation>
-      <xs:documentation> Wildcards                                                         #</xs:documentation>
+      <xs:documentation>Wildcards #</xs:documentation>
     </xs:annotation>
     <xs:anyAttribute processContents="skip"/>
   </xs:attributeGroup>
@@ -31,7 +33,7 @@
   <!-- ##################################################################### -->
   <xs:group name="common.elem.metadata">
     <xs:annotation>
-      <xs:documentation> Common Element Classes                                            #</xs:documentation>
+      <xs:documentation>Common Element Classes #</xs:documentation>
     </xs:annotation>
     <xs:choice>
       <xs:element ref="xhtml:link"/>
@@ -147,7 +149,7 @@
   <!-- ##################################################################### -->
   <xs:group name="common.inner.metadata">
     <xs:annotation>
-      <xs:documentation> Common Content Models                                             #</xs:documentation>
+      <xs:documentation>Common Content Models #</xs:documentation>
     </xs:annotation>
     <xs:sequence>
       <xs:group minOccurs="0" maxOccurs="unbounded" ref="common.elem.metadata"/>
@@ -175,7 +177,7 @@
   <!-- When updating, check <bdo> definition too -->
   <xs:attributeGroup name="common.attrs">
     <xs:annotation>
-      <xs:documentation> Common Attributes                                                 #</xs:documentation>
+      <xs:documentation>Common Attributes #</xs:documentation>
     </xs:annotation>
     <xs:attributeGroup ref="common.attrs.basic"/>
     <xs:attributeGroup ref="common.attrs.i18n"/>
@@ -217,7 +219,10 @@
   <xs:attributeGroup name="common.attrs.i18n">
     <xs:attribute name="dir">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="ltr"/>
+          <xs:enumeration value="rtl"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attributeGroup ref="common.attrs.language"/>
@@ -225,7 +230,10 @@
   <xs:attributeGroup name="common.attrs.dir">
     <xs:attribute name="dir" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="ltr"/>
+          <xs:enumeration value="rtl"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -280,7 +288,7 @@
   <!-- ##################################################################### -->
   <xs:simpleType name="common.data.tokens">
     <xs:annotation>
-      <xs:documentation> Common Datatypes                                                  #</xs:documentation>
+      <xs:documentation>Common Datatypes #</xs:documentation>
     </xs:annotation>
     <xs:list itemType="xs:token"/>
   </xs:simpleType>
@@ -328,7 +336,9 @@
     <xs:annotation>
       <xs:documentation>Numerical</xs:documentation>
     </xs:annotation>
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="-?[0-9]+"/>
+    </xs:restriction>
   </xs:simpleType>
   <!--
     		xsd:string {
@@ -336,7 +346,9 @@
     		}
   -->
   <xs:simpleType name="common.data.integer.positive">
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="0*[1-9][0-9]*"/>
+    </xs:restriction>
   </xs:simpleType>
   <!--
     		xsd:string {
@@ -344,7 +356,9 @@
     		}
   -->
   <xs:simpleType name="common.data.integer.non-negative">
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]+"/>
+    </xs:restriction>
   </xs:simpleType>
   <!--
     		xsd:string {
@@ -358,7 +372,9 @@
     		}
   -->
   <xs:simpleType name="common.data.float">
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:float">
+      <xs:pattern value="-?[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?"/>
+    </xs:restriction>
   </xs:simpleType>
   <!--
     		xsd:string {
@@ -366,7 +382,9 @@
     		}
   -->
   <xs:simpleType name="common.data.float.positive">
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="(0*[1-9][0-9]*(\.[0-9]+)?)|([0-9]+(\.0*[1-9][0-9]*)?)([eE]-?[0-9]+)?"/>
+    </xs:restriction>
   </xs:simpleType>
   <!--
     		xsd:string {
@@ -374,7 +392,9 @@
     		}
   -->
   <xs:simpleType name="common.data.float.non-negative">
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]+(\.[0-9]+)?([eE]-?[0-9]+)?"/>
+    </xs:restriction>
   </xs:simpleType>
   <!--
     		xsd:string {
@@ -481,7 +501,7 @@
   <!-- ##################################################################### -->
   <xs:attributeGroup name="common-form.attrs.form">
     <xs:annotation>
-      <xs:documentation> WF2 Module Hook                                                   #</xs:documentation>
+      <xs:documentation>WF2 Module Hook #</xs:documentation>
     </xs:annotation>
     <xs:attribute name="form" type="common.data.idref"/>
   </xs:attributeGroup>
@@ -714,7 +734,9 @@
   <xs:attributeGroup name="style.attrs.scoped">
     <xs:attribute name="scoped" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="scoped"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -865,7 +887,7 @@
   <!-- ##################################################################### -->
   <xs:group name="a.elem.phrasing">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Phrase Markup                         #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Phrase Markup #</xs:documentation>
     </xs:annotation>
     <xs:sequence>
       <xs:element name="a">
@@ -1314,7 +1336,9 @@
     <xs:attribute name="start" type="common.data.integer"/>
     <xs:attribute name="reversed">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="reversed"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -1324,7 +1348,9 @@
   <xs:attributeGroup name="ol.attrs.reversed">
     <xs:attribute name="reversed" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="reversed"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -1740,7 +1766,7 @@
   <!-- ##################################################################### -->
   <xs:attributeGroup name="edit.attrs.cite">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Revision Annotations                  #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Revision Annotations #</xs:documentation>
     </xs:annotation>
     <xs:attribute name="cite" use="required" type="common.data.uri"/>
   </xs:attributeGroup>
@@ -1843,7 +1869,9 @@
     <xs:attribute name="usemap" type="common.data.hash-name"/>
     <xs:attribute name="ismap">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="ismap"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="border" type="common.data.zero"/>
@@ -1866,7 +1894,9 @@
   <xs:attributeGroup name="img.attrs.ismap">
     <xs:attribute name="ismap" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="ismap"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -2014,7 +2044,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-scripts"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2026,7 +2060,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-forms"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2038,7 +2076,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-scripts"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2050,7 +2092,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2062,7 +2108,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-forms"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2074,7 +2124,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2086,7 +2140,9 @@
     </xs:attribute>
     <xs:attribute name="seamless">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="seamless"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -2105,7 +2161,9 @@
   <xs:attributeGroup name="iframe.attrs.seamless">
     <xs:attribute name="seamless" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="seamless"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -2118,7 +2176,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-scripts"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2130,7 +2192,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-forms"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2142,7 +2208,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-scripts"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2154,7 +2224,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2166,7 +2240,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                      <xs:enumeration value="allow-forms"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2178,7 +2256,11 @@
               <xs:simpleType>
                 <xs:list>
                   <xs:simpleType>
-                    <xs:union memberTypes="xs:string xs:string xs:string"/>
+                    <xs:restriction base="xs:token">
+                      <xs:enumeration value="allow-scripts"/>
+                      <xs:enumeration value="allow-forms"/>
+                      <xs:enumeration value="allow-same-origin"/>
+                    </xs:restriction>
                   </xs:simpleType>
                 </xs:list>
               </xs:simpleType>
@@ -2362,54 +2444,70 @@
   <!-- src not included -->
   <xs:attributeGroup name="media.attrs">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Advanced Embedded Content             #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Advanced Embedded Content #</xs:documentation>
     </xs:annotation>
     <xs:attribute name="autoplay">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autoplay"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autobuffer">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autobuffer"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="controls">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="controls"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="loop">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="loop"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="media.attrs.autoplay">
     <xs:attribute name="autoplay" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autoplay"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="media.attrs.autobuffer">
     <xs:attribute name="autobuffer" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autobuffer"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="media.attrs.controls">
     <xs:attribute name="controls" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="controls"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="media.attrs.loop">
     <xs:attribute name="loop" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="loop"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -2579,7 +2677,7 @@
   <!-- ##################################################################### -->
   <xs:group name="script.elem.embedded">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Core Scripting                        #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Core Scripting #</xs:documentation>
     </xs:annotation>
     <xs:sequence>
       <xs:element name="script">
@@ -2612,12 +2710,16 @@
     <xs:attributeGroup ref="xhtml:script.attrs.src"/>
     <xs:attribute name="defer">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="defer"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="async">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="async"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="type" type="common.data.mimetype"/>
@@ -2630,14 +2732,18 @@
   <xs:attributeGroup name="script.attrs.defer">
     <xs:attribute name="defer" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="defer"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="script.attrs.async">
     <xs:attribute name="async" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="async"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -2910,11 +3016,17 @@
   <!-- ##################################################################### -->
   <xs:attributeGroup name="tables.attrs.alignment">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Tables                                #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Tables #</xs:documentation>
     </xs:annotation>
     <xs:attribute name="align">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="left"/>
+          <xs:enumeration value="center"/>
+          <xs:enumeration value="right"/>
+          <xs:enumeration value="justify"/>
+          <xs:enumeration value="char"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="char">
@@ -2926,14 +3038,25 @@
     </xs:attribute>
     <xs:attribute name="valign">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="top"/>
+          <xs:enumeration value="middle"/>
+          <xs:enumeration value="bottom"/>
+          <xs:enumeration value="baseline"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="tables.attrs.align">
     <xs:attribute name="align" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="left"/>
+          <xs:enumeration value="center"/>
+          <xs:enumeration value="right"/>
+          <xs:enumeration value="justify"/>
+          <xs:enumeration value="char"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -2949,7 +3072,12 @@
   <xs:attributeGroup name="tables.attrs.valign">
     <xs:attribute name="valign" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="top"/>
+          <xs:enumeration value="middle"/>
+          <xs:enumeration value="bottom"/>
+          <xs:enumeration value="baseline"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3133,14 +3261,24 @@
   <xs:attributeGroup name="tables.attrs.define-headers">
     <xs:attribute name="scope">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="row"/>
+          <xs:enumeration value="col"/>
+          <xs:enumeration value="rowgroup"/>
+          <xs:enumeration value="colgroup"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="tables.attrs.scope">
     <xs:attribute name="scope" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="row"/>
+          <xs:enumeration value="col"/>
+          <xs:enumeration value="rowgroup"/>
+          <xs:enumeration value="colgroup"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3178,7 +3316,12 @@
     <xs:attributeGroup ref="xhtml:tables.attrs.cell-structure"/>
     <xs:attribute name="scope">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="row"/>
+          <xs:enumeration value="col"/>
+          <xs:enumeration value="rowgroup"/>
+          <xs:enumeration value="colgroup"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="headers" type="common.data.idrefs"/>
@@ -3190,7 +3333,7 @@
   <!-- ##################################################################### -->
   <xs:simpleType name="form.data.mimetypelist">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Datatypes related to forms            #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Datatypes related to forms #</xs:documentation>
     </xs:annotation>
     <xs:restriction base="xs:string"/>
   </xs:simpleType>
@@ -3244,12 +3387,14 @@
   <!-- ##################################################################### -->
   <xs:attributeGroup name="common-form.attrs">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Web Forms 1.0 markup                  #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Web Forms 1.0 markup #</xs:documentation>
     </xs:annotation>
     <xs:attribute name="name" type="xs:string"/>
     <xs:attribute name="disabled">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attributeGroup ref="common-form.attrs.form"/>
@@ -3260,14 +3405,18 @@
   <xs:attributeGroup name="common-form.attrs.disabled">
     <xs:attribute name="disabled" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="shared-form.attrs.readonly">
     <xs:attribute name="readonly" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3284,7 +3433,9 @@
     </xs:annotation>
     <xs:attribute name="checked" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checked"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3307,32 +3458,47 @@
     <xs:attribute name="maxlength" type="common.data.integer.positive"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="size" type="common.data.integer.positive"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
     <xs:attribute name="pattern" type="xhtml:form.data.pattern"/>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="placeholder" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.text.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="text"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.text.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3383,31 +3549,46 @@
     <xs:attribute name="maxlength" type="common.data.integer.positive"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="size" type="common.data.integer.positive"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="pattern" type="xhtml:form.data.pattern"/>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="placeholder" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.password.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="password"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.password.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3430,23 +3611,35 @@
     <xs:attributeGroup ref="xhtml:input.checkbox.attrs.type"/>
     <xs:attribute name="checked">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checked"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.checkbox.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checkbox"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.checkbox.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3469,23 +3662,35 @@
     <xs:attributeGroup ref="xhtml:input.radio.attrs.type"/>
     <xs:attribute name="checked">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checked"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.radio.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="radio"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.radio.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3509,12 +3714,20 @@
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.button.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="button"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.button.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3540,7 +3753,9 @@
     <xs:attribute name="formaction" type="common.data.uri"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="formenctype" type="xhtml:shared-form.attrs.formenctype.data"/>
@@ -3548,12 +3763,20 @@
     <xs:attribute name="formtarget" type="common.data.browsing-context-or-keyword"/>
     <xs:attribute name="formnovalidate">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="formnovalidate"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.submit.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="submit"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.submit.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3577,12 +3800,20 @@
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.reset.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="reset"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.reset.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3607,22 +3838,34 @@
     <xs:attribute name="accept" type="xhtml:form.data.mimetypelist"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="multiple">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="multiple"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.file.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="file"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.file.attrs.accept">
     <xs:attribute name="accept" use="required" type="xhtml:form.data.mimetypelist"/>
@@ -3646,7 +3889,13 @@
     <xs:attribute name="value" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.hidden.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="hidden"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.hidden.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -3672,7 +3921,9 @@
     <xs:attribute name="formaction" type="common.data.uri"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="formenctype" type="xhtml:shared-form.attrs.formenctype.data"/>
@@ -3680,14 +3931,22 @@
     <xs:attribute name="formtarget" type="common.data.browsing-context-or-keyword"/>
     <xs:attribute name="formnovalidate">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="formnovalidate"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="height" type="common.data.integer.positive"/>
     <xs:attribute name="width" type="common.data.integer.positive"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.image.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="image"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.image.attrs.alt">
     <xs:attribute name="alt" use="required" type="xs:string"/>
@@ -3705,18 +3964,24 @@
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="maxlength" type="common.data.integer.positive"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="placeholder" type="xs:string"/>
@@ -3745,12 +4010,16 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="disabled">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="selected">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="selected"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="label" type="xs:string"/>
@@ -3759,7 +4028,9 @@
   <xs:attributeGroup name="option.attrs.selected">
     <xs:attribute name="selected" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="selected"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3783,7 +4054,9 @@
     <xs:attributeGroup ref="xhtml:optgroup.attrs.label"/>
     <xs:attribute name="disabled">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3810,7 +4083,9 @@
     <xs:attribute name="size" type="common.data.integer.positive"/>
     <xs:attribute name="multiple">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="multiple"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3820,7 +4095,9 @@
   <xs:attributeGroup name="select.attrs.multiple">
     <xs:attribute name="multiple" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="multiple"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3863,7 +4140,9 @@
     <xs:attribute name="formaction" type="common.data.uri"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="formenctype" type="xhtml:shared-form.attrs.formenctype.data"/>
@@ -3871,7 +4150,9 @@
     <xs:attribute name="formtarget" type="common.data.browsing-context-or-keyword"/>
     <xs:attribute name="formnovalidate">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="formnovalidate"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -3908,12 +4189,20 @@
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="button.reset.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="reset"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:group name="button.button.elem">
     <xs:annotation>
@@ -3938,12 +4227,20 @@
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="button.button.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="button"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:element name="form">
     <xs:complexType>
@@ -3963,13 +4260,18 @@
     <xs:attribute name="accept-charset" type="xhtml:form.data.charsetlist"/>
     <xs:attribute name="novalidate">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="novalidate"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="target" type="common.data.browsing-context-or-keyword"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4044,8 +4346,6 @@
   <xs:complexType name="label.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
   </xs:complexType>
-
-  <!-- ##################################################################### -->
   <xs:attributeGroup name="shared-form.attrs.formaction">
     <xs:attribute name="formaction" use="required" type="common.data.uri"/>
   </xs:attributeGroup>
@@ -4067,14 +4367,18 @@
   <xs:attributeGroup name="shared-form.attrs.formnovalidate">
     <xs:attribute name="formnovalidate" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="formnovalidate"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="shared-form.attrs.autofocus">
     <xs:attribute name="autofocus" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4087,7 +4391,9 @@
   <xs:attributeGroup name="shared-form.attrs.required">
     <xs:attribute name="required" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4100,7 +4406,10 @@
     </xs:annotation>
     <xs:attribute name="autocomplete" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4124,7 +4433,9 @@
   <xs:attributeGroup name="input.attrs.multiple">
     <xs:attribute name="multiple" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="multiple"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4152,12 +4463,17 @@
     <xs:attributeGroup ref="xhtml:input.datetime.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4170,18 +4486,28 @@
     </xs:attribute>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="common.data.datetime"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.datetime.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="datetime"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.datetime.attrs.min">
     <xs:attribute name="min" use="required" type="common.data.datetime"/>
@@ -4210,12 +4536,17 @@
     <xs:attributeGroup ref="xhtml:input.datetime-local.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4228,18 +4559,28 @@
     </xs:attribute>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.datetime-local"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.datetime-local.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="datetime-local"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.datetime-local.attrs.min">
     <xs:attribute name="min" use="required" type="xhtml:form.data.datetime-local"/>
@@ -4268,12 +4609,17 @@
     <xs:attributeGroup ref="xhtml:input.date.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4286,18 +4632,28 @@
     </xs:attribute>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.date"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.date.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="date"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.date.attrs.min">
     <xs:attribute name="min" use="required" type="xhtml:form.data.date"/>
@@ -4326,12 +4682,17 @@
     <xs:attributeGroup ref="xhtml:input.month.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4344,18 +4705,28 @@
     </xs:attribute>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.month"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.month.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="month"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.month.attrs.min">
     <xs:attribute name="min" use="required" type="xhtml:form.data.month"/>
@@ -4384,12 +4755,17 @@
     <xs:attributeGroup ref="xhtml:input.time.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4402,18 +4778,28 @@
     </xs:attribute>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.time"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.time.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="time"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.time.attrs.min">
     <xs:attribute name="min" use="required" type="xhtml:form.data.time"/>
@@ -4442,12 +4828,17 @@
     <xs:attributeGroup ref="xhtml:input.week.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4460,18 +4851,28 @@
     </xs:attribute>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.week"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.week.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="week"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.week.attrs.min">
     <xs:attribute name="min" use="required" type="xhtml:form.data.week"/>
@@ -4500,12 +4901,17 @@
     <xs:attributeGroup ref="xhtml:input.number.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4518,18 +4924,28 @@
     </xs:attribute>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="common.data.float"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.number.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="nmber"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.number.attrs.min">
     <xs:attribute name="min" use="required" type="common.data.float"/>
@@ -4558,12 +4974,17 @@
     <xs:attributeGroup ref="xhtml:input.range.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4577,7 +4998,13 @@
     <xs:attribute name="value" type="common.data.float"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.range.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="range"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.range.attrs.min">
     <xs:attribute name="min" use="required" type="common.data.float"/>
@@ -4606,12 +5033,17 @@
     <xs:attributeGroup ref="xhtml:input.email.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4619,12 +5051,16 @@
     <xs:attribute name="pattern" type="xhtml:form.data.pattern"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="size" type="common.data.integer.positive"/>
@@ -4636,12 +5072,20 @@
     </xs:attribute>
     <xs:attribute name="multiple">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="multiple"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.email.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="email"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.email.attrs.value.single">
     <xs:attribute name="value" use="required" type="xhtml:form.data.emailaddress"/>
@@ -4667,12 +5111,17 @@
     <xs:attributeGroup ref="xhtml:input.url.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4680,12 +5129,16 @@
     <xs:attribute name="pattern" type="xhtml:form.data.pattern"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="size" type="common.data.integer.positive"/>
@@ -4697,7 +5150,13 @@
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.url.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="url"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.url.attrs.value">
     <xs:attribute name="value" use="required">
@@ -4724,12 +5183,17 @@
     <xs:attributeGroup ref="xhtml:input.search.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4737,12 +5201,16 @@
     <xs:attribute name="pattern" type="xhtml:form.data.pattern"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="size" type="common.data.integer.positive"/>
@@ -4750,7 +5218,13 @@
     <xs:attribute name="value" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.search.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="search"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.search.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -4773,12 +5247,17 @@
     <xs:attributeGroup ref="xhtml:input.tel.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
@@ -4786,12 +5265,16 @@
     <xs:attribute name="pattern" type="xhtml:form.data.pattern"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="readonly"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="required"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="size" type="common.data.integer.positive"/>
@@ -4799,7 +5282,13 @@
     <xs:attribute name="value" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.tel.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="tel"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.tel.attrs.value">
     <xs:attribute name="value" use="required" type="xs:string"/>
@@ -4822,19 +5311,30 @@
     <xs:attributeGroup ref="xhtml:input.color.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="list" type="common.data.idref"/>
     <xs:attribute name="value" type="xhtml:form.data.color"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.color.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="color"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.color.attrs.value">
     <xs:attribute name="value" use="required" type="xhtml:form.data.color"/>
@@ -4866,7 +5366,6 @@
   <xs:attributeGroup name="textarea.attrs.wrap.soft">
     <xs:attribute name="wrap" use="required" type="xs:string"/>
   </xs:attributeGroup>
-  <!-- REVISIT should the options in datalist be non-selectable? -->
   <xs:element name="datalist">
     <xs:complexType>
       <xs:complexContent>
@@ -4888,7 +5387,9 @@
   <xs:attributeGroup name="form.attrs.novalidate">
     <xs:attribute name="novalidate" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="novalidate"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4898,11 +5399,13 @@
   <xs:attributeGroup name="form.attrs.autocomplete">
     <xs:attribute name="autocomplete" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="on"/>
+          <xs:enumeration value="off"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <!-- REVISIT should this be case-insensitive in conforming XHTML documents? -->
   <xs:element name="keygen">
     <xs:complexType>
       <xs:attributeGroup ref="xhtml:keygen.attrs"/>
@@ -4914,7 +5417,9 @@
     <xs:attribute name="keytype" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="autofocus"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
@@ -4925,31 +5430,40 @@
   <xs:attributeGroup name="keygen.attrs.keytype">
     <xs:attribute name="keytype" use="required" type="xs:string"/>
   </xs:attributeGroup>
-
-  <!-- ##################################################################### -->
   <xs:attributeGroup name="common.attrs.interact">
     <xs:annotation>
-      <xs:documentation> RELAX NG Schema for HTML 5: Web Application Features              #</xs:documentation>
+      <xs:documentation>RELAX NG Schema for HTML 5: Web Application Features #</xs:documentation>
     </xs:annotation>
     <xs:attribute name="contextmenu" type="common.data.idref"/>
     <xs:attribute name="contenteditable">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="draggable">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="hidden">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="hidden"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="spellcheck">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4963,9 +5477,12 @@
     <xs:annotation>
       <xs:documentation>Editable Content: contenteditable</xs:documentation>
     </xs:annotation>
-    <xs:attribute name="contenteditable" use="required">
+    <xs:attribute name="contenteditable">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4973,9 +5490,12 @@
     <xs:annotation>
       <xs:documentation>Draggable Element: draggable</xs:documentation>
     </xs:annotation>
-    <xs:attribute name="draggable" use="required">
+    <xs:attribute name="draggable">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4983,9 +5503,11 @@
     <xs:annotation>
       <xs:documentation>Hidden Element: hidden</xs:documentation>
     </xs:annotation>
-    <xs:attribute name="hidden" use="required">
+    <xs:attribute name="hidden">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="hidden"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4993,9 +5515,12 @@
     <xs:annotation>
       <xs:documentation>Spellchecking and grammar checking: spellcheck</xs:documentation>
     </xs:annotation>
-    <xs:attribute name="spellcheck" use="required">
+    <xs:attribute name="spellcheck">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="true"/>
+          <xs:enumeration value="false"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5042,26 +5567,34 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="multiple">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="multiple"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="disabled">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="datagrid.attrs.multiple">
     <xs:attribute name="multiple" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="multiple"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="datagrid.attrs.disabled">
     <xs:attribute name="disabled" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5086,7 +5619,13 @@
     <xs:attributeGroup ref="xhtml:common-command.attrs"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="command.command.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="command"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:group name="command.elem">
     <xs:choice>
@@ -5113,13 +5652,21 @@
     <xs:attributeGroup ref="xhtml:command.radio.attrs.radiogroup"/>
     <xs:attribute name="checked">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checked"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attributeGroup ref="xhtml:common-command.attrs"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="command.radio.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="radio"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="command.radio.attrs.radiogroup">
     <xs:attribute name="radiogroup" use="required" type="xs:string"/>
@@ -5127,7 +5674,9 @@
   <xs:attributeGroup name="command.radio.attrs.checked">
     <xs:attribute name="checked" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checked"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5148,18 +5697,28 @@
     <xs:attributeGroup ref="xhtml:command.checkbox.attrs.type"/>
     <xs:attribute name="checked">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checked"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attributeGroup ref="xhtml:common-command.attrs"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="command.checkbox.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checkbox"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="command.checkbox.attrs.checked">
     <xs:attribute name="checked" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="checked"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5168,7 +5727,9 @@
     <xs:attribute name="icon" type="common.data.uri"/>
     <xs:attribute name="disabled">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5181,7 +5742,9 @@
   <xs:attributeGroup name="command.attrs.disabled">
     <xs:attribute name="disabled" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="disabled"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5199,7 +5762,13 @@
     <xs:attribute name="type" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="bb.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
+    <xs:attribute name="type">
+      <xs:simpleType>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="makeapp"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
   </xs:attributeGroup>
   <xs:complexType name="bb.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
@@ -5217,15 +5786,21 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="type">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="toolbar"/>
+          <xs:enumeration value="context"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="label" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="menu.attrs.type">
-    <xs:attribute name="type" use="required">
+    <xs:attribute name="type">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="toolbar"/>
+          <xs:enumeration value="context"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5320,14 +5895,18 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="open">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="open"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="details.attrs.open">
-    <xs:attribute name="open" use="required">
+    <xs:attribute name="open">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:restriction base="xs:token">
+          <xs:enumeration value="open"/>
+        </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5337,8 +5916,6 @@
       <xs:group ref="common.inner.flow"/>
     </xs:sequence>
   </xs:complexType>
-
-  <!-- ##################################################################### -->
   <xs:element name="time">
     <xs:complexType>
       <xs:complexContent>
@@ -5409,15 +5986,4 @@
     </xs:simpleType>
   </xs:attribute>
   <xs:attribute name="lang" type="common.data.langcode"/>
-
-  <!-- ##################################################################### -->
-  <!-- ##################################################################### -->
-  <!--
-    To validate an XHTML 5 document, you must first validate against #
-    this schema and then ALSO validate against assertions.sch        #
-  -->
-  <!-- ##################################################################### -->
-  <!-- XHTML flavor # -->
-  <!-- HTML 4 compat # -->
-  <!-- ##################################################################### -->
 </xs:schema>
