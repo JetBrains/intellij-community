@@ -294,8 +294,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     if (call_expr != null) {
       PyExpression callee = call_expr.getCallee();
       if (callee instanceof PyReferenceExpression) {
-        final PyParameter parameter = PsiTreeUtil.getParentOfType(myElement, PyParameter.class);
-        if (parameter != null && !PsiTreeUtil.isAncestor(parameter.getDefaultValue(), myElement, false)) {
+        if (PsiTreeUtil.getParentOfType(myElement, PyKeywordArgument.class) == null) {
           PsiElement def = ((PyReferenceExpression)callee).getReference().resolve();
           if (def instanceof PyFunction) {
             addKeywordArgumentVariants((PyFunction) def, ret);
@@ -344,7 +343,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private static void addKeywordArgumentVariants(PyFunction def, final List<Object> ret) {
-    final Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(def);
+    final Set<PyFunction.Flag> flags = def.getContainingClass() != null ? PyUtil.detectDecorationsAndWrappersOf(def) : null;
     def.getParameterList().acceptChildren(
       new PyElementVisitor() {
         private int myIndex;
@@ -352,7 +351,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         @Override
         public void visitPyParameter(PyParameter par) {
           myIndex++;
-          if (myIndex == 1 && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
+          if (myIndex == 1 && flags != null && !flags.contains(PyFunction.Flag.STATICMETHOD)) {
             return;
           }
           PyNamedParameter n_param = par.getAsNamed();
