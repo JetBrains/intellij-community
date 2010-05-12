@@ -172,12 +172,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
         return Comparing.compare(name1, name2);
       }
     });
-    final ResolveResult[] result = new ResolveResult[properties.size()];
-    int i = 0;
-    for (Property property : properties) {
-      result[i++] = new PsiElementResolveResult(property);
-    }
-    return result;
+    return PsiElementResolveResult.createResults(properties);
   }
 
   @Nullable

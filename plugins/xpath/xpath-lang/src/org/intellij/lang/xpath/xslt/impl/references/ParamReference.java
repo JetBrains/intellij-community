@@ -38,11 +38,6 @@ class ParamReference extends AttributeReference implements PsiPolyVariantReferen
 
     @NotNull
     public final ResolveResult[] multiResolve(final boolean incompleteCode) {
-        final PsiElement[] psiElements = ResolveUtil.collect(myMatcher);
-        final ResolveResult[] results = new ResolveResult[psiElements.length];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = new PsiElementResolveResult(psiElements[i]);
-        }
-        return results;
+      return PsiElementResolveResult.createResults(ResolveUtil.collect(myMatcher));
     }
 }
