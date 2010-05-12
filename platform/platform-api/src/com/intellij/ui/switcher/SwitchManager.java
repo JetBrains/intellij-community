@@ -40,6 +40,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
 
   private Project myProject;
   private QuickAccessSettings myQa;
+  private ActionManager myActionManager;
 
   private SwitchingSession mySession;
 
@@ -52,14 +53,15 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   public SwitchManager(Project project, QuickAccessSettings quickAccess, ActionManager actionManager) {
     myProject = project;
     myQa = quickAccess;
+    myActionManager = actionManager;
 
 
-    actionManager.addAnActionListener(this, project);
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_UP));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_DOWN));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_LEFT));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_RIGHT));
-    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_APPLY));
+    myActionManager.addAnActionListener(this);
+    mySwitchActions.add(myActionManager.getAction(QuickAccessSettings.SWITCH_UP));
+    mySwitchActions.add(myActionManager.getAction(QuickAccessSettings.SWITCH_DOWN));
+    mySwitchActions.add(myActionManager.getAction(QuickAccessSettings.SWITCH_LEFT));
+    mySwitchActions.add(myActionManager.getAction(QuickAccessSettings.SWITCH_RIGHT));
+    mySwitchActions.add(myActionManager.getAction(QuickAccessSettings.SWITCH_APPLY));
   }
 
   public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
