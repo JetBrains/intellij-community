@@ -16,11 +16,9 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -49,7 +47,6 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,7 +57,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.xml.XmlDocumentImpl");
   private volatile XmlProlog myProlog;
   private volatile XmlTag myRootTag;
-  private static final String HTML5_SCHEMA = "html5/xhtml5.xsd";
 
   public XmlDocumentImpl() {
     this(XmlElementType.XML_DOCUMENT);
@@ -252,21 +248,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
 
     final String dtdUri = doctype.getDtdUri();
-
-    if (dtdUri == null || dtdUri.length() > 0) {
-
-      XmlFile xmlFile;
-      if (dtdUri == null) {
-        // it is HTML5
-        URL schemaLocation = getClass().getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + HTML5_SCHEMA);
-        String path = FileUtil.toSystemIndependentName(schemaLocation.getPath().substring(1));
-        xmlFile = XmlUtil.findXmlFile(containingFile, path);
-      }
-      else {
-        xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
-      }
+    if (dtdUri != null && dtdUri.length() > 0){
+      final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
       final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
-      if (descr != null && descr1 != null) {
+      if (descr != null && descr1 != null){
         descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
       }
       else if (descr1 != null) {
