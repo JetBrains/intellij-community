@@ -146,6 +146,20 @@ public class PyIndentTest extends PyLightFixtureTestCase {
     doTest("{<caret>}", "{\n    <caret>\n}");
   }
 
+  public void testEnterInEmptyTuple() {
+    doTest("(<caret>)", "(\n    <caret>\n)");
+  }
+
+  public void testEnterInNonEmptyTuple() {
+    doTest("(\n" +
+           "    'foo',<caret>\n" +
+           ")",
+           "(\n" +
+           "    'foo',\n" +
+           "    <caret>\n" +
+           ")");
+  }
+
   public void testIndentAfterComment() {   // PY-641
     doTest("def foo():\n    #some_call()<caret>\n    another_call()", "def foo():\n    #some_call()\n    <caret>\n    another_call()");
   }

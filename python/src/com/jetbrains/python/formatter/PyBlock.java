@@ -34,8 +34,15 @@ public class PyBlock implements ASTBlock {
   private final CodeStyleSettings mySettings;
   private List<PyBlock> _subBlocks = null;
   private final Alignment _childListAlignment;
-  private final TokenSet _listElementTypes;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
+
+  private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
+                                                                      PyElementTypes.LIST_COMP_EXPRESSION,
+                                                                      PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                                      PyElementTypes.ARGUMENT_LIST,
+                                                                      PyElementTypes.PARAMETER_LIST,
+                                                                      PyElementTypes.TUPLE_EXPRESSION,
+                                                                      PyElementTypes.PARENTHESIZED_EXPRESSION);
 
   public PyBlock(final ASTNode node,
                  final Alignment alignment,
@@ -48,10 +55,6 @@ public class PyBlock implements ASTBlock {
     _wrap = wrap;
     mySettings = settings;
     _childListAlignment = Alignment.createAlignment();
-
-    _listElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION, PyElementTypes.LIST_COMP_EXPRESSION,
-                                        PyElementTypes.DICT_LITERAL_EXPRESSION, PyElementTypes.ARGUMENT_LIST,
-                                        PyElementTypes.PARAMETER_LIST);
   }
 
   @NotNull
@@ -111,7 +114,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    if (_listElementTypes.contains(parentType)) {
+    if (ourListElementTypes.contains(parentType)) {
       wrap = Wrap.createWrap(WrapType.NORMAL, true);
       if (!PyTokenTypes.OPEN_BRACES.contains(childType)) {
         childAlignment = _childListAlignment;
@@ -379,7 +382,7 @@ public class PyBlock implements ASTBlock {
   }
 
   private Alignment getChildAlignment() {
-    if (_listElementTypes.contains(_node.getElementType())) {
+    if (ourListElementTypes.contains(_node.getElementType())) {
       return _childListAlignment;
     }
     return null;
@@ -448,7 +451,7 @@ public class PyBlock implements ASTBlock {
     }
 
     // constructs that imply indent for their children
-    if (_listElementTypes.contains(_node.getElementType()) || _node.getPsi() instanceof PyStatementPart) {
+    if (ourListElementTypes.contains(_node.getElementType()) || _node.getPsi() instanceof PyStatementPart) {
       return Indent.getNormalIndent();
     }
 
