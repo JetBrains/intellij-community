@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm;
+package com.intellij.application.options.codeStyle;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder;
+import com.intellij.lang.Language;
 
 /**
- * @author yole
+ * Must be implemented by components willing to be notified on current code style language
+ * change.
  */
-public class IdeaFrameTitleBuilder extends PlatformFrameTitleBuilder {
-  public String getFileTitle(final Project project, final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, project);
-  }
+public interface LanguageSelectorListener {
+
+  void languageChanged(Language lang);
+
 }

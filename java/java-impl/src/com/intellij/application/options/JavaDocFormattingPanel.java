@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.application.options.codeStyle.OptionTreeWithPreviewPanel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 
@@ -46,6 +48,11 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
     myPanel.add(BorderLayout.CENTER, getInternalPanel());
     myPanel.add(myEnableCheckBox, BorderLayout.NORTH);
+  }
+
+  @Override
+  protected LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
+    return LanguageCodeStyleSettingsProvider.SettingsType.OTHER_SETTINGS;
   }
 
   public JComponent getPanel() {

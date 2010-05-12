@@ -97,10 +97,4 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable {
     myPanel.onSomethingChanged();
   }
 
-  public boolean isMultilanguage() {
-    if (myPanel != null) {
-      return myPanel.isMultilanguage();
-    }
-    return false;
-  }
 }

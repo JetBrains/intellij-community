@@ -65,11 +65,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     final PsiPackage parentPackage = getContext();
     if (parentPackage != null) {
       final Collection<PsiPackage> packages = myReferenceSet.resolvePackageName(parentPackage, getValue());
-      return ContainerUtil.map2Array(packages, ResolveResult.class, new Function<PsiPackage, ResolveResult>() {
-        public ResolveResult fun(final PsiPackage psiPackage) {
-          return new PsiElementResolveResult(psiPackage);
-        }
-      });
+      return PsiElementResolveResult.createResults(packages);
     }
     return ResolveResult.EMPTY_ARRAY;
   }

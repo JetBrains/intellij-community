@@ -17,6 +17,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.TextRange;
@@ -138,6 +139,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
   
   public boolean acceptsPsiElement(final PsiElement element) {
+    ProgressManager.checkCanceled();
     for (InjectionPlace place : myPlaces) {
       if (place.isEnabled() && place.getElementPattern() != null && place.getElementPattern().accepts(element)) {
         return true;

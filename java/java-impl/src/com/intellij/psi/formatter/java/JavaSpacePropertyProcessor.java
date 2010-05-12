@@ -1311,6 +1311,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(false);
     }
+    // There is a possible case that annotation key-value pair is used in 'shorten' form (with implicit name 'values'). It's also
+    // possible that target value is surrounded by curly braces. We want to define child role accordingly then.
+    else if (myRole1 == ChildRole.LPARENTH && mySettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE && myRole2 == ChildRole.ANNOTATION_VALUE) {
+      createSpaceInCode(true);
+    }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
     }
