@@ -50,21 +50,20 @@ public final class DefaultLanguageInjector implements MultiHostInjector {
   }
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
-    final Set<String> supports = new THashSet<String>(ContainerUtil.mapNotNull(Extensions.getExtensions(LanguageInjectionSupport.EP_NAME), new NullableFunction<LanguageInjectionSupport, String>() {
-      public String fun(final LanguageInjectionSupport support) {
-        return support.useDefaultInjector(host)? null : support.getId();
-      }
-    }));
-    for (String supportId : myInjectionConfiguration.getAllInjectorIds()) {
-      if (supports.contains(supportId)) continue;
-      for (BaseInjection injection : myInjectionConfiguration.getInjections(supportId)) {
+    final Set<String> allIds = myInjectionConfiguration.getAllInjectorIds();
+    for (LanguageInjectionSupport support : Extensions.getExtensions(LanguageInjectionSupport.EP_NAME)) {
+      if (!allIds.contains(support.getId())) continue;
+      if (!support.useDefaultInjector(host)) continue;
+      for (BaseInjection injection : myInjectionConfiguration.getInjections(support.getId())) {
         if (injection.acceptsPsiElement(host)) {
           final Language language = InjectedLanguage.findLanguageById(injection.getInjectedLanguageId());
           if (language == null) continue;
 
-          final InjectedLanguage injectedLanguage = InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
+          final InjectedLanguage injectedLanguage =
+            InjectedLanguage.create(injection.getInjectedLanguageId(), injection.getPrefix(), injection.getSuffix(), false);
 
-          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list = new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
+          final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list =
+            new ArrayList<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>>();
           for (TextRange range : injection.getInjectedArea(host)) {
             list.add(Trinity.create((PsiLanguageInjectionHost)host, injectedLanguage, range));
           }
