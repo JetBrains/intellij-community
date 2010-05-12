@@ -292,16 +292,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // in a call, include function's arg names
     PyCallExpression call_expr = PsiTreeUtil.getParentOfType(myElement, PyCallExpression.class);
     if (call_expr != null) {
-      PyExpression callee =call_expr.getCallee();
+      PyExpression callee = call_expr.getCallee();
       if (callee instanceof PyReferenceExpression) {
-        PsiElement def = ((PyReferenceExpression)callee).getReference().resolve();
-        if (def instanceof PyFunction) {
-          addKeywordArgumentVariants((PyFunction) def, ret);
-        }
-        else if (def instanceof PyClass) {
-          PyFunction init = ((PyClass) def).findMethodByName(PyNames.INIT, true);  // search in superclasses
-          if (init != null) {
-            addKeywordArgumentVariants(init, ret);
+        final PyParameter parameter = PsiTreeUtil.getParentOfType(myElement, PyParameter.class);
+        if (parameter != null && !PsiTreeUtil.isAncestor(parameter.getDefaultValue(), myElement, false)) {
+          PsiElement def = ((PyReferenceExpression)callee).getReference().resolve();
+          if (def instanceof PyFunction) {
+            addKeywordArgumentVariants((PyFunction) def, ret);
+          }
+          else if (def instanceof PyClass) {
+            PyFunction init = ((PyClass) def).findMethodByName(PyNames.INIT, true);  // search in superclasses
+            if (init != null) {
+              addKeywordArgumentVariants(init, ret);
+            }
           }
         }
       }
