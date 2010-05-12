@@ -47,7 +47,6 @@ public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
   private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
   private List<PsiMethod> candidates;
-  private static final int OPTIONS = PsiFormatUtil.SHOW_NAME;
 
   public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
@@ -57,7 +56,7 @@ public class StaticImportMethodFix implements IntentionAction {
   public String getText() {
     String text = QuickFixBundle.message("static.import.method.text");
     if (candidates.size() == 1) {
-      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, OPTIONS, 0)+"'";
+      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS  | PsiFormatUtil.SHOW_FQ_NAME, 0)+"'";
     }
     else {
       text += "...";
@@ -164,7 +163,7 @@ public class StaticImportMethodFix implements IntentionAction {
 
   private void chooseAndImport(Editor editor) {
     final JList list = new JList(new Vector<PsiMethod>(candidates));
-    list.setCellRenderer(new MethodCellRenderer(true, OPTIONS));
+    list.setCellRenderer(new MethodCellRenderer(true, PsiFormatUtil.SHOW_NAME));
     new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
       setMovable(true).

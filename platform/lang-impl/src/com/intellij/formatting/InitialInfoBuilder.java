@@ -222,7 +222,7 @@ class InitialInfoBuilder {
                                                   Block parentBlock
 
                                                   ) {
-    final LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myPreviousBlock, readOnly);
+    final LeafBlockWrapper info = new LeafBlockWrapper(rootBlock, parent, myCurrentWhiteSpace, myModel, myOptions, myPreviousBlock, readOnly);
     if (index == 0) {
       info.arrangeParentTextRange();
     }

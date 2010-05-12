@@ -1,4 +1,5 @@
 public class A {
+
     private final MyIntf myDelegate = new MyIntf();
 
     public Intf getMyDelegate() {

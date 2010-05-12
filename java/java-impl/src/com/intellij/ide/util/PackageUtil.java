@@ -32,9 +32,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -241,17 +241,7 @@ public class PackageUtil {
   }
 
   private static PsiDirectory[] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
-    final PsiManager manager = PsiManager.getInstance(module.getProject());
-    final String packageName = rootPackage.getQualifiedName();
-    final List<PsiDirectory> moduleDirectoryList = new ArrayList<PsiDirectory>();
-    ModulePackageIndex.getInstance(module).getDirsByPackageName(packageName, false).forEach(new Processor<VirtualFile>() {
-      public boolean process(final VirtualFile directory) {
-        moduleDirectoryList.add(manager.findDirectory(directory));
-        return true;
-      }
-    });
-
-    return moduleDirectoryList.toArray(new PsiDirectory[moduleDirectoryList.size()]);
+    return rootPackage.getDirectories(GlobalSearchScope.moduleScope(module));
   }
 
   private static PsiPackage findLongestExistingPackage(Project project, String packageName) {
