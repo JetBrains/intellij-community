@@ -53,7 +53,8 @@ import java.awt.*;
  */
 public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstractPanel {
 
-  private static Language myLanguage;
+  private Language myLanguage;
+  private LanguageSelector myLanguageSelector;
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
   private int myLangSelectionIndex;
   private JTabbedPane tabbedPane;
@@ -62,16 +63,12 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     super(settings);
   }
 
-  /**
-   * @return Always true for multilanguage panel.
-   */
-  @Override
-  protected final boolean isMultilanguage() {
-    return true;
+  public void setLanguageSelector(LanguageSelector langSelector) {
+    myLanguageSelector = langSelector;
   }
 
-  public void setLanguage(Language language) {
-    setCurrLanguage(language);
+  public void setPanelLanguage(Language language) {
+    myLanguage = language;
     updatePreviewEditor();
   }
 
@@ -96,7 +93,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     }
     Language[] langs = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
     if (langs.length > 0) {
-      setCurrLanguage(langs[0]);
+      myLanguage = langs[0];
       FileType type = langs[0].getAssociatedFileType();
       if (type != null) return type;
     }
@@ -163,7 +160,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     tabbedPane.setComponentAt(0, getEditor().getComponent());
     myLangSelectionIndex = 0;
     if (myLanguage == null) {
-      setLanguage(langs[0]);
+      setPanelLanguage(langs[0]);
     }
     else {
       updatePreviewEditor();
@@ -206,18 +203,14 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     myLangSelectionIndex = i;
     String selectionTitle = tabs.getTitleAt(i);
     Language lang = LanguageCodeStyleSettingsProvider.getLanguage(selectionTitle);
-    if (lang != null) {
-      setLanguage(lang);
+    if (lang != null && myLanguageSelector != null) {
+      myLanguageSelector.setLanguage(lang);
     }
   }
 
 
   private static JComponent createDummy() {
     return new JLabel("");
-  }
-
-  private static void setCurrLanguage(Language lang) {
-    myLanguage = lang;
   }
 
 
