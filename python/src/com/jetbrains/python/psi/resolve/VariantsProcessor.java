@@ -9,6 +9,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.Icons;
+import com.jetbrains.python.codeInsight.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.PyFunctionInsertHandler;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nullable;
@@ -56,8 +57,13 @@ public class VariantsProcessor implements PsiScopeProcessor {
 
 
   protected LookupElementBuilder setupItem(LookupElementBuilder item) {
-    if (! myPlainNamesOnly && item.getObject() instanceof PyFunction) {
-      item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
+    if (! myPlainNamesOnly) {
+      if (item.getObject() instanceof PyFunction) {
+        item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
+      }
+      else if (item.getObject() instanceof PyClass) {
+        item = item.setInsertHandler(PyClassInsertHandler.INSTANCE);
+      }
     }
     if (myNotice != null) {
       return setItemNotice(item, myNotice);
