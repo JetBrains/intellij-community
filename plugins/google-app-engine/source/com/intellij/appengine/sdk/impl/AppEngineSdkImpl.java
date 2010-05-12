@@ -56,6 +56,10 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     return new File(FileUtil.toSystemDependentName(myHomePath + "/bin/appcfg." + extension));
   }
 
+  public File getWebSchemeFile() {
+    return new File(FileUtil.toSystemDependentName(myHomePath + "/docs/appengine-web.xsd"));
+  }
+
   public File getToolsApiJarFile() {
     final String path = FileUtil.toSystemDependentName(myHomePath + "/lib/appengine-tools-api.jar");
     return new File(path);

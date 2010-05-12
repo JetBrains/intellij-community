@@ -43,6 +43,7 @@
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
     <compiler implementation="com.intellij.appengine.enhancement.EnhancerCompiler"/>
+    <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
   </extensions>
 
   <actions>

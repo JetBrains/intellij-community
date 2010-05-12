@@ -3,6 +3,7 @@ package com.intellij.appengine.facet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.AppEngineSdkManager;
 import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.javaee.web.facet.WebFacet;
@@ -11,6 +12,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author nik
@@ -24,6 +27,10 @@ public class AppEngineFacet extends Facet<AppEngineFacetConfiguration> {
                         @NotNull AppEngineFacetConfiguration configuration,
                         @NotNull Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
+  }
+
+  public static Collection<AppEngineFacet> getInstances(Module module) {
+    return FacetManager.getInstance(module).getFacetsByType(ID);
   }
 
   @NotNull

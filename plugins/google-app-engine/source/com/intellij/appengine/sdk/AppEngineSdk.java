@@ -35,4 +35,6 @@ public interface AppEngineSdk {
   VirtualFile[] getOrmLibSources();
 
   String getAgentPath();
+
+  File getWebSchemeFile();
 }
