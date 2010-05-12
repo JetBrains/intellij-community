@@ -332,15 +332,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     }, 300);
   }
 
-  /**
-   * Checks if the panel supports multiple languages (a particular language is selected on
-   * the main code style schemes panel).
-   * @return  False by default.
-   */
-  protected boolean isMultilanguage() {
-    return false;
-  }
-
   protected Editor getEditor() {
     return myEditor;
   }

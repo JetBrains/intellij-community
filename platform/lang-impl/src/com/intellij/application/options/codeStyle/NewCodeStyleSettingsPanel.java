@@ -87,6 +87,15 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
   }
 
+  public void setLanguageSelector(final LanguageSelector langSelector) {
+    if (myTab instanceof CodeStyleAbstractConfigurable) {
+      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
+      if (configurable.getPanel() instanceof MultilanguageCodeStyleAbstractPanel) {
+        ((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setLanguageSelector(langSelector);
+      }
+    }
+  }
+
   public void onSomethingChanged() {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       ((CodeStyleAbstractConfigurable)myTab).onSomethingChanged();
@@ -101,20 +110,12 @@ public class NewCodeStyleSettingsPanel extends JPanel {
 
   }
 
-  public boolean isMultilanguage() {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      return ((CodeStyleAbstractConfigurable)myTab).isMultilanguage();
-    }
-    return false;
-  }
 
   public void setLanguage(Language language) {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      if (configurable.isMultilanguage()) {
-        if (configurable.getPanel() instanceof MultilanguageCodeStyleAbstractPanel) {
-          ((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setLanguage(language);          
-        }
+      if (configurable.getPanel() instanceof MultilanguageCodeStyleAbstractPanel) {
+        ((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setPanelLanguage(language);
       }
     }
   }
