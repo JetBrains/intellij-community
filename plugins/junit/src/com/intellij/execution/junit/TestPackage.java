@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,6 +50,8 @@ import java.net.Socket;
 import java.util.Collection;
 
 public class TestPackage extends TestObject {
+  private static BackgroundableProcessIndicator mySearchForTestsIndicator;
+
   public TestPackage(final Project project,
                      final JUnitConfiguration configuration,
                      RunnerSettings runnerSettings,
@@ -60,6 +63,19 @@ public class TestPackage extends TestObject {
   public SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     return data.getScope().getSourceScope(myConfiguration);
+  }
+
+  @Override
+  public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    try {
+      return super.execute(executor, runner);
+    }
+    catch (ExecutionException e) {
+      if (mySearchForTestsIndicator != null && !mySearchForTestsIndicator.isCanceled()) {
+        mySearchForTestsIndicator.cancel(); //ensure that search for tests stops anyway
+      }
+      throw e;
+    }
   }
 
   protected void initialize() throws ExecutionException {
@@ -244,7 +260,7 @@ public class TestPackage extends TestObject {
           }
         }
       };
-    ProgressManagerImpl.runProcessWithProgressAsynchronously(task, new BackgroundableProcessIndicator(task) {
+    mySearchForTestsIndicator = new BackgroundableProcessIndicator(task) {
       @Override
       public void cancel() {
         try {//ensure that serverSocket.accept was interrupted
@@ -257,7 +273,8 @@ public class TestPackage extends TestObject {
         }
         super.cancel();
       }
-    });
+    };
+    ProgressManagerImpl.runProcessWithProgressAsynchronously(task, mySearchForTestsIndicator);
   }
 
   private static boolean isSyncSearch() {
