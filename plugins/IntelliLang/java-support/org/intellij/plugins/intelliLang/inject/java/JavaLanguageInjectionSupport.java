@@ -461,6 +461,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
             originalInjection.initializePlaces(true);
           }
         }
+        else {
+          createDefaultEditAction(project, producer).actionPerformed(null);
+        }
       }
     };
   }
