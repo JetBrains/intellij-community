@@ -24,7 +24,7 @@ import com.intellij.platform.ProjectBaseDirectory;
  */
 public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   public String getProjectTitle(final Project project) {
-    final VirtualFile baseDir = ProjectBaseDirectory.getInstance(project).getBaseDir();
+    final VirtualFile baseDir = project.getBaseDir();
     if (baseDir != null) {
       return project.getName() + " - [" + baseDir.getPresentableUrl() + "]";
     }
