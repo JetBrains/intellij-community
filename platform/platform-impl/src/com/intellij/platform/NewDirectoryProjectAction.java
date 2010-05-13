@@ -54,6 +54,17 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
     });
     baseDir.refresh(false, true);
 
+    if (baseDir.getChildren().length > 0) {
+      int rc = Messages.showYesNoDialog(project,
+                                        "The directory '" + location +
+                                            "' is not empty. Would you like to create a project from existing sources instead?",
+                                        "Create New Project", Messages.getQuestionIcon());
+      if (rc == 0) {
+        PlatformProjectOpenProcessor.getInstance().doOpenProject(baseDir, null, false);
+        return;
+      }
+    }
+
     Object settings = null;
     if (generator != null) {
       try {
