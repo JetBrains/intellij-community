@@ -62,6 +62,6 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
   }
 
   public int compareTo(final Object o) {
-    return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    return PREFERED;
   }
 }
