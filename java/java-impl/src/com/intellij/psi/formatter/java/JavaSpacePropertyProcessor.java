@@ -206,11 +206,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                       false);
     }
     else if (myRole1 == ChildRole.LBRACE) {
-      if (!(aClass instanceof PsiAnonymousClass)) {
-        myResult = Spacing.createSpacing(
-          0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS
-        );
-      } else {
+      if (aClass.isEnum()) {
+        createParenSpace(true, false);
+      }
+      else if (aClass instanceof PsiAnonymousClass) {
         if (myRole2 == ChildRole.CLASS_INITIALIZER && isTheOnlyClassMember(myChild2)) {
           myResult = Spacing.createSpacing(0, 0, 0,
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
@@ -220,6 +219,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
         }
       }
+      else {
+        myResult = Spacing.createSpacing(
+          0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS
+        );
+      }
+    }
+    else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
+      createParenSpace(true, false);
     }
     else processClassBody();
   }
