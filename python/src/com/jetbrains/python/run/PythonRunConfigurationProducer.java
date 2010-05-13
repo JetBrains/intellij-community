@@ -1,8 +1,8 @@
 package com.jetbrains.python.run;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -27,7 +27,7 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
     return mySourceFile;
   }
 
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(final Location location, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     PsiFile script = location.getPsiElement().getContainingFile();
     if (script == null || script.getFileType() != PythonFileType.INSTANCE) {
       return null;
@@ -43,7 +43,7 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
     mySourceFile = script;
 
     final Project project = mySourceFile.getProject();
-    RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     PythonRunConfiguration configuration = (PythonRunConfiguration) settings.getConfiguration();
     final VirtualFile vFile = mySourceFile.getVirtualFile();
     if (vFile == null) return null;
@@ -57,7 +57,6 @@ public class PythonRunConfigurationProducer extends RuntimeConfigurationProducer
       configuration.setUseModuleSdk(true);
       configuration.setModule(module);
     }
-    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 
