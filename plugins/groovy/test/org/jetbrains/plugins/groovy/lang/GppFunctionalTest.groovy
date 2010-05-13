@@ -96,10 +96,7 @@ Foo f = [name: 'aaa', foo: { println 'hi' }, anotherProperty: 42 ]
   }
 
   private PsiFile configureTyped(String text) {
-    return myFixture.configureByText("a.groovy", """
-@Typed def foo() {
-  $text
-}""")
+    return myFixture.configureByText("a.groovy", text)
   }
 
   public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne() throws Exception {
