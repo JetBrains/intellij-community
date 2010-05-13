@@ -15,9 +15,11 @@ import org.jetbrains.annotations.Nullable;
  * User: dcheryasov
  * Date: Apr 24, 2009 3:17:59 AM
  */
-// intentional package level access
-class AddImportHelper {
+public class AddImportHelper {
   private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
+
+  private AddImportHelper() {
+  }
 
   private static PsiElement getInsertPosition(final PsiFile file) {
     PsiElement feeler = file.getFirstChild();
