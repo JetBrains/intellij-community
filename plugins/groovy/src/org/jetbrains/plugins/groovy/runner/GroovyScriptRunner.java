@@ -23,8 +23,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -90,12 +89,15 @@ public abstract class GroovyScriptRunner {
 
   @Nullable
   protected static VirtualFile findGroovyJar(@NotNull Module module) {
-    final Pattern pattern = Pattern.compile(".*[\\\\/]groovy[^\\\\/]*jar");
-    for (Library library : GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module)) {
-      for (VirtualFile root : library.getFiles(OrderRootType.CLASSES)) {
-        if (pattern.matcher(root.getPresentableUrl()).matches()) {
-          return root;
-        }
+    final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES);
+    for (VirtualFile root : files) {
+      if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matches(root.getName()) || GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matches(root.getName())) {
+        return root;
+      }
+    }
+    for (VirtualFile file : files) {
+      if (file.getName().contains("groovy") && "jar".equals(file.getExtension())) {
+        return file;
       }
     }
     return null;
