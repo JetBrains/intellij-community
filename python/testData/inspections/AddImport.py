@@ -1,3 +1,3 @@
-<warning descr="Unresolved reference 'AddImport'">AddImport</warning>.foo
+<warning descr="Unresolved reference 'ImportTarget'">ImportTarget</warning>.foo
 
 foo = 1

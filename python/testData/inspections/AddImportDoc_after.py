@@ -1,5 +1,5 @@
 "Doc comment stays intact"
-import AddImportDoc
-AddImportDoc.foo
+import ImportTarget
+ImportTarget.foo
 
 foo = 1

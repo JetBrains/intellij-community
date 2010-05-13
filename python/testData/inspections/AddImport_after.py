@@ -1,4 +1,4 @@
-import AddImport
-AddImport.foo
+import ImportTarget
+ImportTarget.foo
 
 foo = 1
