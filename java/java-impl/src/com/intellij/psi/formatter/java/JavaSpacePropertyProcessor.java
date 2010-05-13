@@ -431,12 +431,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private int getLinesAroundMethod() {
-    if (isClass(myParent)) {
-      return mySettings.BLANK_LINES_AROUND_METHOD;
-    }
-    else {
-      return mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE;
-    }
+    boolean useInterfaceMethodSpacing = !isClass(myParent) || (isAbstractMethod(myChild1) && isAbstractMethod(myChild2));
+    return useInterfaceMethodSpacing ? mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_METHOD;
   }
 
   private int getLinesAroundField() {
@@ -455,6 +451,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     return false;
   }
 
+  private static boolean isAbstractMethod(ASTNode node) {
+    PsiElement element = node.getPsi();
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
+    }
+    return false;
+  }
 
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     createSpaceInCode(true);
