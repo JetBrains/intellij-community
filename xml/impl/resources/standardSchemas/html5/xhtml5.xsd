@@ -10,12 +10,6 @@
   <!--  (xml:base on elements other than <html>) -->
   <!-- ##################################################################### -->
 
-  <xs:attributeGroup name="common.attr.anything">
-    <xs:annotation>
-      <xs:documentation>Wildcards #</xs:documentation>
-    </xs:annotation>
-    <xs:anyAttribute processContents="skip"/>
-  </xs:attributeGroup>
   <xs:group name="common.elem.anything">
     <xs:annotation>
       <xs:documentation>Any element from any namespace</xs:documentation>
@@ -192,30 +186,6 @@
     <xs:attribute ref="xml:base"/>
     <xs:attribute ref="xml:space"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.id">
-    <xs:attribute name="id" use="required" type="common.data.id"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.xml-id">
-    <xs:attribute ref="xml:id" use="required"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.class">
-    <xs:attribute name="class" use="required" type="common.data.tokens"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.title">
-    <xs:attribute name="title" use="required"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.base">
-    <xs:attributeGroup ref="common.attrs.xmlbase"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.xmlbase">
-    <xs:attribute ref="xml:base" use="required"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.space">
-    <xs:attributeGroup ref="common.attrs.xmlspace"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.xmlspace">
-    <xs:attribute ref="xml:space" use="required"/>
-  </xs:attributeGroup>
   <xs:attributeGroup name="common.attrs.i18n">
     <xs:attribute name="dir">
       <xs:simpleType>
@@ -227,16 +197,6 @@
     </xs:attribute>
     <xs:attributeGroup ref="common.attrs.language"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.dir">
-    <xs:attribute name="dir" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="ltr"/>
-          <xs:enumeration value="rtl"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <!--
     This lang definition is a hack for enviroments where
     the HTML5 parser maps lang to xml:lang.
@@ -245,12 +205,6 @@
   <xs:attributeGroup name="common.attrs.language">
     <xs:attribute ref="xml:lang"/>
     <xs:attribute name="lang" type="common.data.langcode"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.lang">
-    <xs:attribute name="lang" use="required" type="common.data.langcode"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.xmllang">
-    <xs:attribute ref="xml:lang" use="required"/>
   </xs:attributeGroup>
   <!--
     	common.attrs.language =
@@ -271,16 +225,7 @@
     <xs:attribute name="tabindex" type="common.data.integer"/>
     <xs:attribute name="accesskey" type="common.data.keylabellist"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.style">
-    <xs:attribute name="style" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.tabindex">
-    <xs:attribute name="tabindex" use="required" type="common.data.integer"/>
-  </xs:attributeGroup>
   <!-- REVISIT move style to a module and bundle tabindex with ARIA -->
-  <xs:attributeGroup name="common.attrs.accesskey">
-    <xs:attribute name="accesskey" use="required" type="common.data.keylabellist"/>
-  </xs:attributeGroup>
   <xs:attributeGroup name="common.attrs.other">
     <xs:attributeGroup ref="xhtml:common.attrs.scripting"/>
     <xs:attributeGroup ref="xhtml:common.attrs.interact"/>
@@ -589,45 +534,6 @@
   <xs:complexType name="body.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
-  <xs:attributeGroup name="body.attrs.onafterprint">
-    <xs:attribute name="onafterprint" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onbeforeprint">
-    <xs:attribute name="onbeforeprint" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onbeforeunload">
-    <xs:attribute name="onbeforeunload" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onhashchange">
-    <xs:attribute name="onhashchange" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onmessage">
-    <xs:attribute name="onmessage" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onoffline">
-    <xs:attribute name="onoffline" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.ononline">
-    <xs:attribute name="ononline" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onpopstate">
-    <xs:attribute name="onpopstate" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onredo">
-    <xs:attribute name="onredo" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onresize">
-    <xs:attribute name="onresize" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onstorage">
-    <xs:attribute name="onstorage" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onundo">
-    <xs:attribute name="onundo" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="body.attrs.onunload">
-    <xs:attribute name="onunload" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:element name="title">
     <xs:complexType mixed="true">
       <xs:attributeGroup ref="xhtml:title.attrs"/>
@@ -646,12 +552,6 @@
     <xs:attribute name="href" type="common.data.uri"/>
     <xs:attribute name="target" type="common.data.browsing-context-or-keyword"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="base.attrs.href">
-    <xs:attribute name="href" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="base.attrs.target">
-    <xs:attribute name="target" use="required" type="common.data.browsing-context-or-keyword"/>
-  </xs:attributeGroup>
   <xs:element name="link">
     <xs:complexType>
       <xs:attributeGroup ref="xhtml:link.attrs"/>
@@ -666,13 +566,6 @@
     <xs:attribute name="media" type="common.data.mediaquery"/>
     <xs:attribute name="type" type="common.data.mimetype"/>
     <xs:attribute name="sizes">
-      <xs:simpleType>
-        <xs:union memberTypes="xs:string"/>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="link.attrs.sizes">
-    <xs:attribute name="sizes" use="required">
       <xs:simpleType>
         <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
@@ -698,12 +591,6 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="type" type="common.data.mimetype"/>
     <xs:attribute name="media" type="common.data.mediaquery"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="style.attrs.type">
-    <xs:attribute name="type" use="required" type="common.data.mimetype"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="style.attrs.media">
-    <xs:attribute name="media" use="required" type="common.data.mediaquery"/>
   </xs:attributeGroup>
   <xs:complexType name="style.inner">
     <xs:complexContent>
@@ -831,17 +718,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.content-type.attrs">
-    <xs:attributeGroup ref="common.attrs"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.http-equiv.content-type"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.content.content-type"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.http-equiv.content-type">
-    <xs:attribute name="http-equiv" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.content.content-type">
-    <xs:attribute name="content" use="required" type="common.data.meta-charset"/>
-  </xs:attributeGroup>
 
   <!-- ##################################################################### -->
   <xs:group name="a.elem.phrasing">
@@ -849,15 +725,15 @@
       <xs:documentation>RELAX NG Schema for HTML 5: Phrase Markup #</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="a">
-        <xs:complexType>
-          <xs:complexContent>
+  <xs:element name="a">
+    <xs:complexType>
+      <xs:complexContent>
             <xs:extension base="xhtml:a.inner.phrasing">
-              <xs:attributeGroup ref="xhtml:a.attrs"/>
-            </xs:extension>
-          </xs:complexContent>
-        </xs:complexType>
-      </xs:element>
+          <xs:attributeGroup ref="xhtml:a.attrs"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
     </xs:sequence>
   </xs:group>
   <xs:group name="a.elem.flow">
@@ -884,9 +760,6 @@
     <xs:attribute name="type" type="common.data.mimetype"/>
     <xs:attribute name="ping" type="common.data.uris"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="a.attrs.name">
-    <xs:attribute name="name" use="required" type="common.data.id"/>
-  </xs:attributeGroup>
   <xs:complexType name="a.inner.phrasing" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
   </xs:complexType>
@@ -899,23 +772,8 @@
     </xs:annotation>
     <xs:attribute name="href" use="required" type="common.data.uri"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="shared-hyperlink.attrs.target">
-    <xs:attribute name="target" use="required" type="common.data.browsing-context-or-keyword"/>
-  </xs:attributeGroup>
   <xs:attributeGroup name="shared-hyperlink.attrs.rel">
     <xs:attribute name="rel" use="required" type="common.data.tokens"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-hyperlink.attrs.hreflang">
-    <xs:attribute name="hreflang" use="required" type="common.data.langcode"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-hyperlink.attrs.media">
-    <xs:attribute name="media" use="required" type="common.data.mediaquery"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-hyperlink.attrs.type">
-    <xs:attribute name="type" use="required" type="common.data.mimetype"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-hyperlink.attrs.ping">
-    <xs:attribute name="ping" use="required" type="common.data.uris"/>
   </xs:attributeGroup>
   <xs:element name="em">
     <xs:complexType>
@@ -1140,9 +998,6 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="cite" type="common.data.uri"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="q.attrs.cite">
-    <xs:attribute name="cite" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
   <xs:complexType name="q.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
   </xs:complexType>
@@ -1301,9 +1156,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="ol.attrs.start">
-    <xs:attribute name="start" use="required" type="common.data.integer"/>
-  </xs:attributeGroup>
   <xs:attributeGroup name="ol.attrs.reversed">
     <xs:attribute name="reversed" use="required">
       <xs:simpleType>
@@ -1335,9 +1187,6 @@
   <xs:attributeGroup name="oli.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="value" type="common.data.integer"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="oli.attrs.value">
-    <xs:attribute name="value" use="required" type="common.data.integer"/>
   </xs:attributeGroup>
   <xs:complexType name="oli.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
@@ -1592,9 +1441,6 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="cite" type="common.data.uri"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="blockquote.attrs.cite">
-    <xs:attribute name="cite" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
   <xs:complexType name="blockquote.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
@@ -1645,9 +1491,6 @@
   <xs:attributeGroup name="article.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="pubdate" type="common.data.datetime"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="article.attrs.pubdate">
-    <xs:attribute name="pubdate" use="required" type="common.data.datetime"/>
   </xs:attributeGroup>
   <xs:complexType name="article.inner" mixed="true">
     <xs:sequence>
@@ -1729,9 +1572,6 @@
     </xs:annotation>
     <xs:attribute name="cite" use="required" type="common.data.uri"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="edit.attrs.datetime">
-    <xs:attribute name="datetime" use="required" type="common.data.datetime"/>
-  </xs:attributeGroup>
   <xs:group name="ins.elem.flow">
     <xs:annotation>
       <xs:documentation>Inserts: &lt;ins&gt;</xs:documentation>
@@ -1777,15 +1617,15 @@
       <xs:documentation>Deletions: &lt;del&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="del">
-        <xs:complexType>
-          <xs:complexContent>
-            <xs:extension base="xhtml:del.inner.flow">
-              <xs:attributeGroup ref="xhtml:del.attrs"/>
-            </xs:extension>
-          </xs:complexContent>
-        </xs:complexType>
-      </xs:element>
+  <xs:element name="del">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="xhtml:del.inner.flow">
+          <xs:attributeGroup ref="xhtml:del.attrs"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
     </xs:sequence>
   </xs:group>
   <xs:group name="del.elem.phrasing">
@@ -1838,30 +1678,6 @@
   <xs:attributeGroup name="img.attrs.src">
     <xs:attribute name="src" use="required" type="common.data.uri"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="img.attrs.alt">
-    <xs:attribute name="alt" use="required"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="img.attrs.height">
-    <xs:attribute name="height" use="required" type="common.data.integer.non-negative"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="img.attrs.width">
-    <xs:attribute name="width" use="required" type="common.data.integer.non-negative"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="img.attrs.usemap">
-    <xs:attribute name="usemap" use="required" type="common.data.hash-name"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="img.attrs.ismap">
-    <xs:attribute name="ismap" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="ismap"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="img.attrs.border">
-    <xs:attribute name="border" use="required" type="common.data.zero"/>
-  </xs:attributeGroup>
   <xs:element name="embed">
     <xs:complexType>
       <xs:attributeGroup ref="xhtml:embed.attrs"/>
@@ -1875,18 +1691,6 @@
     <xs:attribute name="width" type="common.data.integer.positive"/>
     <xs:attributeGroup ref="xhtml:embed.attrs.other"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="embed.attrs.src">
-    <xs:attribute name="src" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="embed.attrs.type">
-    <xs:attribute name="type" use="required" type="common.data.mimetype"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="embed.attrs.height">
-    <xs:attribute name="height" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="embed.attrs.width">
-    <xs:attribute name="width" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
   <xs:attributeGroup name="embed.attrs.other">
     <xs:anyAttribute namespace="##local" processContents="skip"/>
   </xs:attributeGroup>
@@ -1895,15 +1699,15 @@
       <xs:documentation>Generic Objects: &lt;object&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="object">
-        <xs:complexType>
-          <xs:complexContent>
-            <xs:extension base="xhtml:object.inner.flow">
-              <xs:attributeGroup ref="xhtml:object.attrs"/>
-            </xs:extension>
-          </xs:complexContent>
-        </xs:complexType>
-      </xs:element>
+  <xs:element name="object">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="xhtml:object.inner.flow">
+          <xs:attributeGroup ref="xhtml:object.attrs"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
     </xs:sequence>
   </xs:group>
   <xs:group name="object.elem.phrasing">
@@ -1928,33 +1732,6 @@
     <xs:attribute name="usemap" type="common.data.hash-name"/>
     <xs:attribute name="name" type="common.data.browsing-context"/>
     <xs:attributeGroup ref="common-form.attrs.form"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.data">
-    <xs:attribute name="data" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.type">
-    <xs:attribute name="type" use="required" type="common.data.mimetype"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.classid">
-    <xs:attribute name="classid" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.codebase">
-    <xs:attribute name="codebase" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.codetype">
-    <xs:attribute name="codetype" use="required" type="common.data.mimetype"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.height">
-    <xs:attribute name="height" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.width">
-    <xs:attribute name="width" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.usemap">
-    <xs:attribute name="usemap" use="required" type="common.data.hash-name"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="object.attrs.name">
-    <xs:attribute name="name" use="required" type="common.data.browsing-context"/>
   </xs:attributeGroup>
   <xs:complexType name="object.inner.flow" mixed="true">
     <xs:sequence>
@@ -2105,131 +1882,7 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="iframe.attrs.src">
-    <xs:attribute name="src" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="iframe.attrs.name">
-    <xs:attribute name="name" use="required" type="common.data.browsing-context"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="iframe.attrs.height">
-    <xs:attribute name="height" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="iframe.attrs.width">
-    <xs:attribute name="width" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="iframe.attrs.seamless">
-    <xs:attribute name="seamless" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="seamless"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="iframe.attrs.sandbox">
-    <xs:attribute name="sandbox" use="required">
-      <xs:simpleType>
-        <xs:union>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-scripts"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-forms"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-scripts"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-forms"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-        </xs:union>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
+
   <xs:group name="map.elem.flow">
     <xs:annotation>
       <xs:documentation>Map Definition: &lt;map&gt;</xs:documentation>
@@ -2290,33 +1943,9 @@
     <xs:attribute name="type" type="common.data.mimetype"/>
     <xs:attributeGroup ref="xhtml:area.attrs.shape"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.alt">
-    <xs:attribute name="alt" use="required"/>
-  </xs:attributeGroup>
   <xs:attributeGroup name="area.attrs.shape">
     <xs:attribute name="shape" type="xs:string"/>
     <xs:attribute name="coords" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.shape.rect">
-    <xs:attribute name="shape" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.coords.rect">
-    <xs:attribute name="coords" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.shape.circle">
-    <xs:attribute name="shape" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.coords.circle">
-    <xs:attribute name="coords" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.shape.poly">
-    <xs:attribute name="shape" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.coords.poly">
-    <xs:attribute name="coords" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="area.attrs.shape.default">
-    <xs:attribute name="shape" use="required" type="xs:string"/>
   </xs:attributeGroup>
 
   <!-- ##################################################################### -->
@@ -2434,42 +2063,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="media.attrs.autoplay">
-    <xs:attribute name="autoplay" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="autoplay"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="media.attrs.autobuffer">
-    <xs:attribute name="autobuffer" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="autobuffer"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="media.attrs.controls">
-    <xs:attribute name="controls" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="controls"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="media.attrs.loop">
-    <xs:attribute name="loop" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="loop"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:element name="source">
     <xs:complexType>
       <xs:attributeGroup ref="xhtml:source.attrs"/>
@@ -2483,12 +2076,6 @@
   </xs:attributeGroup>
   <xs:attributeGroup name="source.attrs.src">
     <xs:attribute name="src" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="source.attrs.type">
-    <xs:attribute name="type" use="required" type="common.data.mimetype"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="source.attrs.media">
-    <xs:attribute name="media" use="required" type="common.data.mediaquery"/>
   </xs:attributeGroup>
   <xs:complexType name="media.source" mixed="true">
     <xs:annotation>
@@ -2537,15 +2124,6 @@
     <xs:attribute name="poster" type="common.data.uri"/>
     <xs:attribute name="height" type="common.data.integer.positive"/>
     <xs:attribute name="width" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="video.attrs.poster">
-    <xs:attribute name="poster" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="video.attrs.height">
-    <xs:attribute name="height" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="video.attrs.width">
-    <xs:attribute name="width" use="required" type="common.data.integer.positive"/>
   </xs:attributeGroup>
   <xs:complexType name="video.inner.flow" mixed="true">
     <xs:complexContent>
@@ -2633,21 +2211,24 @@
     </xs:choice>
   </xs:complexType>
 
+  <xs:element name="script">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="xhtml:script.inner.embedded">
+          <xs:attributeGroup ref="xhtml:script.attrs.embedded"/>
+          <xs:attributeGroup ref="xhtml:script.attrs.imported"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
   <!-- ##################################################################### -->
   <xs:group name="script.elem.embedded">
     <xs:annotation>
       <xs:documentation>RELAX NG Schema for HTML 5: Core Scripting #</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="script">
-        <xs:complexType>
-          <xs:complexContent>
-            <xs:extension base="xhtml:script.inner.embedded">
-              <xs:attributeGroup ref="xhtml:script.attrs.embedded"/>
-            </xs:extension>
-          </xs:complexContent>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="script"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="script.attrs.embedded">
@@ -2657,11 +2238,7 @@
   </xs:attributeGroup>
   <xs:group name="script.elem.imported">
     <xs:sequence>
-      <xs:element name="script">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:script.attrs.imported"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="script"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="script.attrs.imported">
@@ -2687,33 +2264,6 @@
   </xs:attributeGroup>
   <xs:attributeGroup name="script.attrs.src">
     <xs:attribute name="src" use="optional" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="script.attrs.defer">
-    <xs:attribute name="defer" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="defer"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="script.attrs.async">
-    <xs:attribute name="async" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="async"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="script.attrs.type">
-    <xs:attribute name="type" use="required" type="common.data.mimetype"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="script.attrs.charset">
-    <xs:attribute name="charset" use="required" type="common.data.charset"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="script.attrs.language">
-    <xs:attribute name="language" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:complexType name="script.inner.embedded">
     <xs:complexContent>
@@ -2809,168 +2359,6 @@
     <xs:attribute name="onvolumechange" type="xs:string"/>
     <xs:attribute name="onwaiting" type="xs:string"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onabort">
-    <xs:attribute name="onabort" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onblur">
-    <xs:attribute name="onblur" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.oncanplay">
-    <xs:attribute name="oncanplay" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.oncanplaythrough">
-    <xs:attribute name="oncanplaythrough" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onchange">
-    <xs:attribute name="onchange" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onclick">
-    <xs:attribute name="onclick" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.oncontextmenu">
-    <xs:attribute name="oncontextmenu" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondblclick">
-    <xs:attribute name="ondblclick" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondrag">
-    <xs:attribute name="ondrag" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondragend">
-    <xs:attribute name="ondragend" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondragenter">
-    <xs:attribute name="ondragenter" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondragleave">
-    <xs:attribute name="ondragleave" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondragover">
-    <xs:attribute name="ondragover" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondragstart">
-    <xs:attribute name="ondragstart" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondrop">
-    <xs:attribute name="ondrop" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ondurationchange">
-    <xs:attribute name="ondurationchange" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onemptied">
-    <xs:attribute name="onemptied" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onended">
-    <xs:attribute name="onended" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onerror">
-    <xs:attribute name="onerror" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onfocus">
-    <xs:attribute name="onfocus" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onformchange">
-    <xs:attribute name="onformchange" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onforminput">
-    <xs:attribute name="onforminput" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.oninput">
-    <xs:attribute name="oninput" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.oninvalid">
-    <xs:attribute name="oninvalid" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onkeydown">
-    <xs:attribute name="onkeydown" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onkeypress">
-    <xs:attribute name="onkeypress" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onkeyup">
-    <xs:attribute name="onkeyup" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onload">
-    <xs:attribute name="onload" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onloadeddata">
-    <xs:attribute name="onloadeddata" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onloadedmetadata">
-    <xs:attribute name="onloadedmetadata" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onloadstart">
-    <xs:attribute name="onloadstart" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onmousedown">
-    <xs:attribute name="onmousedown" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onmousemove">
-    <xs:attribute name="onmousemove" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onmouseout">
-    <xs:attribute name="onmouseout" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onmouseover">
-    <xs:attribute name="onmouseover" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onmouseup">
-    <xs:attribute name="onmouseup" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onmousewheel">
-    <xs:attribute name="onmousewheel" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onpause">
-    <xs:attribute name="onpause" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onplay">
-    <xs:attribute name="onplay" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onplaying">
-    <xs:attribute name="onplaying" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onprogress">
-    <xs:attribute name="onprogress" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onratechange">
-    <xs:attribute name="onratechange" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onreadystatechange">
-    <xs:attribute name="onreadystatechange" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onscroll">
-    <xs:attribute name="onscroll" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onseeked">
-    <xs:attribute name="onseeked" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onseeking">
-    <xs:attribute name="onseeking" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onselect">
-    <xs:attribute name="onselect" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onshow">
-    <xs:attribute name="onshow" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onstalled">
-    <xs:attribute name="onstalled" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onsubmit">
-    <xs:attribute name="onsubmit" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onsuspend">
-    <xs:attribute name="onsuspend" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.ontimeupdate">
-    <xs:attribute name="ontimeupdate" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onvolumechange">
-    <xs:attribute name="onvolumechange" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="scripting.attr.onwaiting">
-    <xs:attribute name="onwaiting" use="required" type="xs:string"/>
-  </xs:attributeGroup>
 
   <!-- ##################################################################### -->
   <xs:attributeGroup name="tables.attrs.alignment">
@@ -3006,40 +2394,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.align">
-    <xs:attribute name="align" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="left"/>
-          <xs:enumeration value="center"/>
-          <xs:enumeration value="right"/>
-          <xs:enumeration value="justify"/>
-          <xs:enumeration value="char"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.char">
-    <xs:attribute name="char" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:string">
-          <xs:pattern value="."/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.valign">
-    <xs:attribute name="valign" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="top"/>
-          <xs:enumeration value="middle"/>
-          <xs:enumeration value="bottom"/>
-          <xs:enumeration value="baseline"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:element name="table">
     <xs:complexType>
       <xs:complexContent>
@@ -3052,9 +2406,6 @@
   <xs:attributeGroup name="table.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="summary" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="table.attrs.summary">
-    <xs:attribute name="summary" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:complexType name="table.inner">
     <xs:sequence>
@@ -3107,9 +2458,6 @@
   <xs:attributeGroup name="colgroup.attrs">
     <xs:attributeGroup ref="common.attrs"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="colgroup.attrs.span">
-    <xs:attribute name="span" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
   <xs:complexType name="colgroup.inner">
     <xs:sequence>
       <xs:element minOccurs="0" maxOccurs="unbounded" ref="xhtml:col"/>
@@ -3124,9 +2472,6 @@
   <xs:attributeGroup name="col.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="span" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="col.attrs.span">
-    <xs:attribute name="span" use="required" type="common.data.integer.positive"/>
   </xs:attributeGroup>
   <xs:element name="thead">
     <xs:complexType>
@@ -3205,18 +2550,6 @@
     <xs:attribute name="colspan" type="common.data.integer.positive"/>
     <xs:attribute name="rowspan" type="common.data.integer.non-negative"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.colspan">
-    <xs:attribute name="colspan" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.rowspan">
-    <xs:attribute name="rowspan" use="required" type="common.data.integer.non-negative"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.access-headers">
-    <xs:attribute name="headers" type="common.data.idrefs"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.headers">
-    <xs:attribute name="headers" use="required" type="common.data.idrefs"/>
-  </xs:attributeGroup>
   <xs:attributeGroup name="tables.attrs.define-headers">
     <xs:attribute name="scope">
       <xs:simpleType>
@@ -3228,21 +2561,6 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.scope">
-    <xs:attribute name="scope" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="row"/>
-          <xs:enumeration value="col"/>
-          <xs:enumeration value="rowgroup"/>
-          <xs:enumeration value="colgroup"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="tables.attrs.abbr">
-    <xs:attribute name="abbr" use="required"/>
   </xs:attributeGroup>
   <xs:element name="td">
     <xs:complexType>
@@ -3358,33 +2676,7 @@
     </xs:attribute>
     <xs:attributeGroup ref="common-form.attrs.form"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="common-form.attrs.name">
-    <xs:attribute name="name" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common-form.attrs.disabled">
-    <xs:attribute name="disabled" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="disabled"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.readonly">
-    <xs:attribute name="readonly" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="readonly"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.maxlength">
-    <xs:attribute name="maxlength" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.size">
-    <xs:attribute name="size" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
+
   <!-- REVISIT tabindex goes in common.attrs -->
   <xs:attributeGroup name="input.attrs.checked">
     <xs:annotation>
@@ -3398,22 +2690,47 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
+
+  <xs:element name="input">
+    <xs:complexType>
+      <xs:attributeGroup ref="xhtml:input.text.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.password.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.checkbox.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.radio.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.button.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.submit.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.reset.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.file.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.hidden.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.image.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.datetime.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.datetime-local.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.date.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.month.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.time.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.week.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.number.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.range.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.email.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.url.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.search.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.tel.attrs"/>
+      <xs:attributeGroup ref="xhtml:input.color.attrs"/>      
+    </xs:complexType>
+  </xs:element>
+
   <xs:group name="input.text.elem">
     <xs:annotation>
       <xs:documentation>Text Field: &lt;input type='text'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.text.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.text.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attribute name="type" type="xs:string"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="maxlength" type="common.data.integer.positive"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
@@ -3450,18 +2767,6 @@
     </xs:attribute>
     <xs:attribute name="placeholder" type="xs:string"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.text.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="text"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.text.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:group name="input.elem">
     <xs:choice>
       <xs:group ref="xhtml:input.text.elem"/>
@@ -3494,17 +2799,13 @@
       <xs:documentation>Password Field: &lt;input type='password'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.password.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.password.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.password.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="maxlength" type="common.data.integer.positive"/>
     <xs:attribute name="readonly">
       <xs:simpleType>
@@ -3540,34 +2841,50 @@
     </xs:attribute>
     <xs:attribute name="placeholder" type="xs:string"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.password.attrs.type">
+  <xs:attributeGroup name="input.attrs.type">
     <xs:attribute name="type">
       <xs:simpleType>
         <xs:restriction base="xs:token">
+          <xs:enumeration value="text"/>
           <xs:enumeration value="password"/>
+          <xs:enumeration value="checkbox"/>
+          <xs:enumeration value="radio"/>
+          <xs:enumeration value="button"/>
+          <xs:enumeration value="submit"/>
+          <xs:enumeration value="reset"/>
+          <xs:enumeration value="file"/>
+          <xs:enumeration value="hidden"/>
+          <xs:enumeration value="image"/>
+          <xs:enumeration value="datetime"/>
+          <xs:enumeration value="datetime-local"/>
+          <xs:enumeration value="date"/>
+          <xs:enumeration value="month"/>
+          <xs:enumeration value="time"/>
+          <xs:enumeration value="week"/>
+          <xs:enumeration value="number"/>
+          <xs:enumeration value="range"/>
+          <xs:enumeration value="email"/>
+          <xs:enumeration value="url"/>
+          <xs:enumeration value="search"/>
+          <xs:enumeration value="tel"/>
+          <xs:enumeration value="color"/>
+
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.password.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:group name="input.checkbox.elem">
     <xs:annotation>
       <xs:documentation>Checkbox: &lt;input type='checkbox'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.checkbox.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.checkbox.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.checkbox.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="checked">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -3590,35 +2907,19 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.checkbox.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="checkbox"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.checkbox.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:group name="input.radio.elem">
     <xs:annotation>
       <xs:documentation>Radiobutton: &lt;input type='radio'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.radio.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.radio.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.radio.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="checked">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -3642,34 +2943,18 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.radio.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="radio"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.radio.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:group name="input.button.elem">
     <xs:annotation>
       <xs:documentation>Scripting Hook Button: &lt;input type='button'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.button.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.button.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.button.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
@@ -3678,18 +2963,6 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.button.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="button"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.button.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <!-- REVISIT should this be enabled by a scripting module only? -->
   <xs:group name="input.submit.elem">
@@ -3697,17 +2970,13 @@
       <xs:documentation>Submit Button: &lt;input type='submit'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.submit.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.submit.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.submit.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="formaction" type="common.data.uri"/>
     <xs:attribute name="autofocus">
@@ -3728,34 +2997,18 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.submit.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="submit"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.submit.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:group name="input.reset.elem">
     <xs:annotation>
       <xs:documentation>Reset Button: &lt;input type='reset'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.reset.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.reset.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.reset.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
@@ -3765,35 +3018,19 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.reset.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="reset"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.reset.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <!-- REVISIT does reset make sense outside a form? -->
   <xs:group name="input.file.elem">
     <xs:annotation>
       <xs:documentation>File Upload: &lt;input type='file'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.file.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.file.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.file.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="accept" type="xhtml:form.data.mimetypelist"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
@@ -3817,64 +3054,32 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.file.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="file"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.file.attrs.accept">
-    <xs:attribute name="accept" use="required" type="xhtml:form.data.mimetypelist"/>
-  </xs:attributeGroup>
   <xs:group name="input.hidden.elem">
     <xs:annotation>
       <xs:documentation>Hidden String: &lt;input type='hidden'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.hidden.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.hidden.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.hidden.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="value" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.hidden.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="hidden"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.hidden.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:group name="input.image.elem">
     <xs:annotation>
       <xs:documentation>Image Submit Button: &lt;input type='image'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.image.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.image.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.image.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attributeGroup ref="xhtml:input.image.attrs.alt"/>
     <xs:attribute name="src" type="common.data.uri"/>
     <xs:attribute name="formaction" type="common.data.uri"/>
@@ -3898,20 +3103,8 @@
     <xs:attribute name="height" type="common.data.integer.positive"/>
     <xs:attribute name="width" type="common.data.integer.positive"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.image.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="image"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:attributeGroup name="input.image.attrs.alt">
     <xs:attribute name="alt" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.image.attrs.src">
-    <xs:attribute name="src" use="required" type="common.data.uri"/>
   </xs:attributeGroup>
   <xs:element name="textarea">
     <xs:complexType mixed="true">
@@ -3949,12 +3142,6 @@
     <xs:attribute name="cols" type="common.data.integer.positive"/>
   </xs:attributeGroup>
   <!-- This is ugly. -->
-  <xs:attributeGroup name="textarea.attrs.cols">
-    <xs:attribute name="cols" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="textarea.attrs.rows">
-    <xs:attribute name="rows" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
   <!--
     Due to limitations with interleave, handling single/multiple selection
     enforcement in RELAX NG seems to be possible but really awkward.
@@ -3983,21 +3170,6 @@
     </xs:attribute>
     <xs:attribute name="label" type="xs:string"/>
     <xs:attribute name="value" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="option.attrs.selected">
-    <xs:attribute name="selected" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="selected"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="option.attrs.label">
-    <xs:attribute name="label" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="option.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:element name="optgroup">
     <xs:complexType>
@@ -4048,18 +3220,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="select.attrs.size">
-    <xs:attribute name="size" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="select.attrs.multiple">
-    <xs:attribute name="multiple" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="multiple"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:complexType name="select.inner">
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:element ref="xhtml:optgroup"/>
@@ -4075,26 +3235,31 @@
   <xs:complexType name="button.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
+
+  <xs:element name="button">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="xhtml:button.inner">
+          <xs:attributeGroup ref="xhtml:button.submit.attrs"/>
+          <xs:attributeGroup ref="xhtml:button.reset.attrs"/>
+          <xs:attributeGroup ref="xhtml:button.button.attrs"/>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+
   <xs:group name="button.submit.elem">
     <xs:annotation>
       <xs:documentation>Complex Submit Button: &lt;button type='submit'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="button">
-        <xs:complexType>
-          <xs:complexContent>
-            <xs:extension base="xhtml:button.inner">
-              <xs:attributeGroup ref="xhtml:button.submit.attrs"/>
-            </xs:extension>
-          </xs:complexContent>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="button"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="button.submit.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attribute name="type" type="xs:string"/>
+    <xs:attributeGroup ref="button.attrs.type"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="formaction" type="common.data.uri"/>
     <xs:attribute name="autofocus">
@@ -4115,9 +3280,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="button.submit.attrs.type">
-    <xs:attribute name="type" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:group name="button.elem">
     <xs:choice>
       <xs:group ref="xhtml:button.submit.elem"/>
@@ -4130,21 +3292,13 @@
       <xs:documentation>Complex Reset Button: &lt;button type='reset'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="button">
-        <xs:complexType>
-          <xs:complexContent>
-            <xs:extension base="xhtml:button.inner">
-              <xs:attributeGroup ref="xhtml:button.reset.attrs"/>
-            </xs:extension>
-          </xs:complexContent>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="button"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="button.reset.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:button.reset.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:button.attrs.type"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
@@ -4154,11 +3308,13 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="button.reset.attrs.type">
+  <xs:attributeGroup name="button.attrs.type">
     <xs:attribute name="type">
       <xs:simpleType>
         <xs:restriction base="xs:token">
+          <xs:enumeration value="submit"/>
           <xs:enumeration value="reset"/>
+          <xs:enumeration value="button"/>
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
@@ -4168,35 +3324,18 @@
       <xs:documentation>Complex Push Button: &lt;button type='button'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="button">
-        <xs:complexType>
-          <xs:complexContent>
-            <xs:extension base="xhtml:button.inner">
-              <xs:attributeGroup ref="xhtml:button.button.attrs"/>
-            </xs:extension>
-          </xs:complexContent>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="button"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="button.button.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:button.button.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:button.attrs.type"/>
     <xs:attribute name="value" type="xs:string"/>
     <xs:attribute name="autofocus">
       <xs:simpleType>
         <xs:restriction base="xs:token">
           <xs:enumeration value="autofocus"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="button.button.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="button"/>
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
@@ -4234,12 +3373,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="form.attrs.action">
-    <xs:attribute name="action" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="form.attrs.method">
-    <xs:attribute name="method" use="required" type="xhtml:form.attrs.method.data"/>
-  </xs:attributeGroup>
   <xs:simpleType name="form.attrs.method.data">
     <xs:union>
       <xs:simpleType>
@@ -4250,9 +3383,6 @@
       </xs:simpleType>
     </xs:union>
   </xs:simpleType>
-  <xs:attributeGroup name="form.attrs.enctype">
-    <xs:attribute name="enctype" use="required" type="xhtml:form.attrs.enctype.data"/>
-  </xs:attributeGroup>
   <xs:simpleType name="form.attrs.enctype.data">
     <xs:union memberTypes="xs:string">
       <xs:simpleType>
@@ -4260,9 +3390,6 @@
       </xs:simpleType>
     </xs:union>
   </xs:simpleType>
-  <xs:attributeGroup name="form.attrs.accept-charset">
-    <xs:attribute name="accept-charset" use="required" type="xhtml:form.data.charsetlist"/>
-  </xs:attributeGroup>
   <xs:complexType name="form.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
@@ -4299,127 +3426,27 @@
     <xs:attribute name="for" type="common.data.idref"/>
     <xs:attributeGroup ref="common-form.attrs.form"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="label.attrs.for">
-    <xs:attribute name="for" use="required" type="common.data.idref"/>
-  </xs:attributeGroup>
   <xs:complexType name="label.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
   </xs:complexType>
-  <xs:attributeGroup name="shared-form.attrs.formaction">
-    <xs:attribute name="formaction" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.formenctype">
-    <xs:attribute name="formenctype" use="required" type="xhtml:shared-form.attrs.formenctype.data"/>
-  </xs:attributeGroup>
   <xs:simpleType name="shared-form.attrs.formenctype.data">
     <xs:union memberTypes="xs:string"/>
   </xs:simpleType>
-  <xs:attributeGroup name="shared-form.attrs.formmethod">
-    <xs:attribute name="formmethod" use="required" type="xhtml:shared-form.attrs.formmethod.data"/>
-  </xs:attributeGroup>
   <xs:simpleType name="shared-form.attrs.formmethod.data">
     <xs:union memberTypes="xs:string"/>
   </xs:simpleType>
-  <xs:attributeGroup name="shared-form.attrs.formtarget">
-    <xs:attribute name="formtarget" use="required" type="common.data.browsing-context-or-keyword"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.formnovalidate">
-    <xs:attribute name="formnovalidate" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="formnovalidate"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.autofocus">
-    <xs:attribute name="autofocus" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="autofocus"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.pattern">
-    <xs:attribute name="pattern" use="required" type="xhtml:form.data.pattern"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.template">
-    <xs:attribute name="template" use="required" type="common.data.idref"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.required">
-    <xs:attribute name="required" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="required"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="shared-form.attrs.placeholder">
-    <xs:attribute name="placeholder" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.attrs.autocomplete">
-    <xs:annotation>
-      <xs:documentation>Shared attributes for &lt;input&gt;</xs:documentation>
-    </xs:annotation>
-    <xs:attribute name="autocomplete" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="on"/>
-          <xs:enumeration value="off"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.attrs.list">
-    <xs:attribute name="list" use="required" type="common.data.idref"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.attrs.step.float">
-    <xs:attribute name="step" use="required">
-      <xs:simpleType>
-        <xs:union memberTypes="xs:string"/>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.attrs.step.integer">
-    <xs:attribute name="step" use="required">
-      <xs:simpleType>
-        <xs:union memberTypes="xs:string"/>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.attrs.multiple">
-    <xs:attribute name="multiple" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="multiple"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.image.attrs.height">
-    <xs:attribute name="height" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.image.attrs.width">
-    <xs:attribute name="width" use="required" type="common.data.integer.positive"/>
-  </xs:attributeGroup>
   <xs:group name="input.datetime.elem">
     <xs:annotation>
       <xs:documentation>Global Date and Time: &lt;input type='datetime'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.datetime.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.datetime.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.datetime.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4459,40 +3486,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="common.data.datetime"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="datetime"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime.attrs.min">
-    <xs:attribute name="min" use="required" type="common.data.datetime"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime.attrs.max">
-    <xs:attribute name="max" use="required" type="common.data.datetime"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime.attrs.value">
-    <xs:attribute name="value" use="required" type="common.data.datetime"/>
-  </xs:attributeGroup>
   <xs:group name="input.datetime-local.elem">
     <xs:annotation>
       <xs:documentation>Date and Time with No Time Zone Information: &lt;input type='datetime-local'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.datetime-local.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.datetime-local.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.datetime-local.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4532,40 +3537,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.datetime-local"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime-local.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="datetime-local"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime-local.attrs.min">
-    <xs:attribute name="min" use="required" type="xhtml:form.data.datetime-local"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime-local.attrs.max">
-    <xs:attribute name="max" use="required" type="xhtml:form.data.datetime-local"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.datetime-local.attrs.value">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.datetime-local"/>
-  </xs:attributeGroup>
   <xs:group name="input.date.elem">
     <xs:annotation>
       <xs:documentation>Date: &lt;input type='date'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.date.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.date.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.date.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4605,40 +3588,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.date"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.date.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="date"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.date.attrs.min">
-    <xs:attribute name="min" use="required" type="xhtml:form.data.date"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.date.attrs.max">
-    <xs:attribute name="max" use="required" type="xhtml:form.data.date"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.date.attrs.value">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.date"/>
-  </xs:attributeGroup>
   <xs:group name="input.month.elem">
     <xs:annotation>
       <xs:documentation>Year and Month: &lt;input type='month'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.month.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.month.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.month.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4678,40 +3639,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.month"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.month.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="month"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.month.attrs.min">
-    <xs:attribute name="min" use="required" type="xhtml:form.data.month"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.month.attrs.max">
-    <xs:attribute name="max" use="required" type="xhtml:form.data.month"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.month.attrs.value">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.month"/>
-  </xs:attributeGroup>
   <xs:group name="input.time.elem">
     <xs:annotation>
       <xs:documentation>Time without Time Zone Information: &lt;input type='time'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.time.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.time.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.time.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4751,40 +3690,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.time"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.time.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="time"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.time.attrs.min">
-    <xs:attribute name="min" use="required" type="xhtml:form.data.time"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.time.attrs.max">
-    <xs:attribute name="max" use="required" type="xhtml:form.data.time"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.time.attrs.value">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.time"/>
-  </xs:attributeGroup>
   <xs:group name="input.week.elem">
     <xs:annotation>
       <xs:documentation>Year and Week: &lt;input type='week'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.week.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.week.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.week.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4824,40 +3741,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="xhtml:form.data.week"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.week.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="week"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.week.attrs.min">
-    <xs:attribute name="min" use="required" type="xhtml:form.data.week"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.week.attrs.max">
-    <xs:attribute name="max" use="required" type="xhtml:form.data.week"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.week.attrs.value">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.week"/>
-  </xs:attributeGroup>
   <xs:group name="input.number.elem">
     <xs:annotation>
       <xs:documentation>Number: &lt;input type='number'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.number.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.number.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.number.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4897,40 +3792,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="common.data.float"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.number.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="nmber"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.number.attrs.min">
-    <xs:attribute name="min" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.number.attrs.max">
-    <xs:attribute name="max" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.number.attrs.value">
-    <xs:attribute name="value" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
   <xs:group name="input.range.elem">
     <xs:annotation>
       <xs:documentation>Imprecise Number: &lt;input type='range'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.range.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.range.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.range.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -4956,40 +3829,18 @@
     </xs:attribute>
     <xs:attribute name="value" type="common.data.float"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.range.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="range"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.range.attrs.min">
-    <xs:attribute name="min" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.range.attrs.max">
-    <xs:attribute name="max" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.range.attrs.value">
-    <xs:attribute name="value" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
   <xs:group name="input.email.elem">
     <xs:annotation>
       <xs:documentation>Email Address: &lt;input type='email'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.email.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.email.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.email.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -5037,37 +3888,18 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.email.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="email"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.email.attrs.value.single">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.emailaddress"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.email.attrs.value.multiple">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.emailaddresslist"/>
-  </xs:attributeGroup>
   <xs:group name="input.url.elem">
     <xs:annotation>
       <xs:documentation>IRI: &lt;input type='url'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.url.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.url.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.url.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -5108,38 +3940,18 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.url.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="url"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.url.attrs.value">
-    <xs:attribute name="value" use="required">
-      <xs:simpleType>
-        <xs:union memberTypes="xs:string"/>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:group name="input.search.elem">
     <xs:annotation>
       <xs:documentation>Search: &lt;input type='search'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.search.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.search.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.search.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -5175,35 +3987,19 @@
     <xs:attribute name="size" type="common.data.integer.positive"/>
     <xs:attribute name="placeholder" type="xs:string"/>
     <xs:attribute name="value" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.search.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="search"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.search.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:group name="input.tel.elem">
     <xs:annotation>
       <xs:documentation>Telephone Number: &lt;input type='tel'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.tel.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.tel.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.tel.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -5240,34 +4036,18 @@
     <xs:attribute name="placeholder" type="xs:string"/>
     <xs:attribute name="value" type="xs:string"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.tel.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="tel"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.tel.attrs.value">
-    <xs:attribute name="value" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:group name="input.color.elem">
     <xs:annotation>
       <xs:documentation>Color: &lt;input type='color'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="input">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:input.color.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="input"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="input.color.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-    <xs:attributeGroup ref="xhtml:input.color.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:input.attrs.type"/>
     <xs:attribute name="autocomplete">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -5286,18 +4066,6 @@
     <xs:attribute name="list" type="common.data.idref"/>
     <xs:attribute name="value" type="xhtml:form.data.color"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="input.color.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="color"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="input.color.attrs.value">
-    <xs:attribute name="value" use="required" type="xhtml:form.data.color"/>
-  </xs:attributeGroup>
   <xs:element name="output">
     <xs:complexType>
       <xs:complexContent>
@@ -5313,18 +4081,9 @@
     <xs:attributeGroup ref="common-form.attrs.form"/>
     <xs:attribute name="for" type="common.data.idrefs"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="output.attrs.for">
-    <xs:attribute name="for" use="required" type="common.data.idrefs"/>
-  </xs:attributeGroup>
   <xs:complexType name="output.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
   </xs:complexType>
-  <xs:attributeGroup name="textarea.attrs.wrap.hard">
-    <xs:attribute name="wrap" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="textarea.attrs.wrap.soft">
-    <xs:attribute name="wrap" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:element name="datalist">
     <xs:complexType>
       <xs:complexContent>
@@ -5343,28 +4102,6 @@
   <xs:attributeGroup name="datalist.attrs">
     <xs:attributeGroup ref="common.attrs"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="form.attrs.novalidate">
-    <xs:attribute name="novalidate" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="novalidate"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="form.attrs.target">
-    <xs:attribute name="target" use="required" type="common.data.browsing-context-or-keyword"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="form.attrs.autocomplete">
-    <xs:attribute name="autocomplete" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="on"/>
-          <xs:enumeration value="off"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:element name="keygen">
     <xs:complexType>
       <xs:attributeGroup ref="xhtml:keygen.attrs"/>
@@ -5382,12 +4119,6 @@
       </xs:simpleType>
     </xs:attribute>
     <xs:attributeGroup ref="xhtml:common-form.attrs"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="keygen.attrs.challenge">
-    <xs:attribute name="challenge" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="keygen.attrs.keytype">
-    <xs:attribute name="keytype" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="common.attrs.interact">
     <xs:annotation>
@@ -5425,12 +4156,6 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="common.attrs.contextmenu">
-    <xs:annotation>
-      <xs:documentation>Context Menu: contextmenu</xs:documentation>
-    </xs:annotation>
-    <xs:attribute name="contextmenu" use="required" type="common.data.idref"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="common.attrs.contenteditable">
     <xs:annotation>
@@ -5483,12 +4208,6 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="html.attrs.manifest">
-    <xs:annotation>
-      <xs:documentation>Application Cache: manifest</xs:documentation>
-    </xs:annotation>
-    <xs:attribute name="manifest" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
   <xs:element name="progress">
     <xs:complexType>
       <xs:complexContent>
@@ -5502,12 +4221,6 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="value" type="common.data.float.non-negative"/>
     <xs:attribute name="max" type="common.data.float.positive"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="progress.attrs.value">
-    <xs:attribute name="value" use="required" type="common.data.float.non-negative"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="progress.attrs.max">
-    <xs:attribute name="max" use="required" type="common.data.float.positive"/>
   </xs:attributeGroup>
   <xs:complexType name="progress.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
@@ -5539,49 +4252,39 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
-  <xs:attributeGroup name="datagrid.attrs.multiple">
-    <xs:attribute name="multiple" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="multiple"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="datagrid.attrs.disabled">
-    <xs:attribute name="disabled" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="disabled"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:complexType name="datagrid.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
+
+  <xs:element name="command">
+    <xs:complexType>
+      <xs:attributeGroup ref="xhtml:command.command.attrs"/>
+      <xs:attributeGroup ref="xhtml:command.radio.attrs"/>
+      <xs:attributeGroup ref="xhtml:command.checkbox.attrs"/>
+
+    </xs:complexType>
+  </xs:element>
+
   <xs:group name="command.command.elem">
     <xs:annotation>
       <xs:documentation>Command with an associated action: &lt;command type='command'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="command">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:command.command.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="command"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="command.command.attrs">
     <xs:attributeGroup ref="common.attrs"/>
-    <xs:attribute name="type" type="xs:string"/>
+    <xs:attributeGroup ref="command.attrs.type"/>
     <xs:attributeGroup ref="xhtml:common-command.attrs"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="command.command.attrs.type">
+  <xs:attributeGroup name="command.attrs.type">
     <xs:attribute name="type">
       <xs:simpleType>
         <xs:restriction base="xs:token">
+          <xs:enumeration value="radio"/>
           <xs:enumeration value="command"/>
+          <xs:enumeration value="checkbox"/>          
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
@@ -5598,16 +4301,12 @@
       <xs:documentation>Selection of one item from a list of items: &lt;command type='radio'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="command">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:command.radio.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="command"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="command.radio.attrs">
     <xs:attributeGroup ref="common.attrs"/>
-    <xs:attributeGroup ref="xhtml:command.radio.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:command.attrs.type"/>
     <xs:attributeGroup ref="xhtml:command.radio.attrs.radiogroup"/>
     <xs:attribute name="checked">
       <xs:simpleType>
@@ -5618,42 +4317,20 @@
     </xs:attribute>
     <xs:attributeGroup ref="xhtml:common-command.attrs"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="command.radio.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="radio"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:attributeGroup name="command.radio.attrs.radiogroup">
-    <xs:attribute name="radiogroup" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="command.radio.attrs.checked">
-    <xs:attribute name="checked" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="checked"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
+    <xs:attribute name="radiogroup" type="xs:string"/>
   </xs:attributeGroup>
   <xs:group name="command.checkbox.elem">
     <xs:annotation>
       <xs:documentation>State or option that can be toggled: &lt;command type='checkbox'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="command">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:command.checkbox.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="command"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="command.checkbox.attrs">
     <xs:attributeGroup ref="common.attrs"/>
-    <xs:attributeGroup ref="xhtml:command.checkbox.attrs.type"/>
+    <xs:attributeGroup ref="xhtml:command.attrs.type"/>
     <xs:attribute name="checked">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -5663,43 +4340,10 @@
     </xs:attribute>
     <xs:attributeGroup ref="xhtml:common-command.attrs"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="command.checkbox.attrs.type">
-    <xs:attribute name="type">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="checkbox"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="command.checkbox.attrs.checked">
-    <xs:attribute name="checked" use="required">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="checked"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
   <xs:attributeGroup name="common-command.attrs">
     <xs:attribute name="label" type="xs:string"/>
     <xs:attribute name="icon" type="common.data.uri"/>
     <xs:attribute name="disabled">
-      <xs:simpleType>
-        <xs:restriction base="xs:token">
-          <xs:enumeration value="disabled"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="command.attrs.label">
-    <xs:attribute name="label" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="command.attrs.icon">
-    <xs:attribute name="icon" use="required" type="common.data.uri"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="command.attrs.disabled">
-    <xs:attribute name="disabled" use="required">
       <xs:simpleType>
         <xs:restriction base="xs:token">
           <xs:enumeration value="disabled"/>
@@ -5762,9 +4406,6 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="menu.attrs.label">
-    <xs:attribute name="label" use="required" type="xs:string"/>
   </xs:attributeGroup>
   <xs:complexType name="menu.inner" mixed="true">
     <xs:choice>
@@ -5829,12 +4470,6 @@
     <xs:attribute name="height" type="common.data.integer.non-negative"/>
     <xs:attribute name="width" type="common.data.integer.non-negative"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="canvas.attrs.height">
-    <xs:attribute name="height" use="required" type="common.data.integer.non-negative"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="canvas.attrs.width">
-    <xs:attribute name="width" use="required" type="common.data.integer.non-negative"/>
-  </xs:attributeGroup>
   <xs:complexType name="canvas.inner.flow" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
@@ -5888,9 +4523,6 @@
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attribute name="datetime" type="common.data.date-or-time"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="time.attrs.datetime">
-    <xs:attribute name="datetime" use="required" type="common.data.date-or-time"/>
-  </xs:attributeGroup>
   <xs:complexType name="time.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
   </xs:complexType>
@@ -5913,24 +4545,7 @@
     <xs:attribute name="max" type="common.data.float"/>
     <xs:attribute name="optimum" type="common.data.float"/>
   </xs:attributeGroup>
-  <xs:attributeGroup name="meter.attrs.value">
-    <xs:attribute name="value" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meter.attrs.min">
-    <xs:attribute name="min" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meter.attrs.low">
-    <xs:attribute name="low" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meter.attrs.high">
-    <xs:attribute name="high" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meter.attrs.max">
-    <xs:attribute name="max" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meter.attrs.optimum">
-    <xs:attribute name="optimum" use="required" type="common.data.float"/>
-  </xs:attributeGroup>
+
   <xs:complexType name="meter.inner" mixed="true">
     <xs:group ref="common.inner.phrasing"/>
   </xs:complexType>
