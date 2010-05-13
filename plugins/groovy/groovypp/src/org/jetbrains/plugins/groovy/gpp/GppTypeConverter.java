@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 
@@ -28,8 +29,7 @@ public class GppTypeConverter extends GrTypeConverter {
       return false;
     }
 
-    final PsiModifierList modifierList = member.getModifierList();
-    if (modifierList != null && modifierList.findAnnotation("groovy.lang.Typed") != null) {
+    if (isTyped(member.getModifierList())) {
       return true;
     }
 
@@ -40,6 +40,11 @@ public class GppTypeConverter extends GrTypeConverter {
 
     final PsiFile file = member.getContainingFile();
     if (file instanceof GroovyFile) {
+      final GrPackageDefinition packageDefinition = ((GroovyFile)file).getPackageDefinition();
+      if (packageDefinition != null && isTyped(packageDefinition.getAnnotationList())) {
+        return true;
+      }
+
       final VirtualFile vfile = file.getVirtualFile();
       if (vfile != null) {
         final String extension = vfile.getExtension();
@@ -48,9 +53,13 @@ public class GppTypeConverter extends GrTypeConverter {
         }
       }
 
-      return isTyped(JavaPsiFacade.getInstance(member.getProject()).findPackage(((GroovyFile)file).getPackageName()));
+      return false;
     }
     return false;
+  }
+
+  private static boolean isTyped(PsiModifierList modifierList) {
+    return modifierList != null && modifierList.findAnnotation("groovy.lang.Typed") != null;
   }
 
   @Override

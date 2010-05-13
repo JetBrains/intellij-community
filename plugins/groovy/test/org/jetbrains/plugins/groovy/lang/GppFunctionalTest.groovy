@@ -221,7 +221,9 @@ def foo(Function2<Integer, String, Object> f) {}
 
   public void testReturnTypeOneMethodInterface() throws Exception {
     myFixture.configureByText "a.groovy", """
-@Typed Function1<String, Integer> bar() {
+@Typed package aaa
+
+Function1<String, Integer> bar() {
    { it.subs<caret> }
 }
 """
