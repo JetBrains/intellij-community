@@ -182,10 +182,13 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
       if (qual != null) return false;
     }
     // don't propose to import unimportable
-    if (
-      !(element instanceof PyReferenceExpression)  ||
-      (ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)element, null) == null)
-    ) return false;
+    if (!(element instanceof PyReferenceExpression)) {
+      return false;
+    }
+    final PsiElement resolveResult = ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)element, null);
+    if (resolveResult == null || resolveResult == element.getContainingFile()) {
+      return false;
+    }
     // don't propose to import what's already imported, under different name or unsuccessfully for any reason
     final String referenceName = getRefName();
     ImportLookupProcessor ilp = new ImportLookupProcessor(referenceName);
@@ -229,7 +232,8 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     final PsiFile[] files = getRefFiles(referenceName);
     if (!(files != null && files.length > 0)) return false;
     */
-    if (ResolveImportUtil.resolveInRoots(myReference.getElement(), referenceName) == null) return false;
+    final PsiElement element = ResolveImportUtil.resolveInRoots(myReference.getElement(), referenceName);
+    if (element == null || element == myReference.getElement().getContainingFile()) return false;
     String hintText = ShowAutoImportPass.getMessage(false, getRefName());
     HintManager.getInstance().showQuestionHint(editor, hintText, myReference.getElement().getTextOffset(),
                                                myReference.getElement().getTextRange().getEndOffset(), this);
