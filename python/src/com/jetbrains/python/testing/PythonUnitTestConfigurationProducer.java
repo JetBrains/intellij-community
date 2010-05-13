@@ -9,7 +9,6 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -41,7 +40,7 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     RunnerAndConfigurationSettings settings;
 
     Module module = location.getModule();
@@ -54,19 +53,19 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
     }
 
     settings = createConfigurationFromFolder(location);
-    if (settings != null) return (RunnerAndConfigurationSettingsImpl)settings;
+    if (settings != null) return settings;
 
     final PyElement pyElement = PsiTreeUtil.getParentOfType(location.getPsiElement(), PyElement.class);
     if (pyElement != null) {
       settings = createConfigurationFromFunction(location, pyElement);
-      if (settings != null) return (RunnerAndConfigurationSettingsImpl)settings;
+      if (settings != null) return settings;
 
       settings = createConfigurationFromClass(location, pyElement);
-      if (settings != null) return (RunnerAndConfigurationSettingsImpl)settings;
+      if (settings != null) return settings;
     }
 
     settings = createConfigurationFromFile(location, location.getPsiElement());
-    if (settings != null) return (RunnerAndConfigurationSettingsImpl)settings;
+    if (settings != null) return settings;
 
     return null;
   }
@@ -198,13 +197,13 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
-    final RunnerAndConfigurationSettingsImpl settings = createConfigurationByElement(location, null);
+    final RunnerAndConfigurationSettings settings = createConfigurationByElement(location, null);
     if (settings != null) {
       final PythonUnitTestRunConfiguration configuration = (PythonUnitTestRunConfiguration)settings.getConfiguration();
-      for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+      for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
         if (configuration.compareSettings((PythonUnitTestRunConfiguration)existingConfiguration.getConfiguration())) {
           return existingConfiguration;
         }
