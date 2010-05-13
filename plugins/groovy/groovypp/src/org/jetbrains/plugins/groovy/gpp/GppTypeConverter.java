@@ -68,11 +68,6 @@ public class GppTypeConverter extends GrTypeConverter {
 
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (!hasTypedContext(context)) {
-      return null;
-    }
-
-
     if (rType instanceof GrTupleType) {
       final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
 

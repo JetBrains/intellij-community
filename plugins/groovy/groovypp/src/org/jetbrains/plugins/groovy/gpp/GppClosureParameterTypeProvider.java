@@ -28,10 +28,6 @@ import java.util.*;
 public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
   @Override
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    if (!GppTypeConverter.hasTypedContext(closure)) {
-      return null;
-    }
-
     final Pair<PsiMethod, PsiSubstitutor> pair = getOverriddenMethod(closure);
     if (pair != null) {
       final PsiParameter[] parameters = pair.first.getParameterList().getParameters();
