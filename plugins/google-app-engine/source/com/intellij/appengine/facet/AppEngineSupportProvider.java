@@ -5,8 +5,8 @@ import com.intellij.appengine.server.instance.AppEngineServerModel;
 import com.intellij.appengine.server.run.AppEngineServerConfigurationType;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
@@ -105,7 +105,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
     if (appServer != null) {
       final ConfigurationFactory type = AppEngineServerConfigurationType.getInstance().getConfigurationFactories()[0];
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(module.getProject());
-      final RunnerAndConfigurationSettingsImpl runSettings = (RunnerAndConfigurationSettingsImpl)runManager.createRunConfiguration("AppEngine Dev", type);
+      final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration("AppEngine Dev", type);
 
       final CommonStrategy configuration = (CommonStrategy)runSettings.getConfiguration();
       configuration.setApplicationServer(appServer);
