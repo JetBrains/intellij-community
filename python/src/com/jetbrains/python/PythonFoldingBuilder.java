@@ -41,7 +41,7 @@ public class PythonFoldingBuilder implements FoldingBuilder, DumbAware {
           while (lastImport.getElementType() == TokenType.WHITE_SPACE) {
             lastImport = lastImport.getTreePrev();
           }
-          if (isImport(lastImport, false)) {
+          if (isImport(lastImport, false) && firstImport != lastImport) {
             descriptors.add(new FoldingDescriptor(firstImport, new TextRange(firstImport.getStartOffset(),
                                                                              lastImport.getTextRange().getEndOffset())));
           }
