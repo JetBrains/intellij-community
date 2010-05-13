@@ -811,7 +811,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Exception {
-        final VirtualFile copy = findFileInTempDir(filePath.replace(File.separatorChar, '/'));
+        final String path = filePath.replace(File.separatorChar, '/');
+        final VirtualFile copy = findFileInTempDir(path);
+        if (copy == null) {
+          throw new IllegalArgumentException("could not find results file " + path);
+        }
         final PsiFile psiFile = myPsiManager.findFile(copy);
         assert psiFile != null;
         checkResultByFile(expectedFile, psiFile, ignoreTrailingWhitespaces);
