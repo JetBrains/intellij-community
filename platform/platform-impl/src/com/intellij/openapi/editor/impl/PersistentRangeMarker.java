@@ -22,13 +22,13 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 /**
  * @author max
  */
-public class PersistentRangeMarker extends RangeMarkerImpl {
+class PersistentRangeMarker extends RangeMarkerImpl {
   private int myStartLine;
   private int myStartColumn;
   private int myEndLine;
   private int myEndColumn;
 
-  public PersistentRangeMarker(DocumentEx document, int startOffset, int endOffset) {
+  PersistentRangeMarker(DocumentEx document, int startOffset, int endOffset) {
     super(document, startOffset, endOffset);
     storeLinesAndCols();
   }
