@@ -34,6 +34,8 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
+import java.util.EnumMap;
+import java.util.Map;
 
 /**
  * Base class for java formatter tests that holds utility methods.
@@ -42,6 +44,26 @@ import java.io.File;
  * @since Apr 27, 2010 6:26:29 PM
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
+
+  protected enum Action {REFORMAT, INDENT}
+
+  private interface TestFormatAction {
+    void run(PsiFile psiFile, int startOffset, int endOffset);
+  }
+
+  private static final Map<Action, TestFormatAction> ACTIONS = new EnumMap<Action, TestFormatAction>(Action.class);
+  static {
+    ACTIONS.put(Action.REFORMAT, new TestFormatAction() {
+      public void run(PsiFile psiFile, int startOffset, int endOffset) {
+        CodeStyleManager.getInstance(getProject()).reformatText(psiFile, startOffset, endOffset);
+      }
+    });
+    ACTIONS.put(Action.INDENT, new TestFormatAction() {
+      public void run(PsiFile psiFile, int startOffset, int endOffset) {
+        CodeStyleManager.getInstance(getProject()).adjustLineIndent(psiFile, startOffset);
+      }
+    });
+  }
 
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
 
@@ -57,10 +79,14 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
   public void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
-    doTextTest(loadFile(fileNameBefore), loadFile(fileNameAfter));
+    doTextTest(Action.REFORMAT, loadFile(fileNameBefore), loadFile(fileNameAfter));
   }
 
   public void doTextTest(final String text, String textAfter) throws IncorrectOperationException {
+    doTextTest(Action.REFORMAT, text, textAfter);
+  }
+
+  public void doTextTest(final Action action, final String text, String textAfter) throws IncorrectOperationException {
     final PsiFile file = createPseudoPhysicalFile("A.java", text);
 
     if (myLineRange != null) {
@@ -96,13 +122,11 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
             document.replaceString(0, document.getTextLength(), text);
             manager.commitDocument(document);
             try {
-              if (myTextRange != null) {
-                CodeStyleManager.getInstance(getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
+              TextRange rangeToUse = myTextRange;
+              if (rangeToUse == null) {
+                rangeToUse = file.getTextRange();
               }
-              else {
-                CodeStyleManager.getInstance(getProject())
-                  .reformatText(file, file.getTextRange().getStartOffset(), file.getTextRange().getEndOffset());
-              }
+              ACTIONS.get(action).run(file, rangeToUse.getStartOffset(), rangeToUse.getEndOffset());
             }
             catch (IncorrectOperationException e) {
               assertTrue(e.getLocalizedMessage(), false);
@@ -124,12 +148,19 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
   public void doMethodTest(final String before, final String after) throws Exception {
-    doTextTest("class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + StringUtil.shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}");
+    doTextTest(
+      Action.REFORMAT,
+      "class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
+      "class Foo {\n" + "    void foo() {\n" + StringUtil.shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}"
+    );
   }
 
   public void doClassTest(final String before, final String after) throws Exception {
-    doTextTest("class Foo{\n" + before + '\n' + "}", "class Foo {\n" + StringUtil.shiftIndentInside(after, 4, false) + '\n' + "}");
+    doTextTest(
+      Action.REFORMAT,
+      "class Foo{\n" + before + '\n' + "}",
+      "class Foo {\n" + StringUtil.shiftIndentInside(after, 4, false) + '\n' + "}"
+    );
   }
 
   private static String prepareText(String actual) {

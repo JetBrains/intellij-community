@@ -22,13 +22,13 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
-import com.intellij.execution.junit2.configuration.CommonJavaParameters;
-import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,7 +67,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JPanel panel;
 
   private LabeledComponent<TextFieldWithBrowseButton> classField;
-  private EnvironmentVariablesComponent envVariablesComponent;
   private LabeledComponent<JComboBox> moduleClasspath;
   private AlternativeJREPanel alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
@@ -97,7 +96,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JButton removeListener;
   private LabeledComponent<JComboBox> annotationType;
   private JCheckBox myUseDefaultReportersCheckBox;
-  private final CommonJavaParameters commonJavaParameters = new CommonJavaParameters();
+  private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private ArrayList<Map.Entry> propertiesList;
   private TestNGListenersTableModel listenerModel;
 
@@ -160,6 +159,8 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     });
     propertiesFile.getComponent().getTextField().setDocument(model.getPropertiesFileDocument());
     outputDirectory.getComponent().getTextField().setDocument(model.getOutputDirectoryDocument());
+
+    commonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
   }
 
   private void evaluateModuleClassPath() {
@@ -224,8 +225,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       packagesInProject.setSelected(true);
     }
     alternateJDK.init(config.ALTERNATIVE_JRE_PATH, config.ALTERNATIVE_JRE_PATH_ENABLED);
-    envVariablesComponent.setEnvs(config.getPersistantData().getEnvs());
-    envVariablesComponent.setPassParentEnvs(config.getPersistantData().PASS_PARENT_ENVS);
     propertiesList = new ArrayList<Map.Entry>();
     propertiesList.addAll(data.TEST_PROPERTIES.entrySet());
     propertiesTableModel.setParameterList(propertiesList);
@@ -265,9 +264,6 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     data.TEST_LISTENERS.addAll(listenerModel.getListenerList());
 
     data.USE_DEFAULT_REPORTERS = myUseDefaultReportersCheckBox.isSelected();
-
-    data.setEnvs(envVariablesComponent.getEnvs());
-    data.PASS_PARENT_ENVS = envVariablesComponent.isPassParentEnvs();
   }
 
   public ConfigurationModuleSelector getModuleSelector() {

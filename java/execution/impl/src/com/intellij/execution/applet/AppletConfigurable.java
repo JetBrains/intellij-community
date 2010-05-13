@@ -17,9 +17,9 @@ package com.intellij.execution.applet;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
-import com.intellij.execution.junit2.configuration.ClassBrowser;
-import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.ClassBrowser;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;

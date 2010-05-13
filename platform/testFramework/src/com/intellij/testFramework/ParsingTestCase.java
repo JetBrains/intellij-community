@@ -56,7 +56,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
   protected void doTest(boolean checkResult) throws Exception{
     String name = getTestName(false);
     String text = loadFile(name + "." + myFileExt);
-    myFile = createFile(name + "." + myFileExt, text);
+    myFile = createPsiFile(name, text);
     myFile.accept(new PsiRecursiveElementVisitor(){});
     assertEquals(text, myFile.getText());
     if (checkResult){
@@ -65,6 +65,10 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
     else{
       toParseTreeText(myFile, includeRanges());
     }
+  }
+
+  protected PsiFile createPsiFile(String name, String text) {
+    return createFile(name + "." + myFileExt, text);
   }
 
   protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws Exception {

@@ -15,18 +15,12 @@
  */
 package com.intellij.execution;
 
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
-public interface RunJavaConfiguration {
-  int VM_PARAMETERS_PROPERTY = 0;
-  int PROGRAM_PARAMETERS_PROPERTY = 1;
-  int WORKING_DIRECTORY_PROPERTY = 2;
+public interface CommonJavaRunConfigurationParameters extends CommonProgramRunConfigurationParameters {
+  void setVMParameters(String value);
 
-  void setProperty(int property, String value);
-  String getProperty(int property);
-
-  Project getProject();
+  String getVMParameters();
 
   boolean isAlternativeJrePathEnabled();
 
@@ -34,12 +28,11 @@ public interface RunJavaConfiguration {
 
   String getAlternativeJrePath();
 
-  void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH);
+  void setAlternativeJrePath(String path);
 
   @Nullable
   String getRunClass();
 
   @Nullable
   String getPackage();
-
 }

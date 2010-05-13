@@ -344,6 +344,9 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
             originalInjection.initializePlaces(true);
           }
         }
+        else {
+          createDefaultEditAction(project, producer).actionPerformed(null);
+        }
       }
     };
   }

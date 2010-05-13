@@ -40,6 +40,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "@AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\")) })\n" +
       "class Foo {\n" +
       "}",
+      
       "@AttributeOverrides({\n" +
       "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
       "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
@@ -113,5 +114,26 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "\n" +
       "}");
+  }
+
+  public void testEnumConstantsWrapping() {
+    // Inspired by IDEA-54667
+    getSettings().ENUM_CONSTANTS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().RIGHT_MARGIN = 80;
+
+    // Don't expect the constants to be placed on new line.
+    doTextTest(
+      "enum Test {FIRST, SECOND}",
+      "enum Test {FIRST, SECOND}"
+    );
+
+    // Expect not only enum constants to be wrapped but line break inside enum-level curly braces as well.
+    doTextTest(
+      "enum Test {FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH}",
+
+      "enum Test {\n" +
+      "    FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH\n" +
+      "}"
+    );
   }
 }

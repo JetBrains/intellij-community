@@ -107,7 +107,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
     }
 
     private PsiMethod getMethod() {
-      return (PsiMethod)myMethodPointer.getElement();
+      return myMethodPointer.getElement();
     }
 
     @NotNull

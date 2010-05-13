@@ -16,8 +16,8 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorSettings;
+//import com.intellij.openapi.editor.Editor;
+//import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 import javax.swing.*;
@@ -100,6 +100,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_AFTER_TYPE_CAST", ApplicationBundle.message("checkbox.spaces.after.type.cast"), OTHER);
   }
 
+  /*
   protected void setupEditorSettings(Editor editor) {
     EditorSettings editorSettings = editor.getSettings();
     editorSettings.setWhitespacesShown(true);
@@ -110,6 +111,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
   }
+  */
 
   public JComponent getPanel() {
     return getInternalPanel();

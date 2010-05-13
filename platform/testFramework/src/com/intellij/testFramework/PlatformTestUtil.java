@@ -15,7 +15,7 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.ide.DataManager;
+import com.intellij.ide.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
@@ -43,11 +43,15 @@ import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.awt.*;
+import java.awt.event.InvocationEvent;
+
 
 /**
  * @author yole
@@ -180,6 +184,20 @@ public class PlatformTestUtil {
     while (!invoked[0]) {
       UIUtil.dispatchAllInvocationEvents();
       Thread.sleep(delay);
+    }
+  }
+
+  @TestOnly
+  public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    while (true) {
+      AWTEvent event = eventQueue.peekEvent();
+      if (event == null) break;
+        AWTEvent event1 = eventQueue.getNextEvent();
+        if (event1 instanceof InvocationEvent) {
+          IdeEventQueue.getInstance().dispatchEvent(event1);
+        }
     }
   }
 

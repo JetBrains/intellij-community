@@ -30,4 +30,17 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doTextTest("class Foo {\n" + "Map<String,String> map() {}\n" + "}",
                "class Foo {\n" + "    Map<String, String> map() {\n" + "    }\n" + "}");
   }
+
+  public void testSpaceBeforeAnnotationParamArray() {
+    // Inspired by IDEA-24329
+    getSettings().SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE = true;
+
+    String text =
+      "@SuppressWarnings( {\"ALL\"})\n" +
+      "public class FormattingTest {\n" +
+      "}";
+
+    // Don't expect the space to be 'ate'
+    doTextTest(text, text);
+  }
 }

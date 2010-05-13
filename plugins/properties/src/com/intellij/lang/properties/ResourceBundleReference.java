@@ -46,12 +46,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement> implem
   @NotNull public ResolveResult[] multiResolve(final boolean incompleteCode) {
     PropertiesReferenceManager referenceManager = PropertiesReferenceManager.getInstance(myElement.getProject());
     List<PropertiesFile> propertiesFiles = referenceManager.findPropertiesFiles(myElement.getResolveScope(), myBundleName, this);
-    final ResolveResult[] result = new ResolveResult[propertiesFiles.size()];
-    for(int i=0; i<propertiesFiles.size(); i++) {
-      PropertiesFile file = propertiesFiles.get(i);
-      result[i] = new PsiElementResolveResult(file);
-    }
-    return result;
+    return PsiElementResolveResult.createResults(propertiesFiles);
   }
 
   @NotNull

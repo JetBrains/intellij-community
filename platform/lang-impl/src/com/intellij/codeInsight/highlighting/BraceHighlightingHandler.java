@@ -27,7 +27,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobScheduler;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -93,8 +93,7 @@ public class BraceHighlightingHandler {
     final Project project = editor.getProject();
     if (project == null) return;
     final int offset = editor.getCaretModel().getOffset();
-    Job<Object> job = JobScheduler.getInstance().createJob("Brace highlighter", Job.DEFAULT_PRIORITY);
-    job.addTask(new Runnable() {
+    JobUtil.submitToJobThread(new Runnable() {
       public void run() {
         if (isReallyDisposed(editor, project)) return;
         final PsiFile injected = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
@@ -114,8 +113,7 @@ public class BraceHighlightingHandler {
           }
         }, ModalityState.stateForComponent(editor.getComponent()));
       }
-    });
-    job.schedule();
+    }, Job.DEFAULT_PRIORITY);
   }
 
   private static boolean isReallyDisposed(Editor editor, Project project) {

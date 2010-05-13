@@ -34,7 +34,9 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
@@ -137,14 +139,22 @@ public class TestsPacketsReceiver implements PacketProcessor, Disposable {
     final String parentClass = myCurrentTest.getInfo().getComment();
     TestProxy dynamicParent = myKnownDynamicParents.get(parentClass);
     if (dynamicParent == null) {
-      dynamicParent = new TestProxy(new ClassBasedInfo(DisplayTestInfoExtractor.FOR_CLASS){
-        {
-          setClassName(parentClass);
-        }
-        public void readFrom(ObjectReader reader) {}
-      });
+      if (Comparing
+        .strEqual(parentClass, StringUtil.getQualifiedName(model.getRoot().getInfo().getComment(), model.getRoot().getName()))) {
+        dynamicParent = model.getRoot();
+      }
+      else {
+        dynamicParent = new TestProxy(new ClassBasedInfo(DisplayTestInfoExtractor.FOR_CLASS) {
+          {
+            setClassName(parentClass);
+          }
+
+          public void readFrom(ObjectReader reader) {
+          }
+        });
+        model.getRoot().addChild(dynamicParent);
+      }
       myKnownDynamicParents.put(parentClass, dynamicParent);
-      model.getRoot().addChild(dynamicParent);
     }
     return dynamicParent;
   }
