@@ -96,6 +96,7 @@ public class AddSupportForFrameworksPanel {
         final FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
         frameworkSupportNode.setConfigurableComponentEnabled(node.isChecked());
         updateOptionsPanel();
+        frameworkSupportNode.getConfigurable().onFrameworkSelectionChanged(node.isChecked());
         myModel.onFrameworkSelectionChanged(frameworkSupportNode);
       }
     };
