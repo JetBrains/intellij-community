@@ -10,7 +10,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Comparing;
@@ -37,7 +36,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
     PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
     if (file == null) return null;
@@ -63,7 +62,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       configuration.setKeywords(name);
       configuration.setName(name + " in " + configuration.getName());
     }
-    return (RunnerAndConfigurationSettingsImpl)result;
+    return result;
   }
 
   @Nullable
@@ -79,10 +78,10 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
-    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
       PyTestRunConfiguration pyTestRunConfiguration = (PyTestRunConfiguration)configuration;
       final PsiElement element = location.getPsiElement();
