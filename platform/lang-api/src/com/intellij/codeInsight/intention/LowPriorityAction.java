@@ -16,12 +16,9 @@
 package com.intellij.codeInsight.intention;
 
 /**
+ * @author Max Ishchenko
  * Marker interface for intentions and quick fixes.
- * Marked actions are shown on the top of the list and are separated from the others.
- *
- * @author Dmitry Avdeev
- * @see com.intellij.codeInsight.intention.IntentionAction
- * @see com.intellij.codeInspection.LocalQuickFix
+ * Marked actions are shown lower in the list of available quick fixes.
  */
-public interface PreferredAction {
+public interface LowPriorityAction {
 }
