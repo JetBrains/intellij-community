@@ -34,6 +34,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <javaee.appServerIntegration implementation="com.intellij.appengine.server.integration.AppEngineServerIntegration"/>
     <configurationType implementation="com.intellij.appengine.server.run.AppEngineServerConfigurationType"/>
+    <configurationProducer implementation="com.intellij.appengine.server.run.AppEngineServerConfigurationProducer"/>
 
     <applicationService serviceInterface="com.intellij.appengine.sdk.AppEngineSdkManager"
                         serviceImplementation="com.intellij.appengine.sdk.impl.AppEngineSdkManagerImpl"/>
@@ -43,7 +44,6 @@
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
     <compiler implementation="com.intellij.appengine.enhancement.EnhancerCompiler"/>
-    <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
   </extensions>
 
   <actions>
