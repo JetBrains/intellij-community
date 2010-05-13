@@ -36,7 +36,7 @@ public interface QuickFix<D extends CommonProblemDescriptor> {
   String getName();
 
   /**
-   * To appear in "Apply Fix" statement when multiple Quick Fixes exist
+   * @return text to appear in "Apply Fix" statement when multiple Quick Fixes exist
    */
   @NotNull String getFamilyName();
 
