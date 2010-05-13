@@ -16,6 +16,15 @@
 
 package com.intellij.execution.junit;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
+
 public abstract class JUnitConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
   public static final RuntimeConfigurationProducer[] PROTOTYPES = new RuntimeConfigurationProducer[]{
         new AllInPackageConfigurationProducer(),
@@ -30,5 +39,40 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
   public int compareTo(final Object o) {
     if (o instanceof TestMethodConfigurationProducer) return -PREFERED;
     return PREFERED;
+  }
+
+  @Override
+  protected RunnerAndConfigurationSettingsImpl findExistingByElement(@NotNull Location location,
+                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  ) {
+    final Module predefinedModule =
+      ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
+        .getConfigurationTemplate(getConfigurationFactory())
+        .getConfiguration()).getConfigurationModule().getModule();
+    final PsiElement element = location.getPsiElement();
+    final PsiClass testClass = JUnitUtil.getTestClass(element);
+    final PsiMethod testMethod = JUnitUtil.getTestMethod(element);
+    final PsiPackage testPackage;
+    if (element instanceof PsiPackage) {
+      testPackage = (PsiPackage)element;
+    } else if (element instanceof PsiDirectory){
+      testPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    } else {
+      testPackage = null;
+    }
+    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+      final JUnitConfiguration unitConfiguration = (JUnitConfiguration)existingConfiguration.getConfiguration();
+      final TestObject testobject = unitConfiguration.getTestObject();
+      if (testobject != null) {
+        if (testobject.isConfiguredByElement(unitConfiguration, testClass, testMethod, testPackage)) {
+          final Module configurationModule = unitConfiguration.getConfigurationModule().getModule();
+          if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
+          if (Comparing.equal(predefinedModule, configurationModule)) {
+            return existingConfiguration;
+          }
+        }
+      }
+    }
+    return null;
   }
 }

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,16 +41,19 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenRunConfigurationType implements LocatableConfigurationType {
+public class MavenRunConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/images/phase.png");
   private static final int MAX_NAME_LENGTH = 40;
+
+  public static MavenRunConfigurationType getInstance() {
+    return ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
+  }
 
   /**
    * reflection
@@ -142,26 +145,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     return null;
   }
 
-  public RunnerAndConfigurationSettings createConfigurationByLocation(Location l) {
-    final MavenRunnerParameters params = createBuildParameters(l);
-    if (params == null) return null;
-    return createRunnerAndConfigurationSettings(null, null, params, l.getProject());
-  }
 
-  public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
-    return configuration instanceof MavenRunConfiguration &&
-           ((MavenRunConfiguration)configuration).getRunnerParameters().equals(createBuildParameters(location));
-  }
-
-  private static MavenRunnerParameters createBuildParameters(Location l) {
-    if (!(l instanceof MavenGoalLocation)) return null;
-
-    VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
-    List<String> goals = ((MavenGoalLocation)l).getGoals();
-    Collection<String> profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
-
-    return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles);
-  }
 
   public static void runConfiguration(Project project,
                                       MavenRunnerParameters params,
@@ -195,7 +179,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     }
   }
 
-  private static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(MavenGeneralSettings generalSettings,
+  static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(MavenGeneralSettings generalSettings,
                                                                                      MavenRunnerSettings runnerSettings,
                                                                                      MavenRunnerParameters params,
                                                                                      Project project) {

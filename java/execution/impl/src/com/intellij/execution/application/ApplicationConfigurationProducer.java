@@ -18,16 +18,21 @@ package com.intellij.execution.application;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
@@ -85,5 +90,33 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
 
   public int compareTo(final Object o) {
     return PREFERED;
+  }
+
+  @Override
+  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  ) {
+    final PsiClass aClass = ApplicationConfigurationType.getMainClass(location.getPsiElement());
+    if (aClass == null) {
+      return null;
+    }
+    final Module predefinedModule =
+      ((ApplicationConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
+        .getConfigurationTemplate(getConfigurationFactory())
+        .getConfiguration()).getConfigurationModule().getModule();
+    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+      final ApplicationConfiguration appConfiguration = (ApplicationConfiguration)existingConfiguration.getConfiguration();
+      if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
+        if (Comparing.equal(location.getModule(), appConfiguration.getConfigurationModule().getModule())) {
+          return existingConfiguration;
+        }
+        final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
+        if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
+        if (Comparing.equal(predefinedModule, configurationModule)) {
+          return existingConfiguration;
+        }
+      }
+    }
+    return null;
   }
 }

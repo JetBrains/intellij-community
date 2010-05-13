@@ -16,7 +16,10 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.*;
+import com.intellij.execution.LocatableConfigurationType;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
@@ -28,6 +31,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -57,16 +61,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
       final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location != null ? location.getModule() : null);
       if (_location != null) {
         // replace with existing configuration if any
+        final RunManagerEx runManager = RunManagerEx.getInstanceEx(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
-        if (type instanceof LocatableConfigurationType) {
-          final RunManagerEx runManager = RunManagerEx.getInstanceEx(context.getProject());
-          final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(type);
-          for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
-            if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), _location)) {
-              result.myConfiguration = configuration;
-              break;
-            }
-          }
+        final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(type);
+        final RunnerAndConfigurationSettingsImpl configuration = findExistingByElement(_location, configurations);
+        if (configuration != null) {
+          result.myConfiguration = configuration;
         }
       }
     }
@@ -82,6 +82,23 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
 
   @Nullable
   protected abstract RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context);
+
+  @Nullable
+  protected RunnerAndConfigurationSettingsImpl findExistingByElement(final Location location,
+                                                                     @NotNull final RunnerAndConfigurationSettingsImpl[] existingConfigurations) {
+    if (existingConfigurations.length > 0) {
+      ConfigurationType type = existingConfigurations[0].getType();
+      if (type instanceof LocatableConfigurationType) {
+        for (final RunnerAndConfigurationSettingsImpl configuration : existingConfigurations) {
+          if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), location)) {
+            return configuration;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
 
   public RuntimeConfigurationProducer clone() {
     try {

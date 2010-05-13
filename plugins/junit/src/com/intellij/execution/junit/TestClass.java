@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
@@ -56,17 +57,19 @@ class TestClass extends TestObject {
     return RefactoringListeners.getClassOrPackageListener(element, configuration.myClass);
   }
 
-  public boolean isConfiguredByElement(final JUnitConfiguration configuration, final PsiElement element) {
-    final PsiClass aClass = JUnitUtil.getTestClass(element);
-    if (aClass == null) {
+  public boolean isConfiguredByElement(final JUnitConfiguration configuration,
+                                       PsiClass testClass,
+                                       PsiMethod testMethod,
+                                       PsiPackage testPackage) {
+
+    if (testClass == null) {
       return false;
     }
-    final PsiMethod method = JUnitUtil.getTestMethod(element);
-    if (method != null) {
+    if (testMethod != null) {
       // 'test class' configuration is not equal to the 'test method' configuration!
       return false;
     }
-    return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), configuration.getPersistentData().getMainClassName());
+    return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(testClass), configuration.getPersistentData().getMainClassName());
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
