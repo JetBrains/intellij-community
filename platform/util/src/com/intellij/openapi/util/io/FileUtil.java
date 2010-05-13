@@ -100,7 +100,7 @@ public class FileUtil {
     return relativePath.toString();
   }
 
-  public static boolean isAbsolute(String path) {
+  public static boolean isAbsolute(@NotNull String path) {
     return new File(path).isAbsolute();
   }
 
