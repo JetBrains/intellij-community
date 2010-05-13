@@ -6,5 +6,7 @@ from pycharm import django_settings
 if __name__ == "__main__":
     if sys.platform == 'win32':
         import getpass
+        import warnings
         getpass.getpass = getpass.fallback_getpass
+        warnings.simplefilter("ignore", category=getpass.GetPassWarning)
     execute_manager(django_settings)
