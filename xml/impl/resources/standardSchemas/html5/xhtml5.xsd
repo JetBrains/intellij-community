@@ -414,7 +414,7 @@
     <xs:annotation>
       <xs:documentation>IRIs</xs:documentation>
     </xs:annotation>
-    <xs:union memberTypes="xs:string xs:string"/>
+    <xs:union memberTypes="xs:string"/>
   </xs:simpleType>
   <xs:simpleType name="common.data.uris">
     <xs:list itemType="xs:string"/>
@@ -477,7 +477,7 @@
     <xs:annotation>
       <xs:documentation>Language Codes</xs:documentation>
     </xs:annotation>
-    <xs:union memberTypes="xs:string xs:string"/>
+    <xs:union memberTypes="xs:string"/>
   </xs:simpleType>
   <xs:simpleType name="common.data.keylabellist">
     <xs:annotation>
@@ -657,6 +657,7 @@
       <xs:attributeGroup ref="xhtml:link.attrs"/>
     </xs:complexType>
   </xs:element>
+
   <xs:attributeGroup name="link.attrs">
     <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:shared-hyperlink.attrs.href"/>
@@ -666,14 +667,14 @@
     <xs:attribute name="type" type="common.data.mimetype"/>
     <xs:attribute name="sizes">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.sizes"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="link.attrs.sizes">
     <xs:attribute name="sizes" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.sizes"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -740,51 +741,44 @@
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
+
+  <xs:element name="meta">
+    <xs:complexType>
+      <xs:attributeGroup ref="xhtml:common.attrs"/>
+      <xs:attributeGroup ref="xhtml:meta.name.attrs"/>
+      <xs:attributeGroup ref="xhtml:meta.http-equiv.refresh.attrs"/>
+      <xs:attributeGroup ref="xhtml:meta.charset.attrs"/>
+    </xs:complexType>
+  </xs:element>
+
   <xs:group name="meta.name.elem">
     <xs:annotation>
       <xs:documentation>Name-Value Metadata: &lt;meta name&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="meta">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:meta.name.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="meta"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="meta.name.attrs">
-    <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:meta.name.attrs.name"/>
     <xs:attributeGroup ref="xhtml:meta.name.attrs.content"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="meta.name.attrs.name">
-    <xs:attribute name="name" use="required" type="xs:string"/>
+    <xs:attribute name="name" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="meta.name.attrs.content">
-    <xs:attribute name="content" use="required" type="xs:string"/>
+    <xs:attribute name="content" type="xs:string"/>
   </xs:attributeGroup>
   <xs:group name="meta.http-equiv.refresh.elem">
     <xs:annotation>
       <xs:documentation>"refresh" pragma directive: &lt;meta http-equiv='refresh'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="meta">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:meta.http-equiv.refresh.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="meta"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="meta.http-equiv.refresh.attrs">
-    <xs:attributeGroup ref="common.attrs"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.http-equiv.refresh"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.content.refresh"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.http-equiv.refresh">
-    <xs:attribute name="http-equiv" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.content.refresh">
-    <xs:attribute name="content" use="required" type="common.data.refresh"/>
+    <xs:attribute name="http-equiv" type="xs:string"/>
   </xs:attributeGroup>
   <!--
     not quite right per spec
@@ -796,24 +790,9 @@
       <xs:documentation>"default-style" pragma directive: &lt;meta http-equiv='default-style'&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="meta">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:meta.http-equiv.default-style.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="meta"/>
     </xs:sequence>
   </xs:group>
-  <xs:attributeGroup name="meta.http-equiv.default-style.attrs">
-    <xs:attributeGroup ref="common.attrs"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.http-equiv.default-style"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.content.default-style"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.http-equiv.default-style">
-    <xs:attribute name="http-equiv" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.content.default-style">
-    <xs:attribute name="content" use="required" type="common.data.default-style"/>
-  </xs:attributeGroup>
   <!--
     not quite right per spec
     if the definition is
@@ -824,24 +803,9 @@
       <xs:documentation>"content-language" pragma directive: &lt;meta http-equiv='content-language'&gt; (obsolete)</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="meta">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:meta.http-equiv.content-language.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="meta"/>
     </xs:sequence>
   </xs:group>
-  <xs:attributeGroup name="meta.http-equiv.content-language.attrs">
-    <xs:attributeGroup ref="common.attrs"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.http-equiv.content-language"/>
-    <xs:attributeGroup ref="xhtml:meta.http-equiv.attrs.content.content-language"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.http-equiv.content-language">
-    <xs:attribute name="http-equiv" use="required" type="xs:string"/>
-  </xs:attributeGroup>
-  <xs:attributeGroup name="meta.http-equiv.attrs.content.content-language">
-    <xs:attribute name="content" use="required" type="common.data.langcode"/>
-  </xs:attributeGroup>
   <!--
     not quite right per spec
     if the definition is
@@ -852,19 +816,14 @@
       <xs:documentation>Inline Character Encoding Statement for HTML: &lt;meta charset&gt;</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="meta">
-        <xs:complexType>
-          <xs:attributeGroup ref="xhtml:meta.charset.attrs"/>
-        </xs:complexType>
-      </xs:element>
+      <xs:element ref="meta"/>
     </xs:sequence>
   </xs:group>
   <xs:attributeGroup name="meta.charset.attrs">
-    <xs:attributeGroup ref="common.attrs"/>
     <xs:attributeGroup ref="xhtml:meta.charset.attrs.charset"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="meta.charset.attrs.charset">
-    <xs:attribute name="charset" use="required">
+    <xs:attribute name="charset">
       <xs:simpleType>
         <xs:restriction base="xs:string">
           <xs:pattern value="[uU][tT][fF]-8"/>
@@ -4284,10 +4243,10 @@
   <xs:simpleType name="form.attrs.method.data">
     <xs:union>
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:union>
   </xs:simpleType>
@@ -4297,7 +4256,7 @@
   <xs:simpleType name="form.attrs.enctype.data">
     <xs:union memberTypes="xs:string">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string xs:string"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:union>
   </xs:simpleType>
@@ -4353,13 +4312,13 @@
     <xs:attribute name="formenctype" use="required" type="xhtml:shared-form.attrs.formenctype.data"/>
   </xs:attributeGroup>
   <xs:simpleType name="shared-form.attrs.formenctype.data">
-    <xs:union memberTypes="xs:string xs:string xs:string"/>
+    <xs:union memberTypes="xs:string"/>
   </xs:simpleType>
   <xs:attributeGroup name="shared-form.attrs.formmethod">
     <xs:attribute name="formmethod" use="required" type="xhtml:shared-form.attrs.formmethod.data"/>
   </xs:attributeGroup>
   <xs:simpleType name="shared-form.attrs.formmethod.data">
-    <xs:union memberTypes="xs:string xs:string xs:string xs:string"/>
+    <xs:union memberTypes="xs:string"/>
   </xs:simpleType>
   <xs:attributeGroup name="shared-form.attrs.formtarget">
     <xs:attribute name="formtarget" use="required" type="common.data.browsing-context-or-keyword"/>
@@ -4419,14 +4378,14 @@
   <xs:attributeGroup name="input.attrs.step.float">
     <xs:attribute name="step" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.float.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.attrs.step.integer">
     <xs:attribute name="step" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.integer.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -4481,7 +4440,7 @@
     <xs:attribute name="max" type="common.data.datetime"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.float.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="readonly">
@@ -4554,7 +4513,7 @@
     <xs:attribute name="max" type="xhtml:form.data.datetime-local"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.float.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="readonly">
@@ -4627,7 +4586,7 @@
     <xs:attribute name="max" type="xhtml:form.data.date"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.integer.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="readonly">
@@ -4700,7 +4659,7 @@
     <xs:attribute name="max" type="xhtml:form.data.month"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.integer.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="readonly">
@@ -4773,7 +4732,7 @@
     <xs:attribute name="max" type="xhtml:form.data.time"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.float.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="readonly">
@@ -4846,7 +4805,7 @@
     <xs:attribute name="max" type="xhtml:form.data.week"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.integer.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="readonly">
@@ -4919,7 +4878,7 @@
     <xs:attribute name="max" type="common.data.float"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.float.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="readonly">
@@ -4992,7 +4951,7 @@
     <xs:attribute name="max" type="common.data.float"/>
     <xs:attribute name="step">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.float.positive"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="value" type="common.data.float"/>
@@ -5145,7 +5104,7 @@
     <xs:attribute name="placeholder" type="xs:string"/>
     <xs:attribute name="value">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.uri.absolute"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5161,7 +5120,7 @@
   <xs:attributeGroup name="input.url.attrs.value">
     <xs:attribute name="value" use="required">
       <xs:simpleType>
-        <xs:union memberTypes="xs:string common.data.uri.absolute"/>
+        <xs:union memberTypes="xs:string"/>
       </xs:simpleType>
     </xs:attribute>
   </xs:attributeGroup>
@@ -5987,3 +5946,4 @@
   </xs:attribute>
   <xs:attribute name="lang" type="common.data.langcode"/>
 </xs:schema>
+
