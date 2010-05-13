@@ -65,7 +65,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     });
   }
 
-  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/formatter/java";
+  private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath2() + "/psi/formatter/java";
 
   public TextRange myTextRange;
   public TextRange myLineRange;
