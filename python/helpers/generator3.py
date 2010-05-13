@@ -542,7 +542,12 @@ class ModuleRedeclarator(object):
     PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key)"
 
   if version == (2, 5):
-    PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there    
+    PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
+
+  # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
+  PREDEFINED_MOD_CLASS_SIGS = {
+    ("datetime", "timedelta", "__new__") : "(cls, days=None, seconds=None, microseconds=None, milliseconds=None, minutes=None, hours=None, weeks=None)",
+  }
 
   # Some builtin classes effectively change __init__ signature without overriding it.
   # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -843,6 +848,7 @@ class ModuleRedeclarator(object):
     classname = p_class and p_class.__name__ or None
     deco = None
     deco_comment = ""
+    mod_class_method_tuple = (p_modname, classname, p_name)
     # any decorators?
     if self.doing_builtins and p_modname == BUILTIN_MOD_NAME:
       deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
@@ -868,7 +874,7 @@ class ModuleRedeclarator(object):
     if inspect and inspect.isfunction(p_func):
       self.out("def " + p_name + self.restoreByInspect(p_func) +": # reliably restored by inspect", indent)
       self.outDocAttr(p_func, indent+1, p_class)
-    elif self.isPredefinedBuiltin(p_modname, classname, p_name):
+    elif self.isPredefinedBuiltin(*mod_class_method_tuple):
       spec, sig_note = self.restorePredefinedBuiltin(classname, p_name)
       self.out("def " + spec + ": # " + sig_note, indent)
       self.outDocAttr(p_func, indent+1, p_class)
@@ -881,6 +887,9 @@ class ModuleRedeclarator(object):
         self.out("def " + spec + ":", indent)
       if not p_name in ['__gt__', '__ge__', '__lt__', '__le__', '__ne__', '__reduce_ex__', '__str__']:
         self.outDocAttr(p_func, indent+1, p_class)
+    elif mod_class_method_tuple in self.PREDEFINED_MOD_CLASS_SIGS:
+      sig = self.PREDEFINED_MOD_CLASS_SIGS[mod_class_method_tuple]
+      self.out("def " + p_name + sig + (": # known case of %s.%s.%s" % mod_class_method_tuple), indent)
     else:
       # __doc__ is our best source of arglist
       sig_note = "real signature unknown"
