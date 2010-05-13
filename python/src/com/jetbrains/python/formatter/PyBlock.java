@@ -204,7 +204,7 @@ public class PyBlock implements ASTBlock {
     if (type1 == PyElementTypes.FUNCTION_DECLARATION || (type2 == PyElementTypes.FUNCTION_DECLARATION && type1 == PyElementTypes.CLASS_DECLARATION)) {
       return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_METHOD);
     }
-    if (type1 == PyElementTypes.IMPORT_STATEMENT && isStatementOrDeclaration(type2)) {
+    if ((type1 == PyElementTypes.IMPORT_STATEMENT || type1 == PyElementTypes.FROM_IMPORT_STATEMENT) && isStatementOrDeclaration(type2)) {
       return getBlankLinesForOption(mySettings.BLANK_LINES_AFTER_IMPORTS);
     }
 
