@@ -204,7 +204,7 @@ public class PyBlock implements ASTBlock {
     if (type1 == PyElementTypes.FUNCTION_DECLARATION || (type2 == PyElementTypes.FUNCTION_DECLARATION && type1 == PyElementTypes.CLASS_DECLARATION)) {
       return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_METHOD);
     }
-    if ((type1 == PyElementTypes.IMPORT_STATEMENT || type1 == PyElementTypes.FROM_IMPORT_STATEMENT) && isStatementOrDeclaration(type2)) {
+    if (isImportStatement(type1) && (isStatementOrDeclaration(type2) && !isImportStatement(type2))) {
       return getBlankLinesForOption(mySettings.BLANK_LINES_AFTER_IMPORTS);
     }
 
@@ -297,6 +297,10 @@ public class PyBlock implements ASTBlock {
     //return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, true, Integer.MAX_VALUE);
 
     return null;
+  }
+
+  private boolean isImportStatement(IElementType type1) {
+    return (type1 == PyElementTypes.IMPORT_STATEMENT || type1 == PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   private static boolean isAround(IElementType type1, IElementType type2, final TokenSet tokenSet) {
