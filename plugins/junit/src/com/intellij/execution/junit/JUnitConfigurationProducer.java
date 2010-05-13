@@ -18,8 +18,8 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -42,8 +42,8 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(@NotNull Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(@NotNull Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
     final Module predefinedModule =
       ((JUnitConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
@@ -60,7 +60,7 @@ public abstract class JUnitConfigurationProducer extends JavaRuntimeConfiguratio
     } else {
       testPackage = null;
     }
-    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final JUnitConfiguration unitConfiguration = (JUnitConfiguration)existingConfiguration.getConfiguration();
       final TestObject testobject = unitConfiguration.getTestObject();
       if (testobject != null) {

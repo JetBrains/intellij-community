@@ -30,7 +30,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.lang.ref.Reference;
 import java.net.URL;
-import java.util.Map;
+import java.util.*;
 
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");

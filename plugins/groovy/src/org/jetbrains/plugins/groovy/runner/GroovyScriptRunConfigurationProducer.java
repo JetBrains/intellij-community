@@ -22,7 +22,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,7 +47,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     return mySourceElement;
   }
 
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(final Location location, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final PsiElement element = location.getPsiElement();
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof GroovyFile)) {
@@ -64,7 +63,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       if (settings != null) {
         final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
         GroovyScriptType.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
-        return (RunnerAndConfigurationSettingsImpl)settings;
+        return settings;
       }
     }
 
@@ -72,10 +71,10 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
-    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
       final String path = ((GroovyScriptRunConfiguration)configuration).scriptPath;
       if (path != null) {

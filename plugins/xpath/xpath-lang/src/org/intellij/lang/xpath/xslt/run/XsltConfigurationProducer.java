@@ -26,7 +26,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -50,7 +49,7 @@ public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     final XmlFile file = PsiTreeUtil.getParentOfType(location.getPsiElement(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
       myFile = file;
@@ -58,7 +57,7 @@ public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
       final RunnerAndConfigurationSettings settings =
         RunManager.getInstance(project).createRunConfiguration(myFile.getName(), getConfigurationFactory());
       ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(myFile);
-      return (RunnerAndConfigurationSettingsImpl)settings;
+      return settings;
     }
     return null;
   }
@@ -69,12 +68,12 @@ public class XsltConfigurationProducer extends RuntimeConfigurationProducer{
 
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
     final XmlFile file = PsiTreeUtil.getParentOfType(location.getPsiElement(), XmlFile.class, false);
     if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
-      for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+      for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
         final RunConfiguration configuration = existingConfiguration.getConfiguration();
         if (configuration instanceof XsltRunConfiguration) {
           if (file.getVirtualFile().getPath().replace('/', File.separatorChar)

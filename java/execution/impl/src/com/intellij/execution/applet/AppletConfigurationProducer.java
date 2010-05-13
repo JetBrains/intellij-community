@@ -25,7 +25,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
@@ -52,7 +51,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     location = JavaExecutionUtil.stepIntoSingleClass(location);
     final Project project = location.getProject();
     final PsiElement element = location.getPsiElement();
@@ -63,7 +62,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(myPsiClass);
     configuration.setModule(new JUnitUtil.ModuleOfClass().convert(myPsiClass));
     configuration.setName(configuration.getGeneratedName());
-    return (RunnerAndConfigurationSettingsImpl)settings;
+    return settings;
   }
 
   public int compareTo(Object o) {
@@ -104,12 +103,12 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
     final PsiClass aClass = getAppletClass(location.getPsiElement(), PsiManager.getInstance(location.getProject()));
     if (aClass != null) {
-      for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+      for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
         if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass),
                             ((AppletConfiguration)existingConfiguration.getConfiguration()).MAIN_CLASS_NAME)) {
           return existingConfiguration;

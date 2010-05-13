@@ -15,14 +15,10 @@
  */
 package com.intellij.execution.application;
 
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.module.Module;
@@ -47,7 +43,7 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
     return myPsiElement;
   }
 
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, final ConfigurationContext context) {
     location = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiElement element = location.getPsiElement();
 
@@ -67,15 +63,14 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
     return createConfiguration(aClass, context);
   }
 
-  private RunnerAndConfigurationSettingsImpl createConfiguration(final PsiClass aClass, final ConfigurationContext context) {
+  private RunnerAndConfigurationSettings createConfiguration(final PsiClass aClass, final ConfigurationContext context) {
     final Project project = aClass.getProject();
-    RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final ApplicationConfiguration configuration = (ApplicationConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setName(configuration.getGeneratedName());
     setupConfigurationModule(context, configuration);
     RunConfigurationExtension.patchCreatedConfiguration(configuration);
-    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 
@@ -93,8 +88,8 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location.getPsiElement());
     if (aClass == null) {
@@ -104,7 +99,7 @@ public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationPr
       ((ApplicationConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
         .getConfigurationTemplate(getConfigurationFactory())
         .getConfiguration()).getConfigurationModule().getModule();
-    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final ApplicationConfiguration appConfiguration = (ApplicationConfiguration)existingConfiguration.getConfiguration();
       if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.MAIN_CLASS_NAME)) {
         if (Comparing.equal(location.getModule(), appConfiguration.getConfigurationModule().getModule())) {

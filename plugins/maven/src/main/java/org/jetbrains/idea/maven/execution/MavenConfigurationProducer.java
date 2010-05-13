@@ -21,9 +21,9 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -47,20 +47,20 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer{
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     myPsiElement = location.getPsiElement();
     final MavenRunnerParameters params = createBuildParameters(location);
     if (params == null) return null;
-    return (RunnerAndConfigurationSettingsImpl)MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, location.getProject());
+    return MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, location.getProject());
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
 
     final MavenRunnerParameters runnerParameters = createBuildParameters(location);
-    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       final RunConfiguration configuration = existingConfiguration.getConfiguration();
       if (configuration instanceof MavenRunConfiguration &&
              ((MavenRunConfiguration)configuration).getRunnerParameters().equals(runnerParameters)) {

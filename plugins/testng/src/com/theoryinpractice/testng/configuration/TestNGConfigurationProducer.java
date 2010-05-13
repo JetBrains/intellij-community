@@ -22,8 +22,8 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
@@ -38,14 +38,14 @@ public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurati
   }
 
   @Override
-  protected RunnerAndConfigurationSettingsImpl findExistingByElement(Location location,
-                                                                     @NotNull RunnerAndConfigurationSettingsImpl[] existingConfigurations
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
   ) {
     final Module predefinedModule =
       ((TestNGConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
         .getConfigurationTemplate(getConfigurationFactory())
         .getConfiguration()).getConfigurationModule().getModule();
-    for (RunnerAndConfigurationSettingsImpl existingConfiguration : existingConfigurations) {
+    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
       TestNGConfiguration config = (TestNGConfiguration)existingConfiguration.getConfiguration();
       TestData testobject = config.getPersistantData();
       if (testobject != null){

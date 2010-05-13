@@ -18,11 +18,11 @@ package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JreVersionDetector;
@@ -111,14 +111,14 @@ public class CreateSnapShotAction extends AnAction {
     if (dir == null) return;
 
     final SnapShotClient client = new SnapShotClient();
-    List<RunnerAndConfigurationSettingsImpl> appConfigurations = new ArrayList<RunnerAndConfigurationSettingsImpl>();
-    RunnerAndConfigurationSettingsImpl snapshotConfiguration = null;
+    List<RunnerAndConfigurationSettings> appConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
+    RunnerAndConfigurationSettings snapshotConfiguration = null;
     boolean connected = false;
 
     ApplicationConfigurationType cfgType = ApplicationConfigurationType.getInstance();
-    RunnerAndConfigurationSettingsImpl[] racsi = RunManagerEx.getInstanceEx(project).getConfigurationSettings(cfgType);
+    RunnerAndConfigurationSettings[] racsi = RunManagerEx.getInstanceEx(project).getConfigurationSettings(cfgType);
 
-    for(RunnerAndConfigurationSettingsImpl config: racsi) {
+    for(RunnerAndConfigurationSettings config: racsi) {
       if (config.getConfiguration() instanceof ApplicationConfiguration) {
         ApplicationConfiguration appConfig = (ApplicationConfiguration) config.getConfiguration();
         appConfigurations.add(config);
@@ -259,8 +259,8 @@ public class CreateSnapShotAction extends AnAction {
   }
 
   @Nullable
-  private static RunnerAndConfigurationSettingsImpl promptForSnapshotConfiguration(final Project project,
-                                                                                   final List<RunnerAndConfigurationSettingsImpl> configurations) {
+  private static RunnerAndConfigurationSettings promptForSnapshotConfiguration(final Project project,
+                                                                                   final List<RunnerAndConfigurationSettings> configurations) {
     if (configurations.isEmpty()) {
       Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.no.configuration.error"),
                                  UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
@@ -279,7 +279,7 @@ public class CreateSnapShotAction extends AnAction {
       return null;
     }
 
-    final RunnerAndConfigurationSettingsImpl snapshotConfiguration;
+    final RunnerAndConfigurationSettings snapshotConfiguration;
     if (configurations.size() == 1) {
       final int rc = Messages.showYesNoDialog(
         project,

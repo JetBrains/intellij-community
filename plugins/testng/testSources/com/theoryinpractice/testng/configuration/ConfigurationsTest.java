@@ -24,7 +24,6 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -177,7 +176,7 @@ public class ConfigurationsTest {
     final Project project = myProjectFixture.getProject();
     final PsiClass psiClass = findTestClass(project);
     final TestNGInClassConfigurationProducer producer = new TestNGInClassConfigurationProducer();
-    final RunnerAndConfigurationSettingsImpl config = producer.createConfigurationByElement(new PsiLocation<PsiClass>(project, psiClass), null);
+    final RunnerAndConfigurationSettings config = producer.createConfigurationByElement(new PsiLocation<PsiClass>(project, psiClass), null);
     assert config != null;
     final RunConfiguration runConfiguration = config.getConfiguration();
     Assert.assertTrue(runConfiguration instanceof TestNGConfiguration);
@@ -202,7 +201,7 @@ public class ConfigurationsTest {
     final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
     final RunnerAndConfigurationSettings settings =
       manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
-    manager.addConfiguration((RunnerAndConfigurationSettingsImpl)settings, false);
+    manager.addConfiguration(settings, false);
     return (TestNGConfiguration)settings.getConfiguration();
   }
 }
