@@ -1,9 +1,6 @@
 package com.jetbrains.python;
 
-import com.jetbrains.python.refactoring.PyCodeFragmentTest;
-import com.jetbrains.python.refactoring.PyExtractMethodTest;
-import com.jetbrains.python.refactoring.PyInlineLocalTest;
-import com.jetbrains.python.refactoring.PyRenameTest;
+import com.jetbrains.python.refactoring.*;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;
 import com.jetbrains.python.refactoring.classes.PyPullUpTest;
 import com.jetbrains.python.refactoring.classes.PyPushDownTest;
@@ -56,7 +53,8 @@ public class PythonAllTestsSuite {
     PyCodeFragmentTest.class,
     PyOptimizeImportsTest.class,
     PySmartEnterTest.class,
-    PyStatementMoverTest.class
+    PyStatementMoverTest.class,
+    PyIntroduceVariableTest.class
   };
 
   public static TestSuite suite() {

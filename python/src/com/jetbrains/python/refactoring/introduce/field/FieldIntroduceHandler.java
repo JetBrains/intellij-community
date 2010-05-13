@@ -60,10 +60,10 @@ public class FieldIntroduceHandler extends IntroduceHandler {
   }
 
   @Override
-  protected PyExpressionStatement createExpression(Project project, String name, PyAssignmentStatement declaration) {
+  protected PyExpression createExpression(Project project, String name, PyAssignmentStatement declaration) {
     final String text = declaration.getText();
     final String self_name = text.substring(0, text.indexOf('.'));
-    return PyElementGenerator.getInstance(project).createFromText(PyExpressionStatement.class, self_name + "." + name);
+    return PyElementGenerator.getInstance(project).createExpressionFromText(self_name + "." + name);
   }
 
   @Override
