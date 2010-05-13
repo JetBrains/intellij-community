@@ -2686,7 +2686,7 @@
     <xs:attribute name="language" type="xs:string"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="script.attrs.src">
-    <xs:attribute name="src" use="required" type="common.data.uri"/>
+    <xs:attribute name="src" use="optional" type="common.data.uri"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="script.attrs.defer">
     <xs:attribute name="defer" use="required">

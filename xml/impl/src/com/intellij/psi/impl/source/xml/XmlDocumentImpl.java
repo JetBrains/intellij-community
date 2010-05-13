@@ -46,6 +46,7 @@ import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -247,18 +248,27 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       if (rootElementsDescriptors.length == 0) descr = null;
     }
 
+    XmlFile xmlFile = null;
+    
     final String dtdUri = doctype.getDtdUri();
-    if (dtdUri != null && dtdUri.length() > 0){
-      final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
-      final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
-      if (descr != null && descr1 != null){
-        descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
-      }
-      else if (descr1 != null) {
-        descr = descr1;
-      }
+    if (dtdUri == null && descr == null) {
+      xmlFile = getNsDescriptorWhenEmptyDocType(containingFile);
+    } else if (dtdUri != null && dtdUri.length() > 0){
+      xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
+    }
+    
+    final XmlNSDescriptor descr1 = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+    if (descr != null && descr1 != null){
+      descr = new XmlNSDescriptorSequence(new XmlNSDescriptor[]{descr, descr1});
+    }
+    else if (descr1 != null) {
+      descr = descr1;
     }
     return descr;
+  }
+
+  protected @Nullable XmlFile getNsDescriptorWhenEmptyDocType(XmlFile containingFile) {
+    return null;
   }
 
   public Object clone() {
