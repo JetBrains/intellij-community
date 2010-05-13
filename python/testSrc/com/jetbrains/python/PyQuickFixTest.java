@@ -140,6 +140,10 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.replace.equality"), true, true);
   }
 
+  public void testAddClassFix() throws Exception {
+    doInspectionTest("AddClass.py", PyUnresolvedReferencesInspection.class, "Create class 'Xyzzy'", true, true);
+  }
+
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
