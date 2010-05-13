@@ -22,7 +22,6 @@ package com.intellij.execution.applet;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitUtil;
@@ -57,7 +56,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     final PsiElement element = location.getPsiElement();
     myPsiClass = getAppletClass(element, PsiManager.getInstance(project));
     if (myPsiClass == null) return null;
-    RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", getConfigurationFactory());
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
     configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(myPsiClass);
     configuration.setModule(new JUnitUtil.ModuleOfClass().convert(myPsiClass));

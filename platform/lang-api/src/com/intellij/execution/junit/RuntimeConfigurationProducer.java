@@ -80,17 +80,6 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
   @Nullable
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
                                                                  @NotNull final RunnerAndConfigurationSettings[] existingConfigurations) {
-    if (existingConfigurations.length > 0) {
-      ConfigurationType type = existingConfigurations[0].getType();
-      if (type instanceof LocatableConfigurationType) {
-        for (final RunnerAndConfigurationSettings configuration : existingConfigurations) {
-          if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), location)) {
-            return configuration;
-          }
-        }
-      }
-    }
-
     return null;
   }
 
