@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -181,100 +182,107 @@ public class ExpectedHighlightingData {
    * remove highlights (bounded with <marker>...</marker>) from test case file
    * @param document document to process
    */
-  private void extractExpectedHighlightsSet(Document document) {
-    String text = document.getText();
+  private void extractExpectedHighlightsSet(final Document document) {
+    final String text = document.getText();
 
     final Set<String> markers = highlightingTypes.keySet();
-    String typesRegex = "(?:"+StringUtil.join(markers, ")|(?:")+")";
+    final String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
+    final String openingTagRx = "<(" + typesRx + ")" +
+                                "(?:\\s+descr=\"((?:[^\"\\\\]|\\\\\"|\\\\\\\\\")*)\")?" +
+                                "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
+                                "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
+                                "(?:\\s+background=\"([0-9xa-f]+)\")?" +
+                                "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
+                                "(?:\\s+effecttype=\"([A-Z]+)\")?" +
+                                "(?:\\s+fonttype=\"([0-9]+)\")?" +
+                                "(/)?>";
 
-    // er...
-    // any code then <marker> (with optional descr="...") then any code then </marker> then any code
-    @NonNls String pat = ".*?(<(" + typesRegex + ")(?: descr=\"((?:[^\"\\\\]|\\\\\"|\\\\\\\\\")*)\")?(?: type=\"([0-9A-Z_]+)\")?(?: foreground=\"([0-9xa-f]+)\")?(?: background=\"([0-9xa-f]+)\")?(?: effectcolor=\"([0-9xa-f]+)\")?(?: effecttype=\"([A-Z]+)\")?(?: fonttype=\"([0-9]+)\")?(/)?>)(.*)";
-                 //"(.+?)</" + marker + ">).*";
-    Pattern p = Pattern.compile(pat, Pattern.DOTALL);
-    Out:
-    while (true) {
-      Matcher m = p.matcher(text);
-      if (!m.matches()) break;
-      int startOffset = m.start(1);
-      String marker = m.group(2);
-      ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
-
-      while (!expectedHighlightingSet.enabled) {
-        if (!m.find()) break Out;
-        marker = m.group(2);
-        startOffset = m.start(1);
-        expectedHighlightingSet = highlightingTypes.get(marker);
-      }
-      int pos = 3;
-      @NonNls String descr = m.group(pos++);
-      if (descr == null) {
-        // no descr means any string by default
-        descr = ANY_TEXT;
-      }
-      else if (descr.equals("null")) {
-        // explicit "null" descr
-        descr = null;
-      }
-
-      // replace: \\" to ", doesn't check symbol before sequence \\"
-      if (descr != null) {
-        descr = descr.replaceAll("\\\\\\\\\"", "\"");
-      }
-
-      String typeString = m.group(pos++);
-      String foregroundColor = m.group(pos++);
-      String backgroundColor = m.group(pos++);
-      String effectColor = m.group(pos++);
-      String effectType = m.group(pos++);
-      String fontType = m.group(pos++);
-      String closeTagMarker = m.group(pos++);
-      String rest = m.group(pos++);
-
-      String content;
-      int endOffset;
-      if (closeTagMarker == null) {
-        Pattern pat2 = Pattern.compile("(.*?)</" + marker + ">(.*)", Pattern.DOTALL);
-        final Matcher matcher2 = pat2.matcher(rest);
-        LOG.assertTrue(matcher2.matches(), "Cannot find closing </" + marker + ">");
-        content = matcher2.group(1);
-        endOffset = m.start(pos - 1) + matcher2.start(2);
-      }
-      else {
-        // <XXX/>
-        content = "";
-        endOffset = m.start(pos - 1);
-      }
-
-      document.replaceString(startOffset, endOffset, content);
-      TextAttributes forcedAttributes = null;
-      if (foregroundColor != null) {
-        forcedAttributes = new TextAttributes(Color.decode(foregroundColor), Color.decode(backgroundColor), Color.decode(effectColor),
-                                              EffectType.valueOf(effectType), Integer.parseInt(fontType));
-      }
-
-      TextRange textRange = new TextRange(startOffset, startOffset + content.length());
-
-      HighlightInfoType type = WHATEVER;
-
-      if (typeString != null) {
-        try {
-          Field field = HighlightInfoType.class.getField(typeString);
-          type = (HighlightInfoType)field.get(null);
-        }
-        catch (Exception e) {
-          // ignore
-        }
-        LOG.assertTrue(type != null, "Wrong highlight type: " + typeString);
-      }
-
-
-      HighlightInfo highlightInfo =
-        new HighlightInfo(forcedAttributes, type, textRange.getStartOffset(), textRange.getEndOffset(), descr, descr,
-                          expectedHighlightingSet.severity, expectedHighlightingSet.endOfLine, null, false);
-      expectedHighlightingSet.infos.add(highlightInfo);
-      text = document.getText();
+    final Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
+    int pos = 0;
+    final Ref<Integer> textOffset = Ref.create(0);
+    while (matcher.find(pos)) {
+      textOffset.set(textOffset.get() + (matcher.start() - pos));
+      pos = extractExpectedHighlight(matcher, text, document, textOffset);
     }
+  }
+
+  private int extractExpectedHighlight(final Matcher matcher, final String text, final Document document, final Ref<Integer> textOffset) {
+    final int toContinueFrom;
+
+    document.deleteString(textOffset.get(), textOffset.get() + (matcher.end() - matcher.start()));
+
+    int groupIdx = 1;
+    final String marker = matcher.group(groupIdx++);
+    @NonNls String descr = matcher.group(groupIdx++);
+    final String typeString = matcher.group(groupIdx++);
+    final String foregroundColor = matcher.group(groupIdx++);
+    final String backgroundColor = matcher.group(groupIdx++);
+    final String effectColor = matcher.group(groupIdx++);
+    final String effectType = matcher.group(groupIdx++);
+    final String fontType = matcher.group(groupIdx++);
+    final boolean closed = matcher.group(groupIdx) != null;
+
+    if (descr == null) {
+      descr = ANY_TEXT;  // no descr means any string by default
+    }
+    else if (descr.equals("null")) {
+      descr = null;  // explicit "null" descr
+    }
+    if (descr != null) {
+      descr = descr.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
+    }
+
+    HighlightInfoType type = WHATEVER;
+    if (typeString != null) {
+      try {
+        Field field = HighlightInfoType.class.getField(typeString);
+        type = (HighlightInfoType)field.get(null);
+      }
+      catch (Exception ignore) {
+      }
+      LOG.assertTrue(type != null, "Wrong highlight type: " + typeString);
+    }
+
+    TextAttributes forcedAttributes = null;
+    if (foregroundColor != null) {
+      forcedAttributes = new TextAttributes(Color.decode(foregroundColor), Color.decode(backgroundColor), Color.decode(effectColor),
+                                            EffectType.valueOf(effectType), Integer.parseInt(fontType));
+    }
+
+    final int rangeStart = textOffset.get();
+    if (closed) {
+      toContinueFrom = matcher.end();
+    }
+    else {
+      int pos = matcher.end();
+      final Matcher closingTagMatcher = Pattern.compile("</" + marker + ">").matcher(text);
+      while (true) {
+        if (!closingTagMatcher.find(pos)) {
+          LOG.assertTrue(closingTagMatcher.matches(), "Cannot find closing </" + marker + ">");
+        }
+
+        final int nextTagStart = matcher.find(pos) ? matcher.start() : text.length();
+        if (closingTagMatcher.start() < nextTagStart) {
+          textOffset.set(textOffset.get() + (closingTagMatcher.start() - pos));
+          document.deleteString(textOffset.get(), textOffset.get() + (closingTagMatcher.end() - closingTagMatcher.start()));
+          toContinueFrom = closingTagMatcher.end();
+          break;
+        }
+
+        textOffset.set(textOffset.get() + (nextTagStart - pos));
+        pos = extractExpectedHighlight(matcher, text, document, textOffset);
+      }
+    }
+
+    final ExpectedHighlightingSet expectedHighlightingSet = highlightingTypes.get(marker);
+    if (expectedHighlightingSet.enabled) {
+      final HighlightInfo highlightInfo = new HighlightInfo(forcedAttributes, type, rangeStart, textOffset.get(), descr, descr,
+                                                            expectedHighlightingSet.severity, expectedHighlightingSet.endOfLine, null,
+                                                            false);
+      expectedHighlightingSet.infos.add(highlightInfo);
+    }
+
+    return toContinueFrom;
   }
 
   private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl();
@@ -415,40 +423,51 @@ public class ExpectedHighlightingData {
     final ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>(infos);
     Collections.sort(list, new Comparator<HighlightInfo>() {
       public int compare(HighlightInfo o1, HighlightInfo o2) {
-        return o2.startOffset - o1.startOffset;
+        final int start = o2.startOffset - o1.startOffset;
+        return start != 0 ? start : o1.endOffset - o2.endOffset;
       }
     });
 
     StringBuilder sb = new StringBuilder();
 
     int end = text.length();
-    try {
-      for (HighlightInfo info : list) {
-        for (Map.Entry<String, ExpectedHighlightingSet> entry : highlightingTypes.entrySet()) {
-          final ExpectedHighlightingSet set = entry.getValue();
-          if(set.enabled
-             && set.severity == info.getSeverity()
-             //&& (set.defaultErrorType.equals(info.type))
-             && set.endOfLine == info.isAfterEndOfLine
-            ) {
-            final String severity = entry.getKey();
-            sb.insert(0, text.substring(info.endOffset, end));
-            sb.insert(0, "<"+
-                         severity +" descr=\"" + info.description+"\">"+ text.substring(info.startOffset, info.endOffset)+"</"+
-                         severity +">");
-            end = info.startOffset;
-            break;
+    HighlightInfo prev = null;
+    String prevSeverity = null;
+    for (HighlightInfo info : list) {
+      for (Map.Entry<String, ExpectedHighlightingSet> entry : highlightingTypes.entrySet()) {
+        final ExpectedHighlightingSet set = entry.getValue();
+        if (set.enabled
+            && set.severity == info.getSeverity()
+            && set.endOfLine == info.isAfterEndOfLine) {
+          final String severity = entry.getKey();
+
+          if (prev != null && info.endOffset > prev.startOffset) {  // nested ranges
+            Assert.assertTrue("Overlapped highlightings: " + info + " and " + prev,
+                              info.endOffset >= prev.endOffset);
+
+            int offset = prevSeverity.length()*2 + 14 + (prev.description != null ? prev.description.length() : 4) + // open and closing tags
+                         (prev.endOffset - prev.startOffset) + (info.endOffset - prev.endOffset);
+            sb.insert(offset, "</" + severity + ">");
+            sb.insert(0, text.substring(info.startOffset, prev.startOffset));
+            sb.insert(0, "<" + severity + " descr=\"" + info.description + "\">");
           }
+          else {  // sequential ranges
+            sb.insert(0, text.substring(info.endOffset, end));
+            sb.insert(0, "<" + severity + " descr=\"" + info.description + "\">" +
+                         text.substring(info.startOffset, info.endOffset) +
+                         "</" + severity + ">");
+          }
+
+          end = info.startOffset;
+          prev = info;
+          prevSeverity = severity;
+          break;
         }
       }
     }
-    catch (IndexOutOfBoundsException e) {
-      //sometimes (rarely) we have info offsets < 0 
-      sb.insert(0, "<exception>" + e.getMessage() + "</exception>");
-    }
     sb.insert(0, text.substring(0, end));
 
-    Assert.assertEquals(failMessage + "\n" , myText, sb.toString());
+    Assert.assertEquals(failMessage + "\n", myText, sb.toString());
     Assert.fail(failMessage);
   }
 
