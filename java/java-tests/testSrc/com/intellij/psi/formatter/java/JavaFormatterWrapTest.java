@@ -40,6 +40,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "@AttributeOverride(name = \"systemExchangeRate\", column = @Column(name = \"system_exchange_rate\")) })\n" +
       "class Foo {\n" +
       "}",
+      
       "@AttributeOverrides({\n" +
       "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
       "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
