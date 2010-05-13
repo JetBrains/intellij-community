@@ -42,19 +42,18 @@ public class JavaImportOptimizer implements ImportOptimizer {
     }
     Project project = file.getProject();
     final PsiImportList newImportList = JavaCodeStyleManager.getInstance(project).prepareOptimizeImportsResult((PsiJavaFile)file);
+    if (newImportList == null) return EmptyRunnable.getInstance();
     return new Runnable() {
       public void run() {
         try {
-          if (newImportList != null) {
-            final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-            final Document document = manager.getDocument(file);
-            if (document != null) {
-              manager.commitDocument(document);
-            }
-            final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
-            assert oldImportList != null;
-            oldImportList.replace(newImportList);
+          final PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+          final Document document = manager.getDocument(file);
+          if (document != null) {
+            manager.commitDocument(document);
           }
+          final PsiImportList oldImportList = ((PsiJavaFile)file).getImportList();
+          assert oldImportList != null;
+          oldImportList.replace(newImportList);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
