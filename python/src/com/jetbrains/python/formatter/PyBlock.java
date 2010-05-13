@@ -199,13 +199,13 @@ public class PyBlock implements ASTBlock {
     IElementType type2 = childNode2.getElementType();
 
     if (type1 == PyElementTypes.CLASS_DECLARATION) {
-      int blankLines = mySettings.BLANK_LINES_AROUND_CLASS + 1;
-      return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_CLASS);
     }
-
     if (type1 == PyElementTypes.FUNCTION_DECLARATION || (type2 == PyElementTypes.FUNCTION_DECLARATION && type1 == PyElementTypes.CLASS_DECLARATION)) {
-      int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
-      return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_METHOD);
+    }
+    if (type1 == PyElementTypes.IMPORT_STATEMENT && isStatementOrDeclaration(type2)) {
+      return getBlankLinesForOption(mySettings.BLANK_LINES_AFTER_IMPORTS);
     }
 
     if (isStatementOrDeclaration(type1) && isStatementOrDeclaration(type2)) {
@@ -305,6 +305,11 @@ public class PyBlock implements ASTBlock {
 
   private PyCodeStyleSettings getPySettings() {
     return mySettings.getCustomSettings(PyCodeStyleSettings.class);
+  }
+
+  private Spacing getBlankLinesForOption(final int option) {
+    int blankLines = option + 1;
+    return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
 
   private Spacing getSpacingForOption(boolean isOptionSet) {
