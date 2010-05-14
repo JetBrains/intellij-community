@@ -30,6 +30,8 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ListUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -94,14 +96,14 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   }
 
   public void addExcludePackage(String packageName) {
-    if (packageName != null) {
-      myExcludePackagesModel.add(myExcludePackagesModel.size(), packageName);
-      myExcludePackagesList.setSelectedValue(packageName, true);
+    if (packageName == null) {
+      return;
     }
-  }
-
-  public JList getExcludePackagesList() {
-    return myExcludePackagesList;
+    int index = myExcludePackagesModel.size();
+    myExcludePackagesModel.add(index, packageName);
+    myExcludePackagesList.setSelectedValue(packageName, true);
+    ListScrollingUtil.ensureIndexIsVisible(myExcludePackagesList, index, 0);
+    IdeFocusManager.getGlobalInstance().requestFocus(myExcludePackagesList, false);
   }
 
   public void reset() {
