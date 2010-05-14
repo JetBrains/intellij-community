@@ -406,6 +406,9 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
           if (ref_element != null && ref_is_importable && hint_action == null) {
             actions.add(new AddImportAction(reference));
           }
+          if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1))) {
+            actions.add(new CreateClassQuickFix(ref_text, reference.getElement()));
+          }
         }
       }
       String description = description_buf.toString();

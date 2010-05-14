@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.introduce;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -39,7 +40,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     PyExpressionStatement statement = PsiTreeUtil.getParentOfType(expression, PyExpressionStatement.class);
     if (statement != null) {
       if (statement.getExpression() == expression) {
-        expression.delete();
+        statement.delete();
         return;
       }
     }
@@ -85,7 +86,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return ArrayUtil.toStringArray(res);
   }
 
-  protected void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor) {
+  public void performAction(@NotNull final Project project, Editor editor, PsiFile file, String name, boolean replaceAll, boolean hasConstructor) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(file)) {
       return;
     }
@@ -145,10 +146,13 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       initInConstructor = dialog.initInConstructor();
     }
     String assignmentText = name + " = " + expression.getText();
-    final PyAssignmentStatement declaration = createDeclaration(project, assignmentText);
+    PyAssignmentStatement declaration = createDeclaration(project, assignmentText);
 
     assert name != null;
-    performReplace(project, declaration, expression, occurrences, name, replaceAll, initInConstructor);
+    declaration = performReplace(project, declaration, expression, occurrences, name, replaceAll, initInConstructor);
+    declaration = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(declaration);
+    editor.getCaretModel().moveToOffset(declaration.getTextRange().getEndOffset());
+    editor.getSelectionModel().removeSelection();
   }
 
   protected abstract String getHelpId();
@@ -172,24 +176,24 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     return PyRefactoringUtil.getOccurences(expression, context);
   }
 
-  private void performReplace(@NotNull final Project project,
-                              @NotNull final PyAssignmentStatement declaration,
-                              @NotNull final PsiElement expression,
-                              @NotNull final List<PsiElement> occurrences,
-                              @NotNull final String name,
-                              final boolean replaceAll,
-                              final boolean initInConstructor) {
-    new WriteCommandAction(project, expression.getContainingFile()) {
-      protected void run(final Result result) throws Throwable {
+  private PyAssignmentStatement performReplace(@NotNull final Project project,
+                                               @NotNull final PyAssignmentStatement declaration,
+                                               @NotNull final PsiElement expression,
+                                               @NotNull final List<PsiElement> occurrences,
+                                               @NotNull final String name,
+                                               final boolean replaceAll,
+                                               final boolean initInConstructor) {
+    return new WriteCommandAction<PyAssignmentStatement>(project, expression.getContainingFile()) {
+      protected void run(final Result<PyAssignmentStatement> result) throws Throwable {
         final Pair<PsiElement, TextRange> data = expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE);
         if (data == null) {
-          addDeclaration(expression, declaration, occurrences, replaceAll, initInConstructor);
+          result.setResult((PyAssignmentStatement)addDeclaration(expression, declaration, occurrences, replaceAll, initInConstructor));
         }
         else {
-          addDeclaration(data.first, declaration, occurrences, replaceAll, initInConstructor);
+          result.setResult((PyAssignmentStatement)addDeclaration(data.first, declaration, occurrences, replaceAll, initInConstructor));
         }
 
-        PyExpression newExpression = createExpression(project, name, declaration).getExpression();
+        PyExpression newExpression = createExpression(project, name, declaration);
 
         if (replaceAll) {
           for (PsiElement occurrence : occurrences) {
@@ -200,11 +204,11 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           replaceExpression(newExpression, project, expression);
         }
       }
-    }.execute();
+    }.execute().getResultObject();
   }
 
-  protected PyExpressionStatement createExpression(Project project, String name, PyAssignmentStatement declaration) {
-    return PyElementGenerator.getInstance(project).createFromText(PyExpressionStatement.class, name);
+  protected PyExpression createExpression(Project project, String name, PyAssignmentStatement declaration) {
+    return PyElementGenerator.getInstance(project).createExpressionFromText(name);
   }
 
   @Nullable

@@ -199,13 +199,13 @@ public class PyBlock implements ASTBlock {
     IElementType type2 = childNode2.getElementType();
 
     if (type1 == PyElementTypes.CLASS_DECLARATION) {
-      int blankLines = mySettings.BLANK_LINES_AROUND_CLASS + 1;
-      return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_CLASS);
     }
-
     if (type1 == PyElementTypes.FUNCTION_DECLARATION || (type2 == PyElementTypes.FUNCTION_DECLARATION && type1 == PyElementTypes.CLASS_DECLARATION)) {
-      int blankLines = mySettings.BLANK_LINES_AROUND_METHOD + 1;
-      return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      return getBlankLinesForOption(mySettings.BLANK_LINES_AROUND_METHOD);
+    }
+    if (isImportStatement(type1) && (isStatementOrDeclaration(type2) && !isImportStatement(type2))) {
+      return getBlankLinesForOption(mySettings.BLANK_LINES_AFTER_IMPORTS);
     }
 
     if (isStatementOrDeclaration(type1) && isStatementOrDeclaration(type2)) {
@@ -299,12 +299,21 @@ public class PyBlock implements ASTBlock {
     return null;
   }
 
+  private boolean isImportStatement(IElementType type1) {
+    return (type1 == PyElementTypes.IMPORT_STATEMENT || type1 == PyElementTypes.FROM_IMPORT_STATEMENT);
+  }
+
   private static boolean isAround(IElementType type1, IElementType type2, final TokenSet tokenSet) {
     return tokenSet.contains(type1) || tokenSet.contains(type2);
   }
 
   private PyCodeStyleSettings getPySettings() {
     return mySettings.getCustomSettings(PyCodeStyleSettings.class);
+  }
+
+  private Spacing getBlankLinesForOption(final int option) {
+    int blankLines = option + 1;
+    return Spacing.createSpacing(0, 0, blankLines, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
   }
 
   private Spacing getSpacingForOption(boolean isOptionSet) {

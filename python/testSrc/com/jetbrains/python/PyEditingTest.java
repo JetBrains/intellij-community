@@ -1,5 +1,9 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -79,6 +83,19 @@ public class PyEditingTest extends PyLightFixtureTestCase {
       }
     }, "", null);
     myFixture.checkResultByFile("/editing/smartUnindent.after.py", true);
+  }
+
+  public void testUncommentWithSpace() throws Exception {   // PY-980
+    myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
+    myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
+      public void run() {
+        CommentByLineCommentAction action = new CommentByLineCommentAction();
+        action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
+                                                 ActionManager.getInstance(), 0));
+      }
+    }, "", null);
+    myFixture.checkResultByFile("/editing/uncommentWithSpace.after.py", true);
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {
