@@ -37,6 +37,7 @@ public class GppStdLibSupport implements NonCodeMembersProcessor {
     "groovy.util.Iterations", "groovy.util.Mappers",
     "groovy.util.Sort", "groovy.util.Strings",
     "groovy.util.With",
+    "groovy.util.concurrent.Atomics",
     "org.mbte.groovypp.runtime.ArraysMethods",
     "org.mbte.groovypp.runtime.DefaultGroovyPPMethods"};
 
