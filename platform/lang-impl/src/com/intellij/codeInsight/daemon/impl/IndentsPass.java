@@ -75,12 +75,13 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
       int off;
       int startLine = doc.getLineNumber(startOffset);
+      final CharSequence chars = doc.getCharsSequence();
       do {
         int pos = doc.getLineStartOffset(startLine);
-        off = CharArrayUtil.shiftForward(doc.getCharsSequence(), pos, " \t");
+        off = CharArrayUtil.shiftForward(chars, pos, " \t");
         startLine--;
       }
-      while (startLine > 1 && off < doc.getTextLength() && doc.getCharsSequence().charAt(off) == '\n');
+      while (startLine > 1 && off < doc.getTextLength() && chars.charAt(off) == '\n');
 
       final VisualPosition startPosition = editor.offsetToVisualPosition(off);
       if (startPosition.column <= 0) return;
