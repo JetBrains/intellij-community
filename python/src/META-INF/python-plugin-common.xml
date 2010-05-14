@@ -218,6 +218,8 @@
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagNameSelectionHandler"/>
 
+    <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.inspection.DjangoTemplateTagNamesValidator"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
