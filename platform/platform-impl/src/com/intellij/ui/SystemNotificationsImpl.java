@@ -36,7 +36,7 @@ import java.util.Set;
       file="$APP_CONFIG$/other.xml"
     )}
 )
-public class SystemNotificationsImpl implements SystemNotifications, PersistentStateComponent<SystemNotificationsImpl.State> {
+public class SystemNotificationsImpl extends SystemNotifications implements PersistentStateComponent<SystemNotificationsImpl.State> {
   private State myState = new State();
   private boolean myGrowlDisabled = false;
 
