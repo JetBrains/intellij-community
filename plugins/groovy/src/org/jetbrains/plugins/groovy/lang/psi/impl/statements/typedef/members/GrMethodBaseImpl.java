@@ -32,6 +32,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
@@ -393,6 +394,8 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
 
   @Nullable
   public PsiMethod findDeepestSuperMethod() {
+    final PsiMethod[] methods = findDeepestSuperMethods();
+    if (methods.length > 0) return methods[0];
     return null;
   }
 

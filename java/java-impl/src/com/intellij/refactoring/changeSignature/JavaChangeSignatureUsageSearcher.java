@@ -119,30 +119,29 @@ class JavaChangeSignatureUsageSearcher {
         if (isOriginal) {   //Name changes take place only in primary method
           final PsiParameter parameter = parameters[oldParameterIndex];
           if (!newName.equals(parameter.getName())) {
-            JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, method.getBody(), null,
-                                                                         new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
-                                                                           public void visitCollidingElement(final PsiVariable collidingVariable) {
-                                                                             if (!deletedOrRenamedParameters
-                                                                               .contains(collidingVariable)) {
-                                                                               result.add(
-                                                                                 new RenamedParameterCollidesWithLocalUsageInfo(
-                                                                                   parameter, collidingVariable, method));
-                                                                             }
-                                                                           }
-                                                                         });
+            JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(
+              parameter, newName, method.getBody(), null,
+              new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+                public void visitCollidingElement(final PsiVariable collidingVariable) {
+                  if (!deletedOrRenamedParameters.contains(collidingVariable)) {
+                    result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
+                  }
+                }
+              });
           }
         }
       }
       else {
-        JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, method.getBody(), null,
-                                                                     new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
-                                                                       public void visitCollidingElement(PsiVariable collidingVariable) {
-                                                                         if (!deletedOrRenamedParameters.contains(collidingVariable)) {
-                                                                           result.add(new NewParameterCollidesWithLocalUsageInfo(
-                                                                             collidingVariable, collidingVariable, method));
-                                                                         }
-                                                                       }
-                                                                     });
+        JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(
+          method, newName, method.getBody(), null,
+          new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
+            public void visitCollidingElement(PsiVariable collidingVariable) {
+              if (!deletedOrRenamedParameters.contains(collidingVariable)) {
+                result.add(new NewParameterCollidesWithLocalUsageInfo(
+                  collidingVariable, collidingVariable, method));
+              }
+            }
+          });
       }
     }
   }

@@ -17,10 +17,8 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.*;
@@ -87,7 +85,45 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     GrChangeInfoImpl grInfo = (GrChangeInfoImpl)changeInfo;
     GrMethod method = grInfo.getMethod();
+    if (grInfo.isGenerateDelegate()) {
+      return generateDelegate(grInfo);
+    }
 
+    return processPrimaryMethodInner(grInfo, method, null);
+  }
+
+  private static boolean generateDelegate(GrChangeInfoImpl grInfo) {
+    final GrMethod method = grInfo.getMethod();
+    final PsiClass psiClass = method.getContainingClass();
+    GrMethod newMethod = (GrMethod)method.copy();
+    newMethod = (GrMethod)psiClass.addAfter(newMethod, method);
+    StringBuffer buffer = new StringBuffer();
+    buffer.append("\n");
+    if (!PsiType.VOID.equals(method.getReturnType())) {
+      buffer.append("return ");
+    }
+    buffer.append(method.getName()).append("(");
+
+    final GrParameter[] oldParameters = method.getParameterList().getParameters();
+    final JavaParameterInfo[] parameters = grInfo.getNewParameters();
+
+    String[] params = new String[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      JavaParameterInfo parameter = parameters[i];
+      final int oldIndex = parameter.getOldIndex();
+      if (oldIndex >= 0) {
+        params[i] = oldParameters[oldIndex].getName();
+      }
+      else {
+        params[i] = parameter.getDefaultValue();
+      }
+    }
+    buffer.append(StringUtil.join(params, ","));
+    buffer.append(");");
+    
+    final GrCodeBlock codeBlock = GroovyPsiElementFactory.getInstance(method.getProject()).createMethodBodyFromText(buffer.toString());
+    newMethod.setBlock(codeBlock);
+    CodeStyleManager.getInstance(method.getProject()).reformat(newMethod);
     return processPrimaryMethodInner(grInfo, method, null);
   }
 
@@ -115,7 +151,8 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
             modifierList.setModifierProperty(GrModifier.DEF, true);
           }
         }
-      } else {
+      }
+      else {
         PsiType type = newReturnType.getType(method.getParameterList(), method.getManager());
         method.setReturnType(type);
       }
@@ -135,16 +172,16 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       int index = newParameter.getOldIndex();
       if (index < 0) {
       */
-        String typeText;
-        if (newParameter instanceof GrParameterInfo && ((GrParameterInfo)newParameter).hasNoType()) {
-          typeText = null;
-        }
-        else {
-          typeText = newParameter.getTypeText();
-        }
-        GrParameter grParameter =
-          factory.createParameter(newParameter.getName(), typeText, getInitializer(newParameter), parameterList);
-        anchor = (GrParameter)parameterList.addAfter(grParameter, anchor);
+      String typeText;
+      if (newParameter instanceof GrParameterInfo && ((GrParameterInfo)newParameter).hasNoType()) {
+        typeText = null;
+      }
+      else {
+        typeText = newParameter.getTypeText();
+      }
+      GrParameter grParameter =
+        factory.createParameter(newParameter.getName(), typeText, getInitializer(newParameter), parameterList);
+      anchor = (GrParameter)parameterList.addAfter(grParameter, anchor);
 /*      }
       else {
         GrParameter grParameter = oldParameters[index];
@@ -170,7 +207,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   }
 
   @Nullable
-  private static <Type extends PsiElement, List extends PsiElement> Type getNextOfType(List parameterList, PsiElement current, Class<Type> type) {
+  private static <Type extends PsiElement, List extends PsiElement> Type getNextOfType(List parameterList,
+                                                                                       PsiElement current,
+                                                                                       Class<Type> type) {
     return current != null ? PsiTreeUtil.getNextSiblingOfType(current, type) : PsiTreeUtil.getChildOfType(parameterList, type);
   }
 

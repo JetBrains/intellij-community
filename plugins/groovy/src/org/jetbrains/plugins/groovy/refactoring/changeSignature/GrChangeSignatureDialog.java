@@ -40,10 +40,7 @@ import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellEditor
 import org.jetbrains.plugins.groovy.refactoring.ui.GrCodeFragmentTableCellRenderer;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle.message;
@@ -59,17 +56,14 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   private JRadioButton myPrivateRadioButton;
   private JPanel myParametersPanel;
   private JBTable myParameterTable;
-  private JButton myAddButton;
-  private JButton myRemoveButton;
-  private JButton myMoveUpButton;
-  private JButton myMoveDownButton;
   private JPanel contentPane;
   private JLabel mySignatureLabel;
   private JLabel myNameLabel;
   private JLabel myReturnTypeLabel;
+  private JRadioButton myModifyRadioButton;
+  private JRadioButton myDelegateRadioButton;
   private GrParameterTableModel myParameterModel;
   private GrMethod myMethod;
-//  private Project myProject;
   private PsiTypeCodeFragment myReturnTypeCodeFragment;
   private GroovyCodeFragment myNameCodeFragment;
 
@@ -77,61 +71,9 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     super(project, true);
     myMethod = method;
     init();
-    configureParameterButtons();
+    createParametersPanel();
+    createExceptionsPanel();
     updateSignature();
-  }
-
-  private void configureParameterButtons() {
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        int selectedColumn = myParameterTable.getSelectedColumn();
-        if (selectedColumn < 0) selectedColumn = 0;
-        myParameterModel.addRow();
-        myParameterTable.setRowSelectionInterval(myParameterModel.getRowCount() - 1, myParameterModel.getRowCount() - 1);
-        myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
-        updateSignature();
-        myParameterTable.requestFocus();
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        int selectedRow = myParameterTable.getSelectedRow();
-        int selectedColumn = myParameterTable.getSelectedColumn();
-
-        myParameterModel.removeRow(myParameterTable.getSelectedRow());
-
-        if (selectedRow == myParameterModel.getRowCount()) selectedRow--;
-        if (myParameterModel.getRowCount() == 0) return;
-        myParameterTable.setRowSelectionInterval(selectedRow, selectedRow);
-        myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
-        updateSignature();
-        myParameterTable.requestFocus();
-      }
-    });
-
-    myMoveUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final int selectedRow = myParameterTable.getSelectedRow();
-        int selectedColumn = myParameterTable.getSelectedColumn();
-        myParameterModel.exchangeRows(selectedRow, selectedRow - 1);
-        myParameterTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
-        myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
-        updateSignature();
-        myParameterTable.requestFocus();
-      }
-    });
-
-    myMoveDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final int selectedRow = myParameterTable.getSelectedRow();
-        int selectedColumn = myParameterTable.getSelectedColumn();
-        myParameterModel.exchangeRows(selectedRow, selectedRow + 1);
-        myParameterTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
-        myParameterTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
-        updateSignature();
-        myParameterTable.requestFocus();
-      }
-    });
   }
 
   protected void init() {
@@ -150,7 +92,6 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
   private void createUIComponents() {
     createNameAndReturnTypeEditors();
-    createParametersModel();
   }
 
   private void createNameAndReturnTypeEditors() {
@@ -175,9 +116,16 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     myNameLabel.setLabelFor(myNameField);
   }
 
-  private void createParametersModel() {
+  private void createParametersPanel() {
     myParameterModel = new GrParameterTableModel(myMethod, this, myProject);
-    myParameterTable = new JBTable(myParameterModel);
+    TableWithButtons parameterTable = new TableWithButtons(myParameterModel) {
+      @Override
+      protected void update() {
+        updateSignature();
+      }
+    };
+
+    myParameterTable = parameterTable.getTable();
     myParameterTable.setCellSelectionEnabled(true);
 
     myParameterTable.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
@@ -190,26 +138,17 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     myParameterTable.getColumnModel().getColumn(2).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
     myParameterTable.getColumnModel().getColumn(3).setCellEditor(new GrCodeFragmentTableCellEditor(myProject));
 
-    if (myParameterTable.getRowCount() > 0) {
-      myParameterTable.setRowSelectionInterval(0, 0);
-      myParameterTable.setColumnSelectionInterval(0, 0);
-    }
+    myParameterTable.setRowSelectionInterval(0, 0);
+    myParameterTable.setColumnSelectionInterval(0, 0);
 
-    myParameterModel.addTableModelListener(new TableModelListener() {
-      public void tableChanged(TableModelEvent e) {
-        updateSignature();
-      }
-    });
-
+    myParametersPanel.add(parameterTable.getPanel(), BorderLayout.CENTER);
   }
 
-  private void updateSignature() {
-    final int selectedRow = myParameterTable.getSelectedRow();
-    final int rowCount = myParameterModel.getRowCount();
-    myMoveUpButton.setEnabled(selectedRow > 0);
-    myMoveDownButton.setEnabled(selectedRow + 1 < rowCount && rowCount > 1);
-    myRemoveButton.setEnabled(rowCount > 0);
+  private void createExceptionsPanel() {
+  }
 
+
+  private void updateSignature() {
     mySignatureLabel.setText(generateSignatureText());
   }
 
@@ -292,7 +231,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
                                                                                      ? null
                                                                                      : CanonicalTypes.createTypeWrapper(
                                                                                        returnType), newName,
-                                                                                     parameterInfos)));
+                                                                                     parameterInfos, myDelegateRadioButton.isSelected())));
 
   }
 

@@ -23,13 +23,17 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
+import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
 import java.util.*;
 
@@ -118,13 +122,7 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected String getCommandName() {
-    return "";
-    //return RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod()));
-  }
-
-
-  private MultiMap<PsiElement, String> findConflicts(Ref<UsageInfo[]> refUsages) {
-    return new MultiMap<PsiElement, String>();//todo
+    return GroovyRefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 
   @Override
@@ -140,6 +138,24 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return showConflicts(conflictDescriptions);
+    final UsageInfo[] usagesIn = refUsages.get();
+    RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
+    Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+    RenameUtil.removeConflictUsages(usagesSet);
+    if (!conflictDescriptions.isEmpty()) {
+      ConflictsDialog dialog = new ConflictsDialog(myProject, conflictDescriptions, new Runnable() {
+        public void run() {
+          execute(usagesIn);
+        }
+      });
+      dialog.show();
+      if (!dialog.isOK()) {
+        if (dialog.isShowConflicts()) prepareSuccessful();
+        return false;
+      }
+    }
+    refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
+    prepareSuccessful();
+    return true;
   }
 }

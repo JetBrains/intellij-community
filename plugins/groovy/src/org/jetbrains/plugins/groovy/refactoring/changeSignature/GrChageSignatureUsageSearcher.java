@@ -203,11 +203,11 @@ class GrChageSignatureUsageSearcher {
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
         //todo check for applicability of arguments to method
         if (PsiUtil.isMethodUsage(element)) {
-          GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method);
+          GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
           GrClosureSignatureUtil.ArgInfo[] map = GrClosureSignatureUtil
             .mapParametersToArguments(signature, PsiUtil.getArgumentsList(element), method.getManager(), method.getResolveScope());
           result.add(
-            new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method), isToModifyArgs, isToCatchExceptions, map));
+            new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs, isToCatchExceptions, map));
         }
         else if (element instanceof GrDocTagValueToken) {
           result.add(new UsageInfo(ref.getElement()));
@@ -221,11 +221,11 @@ class GrChageSignatureUsageSearcher {
           LOG.assertTrue(method.isConstructor());
           final PsiClass psiClass = (PsiClass)element;
           if (psiClass instanceof GrAnonymousClassDefinition) {
-            GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method);
+            GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
             GrClosureSignatureUtil.ArgInfo[] map = GrClosureSignatureUtil
               .mapParametersToArguments(signature, PsiUtil.getArgumentsList(element), method.getManager(), method.getResolveScope());
             result.add(
-              new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method), isToModifyArgs, isToCatchExceptions, map));
+              new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs, isToCatchExceptions, map));
             continue;
           }
           /*if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue; todo propagate methods

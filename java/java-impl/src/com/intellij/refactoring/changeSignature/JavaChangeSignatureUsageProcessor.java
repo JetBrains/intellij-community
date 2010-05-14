@@ -531,11 +531,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     if (changeInfo.isVisibilityChanged()) {
       PsiModifierList modifierList = method.getModifierList();
-      final String highestVisibility = isOriginal ?
-                                       changeInfo.getNewVisibility() :
-                                       VisibilityUtil
-                                         .getHighestVisibility(changeInfo.getNewVisibility(),
-                                                               VisibilityUtil.getVisibilityModifier(modifierList));
+      final String highestVisibility = isOriginal
+                                       ? changeInfo.getNewVisibility()
+                                       : VisibilityUtil.getHighestVisibility(changeInfo.getNewVisibility(),
+                                                                             VisibilityUtil.getVisibilityModifier(modifierList));
       VisibilityUtil.setVisibility(modifierList, highestVisibility);
     }
 
@@ -765,9 +764,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     public MultiMap<PsiElement, String> findConflicts(Ref<UsageInfo[]> refUsages) {
       MultiMap<PsiElement, String> conflictDescriptions = new MultiMap<PsiElement, String>();
       addMethodConflicts(conflictDescriptions);
-      UsageInfo[] usagesIn = refUsages.get();
-      RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-      Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
+      Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(refUsages.get()));
       RenameUtil.removeConflictUsages(usagesSet);
       if (myChangeInfo.isVisibilityChanged()) {
         try {
@@ -795,7 +792,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
         UsageInfo usageInfo = iterator.next();
         PsiElement element = usageInfo.getElement();
-        if (element != null) {
+        if (element != null && StdLanguages.JAVA.equals(element.getLanguage())) {
           if (element instanceof PsiReferenceExpression) {
             PsiClass accessObjectClass = null;
             PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();

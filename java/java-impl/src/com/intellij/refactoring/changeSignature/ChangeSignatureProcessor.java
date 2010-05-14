@@ -139,6 +139,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     }
 
     final UsageInfo[] usagesIn = refUsages.get();
+    RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
     Set<UsageInfo> usagesSet = new HashSet<UsageInfo>(Arrays.asList(usagesIn));
     RenameUtil.removeConflictUsages(usagesSet);
     if (myPrepareSuccessfulSwingThreadCallback != null && !conflictDescriptions.isEmpty()) {

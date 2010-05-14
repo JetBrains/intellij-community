@@ -73,7 +73,7 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNamedParametersOrder1() throws Exception {
-    doTest(null, new GrParameterInfo[] {
+    doTest(null, new GrParameterInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(2)
     });
@@ -86,9 +86,9 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
       new SimpleInfo(2),
     });
   }
-  
+
   public void testNamedParametersOrder3() throws Exception {
-    doTest(null, new GrParameterInfo[] {
+    doTest(null, new GrParameterInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(2),
       new SimpleInfo("p", -1, "5", null, PsiType.INT),
@@ -96,14 +96,14 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testMoveNamedParameters() throws Exception {
-    doTest(null, new GrParameterInfo[] {
+    doTest(null, new GrParameterInfo[]{
       new SimpleInfo(1),
       new SimpleInfo(0)
     });
   }
 
   public void testMoveVarArgParameters() throws Exception {
-    doTest(null, new GrParameterInfo[] {
+    doTest(null, new GrParameterInfo[]{
       new SimpleInfo(1),
       new SimpleInfo(0)
     });
@@ -132,7 +132,7 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testGroovyDocReferences() throws Exception {
-    doTest(null, new GrParameterInfo[] {
+    doTest(null, new GrParameterInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(2)
     });
@@ -165,7 +165,11 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   public void testChangeParameterType() throws Exception {
     doTest("", new GrParameterInfo[]{new SimpleInfo("p", 0, null, null, PsiType.INT)});
   }
-  
+
+  public void testGenerateDelegate() throws Exception {
+    doTest("", new GrParameterInfo[]{new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT)}, true);
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
@@ -218,8 +222,7 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     }
     GrChangeInfoImpl changeInfo =
       new GrChangeInfoImpl(method, newVisibility, newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-                           newName != null ? newName : method.getName(),
-                           Arrays.asList(genParams.genParams(method)));
+                           newName != null ? newName : method.getName(), Arrays.asList(genParams.genParams(method)), generateDelegate);
     new GrChangeSignatureProcessor(getProject(), changeInfo).run();
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }

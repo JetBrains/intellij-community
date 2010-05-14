@@ -152,7 +152,7 @@ class GrChangeSignatureConflictSearcher {
       }
 
       ConflictsUtil.checkMethodConflicts(method.getContainingClass(), method, prototype, conflicts);
-      GrMethodConflictUtil.checkMethodConflicts(method.getContainingClass(), prototype, ((GrMethod)method), conflicts);
+      GrMethodConflictUtil.checkMethodConflicts(method.getContainingClass(), prototype, ((GrMethod)method), conflicts, true);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

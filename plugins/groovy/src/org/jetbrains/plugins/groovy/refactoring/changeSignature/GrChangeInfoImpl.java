@@ -52,17 +52,19 @@ class GrChangeInfoImpl implements JavaChangeInfo {
   private String myOldName;
   private PsiIdentifier myNewNameIdentifier;
   private PsiExpression[] defaultValues;
+  private boolean myDelegate;
 
   public GrChangeInfoImpl(GrMethod method,
                           String visibilityModifier,
                           @Nullable CanonicalTypes.Type returnType,
                           String newName,
-                          List<GrParameterInfo> parameters) {
+                          List<GrParameterInfo> parameters, boolean generateDelegate) {
     this.method = method;
     this.visibilityModifier = visibilityModifier;
     this.returnType = returnType;
     this.parameters = parameters;
     this.newName = newName;
+    myDelegate = generateDelegate;
     myOldName = method.getName();
 
     if (!method.getName().equals(newName)) {
@@ -113,13 +115,14 @@ class GrChangeInfoImpl implements JavaChangeInfo {
     }
 
     myWasVarargs = method.isVarArgs();
-    if (parameters.size()==0) {
-      myIsObtainVarargs=false;
-      myIsRetainVarargs=false;
-      myIsArrayToVarargs=false;
-    } else {
+    if (parameters.size() == 0) {
+      myIsObtainVarargs = false;
+      myIsRetainVarargs = false;
+      myIsArrayToVarargs = false;
+    }
+    else {
       GrParameterInfo lastNewParam = parameters.get(parameters.size() - 1);
-      myIsObtainVarargs= lastNewParam.isVarargType();
+      myIsObtainVarargs = lastNewParam.isVarargType();
       myIsRetainVarargs = lastNewParam.getOldIndex() >= 0 && myIsObtainVarargs;
       if (myIsRetainVarargs) {
         final PsiType oldTypeForVararg = params[lastNewParam.getOldIndex()].getType();
@@ -136,14 +139,14 @@ class GrChangeInfoImpl implements JavaChangeInfo {
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     defaultValues = new PsiExpression[parameters.size()];
-    for(int i = 0; i < parameters.size(); i++){
+    for (int i = 0; i < parameters.size(); i++) {
       JavaParameterInfo info = parameters.get(i);
-      if (info.getOldIndex() < 0 && !info.isVarargType()){
+      if (info.getOldIndex() < 0 && !info.isVarargType()) {
         if (info.getDefaultValue() == null) continue;
-        try{
+        try {
           defaultValues[i] = factory.createExpressionFromText(info.getDefaultValue(), method);
         }
-        catch(IncorrectOperationException e){
+        catch (IncorrectOperationException e) {
 //          LOG.error(e);
         }
       }
@@ -173,7 +176,7 @@ class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   public boolean isGenerateDelegate() {
-    return false;
+    return myDelegate;
   }
 
   public boolean isNameChanged() {
