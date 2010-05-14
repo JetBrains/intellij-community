@@ -21,6 +21,7 @@ import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -47,8 +49,8 @@ public abstract class AntDomProject extends AntDomElement {
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("default")
-  @Convert(value = AntDomTargetConverter.class)
-  public abstract GenericAttributeValue<String> getDefaultTarget();
+  @Convert(value = AntDomDefaultTargetConverter.class)
+  public abstract GenericAttributeValue<Trinity<AntDomTarget, String, Map<String, AntDomTarget>>> getDefaultTarget();
 
   @Attribute("basedir")
   @Convert(value = AntPathConverter.class)
@@ -99,11 +101,9 @@ public abstract class AntDomProject extends AntDomElement {
   public abstract List<AntDomInclude> getDeclaredIncludes();
 
   @Nullable
-  public final AntDomTarget findTarget(String name) {
-    // todo: consider imported targes
-    // todo: search from the including project if any
+  public final AntDomTarget findDeclaredTarget(String declaredName, DomElement contextElement) {
     for (AntDomTarget target : getDeclaredTargets()) {
-      if (name.equals(target.getName().getRawText())) {
+      if (declaredName.equals(target.getName().getRawText())) {
         return target;
       }
     }

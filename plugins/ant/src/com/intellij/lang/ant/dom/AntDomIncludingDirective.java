@@ -20,6 +20,7 @@ import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.converters.values.BooleanValueConverter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -42,7 +43,8 @@ public abstract class AntDomIncludingDirective extends AntDomElement {
   @Attribute("prefixSeparator")
   public abstract GenericAttributeValue<String> getTargetPrefixSeparator();
 
-  public final String getPrefixSeparatorValue() {
+  @NotNull
+  public final String getTargetPrefixSeparatorValue() {
     final GenericAttributeValue<String> separator = getTargetPrefixSeparator();
     if (separator == null) {
       return DEFAULT_SEPARATOR;

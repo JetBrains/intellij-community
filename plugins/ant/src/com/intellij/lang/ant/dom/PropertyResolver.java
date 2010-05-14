@@ -36,7 +36,7 @@ public class PropertyResolver extends PropertyProviderFinder {
   @Nullable
   public static PsiElement resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
     final PropertyResolver resolver = new PropertyResolver(propertyName, contextElement);
-    project.accept(resolver);
+    resolver.execute(project, project.getDefaultTarget().getRawText());
     return resolver.getResult();
 
   }

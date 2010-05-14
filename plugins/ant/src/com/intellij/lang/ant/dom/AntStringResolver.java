@@ -41,7 +41,7 @@ public class AntStringResolver extends PropertyProviderFinder{
     if (project == null) {
       return valueString;
     }
-    project.accept(new AntStringResolver(context, expander));
+    new AntStringResolver(context, expander).execute(project, project.getDefaultTarget().getRawText());
     return expander.getResult();
   }
 

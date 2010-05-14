@@ -38,17 +38,20 @@ import java.util.Set;
  */
 public class AntDomTargetDependsListConverter extends DelimitedListConverter<XmlAttributeValue> {
   public AntDomTargetDependsListConverter() {
-    super(",\t ");
+    super(",");
   }
 
   @Nullable
   protected XmlAttributeValue convertString(@Nullable String string, ConvertContext context) {
+    if (string == null) {
+      return null;
+    }
     final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
     if (element == null) {
       return null;
     }
     final AntDomProject project = element.getAntProject();
-    final AntDomTarget target = project.findTarget(string);
+    final AntDomTarget target = project.findDeclaredTarget(string.trim(), element);
     if (target == null) {
       return null;
     }
