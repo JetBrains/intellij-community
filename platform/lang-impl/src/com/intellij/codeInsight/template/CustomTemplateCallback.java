@@ -61,7 +61,7 @@ public class CustomTemplateCallback {
     fixInitialState();
   }
 
-  @Nullable
+  @NotNull
   public PsiElement getContext() {
     return getContext(myFile, myStartOffset > 0 ? myStartOffset - 1 : myStartOffset);
   }
@@ -74,10 +74,6 @@ public class CustomTemplateCallback {
     if (myEndOffsetMarker == null) {
       myEndOffsetMarker = myBuilder.createMarker(myOffset);
     }
-  }
-
-  public boolean isLiveTemplateApplicable(@NotNull String key) {
-    return findApplicableTemplate(key) != null;
   }
 
   @Nullable
@@ -231,7 +227,8 @@ public class CustomTemplateCallback {
     myEditor.getDocument().deleteString(caretAt - key.length(), caretAt);
   }
 
-  public static PsiElement getContext(PsiFile file, int offset) {
+  @NotNull
+  public static PsiElement getContext(@NotNull PsiFile file, int offset) {
     PsiElement element = null;
     if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
