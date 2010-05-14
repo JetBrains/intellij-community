@@ -80,7 +80,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         off = CharArrayUtil.shiftForward(doc.getCharsSequence(), pos, " \t");
         startLine--;
       }
-      while (startLine > 1 && doc.getCharsSequence().charAt(off) == '\n');
+      while (startLine > 1 && off < doc.getTextLength() && doc.getCharsSequence().charAt(off) == '\n');
 
       final VisualPosition startPosition = editor.offsetToVisualPosition(off);
       if (startPosition.column <= 0) return;
@@ -92,7 +92,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
       final FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(off)));
       final FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
-      
+
       if (tailRegion != null && tailRegion == headerRegion) return;
 
       final boolean selected;
@@ -141,14 +141,15 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     List<TextRange> ranges = new ArrayList<TextRange>();
     for (IndentGuideDescriptor descriptor : descriptors) {
-      int endOffset = descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
+      int endOffset =
+        descriptor.endLine < myDocument.getLineCount() ? myDocument.getLineStartOffset(descriptor.endLine) : myDocument.getTextLength();
       ranges.add(new TextRange(myDocument.getLineStartOffset(descriptor.startLine), endOffset));
     }
 
 
     Collections.sort(ranges, RANGE_COMPARATOR);
     List<RangeHighlighter> oldHighlighters = myEditor.getUserData(INDENT_HIGHLIGHTERS_IN_EDITOR_KEY);
-    List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();  
+    List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
     MarkupModel mm = myEditor.getMarkupModel();
 
     int curRange = 0;
@@ -191,7 +192,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
   private List<IndentGuideDescriptor> buildDescriptors() {
     if (!myEditor.getSettings().isIndentGuidesShown()) return Collections.emptyList();
-    
+
     int[] lineIndents = calcIndents();
 
     List<IndentGuideDescriptor> descriptors = new ArrayList<IndentGuideDescriptor>();
