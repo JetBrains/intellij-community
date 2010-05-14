@@ -344,5 +344,4 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   <T extends PsiElement> T findElementByText(String text, Class<T> elementClass);
 
-  void testWordSelection(@NotNull String before, String... after) throws Exception;
 }
