@@ -46,6 +46,7 @@ public abstract class AntDomProject extends AntDomElement {
   private ClassLoader myClassLoader;
 
   @Attribute("name")
+  @NameValue
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("default")

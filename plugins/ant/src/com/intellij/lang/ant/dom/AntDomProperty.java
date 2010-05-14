@@ -25,6 +25,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
   private Map<String, String> myCachedPreperties;
 
   @Attribute("name")
+  @NameValue
   @Convert(value = AntDomAttributeValueConverter.class)
   public abstract GenericAttributeValue<String> getName();
 

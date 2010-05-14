@@ -31,7 +31,6 @@ import java.util.*;
  *         Date: Apr 22, 2010
  */
 public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
-  // todo: when searching for properties walk elements in the target dependency-based order
 
   public static enum Stage {
     RESOLVE_MAP_BUILDING_STAGE, TARGETS_WALKUP_STAGE
@@ -43,8 +42,8 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   private final AntDomElement myContextElement;
   private boolean myStopped;
   private TargetsNameContext myNameContext = new TargetsNameContext();
-  private Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<String, AntDomTarget>();
-  private Map<String, List<String>> myDependenciesMap = new HashMap<String, List<String>>();
+  private Map<String, AntDomTarget> myTargetsResolveMap = new HashMap<String, AntDomTarget>(); // target effective name -> ant target
+  private Map<String, List<String>> myDependenciesMap = new HashMap<String, List<String>>();   // target effective name -> dependencies effective names
 
   private Set<String> myProcessedTargets = new HashSet<String>();
 

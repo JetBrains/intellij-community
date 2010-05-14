@@ -16,11 +16,11 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -28,56 +28,85 @@ import java.util.Map;
  */
 public class TargetResolver extends PropertyProviderFinder {
 
-  private final String myDeclaredTargetRef;
+  private List<String> myDeclaredTargetRefs;
   private @Nullable AntDomTarget myContextTarget;
-  private Pair<AntDomTarget, String> myResult;
 
-  public TargetResolver(@NotNull String declaredDependencyRef, AntDomTarget contextElement) {
+  private Result myResult = new Result();
+
+  public static class Result {
+    private Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<String, Pair<AntDomTarget, String>>(); // declared target name -> pair[target, effective name]
+    private Map<String, AntDomTarget> myVariants;
+
+    void add(String declaredTargetRef, Pair<AntDomTarget, String> pair) {
+      myMap.put(declaredTargetRef, pair);
+    }
+
+    void setVariants(Map<String, AntDomTarget> variants) {
+      myVariants = variants;
+    }
+
+    @Nullable
+    public Pair<AntDomTarget, String> getResolvedTarget(String declaredTargetRef) {
+      return myMap.get(declaredTargetRef);
+    }
+
+    @NotNull
+    public Map<String, AntDomTarget> getVariants() {
+      return myVariants != null? myVariants : Collections.<String, AntDomTarget>emptyMap();
+    }
+  }
+
+  private TargetResolver(@NotNull Collection<String> declaredDependencyRefs, AntDomTarget contextElement) {
     super(contextElement);
-    myDeclaredTargetRef = declaredDependencyRef;
+    myDeclaredTargetRefs = new ArrayList<String>(declaredDependencyRefs);
     myContextTarget = contextElement;
   }
 
-  @Nullable
-  public static AntDomTarget resolve(@NotNull AntDomProject project, @Nullable AntDomTarget contextTarget, @NotNull String declaredTargetRef) {
-    final TargetResolver resolver = new TargetResolver(declaredTargetRef, contextTarget);
+  @NotNull
+  public static Result resolve(@NotNull AntDomProject project, @Nullable AntDomTarget contextTarget, @NotNull String declaredTargetRef) {
+    return resolve(project, contextTarget, Arrays.asList(declaredTargetRef));
+  }
+
+  public static Result resolve(AntDomProject project, AntDomTarget contextTarget, @NotNull Collection<String> declaredTargetRefs) {
+    final TargetResolver resolver = new TargetResolver(declaredTargetRefs, contextTarget);
     resolver.execute(project, null);
-    final Pair<AntDomTarget, String> result = resolver.getResult();
-    return result != null? result.getFirst() : null;
+    final Result result = resolver.getResult();
+    result.setVariants(resolver.getDiscoveredTargets());
+    return result;
   }
 
-  @Nullable
-  public static Trinity<AntDomTarget, String, Map<String, AntDomTarget>> resolveWithVariants(@NotNull AntDomProject project, @Nullable AntDomTarget contextTarget, @NotNull String declaredTargetRef) {
-    final TargetResolver resolver = new TargetResolver(declaredTargetRef, contextTarget);
-    resolver.execute(project, null);
-    final Pair<AntDomTarget, String> result = resolver.getResult();
-    if (result == null) {
-      return null;
-    }
-    return new Trinity<AntDomTarget, String, Map<String, AntDomTarget>>(result.getFirst(), result.getSecond(), resolver.getDiscoveredTargets());
-  }
-
-  protected void targetDefined(AntDomTarget target, String taregetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
-    if (myContextTarget != null && myResult == null && target.equals(myContextTarget)) {
-      myResult = dependenciesMap.get(myDeclaredTargetRef);
-      stop();
-    }
-  }
-
-  protected void stageCompleted(Stage completedStage, Stage startingStage) {
-    if (completedStage == Stage.RESOLVE_MAP_BUILDING_STAGE) {
-      if (myResult == null) {
-        final AntDomTarget target = getTargetByName(myDeclaredTargetRef);
-        if (target != null) {
-          myResult = new Pair<AntDomTarget, String>(target, myDeclaredTargetRef); // treat declared name as effective name
+  protected void targetDefined(AntDomTarget target, String targetEffectiveName, Map<String, Pair<AntDomTarget, String>> dependenciesMap) {
+    if (myContextTarget != null && myDeclaredTargetRefs.size() > 0 && target.equals(myContextTarget)) {
+      for (Iterator<String> it = myDeclaredTargetRefs.iterator(); it.hasNext();) {
+        final String declaredRef = it.next();
+        final Pair<AntDomTarget, String> result = dependenciesMap.get(declaredRef);
+        if (result != null) {
+          myResult.add(declaredRef, result);
+          it.remove();
         }
       }
       stop();
     }
   }
 
-  @Nullable
-  public Pair<AntDomTarget, String> getResult() {
+  protected void stageCompleted(Stage completedStage, Stage startingStage) {
+    if (completedStage == Stage.RESOLVE_MAP_BUILDING_STAGE) {
+      if (myDeclaredTargetRefs.size() > 0) {
+        for (Iterator<String> it = myDeclaredTargetRefs.iterator(); it.hasNext();) {
+          final String declaredRef = it.next();
+          final AntDomTarget result = getTargetByName(declaredRef);
+          if (result != null) {
+            myResult.add(declaredRef, new Pair<AntDomTarget, String>(result, declaredRef)); // treat declared name as effective name
+            it.remove();
+          }
+        }
+      }
+      stop();
+    }
+  }
+
+  @NotNull
+  public Result getResult() {
     return myResult;
   }
 

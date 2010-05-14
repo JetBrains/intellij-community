@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ import java.util.List;
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomTarget extends AntDomElement {
   @Attribute("name")
+  @NameValue
   @Convert(value = AntDomAttributeValueConverter.class)
   public abstract GenericAttributeValue<String> getName();
 
