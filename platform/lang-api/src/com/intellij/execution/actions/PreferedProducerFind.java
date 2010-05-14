@@ -114,6 +114,22 @@ class PreferedProducerFind {
       return ((LocatableConfigurationType)getConfigurationType()).createConfigurationByLocation(location);
     }
 
+    @Override
+    protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                   @NotNull RunnerAndConfigurationSettings[] existingConfigurations) {
+      if (existingConfigurations.length > 0) {
+        ConfigurationType type = existingConfigurations[0].getType();
+        if (type instanceof LocatableConfigurationType) {
+          for (final RunnerAndConfigurationSettings configuration : existingConfigurations) {
+            if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), location)) {
+              return configuration;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
     public int compareTo(final Object o) {
       return PREFERED;
     }

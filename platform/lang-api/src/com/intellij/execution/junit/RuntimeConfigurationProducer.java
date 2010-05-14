@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
-public abstract class RuntimeConfigurationProducer implements Comparable {
+public abstract class RuntimeConfigurationProducer implements Comparable, Cloneable {
   public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer"); 
 
   public static final Comparator<RuntimeConfigurationProducer> COMPARATOR = new ProducerComparator();
@@ -80,17 +80,6 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
   @Nullable
   protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
                                                                  @NotNull final RunnerAndConfigurationSettings[] existingConfigurations) {
-    if (existingConfigurations.length > 0) {
-      ConfigurationType type = existingConfigurations[0].getType();
-      if (type instanceof LocatableConfigurationType) {
-        for (final RunnerAndConfigurationSettings configuration : existingConfigurations) {
-          if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), location)) {
-            return configuration;
-          }
-        }
-      }
-    }
-
     return null;
   }
 
