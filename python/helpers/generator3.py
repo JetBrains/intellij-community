@@ -18,6 +18,12 @@ are not parsed. This is deliberate in current version, since the rest of PyCharm
 all this too.
 """
 
+from datetime import datetime
+OUR_OWN_DATETIME = datetime(2010, 5, 14, 3, 32, 12) # datetime.now() of edit time
+# we could use script's ctime, but the actual running copy may have it all wrong.
+#
+# Note: DON'T FORGET TO UPDATE!
+
 import sys
 import os
 import string
@@ -1242,7 +1248,8 @@ if __name__ == "__main__":
         action = "probing " + fname
         mod_mtime = os.path.exists(mod.__file__) and os.path.getmtime(mod.__file__) or 0.0
         file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
-        if mod_mtime <= file_mtime:
+        # skeleton's file is no older than module's, and younger than our script
+        if file_mtime >= mod_mtime and datetime.fromtimestamp(file_mtime) > OUR_OWN_DATETIME:
           continue # skip the file
       if doing_builtins and name == BUILTIN_MOD_NAME:
         action = "grafting"
