@@ -19,9 +19,14 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.codeInsight.editorActions.SelectWordHandler;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +82,20 @@ public class CodeInsightTestUtil {
       @Override
       protected void run() throws Throwable {
         SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder);
+      }
+    }.execute();
+    fixture.checkResultByFile(after, false);
+  }
+
+  public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
+                                        @NotNull final String before, @NotNull final String after) throws Exception {
+    fixture.configureByFile(before);
+    new WriteCommandAction(fixture.getProject()) {
+      protected void run(Result result) throws Throwable {
+        new ListTemplatesAction().actionPerformedImpl(fixture.getProject(), fixture.getEditor());
+        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
+        assert lookup != null;
+        lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
       }
     }.execute();
     fixture.checkResultByFile(after, false);
