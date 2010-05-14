@@ -318,9 +318,11 @@ public class DuplicatesFinder {
         return false;
       }
     } else if (pattern instanceof PsiPrefixExpression) {
-      if (checkParameterModification(((PsiPrefixExpression)pattern).getOperand(), ((PsiPrefixExpression)pattern).getOperationTokenType())) return false;
+      if (checkParameterModification(((PsiPrefixExpression)pattern).getOperand(), ((PsiPrefixExpression)pattern).getOperationTokenType(),
+                                     ((PsiPrefixExpression)candidate).getOperand())) return false;
     } else if (pattern instanceof PsiPostfixExpression) {
-      if (checkParameterModification(((PsiPostfixExpression)pattern).getOperand(), ((PsiPostfixExpression)pattern).getOperationTokenType())) return false;
+      if (checkParameterModification(((PsiPostfixExpression)pattern).getOperand(), ((PsiPostfixExpression)pattern).getOperationTokenType(),
+                                     ((PsiPostfixExpression)candidate).getOperand())) return false;
     }
 
     if (pattern instanceof PsiJavaCodeReferenceElement) {
@@ -458,9 +460,14 @@ public class DuplicatesFinder {
     return true;
   }
 
-  private static boolean checkParameterModification(final PsiExpression expression, final IElementType sign) {
+  private static boolean checkParameterModification(final PsiExpression expression,
+                                                    final IElementType sign,
+                                                    PsiExpression candidate) {
     if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() instanceof PsiParameter &&
         (sign.equals(JavaTokenType.MINUSMINUS)|| sign.equals(JavaTokenType.PLUSPLUS))) {
+      if (candidate instanceof PsiReferenceExpression && ((PsiReferenceExpression)candidate).resolve() instanceof PsiParameter) {
+        return false;
+      }
       return true;
     }
     return false;
