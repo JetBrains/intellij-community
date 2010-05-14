@@ -16,9 +16,15 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 
 import java.util.HashSet;
 
@@ -37,16 +43,35 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
 
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-    final GrExpression expression = referenceExpression.getQualifierExpression();
-    if (!(expression instanceof GrReferenceExpression)) {
-      super.visitReferenceExpression(referenceExpression);
-      return;
+    PsiElement nextSibling = referenceExpression.getNextSibling();
+    if (nextSibling instanceof PsiWhiteSpace) {
+      nextSibling = nextSibling.getNextSibling();
     }
 
-    final GrReferenceExpression qualifierExpr = (GrReferenceExpression)expression;
+    final GrExpression expression = referenceExpression.getQualifierExpression();
 
-    if (myParamName.equals(qualifierExpr.getName())) {
-      mySet.add(referenceExpression.getName());
+    if (expression instanceof GrReferenceExpression) {
+      if (myParamName.equals(((GrReferenceExpression)expression).getName())) {
+        if (!(nextSibling instanceof GrArgumentList)) {
+          mySet.add(referenceExpression.getName());
+        }
+      }
+    }
+    else if (expression == null && myParamName.equals(referenceExpression.getName())) {
+      if (nextSibling instanceof GrArgumentList) {
+        GrArgumentList args = (GrArgumentList)nextSibling;
+
+        if (args.isIndexPropertiesList()) {
+          GrExpression[] expr = args.getExpressionArguments();
+
+          if (expr.length == 1 && expr[0] instanceof GrLiteral) {
+            Object value = ((GrLiteral)expr[0]).getValue();
+            if (value instanceof String) {
+              mySet.add((String)value);
+            }
+          }
+        }
+      }
     }
 
     super.visitReferenceExpression(referenceExpression);
