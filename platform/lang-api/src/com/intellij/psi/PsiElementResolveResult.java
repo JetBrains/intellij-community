@@ -18,6 +18,9 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * Trivial implementation of {@link ResolveResult}.
@@ -66,5 +69,26 @@ public class PsiElementResolveResult implements ResolveResult{
   @NonNls
   public String toString() {
     return "PsiElementResolveResult: " + (myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText());
+  }
+
+  public static ResolveResult[] createResults(@Nullable Collection<? extends PsiElement> elements) {
+    if (elements == null || elements.isEmpty()) return EMPTY_ARRAY;
+
+    final ResolveResult[] results = new ResolveResult[elements.size()];
+    int i = 0;
+    for (PsiElement element : elements) {
+      results[i++] = new PsiElementResolveResult(element);
+    }
+    return results;
+  }
+
+  public static ResolveResult[] createResults(@Nullable PsiElement[] elements) {
+    if (elements == null || elements.length == 0) return EMPTY_ARRAY;
+
+    final ResolveResult[] results = new ResolveResult[elements.length];
+    for (int i = 0; i < elements.length; i++) {
+      results[i] = new PsiElementResolveResult(elements[i]);
+    }
+    return results;
   }
 }

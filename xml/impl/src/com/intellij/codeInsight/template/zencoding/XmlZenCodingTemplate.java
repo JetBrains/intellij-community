@@ -27,15 +27,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xml.util.HtmlUtil;
 import org.apache.xerces.util.XML11Char;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -68,7 +71,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   }
 
   @Nullable
-  private static TemplateToken parseSelectors(@NotNull String text) {
+  private static XmlTemplateToken parseSelectors(@NotNull String text) {
     String templateKey = null;
     List<Pair<String, String>> attributes = new ArrayList<Pair<String, String>>();
     Set<String> definedAttrs = new HashSet<String>();
@@ -140,7 +143,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       assert classAttrPosition >= 0;
       attributes.add(classAttrPosition, new Pair<String, String>(CLASS, classesAttrValue.toString()));
     }
-    return new TemplateToken(templateKey, attributes);
+    return new XmlTemplateToken(templateKey, attributes);
   }
 
   private static boolean isXML11ValidQName(String str) {
@@ -157,7 +160,10 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
   }
 
   public static boolean isTrueXml(CustomTemplateCallback callback) {
-    FileType type = callback.getFileType();
+    return isTrueXml(callback.getFileType());
+  }
+
+  public static boolean isTrueXml(FileType type) {
     return type == StdFileTypes.XHTML || type == StdFileTypes.JSPX || type == StdFileTypes.XML;
   }
 
@@ -185,24 +191,65 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     if (template == null && !isXML11ValidQName(prefix)) {
       return null;
     }
-    TemplateToken token = parseSelectors(key);
+    XmlTemplateToken token = parseSelectors(key);
     if (token == null) {
       return null;
     }
-    if (useDefaultTag && token.myAttribute2Value.size() == 0) {
+    if (useDefaultTag && token.getAttribute2Value().size() == 0) {
       return null;
     }
-    if (template != null && (token.myAttribute2Value.size() > 0 || isTrueXml(callback))) {
-      assert prefix.equals(token.myKey);
-      token.myTemplate = template;
-      if (token.myAttribute2Value.size() > 0) {
-        XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, false);
-        if (tag == null) {
-          return null;
-        }
+    if (template == null) {
+      template = generateTagTemplate(token.getKey(), callback);
+    }
+    assert prefix.equals(token.getKey());
+    token.setTemplate(template);
+    XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
+    if (token.getAttribute2Value().size() > 0 && tag == null) {
+      return null;
+    }
+    if (tag != null) {
+      if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
+        addMissingAttributes(tag, token.getAttribute2Value());
       }
+      token.setTag(tag);
     }
     return token;
+  }
+
+  private static void addMissingAttributes(XmlTag tag, List<Pair<String, String>> value) {
+    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(value);
+    for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+      Pair<String, String> pair = iterator.next();
+      if (tag.getAttribute(pair.first) != null) {
+        iterator.remove();
+      }
+    }
+    addAttributesBefore(tag, attr2value);
+  }
+
+  private static void addAttributesBefore(XmlTag tag, List<Pair<String, String>> attr2value) {
+    XmlAttribute[] attributes = tag.getAttributes();
+    XmlAttribute firstAttribute = attributes.length > 0 ? attributes[0] : null;
+    XmlElementFactory factory = XmlElementFactory.getInstance(tag.getProject());
+    for (Pair<String, String> pair : attr2value) {
+      XmlAttribute xmlAttribute = factory.createXmlAttribute(pair.first, "");
+      if (firstAttribute != null) {
+        tag.addBefore(xmlAttribute, firstAttribute);
+      }
+      else {
+        tag.add(xmlAttribute);
+      }
+    }
+  }
+
+  @NotNull
+  private static TemplateImpl generateTagTemplate(String tagName, CustomTemplateCallback callback) {
+    StringBuilder builder = new StringBuilder("<");
+    builder.append(tagName).append('>');
+    if (isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(tagName)) {
+      builder.append("$END$</").append(tagName).append('>');
+    }
+    return new TemplateImpl("", builder.toString(), "");
   }
 
   @Nullable
@@ -221,9 +268,21 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
       if (PsiTreeUtil.getParentOfType(element, XmlComment.class) != null) {
         return false;
       }
+      if (!findApplicableFilter(element)) {
+        return false;
+      }
       return true;
     }
     return false;
+  }
+
+  private static boolean findApplicableFilter(@NotNull PsiElement context) {
+    for (ZenCodingFilter filter : ZenCodingFilter.EP_NAME.getExtensions()) {
+      if (filter.isMyContext(context)) {
+        return true;
+      }
+    }
+    return new XmlZenCodingFilterImpl().isMyContext(context);
   }
 
   public static boolean startZenCoding(Editor editor, PsiFile file, String abbreviation) {

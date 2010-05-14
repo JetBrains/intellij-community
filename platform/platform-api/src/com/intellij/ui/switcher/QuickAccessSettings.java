@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.keymap.Keymap;
@@ -27,6 +28,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -48,15 +50,15 @@ import java.awt.event.*;
 import java.text.NumberFormat;
 import java.util.*;
 
-public class QuickAccessSettings implements ApplicationComponent, Configurable, KeymapManagerListener, Disposable {
+public class QuickAccessSettings implements ApplicationComponent, SearchableConfigurable, KeymapManagerListener, Disposable {
 
   private Set<Integer> myModifierVks = new HashSet<Integer>();
   private Keymap myKeymap;
-  @NonNls private static final String SWITCH_UP = "SwitchUp";
-  @NonNls private static final String SWITCH_DOWN = "SwitchDown";
-  @NonNls private static final String SWITCH_LEFT = "SwitchLeft";
-  @NonNls private static final String SWITCH_RIGHT = "SwitchRight";
-  @NonNls private static final String SWITCH_APPLY = "SwitchApply";
+  @NonNls public static final String SWITCH_UP = "SwitchUp";
+  @NonNls public static final String SWITCH_DOWN = "SwitchDown";
+  @NonNls public static final String SWITCH_LEFT = "SwitchLeft";
+  @NonNls public static final String SWITCH_RIGHT = "SwitchRight";
+  @NonNls public static final String SWITCH_APPLY = "SwitchApply";
 
   private QuickAccessSettings.Ui myUi;
   private RegistryValue myModifiersValue;
@@ -108,6 +110,14 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
     return myUi;
   }
 
+  public String getId() {
+    return "QuickAccess";
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
+  }
+
   public void activeKeymapChanged(Keymap keymap) {
     KeymapManager mgr = KeymapManager.getInstance();
     myKeymap = mgr.getActiveKeymap();
@@ -125,6 +135,9 @@ public class QuickAccessSettings implements ApplicationComponent, Configurable, 
   }
 
   private void applyModifiersFromRegistry() {
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.isUnitTestMode()) return;
+
     String text = getModifierRegistryValue();
     String[] vks = text.split(" ");
 

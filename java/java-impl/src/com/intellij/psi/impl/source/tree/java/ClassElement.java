@@ -407,7 +407,13 @@ public class ClassElement extends CompositeElement implements Constants {
           return nextSibling == null ? aClass.getLBrace().getNextSibling() : nextSibling;
         }
         else {
-          return aClass.getLBrace().getNextSibling();
+          // The main idea is to avoid to anchor to 'white space' element because that causes reformatting algorithm
+          // to perform incorrectly. The algorithm is encapsulated at PostprocessReformattingAspect.doPostponedFormattingInner().
+          PsiElement result = aClass.getLBrace().getNextSibling();
+          while (result instanceof PsiWhiteSpace) {
+            result = result.getNextSibling();
+          }
+          return result;
         }
       }
       lastMember = child;
@@ -417,13 +423,26 @@ public class ClassElement extends CompositeElement implements Constants {
 
   public static int getMemberOrderWeight(PsiElement member, CodeStyleSettings settings) {
     if (member instanceof PsiField) {
-      return member instanceof PsiEnumConstant ? 1 : settings.FIELDS_ORDER_WEIGHT + 1;
+      if (member instanceof PsiEnumConstant) {
+        return 1;
+      }
+      else {
+        return ((PsiField)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_FIELDS_ORDER_WEIGHT + 1
+                                                                          : settings.FIELDS_ORDER_WEIGHT + 1;
+      }
     }
     else if (member instanceof PsiMethod) {
-      return ((PsiMethod)member).isConstructor() ? settings.CONSTRUCTORS_ORDER_WEIGHT + 1 : settings.METHODS_ORDER_WEIGHT + 1;
+      if (((PsiMethod)member).isConstructor()) {
+        return settings.CONSTRUCTORS_ORDER_WEIGHT + 1;
+      }
+      else {
+        return ((PsiMethod)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_METHODS_ORDER_WEIGHT + 1
+                                                                           : settings.METHODS_ORDER_WEIGHT + 1;
+      }
     }
     else if (member instanceof PsiClass) {
-      return settings.INNER_CLASSES_ORDER_WEIGHT + 1;
+      return ((PsiClass)member).hasModifierProperty(PsiModifier.STATIC) ? settings.STATIC_INNER_CLASSES_ORDER_WEIGHT + 1
+                                                                        : settings.INNER_CLASSES_ORDER_WEIGHT + 1;
     }
     else {
       return -1;

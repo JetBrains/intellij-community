@@ -121,7 +121,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       ASTNode[] children = node.getChildren(null);
       ASTNode prevChildNode = null;
-      final Alignment alignment = mustAlign(blockPsi, mySettings) ? Alignment.createAlignment() : null;
+      final Alignment alignment = mustAlign(blockPsi, mySettings, children) ? Alignment.createAlignment() : null;
       for (ASTNode childNode : children) {
         if (canBeCorrectBlock(childNode)) {
           final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
@@ -146,12 +146,33 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return subBlocks;
   }
 
-  private static boolean mustAlign(PsiElement blockPsi, CodeStyleSettings mySettings) {
+  private static boolean mustAlign(PsiElement blockPsi, CodeStyleSettings mySettings, ASTNode[] children) {
+    // We don't want to align single call argument if it's a closure. The reason is that it looks better to have call like
+    //
+    // foo({
+    //   println 'xxx'
+    // })
+    //
+    // than
+    //
+    // foo({
+    //       println 'xxx'
+    //     })
+    if (blockPsi instanceof GrArgumentList && mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
+      List<ASTNode> nonWhiteSpaceNodes = new ArrayList<ASTNode>();
+      for (ASTNode child : children) {
+        if (!WHITE_SPACES_OR_COMMENTS.contains(child.getElementType())) {
+          nonWhiteSpaceNodes.add(child);
+        }
+      }
+      return nonWhiteSpaceNodes.size() != 3 || nonWhiteSpaceNodes.get(0).getElementType() != mLPAREN 
+             || nonWhiteSpaceNodes.get(1).getElementType() != CLOSABLE_BLOCK || nonWhiteSpaceNodes.get(2).getElementType() != mRPAREN;
+    }
+
     return blockPsi instanceof GrParameterList && mySettings.ALIGN_MULTILINE_PARAMETERS ||
         blockPsi instanceof GrExtendsClause && mySettings.ALIGN_MULTILINE_EXTENDS_LIST ||
         blockPsi instanceof GrThrowsClause && mySettings.ALIGN_MULTILINE_THROWS_LIST ||
-        blockPsi instanceof GrConditionalExpression && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION ||
-        blockPsi instanceof GrArgumentList && mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS;
+        blockPsi instanceof GrConditionalExpression && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION;
   }
 
   private static boolean isListLikeClause(PsiElement blockPsi) {

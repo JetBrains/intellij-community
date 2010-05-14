@@ -557,11 +557,13 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   /**
+   * @param place place to start traversal
+   * @param aClass level to stop traversal
    * @return element with static modifier enclosing place and enclosed by aClass (if not null)
    */
   @Nullable
   public static PsiModifierListOwner getEnclosingStaticElement(PsiElement place, @Nullable PsiClass aClass) {
-    LOG.assertTrue(aClass == null || !place.isPhysical() || PsiTreeUtil.isAncestor(aClass, place, false));
+    LOG.assertTrue(aClass == null || !place.isPhysical() || PsiTreeUtil.isContextAncestor(aClass, place, false));
     PsiElement parent = place;
     while (parent != aClass) {
       if (parent instanceof PsiFile) break;
@@ -785,10 +787,16 @@ public final class PsiUtil extends PsiUtilBase {
   }
 
   public static boolean hasDefaultConstructor(PsiClass clazz) {
+    return hasDefaultConstructor(clazz, false);
+  }
+  
+  public static boolean hasDefaultConstructor(PsiClass clazz, boolean allowProtected) {
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length > 0) {
       for (PsiMethod cls: constructors) {
-        if (cls.hasModifierProperty(PsiModifier.PUBLIC) && cls.getParameterList().getParametersCount() == 0) {
+        if ((cls.hasModifierProperty(PsiModifier.PUBLIC) ||
+             allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)) &&
+            cls.getParameterList().getParametersCount() == 0) {
           return true;
         }
       }

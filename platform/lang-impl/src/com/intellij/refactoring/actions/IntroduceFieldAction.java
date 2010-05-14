@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 
-public class IntroduceFieldAction extends BaseRefactoringAction {
+public class IntroduceFieldAction extends BasePlatformRefactoringAction {
   public IntroduceFieldAction() {
     setInjectedContext(true);
   }

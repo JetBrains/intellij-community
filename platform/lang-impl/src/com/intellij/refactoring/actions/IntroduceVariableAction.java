@@ -26,7 +26,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 /**
  *
  */
-public class IntroduceVariableAction extends BaseRefactoringAction {
+public class IntroduceVariableAction extends BasePlatformRefactoringAction {
   public IntroduceVariableAction() {
     setInjectedContext(true);
   }

@@ -16,6 +16,7 @@
 
 package com.intellij.execution.impl;
 
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
@@ -102,7 +103,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
 
     final List children = element.getChildren();
     for (final Object child : children) {
-      final RunnerAndConfigurationSettingsImpl configuration = myManager.loadConfiguration((Element)child, true);
+      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration((Element)child, true);
       if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
         if (myUnloadedElements == null) myUnloadedElements = new ArrayList<Element>(2);
         myUnloadedElements.add(element);
@@ -117,8 +118,8 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    final Collection<RunnerAndConfigurationSettingsImpl> configurations = myManager.getStableConfigurations().values();
-    for (RunnerAndConfigurationSettingsImpl configuration : configurations) {
+    final Collection<RunnerAndConfigurationSettings> configurations = myManager.getStableConfigurations().values();
+    for (RunnerAndConfigurationSettings configuration : configurations) {
       if (myManager.isConfigurationShared(configuration)){
         myManager.addConfigurationElement(element, configuration);
       }

@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -192,7 +193,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     LOG.assertTrue(indicator != null);
 
-    JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
+    boolean result = JobUtil.invokeConcurrentlyUnderMyProgress(tools, new Processor<LocalInspectionTool>() {
       public boolean process(final LocalInspectionTool tool) {
         final ProgressManager progressManager = ProgressManager.getInstance();
         indicator.checkCanceled();
@@ -223,6 +224,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         return true;
       }
     }, "Inspection tools");
+    if (!result) throw new ProcessCanceledException();
 
     indicator.checkCanceled();
     inspectInjectedPsi(elements, tools);
@@ -242,12 +244,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       }, false);
     }
-    JobUtil.invokeConcurrentlyUnderMyProgress(injected, new Processor<PsiFile>() {
+    if (!JobUtil.invokeConcurrentlyUnderMyProgress(new ArrayList<PsiFile>(injected), new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults, tools);
         return true;
       }
-    }, "Inspect injected fragments");
+    }, "Inspect injected fragments")) throw new ProcessCanceledException();
   }
 
   public Collection<HighlightInfo> getHighlights() {

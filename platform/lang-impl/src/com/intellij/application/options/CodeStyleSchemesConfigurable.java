@@ -48,9 +48,11 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   private boolean myApplyCompleted = false;
   private final Project myProject;
+  private final LanguageSelector myLangSelector;
 
   public CodeStyleSchemesConfigurable(Project project) {
     myProject = project;
+    myLangSelector = new LanguageSelector();
   }
 
   public JComponent createComponent() {
@@ -322,7 +324,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     private CodeStyleMainPanel ensurePanel() {
       if (myPanel == null) {
-        myPanel = new CodeStyleMainPanel(ensureModel(), myFactory);
+        myPanel = new CodeStyleMainPanel(ensureModel(), myLangSelector, myFactory);
       }
       return myPanel;
     }

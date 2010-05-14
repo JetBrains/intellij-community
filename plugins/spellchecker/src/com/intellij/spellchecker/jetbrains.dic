@@ -108,6 +108,5 @@ utf
 stylesheet
 charset
 vertices
-commandline
-cmdline
-multi
+println
+encoded

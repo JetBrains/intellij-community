@@ -93,7 +93,8 @@ public class IOResourceInspection extends ResourceInspection {
         constraints.fill = GridBagConstraints.BOTH;
         final IGTable table =
                 new IGTable(new ListWrappingTableModel(ignoredTypes,
-                        "ignored io resource types"));
+                        InspectionGadgetsBundle.message(
+                                "ignored.io.resource.types")));
         final JScrollPane scrollPane = new JScrollPane(table);
         panel.add(scrollPane, constraints);
         constraints.gridx = 1;
@@ -103,7 +104,11 @@ public class IOResourceInspection extends ResourceInspection {
         constraints.fill = GridBagConstraints.HORIZONTAL;
         final JButton addButton =
                 new JButton(new TreeClassChooserAction(table,
-                        "Choose io resource type to ignore"));
+                        InspectionGadgetsBundle.message(
+                                "choose.io.resource.type.to.ignore"),
+                        "java.io.InputStream", "java.io.OutputStream",
+                        "java.io.Reader", "java.io.Writer",
+                        "java.io.RandomAccessFile"));
         panel.add(addButton, constraints);
         constraints.gridy = 1;
         final JButton removeButton = new JButton(new RemoveAction(table));

@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
@@ -69,7 +70,7 @@ public class PatternBasedInjectionHelper {
 
   @Nullable
   public static ElementPattern<PsiElement> createElementPattern(final String text, final String displayName, final String supportId) {
-    return createElementPatternNoGroovy(text, displayName, supportId);
+    return createElementPatternNoException(text, displayName, supportId);
   }
 
   //@Nullable
@@ -111,7 +112,18 @@ public class PatternBasedInjectionHelper {
 
   // without Groovy
   @Nullable
-  public static ElementPattern<PsiElement> createElementPatternNoGroovy(final String text, final String displayName, final String supportId) {
+  public static ElementPattern<PsiElement> createElementPatternNoException(final String text, final String displayName, final String supportId) {
+    try {
+      return compileElementPattern(text, supportId);
+    }
+    catch (Exception ex) {
+      final Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+      Configuration.LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
+      return null;
+    }
+  }
+
+  public static ElementPattern<PsiElement> compileElementPattern(final String text, final String supportId) {  
     final Class[] patternClasses = getPatternClasses(supportId);
     final Set<Method> staticMethods = new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
       public Collection<Method> fun(final Class aClass) {
@@ -125,23 +137,16 @@ public class PatternBasedInjectionHelper {
         });
       }
     }));
-    try {
-      return createElementPatternNoGroovy(text, new Function<Frame, Object>() {
-        public Object fun(final Frame frame) {
-          try {
-            return invokeMethod(frame.target, frame.methodName, frame.params.toArray(), staticMethods);
-          }
-          catch (Throwable throwable) {
-            throw new RuntimeException(throwable);
-          }
+    return createElementPatternNoGroovy(text, new Function<Frame, Object>() {
+      public Object fun(final Frame frame) {
+        try {
+          return invokeMethod(frame.target, frame.methodName, frame.params.toArray(), staticMethods);
         }
-      });
-    }
-    catch (Exception ex) {
-      final Throwable cause = ex.getCause() != null? ex.getCause() : ex;
-      Configuration.LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
-      return null;
-    }
+        catch (Throwable throwable) {
+          throw new IllegalArgumentException(text, throwable);
+        }
+      }
+    });
   }
 
   private static enum State {
@@ -354,7 +359,11 @@ public class PatternBasedInjectionHelper {
         throw e.getTargetException();
       }
     }
-    throw new NoSuchMethodException(methodName + ":" + Arrays.asList(arguments));
+    throw new NoSuchMethodException("unknown symbol: "+methodName + "(" + StringUtil.join(arguments, new Function<Object, String>() {
+      public String fun(Object o) {
+        return String.valueOf(o);
+      }
+    }, ", ")+")");
   }
 
 }

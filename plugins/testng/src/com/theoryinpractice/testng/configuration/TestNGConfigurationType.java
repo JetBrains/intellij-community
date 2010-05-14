@@ -22,8 +22,12 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.*;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -38,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class TestNGConfigurationType implements LocatableConfigurationType
+public class TestNGConfigurationType implements ConfigurationType
 {
     private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
     private static final Icon ICON = IconLoader.getIcon("/resources/testNG.png");

@@ -27,8 +27,7 @@ import com.intellij.ui.ListUtil;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.*;
 
 public class CodeStyleGenerationConfigurable implements Configurable {
   JPanel myPanel;
@@ -306,33 +305,116 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   }
 
   private static class MembersOrderList extends JList {
-    private static final String FIELDS = ApplicationBundle.message("listbox.members.order.fields");
-    private static final String METHODS = ApplicationBundle.message("listbox.members.order.methods");
-    private static final String CONSTRUCTORS = ApplicationBundle.message("listbox.members.order.constructors");
-    private static final String INNER_CLASSES = ApplicationBundle.message("listbox.members.order.inner.classes");
+
+    private static abstract class PropertyManager {
+
+      public final String myName;
+
+      protected PropertyManager(String nameKey) {
+        myName = ApplicationBundle.message(nameKey);
+      }
+
+      abstract void apply(CodeStyleSettings settings, int value);
+      abstract int getValue(CodeStyleSettings settings);
+    }
+
+    private static final Map<String, PropertyManager> PROPERTIES = new HashMap<String, PropertyManager>();
+    static {
+      init();
+    }
 
     private final DefaultListModel myModel;
 
     public MembersOrderList() {
       myModel = new DefaultListModel();
       setModel(myModel);
-      setVisibleRowCount(4);
+      setVisibleRowCount(PROPERTIES.size());
     }
 
     public void reset(final CodeStyleSettings settings) {
       myModel.removeAllElements();
-      String[] strings = getStrings(settings);
-      for (String string : strings) {
+      for (String string : getPropertyNames(settings)) {
         myModel.addElement(string);
       }
 
       setSelectedIndex(0);
     }
 
-    private static String[] getStrings(final CodeStyleSettings settings) {
-      String[] strings = new String[]{FIELDS, METHODS, CONSTRUCTORS, INNER_CLASSES};
+    private static void init() {
+      PropertyManager staticFieldManager = new PropertyManager("listbox.members.order.static.fields") {
+        @Override void apply(CodeStyleSettings settings, int value) {
+          settings.STATIC_FIELDS_ORDER_WEIGHT = value;
+        }
+        @Override int getValue(CodeStyleSettings settings) {
+          return settings.STATIC_FIELDS_ORDER_WEIGHT;
+        }
+      };
+      PROPERTIES.put(staticFieldManager.myName, staticFieldManager);
 
-      Arrays.sort(strings, new Comparator<String>() {
+      PropertyManager instanceFieldManager = new PropertyManager("listbox.members.order.fields") {
+        @Override void apply(CodeStyleSettings settings, int value) {
+          settings.FIELDS_ORDER_WEIGHT = value;
+        }
+        @Override int getValue(CodeStyleSettings settings) {
+          return settings.FIELDS_ORDER_WEIGHT;
+        }
+      };
+      PROPERTIES.put(instanceFieldManager.myName, instanceFieldManager);
+
+      PropertyManager constructorManager = new PropertyManager("listbox.members.order.constructors") {
+        @Override void apply(CodeStyleSettings settings, int value) {
+          settings.CONSTRUCTORS_ORDER_WEIGHT = value;
+        }
+        @Override int getValue(CodeStyleSettings settings) {
+          return settings.CONSTRUCTORS_ORDER_WEIGHT;
+        }
+      };
+      PROPERTIES.put(constructorManager.myName, constructorManager);
+
+      PropertyManager staticMethodManager = new PropertyManager("listbox.members.order.static.methods") {
+        @Override void apply(CodeStyleSettings settings, int value) {
+          settings.STATIC_METHODS_ORDER_WEIGHT = value;
+        }
+        @Override int getValue(CodeStyleSettings settings) {
+          return settings.STATIC_METHODS_ORDER_WEIGHT;
+        }
+      };
+      PROPERTIES.put(staticMethodManager.myName, staticMethodManager);
+
+      PropertyManager instanceMethodManager = new PropertyManager("listbox.members.order.methods") {
+        @Override void apply(CodeStyleSettings settings, int value) {
+          settings.METHODS_ORDER_WEIGHT = value;
+        }
+        @Override int getValue(CodeStyleSettings settings) {
+          return settings.METHODS_ORDER_WEIGHT;
+        }
+      };
+      PROPERTIES.put(instanceMethodManager.myName, instanceMethodManager);
+
+      PropertyManager staticInnerClassManager = new PropertyManager("listbox.members.order.inner.static.classes") {
+        @Override void apply(CodeStyleSettings settings, int value) {
+          settings.STATIC_INNER_CLASSES_ORDER_WEIGHT = value;
+        }
+        @Override int getValue(CodeStyleSettings settings) {
+          return settings.STATIC_INNER_CLASSES_ORDER_WEIGHT;
+        }
+      };
+      PROPERTIES.put(staticInnerClassManager.myName, staticInnerClassManager);
+
+      PropertyManager innerClassManager = new PropertyManager("listbox.members.order.inner.classes") {
+        @Override void apply(CodeStyleSettings settings, int value) {
+          settings.INNER_CLASSES_ORDER_WEIGHT = value;
+        }
+        @Override int getValue(CodeStyleSettings settings) {
+          return settings.INNER_CLASSES_ORDER_WEIGHT;
+        }
+      };
+      PROPERTIES.put(innerClassManager.myName, innerClassManager);
+    }
+
+    private static Iterable<String> getPropertyNames(final CodeStyleSettings settings) {
+      List<String> result = new ArrayList<String>(PROPERTIES.keySet());
+      Collections.sort(result, new Comparator<String>() {
         public int compare(String o1, String o2) {
           int weight1 = getWeight(o1);
           int weight2 = getWeight(o2);
@@ -340,57 +422,40 @@ public class CodeStyleGenerationConfigurable implements Configurable {
         }
 
         private int getWeight(String o) {
-          if (FIELDS.equals(o)) {
-            return settings.FIELDS_ORDER_WEIGHT;
-          }
-          else if (METHODS.equals(o)) {
-            return settings.METHODS_ORDER_WEIGHT;
-          }
-          else if (CONSTRUCTORS.equals(o)) {
-            return settings.CONSTRUCTORS_ORDER_WEIGHT;
-          }
-          else if (INNER_CLASSES.equals(o)) {
-            return settings.INNER_CLASSES_ORDER_WEIGHT;
-          }
-          else {
+          PropertyManager propertyManager = PROPERTIES.get(o);
+          if (propertyManager == null) {
             throw new IllegalArgumentException("unexpected " + o);
           }
+          return propertyManager.getValue(settings);
         }
       });
-      return strings;
+      return result;
     }
 
     public void apply(CodeStyleSettings settings) {
       for (int i = 0; i < myModel.size(); i++) {
         Object o = myModel.getElementAt(i);
-        int weight = i + 1;
-
-        if (FIELDS.equals(o)) {
-          settings.FIELDS_ORDER_WEIGHT = weight;
-        }
-        else if (METHODS.equals(o)) {
-          settings.METHODS_ORDER_WEIGHT = weight;
-        }
-        else if (CONSTRUCTORS.equals(o)) {
-          settings.CONSTRUCTORS_ORDER_WEIGHT = weight;
-        }
-        else if (INNER_CLASSES.equals(o)) {
-          settings.INNER_CLASSES_ORDER_WEIGHT = weight;
-        }
-        else {
+        if (o == null) {
           throw new IllegalArgumentException("unexpected " + o);
         }
+        PropertyManager propertyManager = PROPERTIES.get(o.toString());
+        if (propertyManager == null) {
+          throw new IllegalArgumentException("unexpected " + o);
+        }
+        propertyManager.apply(settings, i + 1);
       }
     }
 
     public boolean isModified(CodeStyleSettings settings) {
-      String[] oldStrings = getStrings(settings);
-      String[] newStrings = new String[myModel.size()];
-      for (int i = 0; i < newStrings.length; i++) {
-        newStrings[i] = (String)myModel.getElementAt(i);
+      Iterable<String> oldProperties = getPropertyNames(settings);
+      int i = 0;
+      for (String property : oldProperties) {
+        if (i >= myModel.size() || !property.equals(myModel.getElementAt(i))) {
+          return true;
+        }
+        i++;
       }
-
-      return !Arrays.equals(newStrings, oldStrings);
+      return false;
     }
   }
 }

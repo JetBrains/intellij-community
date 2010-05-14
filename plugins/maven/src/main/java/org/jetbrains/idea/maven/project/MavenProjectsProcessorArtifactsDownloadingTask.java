@@ -17,8 +17,9 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.EmptyRunnable;
 import org.jetbrains.idea.maven.embedder.MavenConsole;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -59,8 +60,7 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
-            ProjectRootManagerImpl.getInstanceImpl(project).beforeRootsChange(false);
-            ProjectRootManagerImpl.getInstanceImpl(project).rootsChanged(false);
+            ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
           }
         });
       }

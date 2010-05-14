@@ -206,11 +206,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                       false);
     }
     else if (myRole1 == ChildRole.LBRACE) {
-      if (!(aClass instanceof PsiAnonymousClass)) {
-        myResult = Spacing.createSpacing(
-          0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS
-        );
-      } else {
+      if (aClass.isEnum()) {
+        createParenSpace(true, false);
+      }
+      else if (aClass instanceof PsiAnonymousClass) {
         if (myRole2 == ChildRole.CLASS_INITIALIZER && isTheOnlyClassMember(myChild2)) {
           myResult = Spacing.createSpacing(0, 0, 0,
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
@@ -220,6 +219,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
         }
       }
+      else {
+        myResult = Spacing.createSpacing(
+          0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS
+        );
+      }
+    }
+    else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
+      createParenSpace(true, false);
     }
     else processClassBody();
   }
@@ -249,6 +256,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(0, mySettings.SPACE_BEFORE_CLASS_LBRACE ? 1 : 0, 0, true, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE,
                                          lines);
       }
+      else if (myRole1 == ChildRole.CLASS) {
+        setAroundClassSpacing();
+      }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
         myResult = Spacing
@@ -261,6 +271,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createSpacing(
           0, Integer.MAX_VALUE, minLineFeeds, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE
         );
+      }
+      else if (myRole2 == ChildRole.CLASS) {
+        setAroundClassSpacing();
       }
       else {
         final int blankLines = getLinesAroundMethod() + 1;
@@ -359,6 +372,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  /**
+   * Initializes {@link #myResult} property with {@link Spacing} which <code>'min line feeds'</code> property is defined
+   * from {@link CodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
+   */
+  private void setAroundClassSpacing() {
+    myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, mySettings.BLANK_LINES_AROUND_CLASS + 1,
+                                     mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+  }
+
   private boolean processMethod() {
     if (myRole2 == ChildRole.METHOD || myChild2.getElementType() == JavaElementType.METHOD) {
       if (myRole1 == ChildRole.LBRACE) {
@@ -416,12 +438,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private int getLinesAroundMethod() {
-    if (isClass(myParent)) {
-      return mySettings.BLANK_LINES_AROUND_METHOD;
-    }
-    else {
-      return mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE;
-    }
+    boolean useInterfaceMethodSpacing = !isClass(myParent) || (isAbstractMethod(myChild1) && isAbstractMethod(myChild2));
+    return useInterfaceMethodSpacing ? mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_METHOD;
   }
 
   private int getLinesAroundField() {
@@ -440,6 +458,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     return false;
   }
 
+  private static boolean isAbstractMethod(ASTNode node) {
+    PsiElement element = node.getPsi();
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT);
+    }
+    return false;
+  }
 
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     createSpaceInCode(true);
@@ -1295,6 +1321,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override public void visitAnnotationParameterList(PsiAnnotationParameterList list) {
     if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(false);
+    }
+    // There is a possible case that annotation key-value pair is used in 'shorten' form (with implicit name 'values'). It's also
+    // possible that target value is surrounded by curly braces. We want to define child role accordingly then.
+    else if (myRole1 == ChildRole.LPARENTH && mySettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE && myRole2 == ChildRole.ANNOTATION_VALUE) {
+      createSpaceInCode(true);
     }
     else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);

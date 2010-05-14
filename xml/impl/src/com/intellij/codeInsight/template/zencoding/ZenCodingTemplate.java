@@ -55,6 +55,14 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
 
   @Nullable
   private List<Token> parse(@NotNull String text, @NotNull CustomTemplateCallback callback) {
+    String filter = null;
+
+    int filterDelim = text.indexOf('|');
+    if (filterDelim >= 0 && filterDelim < text.length() - 1) {
+      filter = text.substring(filterDelim + 1);
+      text = text.substring(0, filterDelim);
+    }
+
     text += MARKER;
     StringBuilder templateKeyBuilder = new StringBuilder();
     List<Token> result = new ArrayList<Token>();
@@ -81,6 +89,10 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
         return null;
       }
     }
+
+    if (filter != null) {
+      result.add(new FilterToken(filter));
+    }
     return result;
   }
 
@@ -96,7 +108,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       switch (state) {
         case OPERATION:
           if (token instanceof OperationToken) {
-            state = ((OperationToken)token).mySign == '*' ? State.NUMBER : State.WORD;
+            state = ((OperationToken)token).getSign() == '*' ? State.NUMBER : State.WORD;
           }
           else {
             return false;
@@ -119,7 +131,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
           }
           break;
         case AFTER_NUMBER:
-          if (token instanceof OperationToken && ((OperationToken)token).mySign != '*') {
+          if (token instanceof OperationToken && ((OperationToken)token).getSign() != '*') {
             state = State.WORD;
           }
           else {
@@ -154,16 +166,6 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
   protected boolean checkTemplateKey(String key, CustomTemplateCallback callback) {
     List<Token> tokens = parse(key, callback);
     if (tokens != null && check(tokens)) {
-      // !! required if Zen Coding if invoked by TemplateManagerImpl action
-      /*if (tokens.size() == 2) {
-        Token token = tokens.get(0);
-        if (token instanceof TemplateToken) {
-          if (key.equals(((TemplateToken)token).myKey) && callback.isLiveTemplateApplicable(key)) {
-            // do not activate only live template
-            return null;
-          }
-        }
-      }*/
       return true;
     }
     return false;
@@ -182,7 +184,7 @@ public abstract class ZenCodingTemplate implements CustomLiveTemplate {
       if (tokens.size() == 2) {
         Token token = tokens.get(0);
         if (token instanceof TemplateToken) {
-          if (key.equals(((TemplateToken)token).myKey) && callback.findApplicableTemplates(key).size() > 1) {
+          if (key.equals(((TemplateToken)token).getKey()) && callback.findApplicableTemplates(key).size() > 1) {
             callback.startTemplate();
             return;
           }

@@ -425,8 +425,15 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
       boolean commented = CharArrayUtil.regionMatches(chars, startOffset, prefix) ||
                           (skipNewLine = prefix.endsWith(" ") && CharArrayUtil.regionMatches(chars, startOffset, prefix.trim() + "\n"));
       assert commented;
-      int position = 0;//text.indexOf(prefix);
-      myDocument.deleteString(position + startOffset , position + startOffset + (skipNewLine? prefix.trim().length():prefix.length()));
+
+      int charsToDelete = skipNewLine ? prefix.trim().length() : prefix.length();
+      int theEnd = endOffset > 0 ? endOffset : chars.length();
+      // if there's exactly one space after line comment prefix and before the text that follows in the same line, delete the space too
+      if (startOffset + charsToDelete < theEnd-2 && chars.charAt(startOffset+charsToDelete) == ' ' &&
+          chars.charAt(startOffset+charsToDelete+1) != ' ') {
+        charsToDelete++;
+      }
+      myDocument.deleteString(startOffset, startOffset + charsToDelete);
       return;
     }
     String text = myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();

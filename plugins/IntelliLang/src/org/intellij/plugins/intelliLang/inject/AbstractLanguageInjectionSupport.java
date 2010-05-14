@@ -18,17 +18,26 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.Icons;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
+import org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionPanel;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
@@ -64,10 +73,72 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   }
 
   public AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer) {
-    return AnAction.EMPTY_ARRAY;
+    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return AnAction.EMPTY_ARRAY;
+    return new AnAction[] { createDefaultAddAction(project, consumer, this) };
   }
 
   public AnAction createEditAction(final Project project, final Factory<BaseInjection> producer) {
+    return createDefaultEditAction(project, producer);
+  }
+
+  public static AnAction createDefaultEditAction(final Project project, final Factory<BaseInjection> producer) {
+    return new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
+        final BaseInjection originalInjection = producer.create();
+        final BaseInjection newInjection = showInjectionUI(project, originalInjection.copy());
+        if (newInjection != null) {
+          originalInjection.copyFrom(newInjection);
+          originalInjection.initializePlaces(true);
+        }
+      }
+    };
+  }
+
+  public static AnAction createDefaultAddAction(final Project project,
+                                                final Consumer<BaseInjection> consumer,
+                                                final AbstractLanguageInjectionSupport support) {
+    return new AnAction("Generic "+support.getId().toUpperCase(), null, Icons.FILE_ICON) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final BaseInjection injection = new BaseInjection(support.getId());
+        final BaseInjection newInjection = showInjectionUI(project, injection);
+        if (newInjection != null) {
+          consumer.consume(injection);
+        }
+      }
+    };
+  }
+
+  @Nullable
+  private static BaseInjection showInjectionUI(Project project, BaseInjection injection) {
+    final BaseInjectionPanel panel = new BaseInjectionPanel(injection, project);
+    panel.reset();
+    final DialogBuilder builder = new DialogBuilder(project);
+    builder.setHelpId("reference.settings.injection.language.injection.settings.java.parameter");
+    builder.addOkAction();
+    builder.addCancelAction();
+    builder.setDimensionServiceKey("#org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionDialog");
+    builder.setCenterPanel(panel.getComponent());
+    builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
+    builder.setOkOperation(new Runnable() {
+      public void run() {
+        try {
+          panel.apply();
+          builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+        }
+        catch (Exception e) {
+          final Throwable cause = e.getCause();
+          final String message = e.getMessage() + (cause != null? "\n  "+cause.getMessage():"");
+          Messages.showErrorDialog(builder.getWindow(), message, "Unable to Save");
+        }
+      }
+    });
+    if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
+      injection.initializePlaces(false);
+      return injection;
+    }
     return null;
   }
 }

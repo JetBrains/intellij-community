@@ -181,7 +181,7 @@ public class ClassloaderUtil {
           final StringTokenizer tokenizer = new StringTokenizer(classpath, File.separator, false);
           while (tokenizer.hasMoreTokens()) {
             final String token = tokenizer.nextToken();
-            aClasspathElements.add(new File(token).toURL());
+            aClasspathElements.add(new File(token).toURI().toURL());
           }
         }
         else {
@@ -217,7 +217,7 @@ public class ClassloaderUtil {
       final Class<ClassloaderUtil> aClass = ClassloaderUtil.class;
       final String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
 
-      final URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURL();
+      final URL selfRootUrl = new File(selfRoot).getAbsoluteFile().toURI().toURL();
       classPath.add(selfRootUrl);
 
       final File libFolder = new File(aFolderPath + File.separator + "lib");
@@ -238,7 +238,7 @@ public class ClassloaderUtil {
         if (!isJarOrZip(file)) {
           continue;
         }
-        final URL url = file.toURL();
+        final URL url = file.toURI().toURL();
         if (selfRootUrl.equals(url)) {
           continue;
         }
@@ -262,7 +262,7 @@ public class ClassloaderUtil {
       final StringTokenizer tokenizer = new StringTokenizer(System.getProperty("idea.additional.classpath", ""), File.pathSeparator, false);
       while (tokenizer.hasMoreTokens()) {
         String pathItem = tokenizer.nextToken();
-        classPath.add(new File(pathItem).toURL());
+        classPath.add(new File(pathItem).toURI().toURL());
       }
     }
     catch (MalformedURLException e) {

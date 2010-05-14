@@ -21,6 +21,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -262,8 +263,8 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     for (CommonProblemDescriptor description : descriptions) {
       @NonNls final String template = description.getDescriptionTemplate();
       int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
-      final String text = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement().getText() : "";
-      @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", StringUtil.quoteReplacement(text)), " #loc ", " ");
+      final PsiElement psiElement = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement() : null;
+      @NonNls String problemText = StringUtil.replace(StringUtil.replace(template, "#ref", psiElement != null ? ProblemDescriptionNode.extractHighlightedText(description, psiElement): "") , " #loc ", " ");
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));

@@ -20,7 +20,9 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,25 +30,23 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,31 +114,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
   }
 
   public void showParameterInfo(@NotNull GroovyPsiElement place, CreateParameterInfoContext context) {
-    final PsiElement parent = place.getParent();
-    GroovyResolveResult[] variants = GroovyResolveResult.EMPTY_ARRAY;
-    if (parent instanceof GrCallExpression) {
-      variants = ((GrCallExpression) parent).getMethodVariants();
-    } else if (parent instanceof GrConstructorInvocation) {
-      final PsiClass clazz = ((GrConstructorInvocation) parent).getDelegatedClass();
-      if (clazz != null) {
-        final PsiMethod[] constructors = clazz.getConstructors();
-        variants = getConstructorResolveResult(constructors, place);
-      }
-    } else if (parent instanceof GrAnonymousClassDefinition) {
-      final PsiElement element = ((GrAnonymousClassDefinition)parent).getBaseClassReferenceGroovy().resolve();
-      if (element instanceof PsiClass) {
-        final PsiMethod[] constructors = ((PsiClass)element).getConstructors();
-        variants = getConstructorResolveResult(constructors, place);
-      }
-    }
-    else if (parent instanceof GrApplicationStatement) {
-      final GrExpression funExpr = ((GrApplicationStatement) parent).getFunExpression();
-      if (funExpr instanceof GrReferenceExpression) {
-        variants = ((GrReferenceExpression) funExpr).getSameNameVariants();
-      }
-    } else if (place instanceof GrReferenceExpression) {
-      variants = ((GrReferenceExpression) place).getSameNameVariants();
-    }
+    GroovyResolveResult[] variants = ResolveUtil.getMethodVariants(place);
     final List<GroovyResolveResult> namedElements = ContainerUtil.findAll(variants, new Condition<GroovyResolveResult>() {
       public boolean value(GroovyResolveResult groovyResolveResult) {
         return groovyResolveResult.getElement() instanceof PsiNamedElement;
@@ -148,14 +124,6 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  private static GroovyResolveResult[] getConstructorResolveResult(PsiMethod[] constructors, PsiElement place) {
-    GroovyResolveResult[] variants = new GroovyResolveResult[constructors.length];
-    for (int i = 0; i < constructors.length; i++) {
-      final boolean isAccessible = com.intellij.psi.util.PsiUtil.isAccessible(constructors[i], place, null);
-      variants[i] = new GroovyResolveResultImpl(constructors[i], isAccessible);
-    }
-    return variants;
-  }
   public void updateParameterInfo(@NotNull GroovyPsiElement place, UpdateParameterInfoContext context) {
     int offset = context.getEditor().getCaretModel().getOffset();
     offset = CharArrayUtil.shiftForward(context.getEditor().getDocument().getText(), offset, " \t\n");
@@ -204,7 +172,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
           for (int j = 0; j < currIndex; j++) {
             PsiType argType = argTypes[j];
             final PsiType paramType = substitutor.substitute(parameterTypes[j]);
-            if (!TypesUtil.isAssignable(paramType, argType, place.getManager(), place.getResolveScope())) {
+            if (!TypesUtil.isAssignable(paramType, argType, place)) {
               context.setUIComponentEnabled(i, false);
               break Outer;
             }
@@ -218,22 +186,70 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
 
   private static int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
     if (place instanceof GrArgumentList) {
-      GrArgumentList list = (GrArgumentList) place;
+      GrArgumentList list = (GrArgumentList)place;
       final GrNamedArgument[] namedArguments = list.getNamedArguments();
       for (GrNamedArgument namedArgument : namedArguments) {
-        if (namedArgument.getTextRange().contains(offset)) return 0; //first Map parameter
+        if (getArgRange(namedArgument).contains(offset)) return 0; //first Map parameter
       }
 
       int idx = namedArguments.length > 0 ? 1 : 0;
 
       final GrExpression[] exprs = list.getExpressionArguments();
       for (GrExpression expr : exprs) {
-        if (expr.getTextRange().contains(offset)) return idx;
+        if (getArgRange(expr).contains(offset)) return idx;
         idx++;
+      }
+
+      if (exprs.length == 0 || getArgRange(exprs[exprs.length - 1]).getEndOffset() <= offset) {
+        return idx;
+      }
+      else {
+        return 0;
       }
     }
 
     return -1;
+  }
+
+  private static TextRange getArgRange(PsiElement arg) {
+    PsiElement cur = arg;
+    int end;
+    int start;
+    do {
+      PsiElement sibling = cur.getNextSibling();
+      if (sibling == null) {
+        end = cur.getTextRange().getEndOffset();
+        break;
+      }
+      else {
+        cur = sibling;
+      }
+      IElementType type = cur.getNode().getElementType();
+      if (GroovyTokenTypes.mCOMMA.equals(type) || GroovyTokenTypes.mRPAREN.equals(type)) {
+        end = cur.getTextRange().getStartOffset();
+        break;
+      }
+    }
+    while (true);
+
+    do {
+      PsiElement sibling = cur.getPrevSibling();
+      if (sibling == null) {
+        start = cur.getTextRange().getStartOffset();
+        break;
+      }
+      else {
+        cur = sibling;
+      }
+      IElementType type = cur.getNode().getElementType();
+      if (GroovyTokenTypes.mCOMMA.equals(type) || GroovyTokenTypes.mLPAREN.equals(type)) {
+        start = cur.getTextRange().getEndOffset();
+        break;
+      }
+    }
+    while (true);
+
+    return new TextRange(start, end + 1);
   }
 
 

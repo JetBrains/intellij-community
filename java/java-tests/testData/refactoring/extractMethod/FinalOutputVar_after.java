@@ -7,7 +7,6 @@ class C {
     }
 
     private int newMethod() {
-        final int i = 128;
-        return i;
+        return 128;
     }
 }

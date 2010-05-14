@@ -33,13 +33,14 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   /**
    * Shortcut for calling
-   * {@link #LeafBlockWrapper(Block, CompositeBlockWrapper, WhiteSpace, FormattingDocumentModel, LeafBlockWrapper, boolean, TextRange)}
+   * {@link #LeafBlockWrapper(Block, CompositeBlockWrapper, WhiteSpace, FormattingDocumentModel, CodeStyleSettings.IndentOptions, LeafBlockWrapper, boolean, TextRange)}
    * with {@link Block#getTextRange() text range associated with the given block}.
    *
    * @param block               block to wrap
    * @param parent              wrapped parent block
    * @param whiteSpaceBefore    white space before the target block to wrap
    * @param model               formatting model to use during current wrapper initialization
+   * @param options             code formatting options
    * @param previousTokenBlock  previous token block
    * @param isReadOnly          flag that indicates if target block is read-only
    */
@@ -47,16 +48,18 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
                           CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
+                          CodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,
                           boolean isReadOnly)
   {
-    this(block, parent, whiteSpaceBefore, model, previousTokenBlock, isReadOnly, block.getTextRange());
+    this(block, parent, whiteSpaceBefore, model, options, previousTokenBlock, isReadOnly, block.getTextRange());
   }
 
   public LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
                           WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
+                          CodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,
                           boolean isReadOnly,
                           final TextRange textRange)
@@ -68,7 +71,27 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     int flagsValue = myFlags;
     final boolean containsLineFeeds = model.getLineNumber(textRange.getStartOffset()) != lastLineNumber;
     flagsValue |= containsLineFeeds ? CONTAIN_LINE_FEEDS:0;
-    mySymbolsAtTheLastLine = containsLineFeeds ? textRange.getEndOffset() - model.getLineStartOffset(lastLineNumber) : textRange.getLength();
+        
+    // We need to perform such a complex calculation because block construction algorithm is allowed to create 'leaf' blocks
+    // that contain more than one token interleaved white space that contains either tabulations or line breaks.
+    // E.g. consider the following code:
+    //
+    // public
+    //  void foo() {}
+    //
+    // 'public void' here is a single 'leaf' token and it's second part 'void' is preceeded by tabulaton symbol. Hence, we need
+    // correctly calculate number of symbols occupied by the current token at last line.
+    int start = containsLineFeeds ? model.getLineStartOffset(lastLineNumber) : textRange.getStartOffset();
+    int symbols = 0;
+    CharSequence text = model.getDocument().getCharsSequence();
+    for (int i = start; i < textRange.getEndOffset(); i++) {      
+      if (text.charAt(i) == '\t') {
+        symbols += options.TAB_SIZE;
+      } else {
+        symbols++;
+      }
+    }
+    mySymbolsAtTheLastLine = symbols;
     flagsValue |= isReadOnly ? READ_ONLY:0;
     final boolean isLeaf = block.isLeaf();
     flagsValue |= isLeaf ? LEAF : 0;
@@ -90,6 +113,7 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return mySymbolsAtTheLastLine;
   }
 
+  @Override
   public LeafBlockWrapper getPreviousBlock() {
     return myPreviousBlock;
   }
@@ -102,9 +126,32 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     myNextBlock = nextBlock;
   }
 
+  @Override
   protected boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child) {
     return false;
   }
+
+  @Override
+  protected IndentData getNumberOfSymbolsBeforeBlock() {
+    int spaces = getWhiteSpace().getSpaces();
+    int indentSpaces = getWhiteSpace().getIndentSpaces();
+
+    if (getWhiteSpace().containsLineFeeds()) {
+      return new IndentData(indentSpaces, spaces);
+    }
+
+    for (LeafBlockWrapper current = this.getPreviousBlock(); current != null; current = current.getPreviousBlock()) {
+      spaces += current.getWhiteSpace().getSpaces();
+      spaces += current.getSymbolsAtTheLastLine();
+      indentSpaces += current.getWhiteSpace().getIndentSpaces();
+      if (current.getWhiteSpace().containsLineFeeds()) {
+        break;
+      }
+    }
+    return new IndentData(indentSpaces, spaces);
+  }
+
+
 
   public void dispose() {
     super.dispose();
@@ -182,6 +229,10 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
 
   public TextRange getTextRange() {
     return new TextRange(myStart, myEnd);
+  }
+
+  private void calculateNumberOfSymbolsAtLastLine() {
+    
   }
 
 }

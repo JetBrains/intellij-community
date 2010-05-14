@@ -19,7 +19,6 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,7 @@ class FoldingUtil {
 
   @Nullable
   public static FoldRegion findFoldRegion(Editor editor, int startOffset, int endOffset) {
-    FoldRegion[] foldRegions = ((FoldingModelEx)editor.getFoldingModel()).getAllFoldRegionsIncludingInvalid();
+    FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : foldRegions) {
       if (region.isValid() &&
           region.getStartOffset() == startOffset

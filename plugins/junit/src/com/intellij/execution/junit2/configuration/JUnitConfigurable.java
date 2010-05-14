@@ -18,13 +18,15 @@ package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.AlternativeJREPanel;
+import com.intellij.execution.ui.ClassBrowser;
+import com.intellij.execution.ui.CommonJavaParametersPanel;
+import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.module.Module;
@@ -61,8 +63,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   // Fields
   private JPanel myWholePanel;
   private LabeledComponent<JComboBox> myModule;
-  private CommonJavaParameters myCommonJavaParameters;
-  private EnvironmentVariablesComponent myEnvVariablesComponent;
+  private CommonJavaParametersPanel myCommonJavaParameters;
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
   private JRadioButton myModuleWDScope;
@@ -79,64 +80,6 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
   private final BrowseModuleValueActionListener[] myBrowsers;
   private AlternativeJREPanel myAlternativeJREPanel;
-
-  public void applyEditorTo(final JUnitConfiguration configuration) {
-    myModel.apply(getModuleSelector().getModule(), configuration);
-    applyHelpersTo(configuration);
-    final JUnitConfiguration.Data data = configuration.getPersistentData();
-    if (myWholeProjectScope.isSelected()) {
-      data.setScope(TestSearchScope.WHOLE_PROJECT);
-    }
-    else if (mySingleModuleScope.isSelected()) {
-      data.setScope(TestSearchScope.SINGLE_MODULE);
-    }
-    else if (myModuleWDScope.isSelected()) {
-      data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
-    }
-    configuration.setAlternativeJrePath(myAlternativeJREPanel.getPath());
-    configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
-
-    configuration.getPersistentData().setEnvs(myEnvVariablesComponent.getEnvs());
-    configuration.getPersistentData().PASS_PARENT_ENVS = myEnvVariablesComponent.isPassParentEnvs();
-  }
-
-  public void resetEditorFrom(final JUnitConfiguration configuration) {
-    myModel.reset(configuration);
-    myCommonJavaParameters.reset(configuration);
-    getModuleSelector().reset(configuration);
-    final TestSearchScope scope = configuration.getPersistentData().getScope();
-    if (scope == TestSearchScope.SINGLE_MODULE) {
-      mySingleModuleScope.setSelected(true);
-    }
-    else if (scope == TestSearchScope.MODULE_WITH_DEPENDENCIES) {
-      myModuleWDScope.setSelected(true);
-    }
-    else {
-      myWholeProjectScope.setSelected(true);
-    }
-    myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
-
-    myEnvVariablesComponent.setEnvs(configuration.getPersistentData().getEnvs());
-    myEnvVariablesComponent.setPassParentEnvs(configuration.getPersistentData().PASS_PARENT_ENVS);
-  }
-
-  private void changePanel () {
-    if (myAllInPackageButton.isSelected()) {
-      myPackagePanel.setVisible(true);
-      myClass.setVisible(false);
-      myMethod.setVisible(false);
-    }
-    else if (myClassButton.isSelected()){
-      myPackagePanel.setVisible(false);
-      myClass.setVisible(true);
-      myMethod.setVisible(false);
-    }
-    else {
-      myPackagePanel.setVisible(false);
-      myClass.setVisible(true);
-      myMethod.setVisible(true);
-    }
-  }
 
   public JUnitConfigurable(final Project project) {
     myModel = new JUnitConfigurationModel(project);
@@ -184,7 +127,64 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       }
     });
 
+    myCommonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
   }
+
+  public void applyEditorTo(final JUnitConfiguration configuration) {
+    myModel.apply(getModuleSelector().getModule(), configuration);
+    applyHelpersTo(configuration);
+    final JUnitConfiguration.Data data = configuration.getPersistentData();
+    if (myWholeProjectScope.isSelected()) {
+      data.setScope(TestSearchScope.WHOLE_PROJECT);
+    }
+    else if (mySingleModuleScope.isSelected()) {
+      data.setScope(TestSearchScope.SINGLE_MODULE);
+    }
+    else if (myModuleWDScope.isSelected()) {
+      data.setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+    }
+    configuration.setAlternativeJrePath(myAlternativeJREPanel.getPath());
+    configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
+
+    myCommonJavaParameters.applyTo(configuration);
+  }
+
+  public void resetEditorFrom(final JUnitConfiguration configuration) {
+    myModel.reset(configuration);
+    myCommonJavaParameters.reset(configuration);
+    getModuleSelector().reset(configuration);
+    final TestSearchScope scope = configuration.getPersistentData().getScope();
+    if (scope == TestSearchScope.SINGLE_MODULE) {
+      mySingleModuleScope.setSelected(true);
+    }
+    else if (scope == TestSearchScope.MODULE_WITH_DEPENDENCIES) {
+      myModuleWDScope.setSelected(true);
+    }
+    else {
+      myWholeProjectScope.setSelected(true);
+    }
+    myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+
+  }
+
+  private void changePanel () {
+    if (myAllInPackageButton.isSelected()) {
+      myPackagePanel.setVisible(true);
+      myClass.setVisible(false);
+      myMethod.setVisible(false);
+    }
+    else if (myClassButton.isSelected()){
+      myPackagePanel.setVisible(false);
+      myClass.setVisible(true);
+      myMethod.setVisible(false);
+    }
+    else {
+      myPackagePanel.setVisible(false);
+      myClass.setVisible(true);
+      myMethod.setVisible(true);
+    }
+  }
+
 
   public JComboBox getModulesComponent() { return myModule.getComponent(); }
   public ConfigurationModuleSelector getModuleSelector() {

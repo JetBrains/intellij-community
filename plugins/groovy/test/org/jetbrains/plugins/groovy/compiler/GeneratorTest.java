@@ -60,6 +60,7 @@ public void testArrayType1() throws Throwable { doTest(); }
   public void testToGenerate1() throws Throwable { doTest(); }
   public void testVararg1() throws Throwable { doTest(); }
   public void testInaccessibleConstructor() throws Throwable { doTest(); }
+  public void testSynchronizedProperty() throws Throwable { doTest(); }
 
   public void testCheckedExceptionInConstructorDelegate() throws Throwable {
     myFixture.addClass("package foo;" +

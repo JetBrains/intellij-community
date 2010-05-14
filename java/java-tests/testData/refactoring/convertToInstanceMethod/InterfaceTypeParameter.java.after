@@ -1,7 +1,7 @@
 interface Intf<T> {
-    T get();
-
     X<T> method(T value);
+
+    T get();
 }
 
 class Impl<V> implements Intf<V> {

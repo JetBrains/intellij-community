@@ -102,12 +102,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     public ResolveResult[] multiResolve(final boolean incompleteCode) {
         final PsiFile containingFile = myAttribute.getContainingFile();
         if (containingFile instanceof XmlFile && XsltSupport.isXsltFile(containingFile) && myImplicitModeElement.getQName() != null) {
-            final PsiElement[] psiElements = ResolveUtil.collect(getMatcher());
-            final ResolveResult[] results = new ResolveResult[psiElements.length];
-            for (int i = 0; i < psiElements.length; i++) {
-                results[i] = new PsiElementResolveResult(psiElements[i]);
-            }
-            return results;
+          return PsiElementResolveResult.createResults(ResolveUtil.collect(getMatcher()));
         }
         return ResolveResult.EMPTY_ARRAY;
     }

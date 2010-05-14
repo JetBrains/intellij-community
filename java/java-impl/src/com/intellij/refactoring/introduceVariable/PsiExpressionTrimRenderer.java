@@ -21,11 +21,12 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.psi.*;
+import com.intellij.util.Function;
 
-class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisitor {
-  private final StringBuffer myBuf;
+public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisitor {
+  private final StringBuilder myBuf;
 
-  public PsiExpressionTrimRenderer(final StringBuffer buf) {
+  public PsiExpressionTrimRenderer(final StringBuilder buf) {
     myBuf = buf;
   }
 
@@ -210,6 +211,14 @@ class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisitor {
       else {
         myBuf.append(expr.getText());
       }
+    }
+  }
+
+  public static class RenderFunction implements Function<PsiExpression, String> {
+    public String fun(PsiExpression psiExpression) {
+      StringBuilder buf = new StringBuilder();
+      psiExpression.accept(new PsiExpressionTrimRenderer(buf));
+      return buf.toString();
     }
   }
 }

@@ -700,8 +700,9 @@ public class ImportHelper{
     }
   }
 
-  private static void addUnresolvedImportNames(@NotNull Set<Pair<String, Boolean>> names, @NotNull PsiJavaFile file) {
+  private static void addUnresolvedImportNames(@NotNull final Set<Pair<String, Boolean>> namesToImport, @NotNull PsiJavaFile file) {
     PsiImportStatementBase[] imports = file.getImportList().getAllImportStatements();
+    final Map<String, Pair<String, Boolean>> unresolvedNames = new THashMap<String, Pair<String, Boolean>>();
     for (PsiImportStatementBase anImport : imports) {
       PsiJavaCodeReferenceElement ref = anImport.getImportReference();
       if (ref == null) continue;
@@ -711,8 +712,31 @@ public class ImportHelper{
         if (anImport.isOnDemand()) {
           text += ".*";
         }
-        names.add(Pair.create(text, anImport instanceof PsiImportStaticStatement));
+
+        Pair<String, Boolean> pair = Pair.create(text, anImport instanceof PsiImportStaticStatement);
+        if (!anImport.isOnDemand()) {
+          unresolvedNames.put(ref.getReferenceName(), pair);
+        }
+        else {
+          namesToImport.add(pair);
+        }
       }
+    }
+
+    // do not visit imports
+    for (PsiClass aClass : file.getClasses()) {
+      aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          String name = reference.getReferenceName();
+          Pair<String, Boolean> pair = unresolvedNames.get(name);
+          if (pair != null && reference.multiResolve(false).length == 0) {
+            namesToImport.add(pair);
+            unresolvedNames.remove(name);
+          }
+          super.visitReferenceElement(reference);
+        }
+      });
     }
   }
 

@@ -20,6 +20,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import org.jetbrains.annotations.Nullable;
 
 
+/**
+ * Implement {@link com.intellij.execution.junit.RuntimeConfigurationProducer} instead
+ */
+@Deprecated
 public interface LocatableConfigurationType extends ConfigurationType{
   @Nullable
   RunnerAndConfigurationSettings createConfigurationByLocation(Location location);

@@ -553,6 +553,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.intellij.codeInspection.actions.ReplaceImplementsWithStaticImportAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ColorChooserIntentionAction</className>
       <category>Declaration</category>
     </intentionAction>
@@ -927,6 +932,7 @@
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
+    <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 

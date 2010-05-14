@@ -95,10 +95,6 @@ public class GroovyToJavaGenerator {
       PsiModifier.ABSTRACT,
       PsiModifier.FINAL,
       PsiModifier.NATIVE,
-      PsiModifier.SYNCHRONIZED,
-      PsiModifier.STRICTFP,
-      PsiModifier.TRANSIENT,
-      PsiModifier.VOLATILE
   };
 
   private static final CharSequence PREFIX_SEPARATOR = "/";

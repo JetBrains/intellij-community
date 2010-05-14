@@ -111,9 +111,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     
     String oldText = blockCandidate.getText();
     StringBuilder buf = new StringBuilder(oldText.length() + 3);
-    buf.append('{');
-    buf.append(oldText);
-    buf.append("\n}");
+    buf.append("{ ").append(oldText).append(" }");
     final int oldTextLength = statement.getTextLength();
     try {
       CodeEditUtil.replaceChild(SourceTreeToPsiMap.psiElementToTree(statement),

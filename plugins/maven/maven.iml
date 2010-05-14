@@ -121,11 +121,14 @@
     <orderEntry type="module" module-name="compiler-impl" exported="" />
     <orderEntry type="module" module-name="execution-openapi" exported="" />
     <orderEntry type="module" module-name="execution-impl" exported="" />
+    <orderEntry type="module" module-name="maven-facade" />
     <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
+    <orderEntry type="module" module-name="IntelliLang-xml" />
+    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

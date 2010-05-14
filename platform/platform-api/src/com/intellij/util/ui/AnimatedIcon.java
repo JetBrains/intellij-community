@@ -98,10 +98,8 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     boolean changes = myAnimator.isRunning() != running;
 
     if (running) {
-      setOpaque(true);
       myAnimator.resume();
     } else {
-      setOpaque(myPaintPassive);
       myAnimator.suspend();
     }
 
@@ -152,32 +150,16 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
   protected void paintComponent(Graphics g) {
     if (myPaintingBgNow) return;
 
-    if ((myAnimator.isRunning() || myPaintPassive || (myLastPaintWasRunning && !myAnimator.isRunning()))) {
-      Rectangle b = getBounds();
-
-      if (!isOpaque()) {
-        try {
-          myPaintingBgNow = true;
-          Container p = getParent();
-          if (p instanceof JComponent) {
-            JComponent parentComponent = (JComponent)p;
-
-            RepaintManager.currentManager(p).addDirtyRegion(parentComponent, b.x, b.y, b.width, b.height);
-            parentComponent.paintImmediately(b);
-          }
-        }
-        finally {
-          myPaintingBgNow = false;
-        }
-      } else {
-        final Component opaque = UIUtil.findNearestOpaque(this);
-        if (opaque != null) {
-          g.setColor(opaque.getBackground());
-          g.fillRect(b.x, b.y, b.width, b.height);
-        }
+    if (isOpaque()) {
+      final Container parent = getParent();
+      JComponent opaque = null;
+      if (parent instanceof JComponent) {
+        opaque = (JComponent)UIUtil.findNearestOpaque((JComponent)parent);
       }
-
-    }
+      Color bg = opaque != null ? opaque.getBackground() : UIManager.getColor("Panel.background");
+      g.setColor(bg);
+      g.fillRect(0, 0, getWidth(), getHeight());
+    } 
 
     Icon icon;
 
@@ -207,5 +189,10 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
 
   public boolean isAnimated() {
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return myName + " isRunning=" + myRunning + " isOpaque=" + isOpaque() + " paintPassive=" + myPaintPassive;
   }
 }

@@ -435,12 +435,14 @@ public class I18nInspection extends BaseLocalInspectionTool {
           fixes.add(createIntroduceConstantFix(expression));
         }
 
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getManager().getProject());
+        final Project project = expression.getManager().getProject();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing()) {
           for (PsiModifierListOwner element : nonNlsTargets) {
-            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true) &&
-                facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-              fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true)) {
+              if (!element.getManager().isInProject(element) || facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
+                fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+              }
             }
           }
         }
@@ -689,19 +691,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (parent instanceof PsiExpressionList) {
       final PsiElement grParent = parent.getParent();
       if (grParent instanceof PsiMethodCallExpression) {
-        final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)grParent).getMethodExpression();
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier instanceof PsiReferenceExpression) {
-          final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
-          if (resolved instanceof PsiModifierListOwner) {
-            final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
-            if (annotatedAsNonNls(modifierListOwner)) {
-              return true;
-            }
-            nonNlsTargets.add(modifierListOwner);
-            return false;
-          }
-        }
+        return isNonNlsCall((PsiMethodCallExpression)grParent, nonNlsTargets);
       }
       else if (grParent instanceof PsiNewExpression) {
         final PsiElement parentOfNew = grParent.getParent();
@@ -730,6 +720,28 @@ public class I18nInspection extends BaseLocalInspectionTool {
       }
     }
 
+    return false;
+  }
+
+  private static boolean isNonNlsCall(PsiMethodCallExpression grParent, Set<PsiModifierListOwner> nonNlsTargets) {
+    final PsiReferenceExpression methodExpression = grParent.getMethodExpression();
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (qualifier instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
+      if (resolved instanceof PsiModifierListOwner) {
+        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)resolved;
+        if (annotatedAsNonNls(modifierListOwner)) {
+          return true;
+        }
+        nonNlsTargets.add(modifierListOwner);
+        return false;
+      }
+    } else if (qualifier instanceof PsiMethodCallExpression) {
+      final PsiType type = qualifier.getType();
+      if (type != null && type.equals(methodExpression.getType())) {
+        return isNonNlsCall((PsiMethodCallExpression)qualifier, nonNlsTargets);
+      }
+    }
     return false;
   }
 
