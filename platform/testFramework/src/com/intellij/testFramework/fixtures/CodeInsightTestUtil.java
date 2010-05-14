@@ -79,7 +79,7 @@ public class CodeInsightTestUtil {
         SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder);
       }
     }.execute();
-    fixture.checkResultByFile(after, true);
+    fixture.checkResultByFile(after, false);
   }
 
 }
