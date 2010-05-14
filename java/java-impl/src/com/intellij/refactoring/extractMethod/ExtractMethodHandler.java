@@ -39,9 +39,11 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.introduceVariable.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
@@ -85,12 +87,12 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
         editor.getSelectionModel().selectLineAtCaret();
       }
       else {
-        IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {
           @Override
           public void pass(PsiExpression psiExpression) {
             callback.pass(new PsiElement[]{psiExpression});
           }
-        });
+        }, new PsiExpressionTrimRenderer.RenderFunction());
         return;
       }
     }
