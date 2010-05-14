@@ -10,13 +10,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -28,6 +31,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -106,6 +110,11 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         element1 = file.findElementAt(document.getLineStartOffset(lineNumber));
         element2 = file.findElementAt(document.getLineEndOffset(lineNumber) - 1);
       }
+      if (element1 == null || element2 == null || PyRefactoringUtil.getSelectedExpression(project, file, element1, element2) == null) {
+        if (smartIntroduce(file, editor, name, replaceAll, hasConstructor)) {
+          return;
+        }
+      }
     }
     if (element1 == null || element2 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message("refactoring.introduce.selection.error"), myDialogTitle,
@@ -120,11 +129,53 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return;
     }
 
-    if (!checkEnabled(project, editor, element1, myDialogTitle)) {
+    performActionOnElement(editor, element1, name, replaceAll, hasConstructor);
+  }
+
+  private boolean smartIntroduce(final PsiFile file, final Editor editor, final String name, final boolean replaceAll, final boolean hasConstructor) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement elementAtCaret = file.findElementAt(offset);
+    final List<PyExpression> expressions = new ArrayList<PyExpression>();
+    while (elementAtCaret != null) {
+      if (elementAtCaret instanceof PyStatement) {
+        break;
+      }
+      if (elementAtCaret instanceof PyExpression) {
+        expressions.add((PyExpression)elementAtCaret);
+      }
+      elementAtCaret = elementAtCaret.getParent();
+    }
+    if (expressions.size() == 1) {
+      performActionOnElement(editor, expressions.get(0), name, replaceAll, hasConstructor);
+      return true;
+    }
+    else if (expressions.size() > 1) {
+      IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PyExpression>() {
+        @Override
+        public void pass(PyExpression pyExpression) {
+          performActionOnElement(editor, pyExpression, name, replaceAll, hasConstructor);
+        }
+      }, new Function<PyExpression, String>() {
+        public String fun(PyExpression pyExpression) {
+          return pyExpression.getText();
+        }
+      });
+      return true;
+    }
+    return false;
+  }
+
+  private void performActionOnElement(Editor editor,
+                                      PsiElement element,
+                                      String name,
+                                      boolean replaceAll,
+                                      boolean hasConstructor) {
+    final Project project = element.getProject();
+    if (!checkEnabled(project, editor, element, myDialogTitle)) {
       return;
     }
 
-    final PyExpression expression = (PyExpression)element1;
+    final PyExpression expression = (PyExpression)element;
 
     final List<PsiElement> occurrences;
     if (expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null && !(expression instanceof PyCallExpression)) {
