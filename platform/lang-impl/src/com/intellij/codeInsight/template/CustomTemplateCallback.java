@@ -76,10 +76,6 @@ public class CustomTemplateCallback {
     }
   }
 
-  public boolean isLiveTemplateApplicable(@NotNull String key) {
-    return findApplicableTemplate(key) != null;
-  }
-
   @Nullable
   public TemplateImpl findApplicableTemplate(@NotNull String key) {
     List<TemplateImpl> templates = findApplicableTemplates(key);
