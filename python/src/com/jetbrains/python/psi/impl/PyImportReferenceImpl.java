@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -155,9 +156,14 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         final Module module = ModuleUtil.findModuleForPsiElement(myElement);
         if (module != null) {
           ModuleRootManager.getInstance(module).processOrder(new ResolveImportUtil.SdkRootVisitingPolicy(visitor), null);
-          for (String name : visitor.getResult()) { // to thwart stuff like "__phello__.foo"
+          for (ModuleResult result : visitor.getResult()) { // to thwart stuff like "__phello__.foo"
+            String name = result.getName();
             if (PyNames.isIdentifier(name) && underscore_filter.value(name)) {
-              if (is_importing_from_a_module) variants.add(LookupElementBuilder.create(name).setInsertHandler(ImportKeywordHandler.INSTANCE));
+              if (is_importing_from_a_module) {
+                LookupElementBuilder lookup_item = LookupElementBuilder.create(name);
+                if (! result.hasSubmodules()) lookup_item = lookup_item.setInsertHandler(ImportKeywordHandler.INSTANCE);
+                variants.add(lookup_item);
+              }
               else variants.add(name);
             }
           }
@@ -216,8 +222,22 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
   }
 
+  private static class ModuleResult extends Pair<String, Boolean> {
+    public ModuleResult(String name, Boolean hasSubmodules) {
+      super(name, hasSubmodules);
+    }
+
+    public boolean hasSubmodules() {
+      return getSecond();
+    }
+
+    public String getName() {
+      return getFirst();
+    }
+  }
+
   private static class CollectingRootVisitor implements SdkRootVisitor {
-    Set<String> result;
+    Set<ModuleResult> result;
     PsiManager psimgr;
 
     static String cutExt(String name) {
@@ -225,7 +245,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
     }
 
     public CollectingRootVisitor(PsiManager psimgr) {
-      result = new com.intellij.util.containers.HashSet<String>();
+      result = new com.intellij.util.containers.HashSet<ModuleResult>();
       this.psimgr = psimgr;
     }
 
@@ -233,17 +253,20 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       for (VirtualFile vfile : root.getChildren()) {
         if (vfile.getName().endsWith(PyNames.DOT_PY)) {
           PsiFile pfile = psimgr.findFile(vfile);
-          if (pfile != null) result.add(cutExt(pfile.getName()));
+          if (pfile != null) result.add(new ModuleResult(cutExt(pfile.getName()), false));
         }
         else if (vfile.isDirectory() && (vfile.findChild(PyNames.INIT_DOT_PY) != null)) {
           PsiDirectory pdir = psimgr.findDirectory(vfile);
-          if (pdir != null) result.add(pdir.getName());
+          if (pdir != null) {
+            result.add(new ModuleResult(pdir.getName(), true));
+            // we might check if submodules actually exist, but this would be far more expensive: a disk op.
+          }
         }
       }
       return true; // continue forever
     }
 
-    public Collection<String> getResult() {
+    public Collection<ModuleResult> getResult() {
       return result;
     }
   }
