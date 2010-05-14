@@ -87,7 +87,7 @@ public class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
+  public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture,
                                         @NotNull final String before, @NotNull final String after) throws Exception {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
