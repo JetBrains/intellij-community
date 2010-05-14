@@ -2682,7 +2682,7 @@
     <xs:annotation>
       <xs:documentation>Shared attributes for &lt;input&gt;</xs:documentation>
     </xs:annotation>
-    <xs:attribute name="checked" use="required">
+    <xs:attribute name="checked">
       <xs:simpleType>
         <xs:restriction base="xs:token">
           <xs:enumeration value="checked"/>
@@ -2715,7 +2715,7 @@
       <xs:attributeGroup ref="xhtml:input.url.attrs"/>
       <xs:attributeGroup ref="xhtml:input.search.attrs"/>
       <xs:attributeGroup ref="xhtml:input.tel.attrs"/>
-      <xs:attributeGroup ref="xhtml:input.color.attrs"/>      
+      <xs:attributeGroup ref="xhtml:input.color.attrs"/>
     </xs:complexType>
   </xs:element>
 
@@ -3104,7 +3104,7 @@
     <xs:attribute name="width" type="common.data.integer.positive"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="input.image.attrs.alt">
-    <xs:attribute name="alt" use="required" type="xs:string"/>
+    <xs:attribute name="alt" type="xs:string"/>
   </xs:attributeGroup>
   <xs:element name="textarea">
     <xs:complexType mixed="true">
@@ -3226,12 +3226,6 @@
       <xs:element ref="xhtml:option"/>
     </xs:choice>
   </xs:complexType>
-  <xs:attributeGroup name="button.attrs.value">
-    <xs:annotation>
-      <xs:documentation>Shared Definitions for Complex Button</xs:documentation>
-    </xs:annotation>
-    <xs:attribute name="value" use="required" type="xs:string"/>
-  </xs:attributeGroup>
   <xs:complexType name="button.inner" mixed="true">
     <xs:group ref="common.inner.flow"/>
   </xs:complexType>
@@ -4284,7 +4278,7 @@
         <xs:restriction base="xs:token">
           <xs:enumeration value="radio"/>
           <xs:enumeration value="command"/>
-          <xs:enumeration value="checkbox"/>          
+          <xs:enumeration value="checkbox"/>
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
