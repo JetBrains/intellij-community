@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -21,24 +20,20 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 public class GppTypeConverter extends GrTypeConverter {
 
   public static boolean hasTypedContext(PsiElement context) {
-    return isTyped(PsiTreeUtil.getContextOfType(context, GrMember.class, true));
-  }
-
-  private static boolean isTyped(@Nullable PsiModifierListOwner member) {
-    if (member == null) {
+    if (context == null) {
       return false;
     }
 
-    if (isTyped(member.getModifierList())) {
+    if (context instanceof PsiModifierListOwner && isTyped(((PsiModifierListOwner)context).getModifierList())) {
       return true;
     }
 
-    final GrMember parentMember = PsiTreeUtil.getContextOfType(member, GrMember.class, true);
+    final GrMember parentMember = PsiTreeUtil.getContextOfType(context, GrMember.class, true);
     if (parentMember != null) {
-      return isTyped(parentMember);
+      return hasTypedContext(parentMember);
     }
 
-    final PsiFile file = member.getContainingFile();
+    final PsiFile file = context.getContainingFile();
     if (file instanceof GroovyFile) {
       final GrPackageDefinition packageDefinition = ((GroovyFile)file).getPackageDefinition();
       if (packageDefinition != null && isTyped(packageDefinition.getAnnotationList())) {
