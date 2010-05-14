@@ -373,6 +373,10 @@ public class AbstractTreeBuilder implements Disposable {
     getUi().expandAll(onDone);
   }
 
+  public ActionCallback cancelUpdate() {
+    return getUi().cancelUpdate();
+  }
+
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
     public AbstractTreeNodeWrapper() {
       super(null, null);

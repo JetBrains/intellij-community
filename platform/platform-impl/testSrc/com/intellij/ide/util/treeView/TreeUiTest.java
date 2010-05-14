@@ -775,6 +775,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   }
 
   public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
+    assertInterruption(Interruption.throwProcessCancelled);
+  }
+
+  public void testCancelUpdate() throws Exception {
+    assertInterruption(Interruption.invokeCancel);
+  }
+
+  private void assertInterruption(Interruption cancelled) throws Exception {
     buildStructure(myRoot);
 
     expand(getPath("/"));
@@ -792,20 +800,21 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +eclipse\n" +
                " -xunit\n" +
                "  runner\n");
-    
+
     runAndInterrupt(new MyRunnable() {
       public void runSafe() throws Exception {
         updateFrom(new NodeElement("/"));
       }
-    }, "update", new NodeElement("jetbrains"));
+    }, "update", new NodeElement("jetbrains"), cancelled);
 
     runAndInterrupt(new MyRunnable() {
       @Override
       public void runSafe() throws Exception {
         updateFrom(new NodeElement("/"));
       }
-    }, "getChildren", new NodeElement("jetbrains"));
+    }, "getChildren", new NodeElement("jetbrains"), cancelled);
   }
+
 
   public void testBigTreeUpdate() throws Exception {
     Node msg = myRoot.addChild("Messages");
@@ -860,7 +869,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
   }
 
-  private void runAndInterrupt(final Runnable action, final String interruptAction, final Object interruptElement) throws Exception {
+  private enum Interruption {
+    throwProcessCancelled, invokeCancel
+  }
+
+  private void runAndInterrupt(final Runnable action, final String interruptAction, final Object interruptElement, final Interruption interruption) throws Exception {
     myElementUpdate.clear();
 
     final boolean[] wasInterrupted = new boolean[1];
@@ -873,7 +886,13 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
         } else {
           if (element.equals(interruptElement) && action.equals(interruptAction)) {
             wasInterrupted[0] = true;
-            throw new ProcessCanceledException();
+            switch (interruption) {
+              case throwProcessCancelled:
+                throw new ProcessCanceledException();
+              case invokeCancel:
+                getBuilder().cancelUpdate();
+                break;
+            }
           }
         }
       }

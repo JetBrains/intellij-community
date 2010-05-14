@@ -49,6 +49,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AbstractTreeUi {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeBuilder");
@@ -155,6 +156,9 @@ public class AbstractTreeUi {
 
   private final Set<DefaultMutableTreeNode> myWillBeExpaned = new HashSet<DefaultMutableTreeNode>();
   private SimpleTimerTask myCleanupTask;
+
+  private AtomicBoolean myCancelRequest = new AtomicBoolean();
+  private AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
@@ -293,7 +297,7 @@ public class AbstractTreeUi {
       }
     };
 
-    if (isPassthroughMode() || (!isEdt() && !isTreeShowing())) {
+    if (isPassthroughMode() || (!isEdt() && (!isTreeShowing() && !myWasEverShown))) {
       actual.run();
     } else {
       UIUtil.invokeLaterIfNeeded(actual);
@@ -809,10 +813,17 @@ public class AbstractTreeUi {
     return result;
   }
 
-  private boolean _update(NodeDescriptor nodeDescriptor) {
+  private boolean _update(final NodeDescriptor nodeDescriptor) {
     try {
-      nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
-      return getBuilder().updateNodeDescriptor(nodeDescriptor);
+      final Ref<Boolean> update = new Ref<Boolean>();
+      execute(new Runnable() {
+        public void run() {
+          nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
+          update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
+        }
+      });
+
+      return update.get();
     }
     catch (IndexNotReadyException e) {
       warnOnIndexNotReady();
@@ -1460,7 +1471,7 @@ public class AbstractTreeUi {
             }
             else {
               try {
-                processRunnable.run().notify(result);
+                execute(processRunnable).notify(result);
               }
               catch (ProcessCanceledException e) {
                 pass.expire();
@@ -1475,7 +1486,7 @@ public class AbstractTreeUi {
       }
       else {
         try {
-          processRunnable.run().notify(result);
+          execute(processRunnable).notify(result);
         }
         catch (ProcessCanceledException e) {
           pass.expire();
@@ -1485,6 +1496,91 @@ public class AbstractTreeUi {
     }
 
     return result;
+  }
+
+  private ActionCallback execute(final ActiveRunnable runnable) throws ProcessCanceledException {
+    final ActionCallback result = new ActionCallback();
+    execute(new Runnable() {
+      public void run() {
+        runnable.run().notify(result);
+      }
+    });
+    return result;
+  }
+
+  private void execute(Runnable runnable) throws ProcessCanceledException {
+    try {
+      if (myCancelRequest.get()) {
+        throw new ProcessCanceledException();
+      }
+
+      runnable.run();
+
+      if (myCancelRequest.get()) {
+        throw new ProcessCanceledException();
+      }
+
+    }
+    catch (ProcessCanceledException e) {
+      myCancelRequest.set(false);
+      resetToReady();
+      throw e;
+    }
+  }
+
+  private ActionCallback resetToReady() {
+    final ActionCallback result = new ActionCallback();
+
+    if (isReady()) return result;
+
+    myResettingToReadyNow.set(true);
+
+    invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        myYeildingNow = false;
+        myYeildingPasses.clear();
+        myYeildingDoneRunnables.clear();
+
+        myNodeActions.clear();
+        myNodeChildrenActions.clear();
+
+        DefaultMutableTreeNode[] uc = myUpdatingChildren.toArray(new DefaultMutableTreeNode[myUpdatingChildren.size()]);
+        myUpdatingChildren.clear();
+        for (DefaultMutableTreeNode each : uc) {
+          resetIncompleteNode(each);
+        }
+
+
+        Object[] bg = myLoadedInBackground.keySet().toArray(new Object[myLoadedInBackground.size()]);
+        myLoadedInBackground.clear();
+        for (Object each : bg) {
+          resetIncompleteNode(getNodeForElement(each, false));
+        }
+
+        myActiveWorkerTasks.clear();
+
+        myUpdaterState = null;
+        getUpdater().reset();
+
+        assert isReady();
+
+        myResettingToReadyNow.set(false);
+        result.setDone();
+      }
+    });
+
+    return result;
+  }
+
+  private void resetIncompleteNode(DefaultMutableTreeNode node) {
+    if (!isExpanded(node, false)) {
+      node.removeAllChildren();
+      if (!getTreeStructure().isAlwaysLeaf(getElementFor(node))) {
+        insertLoadingNode(node, true);
+      }
+    } else {
+      removeLoading(node, true);
+    }
   }
 
   private boolean yieldAndRun(final Runnable runnable, final TreeUpdatePass pass) {
@@ -1820,6 +1916,17 @@ public class AbstractTreeUi {
     }
 
     return result;
+  }
+
+  public ActionCallback cancelUpdate() {
+    if (myResettingToReadyNow.get()) {
+      return getReady(this);
+    }
+
+    myCancelRequest.set(true);
+    ActionCallback ready = getReady(this);
+    maybeReady();
+    return ready;
   }
 
   static class ElementNode extends DefaultMutableTreeNode {
@@ -2600,7 +2707,7 @@ public class AbstractTreeUi {
             if (isReleased()) return;
 
             try {
-              bgBuildAction.run();
+              execute(bgBuildAction);
 
               if (edtPostRunnable != null) {
                 builder.updateAfterLoadedInBackground(new Runnable() {
@@ -2609,7 +2716,7 @@ public class AbstractTreeUi {
                       assertIsDispatchThread();
                       if (isReleased()) return;
 
-                      edtPostRunnable.run();
+                      execute(edtPostRunnable);
                     } catch (ProcessCanceledException e) {
                       fail.set(true);
                     }
@@ -2643,7 +2750,7 @@ public class AbstractTreeUi {
             ProgressManager.getInstance().runProcess(pooledThreadWithProgressRunnable, myProgress);
           }
           else {
-            pooledThreadWithProgressRunnable.run();
+            execute(pooledThreadWithProgressRunnable);
           }
         }
         catch (ProcessCanceledException e) {
@@ -2654,7 +2761,7 @@ public class AbstractTreeUi {
     };
 
     if (isPassthroughMode()) {
-      pooledThreadRunnable.run();
+      execute(pooledThreadRunnable);
     } else {
       if (myWorker == null || myWorker.isDisposed()) {
         myWorker = new WorkerThread("AbstractTreeBuilder.Worker", 1);
@@ -3314,7 +3421,7 @@ public class AbstractTreeUi {
       }
     }
     else {
-      done.run();
+      execute(done);
     }
   }
 
