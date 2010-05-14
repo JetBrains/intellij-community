@@ -454,7 +454,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  public void beforeRootsChange(boolean filetypes) {
+  private void beforeRootsChange(boolean filetypes) {
     if (myProject.isDisposed()) return;
     getBatchSession(filetypes).beforeRootsChanged();
   }
@@ -471,7 +471,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  public void rootsChanged(boolean filetypes) {
+  private void rootsChanged(boolean filetypes) {
     getBatchSession(filetypes).rootsChanged(false);
   }
 
