@@ -134,26 +134,37 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
                                            "    <version>1</version>" +
                                            "    <type>test-jar</type>" +
                                            "  </dependency>" +
+                                           "  <dependency>" +
+                                           "    <groupId>test</groupId>" +
+                                           "    <artifactId>m3</artifactId>" +
+                                           "    <version>1</version>" +
+                                           "    <classifier>tests</classifier>" +
+                                           "  </dependency>" +
                                            "</dependencies>");
 
     VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
                                            "<artifactId>m2</artifactId>" +
                                            "<version>1</version>");
+    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
+                                           "<artifactId>m3</artifactId>" +
+                                           "<version>1</version>");
 
-    importProjects(m1, m2);
-    assertModules("m1", "m2");
+    importProjects(m1, m2, m3);
+    assertModules("m1", "m2", "m3");
 
-    setupJdkForModules("m1", "m2");
+    setupJdkForModules("m1", "m2", "m3");
 
     assertModuleClasspath("m1",
                           getProjectPath() + "/m1/target/test-classes",
                           getProjectPath() + "/m1/target/classes",
-                          getProjectPath() + "/m2/target/test-classes");
+                          getProjectPath() + "/m2/target/test-classes",
+                          getProjectPath() + "/m3/target/test-classes");
 
     assertModuleClasspath("m1",
                           JavaParameters.CLASSES_ONLY,
                           getProjectPath() + "/m1/target/classes",
-                          getProjectPath() + "/m2/target/test-classes");
+                          getProjectPath() + "/m2/target/test-classes",
+                          getProjectPath() + "/m3/target/test-classes");
   }
 
   public void testConfiguringModuleDependenciesOnTestJarWithTestScope() throws Exception {
@@ -169,21 +180,32 @@ public class JavaClasspathConfigurationTest extends MavenImportingTestCase {
                                            "    <type>test-jar</type>" +
                                            "    <scope>test</scope>" +
                                            "  </dependency>" +
+                                           "  <dependency>" +
+                                           "    <groupId>test</groupId>" +
+                                           "    <artifactId>m3</artifactId>" +
+                                           "    <version>1</version>" +
+                                           "    <classifier>tests</classifier>" +
+                                           "    <scope>test</scope>" +
+                                           "  </dependency>" +
                                            "</dependencies>");
 
     VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
                                            "<artifactId>m2</artifactId>" +
                                            "<version>1</version>");
+    VirtualFile m3 = createModulePom("m3", "<groupId>test</groupId>" +
+                                           "<artifactId>m3</artifactId>" +
+                                           "<version>1</version>");
 
-    importProjects(m1, m2);
-    assertModules("m1", "m2");
+    importProjects(m1, m2, m3);
+    assertModules("m1", "m2", "m3");
 
-    setupJdkForModules("m1", "m2");
+    setupJdkForModules("m1", "m2", "m3");
 
     assertModuleClasspath("m1",
                           getProjectPath() + "/m1/target/test-classes",
                           getProjectPath() + "/m1/target/classes",
-                          getProjectPath() + "/m2/target/test-classes");
+                          getProjectPath() + "/m2/target/test-classes",
+                          getProjectPath() + "/m3/target/test-classes");
 
     assertModuleClasspath("m1",
                           JavaParameters.CLASSES_ONLY,

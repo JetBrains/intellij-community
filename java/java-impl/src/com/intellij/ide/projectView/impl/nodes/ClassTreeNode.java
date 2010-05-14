@@ -21,7 +21,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import org.jetbrains.annotations.Nullable;
@@ -42,23 +41,19 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
       ArrayList<PsiElement> result = new ArrayList<PsiElement>();
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {
-        psiElement.accept(new JavaElementVisitor() {
-          @Override public void visitClass(PsiClass aClass) {
-            treeNodes.add(new ClassTreeNode(getProject(), aClass, getSettings()));
-          }
+        if (!psiElement.isPhysical()) {
+          continue;
+        }
 
-          @Override public void visitMethod(PsiMethod method) {
-            treeNodes.add(new PsiMethodNode(getProject(), method, getSettings()));
-          }
-
-          @Override public void visitField(PsiField field) {
-            treeNodes.add(new PsiFieldNode(getProject(), field, getSettings()));
-          }
-
-          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-            visitExpression(expression);
-          }
-        });
+        if (psiElement instanceof PsiClass) {
+          treeNodes.add(new ClassTreeNode(getProject(), (PsiClass)psiElement, getSettings()));
+        }
+        else if (psiElement instanceof PsiMethod) {
+          treeNodes.add(new PsiMethodNode(getProject(), (PsiMethod)psiElement, getSettings()));
+        }
+        else if (psiElement instanceof PsiField) {
+          treeNodes.add(new PsiFieldNode(getProject(), (PsiField)psiElement, getSettings()));
+        }
       }
     }
     return treeNodes;

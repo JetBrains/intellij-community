@@ -161,6 +161,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myTextToReformat = myEditor.getDocument().getText();
     }
 
+    int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
+
     final Project finalProject = getCurrentProject();
     CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
       public void run() {
@@ -169,6 +171,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     }, null, null);
     myEditor.getSettings().setRightMargin(getRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
+    myEditor.getScrollingModel().scrollVertically(currOffs);
   }
 
   private void replaceText(final Project project) {
@@ -326,15 +329,6 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
       }
     }, 300);
-  }
-
-  /**
-   * Checks if the panel supports multiple languages (a particular language is selected on
-   * the main code style schemes panel).
-   * @return  False by default.
-   */
-  protected boolean isMultilanguage() {
-    return false;
   }
 
   protected Editor getEditor() {

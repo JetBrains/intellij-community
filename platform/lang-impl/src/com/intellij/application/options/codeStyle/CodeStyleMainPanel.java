@@ -16,6 +16,7 @@
 
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DetailsComponent;
@@ -39,16 +40,18 @@ public class CodeStyleMainPanel extends JPanel {
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
+  private final LanguageSelector myLangSelector;
 
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
 
 
-  public CodeStyleMainPanel(CodeStyleSchemesModel model, CodeStyleSettingsPanelFactory factory) {
+  public CodeStyleMainPanel(CodeStyleSchemesModel model, LanguageSelector langSelector, CodeStyleSettingsPanelFactory factory) {
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
     mySchemesPanel = new CodeStyleSchemesPanel(model);
+    myLangSelector = langSelector;
 
     model.addListener(new CodeStyleSettingsListener(){
       public void currentSchemeChanged(final Object source) {
@@ -72,6 +75,12 @@ public class CodeStyleMainPanel extends JPanel {
 
       public void schemeChanged(final CodeStyleScheme scheme) {
         ensurePanel(scheme).resetFromClone();
+      }
+    });
+
+    myLangSelector.addListener(new LanguageSelectorListener(){
+      public void languageChanged(Language lang) {
+        onLanguageChange(lang);
       }
     });
 
@@ -164,7 +173,11 @@ public class CodeStyleMainPanel extends JPanel {
     if (selectedPanel == null) {
       return "reference.settingsdialog.IDE.globalcodestyle";
     }
-    return selectedPanel.getHelpTopic();
+    String helpTopic = selectedPanel.getHelpTopic();
+    if (helpTopic != null) {
+      return helpTopic;
+    }
+    return "";
   }
 
   private NewCodeStyleSettingsPanel ensureCurrentPanel() {
@@ -177,6 +190,7 @@ public class CodeStyleMainPanel extends JPanel {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
       panel.reset();
       panel.setModel(myModel);
+      panel.setLanguageSelector(myLangSelector);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
       mySchemesPanel.setCodeStyleSettingsPanel(panel);
@@ -200,5 +214,11 @@ public class CodeStyleMainPanel extends JPanel {
     }
 
     return mySettingsPanels.get(scheme.getName()).isModified();
+  }
+
+  private void onLanguageChange(Language lang) {
+    for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
+      panel.setLanguage(lang);
+    }
   }
 }

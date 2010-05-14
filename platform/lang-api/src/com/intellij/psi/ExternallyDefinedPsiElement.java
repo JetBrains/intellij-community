@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * Interface for PSI elements which may be injected into other elements but physically belongs
  * to other file - like AspectJ inter-type fields/methods.
  */
-public interface ExternallyDefinedPsiElement extends PsiElement, SyntheticElement {
+public interface ExternallyDefinedPsiElement extends PsiElement {
   /**
    * If inspection started for files with injections founds any problem in them (or their child)
    * it should be able to display them locally. This method allows to define such substitution element.

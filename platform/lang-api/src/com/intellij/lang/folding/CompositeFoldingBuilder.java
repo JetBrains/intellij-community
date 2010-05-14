@@ -63,6 +63,6 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAwa
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
-    return builder == null ? false : builder.isCollapsedByDefault(node);
+    return builder != null && builder.isCollapsedByDefault(node);
   }
 }

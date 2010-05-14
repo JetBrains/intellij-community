@@ -86,7 +86,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     updateEncodingFromContent.cancelAllRequests();
   }
 
-  public void updateEncodingFromContent(Document document) {
+  public void updateEncodingFromContent(@NotNull Document document) {
     myChangedDocuments.offer(document);
     updateEncodingFromContent.cancelAllRequests();
     updateEncodingFromContent.addRequest(myEncodingUpdateRunnable, 400);

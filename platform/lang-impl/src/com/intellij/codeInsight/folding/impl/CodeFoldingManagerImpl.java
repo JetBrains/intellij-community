@@ -206,8 +206,12 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   public void updateFoldRegions(@NotNull Editor editor) {
+    updateFoldRegions(editor, false);
+  }
+
+  public void updateFoldRegions(Editor editor, boolean quick) {
     PsiDocumentManager.getInstance(myProject).commitDocument(editor.getDocument());
-    Runnable runnable = updateFoldRegions(editor, false, false);
+    Runnable runnable = updateFoldRegions(editor, false, quick);
     if (runnable != null) {
       runnable.run();
     }
@@ -224,8 +228,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       public void run() {
+        EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
         for (FoldRegion region : regions) {
-          PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
+          PsiElement element = foldingInfo.getPsiElement(region);
           if (element != null) {
             region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
           }

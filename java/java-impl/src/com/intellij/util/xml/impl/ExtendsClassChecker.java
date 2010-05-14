@@ -21,9 +21,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomCustomAnnotationChecker;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
@@ -97,7 +98,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
       else if (!allowNonPublic && !value.hasModifierProperty(PsiModifier.PUBLIC)) {
         list.add(holder.createProblem(element, DomBundle.message("class.is.not.public", value.getQualifiedName())));
       }
-      else if (!hasDefaultConstructor(value)) {
+      else if (!PsiUtil.hasDefaultConstructor(value, true)) {
         if (canBeDecorator) {
           boolean hasConstructor = false;
 
@@ -132,21 +133,6 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
       list.add(holder.createProblem(element, DomBundle.message("abstract.class.not.allowed", value.getQualifiedName())));
     }
     return list;
-  }
-
-  public static boolean hasDefaultConstructor(PsiClass clazz) {
-    final PsiMethod[] constructors = clazz.getConstructors();
-    if (constructors.length > 0) {
-      for (PsiMethod cls: constructors) {
-        if ((cls.hasModifierProperty(PsiModifier.PUBLIC) || cls.hasModifierProperty(PsiModifier.PROTECTED)) && cls.getParameterList().getParametersCount() == 0) {
-          return true;
-        }
-      }
-    } else {
-      final PsiClass superClass = clazz.getSuperClass();
-      return superClass == null || hasDefaultConstructor(superClass);
-    }
-    return false;
   }
 
   public static List<DomElementProblemDescriptor> checkExtendsClassInReferences(final GenericDomValue element, final DomElementAnnotationHolder holder) {

@@ -971,6 +971,55 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   }
 
+  public void testQueryStructureIsAlwaysShowsPlus() throws Exception {
+    buildStructure(myRoot);
+    myAlwaysShowPlus.add(new NodeElement("jetbrains"));
+    myAlwaysShowPlus.add(new NodeElement("ide"));
+
+    expand(getPath("/"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    assertUpdates("/: update (2) getChildren\n" +
+                  "com: update getChildren\n" +
+                  "eclipse: update\n" +
+                  "intellij: update\n" +
+                  "jetbrains: update\n" +
+                  "org: update getChildren\n" +
+                  "runner: update\n" +
+                  "xunit: update getChildren");
+
+    expand(getPath("jetbrains"));
+    expand(getPath("fabrique"));
+
+    assertTree("-/\n" +
+               " +com\n" +
+               " -jetbrains\n" +
+               "  -fabrique\n" +
+               "   +ide\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    assertUpdates("fabrique: update getChildren\n" +
+                  "ide: update\n" +
+                  "jetbrains: update getChildren");
+
+
+    expand(getPath("ide"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " -jetbrains\n" +
+               "  -fabrique\n" +
+               "   ide\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    assertUpdates("ide: update getChildren");
+  }
+
   public void testQueryStructureIsAlwaysLeaf() throws Exception {
     buildStructure(myRoot);
     myStructure.addLeaf(new NodeElement("openapi"));

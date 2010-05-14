@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -96,12 +97,18 @@ public class GrabDependencies implements IntentionAction {
     final VirtualFile vfile = file.getOriginalFile().getVirtualFile();
     assert vfile != null;
 
+    if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", file.getResolveScope()) == null) {
+      Messages.showErrorDialog("Sorry, but IDEA cannot @Grab the dependencies without Ivy. Please add Ivy to your module dependencies and re-run the action.", "Ivy missing");
+      return;
+    }
+
     final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
     try {
       //debug
       //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
 
       final boolean tests = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(vfile);
+      javaParameters.configureByModule(module, tests? JavaParameters.CLASSES_AND_TESTS : JavaParameters.CLASSES_ONLY);
       DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, tests, "org.jetbrains.plugins.groovy.grape.GrapeRunner");
 
       javaParameters.getProgramParametersList().add("--classpath");

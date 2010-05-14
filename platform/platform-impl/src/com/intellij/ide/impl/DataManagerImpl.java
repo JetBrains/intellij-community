@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -197,6 +198,19 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
 
   public DataContext getDataContext() {
     return getDataContext(getFocusedComponent());
+  }
+
+  @Override
+  public AsyncResult<DataContext> getDataContextFromFocus() {
+    final AsyncResult<DataContext> context = new AsyncResult<DataContext>();
+
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+      public void run() {
+        context.setDone(getDataContext());
+      }
+    });
+
+    return context;
   }
 
   public DataContext getDataContextTest(Component component) {

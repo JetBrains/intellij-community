@@ -27,30 +27,6 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class StandardDslIndexedRootsProvider implements IndexedRootsProvider {
-  private final String ourDslsDir;
+public class StandardDslIndexedRootsProvider extends AbstractDslIndexedRootsProvider {
 
-  public StandardDslIndexedRootsProvider() {
-    final File jarPath = new File(PathUtil.getJarPathForClass(StandardDslIndexedRootsProvider.class));
-    String dirPath;
-    if (jarPath.isFile()) { //jar
-      dirPath = new File(jarPath.getParentFile(), "standardDsls").getAbsolutePath();
-    } else {
-      dirPath = new File(jarPath, "standardDsls").getAbsolutePath();
-    }
-
-    final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByPath(dirPath);
-    assert parent != null;
-    parent.getChildren();
-    ourDslsDir = parent.getUrl();
-    parent.refresh(true, true);
-  }
-
-  public Set<String> getRootsToIndex() {
-    return Collections.singleton(ourDslsDir);
-  }
-
-  public static StandardDslIndexedRootsProvider getInstance() {
-    return IndexedRootsProvider.EP_NAME.findExtension(StandardDslIndexedRootsProvider.class);
-  }
 }

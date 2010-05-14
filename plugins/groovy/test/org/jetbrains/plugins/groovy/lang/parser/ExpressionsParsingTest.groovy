@@ -206,4 +206,15 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testsuper$qualifiedSuper() throws Throwable {doTest();}
   public void testthis$this() throws Throwable {doTest();}
   public void testsuper$super() throws Throwable {doTest();}
+
+  public void testTripleEqual() throws Exception {
+    checkParsing "2===3", """Groovy script
+  Equality expression
+    Literal
+      PsiElement(Integer)('2')
+    PsiElement(==)('===')
+    Literal
+      PsiElement(Integer)('3')
+"""
+  }
 }

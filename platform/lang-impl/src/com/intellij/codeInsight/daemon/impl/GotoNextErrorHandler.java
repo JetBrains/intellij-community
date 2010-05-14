@@ -31,6 +31,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -61,23 +62,34 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     if (settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST) {
       for (int idx = severityRegistrar.getSeveritiesCount() - 1; idx >= 0; idx--) {
         final HighlightSeverity minSeverity = severityRegistrar.getSeverityByIndex(idx);
-        if (!SeverityRegistrar.skipSeverity(minSeverity)) {
-          List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), minSeverity, project);
-          if (!errors.isEmpty()) {
-            highlights = errors;
-            break;
-          }
+        List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), minSeverity, project);
+        if (!errors.isEmpty()) {
+          highlights = errors;
+          break;
         }
       }
     }
 
+    HighlightInfo infoToGo = findInfoToGo(editor, caretOffset, highlights, true);
+    if (infoToGo == null) {
+      infoToGo = findInfoToGo(editor, caretOffset, highlights, false);
+    }
+    if (infoToGo != null) {
+      navigateToError(project, editor, infoToGo);
+    }
+  }
+
+  @Nullable
+  private HighlightInfo findInfoToGo(Editor editor, int caretOffset, List<HighlightInfo> highlights, boolean skip) {
     int offsetToGo = myGoForward ? Integer.MAX_VALUE : Integer.MIN_VALUE;
     int offsetToGoIfNoLuck = offsetToGo;
     HighlightInfo infoToGo = null;
     HighlightInfo infoToGoIfNoLuck = null;
     int caretOffsetIfNoLuck = myGoForward ? -1 : editor.getDocument().getTextLength();
     for (HighlightInfo info : highlights) {
-      if (SeverityRegistrar.skipSeverity(info.getSeverity())) continue;
+      if (skip) {
+        if (SeverityRegistrar.skipSeverity(info.getSeverity())) continue;
+      }
       int startOffset = getNavigationPositionFor(info, editor.getDocument());
       if (isBetter(caretOffset, offsetToGo, startOffset)) {
         offsetToGo = startOffset;
@@ -89,10 +101,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
       }
     }
     if (infoToGo == null) infoToGo = infoToGoIfNoLuck;
-
-    if (infoToGo != null) {
-      navigateToError(project, editor, infoToGo);
-    }
+    return infoToGo;
   }
 
   private boolean isBetter(int caretOffset, int offsetToGo, int startOffset) {

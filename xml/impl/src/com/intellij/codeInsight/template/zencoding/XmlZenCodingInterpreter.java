@@ -97,21 +97,6 @@ class XmlZenCodingInterpreter {
       myCallback.fixEndOffset();
       myCallback.moveToOffset(newOffset);
     }
-
-    /*CharSequence tagName = getPrecedingTagName(text, offset, startOfTemplate);
-    if (tagName != null) {
-      *//*if (!hasClosingTag(text, tagName, offset, endOfTemplate)) {
-        document.insertString(offset, "</" + tagName + '>');
-      }*//*
-    }
-    else if (offset != endOfTemplate) {
-      tagName = getPrecedingTagName(text, endOfTemplate, startOfTemplate);
-      if (tagName != null) {
-        *//*fixEndOffset();
-        document.insertString(endOfTemplate, "</" + tagName + '>');*//*
-        editor.getCaretModel().moveToOffset(endOfTemplate);
-      }
-    }*/
   }
 
   // returns if expanding finished
@@ -136,8 +121,8 @@ class XmlZenCodingInterpreter {
         case OPERATION:
           if (templateToken != null) {
             if (token instanceof MarkerToken || token instanceof OperationToken) {
-              final char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-              if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
+              final char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : ZenCodingTemplate.MARKER;
+              if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
                 final Object key = new Object();
                 myCallback.fixStartOfTemplate(key);
                 invokeTemplate(templateToken, myCallback, 0);
@@ -150,7 +135,7 @@ class XmlZenCodingInterpreter {
                 }
                 templateToken = null;
               }
-              else if (sign == '>' || (mySurroundedText != null && sign == XmlZenCodingTemplate.MARKER)) {
+              else if (sign == '>' || (mySurroundedText != null && sign == ZenCodingTemplate.MARKER)) {
                 startTemplateAndGotoChild(templateToken);
                 templateToken = null;
               }
@@ -183,8 +168,8 @@ class XmlZenCodingInterpreter {
           break;
         case AFTER_NUMBER:
           if (token instanceof MarkerToken || token instanceof OperationToken) {
-            char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : XmlZenCodingTemplate.MARKER;
-            if (sign == '+' || (mySurroundedText == null && sign == XmlZenCodingTemplate.MARKER)) {
+            char sign = token instanceof OperationToken ? ((OperationToken)token).mySign : ZenCodingTemplate.MARKER;
+            if (sign == '+' || (mySurroundedText == null && sign == ZenCodingTemplate.MARKER)) {
               invokeTemplateSeveralTimes(templateToken, 0, number);
               templateToken = null;
             }
@@ -336,25 +321,25 @@ class XmlZenCodingInterpreter {
   private static void invokeTemplate(TemplateToken token,
                                      final CustomTemplateCallback callback,
                                      int numberInIteration) {
-    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.myAttribute2Value);
-    if (callback.isLiveTemplateApplicable(token.myKey)) {
+    List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(token.getAttribute2Value());
+    if (callback.isLiveTemplateApplicable(token.getKey())) {
       invokeExistingLiveTemplate(token, callback, numberInIteration, attr2value);
     }
     else {
       TemplateImpl template = new TemplateImpl("", "");
-      template.addTextSegment('<' + token.myKey);
+      template.addTextSegment('<' + token.getKey());
       if (attr2value.size() > 0) {
         template.addVariable(ATTRS, "", "", false);
         template.addVariableSegment(ATTRS);
       }
       template.addTextSegment(">");
-      if (XmlZenCodingTemplate.isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(token.myKey)) {
+      if (XmlZenCodingTemplate.isTrueXml(callback) || !HtmlUtil.isSingleHtmlTag(token.getKey())) {
         template.addVariableSegment(TemplateImpl.END);
-        template.addTextSegment("</" + token.myKey + ">");
+        template.addTextSegment("</" + token.getKey() + ">");
       }
       template.setToReformat(true);
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-      callback.startTemplate(template, predefinedValues);
+      callback.expandTemplate(template, predefinedValues);
     }
   }
 
@@ -362,10 +347,10 @@ class XmlZenCodingInterpreter {
                                                  CustomTemplateCallback callback,
                                                  int numberInIteration,
                                                  List<Pair<String, String>> attr2value) {
-    if (token.myTemplate != null) {
+    if (token.getTemplate() != null) {
       if (attr2value.size() > 0 || XmlZenCodingTemplate.isTrueXml(callback)) {
-        TemplateImpl modifiedTemplate = token.myTemplate.copy();
-        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.myTemplate.getString(), callback, true);
+        TemplateImpl modifiedTemplate = token.getTemplate().copy();
+        XmlTag tag = XmlZenCodingTemplate.parseXmlTagInTemplate(token.getTemplate().getString(), callback, true);
         if (tag != null) {
           for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
             Pair<String, String> pair = iterator.next();
@@ -397,15 +382,15 @@ class XmlZenCodingInterpreter {
           modifiedTemplate.setString(text);
           removeVariablesWhichHasNoSegment(modifiedTemplate);
           Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-          callback.startTemplate(modifiedTemplate, predefinedValues);
+          callback.expandTemplate(modifiedTemplate, predefinedValues);
           return;
         }
       }
-      callback.startTemplate(token.myTemplate, null);
+      callback.expandTemplate(token.getTemplate(), null);
     }
     else {
       Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration);
-      callback.startTemplate(token.myKey, predefinedValues);
+      callback.expandTemplate(token.getKey(), predefinedValues);
     }
   }
 

@@ -18,13 +18,15 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collections;
+import java.util.List;
 
 class FoldingUtil {
   private FoldingUtil() {}
@@ -56,7 +58,7 @@ class FoldingUtil {
   }
 
   public static FoldRegion[] getFoldRegionsAtOffset(Editor editor, int offset){
-    ArrayList<FoldRegion> list = new ArrayList<FoldRegion>();
+    List<FoldRegion> list = new ArrayList<FoldRegion>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : allRegions) {
       if (region.getStartOffset() <= offset && offset <= region.getEndOffset()) {
@@ -65,15 +67,7 @@ class FoldingUtil {
     }
 
     FoldRegion[] regions = list.toArray(new FoldRegion[list.size()]);
-    Arrays.sort(
-      regions,
-      new Comparator<FoldRegion>() {
-        public int compare(FoldRegion region1, FoldRegion region2) {
-          return region2.getStartOffset() - region1.getStartOffset();
-        }
-      }
-    );
-
+    Arrays.sort(regions, Collections.reverseOrder(RangeMarker.BY_START_OFFSET));
     return regions;
   }
 

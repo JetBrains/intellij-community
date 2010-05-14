@@ -784,14 +784,13 @@ public class JavaCompletionUtil {
 
   @Nullable
   public static PsiType getLookupElementType(final LookupElement element) {
-    final TypedLookupItem typed = element.as(TypedLookupItem.class);
+    TypedLookupItem typed = typedFrom(element);
     if (typed != null) {
       return typed.getType();
     }
 
-
     final PsiType qualifierType = getPsiType(element.getObject());
-    final LookupItem lookupItem = element.as(LookupItem.class);
+    final LookupItem lookupItem = LookupItem.from(element);
     if (lookupItem != null) {
       final Object o = lookupItem.getAttribute(LookupItem.TYPE);
       if (o instanceof PsiType) {
@@ -804,6 +803,16 @@ public class JavaCompletionUtil {
       }
     }
     return qualifierType;
+  }
+
+  public static @Nullable TypedLookupItem typedFrom(LookupElement element) {
+    TypedLookupItem typed = null;
+    if (element instanceof TypedLookupItem) typed = (TypedLookupItem)element;
+    else if (element instanceof LookupElementDecorator) {
+      element = ((LookupElementDecorator)element).getDelegate();
+      if (element instanceof TypedLookupItem) typed = (TypedLookupItem)element;
+    }
+    return typed;
   }
 
   @Nullable

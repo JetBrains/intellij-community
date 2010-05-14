@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class XValueModifier {
 
   /**
-   * Start modification of the value. Note that this methods is called from the Event Dispatch Thread so it should return quickly
+   * Start modification of the value. Note that this method is called from the Event Dispatch Thread so it should return quickly
    * @param expression new value
    * @param callback used to notify that value has been successfully modified or an error occurs
    */

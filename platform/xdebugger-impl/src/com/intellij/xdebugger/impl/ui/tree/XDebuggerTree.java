@@ -21,16 +21,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,13 +47,15 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private static final Convertor<TreePath,String> SPEED_SEARCH_CONVERTER = new Convertor<TreePath, String>() {
     public String convert(TreePath o) {
-      final Object node = o.getLastPathComponent();
       String text = null;
-      if (node instanceof XValueNodeImpl) {
-        text = ((XValueNodeImpl)node).getName();
-      }
-      else if (node instanceof XDebuggerTreeNode) {
-        text = ((XDebuggerTreeNode)node).getText().toString();
+      if (o != null) {
+        final Object node = o.getLastPathComponent();
+        if (node instanceof XValueNodeImpl) {
+          text = ((XValueNodeImpl)node).getName();
+        }
+        else if (node instanceof XDebuggerTreeNode) {
+          text = ((XDebuggerTreeNode)node).getText().toString();
+        }
       }
       return text != null ? text : "";
     }
@@ -75,6 +75,14 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider {
     myTreeModel = new DefaultTreeModel(null);
     setModel(myTreeModel);
     setCellRenderer(new XDebuggerTreeRenderer());
+    new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
+      @Override
+      protected void handleTagClick(Object tag, MouseEvent event) {
+        if (tag instanceof XDebuggerNodeLink) {
+          ((XDebuggerNodeLink)tag).onClick(event);
+        }
+      }
+    }.install(this);
     setRootVisible(false);
     setShowsRootHandles(true);
     addMouseListener(new MouseAdapter() {

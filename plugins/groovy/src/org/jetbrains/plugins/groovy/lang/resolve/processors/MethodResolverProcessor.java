@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -75,7 +76,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method);
-      if (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression)) {
+      if (PsiUtil.isApplicable(myArgumentTypes, method, substitutor, myCurrentFileResolveContext instanceof GrMethodCallExpression, (GroovyPsiElement)myPlace)) {
         myCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
         myInapplicableCandidates.add(new GroovyResolveResultImpl(method, myCurrentFileResolveContext, substitutor, isAccessible, isStaticsOK));
@@ -241,6 +242,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
     if (!method1.getName().equals(method2.getName())) return false;
 
+    if (method1 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method1).dominates(substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
+      return true;
+    }
+
     //hack for default gdk methods
     if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
       method1 = ((GrGdkMethod)method1).getStaticMethod();
@@ -259,6 +264,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
     for (int i = 0; i < params2.length; i++) {
       PsiType type1 = substitutor1.substitute(params1[i].getType());
       PsiType type2 = substitutor2.substitute(params2[i].getType());
+
+      if (myArgumentTypes != null && myArgumentTypes.length > i) {
+        PsiType argType = myArgumentTypes[i];
+        if (argType != null) {
+          final boolean converts1 = TypesUtil.isAssignable(type1, argType, manager, scope, false);
+          final boolean converts2 = TypesUtil.isAssignable(type2, argType, manager, scope, false);
+          if (converts1 != converts2) {
+            return converts2;
+          }
+        }
+      }
+
       if (!typesAgree(manager, scope, type1, type2)) return false;
     }
 

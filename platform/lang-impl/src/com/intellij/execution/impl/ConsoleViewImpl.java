@@ -41,12 +41,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -130,7 +130,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
-  private final Alarm mySpareTimeAlarm = new Alarm();
+  private final Alarm mySpareTimeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
@@ -177,8 +177,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private String myHelpId;
 
-  private final Alarm myFlushAlarm = new Alarm();
-
+  private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
+  private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   private final Runnable myFlushDeferredRunnable = new Runnable() {
     public void run() {
       flushDeferredText();
@@ -192,6 +192,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private int myHistorySize = 20;
 
   private ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
+
+  private final Alarm myFoldingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  private final List<FoldRegion> myPendingFoldRegions = new ArrayList<FoldRegion>();
 
   public void addConsoleUserInputLestener(ConsoleInputListener consoleInputListener) {
     myConsoleInputListeners.add(consoleInputListener);
@@ -286,6 +289,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (myEditor == null) return;
       myEditor.getMarkupModel().removeAllHighlighters();
       document = myEditor.getDocument();
+      myFoldingAlarm.cancelAllRequests();
     }
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
@@ -510,19 +514,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void flushDeferredUserInput() {
-    if (myState.isRunning()){
-      final String text = myDeferredUserInput.substring(0, myDeferredUserInput.length());
-      final int index = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('\r'));
-      if (index < 0) return;
-      try{
-        myState.sendUserInput(text.substring(0, index + 1));
+    final String text = myDeferredUserInput.substring(0, myDeferredUserInput.length());
+    final int index = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('\r'));
+    if (index < 0) return;
+    final String textToSend = text.substring(0, index + 1);
+    myDeferredUserInput.setLength(0);
+    myDeferredUserInput.append(text.substring(index + 1));
+    myFlushUserInputAlarm.addRequest(new Runnable() {
+      public void run() {
+        if (myState.isRunning()) {
+          try {
+            // this may block forever, see IDEA-54340
+            myState.sendUserInput(textToSend);
+          }
+          catch (IOException e) {
+            return;
+          }
+        }
       }
-      catch(IOException e){
-        return;
-      }
-      myDeferredUserInput.setLength(0);
-      myDeferredUserInput.append(text.substring(index + 1));
-    }
+    }, 0);
   }
 
   public Object getData(final String dataId) {
@@ -842,15 +852,31 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void doUpdateFolding(final List<FoldRegion> toAdd) {
-    final FoldingModel model = myEditor.getFoldingModel();
-    model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+    assertIsDispatchThread();
+    myPendingFoldRegions.addAll(toAdd);
+
+    myFoldingAlarm.cancelAllRequests();
+    final Runnable runnable = new Runnable() {
       public void run() {
-        for (FoldRegion region : toAdd) {
-          region.setExpanded(false);
-          model.addFoldRegion(region);
-        }
+        assertIsDispatchThread();
+        final FoldingModel model = myEditor.getFoldingModel();
+        model.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
+          public void run() {
+            assertIsDispatchThread();
+            for (FoldRegion region : myPendingFoldRegions) {
+              region.setExpanded(false);
+              model.addFoldRegion(region);
+            }
+            myPendingFoldRegions.clear();
+          }
+        });
       }
-    });
+    };
+    if (myPendingFoldRegions.size() > 100) {
+      runnable.run();
+    } else {
+      myFoldingAlarm.addRequest(runnable, 50);
+    }
   }
 
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
@@ -876,7 +902,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (oStart > 0) oStart--;
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
-      toAdd.add(new FoldRegionImpl(myEditor, oStart, oEnd, prevFolding.getPlaceholderText(toFold), null));
+      FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null);
+      toAdd.add(region); 
     }
   }
 
@@ -888,14 +915,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
   }
 
+  @Nullable
   private static ConsoleFolding foldingForLine(String lineText) {
-    ConsoleFolding current = null;
     for (ConsoleFolding folding : ConsoleFolding.EP_NAME.getExtensions()) {
       if (folding.shouldFoldLine(lineText)) {
-        current = folding;
+        return folding;
       }
     }
-    return current;
+    return null;
   }
 
   private void addHyperlink(final int highlightStartOffset,
@@ -1374,7 +1401,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     document.insertString(startOffset, s);
-    editor.getCaretModel().moveToOffset(startOffset + s.length());
+    // Math.max is needed when cyclic buffer is used
+    editor.getCaretModel().moveToOffset(Math.min(startOffset + s.length(), document.getTextLength()));
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 

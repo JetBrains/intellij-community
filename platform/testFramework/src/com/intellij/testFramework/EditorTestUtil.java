@@ -16,11 +16,12 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import junit.framework.Assert;
 
 /**
  * User: Maxim.Mossienko
@@ -48,5 +49,22 @@ public class EditorTestUtil {
       TypedAction action = actionManager.getTypedAction();
       action.actionPerformed(editor, c, DataManager.getInstance().getDataContext());
     }
+  }
+
+  public static void performReferenceCopy(DataContext dataContext) {
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction action = actionManager.getAction(IdeActions.ACTION_COPY_REFERENCE);
+    AnActionEvent
+      event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(),
+                                            ActionManager.getInstance(), 0);
+    action.update(event);
+    Assert.assertTrue(event.getPresentation().isEnabled());
+    action.actionPerformed(event);
+  }
+
+  public static void performPaste(Editor editor) {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
+    actionHandler.execute(editor, DataManager.getInstance().getDataContext());
   }
 }

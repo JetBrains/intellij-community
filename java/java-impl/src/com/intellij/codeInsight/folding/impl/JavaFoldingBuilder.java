@@ -592,16 +592,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
     if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
 
-    final PsiMethod[] constructors = baseClass.getConstructors();
-    boolean hasEmptyConstructor = constructors.length == 0;
-    for (final PsiMethod method : constructors) {
-      if (method.getParameterList().getParametersCount() == 0) {
-        hasEmptyConstructor = true;
-        break;
-      }
-    }
-
-    if (!hasEmptyConstructor) return false;
+    if (!PsiUtil.hasDefaultConstructor(baseClass, true)) return false;
 
     for (final PsiMethod method : baseClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {

@@ -78,7 +78,7 @@ public class GroovyOverrideImplementUtil {
 
     if (isImplement && aClass.isInterface()) return;
 
-    Collection<CandidateInfo> candidates = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
+    Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, isImplement);
     if (candidates.isEmpty()) return;
 
     List<PsiMethodMember> classMembers = new ArrayList<PsiMethodMember>();
@@ -176,6 +176,10 @@ public class GroovyOverrideImplementUtil {
       });
 
     }
+  }
+
+  public static Collection<CandidateInfo> getMethodsToOverrideImplement(GrTypeDefinition aClass, boolean isImplement) {
+    return OverrideImplementUtil.getMethodsToOverrideImplement(aClass, isImplement);
   }
 
   private static void positionCaret(Editor editor, GrMethod result) {

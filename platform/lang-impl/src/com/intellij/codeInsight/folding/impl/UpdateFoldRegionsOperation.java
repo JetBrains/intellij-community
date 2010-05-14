@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -32,7 +31,6 @@ import com.intellij.util.containers.HashMap;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static com.intellij.util.containers.CollectionFactory.arrayList;
 import static com.intellij.util.containers.CollectionFactory.newTroveMap;
@@ -44,10 +42,10 @@ class UpdateFoldRegionsOperation implements Runnable {
   private final Project myProject;
   private final Editor myEditor;
   private final boolean myApplyDefaultState;
-  private final TreeMap<PsiElement, FoldingDescriptor> myElementsToFoldMap;
+  private final Map<PsiElement, FoldingDescriptor> myElementsToFoldMap;
   private final boolean myForInjected;
 
-  UpdateFoldRegionsOperation(Project project, Editor editor, TreeMap<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean applyDefaultState,
+  UpdateFoldRegionsOperation(Project project, Editor editor, Map<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean applyDefaultState,
                              boolean forInjected) {
     myProject = project;
     myEditor = editor;
@@ -94,7 +92,7 @@ class UpdateFoldRegionsOperation implements Runnable {
       final FoldingDescriptor descriptor = entry.getValue();
       FoldingGroup group = descriptor.getGroup();
       TextRange range = descriptor.getRange();
-      FoldRegion region = new FoldRegionImpl(myEditor, range.getStartOffset(), range.getEndOffset(), descriptor.getPlaceholderText(), group);
+      FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(), descriptor.getPlaceholderText(), group);
       if (!foldingModel.addFoldRegion(region)) continue;
 
       info.addRegion(region, descriptor);

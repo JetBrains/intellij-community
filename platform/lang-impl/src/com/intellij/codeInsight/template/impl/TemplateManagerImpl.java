@@ -227,7 +227,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     for (TemplateImpl template : template2argument.keySet()) {
       String argument = template2argument.get(template);
       int templateStart = getTemplateStart(template, argument, caretOffset, text);
-      if (templateStart <= offset) {
+      if (templateStart < offset) {
         return true;
       }
     }
@@ -244,16 +244,15 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     for (final CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if (shortcutChar == customLiveTemplate.getShortcut()) {
         int caretOffset = editor.getCaretModel().getOffset();
-        if (customLiveTemplate.isApplicable(file, caretOffset, false)) {
+        if (customLiveTemplate.isApplicable(file, caretOffset)) {
           final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
           String key = customLiveTemplate.computeTemplateKey(callback);
           if (key != null) {
             int offsetBeforeKey = caretOffset - key.length();
             CharSequence text = editor.getDocument().getCharsSequence();
             if (template2argument == null || !containsTemplateStartingBefore(template2argument, offsetBeforeKey, caretOffset, text)) {
-              callback.getEditor().getDocument().deleteString(offsetBeforeKey, caretOffset);
               customLiveTemplate.expand(key, callback);
-              callback.finish();
+              callback.startAllExpandedTemplates();
               return true;
             }
           }
@@ -285,9 +284,9 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return templateStart;
   }
 
-  private Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
+  public Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
                                                           Editor editor,
-                                                          char shortcutChar,
+                                                          Character shortcutChar,
                                                           TemplateSettings templateSettings) {
     final Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
@@ -325,7 +324,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return candidate2Argument;
   }
 
-  private boolean startNonCustomTemplates(Map<TemplateImpl, String> template2argument,
+  public boolean startNonCustomTemplates(Map<TemplateImpl, String> template2argument,
                                           Editor editor,
                                           PairProcessor<String, String> processor) {
     final int caretOffset = editor.getCaretModel().getOffset();
@@ -353,7 +352,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public static List<TemplateImpl> findMatchingTemplates(CharSequence text,
                                                          int caretOffset,
-                                                         char shortcutChar,
+                                                         Character shortcutChar,
                                                          TemplateSettings settings,
                                                          boolean hasArgument) {
     String key;

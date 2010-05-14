@@ -1,0 +1,3 @@
+class FooBar {}
+
+FooBa<caret>

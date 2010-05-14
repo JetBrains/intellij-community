@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Filter;
@@ -23,7 +24,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
+public class JavaFileTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider {
   private final PsiJavaFile myFile;
 
   public JavaFileTreeModel(@NotNull PsiJavaFile file) {
@@ -59,6 +60,16 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
 
   protected PsiFile getPsiFile() {
     return myFile;
+  }
+
+  public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+    Object value = element.getValue();
+    return value instanceof PsiClass || value instanceof PsiFile;
+  }
+
+  public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+    Object value = element.getValue();
+    return value instanceof PsiMethod || value instanceof PsiField;
   }
 
   @Override

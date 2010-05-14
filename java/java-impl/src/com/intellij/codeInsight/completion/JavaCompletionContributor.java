@@ -165,7 +165,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     final PsiElement insertedElement = parameters.getPosition();
-    if (insertedElement.getContainingFile().getLanguage() != StdLanguages.JAVA) {
+    if (!insertedElement.getContainingFile().getLanguage().isKindOf(StdLanguages.JAVA)) {
       return;
     }
 

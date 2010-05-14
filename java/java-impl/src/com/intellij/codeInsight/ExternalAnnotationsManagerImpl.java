@@ -348,8 +348,8 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         }
       }
     }
-    final MyExternalPromptDialog dialog = new MyExternalPromptDialog(project);
-    if (dialog.isToBeShown()) {
+    final MyExternalPromptDialog dialog = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment() ? null : new MyExternalPromptDialog(project);
+    if (dialog != null && dialog.isToBeShown()) {
       final PsiElement highlightElement = element instanceof PsiNameIdentifierOwner
                                            ? ((PsiNameIdentifierOwner)element).getNameIdentifier()
                                            : element.getNavigationElement();
@@ -610,7 +610,6 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
 
     protected boolean isToBeShown() {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode()) return false;
       return CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS;
     }
 

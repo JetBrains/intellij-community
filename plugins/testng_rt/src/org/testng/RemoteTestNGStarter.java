@@ -22,38 +22,51 @@ package org.testng;
 
 import org.testng.remote.RemoteTestNG;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.Map;
 import java.util.Vector;
 
 public class RemoteTestNGStarter {
+  private static final String SOCKET = "-socket";
   public static void main(String[] args) throws Exception {
     int i = 0;
     Vector resultArgs = new Vector();
     for (; i < args.length; i++) {
       String arg = args[i];
-      if (arg.equals("-temp")) {
+      if (arg.startsWith(SOCKET)) {
+        final int port = Integer.parseInt(arg.substring(SOCKET.length()));
+        try {
+          final Socket socket = new Socket(InetAddress.getLocalHost(), port);  //start collecting tests
+          final DataInputStream os = new DataInputStream(socket.getInputStream());
+          try {
+            os.readBoolean();//wait for ready flag
+          }
+          finally {
+            os.close();
+          }
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+        }
+        continue; //do not add socket to actual params
+      }
+      else if (arg.equals("-temp")) {
         break;
       }
       resultArgs.add(arg);
     }
 
-    File temp = new File(args[++i]);
+    final File temp = new File(args[++i]);
 
-    while (temp.length() == 0){
-      //wait for test classes
-    }
-
-    BufferedReader reader = new BufferedReader(new FileReader(temp));
+    final BufferedReader reader = new BufferedReader(new FileReader(temp));
 
     try {
       final String cantRunMessage = "CantRunException";
       while (true) {
         String line = reader.readLine();
         while (line == null) {
-          Thread.sleep(100);
           line = reader.readLine();
         }
 
@@ -71,9 +84,9 @@ public class RemoteTestNGStarter {
     }
 
 
-    Map commandLineArgs= TestNGCommandLineArgs.parseCommandLine((String[])resultArgs.toArray(new String[resultArgs.size()]));
+    final Map commandLineArgs= TestNGCommandLineArgs.parseCommandLine((String[])resultArgs.toArray(new String[resultArgs.size()]));
 
-    RemoteTestNG testNG= new RemoteTestNG();
+    final RemoteTestNG testNG= new RemoteTestNG();
     testNG.configure(commandLineArgs);
     testNG.initializeSuitesAndJarFile();
     testNG.run();

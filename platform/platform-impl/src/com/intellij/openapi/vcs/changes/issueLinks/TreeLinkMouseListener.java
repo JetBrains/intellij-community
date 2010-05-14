@@ -21,7 +21,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -31,7 +31,7 @@ import java.awt.event.MouseEvent;
 */
 public class TreeLinkMouseListener extends LinkMouseListenerBase {
   private final ColoredTreeCellRenderer myRenderer;
-  protected DefaultMutableTreeNode myLastHitNode;
+  protected TreeNode myLastHitNode;
 
   public TreeLinkMouseListener(final ColoredTreeCellRenderer renderer) {
     myRenderer = renderer;
@@ -54,7 +54,7 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
     if (path != null) {
       final Rectangle rectangle = tree.getPathBounds(path);
       int dx = e.getX() - rectangle.x;
-      final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+      final TreeNode treeNode = (TreeNode) path.getLastPathComponent();
       if (myLastHitNode != treeNode) {
         myLastHitNode = treeNode;
         myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), -1, false);

@@ -298,7 +298,8 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameCompleteMacro"/>
 
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
-  
+  <internalFileTemplate name="Html"/>
+  <internalFileTemplate name="Xhtml"/>
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndex" />
   <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
@@ -409,7 +410,7 @@
   <editorOptionsProvider implementation="com.intellij.application.options.CodeCompletionOptions"/>
   <editorOptionsProvider implementation="com.intellij.application.options.editor.AutoImportOptionsConfigurable"/>
 
-  <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>con
+  <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
 
   <intentionAction>
     <className>com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction</className>

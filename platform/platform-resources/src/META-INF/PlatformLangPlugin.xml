@@ -51,7 +51,7 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
-    <applicationService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
+    <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                         serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <applicationService serviceInterface="com.intellij.ide.util.ModuleRendererFactory"
                         serviceImplementation="com.intellij.ide.util.PlatformModuleRendererFactory"/>

@@ -17,12 +17,10 @@ package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,19 +95,9 @@ public class FoldingDescriptor {
    * Returns the folded text range.
    * @return the folded text range.
    */
+  @NotNull
   public TextRange getRange() {
-    return getRange(myElement, myRange);
-  }
-
-  public static TextRange getRange(ASTNode node, TextRange range) {
-    PsiElement element = node.getPsi();
-    PsiFile containingFile = element.getContainingFile();
-    InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(containingFile.getProject());
-    boolean isInjected = injectedManager.isInjectedFragment(containingFile);
-    if (isInjected) {
-      range = injectedManager.injectedToHost(element, range);
-    }
-    return range;
+    return myRange;
   }
 
   @Nullable

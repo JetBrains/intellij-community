@@ -1,0 +1,13 @@
+<project name="Layout GroovyPP plugin distribution" default="layout">
+  <target name="layout">
+    <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
+      <dir name="Groovypp">
+        <dir name="lib">
+          <jar name="groovypp.jar">
+            <module name="groovypp"/>
+          </jar>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+</project>

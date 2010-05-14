@@ -69,7 +69,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
   @NonNls private static final String ourHelpID = "viewingStructure.fileStructureView";
 
-  private AbstractTreeBuilder myAbstractTreeBuilder;
+  private StructureTreeBuilder myAbstractTreeBuilder;
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
@@ -734,6 +734,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return value == null ? this : value;
     }
 
+
+
     @NotNull
     public Collection<AbstractTreeNode> getChildren() {
       if (ourSettingsModificationCount != modificationCountForChildren) {
@@ -759,16 +761,41 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public boolean isAlwaysShowPlus() {
-      return getValue().getChildren().length > 0;
+      if (getElementInfoProvider() != null) {
+        return getElementInfoProvider().isAlwaysShowsPlus((StructureViewTreeElement)getValue());
+      }
+      return true;
     }
 
     @Override
     public boolean isAlwaysLeaf() {
-      return getValue().getChildren().length == 0;
+      if (getElementInfoProvider() != null) {
+        return getElementInfoProvider().isAlwaysLeaf((StructureViewTreeElement)getValue());
+      }
+
+      return false;
+    }
+
+    private StructureViewModel.ElementInfoProvider getElementInfoProvider() {
+      if (myTreeModel instanceof StructureViewModel.ElementInfoProvider) {
+        return ((StructureViewModel.ElementInfoProvider)myTreeModel);
+      } else if (myTreeModel instanceof TreeModelWrapper) {
+        StructureViewModel model = ((TreeModelWrapper)myTreeModel).getModel();
+        if (model instanceof StructureViewModel.ElementInfoProvider) {
+          return (StructureViewModel.ElementInfoProvider)model;
+        }
+      }
+
+      return null;
     }
 
     protected TreeElementWrapper createChildNode(final TreeElement child) {
       return new StructureViewTreeElementWrapper(myProject, child, myTreeModel);
+    }
+
+    @Override
+    protected GroupWrapper createGroupWrapper(final Project project, Group group, final TreeModel treeModel) {
+      return new StructureViewGroup(project, group, treeModel);
     }
 
     public boolean equals(Object o) {
@@ -799,6 +826,28 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       final Object o = unwrapValue(getValue());
 
       return o != null ? o.hashCode() : 0;
+    }
+
+    private class StructureViewGroup extends GroupWrapper {
+      public StructureViewGroup(Project project, Group group, TreeModel treeModel) {
+        super(project, group, treeModel);
+      }
+
+      @Override
+      protected TreeElementWrapper createChildNode(TreeElement child) {
+        return new StructureViewTreeElementWrapper(getProject(), child, myTreeModel);
+      }
+
+
+      @Override
+      protected GroupWrapper createGroupWrapper(Project project, Group group, TreeModel treeModel) {
+        return new StructureViewGroup(project, group, treeModel);
+      }
+
+      @Override
+      public boolean isAlwaysShowPlus() {
+        return true;
+      }
     }
   }
 

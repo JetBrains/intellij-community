@@ -66,7 +66,7 @@ public class WrapWithCustomTemplateAction extends AnAction {
       final CustomTemplateCallback callback = new CustomTemplateCallback(myEditor, myFile);
       myTemplate.wrap(selection, callback, new TemplateInvokationListener() {
         public void finished() {
-          callback.finish();
+          callback.startAllExpandedTemplates();
         }
       });
     }

@@ -41,10 +41,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.unscramble.UnscrambleDialog;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.*;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -88,6 +85,8 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
   private static final byte[] ENABLED_FLAG = new byte[]{(byte)239};
+
+  private static IndexedRootsProvider[] gdslRootsProviders;
 
   public ID<String, Void> getName() {
     return NAME;
@@ -206,7 +205,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     protected CachedValue<List<GroovyFile>> compute(final Project project, Object p) {
       return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<List<GroovyFile>>() {
         public Result<List<GroovyFile>> compute() {
-          final AdditionalIndexableFileSet standardSet = new AdditionalIndexableFileSet(StandardDslIndexedRootsProvider.getInstance());
+          if (gdslRootsProviders == null) {
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
+            gdslRootsProviders = ContainerUtil.findAllAsArray(IndexedRootsProvider.EP_NAME.getExtensions(), GroovyDslIndexedRootProvider.class);
+          }
+          
+          final AdditionalIndexableFileSet standardSet = new AdditionalIndexableFileSet(gdslRootsProviders);
           final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
           final AdditionalIndexedRootsScope scope = new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project), standardSet);
@@ -284,9 +288,15 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
                   if (cause instanceof ProcessCanceledException) {
                     throw (ProcessCanceledException)cause;
                   }
+                  if (cause instanceof OutOfMemoryError) {
+                    throw (OutOfMemoryError)cause;
+                  }
                   handleDslError(e, project, dslFile);
                 }
                 catch (ProcessCanceledException e) {
+                  throw e;
+                }
+                catch (OutOfMemoryError e) {
                   throw e;
                 }
                 catch (Throwable e) { // To handle exceptions in definition script
