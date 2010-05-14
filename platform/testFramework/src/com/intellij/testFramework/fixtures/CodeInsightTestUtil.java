@@ -17,9 +17,12 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.editorActions.SelectWordHandler;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.WriteCommandAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,4 +69,17 @@ public class CodeInsightTestUtil {
       fixture.checkResultByFile(file, false);
     }
   }
+
+  public static void doSurroundWithTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
+                                        @NotNull final String before, @NotNull final String after) throws Exception {
+    fixture.configureByFile(before);
+    new WriteCommandAction.Simple(fixture.getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder);
+      }
+    }.execute();
+    fixture.checkResultByFile(after, true);
+  }
+
 }
