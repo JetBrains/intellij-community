@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.light;
 
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -45,6 +47,10 @@ public class LightMethod extends LightElement implements PsiMethod {
     myContainingClass = containingClass;
   }
 
+  @Override
+  public ItemPresentation getPresentation() {
+    return JavaPresentationUtil.getMethodPresentation(this);
+  }
 
   public boolean hasTypeParameters() {
     return myMethod.hasTypeParameters();
