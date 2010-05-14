@@ -12,6 +12,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -136,6 +137,9 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   @Nullable
   private static LineMarkerInfo<PsiElement> getMethodMarker(final PsiElement element, final PyFunction function) {
+    if (PyNames.INIT.equals(function.getName())) {
+      return null;      
+    }
     final PsiElement superMethod = PySuperMethodsSearch.search(function).findFirst();
     if (superMethod != null) {
       PyClass superClass = null;

@@ -5,15 +5,14 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,30 +88,27 @@ public class AddFieldQuickFix implements LocalQuickFix {
   public static PsiElement addFieldToInit(Project project, PyClass cls, String item_name, Function<String, PyStatement> callback) {
     if (cls != null && item_name != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
-      Language language = cls.getLanguage();
-      if (language instanceof PythonLanguage) {
-        if (init != null) {
-          return appendToInit(init, callback);
+      if (init != null) {
+        return appendToInit(init, callback);
+      }
+      else { // no init! boldly copy ancestor's.
+        for (PyClass ancestor : cls.iterateAncestors()) {
+          init = ancestor.findMethodByName(PyNames.INIT, false);
+          if (init != null) break;
         }
-        else { // no init! boldly copy ancestor's.
-          for (PyClass ancestor : cls.iterateAncestors()) {
-            init = ancestor.findMethodByName(PyNames.INIT, false);
-            if (init != null) break;
-          }
-          PyFunction new_init = createInitMethod(project, cls, init);
+        PyFunction new_init = createInitMethod(project, cls, init);
 
-          appendToInit(new_init, callback);
+        appendToInit(new_init, callback);
 
-          PsiElement add_anchor = null;
-          PyFunction[] meths = cls.getMethods();
-          if (meths.length > 0) add_anchor = meths[0].getPrevSibling();
-          PyStatementList cls_content = cls.getStatementList();
-          new_init = (PyFunction) cls_content.addAfter(new_init, add_anchor);
+        PsiElement add_anchor = null;
+        PyFunction[] meths = cls.getMethods();
+        if (meths.length > 0) add_anchor = meths[0].getPrevSibling();
+        PyStatementList cls_content = cls.getStatementList();
+        new_init = (PyFunction) cls_content.addAfter(new_init, add_anchor);
 
-          PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), MessageType.INFO);
-          return new_init.getStatementList().getStatements()[0];
-          //else  // well, that can't be
-        }
+        PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), MessageType.INFO);
+        return new_init.getStatementList().getStatements()[0];
+        //else  // well, that can't be
       }
     }
     return null;
@@ -124,7 +120,8 @@ public class AddFieldQuickFix implements LocalQuickFix {
     String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
 
     String functionText = "def " + PyNames.INIT + paramList + ":\n";
-    if (cls.isNewStyleClass() && ancestorInit != null) {
+    if (cls.isNewStyleClass() && ancestorInit != null &&
+        ancestorInit.getContainingClass() != PyBuiltinCache.getInstance(ancestorInit).getClass("object")) {
       // form the super() call
       StringBuffer sb = new StringBuffer("super(");
       sb.append(cls.getName());
