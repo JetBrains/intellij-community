@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public interface DominanceAwareMethod extends PsiMethod {
 
-  boolean dominates(@NotNull PsiSubstitutor substitutor,
+  boolean isMoreConcreteThan(@NotNull PsiSubstitutor substitutor,
                     @NotNull PsiMethod another, @NotNull PsiSubstitutor anotherSubstitutor,
                     @NotNull GroovyPsiElement context);
 

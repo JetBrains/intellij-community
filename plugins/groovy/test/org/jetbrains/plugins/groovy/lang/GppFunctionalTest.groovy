@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.navigation.ImplementationSearcher
+
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -10,7 +9,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
+
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
@@ -91,16 +90,16 @@ Foo f = [name: 'aaa', foo: { println 'hi' }, anotherProperty: 42 ]
 
   void testAssignability(String text) {
     myFixture.enableInspections new GroovyAssignabilityCheckInspection()
-    PsiFile file = configureTyped(text)
+    PsiFile file = configureScript(text)
     myFixture.testHighlighting(true, false, false, file.virtualFile)
   }
 
-  private PsiFile configureTyped(String text) {
+  private PsiFile configureScript(String text) {
     return myFixture.configureByText("a.groovy", text)
   }
 
   public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne() throws Exception {
-    configureTyped("""
+    configureScript("""
 File f = ['path']
 f.mk<caret>
 """)
@@ -118,7 +117,7 @@ public class Some {
 }
 """
 
-    configureTyped("""
+    configureScript("""
 Some s = [prop: 239]
 s.f_<caret>
 """)
@@ -175,7 +174,7 @@ Action a1 = { a = 2 -> println a }
   }
 
   public void testClosureParameterTypesInAssignment() throws Exception {
-    configureTyped "Function1<String, Object> f = { it.subs<caret> }"
+    configureScript "Function1<String, Object> f = { it.subs<caret> }"
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
@@ -218,9 +217,7 @@ def foo(Function2<Integer, String, Object> f) {}
 
   public void testReturnTypeOneMethodInterface() throws Exception {
     myFixture.configureByText "a.groovy", """
-@Typed package aaa
-
-Function1<String, Integer> bar() {
+@Typed Function1<String, Integer> bar() {
    { it.subs<caret> }
 }
 """
@@ -299,7 +296,7 @@ class BarImpl extends Bar {}
   }
 
   public void testResolveToStdLib() throws Exception {
-    configureTyped """
+    configureScript """
 @Typed def foo(List<String> l) {
   l.ea<caret>ch { l.substring(1) }
 }
@@ -307,6 +304,17 @@ class BarImpl extends Bar {}
     PsiMethod method = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve().navigationElement
     assertEquals "each", method.name
     assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
+  }
+
+  public void testMethodTypeParameterInference() throws Exception {
+    configureScript """
+@Typed package aaa
+
+java.util.concurrent.atomic.AtomicReference<Integer> r = [2]
+r.apply { it.intV<caret>i }
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.getLookupElementStrings(), "intValue"
   }
 
 }
