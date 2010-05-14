@@ -179,6 +179,7 @@
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageProvider"/>
+    <highlightErrorFilter implementation="com.jetbrains.django.inspection.DjangoErrorFilter"/>
 
     <lang.parserDefinition language="DjangoTemplate"
                            implementationClass="com.jetbrains.django.lang.template.parsing.DjangoTemplateParserDefinition"/>
@@ -318,13 +319,6 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
 
-    <action id="Django.RunManageTaskAction" class="com.jetbrains.django.actions.RunManageTaskAction"
-            text="Run manage.py task..."
-            description="Runs manage.py task">
-
-      <add-to-group group-id="ToolsMenu" anchor="first"/>
-    </action>
-
     <group text="Google App Engine" popup="true">
       <action id="PythonAppEngine.UploadAppAction" class="com.jetbrains.appengine.action.UpdateAppAction"
               text="Upload App Engine app..."
@@ -343,10 +337,25 @@
             text="Run Python Console..." description="Allows to quickly run Python console">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    <action id="com.jetbrains.django.console.RunDjangoConsoleAction"
-            class="com.jetbrains.django.console.RunDjangoConsoleAction"
-            text="Run Django Console..." description="Allows to quickly run Django console">
+
+    <group text="Django">
+      <action id="com.jetbrains.django.console.RunDjangoConsoleAction"
+              class="com.jetbrains.django.console.RunDjangoConsoleAction"
+              text="Run Django Console..." description="Allows to quickly run Django console">
+      </action>
+
+      <action id="Django.RunManageTaskAction" class="com.jetbrains.django.actions.RunManageTaskAction"
+              text="Run manage.py task..."
+              description="Runs manage.py task">
+
+        <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt R"/>
+        <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt R"/>
+        <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="meta alt R" remove="true"/>
+        <keyboard-shortcut keymap="visual studio" first-keystroke="ctrl alt R" remove="true"/>
+        <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt R" remove="true"/>
+      </action>
+
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
+    </group>
   </actions>
 </idea-plugin>
