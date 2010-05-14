@@ -16,6 +16,8 @@
 package com.intellij.ui.switcher;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -34,7 +36,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SwitchManager implements ProjectComponent, KeyEventDispatcher  {
+public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnActionListener {
 
   private Project myProject;
   private QuickAccessSettings myQa;
@@ -45,10 +47,31 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher  {
   private Alarm myInitSessionAlarm = new Alarm();
   private KeyEvent myAutoInitSessionEvent;
 
+  private Set<AnAction> mySwitchActions = new HashSet<AnAction>();
 
-  public SwitchManager(Project project, QuickAccessSettings quickAccess) {
+  public SwitchManager(Project project, QuickAccessSettings quickAccess, ActionManager actionManager) {
     myProject = project;
     myQa = quickAccess;
+
+
+    actionManager.addAnActionListener(this, project);
+    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_UP));
+    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_DOWN));
+    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_LEFT));
+    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_RIGHT));
+    mySwitchActions.add(actionManager.getAction(QuickAccessSettings.SWITCH_APPLY));
+  }
+
+  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    if (!mySwitchActions.contains(action)) {
+      disposeSession(mySession);
+    }
+  }
+
+  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+  }
+
+  public void beforeEditorTyping(char c, DataContext dataContext) {
   }
 
   public boolean dispatchKeyEvent(KeyEvent e) {
@@ -145,6 +168,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher  {
 
   public void disposeComponent() {
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
+    myQa = null;
   }
 
   public static SwitchManager getInstance(Project project) {

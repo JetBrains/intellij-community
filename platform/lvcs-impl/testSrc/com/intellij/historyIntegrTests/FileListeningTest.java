@@ -24,15 +24,16 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class FileListeningTest extends IntegrationTestCase {
@@ -75,10 +76,16 @@ public class FileListeningTest extends IntegrationTestCase {
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
     assertEquals(4, changes.size());
-    assertEquals(dir1, ((StructuralChange)changes.get(0)).getPath());
-    assertEquals(dir2, ((StructuralChange)changes.get(1)).getPath());
-    assertEquals(f2, ((StructuralChange)changes.get(2)).getPath());
-    assertEquals(f1, ((StructuralChange)changes.get(3)).getPath());
+    List<String> actual = new SmartList<String>();
+    for (Change each : changes) {
+      actual.add(((StructuralChange)each).getPath());
+    }
+    
+    List<String> expected = new ArrayList<String>(Arrays.asList(dir1, dir2, f1, f2));
+
+    Collections.sort(actual);
+    Collections.sort(expected);
+    assertOrderedEquals(actual, expected);
   }
 
   public void testChangingFileContent() throws Exception {

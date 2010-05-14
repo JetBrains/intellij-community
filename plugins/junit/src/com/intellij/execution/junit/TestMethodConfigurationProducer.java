@@ -18,8 +18,8 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -30,19 +30,18 @@ import java.util.Iterator;
 public class TestMethodConfigurationProducer extends JUnitConfigurationProducer {
   private Location<PsiMethod> myMethodLocation;
 
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(final Location location, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final Project project = location.getProject();
 
     myMethodLocation = getTestMethod(location);
     if (myMethodLocation == null) return null;
-    RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beMethodConfiguration(myMethodLocation);
     configuration.restoreOriginalModule(originalModule);
     RunConfigurationExtension.patchCreatedConfiguration(configuration);
-    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 

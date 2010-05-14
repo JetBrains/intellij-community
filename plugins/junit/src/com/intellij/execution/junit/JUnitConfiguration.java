@@ -47,7 +47,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements RunJavaConfiguration, RefactoringListenerProvider {
+public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
+  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
 
@@ -130,13 +131,73 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     return getTestObject().suggestActionName();
   }
 
-  public void setProperty(final int property, final String value) {
-    myData.setProperty(property, value);
+  public void setVMParameters(String value) {
+    myData.setVMParameters(value);
   }
 
-  public String getProperty(final int property) {
-    return myData.getProperty(property);
+  public String getVMParameters() {
+    return myData.getVMParameters();
   }
+
+  public void setProgramParameters(String value) {
+    myData.setProgramParameters(value);
+  }
+
+  public String getProgramParameters() {
+    return myData.getProgramParameters();
+  }
+
+  public void setWorkingDirectory(String value) {
+    myData.setWorkingDirectory(value);
+  }
+
+  public String getWorkingDirectory() {
+    return myData.getWorkingDirectory();
+  }
+
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    myData.setEnvs(envs);
+  }
+
+  @NotNull
+  public Map<String, String> getEnvs() {
+    return myData.getEnvs();
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    myData.PASS_PARENT_ENVS = passParentEnvs;
+  }
+
+  public boolean isPassParentEnvs() {
+    return myData.PASS_PARENT_ENVS;
+  }
+
+  public boolean isAlternativeJrePathEnabled() {
+    return ALTERNATIVE_JRE_PATH_ENABLED;
+  }
+
+  public void setAlternativeJrePathEnabled(boolean enabled) {
+    this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+  }
+
+  public String getAlternativeJrePath() {
+    return ALTERNATIVE_JRE_PATH;
+  }
+
+  public void setAlternativeJrePath(String path) {
+    this.ALTERNATIVE_JRE_PATH = path;
+  }
+
+  public String getRunClass() {
+    final Data data = getPersistentData();
+    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
+  }
+
+  public String getPackage() {
+    final Data data = getPersistentData();
+    return data.TEST_OBJECT != TEST_PACKAGE ? null : data.getPackageName();
+  }
+
 
   public void beClassConfiguration(final PsiClass testClass) {
     setMainClass(testClass);
@@ -240,32 +301,6 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
   }
 
-  public boolean isAlternativeJrePathEnabled() {
-    return ALTERNATIVE_JRE_PATH_ENABLED;
-  }
-
-  public void setAlternativeJrePathEnabled(boolean enabled) {
-    this.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
-  }
-
-  public String getAlternativeJrePath() {
-    return ALTERNATIVE_JRE_PATH;
-  }
-
-  public void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH) {
-    this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
-  }
-
-  public String getRunClass() {
-    final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
-  }
-
-  public String getPackage() {
-    final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_PACKAGE ? null : data.getPackageName();
-  }
-
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
@@ -320,44 +355,35 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       }
     }
 
+    public void setVMParameters(String value) {
+      VM_PARAMETERS = value;
+    }
+
+    public String getVMParameters() {
+      return VM_PARAMETERS;
+    }
+
+    public void setProgramParameters(String value) {
+      PARAMETERS = value;
+    }
+
+    public String getProgramParameters() {
+      return PARAMETERS;
+    }
+
+    public void setWorkingDirectory(String value) {
+      WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+    }
+
+    public String getWorkingDirectory() {
+      return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
+    }
+
     public Module setTestMethod(final Location<PsiMethod> methodLocation) {
       final PsiMethod method = methodLocation.getPsiElement();
       METHOD_NAME = method.getName();
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
-    }
-
-    public String getProperty(final int property) {
-      switch (property) {
-        case PROGRAM_PARAMETERS_PROPERTY:
-          return PARAMETERS;
-        case VM_PARAMETERS_PROPERTY:
-          return VM_PARAMETERS;
-        case WORKING_DIRECTORY_PROPERTY:
-          return getWorkingDirectory();
-        default:
-          throw new RuntimeException("Unknown property: " + property);
-      }
-    }
-
-    private String getWorkingDirectory() {
-      return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
-    }
-
-    public void setProperty(final int property, final String value) {
-      switch (property) {
-        case PROGRAM_PARAMETERS_PROPERTY:
-          PARAMETERS = value;
-          break;
-        case VM_PARAMETERS_PROPERTY:
-          VM_PARAMETERS = value;
-          break;
-        case WORKING_DIRECTORY_PROPERTY:
-          WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
-          break;
-        default:
-          throw new RuntimeException("Unknown property: " + property);
-      }
     }
 
     public boolean isGeneratedName(final String name, final JavaRunConfigurationModule configurationModule) {

@@ -46,11 +46,11 @@ public class ProgramRunnerUtil {
   }
 
   @Nullable
-  public static ProgramRunner getRunner(final String executorId, final RunnerAndConfigurationSettingsImpl configuration) {
+  public static ProgramRunner getRunner(final String executorId, final RunnerAndConfigurationSettings configuration) {
     return RunnerRegistry.getInstance().getRunner(executorId, configuration.getConfiguration());
   }
 
-  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettingsImpl configuration, @NotNull final Executor executor, @NotNull final DataContext dataContext) {
+  public static void executeConfiguration(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Executor executor, @NotNull final DataContext dataContext) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
       LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration);

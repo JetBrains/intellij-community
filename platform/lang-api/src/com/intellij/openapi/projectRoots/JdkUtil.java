@@ -146,6 +146,12 @@ public class JdkUtil {
       commandLine.setCharset(charset);
     }
 
+    final Map<String, String> env = javaParameters.getEnv();
+    if (env != null) {
+      commandLine.setEnvParams(env);
+      commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
+    }
+
     final Class commandLineWrapper;
     if (forceDynamicClasspath && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
       File classpathFile = null;
@@ -191,11 +197,6 @@ public class JdkUtil {
     commandLine.addParameters(javaParameters.getProgramParametersList().getList());
     commandLine.setWorkDirectory(javaParameters.getWorkingDirectory());
 
-    final Map<String, String> env = javaParameters.getEnv();
-    if (env != null) {
-      commandLine.setEnvParams(env);
-      commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
-    }
 
     return commandLine;
   }

@@ -227,6 +227,17 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     );
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
                                         RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
+    usageView.addPerformOperationAction(new Runnable() {
+      public void run() {
+        UsageInfo[] preprocessedUsages = usages;
+        for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+          preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
+          if (preprocessedUsages == null) return;
+        }
+        final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
+        execute(filteredUsages);
+      }
+    }, "Delete Anyway", RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"));
   }
 
   public PsiElement[] getElements() {

@@ -37,8 +37,14 @@ public class JUnit4OutputObjectRegistry extends OutputObjectRegistry {
 
   protected void addStringRepresentation(Object obj, Packet packet) {
     Description test = (Description)obj;
-    if (test.isTest()) {
-      addTestMethod(packet, JUnit4ReflectionUtil.getMethodName(test), JUnit4ReflectionUtil.getClassName(test));
+    if (test.isTest()) { //ignored test case has no children thought it hasn't method name
+      final String methodName = JUnit4ReflectionUtil.getMethodName(test);
+      final String className = JUnit4ReflectionUtil.getClassName(test);
+      if (methodName != null && methodName.length() > 0) {
+        addTestMethod(packet, methodName, className);
+      } else {
+        addTestClass(packet, className);
+      }
     }
     else if (test.isSuite()) {
       String fullName = JUnit4ReflectionUtil.getClassName(test);

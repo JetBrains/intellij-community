@@ -267,4 +267,40 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testBlankLinesBetweenAbstractMethods() {
+    // Inspired by IDEA-54668
+    getSettings().BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 0;
+    getSettings().BLANK_LINES_AROUND_METHOD = 1;
+
+    doTextTest(
+      "abstract class Test {\n" +
+      "    void test1() {\n" +
+      "    }\n" +
+      "    abstract void test2();\n" +
+      "    void test3() {\n" +
+      "    }\n" +
+      "    void test4() {\n" +
+      "    }\n" +
+      "    abstract void test5();\n" +
+      "    abstract void test6();\n" +
+      "}",
+
+      "abstract class Test {\n" +
+      "    void test1() {\n" +
+      "    }\n" +
+      "\n" +
+      "    abstract void test2();\n" +
+      "\n" +
+      "    void test3() {\n" +
+      "    }\n" +
+      "\n" +
+      "    void test4() {\n" +
+      "    }\n" +
+      "\n" +
+      "    abstract void test5();\n" +
+      "    abstract void test6();\n" +
+      "}"
+    );
+  }
 }

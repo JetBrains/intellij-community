@@ -49,7 +49,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
@@ -120,7 +123,10 @@ public abstract class TestObject implements JavaCommandLine {
 
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
 
-  public abstract boolean isConfiguredByElement(JUnitConfiguration configuration, PsiElement element);
+  public abstract boolean isConfiguredByElement(JUnitConfiguration configuration,
+                                                PsiClass testClass,
+                                                PsiMethod testMethod,
+                                                PsiPackage testPackage);
 
   protected void configureModule(final JavaParameters parameters, final RunConfigurationModule configurationModule, final String mainClassName)
     throws CantRunException {
@@ -138,7 +144,10 @@ public abstract class TestObject implements JavaCommandLine {
       throw new RuntimeException(String.valueOf(myConfiguration));
     }
 
-    public boolean isConfiguredByElement(final JUnitConfiguration configuration, final PsiElement element) {
+    public boolean isConfiguredByElement(final JUnitConfiguration configuration,
+                                         PsiClass testClass,
+                                         PsiMethod testMethod,
+                                         PsiPackage testPackage) {
       return false;
     }
 
@@ -183,7 +192,6 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected void initialize() throws ExecutionException {
-    myJavaParameters.setupEnvs(myConfiguration.getPersistentData().getEnvs(), myConfiguration.getPersistentData().PASS_PARENT_ENVS);
     JavaParametersUtil.configureConfiguration(myJavaParameters, myConfiguration);
     myJavaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     final Module module = myConfiguration.getConfigurationModule().getModule();

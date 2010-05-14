@@ -81,4 +81,14 @@ public class PsiElementResolveResult implements ResolveResult{
     }
     return results;
   }
+
+  public static ResolveResult[] createResults(@Nullable PsiElement[] elements) {
+    if (elements == null || elements.length == 0) return EMPTY_ARRAY;
+
+    final ResolveResult[] results = new ResolveResult[elements.length];
+    for (int i = 0; i < elements.length; i++) {
+      results[i] = new PsiElementResolveResult(elements[i]);
+    }
+    return results;
+  }
 }

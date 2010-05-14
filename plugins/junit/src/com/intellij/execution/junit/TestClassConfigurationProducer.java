@@ -19,8 +19,8 @@ package com.intellij.execution.junit;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -29,20 +29,19 @@ import com.intellij.psi.PsiElement;
 public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
   private PsiClass myTestClass;
 
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, final ConfigurationContext context) {
     location = JavaExecutionUtil.stepIntoSingleClass(location);
     final Project project = location.getProject();
 
     myTestClass = JUnitUtil.getTestClass(location);
     if (myTestClass == null) return null;
-    RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
     configuration.beClassConfiguration(myTestClass);
     configuration.restoreOriginalModule(originalModule);
     RunConfigurationExtension.patchCreatedConfiguration(configuration);
-    copyStepsBeforeRun(project, configuration);
     return settings;
   }
 

@@ -66,7 +66,7 @@ public class PsiJavaDirectoryImpl extends PsiDirectoryImpl {
 
   public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiClass) {
-      if (element.getParent() instanceof PsiFile) {
+      if (((PsiClass)element).getContainingClass() == null) {
         JavaDirectoryServiceImpl.checkCreateClassOrInterface(this, ((PsiClass)element).getName());
       }
       else {

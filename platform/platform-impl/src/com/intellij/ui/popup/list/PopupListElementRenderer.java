@@ -68,7 +68,7 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
       myTextLabel.setDisplayedMnemonicIndex(-1);
     }
 
-    if (myPopup.getStep().hasSubstep(value) && isSelectable) {
+    if (step.hasSubstep(value) && isSelectable) {
       myNextStepLabel.setVisible(true);
       myNextStepLabel.setIcon(isSelected ? PopupIcons.HAS_NEXT_ICON : PopupIcons.HAS_NEXT_ICON_GRAYED);
     }
@@ -79,7 +79,8 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
 
     if (isSelected) {
       setSelected(myNextStepLabel);
-    } else {
+    }
+    else {
       setDeselected(myNextStepLabel);
     }
   }

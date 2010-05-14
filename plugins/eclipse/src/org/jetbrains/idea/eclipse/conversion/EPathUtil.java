@@ -20,15 +20,13 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -243,5 +241,27 @@ public class EPathUtil {
 
       return ProjectRootManagerImpl.extractLocalPath(url);
     }
+  }
+
+  @Nullable
+  static String collapse2EclipseVariabledPath(final LibraryOrderEntry libraryOrderEntry) {
+    final VirtualFile[] virtualFiles = libraryOrderEntry.getFiles(OrderRootType.CLASSES);
+    if (virtualFiles.length > 0) {
+      VirtualFile jarFile = virtualFiles[0];
+      if (jarFile.getFileSystem() instanceof JarFileSystem) {
+        jarFile = JarFileSystem.getInstance().getVirtualFileForJar(jarFile);
+      }
+      if (jarFile == null) {
+        return null;
+      }
+      final Project project = libraryOrderEntry.getOwnerModule().getProject();
+      final VirtualFile baseDir = project.getBaseDir();
+      if (baseDir != null && !VfsUtil.isAncestor(baseDir, jarFile, false)) {
+         final String ideaCollapsed = PathMacroManager.getInstance(project).collapsePath(jarFile.getPath());
+        if (ideaCollapsed.contains("..")) return null;
+         return ideaCollapsed.substring(ideaCollapsed.indexOf('$')).replace("$", "");
+       }
+    }
+    return null;
   }
 }

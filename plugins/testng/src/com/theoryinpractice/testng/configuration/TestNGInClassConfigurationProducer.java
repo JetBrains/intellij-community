@@ -25,7 +25,6 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -45,7 +44,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   }
 
   @Nullable
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
     PsiClass psiClass = null;
     for (Iterator<Location<PsiClass>> iterator = location.getAncestors(PsiClass.class, false); iterator.hasNext();) {
@@ -75,9 +74,8 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     }
     configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
-    copyStepsBeforeRun(project, configuration);
     RunConfigurationExtension.patchCreatedConfiguration(configuration);
-    return (RunnerAndConfigurationSettingsImpl)settings;
+    return settings;
   }
 
   public int compareTo(Object o) {

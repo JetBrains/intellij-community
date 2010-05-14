@@ -20,7 +20,9 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,6 +30,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -183,22 +186,70 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandler<GroovyPs
 
   private static int getCurrentParameterIndex(GroovyPsiElement place, int offset) {
     if (place instanceof GrArgumentList) {
-      GrArgumentList list = (GrArgumentList) place;
+      GrArgumentList list = (GrArgumentList)place;
       final GrNamedArgument[] namedArguments = list.getNamedArguments();
       for (GrNamedArgument namedArgument : namedArguments) {
-        if (namedArgument.getTextRange().contains(offset)) return 0; //first Map parameter
+        if (getArgRange(namedArgument).contains(offset)) return 0; //first Map parameter
       }
 
       int idx = namedArguments.length > 0 ? 1 : 0;
 
       final GrExpression[] exprs = list.getExpressionArguments();
       for (GrExpression expr : exprs) {
-        if (expr.getTextRange().contains(offset)) return idx;
+        if (getArgRange(expr).contains(offset)) return idx;
         idx++;
+      }
+
+      if (exprs.length == 0 || getArgRange(exprs[exprs.length - 1]).getEndOffset() <= offset) {
+        return idx;
+      }
+      else {
+        return 0;
       }
     }
 
     return -1;
+  }
+
+  private static TextRange getArgRange(PsiElement arg) {
+    PsiElement cur = arg;
+    int end;
+    int start;
+    do {
+      PsiElement sibling = cur.getNextSibling();
+      if (sibling == null) {
+        end = cur.getTextRange().getEndOffset();
+        break;
+      }
+      else {
+        cur = sibling;
+      }
+      IElementType type = cur.getNode().getElementType();
+      if (GroovyTokenTypes.mCOMMA.equals(type) || GroovyTokenTypes.mRPAREN.equals(type)) {
+        end = cur.getTextRange().getStartOffset();
+        break;
+      }
+    }
+    while (true);
+
+    do {
+      PsiElement sibling = cur.getPrevSibling();
+      if (sibling == null) {
+        start = cur.getTextRange().getStartOffset();
+        break;
+      }
+      else {
+        cur = sibling;
+      }
+      IElementType type = cur.getNode().getElementType();
+      if (GroovyTokenTypes.mCOMMA.equals(type) || GroovyTokenTypes.mLPAREN.equals(type)) {
+        start = cur.getTextRange().getEndOffset();
+        break;
+      }
+    }
+    while (true);
+
+    return new TextRange(start, end + 1);
   }
 
 

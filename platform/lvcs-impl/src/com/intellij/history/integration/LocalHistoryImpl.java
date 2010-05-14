@@ -21,8 +21,6 @@ import com.intellij.history.*;
 import com.intellij.history.core.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -201,11 +199,5 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
   public IdeaGateway getGateway() {
     return myGateway;
-  }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
   }
 }

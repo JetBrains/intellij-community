@@ -41,10 +41,6 @@ public abstract class ActionManagerEx extends ActionManager{
   }
 
 
-  public abstract void addAnActionListener(AnActionListener listener);
-  public abstract void addAnActionListener(AnActionListener listener, Disposable parentDisposable);
-
-  public abstract void removeAnActionListener(AnActionListener listener);
 
 
 

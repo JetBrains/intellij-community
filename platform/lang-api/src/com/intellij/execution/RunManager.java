@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -46,4 +47,9 @@ public abstract class RunManager {
   public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
   public abstract RunnerAndConfigurationSettings createRunConfiguration(String name, ConfigurationFactory type);
+
+  @NotNull
+  public abstract RunnerAndConfigurationSettings createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
+
+  public abstract RunnerAndConfigurationSettings[] getConfigurationSettings(ConfigurationType type);
 }

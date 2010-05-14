@@ -16,10 +16,7 @@
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.*;
@@ -44,22 +41,22 @@ import java.util.List;
 /**
  * @author dyoma
  */
-class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettingsImpl> {
-  private final ArrayList<SettingsEditor<RunnerAndConfigurationSettingsImpl>> myRunnerEditors =
-    new ArrayList<SettingsEditor<RunnerAndConfigurationSettingsImpl>>();
+class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
+  private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors =
+    new ArrayList<SettingsEditor<RunnerAndConfigurationSettings>>();
   private RunnersEditorComponent myRunnersComponent;
   private final RunConfiguration myConfiguration;
   private final SettingsEditor<RunConfiguration> myConfigurationEditor;
-  private SettingsEditorGroup<RunnerAndConfigurationSettingsImpl> myCompound;
+  private SettingsEditorGroup<RunnerAndConfigurationSettings> myCompound;
 
-  public CompositeSettingsBuilder<RunnerAndConfigurationSettingsImpl> getBuilder() {
+  public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
     init();
-    return new GroupSettingsBuilder<RunnerAndConfigurationSettingsImpl>(myCompound);
+    return new GroupSettingsBuilder<RunnerAndConfigurationSettings>(myCompound);
   }
 
   private void init() {
     if (myCompound == null) {
-      myCompound = new SettingsEditorGroup<RunnerAndConfigurationSettingsImpl>();
+      myCompound = new SettingsEditorGroup<RunnerAndConfigurationSettings>();
       Disposer.register(this, myCompound);
       if (myConfigurationEditor instanceof SettingsEditorGroup) {
         SettingsEditorGroup<RunConfiguration> group = (SettingsEditorGroup<RunConfiguration>)myConfigurationEditor;
@@ -91,10 +88,10 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
 
       if (myRunnerEditors.size() > 0) {
         myCompound.addEditor(ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
-                             new CompositeSettingsEditor<RunnerAndConfigurationSettingsImpl>(getFactory()) {
-                               public CompositeSettingsBuilder<RunnerAndConfigurationSettingsImpl> getBuilder() {
-                                 return new CompositeSettingsBuilder<RunnerAndConfigurationSettingsImpl>() {
-                                   public Collection<SettingsEditor<RunnerAndConfigurationSettingsImpl>> getEditors() {
+                             new CompositeSettingsEditor<RunnerAndConfigurationSettings>(getFactory()) {
+                               public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
+                                 return new CompositeSettingsBuilder<RunnerAndConfigurationSettings>() {
+                                   public Collection<SettingsEditor<RunnerAndConfigurationSettings>> getEditors() {
                                      return myRunnerEditors;
                                    }
 
@@ -121,12 +118,12 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     }
 
     if (configEditor == null && runnerEditor == null) return null;
-    SettingsEditor<RunnerAndConfigurationSettingsImpl> wrappedConfigEditor = null;
-    SettingsEditor<RunnerAndConfigurationSettingsImpl> wrappedRunEditor = null;
+    SettingsEditor<RunnerAndConfigurationSettings> wrappedConfigEditor = null;
+    SettingsEditor<RunnerAndConfigurationSettings> wrappedRunEditor = null;
     if (configEditor != null) {
-      wrappedConfigEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>(configEditor,
-                                          new Convertor<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>() {
-                                            public JDOMExternalizable convert(RunnerAndConfigurationSettingsImpl configurationSettings) {
+      wrappedConfigEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, JDOMExternalizable>(configEditor,
+                                          new Convertor<RunnerAndConfigurationSettings, JDOMExternalizable>() {
+                                            public JDOMExternalizable convert(RunnerAndConfigurationSettings configurationSettings) {
                                               return configurationSettings.getConfigurationSettings(runner).getSettings();
                                             }
                                           });
@@ -135,9 +132,9 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     }
 
     if (runnerEditor != null) {
-      wrappedRunEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>(runnerEditor,
-                                         new Convertor<RunnerAndConfigurationSettingsImpl, JDOMExternalizable>() {
-                                           public JDOMExternalizable convert(RunnerAndConfigurationSettingsImpl configurationSettings) {
+      wrappedRunEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, JDOMExternalizable>(runnerEditor,
+                                         new Convertor<RunnerAndConfigurationSettings, JDOMExternalizable>() {
+                                           public JDOMExternalizable convert(RunnerAndConfigurationSettings configurationSettings) {
                                              return configurationSettings.getRunnerSettings(runner).getData();
                                            }
                                          });
@@ -156,15 +153,15 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     return wrappedConfigEditor.getComponent();
   }
 
-  public ConfigurationSettingsEditor(RunnerAndConfigurationSettingsImpl settings) {
+  public ConfigurationSettingsEditor(RunnerAndConfigurationSettings settings) {
     super(settings.createFactory());
     myConfigurationEditor = (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
     Disposer.register(this, myConfigurationEditor);
     myConfiguration = settings.getConfiguration();
   }
 
-  public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
-    RunnerAndConfigurationSettingsImpl settings = getFactory().create();
+  public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    RunnerAndConfigurationSettings settings = getFactory().create();
     settings.setName(myConfiguration.getName());
     if (myConfigurationEditor instanceof CheckableRunConfigurationEditor) {
       ((CheckableRunConfigurationEditor)myConfigurationEditor).checkEditorData(settings.getConfiguration());
@@ -221,18 +218,18 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     }
   }
 
-  private static class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettingsImpl> {
+  private static class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings> {
     private final SettingsEditor<RunConfiguration> myConfigEditor;
 
     public ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
       myConfigEditor = configEditor;
     }
 
-    public void resetEditorFrom(RunnerAndConfigurationSettingsImpl configurationSettings) {
+    public void resetEditorFrom(RunnerAndConfigurationSettings configurationSettings) {
       myConfigEditor.resetFrom(configurationSettings.getConfiguration());
     }
 
-    public void applyEditorTo(RunnerAndConfigurationSettingsImpl configurationSettings) throws ConfigurationException {
+    public void applyEditorTo(RunnerAndConfigurationSettings configurationSettings) throws ConfigurationException {
       myConfigEditor.applyTo(configurationSettings.getConfiguration());
     }
 

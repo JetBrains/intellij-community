@@ -100,6 +100,7 @@ public class EclipseClasspathWriter {
     else if (entry instanceof LibraryOrderEntry) {
       final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
       final String libraryName = libraryOrderEntry.getLibraryName();
+      final EclipseModuleManager eclipseModuleManager = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule());
       if (libraryOrderEntry.isModuleLevel()) {
         final String[] files = libraryOrderEntry.getUrls(OrderRootType.CLASSES);
         if (files.length > 0) {
@@ -112,7 +113,10 @@ public class EclipseClasspathWriter {
             setExported(orderEntry, libraryOrderEntry);
           }
           else {
-            final String eclipseVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseVariablePath(files[0]);
+            String eclipseVariablePath = eclipseModuleManager.getEclipseVariablePath(files[0]);
+            if (eclipseVariablePath == null && !eclipseModuleManager.isEclipseLibUrl(files[0])) { //new library was added
+              eclipseVariablePath = EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry);
+            }
             final Element orderEntry;
             if (eclipseVariablePath != null) {
               orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot);
@@ -122,17 +126,21 @@ public class EclipseClasspathWriter {
             }
 
             final String srcRelativePath;
-            final String eclipseSrcVariablePath;
+            String eclipseSrcVariablePath = null;
 
             final String[] srcFiles = libraryOrderEntry.getUrls(OrderRootType.SOURCES);
             if (srcFiles.length == 0) {
               srcRelativePath = null;
-              eclipseSrcVariablePath = null;
             }
             else {
-              final String lastSourceRoot = srcFiles[srcFiles.length - 1];
-              srcRelativePath = EPathUtil.collapse2EclipsePath(lastSourceRoot, myModel);
-              eclipseSrcVariablePath = EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getEclipseSrcVariablePath(lastSourceRoot);
+              final String srcFile = srcFiles[0];
+              srcRelativePath = EPathUtil.collapse2EclipsePath(srcFile, myModel);
+              if (eclipseVariablePath != null) {
+                eclipseSrcVariablePath = eclipseModuleManager.getEclipseSrcVariablePath(srcFile);
+                if (eclipseSrcVariablePath == null && !eclipseModuleManager.isEclipseLibSrcUrl(srcFile)) {
+                  eclipseSrcVariablePath = "/" + EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry);
+                }
+              }
             }
             setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath);
 
@@ -143,7 +151,7 @@ public class EclipseClasspathWriter {
       }
       else {
         final Element orderEntry;
-        if (EclipseModuleManager.getInstance(libraryOrderEntry.getOwnerModule()).getUnknownCons().contains(libraryName)) {
+        if (eclipseModuleManager.getUnknownCons().contains(libraryName)) {
           orderEntry = addOrderEntry(EclipseXml.CON_KIND, libraryName, classpathRoot);
         } else if (Comparing.strEqual(libraryName, IdeaXml.ECLIPSE_LIBRARY)) {
           orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.ECLIPSE_PLATFORM, classpathRoot);

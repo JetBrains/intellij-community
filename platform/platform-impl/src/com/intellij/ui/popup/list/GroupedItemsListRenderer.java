@@ -30,6 +30,10 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
 
   protected JLabel myNextStepLabel;
 
+  public JLabel getNextStepLabel() {
+    return myNextStepLabel;
+  }
+
 
   public GroupedItemsListRenderer(ListItemDescriptor aPopup) {
     myDescriptor = aPopup;

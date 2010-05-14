@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+
 /**
  * Is intended to hold specific java formatting tests for 'braces placement' settings (
  * <code>Project Settings - Code Style - Alignment and Braces</code>).
@@ -58,5 +60,17 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "        //code...\n" +
       "    }\n" +
       "}");
+  }
+
+  public void testSimpleBlockInOneLinesAndForceBraces() throws Exception {
+    // Inspired by IDEA-19328
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().IF_BRACE_FORCE = CodeStyleSettings.FORCE_BRACES_ALWAYS;
+
+    doMethodTest(
+      "if (x > y) System.out.println(\"foo!\");",
+
+      "if (x > y) { System.out.println(\"foo!\"); }"
+    );
   }
 }

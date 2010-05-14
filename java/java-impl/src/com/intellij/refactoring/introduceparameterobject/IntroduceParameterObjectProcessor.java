@@ -36,7 +36,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
 import com.intellij.refactoring.psi.PropertyUtils;
-import com.intellij.refactoring.psi.TypeParametersVisitor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.refactoring.util.FixableUsagesRefactoringProcessor;
 import com.intellij.refactoring.util.ParameterTablePanel;
@@ -108,9 +107,18 @@ public class IntroduceParameterObjectProcessor extends FixableUsagesRefactoringP
       }
     }
     final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
-    final JavaRecursiveElementWalkingVisitor visitor = new TypeParametersVisitor(typeParamSet);
+    final PsiTypeVisitor<Object> typeParametersVisitor = new PsiTypeVisitor<Object>() {
+      @Override
+      public Object visitClassType(PsiClassType classType) {
+        final PsiClass referent = classType.resolve();
+        if (referent instanceof PsiTypeParameter) {
+          typeParamSet.add((PsiTypeParameter)referent);
+        }
+        return super.visitClassType(classType);
+      }
+    };
     for (ParameterTablePanel.VariableData parameter : parameters) {
-      parameter.variable.accept(visitor);
+      parameter.type.accept(typeParametersVisitor);
     }
     typeParams = new ArrayList<PsiTypeParameter>(typeParamSet);
 

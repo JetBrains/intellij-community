@@ -19,8 +19,8 @@ package com.intellij.execution.actions;
 import com.intellij.execution.LocatableConfigurationType;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,7 @@ class PreferedProducerFind {
   private PreferedProducerFind() {}
 
   @Nullable
-  public static RunnerAndConfigurationSettingsImpl createConfiguration(@NotNull Location location, final ConfigurationContext context) {
+  public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, final ConfigurationContext context) {
     final RuntimeConfigurationProducer preferredProducer = findPreferredProducer(location, context);
     return preferredProducer != null ? preferredProducer.getConfiguration() : null;
   }
@@ -109,9 +109,25 @@ class PreferedProducerFind {
     }
 
     @Nullable
-    protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(final Location location, final ConfigurationContext context) {
+    protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
       myPsiElement = location.getPsiElement();
-      return (RunnerAndConfigurationSettingsImpl)((LocatableConfigurationType)getConfigurationType()).createConfigurationByLocation(location);
+      return ((LocatableConfigurationType)getConfigurationType()).createConfigurationByLocation(location);
+    }
+
+    @Override
+    protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                   @NotNull RunnerAndConfigurationSettings[] existingConfigurations) {
+      if (existingConfigurations.length > 0) {
+        ConfigurationType type = existingConfigurations[0].getType();
+        if (type instanceof LocatableConfigurationType) {
+          for (final RunnerAndConfigurationSettings configuration : existingConfigurations) {
+            if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), location)) {
+              return configuration;
+            }
+          }
+        }
+      }
+      return null;
     }
 
     public int compareTo(final Object o) {

@@ -17,7 +17,6 @@
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -161,7 +160,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      final RunnerAndConfigurationSettingsImpl selectedConfiguration = getConfiguration(project);
+      final RunnerAndConfigurationSettings selectedConfiguration = getConfiguration(project);
       if (selectedConfiguration != null) {
         final ProgramRunner runner =
           RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
@@ -179,7 +178,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     @Nullable
-    private static RunnerAndConfigurationSettingsImpl getConfiguration(@NotNull final Project project) {
+    private static RunnerAndConfigurationSettings getConfiguration(@NotNull final Project project) {
       return RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
     }
 
