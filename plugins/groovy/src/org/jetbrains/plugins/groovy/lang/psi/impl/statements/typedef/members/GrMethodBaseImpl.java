@@ -506,27 +506,33 @@ public abstract class GrMethodBaseImpl<T extends NamedStub> extends GroovyBaseEl
   @NotNull
   public Set<String>[] getNamedParametersArray() {
     GrOpenBlock body = getBlock();
-    if (body == null) return new HashSet[0];
+    if (body == null) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
 
-    List<Set<String>> namedParameters = new LinkedList<Set<String>>();
     GrParameter[] parameters = getParameters();
-    for (int i = 0, parametersLength = parameters.length; i < parametersLength; i++) {
-      GrParameter parameter = parameters[i];
+
+    if (parameters.length == 0) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
+
+    Map<String, Set<String>> map = null;
+
+    for (GrParameter parameter : parameters) {
       PsiType type = parameter.getTypeGroovy();
       GrTypeElement typeElement = parameter.getTypeElementGroovy();
       //equalsToText can't be called here because of stub creating
 
       if (type == null || type.getPresentableText() == null || type.getPresentableText().endsWith("Map") || typeElement == null) {
         PsiElement expression = parameter.getNameIdentifierGroovy();
+        if (map == null) {
+          map = new LinkedHashMap<String, Set<String>>();
+        }
 
-        final String paramName = expression.getText();
-        final HashSet<String> set = new HashSet<String>();
-        namedParameters.add(set);
-
-        body.accept(new GrNamedArgumentSearchVisitor(paramName, set));
+        map.put(expression.getText(), new HashSet<String>());
       }
     }
-    return namedParameters.toArray(new HashSet[0]);
+
+    if (map == null) return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
+
+    body.accept(new GrNamedArgumentSearchVisitor(map));
+    return map.values().toArray(GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY);
   }
 
   public PsiMethodReceiver getMethodReceiver() {
