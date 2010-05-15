@@ -38,7 +38,6 @@ class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
 
   protected void setUp() {
     super.setUp()
-    myFixture.allowTreeAccessForFile JavaPsiFacade.getInstance(project).findClass(Object.name).containingFile.navigationElement.containingFile.virtualFile
   }
 
   public void testCastListToIterable() throws Exception {
@@ -312,6 +311,17 @@ class BarImpl extends Bar {}
 
 java.util.concurrent.atomic.AtomicReference<Integer> r = [2]
 r.apply { it.intV<caret>i }
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.getLookupElementStrings(), "intValue"
+  }
+
+  public void testMethodTypeParameterInference2() throws Exception {
+    configureScript """
+@Typed package aaa
+
+java.util.concurrent.atomic.AtomicReference<Integer> r = [2]
+r.apply { it.intV<caret>i } {}
 """
     myFixture.completeBasic()
     assertSameElements myFixture.getLookupElementStrings(), "intValue"
