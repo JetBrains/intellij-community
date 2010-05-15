@@ -221,7 +221,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     if (!isExceptionSetChanged) {
       for (int i = 0; i < newExceptions.length; i++) {
         try {
-          if (newExceptions[i].oldIndex < 0 || !types[i].equals(newExceptions[i].myType.getType(method, method.getManager()))) {
+          if (newExceptions[i].getOldIndex() < 0 || !types[i].equals(newExceptions[i].createType(method, method.getManager()))) {
             isExceptionSetChanged = true;
             break;
           }
@@ -229,7 +229,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
         catch (IncorrectOperationException e) {
           isExceptionSetChanged = true;
         }
-        if (newExceptions[i].oldIndex != i) isExceptionSetOrOrderChanged = true;
+        if (newExceptions[i].getOldIndex() != i) isExceptionSetOrOrderChanged = true;
       }
     }
 
@@ -256,7 +256,7 @@ class JavaChangeInfoImpl implements JavaChangeInfo {
     PsiClassType[] types = method.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] result = new ThrownExceptionInfo[types.length];
     for (int i = 0; i < result.length; i++) {
-      result[i] = new ThrownExceptionInfo(i, types[i]);
+      result[i] = new JavaThrownExceptionInfo(i, types[i]);
     }
     return result;
   }

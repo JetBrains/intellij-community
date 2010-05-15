@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -100,7 +101,10 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
     PsiElement actualAnchor = anchor == null ? getRBrace() : anchor;
     if (mayUseNewLinesAsSeparators()) {
       PsiElement prev = actualAnchor.getPrevSibling();
-      if (!GroovyTokenTypes.mNLS.equals(prev.getNode().getElementType())) {
+      if (prev instanceof GrParameterList && prev.getTextLength() == 0 && prev.getPrevSibling() != null) {
+        prev = prev.getPrevSibling();
+      }
+      if (!isNls(prev)) {
         getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", actualAnchor.getNode());
       }
     }
@@ -113,6 +117,11 @@ public abstract class GrBlockImpl extends GroovyPsiElementImpl implements GrCode
       getNode().addLeaf(GroovyTokenTypes.mSEMI, ";", anchorNode);
     }
     return element;
+  }
+  private static boolean isNls(PsiElement element) {
+    if (!GroovyTokenTypes.WHITE_SPACES_SET.contains(element.getNode().getElementType())) return false;
+    String text = element.getText();
+    return text.contains("\n") || text.contains("\r");
   }
 
   @Nullable

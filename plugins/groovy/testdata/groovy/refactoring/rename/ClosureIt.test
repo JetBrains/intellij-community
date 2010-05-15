@@ -3,6 +3,6 @@ def c = {
 }
 -----
 def c = {
-  newName ->
+  def newName ->
   newName
 }

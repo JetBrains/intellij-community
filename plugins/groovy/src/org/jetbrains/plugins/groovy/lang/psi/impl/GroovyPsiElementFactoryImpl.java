@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -539,18 +540,18 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     List<PsiType> res = new ArrayList<PsiType>();
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
-    for (int i = 0; i < paramTypes.length; i++) {
-      String paramType = paramTypes[i];
-
+    for (String paramType : paramTypes) {
       try {
         psiType = factory.createTypeElement(paramType).getType();
-      } catch (IncorrectOperationException e) {
+      }
+      catch (IncorrectOperationException e) {
         psiType = PsiType.getJavaLangObject(PsiManager.getInstance(myProject), ProjectScope.getAllScope(myProject));
       }
       res.add(psiType);
     }
 
-    return createMethodFromText(modifier, name, type, paramTypes, QuickfixUtil.getMethodArgumentsNames(myProject, res.toArray(PsiType.EMPTY_ARRAY)), null);
+    return createMethodFromText(modifier, name, type, paramTypes,
+                                QuickfixUtil.getMethodArgumentsNames(myProject, res.toArray(new PsiType[res.size()])), null);
   }
 
   public GrDocComment createDocCommentFromText(String text) {
@@ -564,5 +565,32 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrConstructorInvocation createConstructorInvocation(String text) {
     GroovyFile file = (GroovyFile)createGroovyFile("class Foo{ def Foo(){" + text + "}}");
     return ((GrConstructor)file.getClasses()[0].getConstructors()[0]).getChainingConstructorInvocation();
+  }
+
+  @Override
+  public PsiReferenceList createThrownList(PsiClassType[] exceptionTypes) {
+    if (exceptionTypes.length == 0) {
+      return createMethodFromText("def foo(){}").getThrowsList();
+    }
+    String[] types = new String[exceptionTypes.length];
+    for (int i = 0; i < types.length; i++) {
+      types[i] = exceptionTypes[i].getCanonicalText();
+    }
+    final String end = StringUtil.join(types, ",");
+    return createMethodFromText("def foo() throws " + end + "{}").getThrowsList();
+  }
+
+  @Override
+  public GrCatchClause createCatchClause(PsiClassType type, String parameterName) {
+    StringBuffer buffer = new StringBuffer("try{} catch(");
+    if (type == null) {
+      buffer.append("Throwable ");
+    }
+    else {
+      buffer.append(type.getCanonicalText()).append(" ");
+    }
+    buffer.append(parameterName).append("){\n}");
+    final GrTryCatchStatement statement = (GrTryCatchStatement)createStatementFromText(buffer.toString());
+    return statement.getCatchClauses()[0];
   }
 }

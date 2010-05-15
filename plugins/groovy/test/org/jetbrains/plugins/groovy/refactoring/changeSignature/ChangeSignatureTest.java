@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -170,6 +171,30 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     doTest("", new GrParameterInfo[]{new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT)}, true);
   }
 
+  public void testAddException() throws Exception {
+    doTest("public", null, "",
+           new GrParameterInfo[]{new SimpleInfo(0)},
+           new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
+           false
+    );
+  }
+
+  public void testExceptionCaughtInUsage() throws Exception {
+    doTest("public", null, "",
+           new GrParameterInfo[]{new SimpleInfo(0)},
+           new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
+           false
+    );
+  }
+
+  public void testExceptionInClosableBlock() throws Exception {
+    doTest("public", null, "",
+           new GrParameterInfo[]{new SimpleInfo(0)},
+           new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
+           false
+    );
+  }
+
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
   }
@@ -222,7 +247,8 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     }
     GrChangeInfoImpl changeInfo =
       new GrChangeInfoImpl(method, newVisibility, newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
-                           newName != null ? newName : method.getName(), Arrays.asList(genParams.genParams(method)), generateDelegate);
+                           newName != null ? newName : method.getName(), Arrays.asList(genParams.genParams(method)),
+                           genExceptions.genExceptions(method), generateDelegate);
     new GrChangeSignatureProcessor(getProject(), changeInfo).run();
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }

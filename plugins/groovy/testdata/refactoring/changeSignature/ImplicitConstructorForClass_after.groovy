@@ -3,8 +3,7 @@ class Foo {
 }
 
 class Bar extends Foo {
-def Bar(){
+  def Bar(){
 super(5)
-}
-  def get() {return "a"}
+}def get() {return "a"}
 }

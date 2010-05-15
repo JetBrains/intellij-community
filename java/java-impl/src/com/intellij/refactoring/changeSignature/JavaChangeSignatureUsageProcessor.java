@@ -490,8 +490,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     final PsiElement element = changeInfo.getMethod();
     LOG.assertTrue(element instanceof PsiMethod);
     if (changeInfo.isGenerateDelegate()) {
-        generateDelegate((JavaChangeInfo)changeInfo);
-      }
+      generateDelegate((JavaChangeInfo)changeInfo);
+    }
     processPrimaryMethod((JavaChangeInfo)changeInfo, (PsiMethod)element, null, true);
     return true;
   }
@@ -611,7 +611,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     final PsiMethod method = changeInfo.getMethod();
     for (int i = 0; i < newExceptions.length; i++) {
       newExceptions[i] =
-        (PsiClassType)newExceptionInfos[i].myType.getType(method, method.getManager()); //context really does not matter here
+        (PsiClassType)newExceptionInfos[i].createType(method, method.getManager()); //context really does not matter here
     }
     return newExceptions;
   }
@@ -642,7 +642,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       newThrowns.addAll(Arrays.asList(throwsList.getReferenceElements()));
       final ThrownExceptionInfo[] primaryNewExns = changeInfo.getNewExceptions();
       for (ThrownExceptionInfo thrownExceptionInfo : primaryNewExns) {
-        if (thrownExceptionInfo.oldIndex < 0) {
+        if (thrownExceptionInfo.getOldIndex() < 0) {
           final PsiClassType type = (PsiClassType)thrownExceptionInfo.createType(caller, caller.getManager());
           final PsiJavaCodeReferenceElement ref =
             JavaPsiFacade.getInstance(caller.getProject()).getElementFactory().createReferenceElementByType(type);

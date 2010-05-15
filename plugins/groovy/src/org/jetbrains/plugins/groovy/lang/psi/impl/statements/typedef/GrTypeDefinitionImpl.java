@@ -665,14 +665,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
       if (GroovyElementTypes.mSEMI.equals(node.getElementType())) {
         anchor = anchor.getNextSibling();
       }
-      if (anchor != null) {
-        PsiElement prev = anchor.getPrevSibling();
-        if (prev != null &&
-            !(GroovyTokenTypes.WHITE_SPACES_SET.contains(prev.getNode().getElementType()) &&
-              (prev.getText().contains("\n") || prev.getText().contains("\r")))) {
-          body.getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
-        }
-      }
       psiElement = body.addBefore(psiElement, anchor);
     }
     else {
@@ -714,10 +706,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyBaseElementImpl<GrTypeD
           while (nextSibling instanceof LeafPsiElement && (nextSibling.getText().equals(",") || nextSibling.getText().equals(";"))) {
             nextSibling = nextSibling.getNextSibling();
           }
-          return nextSibling == null && lBrace != null ? lBrace.getNextSibling() : nextSibling;
+          return nextSibling == null && lBrace != null ? PsiUtil.skipWhitespaces(lBrace.getNextSibling(), true) : nextSibling;
         }
         else if (lBrace != null) {
-          return lBrace.getNextSibling();
+          return PsiUtil.skipWhitespaces(lBrace.getNextSibling(), true);
         }
       }
       lastMember = child;

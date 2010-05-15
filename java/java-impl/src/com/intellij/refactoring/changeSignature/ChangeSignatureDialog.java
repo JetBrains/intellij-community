@@ -457,7 +457,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
     final PsiClassType[] types = myMethod.getThrowsList().getReferencedTypes();
     if (thrownExceptions.length <= types.length) return false;
     for (int i = 0; i < types.length; i++) {
-      if (thrownExceptions[i].oldIndex != i) return false;
+      if (thrownExceptions[i].getOldIndex() != i) return false;
     }
     return true;
   }

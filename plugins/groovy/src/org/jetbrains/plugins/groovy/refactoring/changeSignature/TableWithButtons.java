@@ -98,6 +98,7 @@ public abstract class TableWithButtons {
 
   private void createUIComponents() {
     myTable = new JBTable(myModel);
+    myTable.setPreferredScrollableViewportSize(new Dimension(450, myTable.getRowHeight() * 8));
   }
 
   private void innerUpdate() {

@@ -1,7 +1,6 @@
 class B extends A {
   def B() {
     super(27)
-
   }
 }
 

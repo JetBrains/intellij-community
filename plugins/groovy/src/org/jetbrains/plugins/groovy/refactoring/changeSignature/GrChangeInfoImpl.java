@@ -53,12 +53,15 @@ class GrChangeInfoImpl implements JavaChangeInfo {
   private PsiIdentifier myNewNameIdentifier;
   private PsiExpression[] defaultValues;
   private boolean myDelegate;
+  private ThrownExceptionInfo[] myThrownExceptions;
+  private boolean myExceptionSetChanged;
+  private boolean myExceptionSetOrOrderChanged;
 
   public GrChangeInfoImpl(GrMethod method,
                           String visibilityModifier,
                           @Nullable CanonicalTypes.Type returnType,
                           String newName,
-                          List<GrParameterInfo> parameters, boolean generateDelegate) {
+                          List<GrParameterInfo> parameters, ThrownExceptionInfo[] exceptions, boolean generateDelegate) {
     this.method = method;
     this.visibilityModifier = visibilityModifier;
     this.returnType = returnType;
@@ -151,6 +154,27 @@ class GrChangeInfoImpl implements JavaChangeInfo {
         }
       }
     }
+
+    myThrownExceptions = exceptions;
+    final PsiClassType[] thrownTypes = method.getThrowsList().getReferencedTypes();
+    if (thrownTypes.length != myThrownExceptions.length) {
+      myExceptionSetChanged = true;
+      myExceptionSetOrOrderChanged = true;
+    }
+    else {
+      myExceptionSetChanged = false;
+      for (int i = 0; i < myThrownExceptions.length; i++) {
+        ThrownExceptionInfo info = myThrownExceptions[i];
+        if (info.getOldIndex() < 0) {
+          myExceptionSetChanged = true;
+          myExceptionSetOrOrderChanged = true;
+          break;
+        }
+        else if (info.getOldIndex() != i) {
+          myExceptionSetOrOrderChanged = true;
+        }
+      }
+    }
   }
 
   @NotNull
@@ -188,11 +212,11 @@ class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   public boolean isExceptionSetChanged() {
-    return false;
+    return myExceptionSetChanged;
   }
 
   public boolean isExceptionSetOrOrderChanged() {
-    return false;
+    return myExceptionSetOrOrderChanged;
   }
 
   public GrMethod getMethod() {
@@ -205,10 +229,6 @@ class GrChangeInfoImpl implements JavaChangeInfo {
 
   public CanonicalTypes.Type getNewReturnType() {
     return returnType;
-  }
-
-  public boolean isChangeVisibility() {
-    return !method.getModifierList().hasModifierProperty(visibilityModifier);
   }
 
   public String getNewName() {
@@ -230,7 +250,7 @@ class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   public ThrownExceptionInfo[] getNewExceptions() {
-    return new ThrownExceptionInfo[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return myThrownExceptions;
   }
 
   public boolean isRetainsVarargs() {

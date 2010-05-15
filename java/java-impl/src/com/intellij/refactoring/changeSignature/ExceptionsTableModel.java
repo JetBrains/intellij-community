@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author ven
  */
-class ExceptionsTableModel extends AbstractTableModel implements RowEditableTableModel {
+public class ExceptionsTableModel extends AbstractTableModel implements RowEditableTableModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterTableModel");
 
   private List<PsiTypeCodeFragment> myTypeCodeFraments;
@@ -45,7 +45,7 @@ class ExceptionsTableModel extends AbstractTableModel implements RowEditableTabl
   }
 
   public void addRow() {
-    myExceptionInfos.add(new ThrownExceptionInfo());
+    myExceptionInfos.add(new JavaThrownExceptionInfo());
     myTypeCodeFraments.add(createParameterTypeCodeFragment("", myContext));
     fireTableRowsInserted(myTypeCodeFraments.size() - 1, myTypeCodeFraments.size() - 1);
   }
@@ -102,22 +102,6 @@ class ExceptionsTableModel extends AbstractTableModel implements RowEditableTabl
     }
   }
 
-  PsiType getTypeByRow(int row) {
-    Object typeValueAt = getValueAt(row, 0);
-    LOG.assertTrue(typeValueAt instanceof PsiTypeCodeFragment);
-    PsiType type;
-    try {
-      type = ((PsiTypeCodeFragment)typeValueAt).getType();
-    }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e1) {
-      type = null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e1) {
-      type = null;
-    }
-    return type;
-  }
-
   public void setTypeInfos(PsiMethod method) {
     PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
     myTypeCodeFraments = new ArrayList<PsiTypeCodeFragment>(referencedTypes.length);
@@ -127,17 +111,17 @@ class ExceptionsTableModel extends AbstractTableModel implements RowEditableTabl
       final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(typeWrapper.getTypeText(), method.getThrowsList());
       typeWrapper.addImportsTo(typeCodeFragment);
       myTypeCodeFraments.add(typeCodeFragment);
-      myExceptionInfos.add(new ThrownExceptionInfo(i, referencedTypes[i]));
+      myExceptionInfos.add(new JavaThrownExceptionInfo(i, referencedTypes[i]));
     }
   }
 
-  PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
+  public PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
     return JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory().createTypeCodeFragment(
         typeText, context, false, true, true
       );
   }
 
-  PsiTypeCodeFragment[] getTypeCodeFragments() {
+  public PsiTypeCodeFragment[] getTypeCodeFragments() {
     return myTypeCodeFraments.toArray(new PsiTypeCodeFragment[myTypeCodeFraments.size()]);
   }
 
