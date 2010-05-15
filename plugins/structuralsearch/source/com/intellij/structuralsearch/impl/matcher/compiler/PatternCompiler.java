@@ -53,7 +53,7 @@ public class PatternCompiler {
   }
 
   public static String getLastFindPlan() {
-    return ((TestModeOptimizingSearchHelper)lastTestingContext.searchHelper).getSearchPlan();
+    return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
   }
 
   private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
@@ -235,7 +235,7 @@ public class PatternCompiler {
 
       NodeFilter filter = LexicalNodesFilter.getInstance();
 
-      CompilingVisitor compilingVisitor = new CompilingVisitor();
+      GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
       compilingVisitor.compile(patternNode,context);
       List<PsiElement> elements = new LinkedList<PsiElement>();
 
@@ -244,7 +244,7 @@ public class PatternCompiler {
           elements.add(matchStatement);
         }
       }
-      context.pattern.setNodes(
+      context.getPattern().setNodes(
         new ArrayBackedNodeIterator(elements.toArray(new PsiElement[elements.size()]))
       );
 
@@ -253,8 +253,8 @@ public class PatternCompiler {
         new DeleteNodesAction(compilingVisitor.getLexicalNodes())
       );
 
-      if (context.searchHelper.doOptimizing() && context.searchHelper.isScannedSomething()) {
-        final Set<PsiFile> set = context.searchHelper.getFilesSetToScan();
+      if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
+        final Set<PsiFile> set = context.getSearchHelper().getFilesSetToScan();
         final List<PsiFile> filesToScan = new ArrayList<PsiFile>(set.size());
         final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
 

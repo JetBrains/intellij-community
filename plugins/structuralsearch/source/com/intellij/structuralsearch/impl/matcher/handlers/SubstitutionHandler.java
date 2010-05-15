@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
-import com.intellij.structuralsearch.impl.matcher.MatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
@@ -77,7 +76,7 @@ public class SubstitutionHandler extends MatchingHandler {
       if (start==0 && end==-1 && result.getStart()==0 && result.getEnd()==-1) {
         matchresult = matchContext.getMatcher().match(match,result.getMatchRef().getElement());
       } else {
-        matchresult = MatchingVisitor.getText(match,start,end).equals(
+        matchresult = getText(match,start,end).equals(
           result.getMatchImage()
         );
       }
@@ -204,7 +203,7 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   private MatchResultImpl createMatch(final PsiElement match, int start, int end) {
-    final String image = match == null ? null : MatchingVisitor.getText(match, start, end);
+    final String image = match == null ? null : getText(match, start, end);
     final SmartPsiPointer ref = new SmartPsiPointer(match);
 
     final MatchResultImpl result = myNestedResult == null ? new MatchResultImpl(
@@ -472,5 +471,11 @@ public class SubstitutionHandler extends MatchingHandler {
 
   public MatchResultImpl getNestedResult() {
     return myNestedResult;
+  }
+
+  public static final String getText(final PsiElement match, int start,int end) {
+    final String matchText = match.getText();
+    if (start==0 && end==-1) return matchText;
+    return matchText.substring(start,end == -1? matchText.length():end);
   }
 }

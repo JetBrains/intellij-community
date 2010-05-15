@@ -13,11 +13,11 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
  * To change this template use File | Settings | File Templates.
  */
 class CompileContext {
-  OptimizingSearchHelper searchHelper;
+  private OptimizingSearchHelper searchHelper;
   
-  CompiledPattern pattern;
-  MatchOptions options;
-  Project project;
+  private CompiledPattern pattern;
+  private MatchOptions options;
+  private Project project;
 
   public void clear() {
     searchHelper.clear();
@@ -35,5 +35,37 @@ class CompileContext {
     searchHelper = ApplicationManager.getApplication().isUnitTestMode() ?
                    new TestModeOptimizingSearchHelper(this) :
                    new FindInFilesOptimizingSearchHelper(this, _findMatchingFiles, _project);
+  }
+
+  OptimizingSearchHelper getSearchHelper() {
+    return searchHelper;
+  }
+
+  void setSearchHelper(OptimizingSearchHelper searchHelper) {
+    this.searchHelper = searchHelper;
+  }
+
+  CompiledPattern getPattern() {
+    return pattern;
+  }
+
+  void setPattern(CompiledPattern pattern) {
+    this.pattern = pattern;
+  }
+
+  MatchOptions getOptions() {
+    return options;
+  }
+
+  void setOptions(MatchOptions options) {
+    this.options = options;
+  }
+
+  Project getProject() {
+    return project;
+  }
+
+  void setProject(Project project) {
+    this.project = project;
   }
 }

@@ -16,7 +16,7 @@ public class MatchContext {
   private MatchResultImpl result;
   private CompiledPattern pattern;
   private MatchOptions options;
-  private MatchingVisitor matcher;
+  private GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
 
   private LinkedList<PsiElement> myMatchedNodes;
@@ -36,11 +36,11 @@ public class MatchContext {
 
   private UnmatchedElementsListener unmatchedElementsListener;
 
-  public void setMatcher(MatchingVisitor matcher) {
+  public void setMatcher(GlobalMatchingVisitor matcher) {
     this.matcher = matcher;
   }
 
-  public MatchingVisitor getMatcher() {
+  public GlobalMatchingVisitor getMatcher() {
     return matcher;
   }
 

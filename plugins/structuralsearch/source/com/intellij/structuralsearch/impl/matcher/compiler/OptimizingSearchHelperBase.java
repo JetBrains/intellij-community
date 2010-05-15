@@ -37,11 +37,11 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
     if (!scanned.contains(refname)) {
       boolean isJavaReservedWord = false;
 
-      if (context.options.getFileType() == StdFileTypes.JAVA) {
+      if (context.getOptions().getFileType() == StdFileTypes.JAVA) {
         if (javaLexer == null) {
           javaLexer = LanguageParserDefinitions.INSTANCE.forLanguage(
             StdFileTypes.JAVA.getLanguage()
-          ).createLexer(context.project);
+          ).createLexer(context.getProject());
         }
         javaLexer.start(refname);
         isJavaReservedWord = JavaTokenType.KEYWORD_BIT_SET.contains(javaLexer.getTokenType());

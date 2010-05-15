@@ -57,7 +57,7 @@ public class MatcherImpl {
   private boolean isTesting;
 
   // visitor to delegate the real work
-  private final MatchingVisitor visitor = new MatchingVisitor();
+  private final GlobalMatchingVisitor visitor = new GlobalMatchingVisitor();
   private ProgressIndicator progress;
   private final TaskScheduler scheduler = new TaskScheduler();
 
@@ -125,7 +125,7 @@ public class MatcherImpl {
       private void checkModifier(final String name) {
         if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
             !MatchOptions.PACKAGE_LOCAL_MODIFIER_NAME.equals(name) &&
-            Arrays.binarySearch(MatchingVisitor.MODIFIERS, name) < 0
+            Arrays.binarySearch(GlobalMatchingVisitor.MODIFIERS, name) < 0
            ) {
           throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
         }

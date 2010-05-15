@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.*;
+import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.MatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.CountingNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
@@ -29,7 +29,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
     PsiDeclarationStatement dcl = (PsiDeclarationStatement)patternNode;
 
     if (matchedNode instanceof PsiDeclarationStatement) {
-      result = MatchingVisitor.continueMatchingSequentially(
+      result = GlobalMatchingVisitor.continueMatchingSequentially(
         new FilteringNodeIterator(patternNode.getFirstChild()),
         new FilteringNodeIterator(matchedNode.getFirstChild()),
         context
@@ -44,7 +44,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
           ) &&
           !(matchedNode.getParent() instanceof PsiDeclarationStatement) // skip twice matching for child
          ) {
-        result = MatchingVisitor.continueMatchingSequentially(
+        result = GlobalMatchingVisitor.continueMatchingSequentially(
           new ArrayBackedNodeIterator(declared),
           new CountingNodeIterator(
             declared.length,

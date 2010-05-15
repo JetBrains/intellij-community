@@ -53,23 +53,23 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   }
 
   protected void doAddSearchJavaReservedWordInCode(final String refname) {
-    helper.processAllFilesWithWordInText(refname, (GlobalSearchScope)context.options.getScope(), new MyFileProcessor(), true);
+    helper.processAllFilesWithWordInText(refname, (GlobalSearchScope)context.getOptions().getScope(), new MyFileProcessor(), true);
   }
 
   protected void doAddSearchWordInCode(final String refname) {
-    helper.processAllFilesWithWord(refname, (GlobalSearchScope)context.options.getScope(), new MyFileProcessor(), true);
+    helper.processAllFilesWithWord(refname, (GlobalSearchScope)context.getOptions().getScope(), new MyFileProcessor(), true);
   }
 
   protected void doAddSearchWordInComments(final String refname) {
     helper.processAllFilesWithWordInComments(refname,
-                                                       (GlobalSearchScope)context.options.getScope(),
+                                                       (GlobalSearchScope)context.getOptions().getScope(),
                                                        new MyFileProcessor()
       );
   }
 
   protected void doAddSearchWordInLiterals(final String refname) {
     helper.processAllFilesWithWordInLiterals(refname,
-                                                       (GlobalSearchScope)context.options.getScope(),
+                                                       (GlobalSearchScope)context.getOptions().getScope(),
                                                        new MyFileProcessor());
   }
 
@@ -103,8 +103,8 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
 
   private List<PsiElement> buildDescendants(String className, boolean includeSelf) {
     if (!doOptimizing()) return Collections.emptyList();
-    PsiShortNamesCache cache = JavaPsiFacade.getInstance(context.project).getShortNamesCache();
-    SearchScope scope = context.options.getScope();
+    PsiShortNamesCache cache = JavaPsiFacade.getInstance(context.getProject()).getShortNamesCache();
+    SearchScope scope = context.getOptions().getScope();
     PsiClass[] classes = cache.getClassesByName(className,(GlobalSearchScope)scope);
     final List<PsiElement> results = new ArrayList<PsiElement>();
 
