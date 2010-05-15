@@ -38,7 +38,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration>
-    extends SettingsEditorConfigurable<RunnerAndConfigurationSettingsImpl> {
+    extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.SingleConfigurationConfigurable");
   private final PlainDocument myNameDocument = new PlainDocument();
   private ValidationResult myLastValidationResult = null;
@@ -49,7 +49,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private final Icon myIcon;
   private final boolean myBrokenConfiguration;
 
-  private SingleConfigurationConfigurable(RunnerAndConfigurationSettingsImpl settings) {
+  private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
 
     final Config configuration = (Config)getSettings().getConfiguration();
@@ -73,7 +73,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     });
   }
 
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettingsImpl settings) {
+  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettings settings) {
     SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<Config>(settings);
     configurable.reset();
     return configurable;
@@ -195,8 +195,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return (Config)getSettings().getConfiguration();
   }
 
-  public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
-    final SettingsEditor<RunnerAndConfigurationSettingsImpl> editor = getEditor();
+  public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    final SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
     return editor == null ? null : editor.getSnapshot();
   }
 

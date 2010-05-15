@@ -136,4 +136,17 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testMethodAnnotationFollowedBySingleLineComment() throws Exception {
+    // Inspired by IDEA-22808
+    getSettings().METHOD_ANNOTATION_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+
+    String text =
+      "@Test//mycomment\n" +
+      "public void foo() {\n" +
+      "}";
+    
+    // Expecting the code to be left as-is
+    doClassTest(text, text);
+  }
 }

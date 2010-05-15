@@ -45,18 +45,6 @@ import org.jetbrains.annotations.NonNls;
   }
 
   public static void initPlatformPrefix() {
-    if (!ourPlatformPrefixInitialized) {
-      ourPlatformPrefixInitialized = true;
-      boolean isUltimate = true;
-      try {
-        IdeaTestCase.class.getClassLoader().loadClass("com.intellij.idea.IdeaUltimateApplication");
-      }
-      catch (ClassNotFoundException e) {
-        isUltimate = false;
-      }
-      if (!isUltimate) {
-        System.setProperty("idea.platform.prefix", "Idea");
-      }
-    }
+    initPlatformPrefix("com.intellij.idea.IdeaUltimateApplication", "Idea");
   }
 }

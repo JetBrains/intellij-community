@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -95,11 +96,11 @@ public class RunDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configuration, final String title) {
+  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title) {
     return editConfiguration(project, configuration, title, null, null);
   }
 
-  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettingsImpl configuration, final String title, final String okText, final Icon okIcon) {
+  public static boolean editConfiguration(final Project project, final RunnerAndConfigurationSettings configuration, final String title, final String okText, final Icon okIcon) {
     final SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(configuration);
     final SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable) {
       {

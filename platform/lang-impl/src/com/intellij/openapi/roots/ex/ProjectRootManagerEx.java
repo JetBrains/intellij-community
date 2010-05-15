@@ -42,9 +42,7 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
 
   public abstract void removeProjectJdkListener(ProjectJdkListener listener);
 
-  public abstract void beforeRootsChange(boolean filetypes);
-
-  public abstract void rootsChanged(boolean filetypes);
+  // invokes runnable surrounded by beforeRootsChage()/rootsChanged() callbacks
   public abstract void makeRootsChange(@NotNull Runnable runnable, boolean filetypes, boolean fireEvents);
 
   public abstract void mergeRootsChangesDuring(@NotNull Runnable runnable);

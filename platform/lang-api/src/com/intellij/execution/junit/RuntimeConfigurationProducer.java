@@ -20,25 +20,23 @@ import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
-public abstract class RuntimeConfigurationProducer implements Comparable {
+public abstract class RuntimeConfigurationProducer implements Comparable, Cloneable {
   public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer"); 
 
   public static final Comparator<RuntimeConfigurationProducer> COMPARATOR = new ProducerComparator();
   protected static final int PREFERED = -1;
   private final ConfigurationFactory myConfigurationFactory;
-  private RunnerAndConfigurationSettingsImpl myConfiguration;
+  private RunnerAndConfigurationSettings myConfiguration;
 
   public RuntimeConfigurationProducer(final ConfigurationType configurationType) {
     this(configurationType.getConfigurationFactories()[0]);
@@ -57,16 +55,12 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
       final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location != null ? location.getModule() : null);
       if (_location != null) {
         // replace with existing configuration if any
+        final RunManager runManager = RunManager.getInstance(context.getProject());
         final ConfigurationType type = result.myConfiguration.getType();
-        if (type instanceof LocatableConfigurationType) {
-          final RunManagerEx runManager = RunManagerEx.getInstanceEx(context.getProject());
-          final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(type);
-          for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
-            if (((LocatableConfigurationType)type).isConfigurationByLocation(configuration.getConfiguration(), _location)) {
-              result.myConfiguration = configuration;
-              break;
-            }
-          }
+        final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
+        final RunnerAndConfigurationSettings configuration = findExistingByElement(_location, configurations);
+        if (configuration != null) {
+          result.myConfiguration = configuration;
         }
       }
     }
@@ -76,12 +70,18 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
 
   public abstract PsiElement getSourceElement();
 
-  public RunnerAndConfigurationSettingsImpl getConfiguration() {
+  public RunnerAndConfigurationSettings getConfiguration() {
     return myConfiguration;
   }
 
   @Nullable
-  protected abstract RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context);
+  protected abstract RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context);
+
+  @Nullable
+  protected RunnerAndConfigurationSettings findExistingByElement(final Location location,
+                                                                 @NotNull final RunnerAndConfigurationSettings[] existingConfigurations) {
+    return null;
+  }
 
   public RuntimeConfigurationProducer clone() {
     try {
@@ -92,20 +92,14 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     }
   }
 
-  protected RunnerAndConfigurationSettingsImpl cloneTemplateConfiguration(final Project project, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, final ConfigurationContext context) {
     if (context != null) {
       final RuntimeConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
       if (original != null){
-        return RunManagerEx.getInstanceEx(project).createConfiguration(original.clone(), myConfigurationFactory);
+        return RunManager.getInstance(project).createConfiguration(original.clone(), myConfigurationFactory);
       }
     }
-    return RunManagerEx.getInstanceEx(project).createConfiguration("", myConfigurationFactory);
-  }
-
-  // todo: looks like may be removed safely
-  protected void copyStepsBeforeRun(Project project, RunConfiguration runConfiguration) {
-    final RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
-    final RunnerAndConfigurationSettingsImpl template = manager.getConfigurationTemplate(myConfigurationFactory);
+    return RunManager.getInstance(project).createRunConfiguration("", myConfigurationFactory);
   }
 
   protected ConfigurationFactory getConfigurationFactory() {

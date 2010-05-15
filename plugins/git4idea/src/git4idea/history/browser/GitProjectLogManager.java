@@ -66,7 +66,11 @@ public class GitProjectLogManager implements ProjectComponent {
     myComponentsMap = new AtomicReference<Map<VirtualFile, Content>>(new HashMap<VirtualFile, Content>());
     myListener = new VcsListener() {
       public void directoryMappingChanged() {
-        recalculateWindows();
+        new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
+          public void run() {
+            recalculateWindows();
+          }
+        }.callMe();
       }
     };
     myProject.getMessageBus().connect(myProject).subscribe(CHECK_CURRENT_BRANCH, new CurrentBranchListener() {

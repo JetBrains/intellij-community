@@ -15,10 +15,7 @@
  */
 package com.intellij.execution.impl;
 
-import com.intellij.execution.BeforeRunTask;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -177,7 +174,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   private boolean isConfigurationAssigned(ConfigurationType type) {
     final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
     for (ConfigurationFactory factory : type.getConfigurationFactories()) {
-      final RunnerAndConfigurationSettingsImpl settings = ((RunManagerImpl)runManager).getConfigurationTemplate(factory);
+      final RunnerAndConfigurationSettings settings = ((RunManagerImpl)runManager).getConfigurationTemplate(factory);
       if (isConfigurationAssigned(settings.getConfiguration())) return true;
     }
     return false;
@@ -198,7 +195,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
       if (descriptor instanceof ConfigurationTypeDescriptor) {
         ConfigurationTypeDescriptor typeDesc = (ConfigurationTypeDescriptor)descriptor;
         for (ConfigurationFactory factory : typeDesc.getConfigurationType().getConfigurationFactories()) {
-          RunnerAndConfigurationSettingsImpl settings = runManager.getConfigurationTemplate(factory);
+          RunnerAndConfigurationSettings settings = runManager.getConfigurationTemplate(factory);
           update(settings.getConfiguration(), isChecked, runManager);
         }
       }

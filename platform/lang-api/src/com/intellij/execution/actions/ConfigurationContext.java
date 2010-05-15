@@ -19,7 +19,6 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RuntimeConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -45,7 +44,7 @@ import java.util.Set;
 public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.ConfigurationContext");
   private final Location<PsiElement> myLocation;
-  private RunnerAndConfigurationSettingsImpl myConfiguration;
+  private RunnerAndConfigurationSettings myConfiguration;
   private final Module myModule;
   private final RuntimeConfiguration myRuntimeConfiguration;
   private final Component myContextComponent;
@@ -73,7 +72,7 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<PsiElement>(project, myModule, element);
   }
 
-  public RunnerAndConfigurationSettingsImpl getConfiguration() {
+  public RunnerAndConfigurationSettings getConfiguration() {
     if (myConfiguration == null) createConfiguration();
     return myConfiguration;
   }
@@ -97,7 +96,7 @@ public class ConfigurationContext {
   }
 
   @Nullable
-  public RunnerAndConfigurationSettingsImpl findExisting() {
+  public RunnerAndConfigurationSettings findExisting() {
     if (myLocation == null) {
       return null;
     }
@@ -116,8 +115,8 @@ public class ConfigurationContext {
     for (ConfigurationType type : types) {
       if (!(type instanceof LocatableConfigurationType)) continue;
       final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
-      final RunnerAndConfigurationSettingsImpl[] configurations = getRunManager().getConfigurationSettings(type);
-      for (final RunnerAndConfigurationSettingsImpl existingConfiguration : configurations) {
+      final RunnerAndConfigurationSettings[] configurations = getRunManager().getConfigurationSettings(type);
+      for (final RunnerAndConfigurationSettings existingConfiguration : configurations) {
         if (factoryLocatable.isConfigurationByLocation(existingConfiguration.getConfiguration(), myLocation)) {
           return existingConfiguration;
         }
@@ -148,8 +147,8 @@ public class ConfigurationContext {
     return element;
   }
 
-  public RunManagerEx getRunManager() {
-    return RunManagerEx.getInstanceEx(getProject());
+  public RunManager getRunManager() {
+    return RunManager.getInstance(getProject());
   }
 
   public Project getProject() { return myLocation.getProject(); }

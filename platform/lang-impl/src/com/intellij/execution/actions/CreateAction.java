@@ -17,12 +17,12 @@
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.Presentation;
 
@@ -44,7 +44,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   private static BaseCreatePolicy choosePolicy(final ConfigurationContext context) {
     final RunnerAndConfigurationSettings configuration = context.findExisting();
     if (configuration == null) return CREATE_AND_EDIT;
-    final RunManagerEx runManager = context.getRunManager();
+    final RunManager runManager = context.getRunManager();
     if (runManager.getSelectedConfiguration() != configuration) return SELECT;
     if (runManager.isTemporary(configuration.getConfiguration())) return SAVE;
     return SELECTED_STABLE;
@@ -97,13 +97,13 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     public void perform(final ConfigurationContext context) {
-      final RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+      final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration == null) return;
-      context.getRunManager().setActiveConfiguration(configuration);
+      ((RunManagerEx)context.getRunManager()).setActiveConfiguration(configuration);
     }
 
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      final RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+      final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration != null) {
         presentation.setIcon(configuration.getType().getIcon());
       } else {
@@ -119,8 +119,8 @@ public class CreateAction extends BaseRunConfigurationAction {
 
     public void perform(final ConfigurationContext context) {
       final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
-      final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
-      final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(configuration.getFactory());
+      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
+      final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(configuration.getFactory());
       final RunConfiguration templateConfiguration = template.getConfiguration();
       runManager.addConfiguration(configuration, runManager.isConfigurationShared(template), runManager.getBeforeRunTasks( templateConfiguration));
       runManager.setActiveConfiguration(configuration);
@@ -133,7 +133,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     public void perform(final ConfigurationContext context) {
-      final RunnerAndConfigurationSettingsImpl configuration = context.getConfiguration();
+      final RunnerAndConfigurationSettings configuration = context.getConfiguration();
       if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
         final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
         runManager.addConfiguration(configuration,
@@ -155,7 +155,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
 
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
-      final RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+      final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration != null) {
         presentation.setIcon(configuration.getType().getIcon());
       } else {

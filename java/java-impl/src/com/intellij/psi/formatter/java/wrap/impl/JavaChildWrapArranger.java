@@ -18,6 +18,7 @@ package com.intellij.psi.formatter.java.wrap.impl;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.java.FormattingAstUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
@@ -152,6 +153,9 @@ public class JavaChildWrapArranger {
     else if (nodeType == JavaElementType.MODIFIER_LIST) {
       if (childType == JavaElementType.ANNOTATION) {
         return reservedWrapsProvider.getReservedWrap(JavaElementType.MODIFIER_LIST);
+      }
+      else if (childType == JavaTokenType.END_OF_LINE_COMMENT) {
+        return Wrap.createWrap(WrapType.NORMAL, true);
       }
       ASTNode prevElement = FormattingAstUtil.getPrevNonWhiteSpaceNode(child);
       if (prevElement != null && prevElement.getElementType() == JavaElementType.ANNOTATION) {

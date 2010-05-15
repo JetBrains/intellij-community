@@ -18,8 +18,8 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -27,12 +27,12 @@ import com.intellij.psi.PsiPackage;
 public class AllInPackageConfigurationProducer extends JUnitConfigurationProducer {
   private PsiPackage myPackage = null;
 
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(final Location location, final ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final Project project = location.getProject();
     final PsiElement element = location.getPsiElement();
     myPackage = checkPackage(element);
     if (myPackage == null) return null;
-    RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = myPackage.getQualifiedName();

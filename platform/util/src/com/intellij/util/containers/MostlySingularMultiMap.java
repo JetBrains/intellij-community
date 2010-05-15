@@ -21,7 +21,10 @@ package com.intellij.util.containers;
 
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 public class MostlySingularMultiMap<K, V> {
@@ -69,5 +72,17 @@ public class MostlySingularMultiMap<K, V> {
     }
 
     return true;
+  }
+
+  @NotNull
+  public Iterable<V> get(K name) {
+    final Object value = myMap.get(name);
+    if (value == null) return Collections.emptyList();
+
+    if (value instanceof Object[]) {
+      return (Iterable<V>)Arrays.asList((Object[])value);
+    }
+
+    return Collections.singleton((V)value);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -283,9 +284,9 @@ public class ProgressManagerImpl extends ProgressManager {
   }
 
   private static void systemNotify(final Task.NotificationInfo notificationInfo) {
-    final SystemNotifications notifications = ServiceManager.getService(SystemNotifications.class);
-    if (notifications == null) return;
-    notifications.notify(notificationInfo.getNotificationName(), notificationInfo.getNotificationTitle(), notificationInfo.getNotificationText());
+    SystemNotifications.getInstance().notify(notificationInfo.getNotificationName(),
+                                             notificationInfo.getNotificationTitle(),
+                                             notificationInfo.getNotificationText());
   }
 
   public void runProcessWithProgressAsynchronously(@NotNull Project project,

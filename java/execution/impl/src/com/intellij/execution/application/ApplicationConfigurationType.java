@@ -15,14 +15,13 @@
  */
 package com.intellij.execution.application;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ApplicationConfigurationType implements LocatableConfigurationType {
+public class ApplicationConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/runConfigurations/application.png");
 
@@ -68,30 +67,6 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
 
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[]{myFactory};
-  }
-
-  public RunnerAndConfigurationSettings createConfigurationByLocation(final Location location) {
-    return null;
-  }
-
-  public boolean isConfigurationByLocation(final RunConfiguration configuration, final Location location) {
-    final PsiClass aClass = getMainClass(location.getPsiElement());
-    if (aClass == null) {
-      return false;
-    }
-    if (Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), ((ApplicationConfiguration)configuration).MAIN_CLASS_NAME)) {
-      if (Comparing.equal(location.getModule(), ((ApplicationConfiguration)configuration).getConfigurationModule().getModule())) {
-        return true;
-      }
-      final Module configurationModule = ((ApplicationConfiguration)configuration).getConfigurationModule().getModule();
-      if (Comparing.equal(location.getModule(), configurationModule)) return true;
-
-      final Module predefinedModule =
-        ((ApplicationConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject())).getConfigurationTemplate(myFactory)
-          .getConfiguration()).getConfigurationModule().getModule();
-      return Comparing.equal(predefinedModule, configurationModule);
-    }
-    return false;
   }
 
   public static PsiClass getMainClass(PsiElement element) {

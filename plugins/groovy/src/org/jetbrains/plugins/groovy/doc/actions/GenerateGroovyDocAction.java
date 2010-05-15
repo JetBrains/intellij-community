@@ -110,7 +110,7 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
     };
 
     ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(groovyDocRun, GroovyDocBundle.message("groovy.documentaion.generating"), false, project);
+      .runProcessWithProgressSynchronously(groovyDocRun, GroovyDocBundle.message("groovy.documentation.generating"), false, project);
 
     if (configuration.OPEN_IN_BROWSER) {
       File url = new File(configuration.OUTPUT_DIRECTORY, INDEX_HTML);
