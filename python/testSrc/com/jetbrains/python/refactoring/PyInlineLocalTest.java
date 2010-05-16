@@ -55,4 +55,8 @@ public class PyInlineLocalTest extends LightMarkedTestCase {
   public void testMultiple() throws Exception {
     doTest();
   }
+
+  public void testPy994() throws Exception {
+    doTest();
+  }
 }
