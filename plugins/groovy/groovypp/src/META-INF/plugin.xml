@@ -16,4 +16,9 @@
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
+  </extensions>
+
+
 </idea-plugin>
