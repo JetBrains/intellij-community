@@ -95,7 +95,7 @@ public abstract class GroovyScriptRunner {
   protected static VirtualFile findGroovyJar(@NotNull Module module) {
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES);
     for (VirtualFile root : files) {
-      if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matches(root.getName()) || GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matches(root.getName())) {
+      if (root.getName().matches(GroovyConfigUtils.GROOVY_JAR_PATTERN) || root.getName().matches(GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)) {
         return root;
       }
     }
