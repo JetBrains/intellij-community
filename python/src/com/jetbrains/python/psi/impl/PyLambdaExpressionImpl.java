@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -26,8 +27,19 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     return null;
   }
 
+  @NotNull
   public PyParameterList getParameterList() {
     return childToPsiNotNull(PyElementTypes.PARAMETER_LIST_SET, 0);
+  }
+
+  public PyType getReturnType() {
+    PyExpression body = PsiTreeUtil.getChildOfType(this, PyExpression.class);
+    if (body != null) return body.getType(TypeEvalContext.fast()); // or slow?
+    else return null;
+  }
+
+  public PyFunction asMethod() {
+    return null; // we're never a method
   }
 
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,

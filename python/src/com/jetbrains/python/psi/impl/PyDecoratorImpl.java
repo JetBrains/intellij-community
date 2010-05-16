@@ -94,11 +94,12 @@ public class PyDecoratorImpl extends PyPresentableElementImpl<PyDecoratorStub> i
     PyCallExpressionHelper.addArgument(this, expression);
   }
 
-  public PyMarkedFunction resolveCallee() {
-    PyMarkedFunction callee = PyCallExpressionHelper.resolveCallee(this);
+  public PyMarkedCallee resolveCallee() {
+    PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this);
     if (callee == null) return null;
     if (! hasArgumentList()) {
-      callee = new PyMarkedFunction(callee.getFunction(), callee.getFlags(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
+      // NOTE: that +1 thing looks fishy
+      callee = new PyMarkedCallee(callee.getCallable(), callee.getFlags(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
     }
     return callee;
   }

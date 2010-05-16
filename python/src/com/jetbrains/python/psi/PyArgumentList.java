@@ -112,7 +112,7 @@ public interface PyArgumentList extends PyElement {
      * @return result of a resolveCallee() against the function call to which the parameter list belongs.
      */
     @Nullable
-    PyCallExpression.PyMarkedFunction getMarkedFunction();
+    PyCallExpression.PyMarkedCallee getMarkedCallee();
 
     PyArgumentList getArgumentList();
   }

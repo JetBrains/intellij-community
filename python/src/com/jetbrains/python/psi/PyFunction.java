@@ -15,8 +15,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author yole
  */
-public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyStatement, NameDefiner, PyDocStringOwner, StubBasedPsiElement<PyFunctionStub>,
-                                    ScopeOwner {
+public interface PyFunction
+extends
+  PsiNamedElement, StubBasedPsiElement<PyFunctionStub>,
+  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner
+{
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   
   /**
@@ -27,9 +30,6 @@ public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyS
    */
   @Nullable
   ASTNode getNameNode();
-
-  @NotNull
-  PyParameterList getParameterList();
 
   PyStatementList getStatementList();
 
@@ -47,9 +47,6 @@ public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyS
   boolean isTopLevel();
 
   @Nullable
-  PyType getReturnType();
-
-  @Nullable
   PyType getReturnTypeFromDocString();
 
   /**
@@ -57,11 +54,11 @@ public interface PyFunction extends PsiNamedElement, PsiNameIdentifierOwner, PyS
    */
   enum Flag {
     /**
-     * Function is decorated with @classmethod, first param is the class.
+     * Function is decorated with @classmethod, its first param is the class.
      */
     CLASSMETHOD,
     /**
-     * Function is decorated with {@code @staticmethod}, first param is as in a regular function.
+     * Function is decorated with {@code @staticmethod}, its first param is as in a regular function.
      */
     STATICMETHOD,
 

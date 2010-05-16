@@ -127,6 +127,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return visitor.result();
   }
 
+  public PyFunction asMethod() {
+    if (getContainingClass() != null) return this;
+    else return null;
+  }
+
   public PyType getReturnTypeFromDocString() {
     String typeName;
     final PyFunctionStub stub = getStub();

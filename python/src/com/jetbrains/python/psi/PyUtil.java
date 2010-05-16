@@ -712,7 +712,7 @@ public class PyUtil {
     }
     PsiElement parent = elt.getParent();
     while(parent != null) {
-      if (parent instanceof PyClass || parent instanceof PyFunction) {
+      if (parent instanceof PyClass || parent instanceof Callable) {
         return parent;
       }
       if (parent instanceof PsiFile) {

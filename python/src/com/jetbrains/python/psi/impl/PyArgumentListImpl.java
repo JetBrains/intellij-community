@@ -235,7 +235,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     // following the spec: http://docs.python.org/ref/calls.html
     PyCallExpression call = getCallExpression();
     if (call != null) {
-      PyCallExpression.PyMarkedFunction resolved_callee = call.resolveCallee();
+      PyCallExpression.PyMarkedCallee resolved_callee = call.resolveCallee();
       ret.my_marked_func = resolved_callee;
       if (resolved_callee != null) {
         analyzeCall(arguments, resolved_callee, ret);
@@ -244,9 +244,9 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     return ret;
   }
 
-  private static void analyzeCall(PyExpression[] arguments, PyCallExpression.PyMarkedFunction resolved_callee, AnalysisResultImpl ret) {
-    PyFunction func = resolved_callee.getFunction();
-    PyParameterList paramlist = func.getParameterList();
+  private static void analyzeCall(PyExpression[] arguments, PyCallExpression.PyMarkedCallee resolved_callee, AnalysisResultImpl ret) {
+    Callable callable = resolved_callee.getCallable();
+    PyParameterList paramlist = callable.getParameterList();
     PyParameter[] params = paramlist.getParameters();
     // prepare args and slots
     List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
@@ -616,7 +616,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     private final List<PyNamedParameter> my_kwd_mapped_params;   // params mapped to **arg
     private final List<PyNamedParameter> my_unmapped_params;
     private final Map<PyExpression, EnumSet<PyArgumentList.ArgFlag>> my_arg_flags; // flags of every arg
-    private PyCallExpression.PyMarkedFunction my_marked_func;
+    private PyCallExpression.PyMarkedCallee my_marked_func;
 
     public AnalysisResultImpl() {
       // full of empty containers
@@ -685,7 +685,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
      * @return result of a resolveCallee() against the function call to which the paramater list belongs.
      */
     @Nullable
-    public PyCallExpression.PyMarkedFunction getMarkedFunction() {
+    public PyCallExpression.PyMarkedCallee getMarkedCallee() {
       return my_marked_func;
     }
 

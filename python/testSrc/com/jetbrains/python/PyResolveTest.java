@@ -140,6 +140,11 @@ public class PyResolveTest extends PyResolveTestCase {
     assertTrue(targetElement instanceof PyNamedParameter);
   }
 
+  public void testLambdaParameterOutside() {
+    PsiElement targetElement = resolve();
+    assertTrue(targetElement instanceof PyTargetExpression);
+  }
+
   public void testSuperField() {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);

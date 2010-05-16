@@ -36,7 +36,7 @@ public interface PyCallExpression extends PyExpression {
    * Return is null if callee cannot be resolved. 
    */
   @Nullable
-  PyMarkedFunction resolveCallee();
+  PyMarkedCallee resolveCallee();
 
   /**
    * Checks if the unqualified name of the callee matches the specified text.
@@ -49,21 +49,35 @@ public interface PyCallExpression extends PyExpression {
   /**
    * Couples function with a flag describing the way it is called.
    */
-  class PyMarkedFunction {
-    PyFunction myFunction;
+  class PyMarkedCallee {
+    Callable myCallable;
     EnumSet<PyFunction.Flag> myFlags;
     int myImplicitOffset;
     boolean myImplicitlyResolved;
 
-    public PyMarkedFunction(@NotNull PyFunction function, EnumSet<PyFunction.Flag> flags, int offset, boolean implicitlyResolved) {
-      myFunction = function;
+    /**
+     * Method-oriented constructor.
+     * @param function the method (or any other callable, but why bother then).
+     * @param flags result of decorators or wrapping.
+     * @param offset implicit argument offset; parameters up to this are implicitly filled in the call.
+     * @param implicitlyResolved value for {@link #isImplicitlyResolved()}
+     */
+    public PyMarkedCallee(@NotNull Callable function, EnumSet<PyFunction.Flag> flags, int offset, boolean implicitlyResolved) {
+      myCallable = function;
       myFlags = flags;
       myImplicitOffset = offset;
       myImplicitlyResolved = implicitlyResolved;
     }
 
-    public PyFunction getFunction() {
-      return myFunction;
+    public PyMarkedCallee(Callable callable, boolean implicitlyResolved) {
+      myCallable = callable;
+      myFlags = EnumSet.noneOf(PyFunction.Flag.class);
+      myImplicitOffset = 0;
+      myImplicitlyResolved = implicitlyResolved; 
+    }
+
+    public Callable getCallable() {
+      return myCallable;
     }
 
     public EnumSet<PyFunction.Flag> getFlags() {
@@ -79,6 +93,9 @@ public interface PyCallExpression extends PyExpression {
       return myImplicitOffset;
     }
 
+    /**
+     * @return true iff the result is resolved based on divination and name similarity rather than by proper resolution process.
+     */
     public boolean isImplicitlyResolved() {
       return myImplicitlyResolved;
     }

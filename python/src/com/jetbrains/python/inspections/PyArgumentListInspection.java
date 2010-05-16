@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
@@ -72,15 +71,15 @@ public class PyArgumentListInspection  extends LocalInspectionTool {
       for (PyDecorator deco : decos) {
         if (! deco.hasArgumentList()) {
           // empty arglist; deco function must have a non-kwarg first arg
-          PyCallExpression.PyMarkedFunction mkfunc = deco.resolveCallee();
+          PyCallExpression.PyMarkedCallee mkfunc = deco.resolveCallee();
           if (mkfunc != null) {
-            PyFunction decofunc = mkfunc.getFunction();
+            Callable callable = mkfunc.getCallable();
             int first_param_offset =  mkfunc.getImplicitOffset();
-            PyParameter[] params = decofunc.getParameterList().getParameters();
+            PyParameter[] params = callable.getParameterList().getParameters();
             PyNamedParameter alleged_first_param = params.length < first_param_offset ? null : params[first_param_offset-1].getAsNamed();
             if (alleged_first_param == null || alleged_first_param.isKeywordContainer()) {
               // no parameters left to pass function implicitly, or wrong param type
-              registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", decofunc.getName()));
+              registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
             }
             else {
               // possible unfilled params

@@ -296,6 +296,30 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a,b", new String[]{"b"});
   }
 
+  public void testSimpleLambda() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x", new String[]{"x"});
+  }
+
+  public void testReassignedLambda() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x,y", new String[]{"x,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x,y", new String[]{"y"});
+  }
+
+  public void testLambdaVariousArgs() throws Exception {
+    Map<String, PsiElement> marks = loadTest();
+    assertEquals("Test data sanity", marks.size(), 4);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x,y=1,*args,**kwargs", new String[]{"x,"});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x,y=1,*args,**kwargs", new String[]{"y=1,"});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("x,y=1,*args,**kwargs", new String[]{"*args,"});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x,y=1,*args,**kwargs", new String[]{"**kwargs"});
+  }
 
 
   // TODO: add method tests with decorators when a mock SDK is available

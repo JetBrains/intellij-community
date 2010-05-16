@@ -15,33 +15,33 @@ import java.util.EnumSet;
  */
 public class PyResolveCalleeTest extends PyResolveTestCase {
 
-  private PyCallExpression.PyMarkedFunction resolveCallee() throws Exception {
+  private PyCallExpression.PyMarkedCallee resolveCallee() throws Exception {
     PsiReference ref = configureByFile(getTestName(false) + ".py");
     PyCallExpression call = PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
     return call.resolveCallee();
   }
 
   public void testInstanceCall() throws Exception {
-    PyCallExpression.PyMarkedFunction resolved = resolveCallee();
-    assertNotNull(resolved.getFunction());
+    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    assertNotNull(resolved.getCallable());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testClassCall() throws Exception {
-    PyCallExpression.PyMarkedFunction resolved = resolveCallee();
-    assertNotNull(resolved.getFunction());
+    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    assertNotNull(resolved.getCallable());
     assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
   }
 
   public void testDecoCall() throws Exception {
-    PyCallExpression.PyMarkedFunction resolved = resolveCallee();
-    assertNotNull(resolved.getFunction());
+    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    assertNotNull(resolved.getCallable());
     assertEquals(1, resolved.getImplicitOffset());
   }
 
   public void testDecoParamCall() throws Exception {
-    PyCallExpression.PyMarkedFunction resolved = resolveCallee();
-    assertNotNull(resolved.getFunction());
+    PyCallExpression.PyMarkedCallee resolved = resolveCallee();
+    assertNotNull(resolved.getCallable());
     assertTrue(resolved.getFlags().equals(EnumSet.noneOf(PyFunction.Flag.class)));
   }
 

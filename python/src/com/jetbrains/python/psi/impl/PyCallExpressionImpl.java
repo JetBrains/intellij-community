@@ -30,8 +30,10 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
 
   @Nullable
   public PyExpression getCallee() {
-    //return PsiTreeUtil.getChildOfType(this, PyReferenceExpression.class); what we call can be whatever expr, not always a ref
-    return (PyExpression)getFirstChild();
+    // peel off any parens, because we may have smth like (lambda x: x+1)(2) 
+    PyExpression seeker = (PyExpression)getFirstChild();
+    while (seeker instanceof PyParenthesizedExpression) seeker = ((PyParenthesizedExpression)seeker).getContainedExpression();
+    return seeker;
   }
 
   public PyArgumentList getArgumentList() {
@@ -48,7 +50,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     PyCallExpressionHelper.addArgument(this, expression);
   }
 
-  public PyMarkedFunction resolveCallee() {
+  public PyMarkedCallee resolveCallee() {
     return PyCallExpressionHelper.resolveCallee(this);
   }
 
@@ -94,16 +96,18 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
           if (providedType != null) {
             return providedType;
           }
-          if (target instanceof PyFunction) {
-            final PyFunction function = (PyFunction)target;
+          if (target instanceof Callable) {
+            final Callable callable = (Callable)target;
             if (context.allowReturnTypes()) {
-              return function.getReturnType();
+              return callable.getReturnType();
             }
-            final PyType docStringType = function.getReturnTypeFromDocString();
-            if (docStringType != null) {
-              return docStringType;
+            if (callable instanceof PyFunction) {
+              final PyType docStringType = ((PyFunction)callable).getReturnTypeFromDocString();
+              if (docStringType != null) {
+                return docStringType;
+              }
             }
-            return new PyReturnTypeReference((PyFunction)target);
+            return new PyReturnTypeReference(callable);
           }
         }
       }

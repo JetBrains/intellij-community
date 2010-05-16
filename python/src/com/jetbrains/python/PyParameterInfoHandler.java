@@ -12,10 +12,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.PyCallExpression.PyMarkedFunction;
+import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
 
 /**
- * @author yole
+ * @author dcheryasov
  */
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, PyArgumentList.AnalysisResult> {
   
@@ -34,7 +34,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
       PyArgumentList.AnalysisResult result = arglist.analyzeCall();
-      if (result != null && result.getMarkedFunction() != null) {
+      if (result != null && result.getMarkedCallee() != null) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
       }
@@ -93,12 +93,12 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
   public void updateUI(final PyArgumentList.AnalysisResult result, final ParameterInfoUIContext context) {
     if (result == null) return;
-    PyMarkedFunction marked = result.getMarkedFunction();
+    PyMarkedCallee marked = result.getMarkedCallee();
     assert marked != null : "findElementForParameterInfo() did it wrong!";
-    final PyFunction py_function = marked.getFunction();
-    if (py_function == null) return; // resolution failed
+    final Callable callable = marked.getCallable();
+    if (callable == null) return; // resolution failed
 
-    PyParameter[] raw_params = py_function.getParameterList().getParameters();
+    PyParameter[] raw_params = callable.getParameterList().getParameters();
     final List<PyNamedParameter> n_param_list = new ArrayList<PyNamedParameter>(raw_params.length);
     final List<String> hint_texts = new ArrayList<String>(raw_params.length);
 
@@ -109,7 +109,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
     // build the textual picture and the list of named parameters
     ParamHelper.walkDownParamArray(
-      py_function.getParameterList().getParameters(),
+      callable.getParameterList().getParameters(),
       new ParamHelper.ParamWalker() {
         public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           hint_flags.put(hint_texts.size(), EnumSet.noneOf(ParameterInfoUIContextEx.Flag.class));
