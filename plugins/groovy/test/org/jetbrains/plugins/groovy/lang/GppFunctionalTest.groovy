@@ -1,17 +1,13 @@
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInsight.lookup.LookupManager
-
+import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.psi.JavaPsiFacade
-
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -22,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.navigation.GotoImplementationHandler
+import com.intellij.psi.*
 
 /**
  * @author peter
@@ -300,9 +296,13 @@ class BarImpl extends Bar {}
   l.ea<caret>ch { l.substring(1) }
 }
 """
-    PsiMethod method = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve().navigationElement
+    PsiMethod method = resolveReference().navigationElement
     assertEquals "each", method.name
     assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
+  }
+
+  private PsiElement resolveReference() {
+    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
   }
 
   public void testMethodTypeParameterInference() throws Exception {
@@ -325,6 +325,20 @@ r.apply { it.intV<caret>i } {}
 """
     myFixture.completeBasic()
     assertSameElements myFixture.getLookupElementStrings(), "intValue"
+  }
+
+  public void testGotoDeclarationFromMapLiterals() throws Exception {
+    PsiClass point = myFixture.addClass("""
+class Point {
+  void setX(int x) {}
+  void move(int x, int y) {}
+}""")
+
+    configureScript "Point p = [<caret>x:2]"
+    assertEquals point.findMethodsByName("setX", false)[0], resolveReference()
+
+    configureScript "Point p = [mo<caret>ve: { x, y -> z }]"
+    assertEquals point.findMethodsByName("move", false)[0], resolveReference()
   }
 
 }
