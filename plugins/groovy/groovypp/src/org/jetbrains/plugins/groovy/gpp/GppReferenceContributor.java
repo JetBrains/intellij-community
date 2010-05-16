@@ -56,7 +56,15 @@ public class GppReferenceContributor extends PsiReferenceContributor {
               return method.first;
             }
           } else {
-            return PropertyUtil.findPropertySetter(((PsiClassType)type).resolve(), getValue(), false, true);
+            final PsiClass psiClass = ((PsiClassType)type).resolve();
+            if (psiClass != null) {
+              final String propertyName = getValue();
+              final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, propertyName, false, true);
+              if (setter != null) {
+                return setter;
+              }
+              return PropertyUtil.findPropertyField(psiClass.getProject(), psiClass, propertyName, false);
+            }
           }
         }
       }
