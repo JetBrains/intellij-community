@@ -68,7 +68,7 @@ public class PyTupleItemAssignmentInspection extends LocalInspectionTool {
             PyExpression expression = (PyExpression)element;
             PyType type = expression.getType(TypeEvalContext.fast());
             if (type instanceof PyTupleType) {
-              registerProblem(node, "Tuples doesn't support item assignment");
+              registerProblem(node, PyBundle.message("INSP.tuples.never.assign.items")); 
             }
           }
         }
