@@ -234,6 +234,20 @@ class Foo<T> {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
+  public void testClosureInMapInstantiationBoxPrimitives() throws Exception {
+    myFixture.configureByText "a.groovy", """
+class Foo {
+  int foo(int a) {}
+}
+
+@Typed Foo bar() {
+    return [foo: { it.intV<caret>V }]
+}
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "intValue"
+  }
+
   public void testClosureInListInstantiation() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Foo {
@@ -330,9 +344,13 @@ r.apply { it.intV<caret>i } {}
   public void testGotoDeclarationFromMapLiterals() throws Exception {
     PsiClass point = myFixture.addClass("""
 class Point {
+  int y;
   void setX(int x) {}
   void move(int x, int y) {}
 }""")
+
+    configureScript "Point p = [<caret>y:2]"
+    assertEquals point.findFieldByName("y", false), resolveReference()
 
     configureScript "Point p = [<caret>x:2]"
     assertEquals point.findMethodsByName("setX", false)[0], resolveReference()
