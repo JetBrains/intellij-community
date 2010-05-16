@@ -175,7 +175,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return;
     }
 
-    final PyExpression expression = (PyExpression)element;
+    final PsiElement parent = element.getParent();
+    final PyExpression expression = parent instanceof PyAssignmentStatement ?
+                                    ((PyAssignmentStatement)parent).getAssignedValue() :
+                                    (PyExpression)element;
 
     final List<PsiElement> occurrences;
     if (expression.getUserData(PyPsiUtils.SELECTION_BREAKS_AST_NODE) == null && !(expression instanceof PyCallExpression)) {
@@ -185,6 +188,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       occurrences = Collections.emptyList();
     }
     String[] possibleNames = getSuggestedNames(expression);
+    replaceAll &= occurrences.size() > 0;
     boolean initInConstructor = false;
     if (name == null) {
       PyIntroduceDialog dialog = new PyIntroduceDialog(project, expression, myDialogTitle, myValidator, occurrences.size(), possibleNames, getHelpId(), hasConstructor);
