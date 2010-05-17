@@ -44,7 +44,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doTextTest(text, text);
   }
 
-  public void testTypeArguments() {
+  public void testCommaInTypeArguments() {
     // Inspired by IDEA-31681
     getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
 
