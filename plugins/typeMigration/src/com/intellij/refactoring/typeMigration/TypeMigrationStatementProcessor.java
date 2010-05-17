@@ -460,7 +460,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       myType = evalSubstitutor != null
                ? evalSubstitutor.substitute(myTypeEvaluator.getType(var))
                : myTypeEvaluator.getType(var);
-      myChanged = !myType.equals(myOriginType);
+      myChanged = (myOriginType == null || myType == null) ? false : !myType.equals(myOriginType);
     }
 
     public PsiType getType() {
