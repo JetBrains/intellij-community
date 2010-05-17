@@ -303,4 +303,30 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testAroundClassHeader() {
+    // Inspired by IDEA-54746
+    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 2;
+    doTextTest(
+      "public class FormattingTest {\n" +
+      "    public void foo() {\n" +
+      "        Object buzz = new Object() {\n" +
+      "            Object test = new Object();\n" +
+      "        };\n" +
+      "    }\n" +
+      "}",
+
+      "public class FormattingTest {\n" +
+      "\n" +
+      "\n" +
+      "    public void foo() {\n" +
+      "        Object buzz = new Object() {\n" +
+      "\n" +
+      "\n" +
+      "            Object test = new Object();\n" +
+      "        };\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }
