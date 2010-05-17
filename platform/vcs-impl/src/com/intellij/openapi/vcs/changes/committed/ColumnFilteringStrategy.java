@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,9 +33,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -55,8 +54,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
                                  final Class<? extends CommittedChangesProvider> providerClass) {
     myModel = new MyListModel();
     myValueList = new JList();
-    myScrollPane = new JScrollPane(myValueList);
-    myScrollPane.setPreferredSize(new Dimension(100, 100));
+    myScrollPane =  ScrollPaneFactory.createScrollPane(myValueList);
     myValueList.setModel(myModel);
     myValueList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -172,6 +170,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
         }
       }
       myValues = ArrayUtil.toStringArray(set);
+      fireContentsChanged(this, 0, myValues.length);
     }
 
     public int getSize() {

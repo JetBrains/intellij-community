@@ -31,11 +31,13 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
+import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 import org.jetbrains.idea.maven.facade.remote.MavenFacade;
 import org.jetbrains.idea.maven.facade.remote.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.remote.RemoteTransferListener;
@@ -127,7 +129,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
                                          Library.ModifiableModel library,
                                          Collection<ArtifactType> artifactTypes,
                                          String copyTo) {
-    final String repoUrl = createMavenFacadeSettings(project).getLocalRepository().getUrl();
+    final String repoUrl = createMavenFacadeSettings(project, null).getLocalRepository().getUrl();
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       for (String url : library.getUrls(type)) {
         if (url.startsWith(repoUrl)) {
@@ -169,8 +171,11 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         final Ref<List<ArtifactType>> result = Ref.create(Collections.<ArtifactType>emptyList());
         try {
           final MavenFacade mavenFacade = mavenManager.getMavenFacade(project);
-          mavenFacade.setMavenSettings(createMavenFacadeSettings(project));
-          result.set(mavenFacade.findArtifacts(template));
+          final MavenFacade.MavenFacadeSettings settings = createMavenFacadeSettings(project, mavenFacade);
+          mavenFacade.setMavenSettings(settings);
+          final List<ArtifactType> artifacts = mavenFacade.findArtifacts(template);
+          // todo assign proper repo urls
+          result.set(artifacts);
         }
         catch (Exception e) {
           handleError(null, e);
@@ -235,7 +240,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     final MavenFacadeManager mavenManager = ServiceManager.getService(project, MavenFacadeManager.class);
     try {
       final MavenFacade mavenFacade = mavenManager.getMavenFacade(project);
-      mavenFacade.setMavenSettings(createMavenFacadeSettings(project));
+      mavenFacade.setMavenSettings(createMavenFacadeSettings(project, mavenFacade));
       final RemoteTransferListener transferListener = fromProgressIndicator(indicator);
       UnicastRemoteObject.exportObject(transferListener, 0);
       mavenFacade.setTransferListener(transferListener);
@@ -350,16 +355,36 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     return urls.toArray(new String[urls.size()]);
   }
 
-  private static MavenFacade.MavenFacadeSettings createMavenFacadeSettings(Project project) {
+  private static MavenFacade.MavenFacadeSettings createMavenFacadeSettings(Project project, MavenFacade mavenFacade) {
     final MavenFacade.MavenFacadeSettings settings = new MavenFacade.MavenFacadeSettings();
     final MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
     settings.setLocalRepository(new MavenFacade.Repository("local", VfsUtil.pathToUrl(generalSettings.getEffectiveLocalRepository().getPath()), "default"));
+    settings.getNexusUrls().add("http://repository.sonatype.org/service/local/");
+    // http://maven.labs.intellij.net:8081/nexus/content/repositories/central/
+    settings.getNexusUrls().add("http://maven.labs.intellij.net:8081/nexus/");
+    final HashSet<String> urls = new HashSet<String>();
+    if (mavenFacade != null) {
+      try {
+        final List<RepositoryType> repositories = mavenFacade.getRepositories();
+        for (RepositoryType repository : repositories) {
+          if (urls.add(repository.getContentResourceURI()) && "maven2".equals(repository.getProvider())) {
+            settings.getRemoteRepositories().add(new MavenFacade.Repository(repository.getId(), repository.getContentResourceURI(), "default"));
+          }
+        }
+      }
+      catch (Exception e) {
+
+      }
+    }
+
 
     final MavenRepositoriesProvider provider = MavenRepositoriesProvider.getInstance();
     for (String id : provider.getRepositoryIds()) {
-      settings.getRemoteRepositories().add(new MavenFacade.Repository(id, provider.getRepositoryUrl(id), "default"));
+      final String url = provider.getRepositoryUrl(id);
+      if (urls.add(url)) {
+        settings.getRemoteRepositories().add(new MavenFacade.Repository(id, url, StringUtil.notNullize(provider.getRepositoryLayout(id), "default")));
+      }
     }
-    settings.getNexusUrls().add("http://repository.sonatype.org/service/local/");
     return settings;
   }
 

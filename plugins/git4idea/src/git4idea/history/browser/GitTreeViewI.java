@@ -15,6 +15,7 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,8 +30,7 @@ public interface GitTreeViewI {
   void refreshStarted();
   void refreshFinished();
 
-  // todo details?
-  void acceptError(String text);
+  void acceptError(String text, VcsException e);
   void acceptHighlighted(final Set<SHAHash> ids);
   void clearHighlighted();
 

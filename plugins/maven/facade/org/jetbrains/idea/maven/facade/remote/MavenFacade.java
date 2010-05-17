@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.facade.remote;
 
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
+import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 
 import java.io.Serializable;
 import java.rmi.Remote;
@@ -28,6 +29,8 @@ import java.util.Map;
  * @author Gregory.Shrago
  */
 public interface MavenFacade extends Remote {
+
+  List<RepositoryType> getRepositories() throws RemoteException;
 
   List<ArtifactType> findArtifacts(ArtifactType template) throws RemoteException;
 

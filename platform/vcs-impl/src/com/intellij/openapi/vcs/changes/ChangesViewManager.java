@@ -145,9 +145,11 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
     ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.DELETE, panel);
     ActionManager.getInstance().getAction("ChangesView.Move").registerCustomShortcutSet(CommonShortcuts.getMove(), panel);
     ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
+    ActionManager.getInstance().getAction("ChangesView.SetDefault").registerCustomShortcutSet(
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);
 
     final CustomShortcutSet diffShortcut =
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK));
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, ctrlMask()));
     ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, panel);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
@@ -160,9 +162,7 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
 
     ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
     showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
-                                                                                             SystemInfo.isMac
-                                                                                             ? InputEvent.META_DOWN_MASK
-                                                                                             : InputEvent.CTRL_DOWN_MASK)),
+                                                                                             ctrlMask())),
                                                 panel);
     visualActionsGroup.add(showFlattenAction);
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));                                              
@@ -188,6 +188,10 @@ public class ChangesViewManager extends AbstractProjectComponent implements JDOM
 
     myView.installDndSupport(ChangeListManagerImpl.getInstanceImpl(myProject));
     return panel;
+  }
+
+  private int ctrlMask() {
+    return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
   }
 
   private static JComponent createToolbarComponent(final DefaultActionGroup group) {

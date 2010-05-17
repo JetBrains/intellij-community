@@ -21,10 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.Icons;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +35,8 @@ import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -60,14 +65,16 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myProgressIcon = new AsyncProcessIcon("Progress");
     myProgressIcon.setVisible(false);
     myProgressIcon.suspend();
-    myInfoLabel = new JLabel(" ");
+    myInfoLabel = new JLabel("");
     myCombobox = new JComboBox(new CollectionComboBoxModel(myShownItems, null));
     myCombobox.setEditable(true);
+    ((JTextField)myCombobox.getEditor().getEditorComponent()).setColumns(50);
     myCombobox.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         final boolean popupVisible = myCombobox.isPopupVisible();
         if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+          if (true) return;
           if (!popupVisible) {
             if (performSearch()) {
               e.consume();
@@ -95,6 +102,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
         }
       }
     });
+    updateInfoLabel();
     init();
   }
 
@@ -194,17 +202,24 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
     final ArrayList<JComponent> gridComponents = new ArrayList<JComponent>();
     {
-      JPanel caption = new JPanel(new BorderLayout());
+      JPanel caption = new JPanel(new BorderLayout(15, 0));
       JLabel textLabel = new JLabel("Enter keywords or Maven coordinates: \ni.e. 'spring', 'jsf' or 'org.hibernate:hibernate-core:3.3.0.GA'");
       textLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
       textLabel.setUI(new MultiLineLabelUI());
       caption.add(textLabel, BorderLayout.WEST);
       final JPanel infoPanel = new JPanel(new BorderLayout());
-      caption.add(infoPanel, BorderLayout.EAST);
       infoPanel.add(myInfoLabel, BorderLayout.WEST);
       infoPanel.add(myProgressIcon, BorderLayout.EAST);
+      caption.add(infoPanel, BorderLayout.EAST);
       gridComponents.add(caption);
-      gridComponents.add(myCombobox);
+
+      final ComponentWithBrowseButton<JComboBox> coordComponent = new ComponentWithBrowseButton<JComboBox>(myCombobox, new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          performSearch();
+        }
+      });
+      coordComponent.setButtonIcon(Icons.SYNCHRONIZE_ICON);
+      gridComponents.add(coordComponent);
 
       final LabeledComponent<JComboBox> repository = new LabeledComponent<JComboBox>();
       repository.getLabel().setText("Repository");
@@ -215,6 +230,12 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
       if (!myManaged) {
         myDirectoryField = new TextFieldWithBrowseButton();
+        if (myProject != null && !myProject.isDefault()) {
+          final VirtualFile baseDir = myProject.getBaseDir();
+          if (baseDir != null) {
+            myDirectoryField.setText(FileUtil.toSystemDependentName(baseDir.getPath()+"/lib"));
+          }
+        }
         myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
                                    ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
