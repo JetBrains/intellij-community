@@ -503,6 +503,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_AROUND_SHIFT_OPERATORS = true;
 
   public boolean SPACE_AFTER_COMMA = true;
+  public boolean SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
   public boolean SPACE_BEFORE_COMMA = false;
   public boolean SPACE_AFTER_SEMICOLON = true; // in for-statement
   public boolean SPACE_BEFORE_SEMICOLON = false; // in for-statement
