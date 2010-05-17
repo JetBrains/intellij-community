@@ -61,8 +61,16 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
   }
 
   protected PsiReference findReferenceBySignature(final String signature) {
-    int pos = PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
+    int pos = findPosBySignature(signature);
+    return findReferenceAt(pos);
+  }
+
+  protected PsiReference findReferenceAt(int pos) {
     return myFixture.getFile().findReferenceAt(pos);
+  }
+
+  protected int findPosBySignature(String signature) {
+    return PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
   }
 
   protected static class PyLightProjectDescriptor implements LightProjectDescriptor {
