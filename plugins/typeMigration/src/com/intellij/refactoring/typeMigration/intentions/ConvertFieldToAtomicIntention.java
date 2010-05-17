@@ -5,6 +5,7 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.*;
 
-public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction{
+public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements LowPriorityAction{
   private static final Logger LOG = Logger.getInstance("#" + ConvertFieldToAtomicIntention.class.getName());
 
   private final Map<PsiType, String> myFromToMap = new HashMap<PsiType, String>();
