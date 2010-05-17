@@ -33,6 +33,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   private JTextField myBlankLinesAroundClass;
   private JTextField myBlankLinesAroundField;
   private JTextField myBlankLinesAroundMethod;
+  private JTextField myBlankLinesBeforeMethodBody;
   private JTextField myBlankLinesAroundFieldI;
   private JTextField myBlankLinesAroundMethodI;
   private JTextField myBlankLinesAfterClassHeader;
@@ -89,6 +90,9 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     myBlankLinesAroundMethod = createTextField();
     optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.around.method")), myBlankLinesAroundMethod);
 
+    myBlankLinesBeforeMethodBody = createTextField();
+    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.before.method.body")), myBlankLinesBeforeMethodBody);
+
     myBlankLinesAroundFieldI = createTextField();
     optionGroup.add(new JLabel("Around field in interface:"), myBlankLinesAroundFieldI);
 
@@ -127,6 +131,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     myBlankLinesAroundClass.setText(String.valueOf(settings.BLANK_LINES_AROUND_CLASS));
     myBlankLinesAroundField.setText(String.valueOf(settings.BLANK_LINES_AROUND_FIELD));
     myBlankLinesAroundMethod.setText(String.valueOf(settings.BLANK_LINES_AROUND_METHOD));
+    myBlankLinesBeforeMethodBody.setText(String.valueOf(settings.BLANK_LINES_BEFORE_METHOD_BODY));
     myBlankLinesAroundFieldI.setText(String.valueOf(settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE));
     myBlankLinesAroundMethodI.setText(String.valueOf(settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE));
     myBlankLinesAfterClassHeader.setText(String.valueOf(settings.BLANK_LINES_AFTER_CLASS_HEADER));
@@ -144,6 +149,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     settings.BLANK_LINES_AROUND_CLASS = getValue(myBlankLinesAroundClass);
     settings.BLANK_LINES_AROUND_FIELD = getValue(myBlankLinesAroundField);
     settings.BLANK_LINES_AROUND_METHOD = getValue(myBlankLinesAroundMethod);
+    settings.BLANK_LINES_BEFORE_METHOD_BODY = getValue(myBlankLinesBeforeMethodBody);
 
     settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE = getValue(myBlankLinesAroundFieldI);
     settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE = getValue(myBlankLinesAroundMethodI);
@@ -164,6 +170,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     isModified |= settings.BLANK_LINES_AROUND_CLASS != getValue(myBlankLinesAroundClass);
     isModified |= settings.BLANK_LINES_AROUND_FIELD != getValue(myBlankLinesAroundField);
     isModified |= settings.BLANK_LINES_AROUND_METHOD != getValue(myBlankLinesAroundMethod);
+    isModified |= settings.BLANK_LINES_BEFORE_METHOD_BODY != getValue(myBlankLinesBeforeMethodBody);
     isModified |= settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE != getValue(myBlankLinesAroundFieldI);
     isModified |= settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE != getValue(myBlankLinesAroundMethodI);
     isModified |= settings.BLANK_LINES_AFTER_CLASS_HEADER != getValue(myBlankLinesAfterClassHeader);

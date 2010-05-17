@@ -126,7 +126,7 @@ public class FindInProjectUtil {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (model.getModuleName() == null || editor == null) {
       model.setDirectoryName(directoryName);
-      model.setProjectScope(directoryName == null && module == null && model.getCustomScopeName() == null || editor != null);
+      model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);
     }
   }
 

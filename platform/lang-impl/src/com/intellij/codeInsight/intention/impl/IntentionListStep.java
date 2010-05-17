@@ -263,6 +263,9 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   private int getWeight(IntentionActionWithTextCaching action) {
     IntentionAction a = action.getAction();
     int group = getGroup(action);
+    if (a instanceof IntentionActionWrapper) {
+      a = ((IntentionActionWrapper)a).getDelegate();
+    }
     if (a instanceof HighPriorityAction) {
       return group + 3;
     }                                                                                         

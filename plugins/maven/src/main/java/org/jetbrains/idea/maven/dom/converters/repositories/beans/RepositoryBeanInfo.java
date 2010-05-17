@@ -32,6 +32,9 @@ public class RepositoryBeanInfo {
   @Attribute("url")
   public String myUrl;
 
+  @Attribute("layout")
+  public String myLayout;
+
   public String getId() {
     return myId;
   }
@@ -42,5 +45,9 @@ public class RepositoryBeanInfo {
 
   public String getUrl() {
     return myUrl;
+  }
+
+  public String getLayout() {
+    return myLayout;
   }
 }

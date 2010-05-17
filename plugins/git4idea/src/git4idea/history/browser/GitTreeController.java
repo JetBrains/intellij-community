@@ -104,7 +104,6 @@ class GitTreeController implements ManageGitTreeView {
             myJumpTarget = null;
             final Portion filtered = loadPortion(myFilterHolder.getStartingPoints(), myFilterHolder.getCurrentPoint(), null,
                                                  myFilterHolder.getFilters(), PageSizes.LOAD_SIZE);
-            if (filtered == null) return;
 
             final List<GitCommit> commitList = filtered.getXFrom(0, PageSizes.VISIBLE_PAGE_SIZE);
             myFiltered = filtered;
@@ -120,6 +119,8 @@ class GitTreeController implements ManageGitTreeView {
           }
 
           myTreeView.acceptHighlighted(loadIdsToHighlight());
+        } catch (VcsException e) {
+          myTreeView.acceptError(e.getMessage(), e);
         } finally {
           myTreeView.refreshFinished();
           myProject.getMessageBus().syncPublisher(GitProjectLogManager.CHECK_CURRENT_BRANCH).consume(myRoot);
@@ -138,7 +139,7 @@ class GitTreeController implements ManageGitTreeView {
     myFilterHolder.setDirty(true);
   }
 
-  private Set<SHAHash> loadIdsToHighlight() {
+  private Set<SHAHash> loadIdsToHighlight() throws VcsException {
     final Portion highlighted;
     if (myFiltered == null) {
       // todo rewrite when dates are introduced
@@ -169,26 +170,20 @@ class GitTreeController implements ManageGitTreeView {
   }
 
   // !!!! after point is included! (should be)
-  @Nullable
+  @NotNull
   private Portion loadPortion(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
-                              final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) {
-    try {
-      final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
-      if (beforePoint != null) {
-        filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
-      }
-      if (afterPoint != null) {
-        filters.add(new ChangesFilter.AfterDate(afterPoint));
-      }
+                              final Collection<ChangesFilter.Filter> filtersIn, int maxCnt) throws VcsException {
+    final Collection<ChangesFilter.Filter> filters = new LinkedList<ChangesFilter.Filter>(filtersIn);
+    if (beforePoint != null) {
+      filters.add(new ChangesFilter.BeforeDate(new Date(beforePoint.getTime() - 1)));
+    }
+    if (afterPoint != null) {
+      filters.add(new ChangesFilter.AfterDate(afterPoint));
+    }
 
-      final Portion portion = new Portion(null);
-      myAccess.loadCommits(startingPoints, Collections.<String>emptyList(), filters, portion, myBranches.get(), maxCnt);
-      return portion;
-    }
-    catch (VcsException e) {
-      myTreeView.acceptError(e.getMessage());
-      return null;
-    }
+    final Portion portion = new Portion(null);
+    myAccess.loadCommits(startingPoints, Collections.<String>emptyList(), filters, portion, myBranches.get(), maxCnt);
+    return portion;
   }
 
   private List<Pair<SHAHash, Date>> loadLine(final Collection<String> startingPoints, final Date beforePoint, final Date afterPoint,
@@ -205,7 +200,7 @@ class GitTreeController implements ManageGitTreeView {
       return myAccess.loadCommitHashes(startingPoints, Collections.<String>emptyList(), filters, maxCnt);
     }
     catch (VcsException e) {
-      myTreeView.acceptError(e.getMessage());
+      myTreeView.acceptError(e.getMessage(), e);
       return null;
     }
   }
@@ -258,7 +253,7 @@ class GitTreeController implements ManageGitTreeView {
       }
     }
     catch (VcsException e) {
-      myTreeView.acceptError(e.getMessage());
+      myTreeView.acceptError(e.getMessage(), e);
     }
   }
 

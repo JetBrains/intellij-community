@@ -35,7 +35,7 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
   }
 
   @Nullable
-  public abstract VirtualFile getVirtualFileForJar(VirtualFile entryVFile);
+  public abstract VirtualFile getVirtualFileForJar(@Nullable VirtualFile entryVFile);
   public abstract ZipFile getJarFile(VirtualFile entryVFile) throws IOException;
 
   public abstract void setNoCopyJarForPath(String pathInJar);
