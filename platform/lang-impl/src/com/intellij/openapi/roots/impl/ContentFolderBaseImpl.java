@@ -56,7 +56,7 @@ public abstract class ContentFolderBaseImpl extends RootModelComponentBase imple
     this(getUrlFrom(element), contentEntry);
   }
 
-  ContentFolderBaseImpl(@NotNull VirtualFilePointer filePointer, @NotNull ContentEntryImpl contentEntry) {
+  protected ContentFolderBaseImpl(@NotNull VirtualFilePointer filePointer, @NotNull ContentEntryImpl contentEntry) {
     super(contentEntry.getRootModel());
     myContentEntry = contentEntry;
     myFilePointer = VirtualFilePointerManager.getInstance().duplicate(filePointer,this, contentEntry.getRootModel().myVirtualFilePointerListener);

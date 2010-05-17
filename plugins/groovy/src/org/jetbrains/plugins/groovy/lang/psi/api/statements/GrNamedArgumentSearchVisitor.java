@@ -16,37 +16,71 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 02.06.2009
  */
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
-  private final String myParamName;
-  private final HashSet<String> mySet;
+  public static final Set<String>[] EMPTY_SET_ARRAY = new Set[0];
 
-  public GrNamedArgumentSearchVisitor(final String paramName, final HashSet<String> set) {
-    myParamName = paramName;
-    mySet = set;
+  private static final Set<String> METHOD_NAMES = new HashSet<String>(Arrays.asList("containsKey", "remove", "get"));
+
+  private final Map<String, Set<String>> myMap;
+
+  public GrNamedArgumentSearchVisitor(final Map<String, Set<String>> map) {
+    myMap = map;
+  }
+
+  private static void extractArguments(GrArgumentList argumentList, Set<String> set) {
+    GrExpression[] expr = argumentList.getExpressionArguments();
+
+    if (expr.length == 1 && expr[0] instanceof GrLiteral) {
+      Object value = ((GrLiteral)expr[0]).getValue();
+      if (value instanceof String) {
+        set.add((String)value);
+      }
+    }
   }
 
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-    final GrExpression expression = referenceExpression.getQualifierExpression();
-    if (!(expression instanceof GrReferenceExpression)) {
-      super.visitReferenceExpression(referenceExpression);
-      return;
-    }
+    Set<String> set = myMap.get(referenceExpression.getName());
 
-    final GrReferenceExpression qualifierExpr = (GrReferenceExpression)expression;
+    if (set != null && !referenceExpression.isQualified()) {
+      PsiElement parent = referenceExpression.getParent();
 
-    if (myParamName.equals(qualifierExpr.getName())) {
-      mySet.add(referenceExpression.getName());
+      if (parent instanceof GrReferenceExpression) {
+        GrReferenceExpression parentRef = (GrReferenceExpression)parent;
+
+        PsiElement parentParent = parentRef.getParent();
+
+        if (parentParent instanceof GrMethodCallExpression) {
+          if (METHOD_NAMES.contains(parentRef.getName())) {
+            extractArguments(((GrMethodCallExpression)parentParent).getArgumentList(), set);
+          }
+        }
+        else {
+          set.add(parentRef.getName());
+        }
+      }
+      else if (parent instanceof GrIndexProperty) {
+        GrIndexProperty indexProperty = (GrIndexProperty)parent;
+        extractArguments(indexProperty.getArgumentList(), set);
+      }
     }
 
     super.visitReferenceExpression(referenceExpression);

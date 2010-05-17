@@ -17,6 +17,8 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.editorActions.SelectWordHandler;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
+import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -28,6 +30,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +90,7 @@ public class CodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
+  public static void doLiveTemplateTest(@NotNull final CodeInsightTestFixture fixture,
                                         @NotNull final String before, @NotNull final String after) throws Exception {
     fixture.configureByFile(before);
     new WriteCommandAction(fixture.getProject()) {
@@ -96,6 +99,21 @@ public class CodeInsightTestUtil {
         final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
         assert lookup != null;
         lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      }
+    }.execute();
+    fixture.checkResultByFile(after, false);
+  }
+
+  public static void doSmartEnterTest(@NotNull final CodeInsightTestFixture fixture,
+                                      @NotNull final String before, @NotNull final String after) throws Exception {
+    fixture.configureByFile(before);
+    final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(fixture.getFile().getLanguage());
+    new WriteCommandAction(fixture.getProject()) {
+      protected void run(Result result) throws Throwable {
+        final Editor editor = fixture.getEditor();
+        for (SmartEnterProcessor processor : processors) {
+          processor.process(getProject(), editor, fixture.getFile());
+        }
       }
     }.execute();
     fixture.checkResultByFile(after, false);

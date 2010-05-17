@@ -58,4 +58,8 @@ public abstract class LibraryManager {
     return StringUtil.toLowerCase(getLibraryCategoryName());
   }
 
+  public boolean managesName(@NotNull String name) {
+    return StringUtil.startsWithIgnoreCase(name, getLibraryPrefix());
+  }
+
 }

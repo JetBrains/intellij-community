@@ -45,4 +45,8 @@ public class CollectionComboBoxModel extends AbstractListModel implements ComboB
   public Object getSelectedItem() {
     return mySelection;
   }
+
+  public void update() {
+    super.fireContentsChanged(this, -1, -1);
+  }
 }

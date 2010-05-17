@@ -426,7 +426,10 @@ public final class Match {
             final int idx = ArrayUtil.find(expressions, getMatchEnd());
             final PsiParameter[] psiParameters = method.getParameterList().getParameters();
             if (idx >= 0 && idx < psiParameters.length) {
-              final PsiType type = result.getSubstitutor().substitute(psiParameters[idx].getType());
+              PsiType type = result.getSubstitutor().substitute(psiParameters[idx].getType());
+              if (type instanceof PsiEllipsisType) {
+                type = ((PsiEllipsisType)type).getComponentType();
+              }
               if (weakerType(psiMethod, returnType, type)){
                 return type;
               }
