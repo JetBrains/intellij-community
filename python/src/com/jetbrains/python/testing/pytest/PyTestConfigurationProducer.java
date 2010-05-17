@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.testing.PythonUnitTestConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
     PsiElement element = location.getPsiElement();
     PsiFileSystemItem file = element instanceof PsiDirectory ? (PsiDirectory)element : element.getContainingFile();
     if (file == null) return null;
-    myPsiElement = element;
+    myPsiElement = file;
     String path = file.getVirtualFile().getPath();
 
     final RunnerAndConfigurationSettings result =
@@ -61,6 +62,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
       String name = pyFunction.getName();
       configuration.setKeywords(name);
       configuration.setName(name + " in " + configuration.getName());
+      myPsiElement = pyFunction;
     }
     return result;
   }
@@ -100,6 +102,9 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
 
 
   public int compareTo(Object o) {
+    if (o instanceof PythonUnitTestConfigurationProducer) {
+      return -PREFERED;
+    }
     return PREFERED;
   }
 }
