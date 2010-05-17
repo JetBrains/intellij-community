@@ -43,4 +43,39 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     // Don't expect the space to be 'ate'
     doTextTest(text, text);
   }
+
+  public void testTypeArguments() {
+    // Inspired by IDEA-31681
+    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
+
+    String initial =
+      "interface TestInterface<A,B> {\n" +
+      "\n" +
+      "    <X,Y> void foo(X x, Y y);\n" +
+      "}\n" +
+      "\n" +
+      "public class FormattingTest implements TestInterface<String,Integer> {\n" +
+      "\n" +
+      "    public <X,Y> void foo(X x, Y y) {\n" +
+      "        Map<String,Integer> map = new HashMap<String,Integer>();\n" +
+      "    }\n" +
+      "}";
+
+    doTextTest(initial, initial); // Don't expect the comma to be inserted
+
+    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
+    String formatted =
+      "interface TestInterface<A, B> {\n" +
+      "\n" +
+      "    <X, Y> void foo(X x, Y y);\n" +
+      "}\n" +
+      "\n" +
+      "public class FormattingTest implements TestInterface<String, Integer> {\n" +
+      "\n" +
+      "    public <X, Y> void foo(X x, Y y) {\n" +
+      "        Map<String, Integer> map = new HashMap<String, Integer>();\n" +
+      "    }\n" +
+      "}";
+    doTextTest(initial, formatted); // Expect the comma to be inserted between type arguments
+  }
 }
