@@ -28,7 +28,6 @@ import java.util.List;
 public abstract class AntDomElement implements DomElement {
 
   @Attribute("id")
-  @Convert(value = AntDomAttributeValueConverter.class)
   public abstract GenericAttributeValue<String> getId();
 
   @Attribute("refid")

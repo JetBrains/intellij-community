@@ -28,7 +28,6 @@ import com.intellij.util.xml.NameValue;
 public abstract class AntDomTarget extends AntDomElement {
   @Attribute("name")
   @NameValue
-  @Convert(value = AntDomAttributeValueConverter.class)
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("if")

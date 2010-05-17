@@ -87,9 +87,13 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       return PsiReference.EMPTY_ARRAY;
     }
     final List<PsiReference> refs = new ArrayList<PsiReference>();
-    final StringTokenizer tokenizer = new StringTokenizer(value.getRawText(), ",", false);
+    final StringTokenizer tokenizer = new StringTokenizer(result.getRefsString(), ",", false);
     final TextRange wholeStringRange = ElementManipulators.getValueTextRange(valueElement);
     final Set<String> existingRefs = new HashSet<String>();
+    final AntDomTarget hostAntTarget = context.getInvocationElement().getParentOfType(AntDomTarget.class, false);
+    if (hostAntTarget != null) {
+      existingRefs.add(hostAntTarget.getName().getRawText()); // avoid setting dependencies onto itself
+    }
     while (tokenizer.hasMoreTokens()) {
       final String token = tokenizer.nextToken();
       int tokenStartOffset = tokenizer.getCurrentPosition() - token.length();

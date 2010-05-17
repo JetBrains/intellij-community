@@ -38,9 +38,6 @@ public class TargetResolver extends PropertyProviderFinder {
     private Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<String, Pair<AntDomTarget, String>>(); // declared target name -> pair[target, effective name]
     private Map<String, AntDomTarget> myVariants;
 
-    public Result() {
-    }
-
     void add(String declaredTargetRef, Pair<AntDomTarget, String> pair) {
       myMap.put(declaredTargetRef, pair);
     }

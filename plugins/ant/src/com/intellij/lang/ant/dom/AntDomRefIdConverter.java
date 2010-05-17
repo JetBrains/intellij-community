@@ -32,6 +32,8 @@ import java.util.List;
  *         Date: Apr 16, 2010
  */
 public class AntDomRefIdConverter extends ResolvingConverter<XmlAttributeValue>{
+  // TODO: convert to ant dom element instead of XmlAttributeValue!
+
   @NotNull
   public Collection<? extends XmlAttributeValue> getVariants(ConvertContext context) {
     // todo: should we add imported files support?
