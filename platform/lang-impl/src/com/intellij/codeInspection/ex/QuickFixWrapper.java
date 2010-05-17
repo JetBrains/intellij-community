@@ -69,7 +69,7 @@ public class QuickFixWrapper implements IntentionAction {
     PsiElement psiElement = myDescriptor.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return false;
     final LocalQuickFix fix = getFix();
-    return fix instanceof IntentionAction ? ((IntentionAction)fix).isAvailable(project, editor, file) : true;
+    return !(fix instanceof IntentionAction) || ((IntentionAction)fix).isAvailable(project, editor, file);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
@@ -90,7 +90,7 @@ public class QuickFixWrapper implements IntentionAction {
 
   public boolean startInWriteAction() {
     final LocalQuickFix fix = getFix();
-    return fix instanceof IntentionAction ? ((IntentionAction)fix).startInWriteAction() : true;
+    return !(fix instanceof IntentionAction) || ((IntentionAction)fix).startInWriteAction();
   }
 
   public LocalQuickFix getFix() {

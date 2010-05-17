@@ -188,25 +188,29 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   private void refreshChangesFromCache(final boolean cacheOnly) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    if (!cache.hasCachesForAnyRoot()) {
-      if (cacheOnly) {
-        myBrowser.setEmptyText(VcsBundle.message("committed.changes.not.loaded.message"));
-        return;
+    cache.hasCachesForAnyRoot(new Consumer<Boolean>() {
+      public void consume(final Boolean notEmpty) {
+        if (! notEmpty) {
+          if (cacheOnly) {
+            myBrowser.setEmptyText(VcsBundle.message("committed.changes.not.loaded.message"));
+            return;
+          }
+          if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
+        }
+        cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
+                                     new Consumer<List<CommittedChangeList>>() {
+                                       public void consume(final List<CommittedChangeList> committedChangeLists) {
+                                         myChangesFromProvider = committedChangeLists;
+                                         updateFilteredModel(false);
+                                         }
+                                       },
+                                     new Consumer<List<VcsException>>() {
+                                       public void consume(final List<VcsException> vcsExceptions) {
+                                         AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history");
+                                       }
+                                     });
       }
-      if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
-    }
-    cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
-                                 new Consumer<List<CommittedChangeList>>() {
-                                   public void consume(final List<CommittedChangeList> committedChangeLists) {
-                                     myChangesFromProvider = committedChangeLists;
-                                     updateFilteredModel(false);
-                                     }
-                                   },
-                                 new Consumer<List<VcsException>>() {
-                                   public void consume(final List<VcsException> vcsExceptions) {
-                                     AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history");
-                                   }
-                                 });
+    });
   }
 
   private static class FilterHelper {

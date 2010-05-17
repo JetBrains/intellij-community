@@ -29,7 +29,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.editorActions.SelectWordHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -1371,15 +1370,4 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return actualText;
   }
 
-  public void testWordSelection(@NotNull final String before, final String... after) throws Exception {
-    assertTrue(after != null && after.length > 0);
-    configureByFile(before);
-
-    final SelectWordHandler action = new SelectWordHandler(null);
-    final DataContext dataContext = DataManager.getInstance().getDataContext(myEditor.getComponent());
-    for (String file : after) {
-      action.execute(myEditor, dataContext);
-      checkResultByFile(file, false);
-    }
-  }
 }

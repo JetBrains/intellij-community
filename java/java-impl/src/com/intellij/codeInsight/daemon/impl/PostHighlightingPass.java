@@ -50,6 +50,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -678,9 +679,26 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     if (file == null || !codeAnalyzer.isHighlightingAvailable(file) || !(file instanceof PsiJavaFile) || file instanceof JspFile) return false;
 
     if (!codeAnalyzer.isErrorAnalyzingFinished(file)) return false;
+    boolean errors = containsErrorsPreventingOptimize(file);
+
+    return !errors && codeAnalyzer.canChangeFileSilently(myFile);
+  }
+
+  private boolean containsErrorsPreventingOptimize(PsiFile file) {
     List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(myDocument, HighlightSeverity.ERROR, myProject);
 
-    return errors.isEmpty() && codeAnalyzer.canChangeFileSilently(myFile);
+    // ignore unresolved imports errors
+    PsiImportList importList = ((PsiJavaFile)file).getImportList();
+    if (importList != null) {
+      TextRange importsRange = importList.getTextRange();
+      for (HighlightInfo error : errors) {
+        if (!error.type.equals(HighlightInfoType.WRONG_REF)) return true;
+        if (!importsRange.contains(error.getActualStartOffset()) || !importsRange.contains(error.getActualEndOffset())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean isIntentionalPrivateConstructor(PsiMethod method, PsiClass containingClass) {

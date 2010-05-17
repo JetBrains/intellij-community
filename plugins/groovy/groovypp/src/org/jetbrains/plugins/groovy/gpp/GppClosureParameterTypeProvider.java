@@ -28,20 +28,18 @@ import java.util.*;
 public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnhancer {
   @Override
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    if (!GppTypeConverter.hasTypedContext(closure)) {
-      return null;
-    }
-
-    final Pair<PsiMethod, PsiSubstitutor> pair = getOverriddenMethod(closure);
-    if (pair != null) {
-      final PsiParameter[] parameters = pair.first.getParameterList().getParameters();
-      if (parameters.length > index) {
-        return pair.second.substitute(parameters[index].getType());
-      }
-      return null;
-    }
-
     final PsiElement parent = closure.getParent();
+    if (parent instanceof GrNamedArgument) {
+      final Pair<PsiMethod, PsiSubstitutor> pair = getOverriddenMethod((GrNamedArgument)parent);
+      if (pair != null) {
+        final PsiParameter[] parameters = pair.first.getParameterList().getParameters();
+        if (parameters.length > index) {
+          return pair.second.substitute(parameters[index].getType());
+        }
+        return null;
+      }
+    }
+
     if (parent instanceof GrListOrMap) {
       final GrListOrMap list = (GrListOrMap)parent;
       if (!list.isMap()) {
@@ -81,13 +79,8 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   }
 
   @Nullable
-  private static Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrClosableBlock closure) {
-    final PsiElement parent = closure.getParent();
-    if (!(parent instanceof GrNamedArgument)) {
-      return null;
-    }
-
-    final GrArgumentLabel label = ((GrNamedArgument)parent).getLabel();
+  public static Pair<PsiMethod, PsiSubstitutor> getOverriddenMethod(GrNamedArgument namedArgument) {
+    final GrArgumentLabel label = namedArgument.getLabel();
     if (label == null) {
       return null;
     }
@@ -97,7 +90,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
       return null;
     }
 
-    final PsiElement map = parent.getParent();
+    final PsiElement map = namedArgument.getParent();
     if (map instanceof GrListOrMap && ((GrListOrMap)map).isMap()) {
       for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes((GrExpression)map)) {
         if (expected instanceof PsiClassType) {

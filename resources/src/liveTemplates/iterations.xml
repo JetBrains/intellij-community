@@ -15,6 +15,7 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
@@ -35,6 +36,7 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
@@ -53,6 +55,7 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
@@ -71,6 +74,7 @@
       <option name="JSP" value="false"/>
       <option name="COMPLETION" value="false"/>
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false"/>
     </context>
   </template>
@@ -90,6 +94,7 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
@@ -108,6 +113,7 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
@@ -127,6 +133,7 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
@@ -145,6 +152,7 @@
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
       <option name="GROOVY" value="true" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
@@ -161,8 +169,8 @@
       <option name="HTML" value="false" />
       <option name="JSP" value="false" />
       <option name="COMPLETION" value="false" />
+      <option name="ASPECTJ" value="true" />
       <option name="OTHER" value="false" />
     </context>
   </template>
 </templateSet>
-

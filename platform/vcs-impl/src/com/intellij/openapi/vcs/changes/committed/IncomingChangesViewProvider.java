@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
@@ -84,18 +85,22 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     });
   }
 
-  private void loadChangesToBrowser(boolean inBackground) {
+  private void loadChangesToBrowser(final boolean inBackground) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    if (cache.hasCachesForAnyRoot()) {
-      final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
-      if (list != null) {
-        myBrowser.setEmptyText(VcsBundle.message("incoming.changes.empty.message"));
-        myBrowser.setItems(list, false, CommittedChangesBrowserUseCase.INCOMING);
+    cache.hasCachesForAnyRoot(new Consumer<Boolean>() {
+      public void consume(final Boolean notEmpty) {
+        if (Boolean.TRUE.equals(notEmpty)) {
+          final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
+          if (list != null) {
+            myBrowser.setEmptyText(VcsBundle.message("incoming.changes.empty.message"));
+            myBrowser.setItems(list, false, CommittedChangesBrowserUseCase.INCOMING);
+          }
+          else {
+            cache.loadIncomingChangesAsync(null, inBackground);
+          }
+        }
       }
-      else {
-        cache.loadIncomingChangesAsync(null, inBackground);
-      }
-    }
+    });
   }
 
   private class MyCommittedChangesListener extends CommittedChangesAdapter {

@@ -20,9 +20,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +44,7 @@ public class FileAttribute {
 
   @Nullable
   public DataInputStream readAttribute(VirtualFile file) {
-    final DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
+    DataInputStream stream = ManagingFS.getInstance().readAttribute(file, this);
     if (stream != null) {
       try {
         int actualVersion = stream.readInt();

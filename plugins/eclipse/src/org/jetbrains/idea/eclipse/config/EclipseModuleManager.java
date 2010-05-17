@@ -27,6 +27,7 @@ import java.util.Set;
 public class EclipseModuleManager {
   private CachedXmlDocumentSet myDocumentSet;
   private final Map<String, String> myEclipseVariablePaths = new HashMap<String, String>();
+  private final Set<String> myEclipseUrls = new HashSet<String>();
   private final Set<String> myUnknownCons = new HashSet<String>();
   private boolean myForceConfigureJDK = false;
   private static final String SRC_PREFIX = "src:";
@@ -84,5 +85,21 @@ public class EclipseModuleManager {
 
   public void setForceConfigureJDK() {
     myForceConfigureJDK = true;
+  }
+
+  public void registerEclipseLibUrl(String url) {
+    myEclipseUrls.add(url);
+  }
+
+  public void registerEclipseLibSrcUrl(String srcUrl) {
+    myEclipseUrls.add(SRC_PREFIX + srcUrl);
+  }
+
+  public boolean isEclipseLibUrl(String url) {
+    return myEclipseUrls.contains(url);
+  }
+
+  public boolean isEclipseLibSrcUrl(String url) {
+    return myEclipseUrls.contains(SRC_PREFIX + url);
   }
 }

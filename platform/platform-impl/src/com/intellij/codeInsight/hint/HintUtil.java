@@ -136,7 +136,15 @@ public class HintUtil {
         super.setText(null);
       }
       else {
-        super.setText(" " + s + " ");
+        final int length = s.length();
+
+        final String alignedText;
+        if (length < 100 && !s.contains("\n")) {
+          alignedText = s;
+        } else {
+          alignedText = s.replaceAll("(\n)|(\r\n)", " \n ");
+        }
+        super.setText(" " + alignedText + " ");
       }
     }
 

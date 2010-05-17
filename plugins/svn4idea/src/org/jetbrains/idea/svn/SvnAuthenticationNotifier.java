@@ -48,18 +48,21 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final Map<SVNURL, Boolean> myCopiesPassiveResults;
-  private final Timer myTimer;
+  private Timer myTimer;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
     super(svnVcs.getProject(), ourGroupId, "Not Logged To Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
     myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());
-    // every 10 minutes
-    myTimer = new Timer("SVN authentication timer");
   }
 
   public void init() {
+    if (myTimer != null) {
+      stop();
+    }
+    myTimer = new Timer("SVN authentication timer");
+    // every 10 minutes
     myTimer.schedule(new TimerTask() {
       @Override
       public void run() {
@@ -70,6 +73,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   public void stop() {
     myTimer.cancel();
+    myTimer = null;
   }
 
   @Override
