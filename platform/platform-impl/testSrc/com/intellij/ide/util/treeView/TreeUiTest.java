@@ -1,12 +1,16 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Progressive;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import junit.framework.TestSuite;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -780,6 +784,80 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public void testCancelUpdate() throws Exception {
     assertInterruption(Interruption.invokeCancel);
+  }
+
+  public void testCheckCancelled() throws Exception {
+    buildStructure(myRoot);
+
+    myAlwaysShowPlus.add(new NodeElement("com"));
+    myAlwaysShowPlus.add(new NodeElement("jetbrains"));
+    myAlwaysShowPlus.add(new NodeElement("org"));
+    myAlwaysShowPlus.add(new NodeElement("xunit"));
+
+    final Ref<Boolean> cancelled = new Ref<Boolean>(false);
+    myElementUpdateHook = new ElementUpdateHook() {
+      public void onElementAction(String action, Object element) {
+        NodeElement stopElement = new NodeElement("com");
+
+        if (cancelled.get()) {
+          myCancelRequest = new AssertionError("Not supposed to update after element=" + stopElement);
+          return;
+        }
+
+        if (element.equals(stopElement) && action.equals("getChildren")) {
+          cancelled.set(true);
+          getBuilder().cancelUpdate();
+        }
+      }
+    };
+
+    final NodeElement[] toExpand = new NodeElement[] {
+      new NodeElement("com"),
+      new NodeElement("jetbrains"),
+      new NodeElement("org"),
+      new NodeElement("xunit")
+    };
+
+    final ActionCallback done = new ActionCallback();
+
+    invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        getBuilder().batch(new Progressive() {
+          public void run(@NotNull ProgressIndicator indicator) {
+            expandNext(toExpand, 0, indicator, done);
+          }
+        });
+      }
+    });
+
+
+    waitBuilderToCome(new Condition() {
+      public boolean value(Object o) {
+        return (done.isProcessed() || myCancelRequest != null) || (cancelled.get());
+      }
+    });
+
+    waitBuilderToCome();
+    
+    assertNull(myCancelRequest);
+  }
+
+  private void expandNext(final NodeElement[] elements, final int index, final ProgressIndicator indicator, final ActionCallback callback) {
+    if (indicator.isCanceled()) {
+      callback.setRejected();
+      return;
+    }
+
+    if (index >= elements.length) {
+      callback.setDone();
+      return;
+    }
+
+    getBuilder().expand(elements[index], new Runnable() {
+      public void run() {
+        expandNext(elements, index + 1, indicator, callback);
+      }
+    });
   }
 
   private void assertInterruption(Interruption cancelled) throws Exception {
@@ -1609,6 +1687,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(true, false);
     }
 
+
+    @Override
+    public void testCheckCancelled() throws Exception {
+      super.testCheckCancelled();
+    }
   }
 
   public static class BgLoadingSyncUpdate extends TreeUiTest {

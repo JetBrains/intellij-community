@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashSet;
@@ -375,6 +376,10 @@ public class AbstractTreeBuilder implements Disposable {
 
   public ActionCallback cancelUpdate() {
     return getUi().cancelUpdate();
+  }
+
+  public void batch(Progressive progressive) {
+    getUi().batch(progressive);
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
