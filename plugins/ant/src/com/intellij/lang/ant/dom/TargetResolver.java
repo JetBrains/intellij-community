@@ -31,11 +31,15 @@ public class TargetResolver extends PropertyProviderFinder {
   private List<String> myDeclaredTargetRefs;
   private @Nullable AntDomTarget myContextTarget;
 
-  private Result myResult = new Result();
+  private Result myResult;
 
   public static class Result {
+    private String myRefsString;
     private Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<String, Pair<AntDomTarget, String>>(); // declared target name -> pair[target, effective name]
     private Map<String, AntDomTarget> myVariants;
+
+    public Result() {
+    }
 
     void add(String declaredTargetRef, Pair<AntDomTarget, String> pair) {
       myMap.put(declaredTargetRef, pair);
@@ -43,6 +47,19 @@ public class TargetResolver extends PropertyProviderFinder {
 
     void setVariants(Map<String, AntDomTarget> variants) {
       myVariants = variants;
+    }
+
+    public String getRefsString() {
+      return myRefsString;
+    }
+
+    public void setRefsString(String refsString) {
+      myRefsString = refsString;
+    }
+
+    @NotNull
+    public Collection<String> getTargetReferences() {
+      return Collections.unmodifiableSet(myMap.keySet());
     }
 
     @Nullable
@@ -58,6 +75,7 @@ public class TargetResolver extends PropertyProviderFinder {
 
   private TargetResolver(@NotNull Collection<String> declaredDependencyRefs, AntDomTarget contextElement) {
     super(contextElement);
+    myResult = new Result();
     myDeclaredTargetRefs = new ArrayList<String>(declaredDependencyRefs);
     myContextTarget = contextElement;
   }

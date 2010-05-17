@@ -15,94 +15,127 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.lang.ant.AntSupport;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.references.PomService;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceBase;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringSetSpinAllocator;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.converters.DelimitedListConverter;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.text.StringTokenizer;
+import com.intellij.util.xml.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 16, 2010
  */
-public class AntDomTargetDependsListConverter extends DelimitedListConverter<XmlAttributeValue> {
-  public AntDomTargetDependsListConverter() {
-    super(",");
+public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
+  
+  public TargetResolver.Result fromString(@Nullable @NonNls String s, ConvertContext context) {
+    AntDomProject project = context.getInvocationElement().getParentOfType(AntDomProject.class, false);
+    if (project == null) {
+      return null;
+    }
+    // todo: use context project
+    final AntDomTarget contextTarget = context.getInvocationElement().getParentOfType(AntDomTarget.class, false);
+    if (contextTarget == null) {
+      return null;
+    }
+    final List<String> refs;
+    if (s == null) {
+      refs = Collections.emptyList();
+    }
+    else {
+      refs = new ArrayList<String>();
+      final StringTokenizer tokenizer = new StringTokenizer(s, ",", false);
+      while (tokenizer.hasMoreTokens()) {
+        final String ref = tokenizer.nextToken();
+        refs.add(ref.trim());
+      }
+    }
+    final TargetResolver.Result result = TargetResolver.resolve(project, contextTarget, refs);
+    result.setRefsString(s);
+    return result;
   }
 
   @Nullable
-  protected XmlAttributeValue convertString(@Nullable String string, ConvertContext context) {
-    if (string == null) {
-      return null;
-    }
-    final AntDomElement element = AntSupport.getInvocationAntDomElement(context);
-    if (element == null) {
-      return null;
-    }
-    final AntDomProject project = element.getAntProject();
-    final AntDomTarget target = project.findDeclaredTarget(string.trim(), element);
-    if (target == null) {
-      return null;
-    }
-    final GenericAttributeValue<String> name = target.getName();
-    return name != null? name.getXmlAttributeValue() : null;
+  public String toString(@Nullable TargetResolver.Result result, ConvertContext context) {
+    return result != null? result.getRefsString() : null;
   }
 
-  protected String toString(@Nullable XmlAttributeValue targetNameValue) {
-    if (targetNameValue != null) {
-      return targetNameValue.getValue();
+  @NotNull
+  public PsiReference[] createReferences(GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
+    final XmlElement xmlElement = value.getXmlElement();
+    if (!(xmlElement instanceof XmlAttribute)) {
+      return PsiReference.EMPTY_ARRAY;
     }
-    return null;
-  }
-
-  protected Object[] getReferenceVariants(ConvertContext context, GenericDomValue<List<XmlAttributeValue>> existingDeps) {
-    final Set<String> existingTargetNames = StringSetSpinAllocator.alloc();
-    try {
-      final AntDomElement antDom = AntSupport.getInvocationAntDomElement(context);
-      if (antDom == null) {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
-      }
-      final AntDomProject project = antDom.getAntProject();
-      if (existingDeps != null) {
-        final List<XmlAttributeValue> attribValueList = existingDeps.getValue();
-        if (attribValueList != null && attribValueList.size() > 0) {
-          for (XmlAttributeValue targetNameAttribValue : attribValueList) {
-            existingTargetNames.add(targetNameAttribValue.getValue());
+    final XmlAttributeValue valueElement = ((XmlAttribute)xmlElement).getValueElement();
+    if (valueElement == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final TargetResolver.Result result = value.getValue();
+    if (result == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final List<PsiReference> refs = new ArrayList<PsiReference>();
+    final StringTokenizer tokenizer = new StringTokenizer(value.getRawText(), ",", false);
+    final TextRange wholeStringRange = ElementManipulators.getValueTextRange(valueElement);
+    final Set<String> existingRefs = new HashSet<String>();
+    while (tokenizer.hasMoreTokens()) {
+      final String token = tokenizer.nextToken();
+      int tokenStartOffset = tokenizer.getCurrentPosition() - token.length();
+      final String ref = token.trim();
+      if (ref.length() != token.length()) {
+        for (int idx = 0; idx < token.length(); idx++) {
+          if (Character.isWhitespace(token.charAt(idx))) {
+            tokenStartOffset++;
+          }
+          else {
+            break;
           }
         }
       }
-      final List<Object> result = new ArrayList<Object>();
-      final List<AntDomTarget> allTargets = project.getDeclaredTargets();
-      for (AntDomTarget target : allTargets) {
-        final String targetName = target.getName().getRawText();
-        if (targetName != null && !existingTargetNames.contains(targetName)) {
-          result.add(LookupElementBuilder.create(target, targetName));
-        }
+      final Pair<AntDomTarget,String> antTarget = result.getResolvedTarget(ref);
+      final DomTarget domTarget = (antTarget != null && antTarget.getFirst() != null) ? DomTarget.getTarget(antTarget.getFirst()) : null;
+      if (domTarget != null) {
+        existingRefs.add(antTarget.getSecond());
       }
-      return result.toArray(new Object[result.size()]);
+      refs.add(new PsiReferenceBase<PsiElement>(valueElement, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), true) {
+        public PsiElement resolve() {
+          return domTarget != null? PomService.convertToPsi(domTarget) : null;
+        }
+        @NotNull
+        public Object[] getVariants() {
+          final List<Object> variants = new ArrayList<Object>();
+          for (Map.Entry<String, AntDomTarget> entry : result.getVariants().entrySet()) {
+            final String targetEffectiveName = entry.getKey();
+            if (!existingRefs.contains(targetEffectiveName)) {
+              //final AntDomTarget target = entry.getValue();
+              //final DomTarget _target = DomTarget.getTarget(target);
+              //if (_target == null) {
+              //  continue;
+              //}
+              //final PsiElement psi = PomService.convertToPsi(_target);
+              //if (psi == null) {
+              //  continue;
+              //}
+              variants.add(LookupElementBuilder.create(/*psi, */targetEffectiveName));
+            }
+          }
+          return variants.toArray();
+        }
+      });
     }
-    finally {
-      StringSetSpinAllocator.dispose(existingTargetNames);
-    }
-  }
-
-  protected PsiElement resolveReference(@Nullable XmlAttributeValue targetAttrib, ConvertContext context) {
-    return targetAttrib;
-  }
-
-  protected String getUnresolvedMessage(String value) {
-    return CodeInsightBundle.message("error.cannot.resolve.default.message", value);
+    return refs.toArray(new PsiReference[refs.size()]);
   }
 
 }

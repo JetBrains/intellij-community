@@ -15,13 +15,10 @@
  */
 package com.intellij.lang.ant.dom;
 
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.NameValue;
-
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -42,5 +39,5 @@ public abstract class AntDomTarget extends AntDomElement {
 
   @Attribute("depends")
   @Convert(value = AntDomTargetDependsListConverter.class)
-  public abstract GenericAttributeValue<List<XmlAttributeValue>> getDependsList();
+  public abstract GenericAttributeValue<TargetResolver.Result> getDependsList();
 }
