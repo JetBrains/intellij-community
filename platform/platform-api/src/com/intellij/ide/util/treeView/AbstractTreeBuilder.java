@@ -378,8 +378,8 @@ public class AbstractTreeBuilder implements Disposable {
     return getUi().cancelUpdate();
   }
 
-  public void batch(Progressive progressive) {
-    getUi().batch(progressive);
+  public ActionCallback batch(Progressive progressive) {
+    return getUi().batch(progressive);
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {

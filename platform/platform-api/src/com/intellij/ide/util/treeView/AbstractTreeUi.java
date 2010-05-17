@@ -158,6 +158,9 @@ public class AbstractTreeUi {
   private AtomicBoolean myCancelRequest = new AtomicBoolean();
   private AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
+  private Map<Progressive, ProgressIndicator> myBatchIndicators = new HashMap<Progressive, ProgressIndicator>();
+  private Map<Progressive, ActionCallback> myBatchCallbacks = new HashMap<Progressive, ActionCallback>();
+
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
                       DefaultTreeModel treeModel,
@@ -1594,7 +1597,18 @@ public class AbstractTreeUi {
         myUpdatingChildren.clear();
         myLoadedInBackground.clear();
 
+        myDeferredExpansions.clear();
+        myDeferredSelections.clear();
+
         assert isReady();
+
+
+        Progressive[] progressives = myBatchIndicators.keySet().toArray(new Progressive[myBatchIndicators.size()]);
+        for (Progressive each : progressives) {
+          myBatchIndicators.remove(each).cancel();
+          myBatchCallbacks.remove(each).setRejected();
+        }
+
 
         myResettingToReadyNow.set(false);
         result.setDone();
@@ -1962,8 +1976,29 @@ public class AbstractTreeUi {
     return ready;
   }
 
-  public void batch(Progressive progressive) {
-    progressive.run(new EmptyProgressIndicator());
+  public ActionCallback batch(final Progressive progressive) {
+    assertIsDispatchThread();
+
+    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+    final ActionCallback callback = new ActionCallback();
+
+    myBatchIndicators.put(progressive, indicator);
+    myBatchCallbacks.put(progressive, callback);
+
+    progressive.run(indicator);
+
+    getReady(this).doWhenDone(new Runnable() {
+      public void run() {
+        if (myBatchIndicators.containsKey(progressive)) {
+          myBatchIndicators.remove(progressive);
+          myBatchCallbacks.remove(progressive);
+
+          callback.setDone();
+        }
+      }
+    });
+
+    return callback;
   }
 
   static class ElementNode extends DefaultMutableTreeNode {

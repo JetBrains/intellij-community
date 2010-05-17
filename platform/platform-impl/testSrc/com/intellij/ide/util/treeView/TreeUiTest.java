@@ -786,7 +786,53 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertInterruption(Interruption.invokeCancel);
   }
 
-  public void testCheckCancelled() throws Exception {
+
+  public void testBatchUpdate() throws Exception {
+    buildStructure(myRoot);
+
+    myElementUpdate.clear();
+
+    final NodeElement[] toExpand = new NodeElement[] {
+      new NodeElement("com"),
+      new NodeElement("jetbrains"),
+      new NodeElement("org"),
+      new NodeElement("xunit")
+    };
+
+    final ActionCallback done = new ActionCallback();
+
+    invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        getBuilder().batch(new Progressive() {
+          public void run(@NotNull ProgressIndicator indicator) {
+            expandNext(toExpand, 0, indicator, done);
+          }
+        }).notify(done);
+      }
+    });
+
+
+    waitBuilderToCome(new Condition() {
+      public boolean value(Object o) {
+        return done.isProcessed();
+      }
+    });
+
+    assertTrue(done.isDone());
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +intellij\n" +
+               " -jetbrains\n" +
+               "  +fabrique\n" +
+               " -org\n" +
+               "  +eclipse\n" +
+               " -xunit\n" +
+               "  runner\n");
+  }
+
+
+  public void testCancelUpdateBatch() throws Exception {
     buildStructure(myRoot);
 
     myAlwaysShowPlus.add(new NodeElement("com"));
@@ -819,27 +865,30 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     };
 
     final ActionCallback done = new ActionCallback();
+    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
 
     invokeLaterIfNeeded(new Runnable() {
       public void run() {
         getBuilder().batch(new Progressive() {
           public void run(@NotNull ProgressIndicator indicator) {
+            indicatorRef.set(indicator);
             expandNext(toExpand, 0, indicator, done);
           }
-        });
+        }).notify(done);
       }
     });
 
 
     waitBuilderToCome(new Condition() {
       public boolean value(Object o) {
-        return (done.isProcessed() || myCancelRequest != null) || (cancelled.get());
+        return done.isProcessed() || myCancelRequest != null;
       }
     });
 
-    waitBuilderToCome();
-    
+
     assertNull(myCancelRequest);
+    assertTrue(done.isRejected());
+    assertTrue(indicatorRef.get().isCanceled());
   }
 
   private void expandNext(final NodeElement[] elements, final int index, final ProgressIndicator indicator, final ActionCallback callback) {
@@ -1646,6 +1695,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public SyncUpdate() {
       super(false, false);
     }
+
+    @Override
+    public void testBatchUpdate() throws Exception {
+      super.testBatchUpdate();
+    }
   }
 
   public static class Passthrough extends TreeUiTest {
@@ -1685,12 +1739,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class YieldingUpdate extends TreeUiTest {
     public YieldingUpdate() {
       super(true, false);
-    }
-
-
-    @Override
-    public void testCheckCancelled() throws Exception {
-      super.testCheckCancelled();
     }
   }
 
