@@ -40,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.*;
+import java.util.List;
 
 public class TestsUIUtil {
   @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
@@ -118,8 +120,9 @@ public class TestsUIUtil {
       text = "";
       type = MessageType.WARNING;
     } else{
-      int passedCount = root.getAllTests().size();
-      int failedCount = Filter.DEFECTIVE_LEAF.select(root.getAllTests()).size();
+      List allTests = root.getAllTests();
+      int failedCount = Filter.DEFECTIVE_LEAF.select(allTests).size();
+      int passedCount = allTests.size() - failedCount;
 
       if (failedCount > 0) {
         title = ExecutionBundle.message("junit.runing.info.tests.failed.label");
