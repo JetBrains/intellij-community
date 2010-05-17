@@ -452,6 +452,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int BLANK_LINES_AROUND_CLASS = 1;
   public int BLANK_LINES_AROUND_FIELD = 0;
   public int BLANK_LINES_AROUND_METHOD = 1;
+  public int BLANK_LINES_BEFORE_METHOD_BODY = 0;
 
   public int BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 0;
   public int BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 1;
