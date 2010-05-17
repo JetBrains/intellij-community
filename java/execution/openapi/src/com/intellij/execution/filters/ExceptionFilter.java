@@ -106,7 +106,10 @@ public class ExceptionFilter implements Filter, DumbAware {
       final int lineNumber = Integer.parseInt(lineString);
       final PsiManager manager = PsiManager.getInstance(myProject);
       PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(className, mySearchScope);
-      if (aClass == null) return null;
+      if (aClass == null) {
+        aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(className, GlobalSearchScope.allScope(myProject));
+        if (aClass == null) return null;
+      }
       final PsiFile file = (PsiFile) aClass.getContainingFile().getNavigationElement();
       if (file == null) return null;
 
