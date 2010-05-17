@@ -186,7 +186,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static int transformFlags(PsiElement element, int _flags) {
-    int flags = 0;
+    int flags = _flags & ~(ICON_FLAG_READ_STATUS);
     final boolean isLocked = (_flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;
