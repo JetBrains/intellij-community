@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -199,7 +200,7 @@ public class PathManagerEx {
     StackTraceElement[] stackTrace = new Exception().getStackTrace();
     for (StackTraceElement stackTraceElement : stackTrace) {
       Class<?> clazz = loadClass(stackTraceElement.getClassName());
-      if (TestCase.class != clazz && isJUnitClass(clazz)) {
+      if (TestCase.class != clazz && isJUnitClass(clazz) && ((clazz.getModifiers() & Modifier.ABSTRACT) == 0)) {
         testClass = clazz;
       }
     }
