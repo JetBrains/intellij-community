@@ -224,10 +224,12 @@ public class PathManagerEx {
   private static Class<?> loadClass(String className) {
     Class<?> clazz = null;
     ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoader definingClassLoader = PathManagerEx.class.getClassLoader();
+    ClassLoader customClassDefiningClassLoader = PathManagerEx.class.getClassLoader();
+    ClassLoader systemClassDefiningClassLoader = String.class.getClassLoader();
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
 
-    List<ClassLoader> classLoaders = asList(contextClassLoader, definingClassLoader, systemClassLoader);
+    List<ClassLoader> classLoaders
+      = asList(contextClassLoader, customClassDefiningClassLoader, systemClassDefiningClassLoader, systemClassLoader);
     for (ClassLoader classLoader : classLoaders) {
       clazz = loadClass(className, classLoader);
       if (clazz != null) {
@@ -237,8 +239,9 @@ public class PathManagerEx {
 
     if (clazz == null) {
       throw new IllegalStateException(String.format("Can't load class '%s'. Tried to do that via thread context class loader(%s), "
-                                                    + "defining class loader(%s) and system class loader(%s)",
-                                                    className, contextClassLoader, definingClassLoader, systemClassLoader));
+                                                    + "PathManagerEx defining class loader(%s), Object defining class loader (%s) "
+                                                    + "and system class loader(%s)", className, contextClassLoader,
+                                                    customClassDefiningClassLoader, systemClassDefiningClassLoader, systemClassLoader));
     }
     return clazz;
   }
