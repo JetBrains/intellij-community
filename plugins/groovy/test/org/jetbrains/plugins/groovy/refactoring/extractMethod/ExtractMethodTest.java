@@ -87,5 +87,7 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testVen2() throws Throwable { doTest(); }
   public void testVen3() throws Throwable { doTest(); }
   public void testForIn() throws Throwable { doTest(); }
+  
+  public void testClosureIt() throws Throwable { doTest(); }
 
 }
