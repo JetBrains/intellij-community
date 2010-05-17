@@ -1151,7 +1151,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(false);
     }
     else if (myRole1 == ChildRole.COMMA && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST) {
-      createSpaceInCode(true);
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
     }
     else if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
       createSpaceInCode(false);
@@ -1288,7 +1288,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(false);
     }
     else if (myRole1 == ChildRole.COMMA) {
-      createSpaceInCode(true);
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
     }
   }
 
