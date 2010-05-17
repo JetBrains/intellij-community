@@ -218,7 +218,14 @@
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.django.editor.DjangoTemplateTagNameSelectionHandler"/>
 
-    <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.inspection.DjangoTemplateTagNamesValidator"/>
+    <lang.namesValidator language="DjangoTemplate" implementationClass="com.jetbrains.django.inspection.DjangoTemplateNamesValidator"/>
+
+    <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last" />
+
+    <projectService serviceInterface="com.jetbrains.django.model.DjangoElementGenerator"
+                    serviceImplementation="com.jetbrains.django.model.DjangoElementGenerator"/>
+
+    <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
