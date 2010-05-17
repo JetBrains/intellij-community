@@ -196,16 +196,29 @@ public class PathManagerEx {
     // against it. Rationale is that there is a possible case that, say, 'ultimate' test class extends basic test class
     // that remains at 'community'. We want to perform the processing against 'ultimate' test class then.
 
+    // About special abstract classes processing - there is a possible case that target test class extends abstract base
+    // test class and call to this method is rooted from that parent. We need to resolve test data lookup against super
+    // class then, hence, we keep track of found abstract test class as well and fallback to it if no non-abstract class is found.
+
     Class<?> testClass = null;
+    Class<?> abstractTestClass = null;
     StackTraceElement[] stackTrace = new Exception().getStackTrace();
     for (StackTraceElement stackTraceElement : stackTrace) {
       Class<?> clazz = loadClass(stackTraceElement.getClassName());
-      if (TestCase.class != clazz && isJUnitClass(clazz) && ((clazz.getModifiers() & Modifier.ABSTRACT) == 0)) {
+      if (TestCase.class == clazz || !isJUnitClass(clazz)) {
+        continue;
+      }
+
+      if ((clazz.getModifiers() & Modifier.ABSTRACT) == 0) {
         testClass = clazz;
+      }
+      else {
+        abstractTestClass = clazz;
       }
     }
 
-    return testClass == null ? null : determineLookupStrategy(testClass);
+    Class<?> classToUse = testClass == null ? abstractTestClass : testClass;
+    return classToUse == null ? null : determineLookupStrategy(classToUse);
   }
 
   private static Class<?> loadClass(String className) {
