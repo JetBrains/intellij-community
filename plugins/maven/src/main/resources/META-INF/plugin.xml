@@ -73,6 +73,9 @@
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
 
+    <projectService serviceInterface="org.jetbrains.idea.maven.facade.remote.MavenFacadeManager"
+                    serviceImplementation="org.jetbrains.idea.maven.facade.remote.MavenFacadeManagerImpl"/>
+
     <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"
                         serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
 
@@ -80,6 +83,7 @@
                         serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
+    <libraryTable.attachHandler implementation="org.jetbrains.idea.maven.utils.RepositoryAttachHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
 
     <intentionAction>
