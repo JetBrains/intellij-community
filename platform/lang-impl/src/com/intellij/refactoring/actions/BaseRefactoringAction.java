@@ -167,7 +167,7 @@ public abstract class BaseRefactoringAction extends AnAction {
   }
 
   protected boolean isAvailableForLanguage(Language language) {
-    return language.equals(StdFileTypes.JAVA.getLanguage());
+    return language.isKindOf(StdFileTypes.JAVA.getLanguage());
   }
 
   protected boolean isAvailableForFile(PsiFile file) {

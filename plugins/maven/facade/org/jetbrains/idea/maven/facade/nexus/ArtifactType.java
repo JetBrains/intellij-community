@@ -365,4 +365,8 @@ public class ArtifactType implements Serializable {
         this.artifactLink = value;
     }
 
+  @Override
+  public String toString() {
+    return groupId +":"+artifactId+":"+version;
+  }
 }

@@ -9,7 +9,7 @@
     <repository id="jboss-maven2-release-repository" name="JBoss" url="http://repository.jboss.org/maven2/"/>
     <repository id="Open.iona.com Releases" name="FUSE" url="http://repo.open.iona.com/maven2/"/>
     <repository id="terracotta" name="Terracotta" url="http://download.terracotta.org/maven2/"/>
-    <repository id="sonatype" name="Sonatype" url="http://repository.sonatype.org/content/groups/public/ "/>
+    <repository id="sonatype" name="Sonatype" url="http://repository.sonatype.org/content/groups/public/"/>
   </repositories>
 </root>
 
