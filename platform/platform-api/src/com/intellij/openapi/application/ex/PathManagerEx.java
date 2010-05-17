@@ -31,7 +31,6 @@ import com.intellij.util.containers.ConcurrentHashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.Reflection;
 
 import java.io.File;
 import java.util.*;
@@ -68,17 +67,6 @@ public class PathManagerEx {
    * processed files here.
    */
   private static final Set<String> PROCESSED_FILES = new ConcurrentHashSet<String>();
-
-  private static volatile boolean sunReflectionFacitilitiesAvailable;
-
-  static {
-    try {
-      Class.forName("sun.reflect.Reflection");
-      sunReflectionFacitilitiesAvailable = true;
-    } catch (Throwable e) {
-      sunReflectionFacitilitiesAvailable= false;
-    }
-  }
 
   private PathManagerEx() {
   }
@@ -209,10 +197,10 @@ public class PathManagerEx {
 
     Class<?> testClass = null;
     StackTraceElement[] stackTrace = new Exception().getStackTrace();
-    for (int i = 0; i < stackTrace.length; i++) {
-      Class<?> clazz = loadClass(stackTrace[i].getClassName());
+    for (StackTraceElement stackTraceElement : stackTrace) {
+      Class<?> clazz = loadClass(stackTraceElement.getClassName());
       if (TestCase.class != clazz && isJUnitClass(clazz)) {
-        testClass = refineClassIfPossible(clazz, i);
+        testClass = clazz;
       }
     }
 
@@ -239,25 +227,6 @@ public class PathManagerEx {
                                                     className, contextClassLoader, definingClassLoader, systemClassLoader));
     }
     return clazz;
-  }
-
-  /**
-   * There is a possible case that there is a class hierarchy and super class method is called on subclass object. Standard java
-   * stack trace analysis shows 'declared class' for every stack trace element, i.e. superclass is shown there.
-   * <p/>
-   * This method does its best in order to show 'real' class, i.e. tries to return 'subclass' at situation mentioned above.
-   *
-   * @param clazz         candidate class at the stack frame with the given index
-   * @param frameIndex    target stack frame index counting on the method that called this method
-   * @return              refined class if possible; given class otherwise
-   */
-  private static Class<?> refineClassIfPossible(Class<?> clazz, int frameIndex) {
-    if (!sunReflectionFacitilitiesAvailable) {
-      return clazz;
-    }
-    Class<?> result = Reflection.getCallerClass(frameIndex + 2); // one is for current method frame, another for Reflection.getCallerClass()
-    assert clazz.isAssignableFrom(result);
-    return result;
   }
 
   @Nullable
