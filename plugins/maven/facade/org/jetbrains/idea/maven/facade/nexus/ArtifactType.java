@@ -16,10 +16,9 @@
  */
 package org.jetbrains.idea.maven.facade.nexus;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlType;
+import com.intellij.util.xmlb.annotations.Transient;
+
+import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 
 
