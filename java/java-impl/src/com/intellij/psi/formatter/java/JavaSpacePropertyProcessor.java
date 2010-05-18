@@ -1011,6 +1011,17 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.OPERATION_SIGN) {
       createSpaceInCode(mySettings.SPACE_AFTER_UNARY_OPERATOR);
     }
+    else if (myChild1.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN
+             && myChild2.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_TOKEN)
+    {
+      createSpaceInCode(true);
+    }
+    else if (myRole1 == ChildRole.COMMA) {
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+    else if (myRole2 == ChildRole.COMMA) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
   }
 
   @Override public void visitExpressionList(PsiExpressionList list) {
