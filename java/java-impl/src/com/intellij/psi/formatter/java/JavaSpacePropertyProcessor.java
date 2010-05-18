@@ -1008,6 +1008,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole1 == ChildRole.MODIFIER_LIST) {
       processModifierList();
     }
+    else if (myRole1 == ChildRole.OPERATION_SIGN) {
+      createSpaceInCode(mySettings.SPACE_AFTER_UNARY_OPERATOR);
+    }
   }
 
   @Override public void visitExpressionList(PsiExpressionList list) {
