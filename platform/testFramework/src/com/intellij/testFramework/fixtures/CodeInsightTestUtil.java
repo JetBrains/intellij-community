@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +115,17 @@ public class CodeInsightTestUtil {
         for (SmartEnterProcessor processor : processors) {
           processor.process(getProject(), editor, fixture.getFile());
         }
+      }
+    }.execute();
+    fixture.checkResultByFile(after, false);
+  }
+
+  public static void doFormattingTest(@NotNull final CodeInsightTestFixture fixture,
+                                      @NotNull final String before, @NotNull final String after) throws Exception {
+    fixture.configureByFile(before);
+    new WriteCommandAction(fixture.getProject()) {
+      protected void run(Result result) throws Throwable {
+        CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile());
       }
     }.execute();
     fixture.checkResultByFile(after, false);
