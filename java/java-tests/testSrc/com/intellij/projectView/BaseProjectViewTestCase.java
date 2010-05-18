@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.ui.Queryable;
@@ -282,7 +283,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    return PathManagerEx.getTestDataPath(getClass());
   }
 
   @Override

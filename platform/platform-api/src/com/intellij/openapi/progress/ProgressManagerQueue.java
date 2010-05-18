@@ -28,7 +28,6 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
   public ProgressManagerQueue(final Project project, final String title) {
     myProgressManager = ProgressManager.getInstance();
     myTask = new Task.Backgroundable(project, title) {
-      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         myQueueWorker.run();
       }
@@ -39,7 +38,8 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
     final Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
       myProgressManager.run(myTask);
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           myProgressManager.run(myTask);

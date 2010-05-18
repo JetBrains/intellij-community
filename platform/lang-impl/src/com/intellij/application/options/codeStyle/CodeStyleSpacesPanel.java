@@ -101,6 +101,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_AFTER_SEMICOLON", ApplicationBundle.message("checkbox.spaces.after.semicolon"), OTHER);
     initBooleanField("SPACE_BEFORE_SEMICOLON", ApplicationBundle.message("checkbox.spaces.before.semicolon"), OTHER);
     initBooleanField("SPACE_AFTER_TYPE_CAST", ApplicationBundle.message("checkbox.spaces.after.type.cast"), OTHER);
+    initBooleanField("SPACE_AFTER_UNARY_OPERATOR", ApplicationBundle.message("checkbox.spaces.after.unary.operator"), OTHER);
   }
 
   /*

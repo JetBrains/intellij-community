@@ -24,8 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
@@ -39,6 +41,8 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.Convertor;
+import com.intellij.util.io.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -84,27 +88,45 @@ public class CopiesPanel {
   private JPanel myPanel;
   private JComponent myHolder;
   private LinkLabel myRefreshLabel;
+  // updated only on AWT
+  private List<OverrideEqualsWrapper<WCInfo>> myCurrentInfoList;
 
   public CopiesPanel(final Project project) {
     myProject = project;
     myConnection = myProject.getMessageBus().connect(myProject);
     myVcs = SvnVcs.getInstance(myProject);
+    myCurrentInfoList = null;
 
     final Runnable focus = new Runnable() {
       public void run() {
         IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true);
       }
     };
+    final Runnable refreshView = new Runnable() {
+      public void run() {
+        final List<WCInfo> infoList = myVcs.getAllWcInfos();
+        if (myCurrentInfoList != null) {
+          final List<OverrideEqualsWrapper<WCInfo>> newList =
+            ObjectsConvertor.convert(infoList, new Convertor<WCInfo, OverrideEqualsWrapper<WCInfo>>() {
+              public OverrideEqualsWrapper<WCInfo> convert(WCInfo o) {
+                return new OverrideEqualsWrapper<WCInfo>(InfoEqualityPolicy.getInstance(), o);
+              }
+            }, ObjectsConvertor.NOT_NULL);
+
+          if (Comparing.haveEqualElements(newList, myCurrentInfoList)) {
+            myRefreshLabel.setEnabled(true);
+            return;
+          }
+          myCurrentInfoList = newList;
+        }
+        updateList(infoList);
+        myRefreshLabel.setEnabled(true);
+        SwingUtilities.invokeLater(focus);
+      }
+    };
     myConnection.subscribe(SvnVcs.ROOTS_RELOADED, new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final List<WCInfo> infoList = myVcs.getAllWcInfos();
-            updateList(infoList);
-            myRefreshLabel.setEnabled(true);
-            SwingUtilities.invokeLater(focus);
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeLater(refreshView, ModalityState.NON_MODAL);
       }
     });
 
@@ -123,6 +145,7 @@ public class CopiesPanel {
     });
     myHolder = new JScrollPane(holderPanel);
     setFocusableForLinks(myRefreshLabel);
+    refreshView.run();
     initView();
   }
 
@@ -464,5 +487,81 @@ public class CopiesPanel {
 
   public JComponent getComponent() {
     return myHolder;
+  }
+
+  public static class OverrideEqualsWrapper<T> {
+    private final EqualityPolicy<T> myPolicy;
+    private final T myT;
+
+    public OverrideEqualsWrapper(EqualityPolicy<T> policy, T t) {
+      myPolicy = policy;
+      myT = t;
+    }
+
+    public T getT() {
+      return myT;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      final OverrideEqualsWrapper<T> that = (OverrideEqualsWrapper<T>) o;
+
+      return myPolicy.isEqual(myT, that.getT());
+    }
+
+    @Override
+    public int hashCode() {
+      return myPolicy.getHashCode(myT);
+    }
+  }
+
+  private static class InfoEqualityPolicy implements EqualityPolicy<WCInfo> {
+    private final static InfoEqualityPolicy ourInstance = new InfoEqualityPolicy();
+
+    public static InfoEqualityPolicy getInstance() {
+      return ourInstance;
+    }
+
+    private static class HashCodeBuilder {
+      private int myCode;
+
+      private HashCodeBuilder() {
+        myCode = 0;
+      }
+
+      public void append(final Object o) {
+        myCode = 31 * myCode + (o != null ? o.hashCode() : 0);
+      }
+
+      public int getCode() {
+        return myCode;
+      }
+    }
+
+    public int getHashCode(WCInfo value) {
+      final HashCodeBuilder builder = new HashCodeBuilder();
+      builder.append(value.getPath());
+      builder.append(value.getUrl());
+      builder.append(value.getFormat());
+      builder.append(value.getType());
+      builder.append(value.getStickyDepth());
+
+      return builder.getCode();
+    }
+
+    public boolean isEqual(WCInfo val1, WCInfo val2) {
+      if (val1 == val2) return true;
+      if (val1 == null || val2 == null || val1.getClass() != val2.getClass()) return false;
+
+      if (! Comparing.equal(val1.getFormat(), val2.getFormat())) return false;
+      if (! Comparing.equal(val1.getPath(), val2.getPath())) return false;
+      if (! Comparing.equal(val1.getStickyDepth(), val2.getStickyDepth())) return false;
+      if (! Comparing.equal(val1.getType(), val2.getType())) return false;
+      if (! Comparing.equal(val1.getUrl(), val2.getUrl())) return false;
+
+      return true;
+    }
   }
 }

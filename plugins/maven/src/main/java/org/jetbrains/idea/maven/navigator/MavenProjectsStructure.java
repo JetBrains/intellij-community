@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -27,7 +28,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -454,9 +459,35 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Nullable
     public Navigatable getNavigatable() {
-      VirtualFile file = getVirtualFile();
+      final VirtualFile file = getVirtualFile();
       if (file == null || !file.isValid()) return null;
-      return PsiManager.getInstance(getProject()).findFile(file);
+      final PsiFile result = PsiManager.getInstance(getProject()).findFile(file);
+      return result == null ? null : new Navigatable() {
+        public void navigate(boolean requestFocus) {
+          int offset = 0;
+          if (result instanceof XmlFile) {
+            final XmlDocument xml = ((XmlFile)result).getDocument();
+            if (xml != null) {
+              final XmlTag rootTag = xml.getRootTag();
+              if (rootTag != null) {
+                final XmlTag id = rootTag.findFirstSubTag("artifactId");
+                if (id != null) {
+                  offset = id.getValue().getTextRange().getStartOffset();
+                }
+              }
+            }
+          }
+          new OpenFileDescriptor(getProject(), file, offset).navigate(requestFocus);
+        }
+
+        public boolean canNavigate() {
+          return true;
+        }
+
+        public boolean canNavigateToSource() {
+          return false;
+        }
+      };
     }
 
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {

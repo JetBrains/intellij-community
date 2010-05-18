@@ -167,6 +167,7 @@ public class GitLogTree implements GitTreeViewI {
             final GitCommit commit = commitsToShow.get(i);
             if (commit.getHash().equals(jumpTarget)) {
               myCommitsList.setSelectedIndex(i);
+              myCommitsList.ensureIndexIsVisible(i);
               break;
             }
           }

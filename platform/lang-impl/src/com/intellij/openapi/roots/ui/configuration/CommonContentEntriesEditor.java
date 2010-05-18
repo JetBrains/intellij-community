@@ -67,7 +67,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Color BACKGROUND_COLOR = UIUtil.getListBackground();
   private static final Icon ADD_CONTENT_ENTRY_ICON = IconLoader.getIcon("/modules/addContentEntry.png");
 
-  private ContentEntryTreeEditor myRootTreeEditor;
+  protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
   protected JPanel myEditorsPanel;
   private final Map<String, ContentEntryEditor> myEntryToEditorMap = new HashMap<String, ContentEntryEditor>();
