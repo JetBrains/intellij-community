@@ -70,7 +70,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private int count;
   private int total;
   private final Set<TestProxy> failed = new HashSet<TestProxy>();
-  private final Map<TestResultMessage, TestProxy> started = new HashMap<TestResultMessage, TestProxy>();
+  private final Map<TestResultMessage, List<TestProxy>> started = new HashMap<TestResultMessage, List<TestProxy>>();
   private TestProxy failedToStart = null;
   private long start;
   private long end;
@@ -192,7 +192,14 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     TestProxy proxy = new TestProxy();
     proxy.setParent(classNode);
     proxy.setResultMessage(result);
-    started.put(result, proxy);
+    synchronized (started) {
+      List<TestProxy> dups = started.get(result);
+      if (dups == null) {
+        dups = new ArrayList<TestProxy>();
+        started.put(result, dups);
+      }
+      dups.add(proxy);
+    }
     animator.setCurrentTestCase(proxy);
     treeBuilder.addItem(classNode, proxy);
     treeBuilder.repaintWithParents(proxy);
@@ -205,7 +212,9 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public boolean wasTestStarted(TestResultMessage resultMessage) {
-    return started.get(resultMessage) != null;
+    synchronized (started) {
+      return started.get(resultMessage) != null;
+    }
   }
 
   public void addTestResult(final TestResultMessage result, List<Printable> output, int exceptionMark) {
@@ -214,7 +223,11 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       exceptionMark += failedToStart.getExceptionMark();
     }
 
-    TestProxy testCase = started.get(result);
+    TestProxy testCase;
+    synchronized (started) {
+      final List<TestProxy> dups = started.get(result);
+      testCase = dups == null || dups.isEmpty() ? null : dups.remove(0);
+    }
     if (testCase == null) {
       final PsiElement element = getPackageClassNodeFor(result).getPsiElement();
       if (element instanceof PsiClass) {
