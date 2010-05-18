@@ -28,10 +28,16 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.Icons;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.hash.*;
 import com.intellij.util.ui.AsyncProcessIcon;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
+import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
+import org.jetbrains.idea.maven.facade.remote.MavenFacade;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,23 +46,23 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.List;
 
 public class RepositoryAttachDialog extends DialogWrapper {
+  private static final String DEFAULT_REPOSITORY = "<default>";
   private final JLabel myInfoLabel;
   private final Project myProject;
   private final boolean myManaged;
   private final AsyncProcessIcon myProgressIcon;
   private JComboBox myCombobox;
   private String myFilterString;
-  private Set<String> myCoordinates = new TreeSet<String>();
+  private THashMap<String, ArtifactType> myCoordinates = new THashMap<String, ArtifactType>();
   private ArrayList<String> myShownItems = new ArrayList<String>();
 
   private TextFieldWithBrowseButton myDirectoryField;
   private JComboBox myRepositoryUrl;
+  private final Map<String, MavenFacade.Repository> myRepositories = new TreeMap<String, MavenFacade.Repository>();
 
   public RepositoryAttachDialog(Project project, boolean managed) {
     super(project, true);
@@ -74,7 +80,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
       public void keyPressed(KeyEvent e) {
         final boolean popupVisible = myCombobox.isPopupVisible();
         if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
-          if (true) return;
+          //if (true) return;
           if (!popupVisible) {
             if (performSearch()) {
               e.consume();
@@ -121,11 +127,12 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myFilterString = prefix.toUpperCase();
     if (!force && myFilterString.equals(prevFilter)) return;
     myShownItems.clear();
-    for (String coordinate : myCoordinates) {
+    for (String coordinate : myCoordinates.keySet()) {
       if (coordinate.toUpperCase().contains(myFilterString)) {
         myShownItems.add(coordinate);
       }
     }
+    Collections.sort(myShownItems);
     ((CollectionComboBoxModel)myCombobox.getModel()).update();
     setInputText(prefix);
     if (myCombobox.getEditor().getEditorComponent().hasFocus()) {
@@ -140,14 +147,22 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (myProgressIcon.isVisible()) return false;
     myProgressIcon.setVisible(true);
     myProgressIcon.resume();
-    RepositoryAttachHandler.searchArtifacts(myProject, text, new Processor<Collection<ArtifactType>>() {
-      public boolean process(Collection<ArtifactType> artifactTypes) {
+    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<ArtifactType>, Collection<RepositoryType>>() {
+      public boolean process(Collection<ArtifactType> artifactTypes, Collection<RepositoryType> repositoryTypes) {
         if (myProgressIcon.isDisposed()) return true;
         myProgressIcon.suspend();
         myProgressIcon.setVisible(false);
         for (ArtifactType artifactType : artifactTypes) {
-          myCoordinates.add(artifactType.getGroupId() + ":" + artifactType.getArtifactId() + ":" + artifactType.getVersion());
+          myCoordinates.put(artifactType.getGroupId() + ":" + artifactType.getArtifactId() + ":" + artifactType.getVersion(), artifactType);
         }
+        for (RepositoryType repositoryType : repositoryTypes) {
+          if (!myRepositories.containsKey(repositoryType.getContentResourceURI())) {
+            myRepositories.put(
+              repositoryType.getContentResourceURI(),
+              new MavenFacade.Repository(repositoryType.getId(), repositoryType.getContentResourceURI(), "default"));
+          }
+        }
+        myRepositoryUrl.setModel(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), myRepositoryUrl.getEditor().getItem()));
         updateComboboxSelection(true);
         return true;
       }
@@ -222,11 +237,15 @@ public class RepositoryAttachDialog extends DialogWrapper {
       gridComponents.add(coordComponent);
 
       final LabeledComponent<JComboBox> repository = new LabeledComponent<JComboBox>();
-      repository.getLabel().setText("Repository");
-      myRepositoryUrl = new JComboBox(RepositoryAttachHandler.getRepositoryUrls());
+      repository.getLabel().setText("Repository URL:");
+      myRepositories.put(DEFAULT_REPOSITORY, null);
+      for (MavenFacade.Repository repo : RepositoryAttachHandler.getDefaultRepositories()) {
+        myRepositories.put(repo.getUrl(), repo);
+      }
+      myRepositoryUrl = new JComboBox(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), DEFAULT_REPOSITORY));
       myRepositoryUrl.setEditable(true);
       repository.setComponent(myRepositoryUrl);
-      //gridComponents.add(repository);
+      gridComponents.add(repository);
 
       if (!myManaged) {
         myDirectoryField = new TextFieldWithBrowseButton();
@@ -269,9 +288,18 @@ public class RepositoryAttachDialog extends DialogWrapper {
     return RepositoryAttachDialog.class.getName();
   }
 
-  @Nullable
-  public String getRepositoryUrl() {
-    return (String)myRepositoryUrl.getSelectedItem();
+  @NotNull
+  public List<MavenFacade.Repository> getRepositories() {
+    final String selectedRepository = (String)myRepositoryUrl.getEditor().getItem();
+    if (selectedRepository != null && selectedRepository != DEFAULT_REPOSITORY && !myRepositories.containsKey(selectedRepository)) {
+      return Collections.singletonList(new MavenFacade.Repository("custom", selectedRepository, "default"));
+    }
+    else {
+      final ArtifactType artifact = myCoordinates.get(getCoordinateText());
+      final MavenFacade.Repository repository =
+        artifact != null && artifact.getResourceUri() != null ? myRepositories.get(artifact.getResourceUri()) : null;
+      return repository != null? Collections.singletonList(repository) : new ArrayList<MavenFacade.Repository>(myRepositories.values());
+    }
   }
 
   private boolean isValidCoordinateSelected() {

@@ -122,40 +122,35 @@ public class MavenFacadeImpl extends RemoteImpl implements MavenFacade {
 
   }
 
-  public List<RepositoryType> getRepositories() throws RemoteException {
-    final HashMap<String, RepositoryType> result = new HashMap<String, RepositoryType>();
-    for (String url : mySettings.getNexusUrls()) {
-      try {
-        final List<RepositoryType> repos = new Endpoint.Repositories(url).getRepolistAsRepositories().getData().getRepositoriesItem();
-        for (RepositoryType repo : repos) {
-          result.put(repo.getId(), repo);
-        }
-      }
-      catch(Exception e){
-        e.printStackTrace();
-      }
+  public List<RepositoryType> getRepositories(String nexusUrl) throws RemoteException {
+    try {
+      return new Endpoint.Repositories(nexusUrl).getRepolistAsRepositories().getData().getRepositoriesItem();
     }
-    return new ArrayList<RepositoryType>(result.values());
+    catch (Exception ex) {
+      handleException(ex);
+      throw new AssertionError();
+    }
   }
 
-  public List<ArtifactType> findArtifacts(ArtifactType template) throws RemoteException {
-    final HashMap<String, ArtifactType> result = new HashMap<String, ArtifactType>();
-    for (String url : mySettings.getNexusUrls()) {
-      try {
-        final SearchResults results = new Endpoint.DataIndex(url)
-          .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
+  public List<ArtifactType> findArtifacts(ArtifactType template, String nexusUrl) throws RemoteException {
+    try {
+      SearchResults results = new Endpoint.DataIndex(nexusUrl)
+        .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
+                                        template.getClassifier());
+      if (results.isTooManyResults()) {
+        results = new Endpoint.DataIndex(nexusUrl)
+          .getArtifactlistAsSearchResults(null, "^"+template.getGroupId(), template.getArtifactId(), template.getVersion(),
                                           template.getClassifier());
-        for (ArtifactType artifact : results.getData().getArtifact()) {
-          result.put(artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion(), artifact);
+        if (results.isTooManyResults()) {
+          return Collections.emptyList();
         }
       }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
+      return new ArrayList<ArtifactType>(results.getData().getArtifact());
     }
-    //addMissingVersions(result);
-
-    return new ArrayList<ArtifactType>(result.values());
+    catch (Exception ex) {
+      handleException(ex);
+      throw new AssertionError();
+    }
   }
 
   private void addMissingVersions(final Map<String, ArtifactType> result) {

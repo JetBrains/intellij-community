@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -120,29 +121,35 @@ public class ReachingDefinitionsCollector {
       private void addUsagesInClosure(final Map<String, VariableInfo> imap, final Map<String, VariableInfo> omap, final GrClosableBlock closure, final GrStatement first, final GrStatement last) {
         closure.accept(new GroovyRecursiveElementVisitor() {
           public void visitReferenceExpression(GrReferenceExpression refExpr) {
-            if (!refExpr.isQualified()) {
-              PsiElement resolved = refExpr.resolve();
-              if (resolved instanceof GrVariable) {
-                GrVariable variable = (GrVariable) resolved;
-                if (!PsiTreeUtil.isAncestor(closure, variable, true)) {
-                  String name = variable.getName();
-                  if (name != null) {
-                    if (!(variable instanceof GrField)) {
-                      if (!isInFragment(first, last, resolved)) {
-                        if (isInFragment(first, last, closure)) {
-                          addVariable(name, imap, variable.getManager(), variable.getType());
-                        }
-                      } else {
-                        if (!isInFragment(first, last, closure)) {
-                          addVariable(name, omap, variable.getManager(), variable.getType());
-                        }
-                      }
-                    }
+            if (refExpr.isQualified()) {
+              return;
+            }
+            PsiElement resolved = refExpr.resolve();
+            if (!(resolved instanceof GrVariable)) {
+              return;
+            }
+            GrVariable variable = (GrVariable) resolved;
+            if (PsiTreeUtil.isAncestor(closure, variable, true)) {
+              return;
+            }
+            if (variable instanceof ClosureSyntheticParameter &&
+                PsiTreeUtil.isAncestor(closure, ((ClosureSyntheticParameter)variable).getClosure(), false)) {
+              return;
+            }
+
+            String name = variable.getName();
+            if (name != null) {
+              if (!(variable instanceof GrField)) {
+                if (!isInFragment(first, last, resolved)) {
+                  if (isInFragment(first, last, closure)) {
+                    addVariable(name, imap, variable.getManager(), variable.getType());
+                  }
+                } else {
+                  if (!isInFragment(first, last, closure)) {
+                    addVariable(name, omap, variable.getManager(), variable.getType());
                   }
                 }
               }
-            } else {
-              super.visitReferenceExpression(refExpr);
             }
           }
         });
