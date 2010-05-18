@@ -180,7 +180,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   public Icon getIcon(final int flags) {
-    return Icons.FIELD_ICON; // for the rare cases it shows in structure view
+    if (getQualifier() != null || PsiTreeUtil.getParentOfType(this, PyFunction.class, PyClass.class) instanceof PyClass) {
+      return Icons.FIELD_ICON;
+    }
+    return Icons.VARIABLE_ICON;
   }
 
   @Nullable
