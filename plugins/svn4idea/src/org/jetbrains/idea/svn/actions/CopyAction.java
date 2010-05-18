@@ -165,7 +165,7 @@ public class CopyAction extends BasicAction {
 
     final Task.Backgroundable task =
       new Task.Backgroundable(project, "Checking target folder", false, BackgroundFromStartOption.getInstance()) {
-        @Override
+        
         public void run(@NotNull ProgressIndicator indicator) {
           taskImpl.run();
         }

@@ -131,7 +131,7 @@ public class GrabDependencies implements IntentionAction {
     try {
       final GrapeProcessHandler handler = new GrapeProcessHandler(JdkUtil.setupJVMCommandLine(exePath, javaParameters, true), module);
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab annotations") {
-        @Override
+        
         public void run(@NotNull ProgressIndicator indicator) {
           handler.startNotify();
           handler.waitFor();

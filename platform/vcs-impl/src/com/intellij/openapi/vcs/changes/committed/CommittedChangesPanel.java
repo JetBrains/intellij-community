@@ -141,7 +141,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myInLoad = true;
     myBrowser.setLoading(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Loading changes", true, BackgroundFromStartOption.getInstance()) {
-      @Override
+      
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final AsynchConsumer<List<CommittedChangeList>> appender = new AsynchConsumer<List<CommittedChangeList>>() {

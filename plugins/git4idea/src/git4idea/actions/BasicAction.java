@@ -69,7 +69,7 @@ public abstract class BasicAction extends DumbAwareAction {
     final boolean background = perform(project, vcs, exceptions, affectedFiles);
     if (!background) {
       vcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
-        @Override
+
         public void run(@NotNull ProgressIndicator indicator) {
           GitUtil.refreshFiles(project, Arrays.asList(affectedFiles));
           UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -112,7 +112,7 @@ public abstract class BasicAction extends DumbAwareAction {
                                  final List<VcsException> exceptions,
                                  final Consumer<ProgressIndicator> action) {
     vcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         action.consume(indicator);
         GitUtil.refreshFiles(project, Arrays.asList(affectedFiles));

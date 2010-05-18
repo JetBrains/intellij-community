@@ -325,7 +325,7 @@ public class CopiesPanel {
       myMergeTitle = "Merge from " + branchName;
     }
 
-    @Override
+    
     public void run(@NotNull ProgressIndicator indicator) {
       // branch is info holder
       new FirstInBranch(myVcs, myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl,
