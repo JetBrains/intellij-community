@@ -37,6 +37,7 @@ import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 import org.jetbrains.idea.maven.facade.nexus.Endpoint;
 import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
@@ -132,18 +133,14 @@ public class MavenFacadeImpl extends RemoteImpl implements MavenFacade {
     }
   }
 
+  @Nullable
   public List<ArtifactType> findArtifacts(ArtifactType template, String nexusUrl) throws RemoteException {
     try {
       SearchResults results = new Endpoint.DataIndex(nexusUrl)
         .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
-                                        template.getClassifier());
+                                        template.getClassifier(), template.getContextId());
       if (results.isTooManyResults()) {
-        results = new Endpoint.DataIndex(nexusUrl)
-          .getArtifactlistAsSearchResults(null, "^"+template.getGroupId(), template.getArtifactId(), template.getVersion(),
-                                          template.getClassifier());
-        if (results.isTooManyResults()) {
-          return Collections.emptyList();
-        }
+        return null;
       }
       return new ArrayList<ArtifactType>(results.getData().getArtifact());
     }

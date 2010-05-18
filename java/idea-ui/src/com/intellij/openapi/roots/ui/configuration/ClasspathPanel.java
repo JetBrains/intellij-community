@@ -379,7 +379,7 @@ public class ClasspathPanel extends JPanel {
         else {
           provider = ProjectStructureConfigurable.getInstance(myState.getProject()).getContext().createModifiableModelProvider(table.getTableLevel(), false);
         }
-        final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
+        final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library, myState.getProject());
         editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, getRootModel().getModule());
         editor.openDialog(ClasspathPanel.this, Collections.singletonList(library), true);
         myEntryTable.repaint();
@@ -995,11 +995,11 @@ public class ClasspathPanel extends JPanel {
   }
   private static class CreateModuleLibraryDialog implements ChooserDialog<Library> {
     private boolean myIsOk;
-    private final Component myParent;
+    private final ClasspathPanel myParent;
     private final LibraryTable myLibraryTable;
     private Library myChosenLibrary;
 
-    public CreateModuleLibraryDialog(Component parent, final LibraryTable libraryTable) {
+    public CreateModuleLibraryDialog(ClasspathPanel parent, final LibraryTable libraryTable) {
       myParent = parent;
       myLibraryTable = libraryTable;
     }
@@ -1028,7 +1028,7 @@ public class ClasspathPanel extends JPanel {
         }
       };
       final Library library = myLibraryTable.createLibrary();
-      final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library);
+      final LibraryTableEditor editor = LibraryTableEditor.editLibrary(provider, library, myParent.myState.getProject());
       final Module contextModule = DataKeys.MODULE_CONTEXT.getData(DataManager.getInstance().getDataContext(myParent));
       editor.addFileChooserContext(LangDataKeys.MODULE_CONTEXT, contextModule);
       myIsOk = editor.openDialog(myParent, Collections.singletonList(library), true) != null;

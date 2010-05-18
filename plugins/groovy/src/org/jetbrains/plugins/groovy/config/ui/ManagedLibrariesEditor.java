@@ -246,7 +246,7 @@ public class ManagedLibrariesEditor {
           }
           final LibraryTableModifiableModelProvider provider =
             ProjectStructureConfigurable.getInstance(myModule.getProject()).getContext().createModifiableModelProvider(table.getTableLevel(), false);
-          LibraryTableEditor.editLibrary(provider, library).openDialog(myComponent, Collections.singletonList(library), true);
+          LibraryTableEditor.editLibrary(provider, library, myModule.getProject()).openDialog(myComponent, Collections.singletonList(library), true);
         }
 
       }
