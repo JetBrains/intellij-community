@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.tools.*;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,7 +44,9 @@ public abstract class FileVirtualObject extends SimpleJavaFileObject {
 
   @Override
   public InputStream openInputStream() throws IOException {
-    return getVirtualFile().getInputStream();
+    // in-process compiler does not work well with zipped stream
+    byte[] bytes = getVirtualFile().contentsToByteArray();
+    return new ByteArrayInputStream(bytes);
   }
 
   @Override
