@@ -49,8 +49,9 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
       return result;
     }
     int pos = -1;
+    char separator = getSeparator();
     while (true) {
-      int nextPos = s.indexOf(',', pos + 1);
+      int nextPos = s.indexOf(separator, pos + 1);
       if (nextPos == -1) {
         PsiReference[] refs =
           createReferences(element, s.substring(pos + 1), pos + offset + 1, false);
@@ -66,6 +67,10 @@ public class PathListReferenceProvider extends PsiReferenceProviderBase {
     }
 
     return result;
+  }
+
+  protected char getSeparator() {
+    return ',';
   }
 
   protected PsiReference[] createReferences(PsiElement element, String s, int offset, final boolean soft) {

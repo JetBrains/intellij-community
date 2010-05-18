@@ -37,6 +37,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
   private static final String BEFORE_LEFT_BRACE = ApplicationBundle.message("group.spaces.before.left.brace");
   private static final String WITHIN_PARENTHESES = ApplicationBundle.message("group.spaces.within.parentheses");
   private static final String TERNARY_OPERATOR = ApplicationBundle.message("group.spaces.in.ternary.operator");
+  private static final String TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
   private static final String OTHER = ApplicationBundle.message("group.spaces.other");
 
   protected void initTables() {
@@ -90,6 +91,8 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_BEFORE_COLON", ApplicationBundle.message("checkbox.spaces.before.colon"), TERNARY_OPERATOR);
     initBooleanField("SPACE_AFTER_COLON", ApplicationBundle.message("checkbox.spaces.after.colon"), TERNARY_OPERATOR);
 
+    initBooleanField("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", ApplicationBundle.message("checkbox.spaces.after.comma"), TYPE_ARGUMENTS);
+
     initBooleanField("SPACE_AFTER_LABEL", ApplicationBundle.message("checkbox.spaces.after.colon.in.label.declaration"), OTHER);
     initBooleanField("SPACE_WITHIN_BRACKETS", ApplicationBundle.message("checkbox.spaces.within.brackets"), OTHER);
     initBooleanField("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES", ApplicationBundle.message("checkbox.spaces.within.array.initializer.braces"), OTHER);
@@ -98,6 +101,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_AFTER_SEMICOLON", ApplicationBundle.message("checkbox.spaces.after.semicolon"), OTHER);
     initBooleanField("SPACE_BEFORE_SEMICOLON", ApplicationBundle.message("checkbox.spaces.before.semicolon"), OTHER);
     initBooleanField("SPACE_AFTER_TYPE_CAST", ApplicationBundle.message("checkbox.spaces.after.type.cast"), OTHER);
+    initBooleanField("SPACE_AFTER_UNARY_OPERATOR", ApplicationBundle.message("checkbox.spaces.after.unary.operator"), OTHER);
   }
 
   /*

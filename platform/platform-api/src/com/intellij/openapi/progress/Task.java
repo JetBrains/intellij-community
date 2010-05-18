@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * }.setCancelText("Stop loading").queue();
  * </pre>
  */
-public abstract class Task implements TaskInfo {
+public abstract class Task implements TaskInfo, Progressive {
 
   protected final Project myProject;
   protected String myTitle;
@@ -50,8 +50,6 @@ public abstract class Task implements TaskInfo {
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
   }
-
-  public abstract void run(@NotNull ProgressIndicator indicator);
 
   public void onCancel() {}
 

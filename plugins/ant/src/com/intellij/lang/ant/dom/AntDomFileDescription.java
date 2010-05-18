@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
   private static final String PROJECT_TAG_NAME = "project";
-  private static final String DEFAULT_ATTRIB_NAME = "default";
 
   public AntDomFileDescription() {
     super(AntDomProject.class, PROJECT_TAG_NAME);
@@ -50,13 +49,11 @@ public class AntDomFileDescription extends DomFileDescription<AntDomProject> {
     if (document != null) {
       final XmlTag tag = document.getRootTag();
       if (tag != null && PROJECT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-        if (tag.getAttributeValue(DEFAULT_ATTRIB_NAME) != null) {
-          return true;
-        }
-        final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
-        if (vFile != null && ForcedAntFileAttribute.isAntFile(vFile)) {
-          return true;
-        }
+        return true;
+      }
+      final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
+      if (vFile != null && ForcedAntFileAttribute.isAntFile(vFile)) {
+        return true;
       }
     }
     return false;

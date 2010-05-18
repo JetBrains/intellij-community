@@ -367,8 +367,13 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public void requestRelease() {
     myReleaseRequested = true;
 
+    reset();
+
+    myUpdateQueue.deactivate();
+  }
+
+  public void reset() {
     myNodeQueue.clear();
     myUpdateQueue.cancelAllUpdates();
-    myUpdateQueue.deactivate();
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.lang.ant.dom;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameValue;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,6 +27,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomTarget extends AntDomElement {
   @Attribute("name")
+  @NameValue
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("if")
@@ -36,5 +38,5 @@ public abstract class AntDomTarget extends AntDomElement {
 
   @Attribute("depends")
   @Convert(value = AntDomTargetDependsListConverter.class)
-  public abstract GenericAttributeValue<String> getDependsList();
+  public abstract GenericAttributeValue<TargetResolver.Result> getDependsList();
 }

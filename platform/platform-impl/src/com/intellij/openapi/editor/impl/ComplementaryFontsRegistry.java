@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 
@@ -71,11 +72,15 @@ public class ComplementaryFontsRegistry {
 
   static {
     ourFontNames = new ArrayList<String>();
-    GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
-    for (final String fontName : fontNames) {
-      if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX)) {
-        ourFontNames.add(fontName);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourFontNames.add("Monospaced");
+    } else {
+      GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+      String[] fontNames = graphicsEnvironment.getAvailableFontFamilyNames();
+      for (final String fontName : fontNames) {
+        if (!fontName.endsWith(BOLD_SUFFIX) && !fontName.endsWith(ITALIC_SUFFIX)) {
+          ourFontNames.add(fontName);
+        }
       }
     }
     ourUsedFonts = new LinkedHashMap<FontKey, FontInfo>();

@@ -142,6 +142,27 @@ public class PathManagerEx {
   }
 
   /**
+   * Shorthand for calling {@link #getTestDataPath(TestDataLookupStrategy)} with strategy obtained via call to
+   * {@link #determineLookupStrategy(Class)} with the given class.
+   * <p/>
+   * <b>Note:</b> this method receives explicit class argument in order to solve the following limitation - we analyze calling
+   * stack trace in order to guess test data lookup strategy ({@link #guessTestDataLookupStrategyOnClassLocation()}). However,
+   * there is a possible case that super-class method is called on sub-class object. Stack trace shows super-class then.
+   * There is a possible situation that actual test is <code>'ultimate'</code> but its abstract super-class is
+   * <code>'community'</code>, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
+   * base test class if its concrete sub-classes doesn't explicitly occur at stack trace.
+   *
+   *
+   * @param testClass     target test class for which test data should be obtained
+   * @return              base test data directory to use for the given test class
+   * @throws IllegalStateException    as defined by {@link #getTestDataPath(TestDataLookupStrategy)}
+   */
+  public static String getTestDataPath(Class<?> testClass) throws IllegalStateException {
+    TestDataLookupStrategy strategy = determineLookupStrategy(testClass);
+    return getTestDataPath(strategy);
+  }
+
+  /**
    * Tries to return test data path for the given lookup strategy.
    *
    * @param strategy    lookup strategy to use
@@ -205,7 +226,7 @@ public class PathManagerEx {
     StackTraceElement[] stackTrace = new Exception().getStackTrace();
     for (StackTraceElement stackTraceElement : stackTrace) {
       Class<?> clazz = loadClass(stackTraceElement.getClassName());
-      if (TestCase.class == clazz || !isJUnitClass(clazz)) {
+      if (clazz == null || TestCase.class == clazz || !isJUnitClass(clazz)) {
         continue;
       }
 
@@ -221,13 +242,15 @@ public class PathManagerEx {
     return classToUse == null ? null : determineLookupStrategy(classToUse);
   }
 
+  @Nullable
   private static Class<?> loadClass(String className) {
     Class<?> clazz = null;
     ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
     ClassLoader definingClassLoader = PathManagerEx.class.getClassLoader();
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
 
-    List<ClassLoader> classLoaders = asList(contextClassLoader, definingClassLoader, systemClassLoader);
+    List<ClassLoader> classLoaders
+      = asList(contextClassLoader, definingClassLoader, systemClassLoader);
     for (ClassLoader classLoader : classLoaders) {
       clazz = loadClass(className, classLoader);
       if (clazz != null) {
@@ -235,11 +258,6 @@ public class PathManagerEx {
       }
     }
 
-    if (clazz == null) {
-      throw new IllegalStateException(String.format("Can't load class '%s'. Tried to do that via thread context class loader(%s), "
-                                                    + "defining class loader(%s) and system class loader(%s)",
-                                                    className, contextClassLoader, definingClassLoader, systemClassLoader));
-    }
     return clazz;
   }
 

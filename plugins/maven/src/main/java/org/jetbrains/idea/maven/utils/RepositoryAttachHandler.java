@@ -31,11 +31,14 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
+import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 import org.jetbrains.idea.maven.facade.remote.MavenFacade;
 import org.jetbrains.idea.maven.facade.remote.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.remote.RemoteTransferListener;
@@ -48,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -79,7 +83,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       final ActionCallback callback = new ActionCallback();
       final String copyTo = dialog.getDirectoryPath();
       final String coord = dialog.getCoordinateText();
-      resolveLibrary(project, Collections.singleton(coord), false, new Processor<Map<String, List<ArtifactType>>>() {
+      resolveLibrary(project, Collections.singleton(coord), dialog.getRepositories(), false, new Processor<Map<String, List<ArtifactType>>>() {
         public boolean process(final Map<String, List<ArtifactType>> stringListMap) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -109,7 +113,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   public ActionCallback refreshLibrary(final Project project, final Library.ModifiableModel library) {
     final ActionCallback result = new ActionCallback();
     final String coord = getMavenCoordinate(library.getName());
-    resolveLibrary(project, Collections.singleton(coord), true, new Processor<Map<String, List<ArtifactType>>>() {
+    resolveLibrary(project, Collections.singleton(coord), getDefaultRepositories(), true, new Processor<Map<String, List<ArtifactType>>>() {
       public boolean process(final Map<String, List<ArtifactType>> artifactTypes) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
@@ -127,7 +131,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
                                          Library.ModifiableModel library,
                                          Collection<ArtifactType> artifactTypes,
                                          String copyTo) {
-    final String repoUrl = createMavenFacadeSettings(project).getLocalRepository().getUrl();
+    final String repoUrl = VfsUtil.pathToUrl(MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveLocalRepository().getPath());
     for (OrderRootType type : OrderRootType.getAllTypes()) {
       for (String url : library.getUrls(type)) {
         if (url.startsWith(repoUrl)) {
@@ -159,7 +163,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     }
   }
 
-  public static void searchArtifacts(final Project project, String coord, final Processor<Collection<ArtifactType>> resultProcessor) {
+  public static void searchArtifacts(final Project project, String coord, final PairProcessor<Collection<ArtifactType>, Collection<RepositoryType>> resultProcessor) {
     if (coord == null) return;
     final ArtifactType template = createTemplate(coord);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
@@ -167,10 +171,74 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       public void run(@NotNull ProgressIndicator indicator) {
         final MavenFacadeManager mavenManager = ServiceManager.getService(project, MavenFacadeManager.class);
         final Ref<List<ArtifactType>> result = Ref.create(Collections.<ArtifactType>emptyList());
+        final Ref<List<RepositoryType>> result2 = Ref.create(Collections.<RepositoryType>emptyList());
         try {
           final MavenFacade mavenFacade = mavenManager.getMavenFacade(project);
-          mavenFacade.setMavenSettings(createMavenFacadeSettings(project));
-          result.set(mavenFacade.findArtifacts(template));
+          final String[] nexusUrls = getDefaultNexusUrls();
+          final List<ArtifactType> resultList = new ArrayList<ArtifactType>();
+          final List<RepositoryType> result2List = new ArrayList<RepositoryType>();
+          for (String nexusUrl : nexusUrls) {
+            final List<ArtifactType> artifacts;
+            try {
+              artifacts = mavenFacade.findArtifacts(template, nexusUrl);
+            }
+            catch (Exception ex) {
+              handleError(null, ex);
+              continue;
+            }
+            if (!artifacts.isEmpty()) {
+              final List<RepositoryType> repositories = mavenFacade.getRepositories(nexusUrl);
+              final HashMap<String, RepositoryType> map = new HashMap<String, RepositoryType>();
+              for (RepositoryType repository : repositories) {
+                map.put(repository.getId(), repository);
+              }
+              result2List.addAll(repositories);
+              for (ArtifactType artifact : artifacts) {
+                final RepositoryType repoType = map.get(artifact.getRepoId());
+                artifact.setResourceUri(repoType == null? null: repoType.getContentResourceURI());
+              }
+              resultList.addAll(artifacts);
+            }
+          }
+          result.set(resultList);
+          result2.set(result2List);
+        }
+        catch (Exception e) {
+          handleError(null, e);
+        }
+        finally {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              resultProcessor.process(result.get(), result2.get());
+            }
+          });
+        }
+      }
+    });
+  }
+
+  public static void searchRepositories(final Project project, final Processor<Collection<RepositoryType>> resultProcessor) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final MavenFacadeManager mavenManager = ServiceManager.getService(project, MavenFacadeManager.class);
+        final Ref<List<RepositoryType>> result = Ref.create(Collections.<RepositoryType>emptyList());
+        try {
+          final String[] nexusUrls = getDefaultNexusUrls();
+          final MavenFacade mavenFacade = mavenManager.getMavenFacade(project);
+          final ArrayList<RepositoryType> repoList = new ArrayList<RepositoryType>();
+          for (String nexusUrl : nexusUrls) {
+            final List<RepositoryType> repositories;
+            try {
+              repositories = mavenFacade.getRepositories(nexusUrl);
+            }
+            catch (Exception ex) {
+              handleError(null, ex);
+              continue;
+            }
+            repoList.addAll(repositories);
+          }
+          result.set(repoList);
         }
         catch (Exception e) {
           handleError(null, e);
@@ -184,6 +252,26 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         }
       }
     });
+  }
+
+  private static String[] getDefaultNexusUrls() {
+    return new String[] {
+              "http://oss.sonatype.org/service/local/",
+              "http://repository.sonatype.org/service/local/",
+              //"http://maven.labs.intellij.net:8081/nexus/service/local/"
+            };
+  }
+
+  public static List<MavenFacade.Repository> getDefaultRepositories() {
+    final List<MavenFacade.Repository> list = new ArrayList<MavenFacade.Repository>();
+    final Set<String> visited = new HashSet<String>();
+    final MavenRepositoriesProvider provider = MavenRepositoriesProvider.getInstance();
+    for (String id : provider.getRepositoryIds()) {
+      final String url = provider.getRepositoryUrl(id);
+      if (!visited.add(url)) continue;
+      list.add(new MavenFacade.Repository(id, url, StringUtil.notNullize(provider.getRepositoryLayout(id), "default")));
+    }
+    return list;
   }
 
   private static ArtifactType createTemplate(String coord) {
@@ -201,7 +289,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   public static void resolveLibrary(final Project project,
                                     Collection<String> libNames,
-                                    boolean modal,
+                                    final Collection<MavenFacade.Repository> repositories, boolean modal,
                                     final Processor<Map<String, List<ArtifactType>>> resultProcessor) {
     if (libNames.isEmpty()) return;
     final ArrayList<ArtifactType> parameters = new ArrayList<ArtifactType>();
@@ -213,12 +301,12 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     ProgressManager.getInstance().run(modal ? new Task.Modal(project, "Maven", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        doResolveInner(project, parameters, resultProcessor, indicator);
+        doResolveInner(project, parameters, repositories, resultProcessor, indicator);
       }
     } : new Task.Backgroundable(project, "Maven", false, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        doResolveInner(project, parameters, resultProcessor, indicator);
+        doResolveInner(project, parameters, repositories, resultProcessor, indicator);
       }
 
       @Override
@@ -230,12 +318,16 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   private static void doResolveInner(Project project,
                                      final ArrayList<ArtifactType> artifacts,
-                                     final Processor<Map<String, List<ArtifactType>>> resultProcessor, ProgressIndicator indicator) {
+                                     Collection<MavenFacade.Repository> repositories,
+                                     final Processor<Map<String, List<ArtifactType>>> resultProcessor,
+                                     ProgressIndicator indicator) {
     final Ref<Map<String, List<ArtifactType>>> result = Ref.create(Collections.<String, List<ArtifactType>>emptyMap());
     final MavenFacadeManager mavenManager = ServiceManager.getService(project, MavenFacadeManager.class);
     try {
       final MavenFacade mavenFacade = mavenManager.getMavenFacade(project);
-      mavenFacade.setMavenSettings(createMavenFacadeSettings(project));
+      final MavenFacade.MavenFacadeSettings settings = createMavenFacadeSettings(project);
+      settings.getRemoteRepositories().addAll(repositories);
+      mavenFacade.setMavenSettings(settings);
       final RemoteTransferListener transferListener = fromProgressIndicator(indicator);
       UnicastRemoteObject.exportObject(transferListener, 0);
       mavenFacade.setTransferListener(transferListener);
@@ -341,28 +433,12 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     });
   }
 
-  public static String[] getRepositoryUrls() {
-    final ArrayList<String> urls = new ArrayList<String>();
-    final MavenRepositoriesProvider provider = MavenRepositoriesProvider.getInstance();
-    for (String id : provider.getRepositoryIds()) {
-      urls.add(provider.getRepositoryUrl(id));
-    }
-    return urls.toArray(new String[urls.size()]);
-  }
-
   private static MavenFacade.MavenFacadeSettings createMavenFacadeSettings(Project project) {
     final MavenFacade.MavenFacadeSettings settings = new MavenFacade.MavenFacadeSettings();
     final MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
     settings.setLocalRepository(new MavenFacade.Repository("local", VfsUtil.pathToUrl(generalSettings.getEffectiveLocalRepository().getPath()), "default"));
-
-    final MavenRepositoriesProvider provider = MavenRepositoriesProvider.getInstance();
-    for (String id : provider.getRepositoryIds()) {
-      settings.getRemoteRepositories().add(new MavenFacade.Repository(id, provider.getRepositoryUrl(id), "default"));
-    }
-    settings.getNexusUrls().add("http://repository.sonatype.org/service/local/");
     return settings;
   }
-
 
   public static RemoteTransferListener fromProgressIndicator(final ProgressIndicator indicator) {
     return new RemoteTransferListenerImpl() {

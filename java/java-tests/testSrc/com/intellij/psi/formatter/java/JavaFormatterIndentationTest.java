@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * Is intended to hold java formatting indentation-specific tests.
@@ -154,5 +155,52 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}"
     );
+  }
+
+  public void testEnumIndentation() throws IncorrectOperationException {
+    // Inspired by IDEADEV-2840
+    doTextTest("enum Xyz {\n" + "FOO,\n" + "BAR,\n" + "}", "enum Xyz {\n" + "    FOO,\n" + "    BAR,\n" + "}");
+  }
+
+  public void testFirstColumnComment() throws IncorrectOperationException {
+    // Inspired by IDEADEV-14116
+    getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
+
+    doTextTest("class Foo{\n" + "private int foo;     // this is a foo\n" + "}",
+               "class Foo {\n" + "    private int foo;     // this is a foo\n" + "}");
+  }
+
+  public void testCaseFromSwitch() throws IncorrectOperationException {
+    // Inspired by IDEADEV-22920
+    getSettings().INDENT_CASE_FROM_SWITCH = false;
+    doTextTest("class Foo{\n" +
+               "void foo () {\n" +
+               "switch(someValue) {\n" +
+               " // This comment is correctly not-indented\n" +
+               " case 1:\n" +
+               "    doSomething();\n" +
+               "    break;\n" +
+               "\n" +
+               " // This comment should not be indented, but it is\n" +
+               " case 2:\n" +
+               "    doSomethingElse();\n" +
+               "    break;\n" +
+               "}\n" +
+               "}\n" +
+               "}", "class Foo {\n" +
+                    "    void foo() {\n" +
+                    "        switch (someValue) {\n" +
+                    "        // This comment is correctly not-indented\n" +
+                    "        case 1:\n" +
+                    "            doSomething();\n" +
+                    "            break;\n" +
+                    "\n" +
+                    "        // This comment should not be indented, but it is\n" +
+                    "        case 2:\n" +
+                    "            doSomethingElse();\n" +
+                    "            break;\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}");
   }
 }

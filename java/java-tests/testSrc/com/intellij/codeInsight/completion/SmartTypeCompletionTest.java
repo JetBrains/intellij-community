@@ -633,6 +633,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testDefaultAnnoMethodValue() throws Throwable { doTest(); }
 
+  public void testNewAnonymousFunction() throws Throwable { doTest(); }
+
   public void testUseIntConstantsFromTargetClass() throws Throwable { doTest(); }
   public void testUseIntConstantsFromTargetClassReturnValue() throws Throwable { doTest(); }
   public void testUseIntConstantsFromConstructedClass() throws Throwable { doTest(); }

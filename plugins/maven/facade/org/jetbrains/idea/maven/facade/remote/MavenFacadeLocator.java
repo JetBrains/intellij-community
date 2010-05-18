@@ -126,11 +126,10 @@ public class MavenFacadeLocator {
       acquireFacade(new String[]{"java", "-cp", systemPath, debug1, debug2, RemoteMavenServer.class.getName()}, null, null);
     final MavenFacade facade = pair.first;
     final MavenFacade.MavenFacadeSettings settings = new MavenFacade.MavenFacadeSettings();
-    settings.getNexusUrls().add("http://repository.sonatype.org/service/local/");
     facade.setMavenSettings(settings);
     final String lookup = args.length > 0 ? args[0] : "hibernate";
     System.out.println("Looking up: "+lookup);
-    final List<ArtifactType> result = facade.findArtifacts(createTemplate(lookup));
+    final List<ArtifactType> result = facade.findArtifacts(createTemplate(lookup), "http://oss.sonatype.org/service/local/");
     int i=1;
     for (ArtifactType type : result) {
       System.out.println((++i)+". "+type.getGroupId()+":"+type.getArtifactId()+":"+type.getVersion());
