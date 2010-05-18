@@ -594,6 +594,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
+  public boolean SPACE_AFTER_UNARY_OPERATOR = false;
 
   /**
    * "f (x)"
