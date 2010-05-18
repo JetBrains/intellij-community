@@ -142,6 +142,19 @@ public class PathManagerEx {
   }
 
   /**
+   * Shorthand for calling {@link #getTestDataPath(TestDataLookupStrategy)} with strategy obtained via call to
+   * {@link #determineLookupStrategy(Class)} with the given class.
+   *
+   * @param testClass     target test class for which test data should be obtained
+   * @return              base test data directory to use for the given test class
+   * @throws IllegalStateException    as defined by {@link #getTestDataPath(TestDataLookupStrategy)}
+   */
+  public static String getTestDataPath(Class<?> testClass) throws IllegalStateException {
+    TestDataLookupStrategy strategy = determineLookupStrategy(testClass);
+    return getTestDataPath(strategy);
+  }
+
+  /**
    * Tries to return test data path for the given lookup strategy.
    *
    * @param strategy    lookup strategy to use
