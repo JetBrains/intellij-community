@@ -15,8 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -31,8 +29,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
@@ -42,12 +38,9 @@ import com.intellij.util.Icons;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.*;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 import org.jetbrains.idea.maven.facade.remote.MavenFacade;
@@ -109,7 +102,10 @@ public class RepositoryAttachDialog extends DialogWrapper {
         if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
           //if (true) return;
           if (popupVisible && !myCoordinates.isEmpty()) {
-            myCombobox.getEditor().setItem(myCombobox.getSelectedItem());
+            final String item = (String)myCombobox.getSelectedItem();
+            if (StringUtil.isNotEmpty(item)) {
+              ((JTextField)myCombobox.getEditor().getEditorComponent()).setText(item);
+            }
           }
           else if (!popupVisible || myCoordinates.isEmpty()) {
             if (performSearch()) {
@@ -158,6 +154,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
       if (myShownItems.isEmpty()) {
         myShownItems.addAll(myCoordinates.keySet());
       }
+      myCombobox.setSelectedItem(null);
     }
     Collections.sort(myShownItems);
     ((CollectionComboBoxModel)myCombobox.getModel()).update();

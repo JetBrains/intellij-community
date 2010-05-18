@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -122,7 +123,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
           }
           else {
             Notifications.Bus.notify(new Notification("Repository", sb.toString(), title,
-                                                      nothingRetrieved? NotificationType.WARNING : NotificationType.INFORMATION), project);
+                                                      nothingRetrieved? NotificationType.WARNING : NotificationType.INFORMATION), NotificationDisplayType.STICKY_BALLOON, project);
           }
           return true;
         }
@@ -181,10 +182,10 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         library.addRoot(targetUrl, OrderRootType.CLASSES);
       }
       catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
       catch (IOException e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
     }
   }

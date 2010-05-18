@@ -46,6 +46,7 @@ import org.jetbrains.idea.maven.facade.remote.MavenFacade;
 import org.jetbrains.idea.maven.facade.remote.RemoteTransferListener;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -139,9 +140,14 @@ public class MavenFacadeImpl extends RemoteImpl implements MavenFacade {
       SearchResults results = new Endpoint.DataIndex(nexusUrl)
         .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
                                         template.getClassifier(), template.getContextId());
-      if (results.isTooManyResults()) {
-        return null;
+      final boolean canTrySwitchGAV = template.getArtifactId() == null && template.getGroupId() != null;
+      final boolean tooManyResults = results.isTooManyResults();
+      if (canTrySwitchGAV && (tooManyResults || BigInteger.ZERO.equals(results.getTotalCount()))) {
+        results = new Endpoint.DataIndex(nexusUrl)
+          .getArtifactlistAsSearchResults(null, null, template.getGroupId(), template.getVersion(),
+                                          template.getClassifier(), template.getContextId());
       }
+      if (tooManyResults || results.isTooManyResults()) return null;
       return new ArrayList<ArtifactType>(results.getData().getArtifact());
     }
     catch (Exception ex) {
