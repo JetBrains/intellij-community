@@ -72,7 +72,7 @@ public class PythonUnitTestConfigurationProducer extends RuntimeConfigurationPro
 
   @Nullable
   private RunnerAndConfigurationSettings createConfigurationFromFunction(Location location, PyElement element) {
-    PyFunction pyFunction = PyUtil.getElementOrContaining(element, PyFunction.class);
+    PyFunction pyFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     if (pyFunction == null || !PythonUnitTestUtil.isTestCaseFunction(pyFunction)) return null;
 
     final PyClass containingClass = pyFunction.getContainingClass();

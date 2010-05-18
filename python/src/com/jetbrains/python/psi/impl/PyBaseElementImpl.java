@@ -4,7 +4,6 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
@@ -106,33 +105,6 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     }
     //noinspection unchecked
     return (T)child;
-  }
-
-  @Nullable
-  public <T extends PyElement> T getContainingElement(Class<T> aClass) {
-    PsiElement parent = getParent();
-    while (parent != null) {
-      if (aClass.isInstance(parent)) {
-        //noinspection unchecked
-        return (T)parent;
-      }
-      parent = parent.getParent();
-    }
-    return null;
-  }
-
-  @Nullable
-  public PyElement getContainingElement(TokenSet tokenSet) {
-    PsiElement parent = getParent();
-    while (parent != null) {
-      ASTNode node = parent.getNode();
-      if (node != null && tokenSet.contains(node.getElementType())) {
-        //noinspection UNCHECKED_WARNING
-        return (PyElement)parent;
-      }
-      parent = parent.getParent();
-    }
-    return null;
   }
 
   public PsiElement replace(@NotNull PsiElement element) throws IncorrectOperationException {

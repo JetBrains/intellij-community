@@ -9,7 +9,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyElementTypes;
@@ -152,16 +151,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     return true;
-  }
-
-  @Nullable
-  public <T extends PyElement> T getContainingElement(Class<T> aClass) {
-    return null;
-  }
-
-  @Nullable
-  public PyElement getContainingElement(TokenSet tokenSet) {
-    return null;
   }
 
   public List<PyStatement> getStatements() {

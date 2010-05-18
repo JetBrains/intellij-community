@@ -163,28 +163,6 @@ public class PyUtil {
     }
   }
 
-  /**
-   * @param element             which to process
-   * @param requiredElementType which type of container element is required
-   * @return closest containing element of given type, or element itself, it it is of required type.
-   */
-  @Nullable
-  public static <T extends PyElement> T getElementOrContaining(final PyElement element, final Class<T> requiredElementType) {
-    if (element == null) return null;
-    if (requiredElementType.isInstance(element)) {
-      //noinspection unchecked
-      return (T)element;
-    }
-
-    final PsiElement parent = element.getContainingElement(requiredElementType);
-    if (parent != null) {
-      //noinspection unchecked
-      return (T)parent;
-    }
-
-    return null;
-  }
-
   @Nullable
   public static PyClass getContainingClassOrSelf(final PsiElement element) {
     PsiElement current = element;

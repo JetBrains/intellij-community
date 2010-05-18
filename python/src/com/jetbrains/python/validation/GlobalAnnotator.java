@@ -16,7 +16,7 @@ import java.util.Set;
 public class GlobalAnnotator extends PyAnnotator {
   @Override
   public void visitPyGlobalStatement(final PyGlobalStatement node) {
-    PyFunction function = node.getContainingElement(PyFunction.class);
+    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
     if (function != null) {
       PyParameterList paramList = function.getParameterList();
       // collect param names
