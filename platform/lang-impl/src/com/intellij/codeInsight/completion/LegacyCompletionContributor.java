@@ -17,14 +17,15 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
@@ -43,7 +44,9 @@ public class LegacyCompletionContributor extends CompletionContributor {
   public LegacyCompletionContributor() {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     extend(CompletionType.BASIC, everywhere, new CompletionProvider<CompletionParameters>() {
-      public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet _result) {
+      public void addCompletions(@NotNull final CompletionParameters parameters,
+                                 final ProcessingContext matchingContext,
+                                 @NotNull final CompletionResultSet _result) {
         final PsiFile file = parameters.getOriginalFile();
         final int startOffset = parameters.getOffset();
         final PsiElement insertedElement = parameters.getPosition();
@@ -71,7 +74,8 @@ public class LegacyCompletionContributor extends CompletionContributor {
         final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
         final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
         completionData.addKeywordVariants(keywordVariants, insertedElement, parameters.getOriginalFile());
-        completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
+        completionData
+          .completeKeywordsBySet(lookupSet, keywordVariants, insertedElement, result.getPrefixMatcher(), parameters.getOriginalFile());
         for (final LookupElement item : lookupSet) {
           result.addElement(item);
         }
@@ -81,14 +85,17 @@ public class LegacyCompletionContributor extends CompletionContributor {
 
   }
 
-  public static boolean completeReference(final CompletionParameters parameters, final CompletionResultSet result, final CompletionData completionData) {
+  public static boolean completeReference(final CompletionParameters parameters,
+                                          final CompletionResultSet result,
+                                          final CompletionData completionData) {
     final Ref<Boolean> hasVariants = Ref.create(false);
     processReferences(parameters, result, completionData, new PairConsumer<PsiReference, CompletionResultSet>() {
       public void consume(final PsiReference reference, final CompletionResultSet resultSet) {
         final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-        completionData.completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile(), parameters.getOffset());
+        completionData
+          .completeReference(reference, lookupSet, parameters.getPosition(), parameters.getOriginalFile(), parameters.getOffset());
         for (final LookupElement item : lookupSet) {
-         if (resultSet.getPrefixMatcher().prefixMatches(item)) {
+          if (resultSet.getPrefixMatcher().prefixMatches(item)) {
             hasVariants.set(true);
             resultSet.addElement(item);
           }
@@ -98,7 +105,9 @@ public class LegacyCompletionContributor extends CompletionContributor {
     return hasVariants.get().booleanValue();
   }
 
-  public static void processReferences(final CompletionParameters parameters, final CompletionResultSet result, final CompletionData completionData,
+  public static void processReferences(final CompletionParameters parameters,
+                                       final CompletionResultSet result,
+                                       final CompletionData completionData,
                                        final PairConsumer<PsiReference, CompletionResultSet> consumer) {
     final int startOffset = parameters.getOffset();
     final PsiReference ref = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
@@ -114,7 +123,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
     else if (ref instanceof PsiDynaReference) {
       int offset = startOffset - ref.getElement().getTextRange().getStartOffset();
       for (final PsiReference reference : ((PsiDynaReference<?>)ref).getReferences()) {
-        if (reference.getRangeInElement().contains(offset)) {
+        if (ReferenceRange.containsOffsetInElement(reference, offset)) {
           processReference(result, startOffset, consumer, reference);
         }
       }
@@ -124,7 +133,9 @@ public class LegacyCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void processReference(final CompletionResultSet result, final int startOffset, final PairConsumer<PsiReference, CompletionResultSet> consumer,
+  private static void processReference(final CompletionResultSet result,
+                                       final int startOffset,
+                                       final PairConsumer<PsiReference, CompletionResultSet> consumer,
                                        final PsiReference reference) {
     final int offsetInElement = startOffset - reference.getElement().getTextRange().getStartOffset();
     final String prefix = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
