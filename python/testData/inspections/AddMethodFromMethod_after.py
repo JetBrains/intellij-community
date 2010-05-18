@@ -5,5 +5,5 @@ class A:
     def foo(self, a):
         self.y(1, a)
 
-    def y(self, param_1, a_2):
+    def y(self, param, a):
         pass

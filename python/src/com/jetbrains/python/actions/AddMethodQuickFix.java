@@ -12,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -57,7 +58,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       sure(CodeInsightUtilBase.preparePsiElementForWrite(cls_stmt_list));
       // try to at least match parameter count
       // TODO: get parameter style from code style
-      StringBuffer param_buf = new StringBuffer("(");
+      PyFunctionBuilder builder = new PyFunctionBuilder(item_name);
       PsiElement pe = problem_elt.getParent();
       String deco_name = null; // set to non-null to add a decorator
       sure(pe instanceof PyCallExpression);
@@ -70,19 +71,18 @@ public class AddMethodQuickFix implements LocalQuickFix {
           PyType first_arg_type = args[0].getType(TypeEvalContext.fast());
           if (first_arg_type instanceof PyClassType && ((PyClassType)first_arg_type).getPyClass().isSubclass(cls)) {
             // class, first arg ok: instance method
-            param_buf.append("self"); // NOTE: might use a name other than 'self', according to code style.
+            builder.parameter("self"); // NOTE: might use a name other than 'self', according to code style.
             made_instance = true;
           }
         }
         if (! made_instance) { // class, first arg absent or of different type: classmethod
-          param_buf.append("cls"); // NOTE: might use a name other than 'cls', according to code style.
+          builder.parameter("cls"); // NOTE: might use a name other than 'cls', according to code style.
           deco_name = "classmethod";
         }
       }
       else { // instance method
-        param_buf.append("self"); // NOTE: might use a name other than 'self', according to code style.
+        builder.parameter("self"); // NOTE: might use a name other than 'self', according to code style.
       }
-      int cnt = 1; // number parameters so we don't need to care about their names being unique.
       boolean skip_first = call_by_class && made_instance; // ClassFoo.meth(foo_instance)
       for (PyExpression arg : args) {
         if (skip_first) {
@@ -90,21 +90,19 @@ public class AddMethodQuickFix implements LocalQuickFix {
           continue;
         }
         if (arg instanceof PyKeywordArgument) { // foo(bar) -> def foo(self, bar_1)
-          param_buf.append(", ").append(((PyKeywordArgument)arg).getKeyword()); //.append("_").append(cnt);
+          builder.parameter(((PyKeywordArgument)arg).getKeyword());
         }
         else if (arg instanceof PyReferenceExpression) {
           PyReferenceExpression refex = (PyReferenceExpression)arg;
-          param_buf.append(", ").append(refex.getReferencedName()).append("_").append(cnt);
+          builder.parameter(refex.getReferencedName());
         }
         else { // use a boring name
-          param_buf.append(", param_").append(cnt);
+          builder.parameter("param");
         }
-        cnt += 1;
       }
-      param_buf.append("):\n");
-      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-      PyFunction meth = generator.createFromText(PyFunction.class, "def " + item_name + param_buf + "    pass");
+      PyFunction meth = builder.buildFunction(project);
       if (deco_name != null) {
+        PyElementGenerator generator = PyElementGenerator.getInstance(project);
         PyDecoratorList deco_list = generator.createFromText(PyDecoratorList.class, "@" + deco_name + "\ndef foo(): pass", new int[]{0, 0});
         meth.addBefore(deco_list, meth.getFirstChild()); // in the very beginning
       }
