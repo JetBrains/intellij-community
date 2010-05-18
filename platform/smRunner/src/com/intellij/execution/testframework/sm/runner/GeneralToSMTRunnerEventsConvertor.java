@@ -257,7 +257,8 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onTestIgnored(final String testName, final String ignoreComment,
+  public void onTestIgnored(@NotNull final String testName, 
+                            @NotNull final String ignoreComment,
                             @Nullable final String stackTrace) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
