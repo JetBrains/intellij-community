@@ -99,7 +99,7 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
    */
   public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file) {
     GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.message("changes.retrieving", revision)) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         try {

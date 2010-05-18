@@ -111,7 +111,6 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     ProgressManager.getInstance().run(backgroundableComputable);
   }
 
-  @Override
   public void run(@NotNull ProgressIndicator indicator) {
     try {
       myResult = myBackgroundable.compute();

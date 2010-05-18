@@ -35,7 +35,10 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
@@ -57,7 +60,7 @@ public class RootsToWorkingCopies implements VcsListener {
   public void addRoot(final VirtualFile root) {
     myQueue.run(new Task.Backgroundable(myProject, "Looking for '" + root.getPath() + "' working copy root", false,
                                         BackgroundFromStartOption.getInstance()) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         calculateRoot(root);
       }

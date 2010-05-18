@@ -23,7 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -51,7 +51,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -167,7 +166,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     if (coord == null) return;
     final ArtifactType template = createTemplate(coord);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
-      @Override
+
       public void run(@NotNull ProgressIndicator indicator) {
         final MavenFacadeManager mavenManager = ServiceManager.getService(project, MavenFacadeManager.class);
         final Ref<List<ArtifactType>> result = Ref.create(Collections.<ArtifactType>emptyList());
@@ -219,7 +218,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   public static void searchRepositories(final Project project, final Processor<Collection<RepositoryType>> resultProcessor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
-      @Override
+
       public void run(@NotNull ProgressIndicator indicator) {
         final MavenFacadeManager mavenManager = ServiceManager.getService(project, MavenFacadeManager.class);
         final Ref<List<RepositoryType>> result = Ref.create(Collections.<RepositoryType>emptyList());
@@ -299,12 +298,12 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       parameters.add(template);
     }
     ProgressManager.getInstance().run(modal ? new Task.Modal(project, "Maven", false) {
-      @Override
+
       public void run(@NotNull ProgressIndicator indicator) {
         doResolveInner(project, parameters, repositories, resultProcessor, indicator);
       }
     } : new Task.Backgroundable(project, "Maven", false, PerformInBackgroundOption.DEAF) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         doResolveInner(project, parameters, repositories, resultProcessor, indicator);
       }

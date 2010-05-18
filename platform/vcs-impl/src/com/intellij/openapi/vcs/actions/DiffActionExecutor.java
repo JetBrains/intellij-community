@@ -97,7 +97,7 @@ public abstract class DiffActionExecutor {
 
     final Task.Backgroundable task = new Task.Backgroundable(myProject,
         VcsBundle.message("show.diff.progress.title.detailed", mySelectedFile.getPath()), true, BackgroundFromStartOption.getInstance()) {
-      @Override
+
       public void run(@NotNull ProgressIndicator indicator) {
         final VcsRevisionNumber revisionNumber = getRevisionNumber();
         try {
