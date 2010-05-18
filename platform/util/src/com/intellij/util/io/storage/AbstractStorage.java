@@ -325,14 +325,22 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     private final int myRecordId;
 
     public StorageDataOutput(AbstractStorage storage, int recordId) {
-      super(new ByteArrayOutputStream());
+      this(storage, recordId, new ByteArrayOutputStream());
+    }
+
+    protected StorageDataOutput(AbstractStorage storage, int recordId, OutputStream stream) {
+      super(stream);
       myStorage = storage;
       myRecordId = recordId;
     }
 
     public void close() throws IOException {
       super.close();
-      myStorage.writeBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
+      myStorage.writeBytes(myRecordId, getByteStream().toByteArray());
+    }
+
+    protected ByteArrayOutputStream getByteStream() {
+      return ((ByteArrayOutputStream)out);
     }
 
     public int getRecordId() {
