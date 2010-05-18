@@ -529,8 +529,8 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
                "*/\n" +
                "class X {\n" +
                "}\n", "/**\n" +
-                      " * @return if ( x1 == x1 ) then retrun {@link #cmp(String y1,int y2)}\n" +
-                      " * otherwise return {@link #cmp(int x1,int x2)}\n" +
+                      " * @return if ( x1 == x1 ) then retrun {@link #cmp(String y1, int y2)}\n" +
+                      " * otherwise return {@link #cmp(int x1, int x2)}\n" +
                       " */\n" +
                       "class X {\n" +
                       "}\n");
