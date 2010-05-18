@@ -235,14 +235,123 @@
     <xs:annotation>
       <xs:documentation>Common Datatypes #</xs:documentation>
     </xs:annotation>
-    <xs:list itemType="xs:token"/>
+    <xs:restriction base="xs:NMTOKENS"/>
   </xs:simpleType>
   <xs:simpleType name="common.data.browsing-context">
     <xs:restriction base="xs:string"/>
   </xs:simpleType>
   <xs:simpleType name="common.data.browsing-context-or-keyword">
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:NMTOKEN">
+      <xs:pattern value="_(blank|self|parent|top)|[A-Za-z]\c*"/>
+    </xs:restriction>
   </xs:simpleType>
+  <xs:simpleType name="common.data.charset">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[uU][tT][fF]-8"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SandboxType">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction>
+          <xs:simpleType>
+            <xs:list>
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="allow-same-origin"/>
+                  <xs:enumeration value="allow-forms"/>
+                  <xs:enumeration value="allow-scripts"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:list>
+          </xs:simpleType>
+          <xs:maxLength value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction>
+          <xs:simpleType>
+            <xs:list>
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="allow-same-origin"/>
+                  <xs:enumeration value="allow-scripts"/>
+                  <xs:enumeration value="allow-forms"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:list>
+          </xs:simpleType>
+          <xs:maxLength value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction>
+          <xs:simpleType>
+            <xs:list>
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="allow-forms"/>
+                  <xs:enumeration value="allow-same-origin"/>
+                  <xs:enumeration value="allow-scripts"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:list>
+          </xs:simpleType>
+          <xs:maxLength value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction>
+          <xs:simpleType>
+            <xs:list>
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="allow-forms"/>
+                  <xs:enumeration value="allow-scripts"/>
+                  <xs:enumeration value="allow-same-origin"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:list>
+          </xs:simpleType>
+          <xs:maxLength value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction>
+          <xs:simpleType>
+            <xs:list>
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="allow-scripts"/>
+                  <xs:enumeration value="allow-same-origin"/>
+                  <xs:enumeration value="allow-forms"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:list>
+          </xs:simpleType>
+          <xs:maxLength value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction>
+          <xs:simpleType>
+            <xs:list>
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="allow-scripts"/>
+                  <xs:enumeration value="allow-forms"/>
+                  <xs:enumeration value="allow-same-origin"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:list>
+          </xs:simpleType>
+          <xs:maxLength value="3"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
   <!--
     		xsd:string {
     			pattern = "()|([^_].*)|(_[bB][lL][aA][nN][kK])|(_[sS][eE][lL][fF])|(_[pP][aA][rR][eE][nN][tT])|(_[tT][oO][pP])"
@@ -252,7 +361,7 @@
     <xs:annotation>
       <xs:documentation>IDs and IDREFs</xs:documentation>
     </xs:annotation>
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:ID"/>
   </xs:simpleType>
   <!--
     		xsd:string {
@@ -260,7 +369,7 @@
     		}
   -->
   <xs:simpleType name="common.data.idref">
-    <xs:restriction base="xs:string"/>
+    <xs:restriction base="xs:ID"/>
   </xs:simpleType>
   <xs:simpleType name="common.data.idrefs">
     <xs:restriction base="xs:string"/>
@@ -359,7 +468,7 @@
     <xs:annotation>
       <xs:documentation>IRIs</xs:documentation>
     </xs:annotation>
-    <xs:union memberTypes="xs:string"/>
+    <xs:restriction base="xs:anyURI"/>
   </xs:simpleType>
   <xs:simpleType name="common.data.uris">
     <xs:list itemType="xs:string"/>
@@ -390,12 +499,6 @@
     </xs:annotation>
     <xs:restriction base="xs:string"/>
   </xs:simpleType>
-  <xs:simpleType name="common.data.charset">
-    <xs:annotation>
-      <xs:documentation>Encodings</xs:documentation>
-    </xs:annotation>
-    <xs:restriction base="xs:string"/>
-  </xs:simpleType>
   <xs:simpleType name="common.data.meta-charset">
     <xs:restriction base="xs:string"/>
   </xs:simpleType>
@@ -422,7 +525,7 @@
     <xs:annotation>
       <xs:documentation>Language Codes</xs:documentation>
     </xs:annotation>
-    <xs:union memberTypes="xs:string"/>
+    <xs:restriction base="xs:language"/>
   </xs:simpleType>
   <xs:simpleType name="common.data.keylabellist">
     <xs:annotation>
@@ -710,13 +813,7 @@
     <xs:attributeGroup ref="xhtml:meta.charset.attrs.charset"/>
   </xs:attributeGroup>
   <xs:attributeGroup name="meta.charset.attrs.charset">
-    <xs:attribute name="charset">
-      <xs:simpleType>
-        <xs:restriction base="xs:string">
-          <xs:pattern value="[uU][tT][fF]-8"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
+    <xs:attribute name="charset" type="common.data.charset"/>
   </xs:attributeGroup>
 
   <!-- ##################################################################### -->
@@ -1772,108 +1869,7 @@
     <xs:attribute name="name" type="common.data.browsing-context"/>
     <xs:attribute name="width" type="common.data.integer.positive"/>
     <xs:attribute name="height" type="common.data.integer.positive"/>
-    <xs:attribute name="sandbox">
-      <xs:simpleType>
-        <xs:union>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-scripts"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-forms"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-scripts"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                      <xs:enumeration value="allow-forms"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-          <xs:simpleType>
-            <xs:restriction>
-              <xs:simpleType>
-                <xs:list>
-                  <xs:simpleType>
-                    <xs:restriction base="xs:token">
-                      <xs:enumeration value="allow-scripts"/>
-                      <xs:enumeration value="allow-forms"/>
-                      <xs:enumeration value="allow-same-origin"/>
-                    </xs:restriction>
-                  </xs:simpleType>
-                </xs:list>
-              </xs:simpleType>
-              <xs:maxLength value="3"/>
-            </xs:restriction>
-          </xs:simpleType>
-        </xs:union>
-      </xs:simpleType>
-    </xs:attribute>
+    <xs:attribute name="sandbox" type="SandboxType"/>
     <xs:attribute name="seamless">
       <xs:simpleType>
         <xs:restriction base="xs:token">
@@ -1881,6 +1877,7 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
+    <xs:attribute name="srcdoc" type="xs:string"/>
   </xs:attributeGroup>
 
   <xs:group name="map.elem.flow">

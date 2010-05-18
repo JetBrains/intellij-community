@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ParameterListElement extends CompositeElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ParameterListElement");
@@ -46,17 +47,16 @@ public class ParameterListElement extends CompositeElement implements Constants 
     }
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     if (first == last && first.getElementType() == PARAMETER) {
-      ASTNode element = first;
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-      for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
+      for (ASTNode child = ((ASTNode)first).getTreeNext(); child != null; child = child.getTreeNext()) {
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == PARAMETER) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, element, Boolean.FALSE);
+          super.addInternal(comma, comma, first, Boolean.FALSE);
           break;
         }
       }
-      for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
+      for (ASTNode child = ((ASTNode)first).getTreePrev(); child != null; child = child.getTreePrev()) {
         if (child.getElementType() == COMMA) break;
         if (child.getElementType() == PARAMETER) {
           TreeElement comma = Factory.createSingleLeafElement(COMMA, ",", 0, 1, treeCharTab, getManager());
@@ -77,6 +77,7 @@ public class ParameterListElement extends CompositeElement implements Constants 
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
+    TreeElement oldLastNodeInsideParens = getLastNodeInsideParens();
     if (child.getElementType() == PARAMETER) {
       ASTNode next = TreeUtil.skipElements(child.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (next != null && next.getElementType() == COMMA) {
@@ -90,6 +91,19 @@ public class ParameterListElement extends CompositeElement implements Constants 
       }
     }
     super.deleteChildInternal(child);
+
+    // We may want to fix trailing white space processing here - there is a following possible case:
+    //    *) this parameter list is like (arg1, <white-space-containing-line-breaks>, arg2);
+    //    *) 'arg2' is to be removed;
+    // We don't want to keep trailing white space then
+    TreeElement newLastNodeInsideParens = getLastNodeInsideParens();
+    if (newLastNodeInsideParens.getElementType() == WHITE_SPACE) {
+      if (oldLastNodeInsideParens.getElementType() != WHITE_SPACE) {
+        deleteChildInternal(newLastNodeInsideParens);
+      } else {
+        replaceChild(newLastNodeInsideParens, (ASTNode)oldLastNodeInsideParens.clone());
+      }
+    }
 
     //todo[max] hack?
     try {
@@ -142,5 +156,14 @@ public class ParameterListElement extends CompositeElement implements Constants 
     else {
       return ChildRoleBase.NONE;
     }
+  }
+
+  /**
+   * @return    last node before closing right paren if possible; <code>null</code> otherwise
+   */
+  @Nullable
+  private TreeElement getLastNodeInsideParens() {
+    TreeElement lastNode = getLastChildNode();
+    return lastNode.getElementType() == RPARENTH ? lastNode.getTreePrev() : null;
   }
 }

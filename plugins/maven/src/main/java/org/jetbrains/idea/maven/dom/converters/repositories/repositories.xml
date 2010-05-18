@@ -4,12 +4,12 @@
     <repository id="codehaus" name="Сodehaus" url="http://repository.codehaus.org"/>
     <repository id="glassfish-repo-archive" name="Nexus repository collection for Glassfish" url="http://maven.glassfish.org/content/groups/glassfish"/>
     <repository id="ibiblio.mirrors" name="ibiblio.mirrors" url="http://mirrors.ibiblio.org/pub/mirrors/maven2"/>
-    <repository id="java.net.m2" name="java.net m2 repo" url="http://download.java.net/maven/2"/>
+    <repository id="java.net.m2" name="java.net m2 repo" url="http://download.java.net/maven/2/"/>
     <repository id="java.net2" name="Java.net" url="http://download.java.net/maven/2/"/>
     <repository id="jboss-maven2-release-repository" name="JBoss" url="http://repository.jboss.org/maven2/"/>
     <repository id="Open.iona.com Releases" name="FUSE" url="http://repo.open.iona.com/maven2/"/>
     <repository id="terracotta" name="Terracotta" url="http://download.terracotta.org/maven2/"/>
-    <repository id="sonatype" name="Sonatype" url="http://repository.sonatype.org/content/groups/public/ "/>
+    <repository id="sonatype" name="Sonatype" url="http://repository.sonatype.org/content/groups/public/"/>
   </repositories>
 </root>
 

@@ -15,12 +15,9 @@
  */
 package org.jetbrains.idea.maven.dom.converters.repositories;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.repositories.beans.RepositoriesBean;
@@ -37,7 +34,7 @@ public class MavenRepositoriesProvider {
     return ServiceManager.getService(MavenRepositoriesProvider.class);
   }
 
-  Map<String, Pair<String, String>> myRepositoriesMap = new HashMap<String, Pair<String, String>>();
+  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new THashMap<String, RepositoryBeanInfo>();
 
   public MavenRepositoriesProvider() {
     final RepositoriesBean repositoriesBean =
@@ -48,12 +45,12 @@ public class MavenRepositoriesProvider {
     assert repositories != null;
 
     for (RepositoryBeanInfo repository : repositories) {
-      registerRepository(repository.getId(), repository.getName(), repository.getUrl());
+      registerRepository(repository.getId(), repository);
     }
   }
 
-  public void registerRepository(@NotNull String id, @NotNull String name, @NotNull String url) {
-    myRepositoriesMap.put(id, Pair.create(name, url));
+  public void registerRepository(@NotNull String id, RepositoryBeanInfo info) {
+    myRepositoriesMap.put(id, info);
   }
 
   @NotNull
@@ -63,13 +60,19 @@ public class MavenRepositoriesProvider {
 
   @Nullable
   public String getRepositoryName(@Nullable String id) {
-    Pair<String, String> pair = myRepositoriesMap.get(id);
-    return pair != null ? pair.getFirst() : null;
+    RepositoryBeanInfo pair = myRepositoriesMap.get(id);
+    return pair != null ? pair.getName() : null;
   }
 
   @Nullable
   public String getRepositoryUrl(@Nullable String id) {
-    Pair<String, String> pair = myRepositoriesMap.get(id);
-    return pair != null ? pair.getSecond() : null;
+    RepositoryBeanInfo pair = myRepositoriesMap.get(id);
+    return pair != null ? pair.getUrl() : null;
+  }
+
+  @Nullable
+  public String getRepositoryLayout(@Nullable String id) {
+    RepositoryBeanInfo pair = myRepositoriesMap.get(id);
+    return pair != null ? pair.getLayout() : null;
   }
 }

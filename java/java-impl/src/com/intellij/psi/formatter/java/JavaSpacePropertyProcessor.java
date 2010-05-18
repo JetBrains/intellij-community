@@ -215,7 +215,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
         }
         else {
-          myResult = Spacing.createSpacing(0, 0, 1,
+          myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_CLASS_HEADER + 1,
                                            mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
         }
       }
@@ -686,7 +686,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LBRACE) {
       if (!keepInOneLine) {
-        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        myResult = Spacing.createSpacing(
+          0, 0, mySettings.BLANK_LINES_BEFORE_METHOD_BODY + 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE
+        );
       }
       else {
         myResult = Spacing
@@ -1151,7 +1153,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(false);
     }
     else if (myRole1 == ChildRole.COMMA && myRole2 == ChildRole.TYPE_IN_REFERENCE_PARAMETER_LIST) {
-      createSpaceInCode(true);
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
     }
     else if (myRole2 == ChildRole.GT_IN_TYPE_LIST) {
       createSpaceInCode(false);
@@ -1288,7 +1290,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(false);
     }
     else if (myRole1 == ChildRole.COMMA) {
-      createSpaceInCode(true);
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
     }
   }
 

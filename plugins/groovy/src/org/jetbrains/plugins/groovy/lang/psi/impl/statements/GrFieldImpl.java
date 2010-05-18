@@ -286,23 +286,26 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     }
     final GrExpression initializerGroovy = getInitializerGroovy();
 
-    List<Set<String>> namedParameters = new LinkedList<Set<String>>();
-    if (initializerGroovy instanceof GrClosableBlock) {
-      final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
-
-      final PsiParameter[] parameters = closure.getAllParameters();
-      final List<PsiParameter> parameterList = Arrays.asList(parameters);
-
-      for (int i = 0, parameterListSize = parameterList.size(); i < parameterListSize; i++) {
-        PsiParameter parameter = parameterList.get(i);
-        final String paramName = parameter.getName();
-        final HashSet<String> set = new HashSet<String>();
-        namedParameters.add(i, set);
-
-        closure.accept(new GrNamedArgumentSearchVisitor(paramName, set));
-      }
+    if (!(initializerGroovy instanceof GrClosableBlock)) {
+      return GrNamedArgumentSearchVisitor.EMPTY_SET_ARRAY;
     }
-    return namedParameters.toArray(new HashSet[namedParameters.size()]);
+
+    final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
+    final PsiParameter[] parameters = closure.getAllParameters();
+
+    Set<String>[] res = new Set[parameters.length];
+
+    Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+
+    for (int i = 0; i < parameters.length; i++) {
+      final Set<String> set = new HashSet<String>();
+      res[i] = set;
+      map.put(parameters[i].getName(), set);
+    }
+
+    closure.accept(new GrNamedArgumentSearchVisitor(map));
+
+    return res;
   }
 
   public GrDocComment getDocComment() {

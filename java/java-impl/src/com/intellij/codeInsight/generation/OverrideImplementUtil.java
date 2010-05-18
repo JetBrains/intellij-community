@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -133,8 +134,18 @@ public class OverrideImplementUtil {
           PsiElement p1 = m1.getParent();
           PsiElement p2 = m2.getParent();
           if (p1 instanceof PsiClass && p2 instanceof PsiClass) {
-            if (((PsiClass)p1).isInheritor((PsiClass)p2, true)) return -1;
-            if (((PsiClass)p2).isInheritor((PsiClass)p1, true)) return 1;
+            final PsiClass c1 = (PsiClass)p1;
+            final PsiClass c2 = (PsiClass)p2;
+
+            if (c1 == c2) {
+              final List<PsiMethod> methods = Arrays.asList(c1.getMethods());
+              return methods.indexOf(m1) - methods.indexOf(m2);
+            }
+
+            if (c1.isInheritor(c2, true)) return -1;
+            if (c2.isInheritor(c1, true)) return 1;
+
+            return StringUtil.notNullize(c1.getName()).compareTo(StringUtil.notNullize(c2.getName()));
           }
           return m1.getTextOffset() - m2.getTextOffset();
         }

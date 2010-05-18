@@ -22,10 +22,6 @@ import java.util.List;
 public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor {
   @Override
   public List<TypeConstraint> calculateTypeConstraints(@NotNull GrExpression expression) {
-    if (!GppTypeConverter.hasTypedContext(expression)) {
-      return Collections.emptyList();
-    }
-
     final PsiElement parent = expression.getParent();
     if (parent instanceof GrListOrMap) {
       final GrListOrMap list = (GrListOrMap)parent;
