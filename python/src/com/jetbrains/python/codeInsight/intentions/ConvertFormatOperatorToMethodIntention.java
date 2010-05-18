@@ -3,14 +3,13 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -118,7 +117,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
       
       if (s.length() >= index) {
         final String substring = s.substring(index).replace("{", "{{").replace("}", "}}");
-        stringBuilder.append(substring);
+        stringBuilder.append(StringUtil.escapeStringCharacters(substring));
       }
     }
     stringBuilder.append("\"");
@@ -131,20 +130,19 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement element =
+    PyBinaryExpression binaryExpression  =
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
-    if (element == null) {
+    if (binaryExpression == null) {
       return false;
     }
-    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
+    final VirtualFile virtualFile = binaryExpression.getContainingFile().getVirtualFile();
     if (virtualFile == null) {
       return false;
     }
     final LanguageLevel languageLevel = LanguageLevel.forFile(virtualFile);
-    if (languageLevel == LanguageLevel.PYTHON24 || languageLevel == LanguageLevel.PYTHON25) {
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
       return false;
     }
-    PyBinaryExpression binaryExpression = (PyBinaryExpression)element;
     if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression && binaryExpression.getOperator() == PyTokenTypes.PERC) {
       setText(PyBundle.message("INTN.replace.with.method"));
       return true;
@@ -170,10 +168,8 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     else {
       text = rightExpression.getText();
     }
-    element.replace(elementGenerator.createFromText(PyExpressionStatement.class,
-                                                    convertFormat((PyStringLiteralExpression)element.getLeftExpression()) +
-                                                    ".format(" +
-                                                    text +
-                                                    ")").getExpression());
+    String targetText = convertFormat((PyStringLiteralExpression)element.getLeftExpression()) +
+                        ".format(" + text + ")";
+    element.replace(elementGenerator.createExpressionFromText(targetText));
   }
 }

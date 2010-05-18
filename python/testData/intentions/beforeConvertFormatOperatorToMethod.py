@@ -1,1 +1,1 @@
-print("%20.2sfdfdf% 2.3Fsdfsdfsv fgvd" <caret>% ("a", 12))
+print("%20.2sfdfdf% 2.3Fsdf\nsdfsv fgvd" <caret>% ("a", 12))

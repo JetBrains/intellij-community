@@ -1,1 +1,1 @@
-print("{0!s:20.2}fdfdf{1: 2.3F}sdfsdfsv fgvd".format("a", 12))
+print("{0!s:20.2}fdfdf{1: 2.3F}sdf\nsdfsv fgvd".format("a", 12))

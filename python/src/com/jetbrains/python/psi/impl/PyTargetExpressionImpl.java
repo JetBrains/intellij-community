@@ -180,7 +180,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   public Icon getIcon(final int flags) {
-    if (getQualifier() != null || PsiTreeUtil.getParentOfType(this, PyFunction.class, PyClass.class) instanceof PyClass) {
+    if (getQualifier() != null || PsiTreeUtil.<PsiElement>getParentOfType(this, PyFunction.class, PyClass.class) instanceof PyClass) {
       return Icons.FIELD_ICON;
     }
     return Icons.VARIABLE_ICON;
