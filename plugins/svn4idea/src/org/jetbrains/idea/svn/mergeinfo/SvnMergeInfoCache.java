@@ -169,6 +169,7 @@ public class SvnMergeInfoCache {
       ApplicationManager.getApplication().executeOnPooledThread(new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl,
                                                                                   new Consumer<FirstInBranch.CopyData>() {
                                                                                     public void consume(FirstInBranch.CopyData copyData) {
+                                                                                      if (copyData == null) return;
                                                                                       myRevision = copyData.getCopySourceRevision();
                                                                                       if (myRevision != -1) {
                                                                                         ApplicationManager.getApplication().invokeLater(new Runnable() {
