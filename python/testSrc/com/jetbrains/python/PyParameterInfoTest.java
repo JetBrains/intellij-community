@@ -6,13 +6,13 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -464,7 +464,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
      * @param disabled expected disabled substrings of hint
      */
     public void check(String text, String[] highlighted, String[] disabled) {
-      assertEquals("Signature", text, PyUtil.joinSubarray(myTexts, 0, 1000, "", new StringBuilder()).toString());
+      assertEquals("Signature", text, StringUtil.join(myTexts, ""));
       StringBuilder wrongs = new StringBuilder();
       // see if highlighted matches
       Set<String> highlight_set = new HashSet<String>();

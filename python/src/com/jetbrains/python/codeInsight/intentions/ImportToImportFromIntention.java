@@ -5,12 +5,12 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
@@ -98,8 +98,6 @@ public class ImportToImportFromIntention implements IntentionAction {
   }
 
 
-  private static String[] EMPTY_STRINGS = ArrayUtil.EMPTY_STRING_ARRAY;
-
   private void collectReferencesAndOtherData(PsiFile file) {
     //PyImportElement myImportElement = findImportElement(editor, file);
     assert myImportElement != null : "isAvailable() must have returned true, but myImportElement is null";
@@ -170,7 +168,7 @@ public class ImportToImportFromIntention implements IntentionAction {
       else throw new IncorrectOperationException("Not an import at all");
       PyElementGenerator generator = PyElementGenerator.getInstance(project);
       StringBuilder builder = new StringBuilder("from ").append(getDots()).append(myModuleName).append(" import ");
-      PyUtil.joinArray(used_names.toArray(EMPTY_STRINGS), ", ", builder);
+      builder.append(StringUtil.join(used_names, ", "));
       PyFromImportStatement from_import_stmt = generator.createFromText(PyFromImportStatement.class,  builder.toString());
       PsiElement parent = import_statement.getParent();
       sure(parent);  sure(parent.isValid());

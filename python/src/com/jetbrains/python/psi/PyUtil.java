@@ -134,45 +134,6 @@ public class PyUtil {
     return false;
   }
 
-  /**
-   * Appends elements of array to a string buffer, interspersing them with a separator: {@code ['a', 'b', 'c'] -> "a, b, c"}.
-   *
-   * @param what      array to join
-   * @param from      index of first element to include (may safely be bigger than array length)
-   * @param upto      index of last element to include (may safely be bigger than array length)
-   * @param separator string to put between elements
-   * @param target    buffer to collect the result
-   * @return target (for easy chaining)
-   */
-  @NotNull
-  public static StringBuilder joinSubarray(
-    @NotNull String[] what, int from, int upto, @NotNull String separator, @NotNull StringBuilder target
-  ) {
-    boolean made_step = false;
-    for (int i = from; i <= upto; i += 1) {
-      if (i >= what.length) break; // safety
-      if (made_step) target.append(separator);
-      else made_step = true;
-      target.append(what[i]);
-    }
-    return target;
-  }
-
-  /**
-   * Appends all elements of array to a string buffer, interspersing them with a separator: {@code ['a', 'b', 'c'] -> "a, b, c"}.
-   * Actually calls {@link PyUtil#joinSubarray(String[], int, int, String, StringBuilder) joinSubarray} with right bounds.
-   * @param what      array to join.
-   * @param separator string to put between elements.
-   * @param target    collects the result.
-   * @return          target, for easy chaining.
-   */
-  @NotNull
-  public static StringBuilder joinArray(
-    @NotNull String[] what, @NotNull String separator, @NotNull StringBuilder target
-  ) {
-    return joinSubarray(what, 0, what.length, separator, target);
-  }
-
 
   /**
    * Produce a reasonable representation of a PSI element, good for debugging.

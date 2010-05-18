@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -107,7 +108,7 @@ class ImportCandidateHolder implements Comparable {
         // ", ".join(x.getName() for x in getSuperClasses())
         String[] super_names = new String[supers.length];
         for (int i=0; i < supers.length; i += 1) super_names[i] = supers[i].getName();
-        PyUtil.joinSubarray(super_names, 0, supers.length, ", ", sb);
+        sb.append(StringUtil.join(super_names, ", "));
         sb.append(")");
       }
     }
