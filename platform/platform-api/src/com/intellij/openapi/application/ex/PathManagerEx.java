@@ -144,6 +144,14 @@ public class PathManagerEx {
   /**
    * Shorthand for calling {@link #getTestDataPath(TestDataLookupStrategy)} with strategy obtained via call to
    * {@link #determineLookupStrategy(Class)} with the given class.
+   * <p/>
+   * <b>Note:</b> this method receives explicit class argument in order to solve the following limitation - we analyze calling
+   * stack trace in order to guess test data lookup strategy ({@link #guessTestDataLookupStrategyOnClassLocation()}). However,
+   * there is a possible case that super-class method is called on sub-class object. Stack trace shows super-class then.
+   * There is a possible situation that actual test is <code>'ultimate'</code> but its abstract super-class is
+   * <code>'community'</code>, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
+   * base test class if its concrete sub-classes doesn't explicitly occur at stack trace.
+   *
    *
    * @param testClass     target test class for which test data should be obtained
    * @return              base test data directory to use for the given test class
