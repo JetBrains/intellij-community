@@ -78,7 +78,7 @@ public class IDEACoverageRunner extends CoverageRunner {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating coverage report ...") {
       final Exception[] myExceptions = new Exception[1];
 
-      @Override
+      
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
