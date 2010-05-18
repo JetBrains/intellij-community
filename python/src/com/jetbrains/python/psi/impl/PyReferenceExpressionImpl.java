@@ -20,7 +20,9 @@ import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Implements reference expression PSI.
@@ -103,6 +105,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     PyReferenceExpression seeker = this;
     QualifiedResolveResult ret = null;
     PyExpression last_qualifier = null;
+    Set<PyExpression> visited = new HashSet<PyExpression>();
+    visited.add(this);
     SEARCH:
     while (ret == null) {
       ResolveResult[] targets = seeker.getReference().multiResolve(false);
@@ -111,6 +115,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (elt instanceof PyTargetExpression) {
           PyExpression assigned_from = ((PyTargetExpression)elt).findAssignedValue();
           if (assigned_from instanceof PyReferenceExpression) {
+            if (visited.contains(assigned_from)) {
+              break;
+            }
+            visited.add(assigned_from);
             seeker = (PyReferenceExpression)assigned_from;
             if (seeker.getQualifier() != null) last_qualifier = seeker.getQualifier();
             continue SEARCH;
