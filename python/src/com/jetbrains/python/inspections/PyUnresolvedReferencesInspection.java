@@ -136,8 +136,8 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                 PyFile dst_file = (PyFile)dst;
                 String name = ielt.getImportReference().getReferencedName(); // ref is ok or matching would fail
                 seen_file_names.add(name);
-                PsiElement res = (dst_file).findExportedName(ref_text);
-                if (res != null) {
+                PsiElement res = dst_file.findExportedName(ref_text);
+                if (res != null && !(res instanceof PyFile)) {
                   exisitng_import_file = dst_file;
                   fix.addImport(res, dst_file, ielt);
                   fixes.add(fix);
@@ -165,8 +165,8 @@ public class PyUnresolvedReferencesInspection extends LocalInspectionTool {
                 PyFile dst_file = (PyFile)dst;
                 String name = from_stmt.getImportSource().getReferencedName(); // source is ok, else it won't match and we'd not be adding it
                 seen_file_names.add(name);
-                PsiElement res = (dst_file).findExportedName(ref_text);
-                if (res != null) {
+                PsiElement res = dst_file.findExportedName(ref_text);
+                if (res != null && !(res instanceof PyFile)) {
                   exisitng_import_file = dst_file;
                   fix.addImport(res, dst_file, ielts[ielts.length-1]); // last element; action expects to add to tail
                   fixes.add(fix);
