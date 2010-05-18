@@ -78,4 +78,43 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}";
     doTextTest(initial, formatted); // Expect the comma to be inserted between type arguments
   }
+
+  public void testUnaryOperators() {
+    // Inspired by IDEA-52127
+    getSettings().SPACE_AFTER_UNARY_OPERATOR = false;
+
+    String initial =
+      "public class FormattingTest {\n" +
+      "    public void foo() {\n" +
+      "        int i = 1;\n" +
+      "        System.out.println(-i);\n" +
+      "        System.out.println(+i);\n" +
+      "        System.out.println(++i);\n" +
+      "        System.out.println(i++);\n" +
+      "        System.out.println(--i);\n" +
+      "        System.out.println(i--);\n" +
+      "        boolean b = true;\n" +
+      "        System.out.println(!b);\n" +
+      "    }\n" +
+      "}";
+
+    doTextTest(initial, initial); // Don't expect spaces to be inserted after unary operators
+
+    getSettings().SPACE_AFTER_UNARY_OPERATOR = true;
+    String formatted =
+      "public class FormattingTest {\n" +
+      "    public void foo() {\n" +
+      "        int i = 1;\n" +
+      "        System.out.println(- i);\n" +
+      "        System.out.println(+ i);\n" +
+      "        System.out.println(++ i);\n" +
+      "        System.out.println(i++);\n" +
+      "        System.out.println(-- i);\n" +
+      "        System.out.println(i--);\n" +
+      "        boolean b = true;\n" +
+      "        System.out.println(! b);\n" +
+      "    }\n" +
+      "}";
+    doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
+  }
 }
