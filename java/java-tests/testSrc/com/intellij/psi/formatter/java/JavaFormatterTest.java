@@ -2464,29 +2464,6 @@ public void testSCR260() throws Exception {
      "}");
   }
 
-  public void testSCR2122() throws Exception {
-    getSettings().BLANK_LINES_AFTER_CLASS_HEADER = 3;
-
-    doTextTest("class Foo {\n" +
-               "    void foo() {\n" +
-               "        new Runnable() {\n" +
-               "            public void run() {\n" +
-               "            }\n" +
-               "        }\n" +
-               "    }\n" +
-"}", "class Foo {\n" +
-     "\n" +
-     "\n" +
-     "\n" +
-     "    void foo() {\n" +
-     "        new Runnable() {\n" +
-     "            public void run() {\n" +
-     "            }\n" +
-     "        }\n" +
-     "    }\n" +
-     "}");
-  }
-
   public void testSCR2132() throws Exception {
     getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_IF_WRAPPED;
     getSettings().ELSE_ON_NEW_LINE = true;
