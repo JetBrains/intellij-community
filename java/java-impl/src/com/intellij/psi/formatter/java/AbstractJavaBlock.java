@@ -838,6 +838,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
+    Alignment bracketAlignment = mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION ? Alignment.createAlignment() : null;
 
     boolean isAfterIncomplete = false;
 
@@ -847,13 +848,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                           child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (child.getElementType() == from) {
-          result.add(createJavaBlock(child, mySettings, externalIndent, null, null));
+          result.add(createJavaBlock(child, mySettings, externalIndent, null, bracketAlignment));
         }
         else if (child.getElementType() == to) {
           result.add(createJavaBlock(child, mySettings,
                                      isAfterIncomplete ? internalIndent : externalIndent,
                                      null,
-                                     isAfterIncomplete ? alignmentStrategy.getAlignment(null) : null));
+                                     isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment));
           return child;
         }
         else {
