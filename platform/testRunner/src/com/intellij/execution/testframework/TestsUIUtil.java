@@ -120,7 +120,7 @@ public class TestsUIUtil {
       text = "";
       type = MessageType.WARNING;
     } else{
-      List allTests = root.getAllTests();
+      List allTests = Filter.LEAF.select(root.getAllTests());
       int failedCount = Filter.DEFECTIVE_LEAF.select(allTests).size();
       int passedCount = allTests.size() - failedCount;
 
