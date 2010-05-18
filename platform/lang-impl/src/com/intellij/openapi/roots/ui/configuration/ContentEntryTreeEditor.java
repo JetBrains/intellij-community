@@ -70,6 +70,7 @@ public class ContentEntryTreeEditor {
   private final JPanel myTreePanel;
   private final DefaultMutableTreeNode EMPTY_TREE_ROOT = new DefaultMutableTreeNode(ProjectBundle.message("module.paths.empty.node"));
   protected DefaultActionGroup myEditingActionsGroup;
+  @Nullable
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
   private final FileChooserDescriptor myDescriptor;
@@ -184,6 +185,7 @@ public class ContentEntryTreeEditor {
 
   }
 
+  @Nullable
   public ContentEntryEditor getContentEntryEditor() {
     return myContentEntryEditor;
   }
