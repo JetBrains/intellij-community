@@ -31,15 +31,7 @@
     <orderEntry type="module" module-name="testng_rt" />
     <orderEntry type="module" module-name="junit_rt" />
     <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../community/plugins/testng/lib/testng-jdk15.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module" module-name="ultimate-verifier" />
     <orderEntry type="module" module-name="platform-ultimate" />
   </component>
