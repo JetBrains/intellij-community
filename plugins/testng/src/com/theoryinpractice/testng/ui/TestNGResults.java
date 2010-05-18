@@ -211,12 +211,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     return proxy;
   }
 
-  public boolean wasTestStarted(TestResultMessage resultMessage) {
-    synchronized (started) {
-      return started.get(resultMessage) != null;
-    }
-  }
-
   public void addTestResult(final TestResultMessage result, List<Printable> output, int exceptionMark) {
     if (failedToStart != null) {
       output.addAll(failedToStart.getOutput());
