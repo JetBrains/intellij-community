@@ -6,8 +6,9 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.toolbox.ArrayIterable;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -42,7 +43,7 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    return new ArrayIterable<PyElement>(getGlobals());
+    return Arrays.<PyElement>asList(getGlobals());
   }
 
   public PyElement getElementNamed(final String the_name) {

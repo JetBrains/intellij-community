@@ -11,9 +11,9 @@ import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.toolbox.ArrayIterator;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -56,6 +56,6 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
   }
 
   public Iterator<PyExpression> iterator() {
-    return new ArrayIterator<PyExpression>(getElements());
+    return Arrays.<PyExpression>asList(getElements()).iterator();
   }
 }

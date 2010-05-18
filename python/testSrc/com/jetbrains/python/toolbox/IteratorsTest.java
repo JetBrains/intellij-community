@@ -17,27 +17,6 @@ public class IteratorsTest extends TestCase {
     super();
   }
 
-  public void testArrayIterable() {
-    final String[] values = {"foo", "bar", "baz"};
-    int count = 0;
-    ArrayIterable<String> tested = new ArrayIterable<String>(values);
-    for (String what : tested) {
-      assertEquals(values[count], what);
-      count += 1;
-    }
-    assertEquals(values.length, count);
-  }
-
-  public void testArrayIterableEmpty() {
-    final String[] values = {};
-    int count = 0;
-    ArrayIterable<String> tested = new ArrayIterable<String>(values);
-    for (String what : tested) {
-      count += 1;
-    }
-    assertEquals(values.length, count);
-  }
-
   public void testRepeatIterable() {
     String value = "foo";
     RepeatIterable<String> tested = new RepeatIterable<String>(value);

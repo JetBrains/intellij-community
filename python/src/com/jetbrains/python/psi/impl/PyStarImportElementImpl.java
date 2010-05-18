@@ -1,18 +1,18 @@
 package com.jetbrains.python.psi.impl;
 
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.jetbrains.python.toolbox.ArrayIterable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 
 /**
  * Simplest PyStarImportElement possible. 
@@ -27,7 +27,7 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    return new ArrayIterable<PyElement>(PyElement.EMPTY_ARRAY);
+    return Collections.emptyList();
   }
 
   @Nullable
