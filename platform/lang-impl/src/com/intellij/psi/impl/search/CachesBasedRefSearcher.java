@@ -50,7 +50,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
       }
     });
     if (StringUtil.isEmpty(text)) return true;
-    if (DEBUG) System.out.println("Searching for :"+text);
+    if (DEBUG) System.out.println("Searching for :" + text);
 
     SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       public SearchScope compute() {
@@ -63,21 +63,21 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
       public boolean execute(PsiElement element, int offsetInElement) {
         ProgressManager.checkCanceled();
         if (DEBUG) {
-          System.out.println("!!! About to check "+element);
+          System.out.println("!!! About to check " + element);
         }
         if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
           if (DEBUG) {
-            System.out.println("!!!!!!!!!!!!!! Ref "+ref);
+            System.out.println("!!!!!!!!!!!!!! Ref " + ref);
           }
-          if (ref.getRangeInElement().contains(offsetInElement)) {
+          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
             if (DEBUG) {
-              System.out.println("!!!!!!!!!!!!!!!!!!!!! Ref "+ref + " contains");
+              System.out.println("!!!!!!!!!!!!!!!!!!!!! Ref " + ref + " contains");
             }
             if (ref.isReferenceTo(refElement)) {
               if (DEBUG) {
-                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Found ref "+ref);
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   Found ref " + ref);
               }
               return consumer.process(ref);
             }
@@ -90,7 +90,7 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
     short searchContext = UsageSearchContext.IN_CODE | UsageSearchContext.IN_FOREIGN_LANGUAGES | UsageSearchContext.IN_COMMENTS;
 
     final PsiSearchHelper helper = PsiManager.getInstance(refElement.getProject()).getSearchHelper();
-    return helper.processElementsWithWord(processor, searchScope, text, searchContext, 
+    return helper.processElementsWithWord(processor, searchScope, text, searchContext,
                                           refElement.getLanguage().isCaseSensitive());
   }
 }
