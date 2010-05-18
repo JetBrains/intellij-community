@@ -105,4 +105,35 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
            "public class Some {\n" +
            "}");
   }
+
+  public void testMethodBrackets() throws Exception {
+    // Inspired by IDEA-53013
+    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true;
+    getSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    getSettings().METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+
+    doClassTest(
+      "public void foo(int i,\n" +
+      "                  int j) {\n" +
+      "}\n" +
+      "\n" +
+      "  public void bar() {\n" +
+      "    foo(1,\n" +
+      "        2);\n" +
+      "  }",
+
+      "public void foo(int i,\n" +
+      "                int j\n" +
+      "               ) {\n" +
+      "}\n" +
+      "\n" +
+      "public void bar() {\n" +
+      "    foo(1,\n" +
+      "        2\n" +
+      "       );\n" +
+      "}"
+    );
+  }
 }
