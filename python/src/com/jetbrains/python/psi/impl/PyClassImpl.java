@@ -28,7 +28,6 @@ import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -465,7 +464,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    return new SingleIterable<PyElement>(this);
+    return Collections.<PyElement>singleton(this);
   }
 
   public PyElement getElementNamed(final String the_name) {

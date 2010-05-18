@@ -17,17 +17,6 @@ public class IteratorsTest extends TestCase {
     super();
   }
 
-  public void testSingleIterable() {
-    final String value = "foo";
-    int count = 0;
-    SingleIterable<String> tested = new SingleIterable<String>(value);
-    for (String what : tested) {
-      assertEquals(value, what);
-      count += 1;
-    }
-    assertEquals(1, count);
-  }
-
   public void testArrayIterable() {
     final String[] values = {"foo", "bar", "baz"};
     int count = 0;
@@ -130,22 +119,6 @@ public class IteratorsTest extends TestCase {
     assertEquals(all.size(), count);
   }
 
-
-  public void testChainIteratorBySingles() {
-    final String[] values = {"foo", "bar", "baz"};
-    SingleIterator<String> zero = new SingleIterator<String>(values[0]);
-    SingleIterator<String> one = new SingleIterator<String>(values[1]);
-    SingleIterator<String> two = new SingleIterator<String>(values[2]);
-    ChainIterator<String> tested = new ChainIterator<String>(zero).add(one).add(two);
-    int count = 0;
-    String what;
-    while (tested.hasNext()) {
-      what = tested.next();
-      assertEquals(values[count], what);
-      count += 1;
-    }
-    assertEquals(values.length, count);
-  }
 
   public void testChainIteratorByLists() {
     List<String> list1 = Arrays.asList("foo", "bar", "baz");

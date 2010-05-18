@@ -16,11 +16,11 @@ import com.jetbrains.python.psi.resolve.PyAsScopeProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
-import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -205,7 +205,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     if (ret == null) {
       return EmptyIterable.getInstance();
     }
-    return new SingleIterable<PyElement>(ret);
+    return Collections.singleton(ret);
   }
 
   public PsiElement getElementNamed(final String the_name) {

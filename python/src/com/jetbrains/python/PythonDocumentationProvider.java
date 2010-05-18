@@ -1,8 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.documentation.QuickDocumentationProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,11 +17,11 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
-import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -364,7 +362,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
 
   private static ChainIterable<String> wrapInTag(String tag, Iterable<String> content) {
-    return new ChainIterable<String>(new SingleIterable<String>("<" + tag + ">")).add(content).add(new SingleIterable<String>("</" + tag + ">"));
+    return new ChainIterable<String>(Collections.singleton("<" + tag + ">")).add(content).add("</" + tag + ">");
   }
 
   private static ChainIterable<String> $(String... content) {

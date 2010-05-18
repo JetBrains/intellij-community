@@ -22,11 +22,11 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.toolbox.SingleIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -283,7 +283,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @NotNull
   public Iterable<PyElement> iterateNames() {
-    return new SingleIterable<PyElement>(this);
+    return Collections.<PyElement>singleton(this);
   }
 
   public PyElement getElementNamed(final String the_name) {

@@ -4,12 +4,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.jetbrains.python.toolbox.SingleIterable;
-import org.jetbrains.annotations.NotNull;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 
 public class PyForStatementImpl extends PyPartitionedElementImpl implements PyForStatement {
   public PyForStatementImpl(ASTNode astNode) {
@@ -58,7 +57,7 @@ public class PyForStatementImpl extends PyPartitionedElementImpl implements PyFo
   @NotNull
   public Iterable<PyElement> iterateNames() {
     PyExpression tgt = getForPart().getTarget();
-    if (tgt instanceof PyReferenceExpression) return new SingleIterable<PyElement>(tgt);
+    if (tgt instanceof PyReferenceExpression) return Collections.<PyElement>singleton(tgt);
     else {
       return PyUtil.flattenedParens(new PyElement[]{tgt});
     }

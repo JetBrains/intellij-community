@@ -2,6 +2,7 @@ package com.jetbrains.python.toolbox;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -38,7 +39,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
    * Convenience: add an item wrapping it into a SingleIterable behind the scenes.
    */
   public ChainIterable<T> add(T item) {
-    return (ChainIterable<T>)super.add(new SingleIterable<T>(item));
+    return (ChainIterable<T>)super.add(Collections.<T>singleton(item));
   }
 
   /**
