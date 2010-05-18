@@ -117,4 +117,50 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}";
     doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
   }
+
+  public void testJavadocMethodParams() {
+    // Inspired by IDEA-42167
+    getSettings().SPACE_AFTER_COMMA = false;
+
+    String initial =
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test,   new      Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}";
+
+    // Expect single space to left between 'new' and Object[0].
+    doTextTest(initial,
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test,new Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}");
+
+    // Expect space to be inserted between ',' and 'new'.
+    getSettings().SPACE_AFTER_COMMA = true;
+    doTextTest(initial,
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test, new Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}");
+
+    // Expect space to be inserted between 'test' and ','.
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doTextTest(initial,
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test , new Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}");
+  }
 }
