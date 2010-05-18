@@ -1,8 +1,7 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -38,17 +37,6 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsSt
 
 public class PyUtil {
   private PyUtil() {
-  }
-
-  public static void ensureWritable(PsiElement element) {
-    PsiDocumentManager docmgr = PsiDocumentManager.getInstance(element.getProject());
-    PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) return;
-    Document doc = docmgr.getDocument(containingFile);
-    if (doc == null) return;
-    if (!FileDocumentManager.getInstance().requestWriting(doc, element.getProject())) {
-      throw new IllegalStateException();
-    }
   }
 
   @Nullable
@@ -424,7 +412,9 @@ public class PyUtil {
    * @param isLast     true if we don't need a comma after the element we're adding.
    */
   public static void addListNode(PsiElement parent, PsiElement newItem, ASTNode beforeThis, boolean isFirst, boolean isLast) {
-    ensureWritable(parent);
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(parent)) {
+      return;
+    }
     ASTNode node = parent.getNode();
     assert node != null;
     ASTNode itemNode = newItem.getNode();
@@ -443,7 +433,9 @@ public class PyUtil {
    */
   public static void removeListNode(PsiElement item) {
     PsiElement parent = item.getParent();
-    ensureWritable(parent);
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(parent)) {
+      return;
+    }
     // remove comma after the item
     ASTNode binder = parent.getNode();
     assert binder != null : "parent node is null, ensureWritable() lied";

@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -146,7 +147,9 @@ public class ImportToImportFromIntention implements IntentionAction {
         PsiElement elt = ref.getElement();
         PsiElement parent_elt = elt.getParent();
         used_names.add(sure(PyUtil.sure(parent_elt).getLastChild()).getText()); // TODO: find ident node more properly
-        PyUtil.ensureWritable(elt);
+        if (!CodeInsightUtilBase.preparePsiElementForWrite(elt)) {
+          return;
+        }
         PsiElement next_elt = elt.getNextSibling();
         if (next_elt != null && ".".equals(next_elt.getText())) next_elt.delete();
         elt.delete();

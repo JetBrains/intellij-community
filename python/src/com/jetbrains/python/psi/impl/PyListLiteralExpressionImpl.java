@@ -26,7 +26,6 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
   }
 
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
-    PyUtil.ensureWritable(this);
     checkPyExpression(psiElement);
     PyExpression element = (PyExpression)psiElement;
     PyExpression[] els = getElements();
@@ -41,14 +40,12 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
   }
 
   public PsiElement addAfter(@NotNull PsiElement psiElement, PsiElement afterThis) throws IncorrectOperationException {
-    PyUtil.ensureWritable(this);
     checkPyExpression(psiElement);
     checkPyExpression(afterThis);
     return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, (PyExpression)afterThis, (PyExpression)psiElement);
   }
 
   public PsiElement addBefore(@NotNull PsiElement psiElement, PsiElement beforeThis) throws IncorrectOperationException {
-    PyUtil.ensureWritable(this);
     checkPyExpression(psiElement);
     return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, null, (PyExpression)psiElement);
   }

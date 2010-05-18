@@ -42,6 +42,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return PyBundle.message("INSP.GROUP.python");
   }
 
+  @Nullable
   private static PsiElement appendToInit(PyFunction init, Function<String, PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList stmt_list = init.getStatementList();
@@ -55,7 +56,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
       self_name = params[0].getName();
     }
     PyStatement new_stmt = callback.fun(self_name);
-    PyUtil.ensureWritable(stmt_list);
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(stmt_list)) return null;
     final PsiElement result = stmt_list.addAfter(new_stmt, last_stmt);
     PyPsiUtils.removeRedundantPass(stmt_list);
     return result;
@@ -85,6 +86,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     }
   }
 
+  @Nullable
   public static PsiElement addFieldToInit(Project project, PyClass cls, String item_name, Function<String, PyStatement> callback) {
     if (cls != null && item_name != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
@@ -97,6 +99,9 @@ public class AddFieldQuickFix implements LocalQuickFix {
           if (init != null) break;
         }
         PyFunction new_init = createInitMethod(project, cls, init);
+        if (new_init == null) {
+          return null;
+        }
 
         appendToInit(new_init, callback);
 
@@ -114,9 +119,12 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return null;
   }
 
+  @Nullable
   private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit) {
     // found it; copy its param list and make a call to it.
-    PyUtil.ensureWritable(cls);
+    if (!CodeInsightUtilBase.preparePsiElementForWrite(cls)) {
+      return null;
+    }
     String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
 
     String functionText = "def " + PyNames.INIT + paramList + ":\n";

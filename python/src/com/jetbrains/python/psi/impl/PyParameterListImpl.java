@@ -33,7 +33,6 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   public void addParameter(final PyNamedParameter param) {
     PsiElement paren = getLastChild();
     if (paren != null && ")".equals(paren.getText())) {
-      PyUtil.ensureWritable(this);
       ASTNode beforeWhat = paren.getNode(); // the closing paren will be this
       PyParameter[] params = getParameters();
       PyUtil.addListNode(this, param, beforeWhat, true, params.length == 0);

@@ -44,7 +44,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   public void addArgument(PyExpression arg) {
-    PyUtil.ensureWritable(this);
     // it should find the comma after the argument to add after, and add after
     // that. otherwise it won't deal with comments nicely
     if (arg instanceof PyKeywordArgument) {
@@ -80,7 +79,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   public void addArgumentFirst(PyExpression arg) {
-    PyUtil.ensureWritable(this);
     ASTNode node = getNode();
     ASTNode[] pars = node.getChildren(TokenSet.create(PyTokenTypes.LPAR));
     if (pars.length == 0) {
@@ -124,7 +122,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   private void addArgumentLastWithoutComma(PyExpression arg) {
-    PyUtil.ensureWritable(this);
     ASTNode node = getNode();
     ASTNode[] pars = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
     if (pars.length == 0) {
@@ -143,7 +140,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   private void addArgumentNode(PyExpression arg, ASTNode beforeThis, boolean commaFirst) {
-    PyUtil.ensureWritable(this);
     ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
     ASTNode node = getNode();
     ASTNode argNode = arg.getNode();
@@ -158,7 +154,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   public void addArgumentAfter(PyExpression argument, @Nullable PyExpression afterThis) {
-    PyUtil.ensureWritable(this);
     if (afterThis == null) {
       addArgumentFirst(argument);
       return;
