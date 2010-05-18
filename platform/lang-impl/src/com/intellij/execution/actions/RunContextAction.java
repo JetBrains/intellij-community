@@ -18,7 +18,6 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -36,8 +35,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   protected void perform(final ConfigurationContext context) {
-    RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
-    final RunManagerEx runManager = context.getRunManager();
+    RunnerAndConfigurationSettings configuration = context.findExisting();
+    final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
     if (configuration == null) {
       configuration = context.getConfiguration();
       if (configuration == null) return;
@@ -69,7 +68,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText() + actionText, true);
 
-    RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+    RunnerAndConfigurationSettings configuration = context.findExisting();
     if (configuration == null) {
       configuration = context.getConfiguration();
     }

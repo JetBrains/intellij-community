@@ -16,6 +16,7 @@
 
 package com.intellij.analysis;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -148,8 +150,18 @@ public abstract class BaseAnalysisAction extends AnAction {
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray);
     }
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
+      final VirtualFile file = psiFile.getVirtualFile();
+      if (file != null && file.isValid() && file.getFileType() instanceof ArchiveFileType && acceptNonProjectDirectories()) {
+        final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(file);
+        if (jarRoot != null) {
+          PsiDirectory psiDirectory = psiFile.getManager().findDirectory(jarRoot);
+          if (psiDirectory != null) {
+            return new AnalysisScope(psiDirectory);
+          }
+        }
+      }
       return new AnalysisScope(psiFile);
     }
 

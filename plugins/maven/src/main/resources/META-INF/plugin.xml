@@ -26,6 +26,7 @@
     <keymapExtension implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
+    <configurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <javaClasspathPolicyExtender implementation="org.jetbrains.idea.maven.execution.MavenJavaClasspathPolicyExtender"/>
 
     <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
@@ -72,6 +73,9 @@
     <projectService serviceInterface="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"
                     serviceImplementation="org.jetbrains.idea.maven.dom.MavenDomElementDescriptorHolder"/>
 
+    <projectService serviceInterface="org.jetbrains.idea.maven.facade.remote.MavenFacadeManager"
+                    serviceImplementation="org.jetbrains.idea.maven.facade.remote.MavenFacadeManagerImpl"/>
+
     <applicationService serviceInterface="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"
                         serviceImplementation="org.jetbrains.idea.maven.dom.converters.MavenDomConvertersRegistry"/>
 
@@ -79,6 +83,7 @@
                         serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
+    <libraryTable.attachHandler implementation="org.jetbrains.idea.maven.utils.RepositoryAttachHandler"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
 
     <intentionAction>

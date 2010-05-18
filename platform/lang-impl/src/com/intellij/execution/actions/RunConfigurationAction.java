@@ -19,7 +19,6 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -145,8 +144,8 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
       final ConfigurationType[] types = runManager.getConfigurationFactories();
       for (ConfigurationType type : types) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
-        final RunnerAndConfigurationSettingsImpl[] configurations = runManager.getConfigurationSettings(type);
-        for (final RunnerAndConfigurationSettingsImpl configuration : configurations) {
+        final RunnerAndConfigurationSettings[] configurations = runManager.getConfigurationSettings(type);
+        for (final RunnerAndConfigurationSettings configuration : configurations) {
           //if (runManager.canRunConfiguration(configuration)) {
           final MenuAction action = new MenuAction(configuration, project);
           actionGroup.add(action);
@@ -213,10 +212,10 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
   }
 
   private static class MenuAction extends AnAction {
-    private final RunnerAndConfigurationSettingsImpl myConfiguration;
+    private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
 
-    public MenuAction(final RunnerAndConfigurationSettingsImpl configuration, final Project project) {
+    public MenuAction(final RunnerAndConfigurationSettings configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
       String name = configuration.getName();

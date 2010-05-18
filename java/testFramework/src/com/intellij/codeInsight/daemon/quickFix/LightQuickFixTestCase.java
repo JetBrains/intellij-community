@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 
@@ -125,17 +126,17 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void doAction(final String text, final boolean actionShouldBeAvailable, final String testFullPath, final String testName,
-                              QuickFixTestCase quickFixTestCase)
+                              QuickFixTestCase quickFix)
     throws Exception {
-    IntentionAction action = quickFixTestCase.findActionWithText(text);
+    IntentionAction action = quickFix.findActionWithText(text);
     if (action == null) {
       if (actionShouldBeAvailable) {
-        List<IntentionAction> actions = quickFixTestCase.getAvailableActions();
+        List<IntentionAction> actions = quickFix.getAvailableActions();
         List<String> texts = new ArrayList<String>();
         for (IntentionAction intentionAction : actions) {
           texts.add(intentionAction.getText());
         }
-        Collection<HighlightInfo> infos = quickFixTestCase.doHighlighting();
+        Collection<HighlightInfo> infos = quickFix.doHighlighting();
         fail("Action with text '" + text + "' is not available in test " + testFullPath+"\nAvailable actions: "+texts+"\n"+actions+"\nErrors:"+infos);
       }
     }
@@ -143,15 +144,17 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       if (!actionShouldBeAvailable) {
         fail("Action '" + text + "' is available in test " + testFullPath);
       }
-      quickFixTestCase.invoke(action);
-      if (!quickFixTestCase.shouldBeAvailableAfterExecution()) {
-        final IntentionAction afterAction = quickFixTestCase.findActionWithText(text);
+      quickFix.invoke(action);
+      UIUtil.dispatchAllInvocationEvents();
+      UIUtil.dispatchAllInvocationEvents();
+      if (!quickFix.shouldBeAvailableAfterExecution()) {
+        final IntentionAction afterAction = quickFix.findActionWithText(text);
         if (afterAction != null) {
           fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
         }
       }
-      final String expectedFilePath = quickFixTestCase.getBasePath() + "/after" + testName;
-      quickFixTestCase.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
+      final String expectedFilePath = quickFix.getBasePath() + "/after" + testName;
+      quickFix.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
     }
   }
 

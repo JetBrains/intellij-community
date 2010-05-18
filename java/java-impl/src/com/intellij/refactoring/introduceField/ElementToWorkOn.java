@@ -25,8 +25,10 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
+import com.intellij.refactoring.introduceVariable.PsiExpressionTrimRenderer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 
 import java.util.List;
@@ -80,7 +82,7 @@ public class ElementToWorkOn {
         final int offset = editor.getCaretModel().getOffset();
         final PsiElement[] statementsInRange = IntroduceVariableBase.findStatementsAtOffset(editor, file, offset);
 
-        if (statementsInRange.length == 1 && PsiUtil.hasErrorElementChild(statementsInRange[0])) {
+        if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) || !PsiUtil.isStatement(statementsInRange[0]))) {
           editor.getSelectionModel().selectLineAtCaret();
           final ElementToWorkOn elementToWorkOn = getElementToWorkOn(editor, file, refactoringName, helpId, project, localVar, expr);
           if (elementToWorkOn == null || elementToWorkOn.getLocalVariable() == null && elementToWorkOn.getExpression() == null) {
@@ -97,7 +99,7 @@ public class ElementToWorkOn {
             expr = expressions.get(0);
           }
           else {
-            IntroduceVariableBase.showChooser(editor, expressions, new Pass<PsiExpression>() {
+            IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {
               @Override
               public void pass(final PsiExpression selectedValue) {
                 PsiLocalVariable var = null; //replace var if selected expression == var initializer
@@ -106,7 +108,7 @@ public class ElementToWorkOn {
                 }
                 processor.pass(getElementToWorkOn(editor, file, refactoringName, helpId, project, var, selectedValue));
               }
-            });
+            }, new PsiExpressionTrimRenderer.RenderFunction());
             return;
           }
         }

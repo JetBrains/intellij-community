@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.util.Factory;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,4 +46,10 @@ public interface RunnerAndConfigurationSettings {
   ConfigurationType getType();
 
   void checkSettings() throws RuntimeConfigurationException;
+
+  void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException;
+
+  void setTemporary(boolean temporary);
+
+  Factory<RunnerAndConfigurationSettings> createFactory();
 }

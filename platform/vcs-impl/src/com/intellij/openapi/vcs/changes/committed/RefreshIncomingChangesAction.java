@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 
 /**
  * @author yole
@@ -34,11 +35,15 @@ public class RefreshIncomingChangesAction extends AnAction implements DumbAware 
 
   public static void doRefresh(final Project project) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(project);
-    if (!cache.hasCachesForAnyRoot() && !CacheSettingsDialog.showSettingsDialog(project)) {
-      return;
-    }
-    cache.refreshAllCachesAsync(true, false);
-    cache.refreshIncomingChangesAsync();
+    cache.hasCachesForAnyRoot(new Consumer<Boolean>() {
+      public void consume(final Boolean notEmpty) {
+        if ((! notEmpty) && (!CacheSettingsDialog.showSettingsDialog(project))) {
+          return;
+        }
+        cache.refreshAllCachesAsync(true, false);
+        cache.refreshIncomingChangesAsync();
+      }
+    });
   }
 
   public void update(final AnActionEvent e) {

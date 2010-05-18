@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,11 +72,6 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
 
   @NotNull
   protected abstract PsiElement[] doCreate(String newName, PsiDirectory directory) throws Exception;
-
-  protected static PsiFile createClassFromTemplate(final PsiDirectory directory, String className, String templateName,
-                                                   @NonNls String... parameters) throws IncorrectOperationException {
-    return GroovyTemplatesFactory.createFromTemplate(directory, className, className + GROOVY_EXTENSION, templateName, parameters);
-  }
 
 
   protected String getErrorTitle() {

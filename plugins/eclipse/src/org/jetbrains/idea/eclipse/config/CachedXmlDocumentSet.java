@@ -73,7 +73,12 @@ public class CachedXmlDocumentSet implements FileSet {
 
   @Nullable
   protected VirtualFile getVFile(final String name) {
-    return LocalFileSystem.getInstance().findFileByIoFile(new File(getParent(name), name));
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(getParent(name), name));
+    if (file != null) {
+      file.refresh(false, true);
+      if (!file.isValid()) return null;
+    }
+    return file;
   }
 
   @NotNull

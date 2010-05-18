@@ -87,21 +87,24 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   public boolean updateStep(final AtomicSectionsAware atomicSectionsAware) {
-    final List<LazyRefreshingSelfQueue<String>> list = new ArrayList<LazyRefreshingSelfQueue<String>>();
     mySomethingChanged = false;
+    final HashMap<VcsRoot, LazyRefreshingSelfQueue> copyMap;
     synchronized (myLock) {
-      final Set<VcsRoot> keys = myRefreshingQueues.keySet();
-      for (VcsRoot key : keys) {
-        final boolean backgroundOperationsAllowed = key.vcs.isVcsBackgroundOperationsAllowed(key.path);
-        LOG.debug("backgroundOperationsAllowed: " + backgroundOperationsAllowed + " for " + key.vcs.getName() + ", " + key.path.getPath());
-        if (backgroundOperationsAllowed) {
-          list.add(myRefreshingQueues.get(key));
-        }
+      copyMap = new HashMap<VcsRoot, LazyRefreshingSelfQueue>(myRefreshingQueues);
+    }
+
+    for (Iterator<Map.Entry<VcsRoot, LazyRefreshingSelfQueue>> iterator = copyMap.entrySet().iterator(); iterator.hasNext();) {
+      final Map.Entry<VcsRoot, LazyRefreshingSelfQueue> entry = iterator.next();
+      final VcsRoot key = entry.getKey();
+      final boolean backgroundOperationsAllowed = key.vcs.isVcsBackgroundOperationsAllowed(key.path);
+      LOG.debug("backgroundOperationsAllowed: " + backgroundOperationsAllowed + " for " + key.vcs.getName() + ", " + key.path.getPath());
+      if (! backgroundOperationsAllowed) {
+        iterator.remove();
       }
     }
-    LOG.debug("queues refresh started, queues: " + list.size());
+    LOG.debug("queues refresh started, queues: " + copyMap.size());
     final ProgressIndicator pi = ControlledAlarmFactory.createProgressIndicator(atomicSectionsAware);
-    for (LazyRefreshingSelfQueue<String> queue : list) {
+    for (LazyRefreshingSelfQueue queue : copyMap.values()) {
       atomicSectionsAware.checkShouldExit();
       queue.updateStep(pi);
     }

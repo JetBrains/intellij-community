@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.intention;
+package org.jetbrains.idea.maven.facade.remote;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Marker interface for intentions and quick fixes.
- * Marked actions are shown on the top of the list and are separated from the others.
- *
- * @author Dmitry Avdeev
- * @see com.intellij.codeInsight.intention.IntentionAction
- * @see com.intellij.codeInspection.LocalQuickFix
+ * @author Gregory.Shrago
  */
-public interface PreferredAction {
+public interface MavenFacadeManager {
+  MavenFacade getMavenFacade(@NotNull final Object key) throws Exception;
+  void releaseMavenFacade(@NotNull Object key);
 }

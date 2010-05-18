@@ -20,7 +20,9 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -291,9 +293,14 @@ public class PatternValidator extends LocalInspectionTool {
       return getName();
     }
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
-      handler.invoke(project, new PsiElement[]{myExpr}, DataManager.getInstance().getDataContext());
+      final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
+      dataContextContainer.doWhenDone(new AsyncResult.Handler<DataContext>() {
+        public void run(DataContext dataContext) {
+          handler.invoke(project, new PsiElement[]{myExpr}, dataContext);
+        }
+      });
       // how to automatically annotate the variable after it has been introduced?
     }
   }

@@ -19,10 +19,12 @@
  */
 package com.intellij.util.io.storage;
 
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.PagePool;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
   public RefCountingStorage(String path) throws IOException {
@@ -31,6 +33,28 @@ public class RefCountingStorage extends AbstractStorage {
 
   public RefCountingStorage(String path, PagePool pool) throws IOException {
     super(path, pool);
+  }
+
+  @Override
+  public StorageDataOutput writeStream(int record) {
+    final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    return new StorageDataOutput(this, record, new DeflaterOutputStream(stream)) {
+      @Override
+      protected ByteArrayOutputStream getByteStream() {
+        return stream;
+      }
+    };
+  }
+
+  @Override
+  public DataInputStream readStream(int record) {
+    final byte[] bytes = readBytes(record);
+    return new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(bytes)));
+  }
+
+  @Override
+  public AppenderStream appendStream(int record) {
+    throw new IncorrectOperationException("Appending is not supported");
   }
 
   @Override

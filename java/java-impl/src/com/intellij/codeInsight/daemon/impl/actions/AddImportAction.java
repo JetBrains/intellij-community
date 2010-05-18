@@ -162,7 +162,6 @@ public class AddImportAction implements QuestionAction {
           public void run() {                 
             final JavaAutoImportOptions options = ContainerUtil.findInstance(configurable.getConfigurables(), JavaAutoImportOptions.class);
             options.addExcludePackage(prefix);
-            IdeFocusManager.getInstance(project).requestFocus(options.getExcludePackagesList(), false);
           }
         });
       }

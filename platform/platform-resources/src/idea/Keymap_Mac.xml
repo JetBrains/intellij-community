@@ -427,5 +427,8 @@
       <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
     </action>
 
+    <action id="context.save"/>
+    <action id="context.load"/>
+
   </keymap>
 </component>

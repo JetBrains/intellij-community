@@ -161,6 +161,8 @@
 
     <extensionPoint name="attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider"/>
 
+    <extensionPoint name="libraryTable.attachHandler" interface="com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler"/>
+
     <extensionPoint name="java.compiler" area="IDEA_PROJECT" interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
 
     <extensionPoint name="classNameInsertHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
@@ -932,6 +934,7 @@
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
 
     <configurationType implementation="com.intellij.execution.applet.AppletConfigurationType"/>
+    <configurationProducer implementation="com.intellij.execution.applet.AppletConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.application.ApplicationConfigurationType"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 

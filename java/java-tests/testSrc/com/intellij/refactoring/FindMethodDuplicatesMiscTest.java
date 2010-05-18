@@ -29,4 +29,8 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testChangeReturnTypeByReturnValue() throws Exception {
     doTest();
   }
+
+  public void testParametersModification() throws Exception {
+    doTest();
+  }
 }

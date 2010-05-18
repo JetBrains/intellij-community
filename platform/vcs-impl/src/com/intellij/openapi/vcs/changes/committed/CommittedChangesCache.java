@@ -337,13 +337,23 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     return true;
   }
 
-  public boolean hasCachesForAnyRoot() {
-    try {
-      return hasCachesWithEmptiness(false);
-    }
-    catch (ProcessCanceledException e) {
-      return true;
-    }
+  public void hasCachesForAnyRoot(@Nullable final Consumer<Boolean> continuation) {
+    myTaskQueue.run(new Runnable() {
+      public void run() {
+        final Ref<Boolean> success = new Ref<Boolean>();
+        try {
+          success.set(hasCachesWithEmptiness(false));
+        }
+        catch (ProcessCanceledException e) {
+          success.set(true);
+        }
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            continuation.consume(success.get());
+          }
+        }, myProject.getDisposed());
+      }
+    });
   }
 
   public boolean hasEmptyCaches() {

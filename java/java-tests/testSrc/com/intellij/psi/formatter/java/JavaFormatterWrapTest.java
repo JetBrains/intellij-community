@@ -115,4 +115,38 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "\n" +
       "}");
   }
+
+  public void testEnumConstantsWrapping() {
+    // Inspired by IDEA-54667
+    getSettings().ENUM_CONSTANTS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().RIGHT_MARGIN = 80;
+
+    // Don't expect the constants to be placed on new line.
+    doTextTest(
+      "enum Test {FIRST, SECOND}",
+      "enum Test {FIRST, SECOND}"
+    );
+
+    // Expect not only enum constants to be wrapped but line break inside enum-level curly braces as well.
+    doTextTest(
+      "enum Test {FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH}",
+
+      "enum Test {\n" +
+      "    FIRST, SECOND, THIIIIIIIIIIIIIIIIIRRDDDDDDDDDDDDDD, FOURTHHHHHHHHHHHHHHHH\n" +
+      "}"
+    );
+  }
+
+  public void testMethodAnnotationFollowedBySingleLineComment() throws Exception {
+    // Inspired by IDEA-22808
+    getSettings().METHOD_ANNOTATION_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+
+    String text =
+      "@Test//mycomment\n" +
+      "public void foo() {\n" +
+      "}";
+    
+    // Expecting the code to be left as-is
+    doClassTest(text, text);
+  }
 }

@@ -204,6 +204,11 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "i", PsiType.INT, "0")}, false);
   }
 
+  public void testReorderMultilineMethodParameters() throws Exception {
+    // Inspired by IDEA-54902
+    doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
+  }
+
   private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }

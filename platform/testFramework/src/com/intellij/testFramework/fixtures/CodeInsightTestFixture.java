@@ -343,4 +343,5 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                              boolean searchTextOccurrences) throws Exception;
 
   <T extends PsiElement> T findElementByText(String text, Class<T> elementClass);
+
 }

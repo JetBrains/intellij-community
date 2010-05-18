@@ -43,4 +43,124 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     // Don't expect the space to be 'ate'
     doTextTest(text, text);
   }
+
+  public void testCommaInTypeArguments() {
+    // Inspired by IDEA-31681
+    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
+
+    String initial =
+      "interface TestInterface<A,B> {\n" +
+      "\n" +
+      "    <X,Y> void foo(X x, Y y);\n" +
+      "}\n" +
+      "\n" +
+      "public class FormattingTest implements TestInterface<String,Integer> {\n" +
+      "\n" +
+      "    public <X,Y> void foo(X x, Y y) {\n" +
+      "        Map<String,Integer> map = new HashMap<String,Integer>();\n" +
+      "    }\n" +
+      "}";
+
+    doTextTest(initial, initial); // Don't expect the comma to be inserted
+
+    getSettings().SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
+    String formatted =
+      "interface TestInterface<A, B> {\n" +
+      "\n" +
+      "    <X, Y> void foo(X x, Y y);\n" +
+      "}\n" +
+      "\n" +
+      "public class FormattingTest implements TestInterface<String, Integer> {\n" +
+      "\n" +
+      "    public <X, Y> void foo(X x, Y y) {\n" +
+      "        Map<String, Integer> map = new HashMap<String, Integer>();\n" +
+      "    }\n" +
+      "}";
+    doTextTest(initial, formatted); // Expect the comma to be inserted between type arguments
+  }
+
+  public void testUnaryOperators() {
+    // Inspired by IDEA-52127
+    getSettings().SPACE_AFTER_UNARY_OPERATOR = false;
+
+    String initial =
+      "public class FormattingTest {\n" +
+      "    public void foo() {\n" +
+      "        int i = 1;\n" +
+      "        System.out.println(-i);\n" +
+      "        System.out.println(+i);\n" +
+      "        System.out.println(++i);\n" +
+      "        System.out.println(i++);\n" +
+      "        System.out.println(--i);\n" +
+      "        System.out.println(i--);\n" +
+      "        boolean b = true;\n" +
+      "        System.out.println(!b);\n" +
+      "    }\n" +
+      "}";
+
+    doTextTest(initial, initial); // Don't expect spaces to be inserted after unary operators
+
+    getSettings().SPACE_AFTER_UNARY_OPERATOR = true;
+    String formatted =
+      "public class FormattingTest {\n" +
+      "    public void foo() {\n" +
+      "        int i = 1;\n" +
+      "        System.out.println(- i);\n" +
+      "        System.out.println(+ i);\n" +
+      "        System.out.println(++ i);\n" +
+      "        System.out.println(i++);\n" +
+      "        System.out.println(-- i);\n" +
+      "        System.out.println(i--);\n" +
+      "        boolean b = true;\n" +
+      "        System.out.println(! b);\n" +
+      "    }\n" +
+      "}";
+    doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
+  }
+
+  public void testJavadocMethodParams() {
+    // Inspired by IDEA-42167
+    getSettings().SPACE_AFTER_COMMA = false;
+
+    String initial =
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test,   new      Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}";
+
+    // Expect single space to left between 'new' and Object[0].
+    doTextTest(initial,
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test,new Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}");
+
+    // Expect space to be inserted between ',' and 'new'.
+    getSettings().SPACE_AFTER_COMMA = true;
+    doTextTest(initial,
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test, new Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}");
+
+    // Expect space to be inserted between 'test' and ','.
+    getSettings().SPACE_BEFORE_COMMA = true;
+    doTextTest(initial,
+      "public class FormattingTest {\n" +
+      "    /**\n" +
+      "     * This is a convenience method for {@code doTest(test , new Object[0]);}\n" +
+      "     */\n" +
+      "    void doTest() {\n" +
+      "    }\n" +
+      "}");
+  }
 }

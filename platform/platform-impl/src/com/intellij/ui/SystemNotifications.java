@@ -15,11 +15,16 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
  */
-public interface SystemNotifications {
-  void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text);
+public abstract class SystemNotifications {
+  public static SystemNotifications getInstance() {
+    return ServiceManager.getService(SystemNotifications.class);
+  }
+
+  public abstract void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text);
 }

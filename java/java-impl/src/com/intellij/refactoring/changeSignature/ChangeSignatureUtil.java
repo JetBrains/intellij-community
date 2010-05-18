@@ -72,7 +72,7 @@ public class ChangeSignatureUtil {
     }
   }
 
-  public static interface ChildrenGenerator<Parent extends PsiElement, Child extends PsiElement> {
+  public interface ChildrenGenerator<Parent extends PsiElement, Child extends PsiElement> {
     List<Child> getChildren(Parent parent);
   }
 }

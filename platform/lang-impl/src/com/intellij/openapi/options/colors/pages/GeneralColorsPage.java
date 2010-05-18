@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.FontEditorPreview;
+import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -35,7 +36,7 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GeneralColorsPage implements ColorSettingsPage {
+public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage {
   private static final String ADDITIONAL_DEMO_TEXT =
     "\n" +
     "<todo>//TODO: Visit JB Web resources:</todo>\n"+
@@ -50,6 +51,16 @@ public class GeneralColorsPage implements ColorSettingsPage {
     "<folded_text>Folded text</folded_text>\n" +
     "Template <template_var>VARIABLE</template_var>\n" +
     "Injected language: <injected_lang>\\.(gif|jpg|png)$</injected_lang>\n" +
+    "\n" +
+    "Code Inspections:\n" +
+    "  <error>Error</error>\n" +
+    "  <warning>Warning</warning>\n" +
+    "  <info>Info</info>\n" +
+    "  <deprecated>Deprecated symbol</deprecated>\n" +
+    "  <unused>Unused symbol</unused>\n"+
+    "  <wrong_ref>Unknown symbol</wrong_ref>\n" +
+    "  <server_error>Problem from server</server_error>\n" +
+    "  <server_duplicate>Duplicate from server</server_duplicate>\n" +
     "\n" +
     "Console:\n" +
     "<stdsys>C:\\command.com</stdsys>\n" +
@@ -128,6 +139,15 @@ public class GeneralColorsPage implements ColorSettingsPage {
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("todo", CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("hyperlink", CodeInsightColors.HYPERLINK_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("hyperlink_f", CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
+
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("wrong_ref", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("deprecated", CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("unused", CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("error", CodeInsightColors.ERRORS_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("warning", CodeInsightColors.WARNINGS_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("info", CodeInsightColors.INFO_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_error", CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_duplicate", CodeInsightColors.DUPLICATE_FROM_SERVER);
   }
 
   @NotNull

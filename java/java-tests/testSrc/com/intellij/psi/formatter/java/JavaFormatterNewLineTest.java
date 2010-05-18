@@ -16,6 +16,8 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * Is intended to hold specific java formatting tests for <code>'Place on New Line'</code> settings (
@@ -162,5 +164,32 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
   public void testBlockOfMethodWithAnnotatedParameter() throws Exception {
     // Inspired by IDEA-17870
     doClassTest("public Test(@Qualifier(\"blah\") AType blah){}", "public Test(@Qualifier(\"blah\") AType blah) {\n" + "}");
+  }
+
+  public void testArrayInitializer() throws IncorrectOperationException {
+    // Inspired by IDEADEV-6787
+    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    getSettings().ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE = true;
+    getSettings().ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE = true;
+    doTextTest(
+               "public @interface Ann\n" +
+               "{\n" +
+               "int[] x = { 1, 2 };\n" +
+               "\n" +
+               "Mode[] modes () default { @Mode(value = 1), @Mode(value = 2) };\n" +
+               "}",
+
+               "public @interface Ann {\n" +
+               "    int[] x = {\n" +
+               "            1,\n" +
+               "            2\n" +
+               "    };\n" +
+               "\n" +
+               "    Mode[] modes() default {\n" +
+               "            @Mode(value = 1),\n" +
+               "            @Mode(value = 2)\n" +
+               "    };\n" +
+               "}"
+    );
   }
 }

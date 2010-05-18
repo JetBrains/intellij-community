@@ -20,8 +20,9 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.PreferredAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -260,17 +261,31 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
   }
 
   private int getWeight(IntentionActionWithTextCaching action) {
-    if (action.getAction() instanceof PreferredAction) {
-      return 3;
+    IntentionAction a = action.getAction();
+    int group = getGroup(action);
+    if (a instanceof IntentionActionWrapper) {
+      a = ((IntentionActionWrapper)a).getDelegate();
     }
-    else if (myCachedErrorFixes.contains(action)) {
-      return 2;
+    if (a instanceof HighPriorityAction) {
+      return group + 3;
+    }                                                                                         
+    else if (a instanceof LowPriorityAction) {
+      return group - 3;
+    }
+    else {
+      return group;
+    }
+  }
+
+  private int getGroup(IntentionActionWithTextCaching action) {
+    if (myCachedErrorFixes.contains(action)) {
+      return 20;
     }
     else if (myCachedInspectionFixes.contains(action)) {
-      return 1;
+      return 10;
     }
     else if (action.getAction() instanceof EmptyIntentionAction) {
-      return -1;
+      return -10;
     }
     else {
       return 0;
@@ -327,7 +342,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     if (index == 0) return null;
     IntentionActionWithTextCaching prev = values.get(index - 1);
 
-    if (getWeight(value) != getWeight(prev)) {
+    if (getGroup(value) != getGroup(prev)) {
       return new ListSeparator();
     }
     return null;

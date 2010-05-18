@@ -38,13 +38,14 @@ public class SelectFilteringAction extends LabeledComboBoxAction {
   protected ComboBoxModel createModel() {
     final DefaultComboBoxModel model = new DefaultComboBoxModel(new Object[]{
       ChangeListFilteringStrategy.NONE,
-      new ColumnFilteringStrategy(ChangeListColumn.NAME, null),
+      /*new ColumnFilteringStrategy(ChangeListColumn.NAME, provider.getClass()),*/
       new StructureFilteringStrategy(myProject)
     });
     final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss();
     for(AbstractVcs vcs: vcss) {
       final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
       if (provider != null) {
+        model.addElement(new ColumnFilteringStrategy(ChangeListColumn.NAME, provider.getClass()));
         for(ChangeListColumn column: provider.getColumns()) {
           if (ChangeListColumn.isCustom(column)) {
             model.addElement(new ColumnFilteringStrategy(column, provider.getClass()));

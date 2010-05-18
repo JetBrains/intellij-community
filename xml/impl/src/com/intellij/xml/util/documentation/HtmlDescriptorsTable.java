@@ -19,12 +19,11 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author maxim
@@ -36,6 +35,9 @@ public class HtmlDescriptorsTable {
 
   @NonNls
   public static final String HTMLTABLE_RESOURCE_NAME = "htmltable.xml";
+
+  @NonNls
+  public static final String HTML5TABLE_RESOURCE_NAME = "html5table.xml";
 
   @NonNls
   public static final String TAG_ELEMENT_NAME = "tag";
@@ -73,97 +75,104 @@ public class HtmlDescriptorsTable {
 
   static {
     try {
-      final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(HTMLTABLE_RESOURCE_NAME));
-      final List elements = document.getRootElement().getChildren(TAG_ELEMENT_NAME);
-      HtmlDocumentationProvider.setBaseHtmlExtDocUrl(
-        document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue()
-      );
+      List<String> htmlTagNames = new ArrayList<String>();
 
-      ourHtmlTagNames = new String[elements.size()];
+      loadHtmlElements(HTMLTABLE_RESOURCE_NAME, htmlTagNames);
 
-      int i = 0;
-      for (Object object : elements) {
-        final Element element = (Element)object;
-        ourHtmlTagNames[i] = element.getAttributeValue(NAME_ATTR);
+      loadHtmlElements(HTML5TABLE_RESOURCE_NAME, htmlTagNames);
 
-        HtmlTagDescriptor value = new HtmlTagDescriptor();
-        ourTagTable.put(ourHtmlTagNames[i], value);
-        value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
-        value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
-        value.setName(ourHtmlTagNames[i]);
+      ourHtmlTagNames = ArrayUtil.toStringArray(htmlTagNames);
 
-        value.setHasStartTag(element.getAttribute(STARTTAG_ATTR).getBooleanValue());
-        value.setHasEndTag(element.getAttribute(ENDTAG_ATTR).getBooleanValue());
-        value.setEmpty(element.getAttribute(EMPTY_ATTR).getBooleanValue());
-
-        String attributeValue = element.getAttributeValue(DTD_ATTR);
-        if (attributeValue.length() > 0) {
-          value.setDtd(attributeValue.charAt(0));
-        }
-
-        ++i;
-      }
-
-      final List attributes = document.getRootElement().getChildren(ATTRIBUTE_ELEMENT_NAME);
-      for (Object attribute : attributes) {
-        final Element element = (Element)attribute;
-        String attrName = element.getAttributeValue(NAME_ATTR);
-
-        HtmlAttributeDescriptor value = new HtmlAttributeDescriptor();
-        HtmlAttributeDescriptor previousDescriptor = ourAttributeTable.get(attrName);
-
-        if (previousDescriptor == null) {
-          ourAttributeTable.put(attrName, value);
-        }
-        else {
-          CompositeAttributeTagDescriptor parentDescriptor;
-
-          if (!(previousDescriptor instanceof CompositeAttributeTagDescriptor)) {
-            parentDescriptor = new CompositeAttributeTagDescriptor();
-            ourAttributeTable.put(attrName, parentDescriptor);
-            parentDescriptor.attributes.add(previousDescriptor);
-          }
-          else {
-            parentDescriptor = (CompositeAttributeTagDescriptor)previousDescriptor;
-          }
-
-          parentDescriptor.attributes.add(value);
-        }
-
-        value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
-        value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
-        value.setName(attrName);
-
-        String attributeValue = element.getAttributeValue(DTD_ATTR);
-        if (attributeValue.length() > 0) {
-          value.setDtd(attributeValue.charAt(0));
-        }
-
-        value.setType(element.getAttributeValue(TYPE_ATTR));
-        value.setHasDefaultValue(element.getAttribute(DEFAULT_ATTR).getBooleanValue());
-
-        StringTokenizer tokenizer = new StringTokenizer(element.getAttributeValue(RELATED_TAGS_ATTR), ",");
-        int tokenCount = tokenizer.countTokens();
-
-        for (i = 0; i < tokenCount; ++i) {
-          final String s = tokenizer.nextToken();
-
-          if (s.equals("!")) {
-            value.setParentSetIsExclusionSet(true);
-          }
-          else {
-            if (value.getSetOfParentTags() == null) {
-              value.setSetOfParentTags(new String[tokenCount - (value.isParentSetIsExclusionSet() ? 1 : 0)]);
-            }
-            value.getSetOfParentTags()[i - (value.isParentSetIsExclusionSet() ? 1 : 0)] = s;
-          }
-        }
-
-        Arrays.sort(value.getSetOfParentTags());
-      }
     } catch (Exception ex) {
       ex.printStackTrace();
       ourHtmlTagNames = ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+  }
+
+  private static void loadHtmlElements(final String resourceName, List<String> htmlTagNames) throws JDOMException, IOException {
+    final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(resourceName));
+    final List elements = document.getRootElement().getChildren(TAG_ELEMENT_NAME);
+    HtmlDocumentationProvider.setBaseHtmlExtDocUrl(
+      document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue()
+    );
+
+    for (Object object : elements) {
+      final Element element = (Element)object;
+      String htmlTagName = element.getAttributeValue(NAME_ATTR);
+      htmlTagNames.add(htmlTagName);
+
+      HtmlTagDescriptor value = new HtmlTagDescriptor();
+      ourTagTable.put(htmlTagName, value);
+      value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
+      value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
+      value.setName(htmlTagName);
+
+      value.setHasStartTag(element.getAttribute(STARTTAG_ATTR).getBooleanValue());
+      value.setHasEndTag(element.getAttribute(ENDTAG_ATTR).getBooleanValue());
+      value.setEmpty(element.getAttribute(EMPTY_ATTR).getBooleanValue());
+
+      String attributeValue = element.getAttributeValue(DTD_ATTR);
+      if (attributeValue.length() > 0) {
+        value.setDtd(attributeValue.charAt(0));
+      }
+    }
+
+    final List attributes = document.getRootElement().getChildren(ATTRIBUTE_ELEMENT_NAME);
+    for (Object attribute : attributes) {
+      final Element element = (Element)attribute;
+      String attrName = element.getAttributeValue(NAME_ATTR);
+
+      HtmlAttributeDescriptor value = new HtmlAttributeDescriptor();
+      HtmlAttributeDescriptor previousDescriptor = ourAttributeTable.get(attrName);
+
+      if (previousDescriptor == null) {
+        ourAttributeTable.put(attrName, value);
+      }
+      else {
+        CompositeAttributeTagDescriptor parentDescriptor;
+
+        if (!(previousDescriptor instanceof CompositeAttributeTagDescriptor)) {
+          parentDescriptor = new CompositeAttributeTagDescriptor();
+          ourAttributeTable.put(attrName, parentDescriptor);
+          parentDescriptor.attributes.add(previousDescriptor);
+        }
+        else {
+          parentDescriptor = (CompositeAttributeTagDescriptor)previousDescriptor;
+        }
+
+        parentDescriptor.attributes.add(value);
+      }
+
+      value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
+      value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
+      value.setName(attrName);
+
+      String attributeValue = element.getAttributeValue(DTD_ATTR);
+      if (attributeValue.length() > 0) {
+        value.setDtd(attributeValue.charAt(0));
+      }
+
+      value.setType(element.getAttributeValue(TYPE_ATTR));
+      value.setHasDefaultValue(element.getAttribute(DEFAULT_ATTR).getBooleanValue());
+
+      StringTokenizer tokenizer = new StringTokenizer(element.getAttributeValue(RELATED_TAGS_ATTR), ",");
+      int tokenCount = tokenizer.countTokens();
+
+      for (int i = 0; i < tokenCount; ++i) {
+        final String s = tokenizer.nextToken();
+
+        if (s.equals("!")) {
+          value.setParentSetIsExclusionSet(true);
+        }
+        else {
+          if (value.getSetOfParentTags() == null) {
+            value.setSetOfParentTags(new String[tokenCount - (value.isParentSetIsExclusionSet() ? 1 : 0)]);
+          }
+          value.getSetOfParentTags()[i - (value.isParentSetIsExclusionSet() ? 1 : 0)] = s;
+        }
+      }
+
+      Arrays.sort(value.getSetOfParentTags());
     }
   }
 
