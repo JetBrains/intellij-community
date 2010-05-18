@@ -193,6 +193,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   }
 
   private void processFileInclusion(AntDomIncludingDirective directive, final InclusionKind kind) {
+    if (directive.equals(myContextElement)) {
+      stop();
+    }
+    if (myStopped) {
+      return;
+    }
     final PsiFileSystemItem item = directive.getFile().getValue();
     if (item instanceof PsiFile) {
       final AntDomProject slaveProject = AntSupport.getAntDomProject((PsiFile)item);
