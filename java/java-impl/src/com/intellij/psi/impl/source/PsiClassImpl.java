@@ -73,7 +73,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @NonNls private static final String VALUE_OF_METHOD = "valueOf";
 
   public PsiClassImpl(final PsiClassStub stub) {
-    super(stub, typeForClass(stub.isAnonymous(), stub.isEnumConstantInitializer()));
+    this(stub, typeForClass(stub.isAnonymous(), stub.isEnumConstantInitializer()));
+  }
+
+  protected PsiClassImpl(final PsiClassStub stub, final IStubElementType type) {
+    super(stub, type);
   }
 
   public PsiClassImpl(final ASTNode node) {
