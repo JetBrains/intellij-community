@@ -54,7 +54,7 @@ import java.io.File;
   }
 
   protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath();
+    return PathManagerEx.getTestDataPath(getClass());
   }
 
   protected abstract String getTestPath();
