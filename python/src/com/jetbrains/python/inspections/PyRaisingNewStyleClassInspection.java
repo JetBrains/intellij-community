@@ -11,10 +11,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   10.03.2010
- * Time:   14:43:08
+ * @author Alexey.Ivanov
  */
 public class PyRaisingNewStyleClassInspection extends LocalInspectionTool {
   @Nls
@@ -60,7 +57,7 @@ public class PyRaisingNewStyleClassInspection extends LocalInspectionTool {
       if (virtualFile == null) {
         return;
       }
-      if (LanguageLevel.forFile(virtualFile).isPy3K()) {
+      if (LanguageLevel.forFile(virtualFile).isAtLeast(LanguageLevel.PYTHON25)) {
         return;
       }
       final PyExpression[] expressions = node.getExpressions();

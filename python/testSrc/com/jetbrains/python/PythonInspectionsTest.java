@@ -21,7 +21,13 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   }
 
   private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) throws Throwable {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON30);
+  }
+
+  private void doTestWithLanguageLevel(String testName,
+                                       LocalInspectionTool localInspectionTool,
+                                       LanguageLevel languageLevel) throws Throwable {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
       doTest(testName, localInspectionTool);
     }
@@ -128,7 +134,7 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testPyRaisingNewStyleClassInspection() throws Throwable {
     LocalInspectionTool inspection = new PyRaisingNewStyleClassInspection();
-    doTest(getTestName(false), inspection);
+    doTestWithLanguageLevel(getTestName(false), inspection, LanguageLevel.PYTHON24);
   }
   
   public void testPyUnboundLocalVariableInspection() throws Throwable {
