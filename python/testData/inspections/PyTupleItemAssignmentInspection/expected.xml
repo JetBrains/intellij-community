@@ -3,6 +3,6 @@
   <problem>
     <file>test.py</file>
     <line>2</line>
-    <description>Tuples doesn't support item assignment</description>
+    <description>Tuples don't support item assignment</description>
   </problem>
 </problems>
