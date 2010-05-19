@@ -59,7 +59,7 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myTestsRootNode = myResultsViewer.getTestsRootNode();
-    myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode());
+    myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode(), "SMTestFramework");
     myEventsProcessor.addEventsListener(myResultsViewer);
     myTreeModel = myResultsViewer.getTreeView().getModel();
   }
