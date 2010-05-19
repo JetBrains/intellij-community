@@ -108,16 +108,16 @@ public interface ASTNode extends UserDataHolder {
   ASTNode getLastChildNode();
 
   /**
-   * Returns the previous sibling of this node in the tree.
+   * Returns the next sibling of this node in the tree.
    *
-   * @return the previous sibling node.
+   * @return the next sibling node.
    */
   ASTNode getTreeNext();
 
   /**
-   * Returns the next sibling of this node in the tree.
+   * Returns the previous sibling of this node in the tree.
    *
-   * @return the next sibling node.
+   * @return the previous sibling node.
    */
   ASTNode getTreePrev();
 
