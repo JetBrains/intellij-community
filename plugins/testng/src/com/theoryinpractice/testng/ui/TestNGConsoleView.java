@@ -24,7 +24,10 @@ package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
@@ -98,7 +101,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
         String trimmed = trimStackTrace(stackTrace);
         List<Printable> printables = getPrintables(result, trimmed);
         for (Printable printable : printables) {
-          printable.print(getConsole()); //enable for root element
+          printable.printOn(wrapConsoleView(getConsole())); //enable for root element
         }
         synchronized (currentTestOutput) {
           exceptionMark = currentTestOutput.size();
@@ -231,25 +234,43 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
       });
     }
     else {
-      getConsole().clear();
+      final ConsoleView consoleView = getConsole();
+      consoleView.clear();
       int idx = 0;
       int offset = 0;
       for (Printable chunk : new ArrayList<Printable>(output)) {
-        chunk.print(getConsole());
+        chunk.printOn(wrapConsoleView(consoleView));
         if (idx++ < i) {
-          offset = getConsole().getContentSize();
+          offset = consoleView.getContentSize();
         }
       }
-      getConsole().scrollTo(offset);
+      consoleView.scrollTo(offset);
     }
+  }
+
+  private static Printer wrapConsoleView(final ConsoleView consoleView) {
+    return new Printer() {
+      public void print(String text, ConsoleViewContentType contentType) {
+        consoleView.print(text, contentType);
+      }
+
+      public void onNewAvailable(Printable printable) {}
+
+      public void printHyperlink(String text, HyperlinkInfo info) {
+        consoleView.printHyperlink(text, info);
+      }
+
+      public void mark() {
+      }
+    };
   }
 
   public static class Chunk implements Printable {
     public String text;
     public ConsoleViewContentType contentType;
 
-    public void print(ConsoleView console) {
-      console.print(text, contentType);
+    public void printOn(Printer printer) {
+      printer.print(text, contentType);
     }
 
     public Chunk(String text, ConsoleViewContentType contentType) {
