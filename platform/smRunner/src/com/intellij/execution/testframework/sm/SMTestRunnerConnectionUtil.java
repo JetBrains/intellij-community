@@ -60,19 +60,20 @@ public class SMTestRunnerConnectionUtil {
    * consistency of test events communication protocol and throw assertion errors. To enable debug mode
    * please set system property idea.smrunner.debug=true
    *
-   * @param processHandler Process handler
-   * @param consoleProperties Console properties for test console actions
    * @param testFrameworkName Is used to store(project level) latest value of testTree/consoleTab splitter and other settings
    * and also will be mentioned in debug diagnostics
+   * @param processHandler Process handler
+   * @param consoleProperties Console properties for test console actions
    * @return Console view
    * @throws ExecutionException If IDEA cannot execute process this Exception will
    * be caught and shown in error message box
    */
-  public static BaseTestsOutputConsoleView attachRunner(@NotNull final ProcessHandler processHandler,
+  public static BaseTestsOutputConsoleView attachRunner(@NotNull final String testFrameworkName,
+                                                        @NotNull final ProcessHandler processHandler,
                                                         @NotNull final TestConsoleProperties consoleProperties,
                                                         final RunnerSettings runnerSettings,
-                                                        final ConfigurationPerRunnerSettings configurationSettings,
-                                                        @NotNull final String testFrameworkName) throws ExecutionException {
+                                                        final ConfigurationPerRunnerSettings configurationSettings
+  ) throws ExecutionException {
 
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
@@ -126,24 +127,24 @@ public class SMTestRunnerConnectionUtil {
    * consistency of test events communication protocol and throw assertion errors. To enable debug mode
    * please set system property idea.smrunner.debug=true
    *
+   * @param testFrameworkName Is used to store(project level) latest value of testTree/consoleTab splitter and other settings
    * @param processHandler Process handler
    * @param commandLineState  Command line state
    * @param config User run configuration settings
-   * @param testFrameworkName Is used to store(project level) latest value of testTree/consoleTab splitter and other settings
    * @return Console view
    * @throws ExecutionException If IDEA cannot execute process this Exception will
    * be caught and shown in error message box
    */
-  public static ConsoleView attachRunner(@NotNull final ProcessHandler processHandler,
+  public static ConsoleView attachRunner(@NotNull final String testFrameworkName, @NotNull final ProcessHandler processHandler,
                                          @NotNull final CommandLineState commandLineState,
-                                         @NotNull final RuntimeConfiguration config,
-                                         @NotNull final String testFrameworkName) throws ExecutionException {
+                                         @NotNull final RuntimeConfiguration config
+  ) throws ExecutionException {
     // final String testFrameworkName
     final TestConsoleProperties consoleProperties = new SMTRunnerConsoleProperties(config, testFrameworkName);
 
-    return attachRunner(processHandler, consoleProperties,
+    return attachRunner(testFrameworkName, processHandler, consoleProperties,
                         commandLineState.getRunnerSettings(),
-                        commandLineState.getConfigurationSettings(), testFrameworkName);
+                        commandLineState.getConfigurationSettings());
   }
 
   /**
