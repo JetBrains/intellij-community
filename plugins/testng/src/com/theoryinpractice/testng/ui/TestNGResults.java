@@ -240,6 +240,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
     if (testCase != null) {
       testCase.setResultMessage(result);
+      testCase.setTearDownFailure(failedToStart != null);
       failedToStart = null;
 
       if (result.getResult() == MessageHelper.FAILED_TEST) {
