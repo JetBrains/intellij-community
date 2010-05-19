@@ -50,7 +50,7 @@ public class PyPushDownTest extends PyClassRefactoringTest {
       protected void run() throws Throwable {
         processor.run();
       }
-    }.execute();
+    }.execute().throwException();
     myFixture.checkResultByFile(baseName + ".after.py");
     } catch (Exception e) {
       if (expectedError == null) throw e;
