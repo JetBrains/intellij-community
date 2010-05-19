@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.*;
@@ -65,6 +66,8 @@ public class FirstInBranch implements Runnable {
       logClient.doLog(SVNURL.parseURIEncoded(myFullBranchUrl), null, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(0), true, true, 0,
                       new ISVNLogEntryHandler() {
                         public void handleLogEntry(final SVNLogEntry logEntry) throws SVNException {
+                          ProgressManager.checkCanceled();
+                          
                           final Map map = logEntry.getChangedPaths();
                           for (Object o : map.values()) {
                             final SVNLogEntryPath path = (SVNLogEntryPath) o;
@@ -97,27 +100,4 @@ public class FirstInBranch implements Runnable {
 
   private static class MockException extends RuntimeException {}
 
-  public static class CopyData {
-    private final long myCopySourceRevision;
-    private final long myCopyTargetRevision;
-    private final boolean myTrunkSupposedCorrect;
-
-    public CopyData(long copySourceRevision, long copyTargetRevision, boolean trunkSupposedCorrect) {
-      myCopySourceRevision = copySourceRevision;
-      myCopyTargetRevision = copyTargetRevision;
-      myTrunkSupposedCorrect = trunkSupposedCorrect;
-    }
-
-    public long getCopySourceRevision() {
-      return myCopySourceRevision;
-    }
-
-    public long getCopyTargetRevision() {
-      return myCopyTargetRevision;
-    }
-
-    public boolean isTrunkSupposedCorrect() {
-      return myTrunkSupposedCorrect;
-    }
-  }
 }

@@ -55,7 +55,7 @@ public class BranchMerger implements IMerger {
   }
 
   public String getComment() {
-    return "Merge from " + myBranchName;
+    return "Merge all from " + myBranchName;
   }
 
   public boolean hasNext() {
