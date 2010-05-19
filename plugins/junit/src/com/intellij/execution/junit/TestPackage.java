@@ -200,7 +200,7 @@ public class TestPackage extends TestObject {
       new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
         private Socket mySocket;
 
-        @Override
+        
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             mySocket = serverSocket.accept();

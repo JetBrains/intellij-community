@@ -120,7 +120,7 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     });
   }
 
-  public void onSuiteStarted(final String suiteName, final String locationUrl) {
+  public void onSuiteStarted(final String suiteName, @Nullable final String locationUrl) {
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final SMTestProxy parentSuite = getCurrentSuite();
@@ -164,10 +164,12 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
     SMRunnerUtil.addToInvokeLater(new Runnable() {
       public void run() {
         final SMTestProxy mySuite = mySuitesStack.popSuite(suiteName);
-        mySuite.setFinished();
+        if (mySuite != null) {
+          mySuite.setFinished();
 
-        //fire events
-        fireOnSuiteFinished(mySuite);
+          //fire events
+          fireOnSuiteFinished(mySuite);
+        }
       }
     });
   }

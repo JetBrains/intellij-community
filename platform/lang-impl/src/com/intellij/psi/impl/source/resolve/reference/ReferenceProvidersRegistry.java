@@ -47,19 +47,22 @@ import java.util.concurrent.ConcurrentMap;
  * To change this template use Options | File Templates.
  */
 public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
-  private final ConcurrentMap<Class,SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
-  private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
-  private MultiMap<Class,Class> myKnownSupers;
+  private final ConcurrentMap<Class, SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
+  private final ConcurrentMap<Class, NamedObjectProviderBinding> myNamedBindingsMap =
+    new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
+  private MultiMap<Class, Class> myKnownSupers;
 
-  private static final Comparator<Trinity<PsiReferenceProvider,ProcessingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
-    public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
-                       final Trinity<PsiReferenceProvider, ProcessingContext, Double> o2) {
-      return o2.getThird().compareTo(o1.getThird());
-    }
-  };
+  private static final Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>> PRIORITY_COMPARATOR =
+    new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
+      public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
+                         final Trinity<PsiReferenceProvider, ProcessingContext, Double> o2) {
+        return o2.getThird().compareTo(o1.getThird());
+      }
+    };
   private final Project myProject;
 
-  private final static NotNullLazyKey<ReferenceProvidersRegistry, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ReferenceProvidersRegistry.class);
+  private final static NotNullLazyKey<ReferenceProvidersRegistry, Project> INSTANCE_CACHE =
+    ServiceManager.createLazyKey(ReferenceProvidersRegistry.class);
 
   public static ReferenceProvidersRegistry getInstance(Project project) {
     return INSTANCE_CACHE.getValue(project);
@@ -87,10 +90,13 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
                                                                double priority) {
   }
 
-  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority) {
+  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
+                                                               @NotNull PsiReferenceProvider provider,
+                                                               double priority) {
     myKnownSupers = null;
     final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
-    final PsiNamePatternCondition<?> nameCondition = ContainerUtil.findInstance(pattern.getCondition().getConditions(), PsiNamePatternCondition.class);
+    final PsiNamePatternCondition<?> nameCondition =
+      ContainerUtil.findInstance(pattern.getCondition().getConditions(), PsiNamePatternCondition.class);
     if (nameCondition != null) {
       final ValuePatternCondition<String> valueCondition =
         ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), ValuePatternCondition.class);
@@ -105,7 +111,8 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
       }
 
       final CaseInsensitiveValuePatternCondition ciCondition =
-        ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), CaseInsensitiveValuePatternCondition.class);
+        ContainerUtil
+          .findInstance(nameCondition.getNamePattern().getCondition().getConditions(), CaseInsensitiveValuePatternCondition.class);
       if (ciCondition != null) {
         registerNamedReferenceProvider(ciCondition.getValues(), new NamedObjectProviderBinding() {
           @Nullable
@@ -164,8 +171,8 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   }
 
   /**
-   * @deprecated
    * @see com.intellij.psi.PsiReferenceContributor
+   * @deprecated
    */
   public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
     registerReferenceProvider(null, scope, provider);
@@ -182,7 +189,8 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   }
 
   @NotNull
-  public List<Trinity<PsiReferenceProvider,ProcessingContext,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  public List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> getPairsByElement(@NotNull PsiElement element,
+                                                                                          @NotNull Class clazz) {
     assert ReflectionCache.isInstance(element, clazz);
 
     MultiMap<Class, Class> knownSupers = myKnownSupers;
@@ -218,11 +226,12 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     return ret == null ? Collections.<Trinity<PsiReferenceProvider, ProcessingContext, Double>>emptyList() : ret;
   }
 
-  public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz){
+  public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz) {
     ProgressManager.checkCanceled();
     assert context.isValid() : "Invalid context: " + context;
 
-    final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers = getInstance(context.getProject()).getPairsByElement(context, clazz);
+    final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers =
+      getInstance(context.getProject()).getPairsByElement(context, clazz);
     if (providers.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -241,12 +250,13 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
 
     List<PsiReference> result = new ArrayList<PsiReference>();
     final double maxPriority = firstProvider.getThird();
-    next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
+    next:
+    for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
       if (trinity.getThird().doubleValue() != maxPriority) {
         for (PsiReference ref : refs) {
           for (PsiReference reference : result) {
-            if (ref != null && reference.getRangeInElement().contains(ref.getRangeInElement())) {
+            if (ref != null && ReferenceRange.containsRangeInElement(reference, ref.getRangeInElement())) {
               continue next;
             }
           }

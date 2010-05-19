@@ -40,7 +40,6 @@ public class Waiter extends Task.Modal {
     setCancelText("Use current data");
   }
 
-  @Override
   public void run(@NotNull ProgressIndicator indicator) {
     indicator.setIndeterminate(true);
     indicator.setText2(VcsBundle.message("commit.wait.util.synched.text"));

@@ -113,7 +113,7 @@ public class GitVFSListener extends VcsVFSListener {
       return;
     }
     gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("add.adding")) {
-      @Override
+
       public void run(@NotNull ProgressIndicator indicator) {
         // note that copied files are not processed because they are included into added files.
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
@@ -157,7 +157,7 @@ public class GitVFSListener extends VcsVFSListener {
       return;
     }
     gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("add.adding")) {
-      @Override
+
       public void run(@NotNull ProgressIndicator indicator) {
         for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
           try {
@@ -212,7 +212,7 @@ public class GitVFSListener extends VcsVFSListener {
       return;
     }
     gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("remove.removing")) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
           try {

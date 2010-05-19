@@ -262,7 +262,7 @@ public class DumbServiceImpl extends DumbService {
 
         private final ArrayBlockingQueue<Ref<CacheUpdateRunner>> myActionQueue = new ArrayBlockingQueue<Ref<CacheUpdateRunner>>(1);
 
-        @Override
+        // /*no override for interfaces in jdk 1.5 */ @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           final ProgressIndicator proxy =
             (ProgressIndicator)Proxy.newProxyInstance(indicator.getClass().getClassLoader(), new Class[]{ProgressIndicator.class}, new InvocationHandler() {

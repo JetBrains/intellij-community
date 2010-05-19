@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
@@ -37,6 +38,7 @@ import java.util.List;
 public class PropertyReferenceViaLastWordSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   // add to the search results occurences in JSPs of the last word in the property name, since this stuff is possible:
   // <bla:bla ref.key="lastWord> (can reference to xxx.lastWord property)
+
   public boolean execute(final ReferencesSearch.SearchParameters queryParameters, final Processor<PsiReference> consumer) {
     final PsiElement refElement = queryParameters.getElementToSearch();
     if (refElement instanceof Property) {
@@ -60,7 +62,7 @@ public class PropertyReferenceViaLastWordSearcher implements QueryExecutor<PsiRe
           ProgressManager.checkCanceled();
           final PsiReference[] refs = element.getReferences();
           for (PsiReference ref : refs) {
-            if (ref.getRangeInElement().contains(offsetInElement) && ref.isReferenceTo(refElement)) {
+            if (ReferenceRange.containsOffsetInElement(ref, offsetInElement) && ref.isReferenceTo(refElement)) {
               return consumer.process(ref);
             }
             ProgressManager.checkCanceled();

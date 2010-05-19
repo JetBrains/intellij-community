@@ -44,8 +44,7 @@ public class VisitorDescription {
         continue;
       }
       final String methodName = method.getName();
-      if (VISIT.equals(methodName) ||
-          methodName.startsWith(VISIT) && domClass.getSimpleName().equals(methodName.substring(VISIT.length()))) {
+      if (VISIT.equals(methodName) || methodName.startsWith(VISIT) /*&& domClass.getSimpleName().equals(methodName.substring(VISIT.length()))*/) {
         method.setAccessible(true);
         myMethods.put(domClass, method);
       }

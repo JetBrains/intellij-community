@@ -25,14 +25,16 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
-*/
+ */
 public class MethodTextOccurenceProcessor implements TextOccurenceProcessor {
   private final PsiMethod[] myMethods;
   private final Processor<PsiReference> myConsumer;
   private final PsiClass myContainingClass;
   private final boolean myStrictSignatureSearch;
 
-  public MethodTextOccurenceProcessor(final Processor<PsiReference> consumer, @NotNull final PsiClass aClass, final boolean strictSignatureSearch,
+  public MethodTextOccurenceProcessor(final Processor<PsiReference> consumer,
+                                      @NotNull final PsiClass aClass,
+                                      final boolean strictSignatureSearch,
                                       final PsiMethod... methods) {
     myMethods = methods;
     myConsumer = consumer;
@@ -43,7 +45,7 @@ public class MethodTextOccurenceProcessor implements TextOccurenceProcessor {
   public boolean execute(PsiElement element, int offsetInElement) {
     final PsiReference[] refs = element.getReferences();
     for (PsiReference ref : refs) {
-      if (ref.getRangeInElement().contains(offsetInElement)) {
+      if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
         for (PsiMethod method : myMethods) {
           if (!method.isValid()) {
             continue;

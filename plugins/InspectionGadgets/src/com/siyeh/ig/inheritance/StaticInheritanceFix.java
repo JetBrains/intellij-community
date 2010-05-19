@@ -79,7 +79,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
     final PsiFile file = implementingClass.getContainingFile();
 
     ProgressManager.getInstance().run(new Task.Modal(project, "Replacing usages of "+iface.getName(), false) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         for (final PsiField field : allFields) {
           final Query<PsiReference> search = ReferencesSearch.search(field, implementingClass.getUseScope(), false);

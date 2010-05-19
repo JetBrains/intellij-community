@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.TextOccurenceProcessor;
@@ -53,7 +50,7 @@ public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, M
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
-          if (ref.getRangeInElement().contains(offsetInElement)) {
+          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
             if (ref.isReferenceTo(method)) {
               return consumer.process(ref);
             }
@@ -64,14 +61,14 @@ public class AccessorReferencesSearcher implements QueryExecutor<PsiReference, M
     };
 
     return helper.processElementsWithWord(processor,
-        searchScope,
-        propertyName,
-        UsageSearchContext.IN_CODE,
-        false);
+                                          searchScope,
+                                          propertyName,
+                                          UsageSearchContext.IN_CODE,
+                                          false);
   }
 
   private String getPropertyName(final PsiMethod method) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>(){
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
         return GroovyPropertyUtils.getPropertyName(method);
       }

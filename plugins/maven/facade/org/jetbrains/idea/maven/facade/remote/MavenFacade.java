@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.facade.remote;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 
@@ -32,6 +33,7 @@ public interface MavenFacade extends Remote {
 
   List<RepositoryType> getRepositories(String nexusUrl) throws RemoteException;
 
+  @Nullable
   List<ArtifactType> findArtifacts(ArtifactType template, String nexusUrl) throws RemoteException;
 
   Map<String, List<ArtifactType>> resolveDependencies(List<ArtifactType> artifacts) throws RemoteException;

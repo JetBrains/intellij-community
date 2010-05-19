@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.testFramework.exceptionCases.AssertionErrorCase;
+import com.intellij.util.SystemProperties;
 
 /**
  * @author Roman Chernyatchik
@@ -28,6 +29,13 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     super.setUp();
 
     myTestSuiteStack = new TestSuiteStack();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    disableDebugMode();
+    
+    super.tearDown();
   }
 
   public void testPushSuite() {
@@ -62,14 +70,60 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     assertEquals(mySuite, myTestSuiteStack.getCurrentSuite());
   }
 
-  public void testPopSuite() throws Throwable {
-    final String suiteName = mySuite.getName();
+  public void testPopEmptySuite_DebugMode() throws Throwable {
+    // enable debug mode
+    enableDebugMode();
 
     assertException(new AssertionErrorCase() {
       public void tryClosure() {
         myTestSuiteStack.popSuite("some suite");
       }
     });
+  }
+
+  public void testPopEmptySuite_NormalMode() throws Throwable {
+    assertNull(myTestSuiteStack.popSuite("some suite"));
+  }
+
+  public void testPopInconsistentSuite_DebugMode() throws Throwable {
+    enableDebugMode();
+
+    final String suiteName = mySuite.getName();
+
+    myTestSuiteStack.pushSuite(createSuiteProxy("0"));
+    myTestSuiteStack.pushSuite(mySuite);
+    myTestSuiteStack.pushSuite(createSuiteProxy("2"));
+    myTestSuiteStack.pushSuite(createSuiteProxy("3"));
+
+    assertEquals(4, myTestSuiteStack.getStackSize());
+    assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
+
+    assertException(new AssertionErrorCase() {
+      public void tryClosure() {
+        myTestSuiteStack.popSuite(suiteName);
+      }
+    });
+    assertEquals(4, myTestSuiteStack.getStackSize());
+  }
+
+  public void testPopInconsistentSuite_NormalMode() throws Throwable {
+    final String suiteName = mySuite.getName();
+
+    myTestSuiteStack.pushSuite(createSuiteProxy("0"));
+    myTestSuiteStack.pushSuite(mySuite);
+    myTestSuiteStack.pushSuite(createSuiteProxy("2"));
+    myTestSuiteStack.pushSuite(createSuiteProxy("3"));
+
+    assertEquals(4, myTestSuiteStack.getStackSize());
+    assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
+
+
+    assertNotNull(myTestSuiteStack.popSuite(suiteName));
+    assertEquals(1, myTestSuiteStack.getStackSize());
+  }
+
+  public void testPopSuite() throws Throwable {
+    final String suiteName = mySuite.getName();
 
     myTestSuiteStack.pushSuite(mySuite);
     assertEquals(mySuite, myTestSuiteStack.popSuite(suiteName));
@@ -118,5 +172,14 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
     myTestSuiteStack.pushSuite(createSuiteProxy("2"));
     myTestSuiteStack.clear();
     assertTrue(myTestSuiteStack.isEmpty());    
+  }
+
+  private static void enableDebugMode() {
+    // enable debug mode
+    System.setProperty("idea.smrunner.debug", "true");
+  }
+  private static void disableDebugMode() {
+    // enable debug mode
+    System.setProperty("idea.smrunner.debug", "false");
   }
 }

@@ -43,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Roman Chernyatchik
  */
 public class SMTestRunnerConnectionUtil {
+  private static final String TEST_RUNNER_DEBUG_MODE_PROPERTY = "idea.smrunner.debug";
+
   private SMTestRunnerConnectionUtil() {
     // Do nothing. Utility class.
   }
@@ -127,6 +129,16 @@ public class SMTestRunnerConnectionUtil {
 
     return attachRunner(processHandler, consoleProperties,
                         commandLineState.getRunnerSettings(), commandLineState.getConfigurationSettings(), splitterPropertyName);
+  }
+
+  /**
+   * In debug mode SM Runner will check events consistency. All errors will be reported using IDEA errors logger.
+   * This mode must be disabled in production. The most widespread false positives were detected when you debug tests.
+   * In such cases Test Framework may fire events several times, etc.
+   * @return true if in debug mode, otherwise false.
+   */
+  public static boolean isInDebugMode() {
+    return Boolean.valueOf(System.getProperty(TEST_RUNNER_DEBUG_MODE_PROPERTY));
   }
 
   private static ProcessHandler attachEventsProcessors(@NotNull final TestConsoleProperties consoleProperties,

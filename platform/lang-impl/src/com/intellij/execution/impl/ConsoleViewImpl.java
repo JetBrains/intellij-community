@@ -1315,18 +1315,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       scrollTo(next.getStartOffset());
     }
     final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
-    return new OccurenceInfo(new Navigatable() {
+    return new OccurenceInfo(new Navigatable.Adapter() {
       public void navigate(final boolean requestFocus) {
         hyperlinkInfo.navigate(myProject);
         linkFollowed(hyperlinkInfo);
-      }
-
-      public boolean canNavigate() {
-        return true;
-      }
-
-      public boolean canNavigateToSource() {
-        return true;
       }
     }, i, ranges.size());
   }

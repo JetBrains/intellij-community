@@ -189,7 +189,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
     myAttachAnnotationsButton.addActionListener(new AttachAnnotationsAction());
 
     final LibraryTableAttachHandler[] handlers = LibraryTableAttachHandler.EP_NAME.getExtensions();
-    if (handlers.length == 0) myAttachMoreButton.setVisible(false);
+    if (handlers.length == 0 || myProject == null) myAttachMoreButton.setVisible(false);
     else if (handlers.length == 1) {
       myAttachMoreButton.setText(handlers[0].getLongName());
     }
