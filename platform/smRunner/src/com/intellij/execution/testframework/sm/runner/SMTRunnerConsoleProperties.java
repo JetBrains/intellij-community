@@ -21,19 +21,22 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.config.Storage;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author: Roman Chernyatchik
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties {
-  @NonNls private static final String PREFIX = "RubyTestUnitSupport.";
   private final RuntimeConfiguration myConfiguration;
 
-  public SMTRunnerConsoleProperties(final RuntimeConfiguration config)
+  /**
+   * @param config
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
+   */
+  public SMTRunnerConsoleProperties(final RuntimeConfiguration config, 
+                                    final String testFrameworkName)
   {
-    super(new Storage.PropertiesComponentStorage(PREFIX, PropertiesComponent.getInstance()), config.getProject());
+    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()), config.getProject());
     myConfiguration = config;
   }
 
