@@ -892,6 +892,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertNull(myCancelRequest);
     assertTrue(done.isRejected());
     assertTrue(indicatorRef.get().isCanceled());
+
+    assertFalse(getBuilder().getUi().isCancelProcessed());
   }
 
   private void expandNext(final NodeElement[] elements, final int index, final ProgressIndicator indicator, final ActionCallback callback) {
@@ -1699,6 +1701,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(false, false);
     }
 
+    @Override
+    public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
+      super.testThrowingProcessCancelledInterruptsUpdate();
+    }
   }
 
   public static class Passthrough extends TreeUiTest {
