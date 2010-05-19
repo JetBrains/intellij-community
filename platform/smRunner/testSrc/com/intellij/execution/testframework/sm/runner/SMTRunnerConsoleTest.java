@@ -72,7 +72,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myRootSuite = myResultsViewer.getTestsRootNode();
-    myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode());
+    myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(myResultsViewer.getTestsRootNode(), "SMTestFramework");
 
     myEventsProcessor.onStartTesting();
   }
