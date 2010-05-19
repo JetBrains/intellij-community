@@ -26,8 +26,9 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
@@ -187,7 +188,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     if (matcher.matches()) {
       printables.add(new Chunk(matcher.group(1), ConsoleViewContentType.ERROR_OUTPUT));
       //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
-      TestNGDiffHyperLink link = new TestNGDiffHyperLink(matcher.group(2), matcher.group(3), null, (TestNGConsoleProperties) myProperties) {
+      DiffHyperlink link = new DiffHyperlink(matcher.group(2), matcher.group(3), null) {
         protected String getTitle() {
           //TODO should do some more farting about to find the equality assertion that failed and show that as title
           return result.getTestClass() + '#' + result.getMethod() + "() failed";
