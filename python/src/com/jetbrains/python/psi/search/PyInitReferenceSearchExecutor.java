@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.search;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
@@ -20,7 +21,7 @@ public class PyInitReferenceSearchExecutor implements QueryExecutor<PsiReference
     if (!(element instanceof PyFunction)) {
       return true;
     }
-    final PyFunction function = (PyFunction) element;
+    final PyFunction function = (PyFunction)element;
     if (!PyNames.INIT.equals(function.getName())) {
       return true;
     }
@@ -43,7 +44,7 @@ public class PyInitReferenceSearchExecutor implements QueryExecutor<PsiReference
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
-          if (ref.getRangeInElement().contains(offsetInElement)) {
+          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
             if (ref.isReferenceTo(function)) {
               return consumer.process(ref);
             }
@@ -54,9 +55,9 @@ public class PyInitReferenceSearchExecutor implements QueryExecutor<PsiReference
     };
 
     return helper.processElementsWithWord(processor,
-        searchScope,
-        className,
-        UsageSearchContext.IN_CODE,
-        false);
+                                          searchScope,
+                                          className,
+                                          UsageSearchContext.IN_CODE,
+                                          false);
   }
 }

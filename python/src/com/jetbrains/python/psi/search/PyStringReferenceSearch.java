@@ -15,6 +15,7 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.jetbrains.django.lang.template.psi.impl.DjangoTemplateFileImpl;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
@@ -27,7 +28,7 @@ public class PyStringReferenceSearch implements QueryExecutor<PsiReference, Refe
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters params,
                          @NotNull final Processor<PsiReference> consumer) {
     final PsiElement element = params.getElementToSearch();
-    if (!(element instanceof PyElement) && !(element instanceof PsiDirectory)) {
+    if (!(element instanceof PyElement) && !(element instanceof PsiDirectory) && !(element instanceof DjangoTemplateFileImpl)) {
       return true;
     }
     final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -37,6 +38,9 @@ public class PyStringReferenceSearch implements QueryExecutor<PsiReference, Refe
         } else
           if (element instanceof PsiDirectory) {
             return ((PsiDirectory) element).getName();
+          }
+          if (element instanceof DjangoTemplateFileImpl) {
+            return ((DjangoTemplateFileImpl) element).getName();
           }
         else {
           return ((PyElement)element).getName();
