@@ -83,6 +83,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
   private final TestNGConsoleView myConsole;
   private int myStatus = MessageHelper.PASSED_TEST;
+  private Set<String> startedMethods = new HashSet<String>();
 
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
@@ -199,6 +200,12 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
         started.put(result, dups);
       }
       dups.add(proxy);
+    }
+    final String testMethodDescriptor = result.getTestClass() + result.getMethod();
+    if (startedMethods.contains(testMethodDescriptor)) {
+      total++;
+    } else {
+      startedMethods.add(testMethodDescriptor);
     }
     animator.setCurrentTestCase(proxy);
     treeBuilder.addItem(classNode, proxy);
