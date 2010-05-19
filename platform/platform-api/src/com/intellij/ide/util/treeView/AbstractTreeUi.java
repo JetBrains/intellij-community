@@ -1550,6 +1550,7 @@ public class AbstractTreeUi {
         throw new ProcessCanceledException();
       }
 
+      myCancelRequest.set(false);
     }
     catch (ProcessCanceledException e) {
       myCancelRequest.set(false);
@@ -1571,37 +1572,7 @@ public class AbstractTreeUi {
 
     invokeLaterIfNeeded(new Runnable() {
       public void run() {
-        DefaultMutableTreeNode[] uc = myUpdatingChildren.toArray(new DefaultMutableTreeNode[myUpdatingChildren.size()]);
-        for (DefaultMutableTreeNode each : uc) {
-          resetIncompleteNode(each);
-        }
-
-
-        Object[] bg = myLoadedInBackground.keySet().toArray(new Object[myLoadedInBackground.size()]);
-        for (Object each : bg) {
-          resetIncompleteNode(getNodeForElement(each, false));
-        }
-
-        myUpdaterState = null;
-        getUpdater().reset();
-
-
-        myYeildingNow = false;
-        myYeildingPasses.clear();
-        myYeildingDoneRunnables.clear();
-
-        myNodeActions.clear();
-        myNodeChildrenActions.clear();
-
-        myActiveWorkerTasks.clear();
-        myUpdatingChildren.clear();
-        myLoadedInBackground.clear();
-
-        myDeferredExpansions.clear();
-        myDeferredSelections.clear();
-
-        assert isReady();
-
+        resetToReadyNow();
 
         Progressive[] progressives = myBatchIndicators.keySet().toArray(new Progressive[myBatchIndicators.size()]);
         for (Progressive each : progressives) {
@@ -1616,6 +1587,37 @@ public class AbstractTreeUi {
     });
 
     return result;
+  }
+
+  private void resetToReadyNow() {
+    DefaultMutableTreeNode[] uc = myUpdatingChildren.toArray(new DefaultMutableTreeNode[myUpdatingChildren.size()]);
+    for (DefaultMutableTreeNode each : uc) {
+      resetIncompleteNode(each);
+    }
+
+
+    Object[] bg = myLoadedInBackground.keySet().toArray(new Object[myLoadedInBackground.size()]);
+    for (Object each : bg) {
+      resetIncompleteNode(getNodeForElement(each, false));
+    }
+
+    myUpdaterState = null;
+    getUpdater().reset();
+
+
+    myYeildingNow = false;
+    myYeildingPasses.clear();
+    myYeildingDoneRunnables.clear();
+
+    myNodeActions.clear();
+    myNodeChildrenActions.clear();
+
+    myActiveWorkerTasks.clear();
+    myUpdatingChildren.clear();
+    myLoadedInBackground.clear();
+
+    myDeferredExpansions.clear();
+    myDeferredSelections.clear();
   }
 
   private void resetIncompleteNode(DefaultMutableTreeNode node) {
@@ -1686,6 +1688,8 @@ public class AbstractTreeUi {
   }
 
   void maybeReady() {
+    assertIsDispatchThread();
+
     if (isReleased()) return;
 
     if (isReady()) {
@@ -1966,14 +1970,28 @@ public class AbstractTreeUi {
   }
 
   public ActionCallback cancelUpdate() {
+    assertIsDispatchThread();
+
+    final ActionCallback done = new ActionCallback();
+
     if (myResettingToReadyNow.get()) {
-      return getReady(this);
+      getReady(this).notify(done);
+      return done;
+    }
+
+    if (isReady()) {
+      resetToReadyNow();
+      done.setDone();
+      return done;
     }
 
     myCancelRequest.set(true);
-    ActionCallback ready = getReady(this);
+
+    getReady(this).notify(done);
+
     maybeReady();
-    return ready;
+
+    return done;
   }
 
   public ActionCallback batch(final Progressive progressive) {
@@ -1985,18 +2003,29 @@ public class AbstractTreeUi {
     myBatchIndicators.put(progressive, indicator);
     myBatchCallbacks.put(progressive, callback);
 
-    progressive.run(indicator);
+    try {
+      progressive.run(indicator);
+    } finally {
+      getReady(this).doWhenDone(new Runnable() {
+        public void run() {
+          if (myBatchIndicators.containsKey(progressive)) {
+            ProgressIndicator indicator = myBatchIndicators.remove(progressive);
+            myBatchCallbacks.remove(progressive);
 
-    getReady(this).doWhenDone(new Runnable() {
-      public void run() {
-        if (myBatchIndicators.containsKey(progressive)) {
-          myBatchIndicators.remove(progressive);
-          myBatchCallbacks.remove(progressive);
-
-          callback.setDone();
+            if (indicator.isCanceled()) {
+              callback.setRejected();
+            } else {
+              callback.setDone();
+            }
+          } else {
+            callback.setRejected();
+          }
         }
-      }
-    });
+      });
+
+      maybeReady();
+    }
+
 
     return callback;
   }

@@ -22,6 +22,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -121,11 +122,33 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   private ActionCallback _select(final Object element,
-                                 VirtualFile file,
+                                 final VirtualFile file,
                                  final boolean requestFocus,
                                  final Condition<AbstractTreeNode> nonStopCondition) {
+
     final ActionCallback result = new ActionCallback();
 
+    cancelUpdate().doWhenDone(new Runnable() {
+      public void run() {
+        batch(new Progressive() {
+          public void run(@NotNull ProgressIndicator indicator) {
+            _select(element, file, requestFocus, nonStopCondition, result, indicator);
+          }
+        });
+      }
+    });
+
+
+
+    return result;
+  }
+
+  private void _select(Object element,
+                       VirtualFile file,
+                       final boolean requestFocus,
+                       final Condition<AbstractTreeNode> nonStopCondition,
+                       final ActionCallback result,
+                       ProgressIndicator indicator) {
     AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = new Runnable() {
@@ -146,7 +169,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     };
 
     if (alreadySelected == null) {
-      expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition)
+      expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator)
         .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
           public void run(AbstractTreeNode node) {
             select(node, onDone);
@@ -156,8 +179,6 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     else {
       select(alreadySelected, onDone);
     }
-
-    return result;
   }
 
   private AbstractTreeNode alreadySelectedNode(final Object element) {
@@ -188,7 +209,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private AsyncResult<AbstractTreeNode> expandPathTo(final VirtualFile file,
                                                      final AbstractTreeNode root,
                                                      final Object element,
-                                                     final Condition<AbstractTreeNode> nonStopCondition) {
+                                                     final Condition<AbstractTreeNode> nonStopCondition,
+                                                     final ProgressIndicator indicator) {
     final AsyncResult<AbstractTreeNode> async = new AsyncResult<AbstractTreeNode>();
 
     if (root.canRepresent(element)) {
@@ -208,10 +230,12 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     expand(root, new Runnable() {
       public void run() {
+        indicator.checkCanceled();
+
         final DefaultMutableTreeNode rootNode = getNodeForElement(root);
         if (rootNode != null) {
           final List<AbstractTreeNode> kids = collectChildren(rootNode);
-          expandChild(kids, 0, nonStopCondition, file, element, async);
+          expandChild(kids, 0, nonStopCondition, file, element, async, indicator);
         }
         else {
           async.setRejected();
@@ -224,7 +248,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   private void expandChild(final List<AbstractTreeNode> kids, final int i, final Condition<AbstractTreeNode> nonStopCondition, final VirtualFile file,
                            final Object element,
-                           final AsyncResult<AbstractTreeNode> async) {
+                           final AsyncResult<AbstractTreeNode> async, final ProgressIndicator indicator) {
 
     if (i >= kids.size()) {
       async.setRejected();
@@ -239,16 +263,20 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
 
     if (nonStopCondition.value(eachKid)) {
-      expandPathTo(file, eachKid, element, nonStopCondition).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+      expandPathTo(file, eachKid, element, nonStopCondition, indicator).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
         public void run(AbstractTreeNode abstractTreeNode) {
+          indicator.checkCanceled();
+
           async.setDone(abstractTreeNode);
         }
       }).doWhenRejected(new Runnable() {
         public void run() {
+          indicator.checkCanceled();
+
           if (nodeWasCollapsed[0]) {
             collapseChildren(eachKid, null);
           }
-          expandChild(kids, i + 1, nonStopCondition, file, element, async);
+          expandChild(kids, i + 1, nonStopCondition, file, element, async, indicator);
         }
       });
     } else {
