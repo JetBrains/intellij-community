@@ -31,4 +31,18 @@ public interface Navigatable {
    * @return <code>false</code> if navigation to source is not possible for any reason. Source means some kind of editor
    */
   boolean canNavigateToSource();
+
+/**
+ *
+ * @author Konstantin Bulenkov
+ */
+  abstract class Adapter implements Navigatable {
+    public boolean canNavigate() {
+      return true;
+    }
+
+    public boolean canNavigateToSource() {
+      return true;
+    }
+  }
 }
