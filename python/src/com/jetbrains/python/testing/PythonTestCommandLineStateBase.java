@@ -42,7 +42,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
 
   @NotNull
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler) throws ExecutionException {
-    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner(processHandler, this, myConfiguration, "PythonUnitTestRunner");
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.attachRunner("PythonUnitTestRunner", processHandler, this, myConfiguration);
     consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfiguration.getWorkingDirectory()));
     return consoleView;
   }
