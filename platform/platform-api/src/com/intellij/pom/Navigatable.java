@@ -36,8 +36,8 @@ public interface Navigatable {
   boolean canNavigateToSource();
 
 /**
- * Very often methods <code>canNavigate</code> and <code>canNavigateToSource</code>
- * are both return <code>true</code>. This adapter class lets focus on navigation
+ * Very often both methods <code>canNavigate</code> and <code>canNavigateToSource</code>
+ * return <code>true</code>. This adapter class lets focus on navigation
  * routine only.
  *
  * @author Konstantin Bulenkov
