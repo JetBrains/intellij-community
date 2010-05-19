@@ -112,7 +112,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
             for (ArtifactType artifactType : result) {
               sb.append("<li>");
               final String file = artifactType.getResourceUri();
-              sb.append(file.substring(file.lastIndexOf('/')));
+              sb.append(file.substring(file.lastIndexOf('/') + 1));
               sb.append("</li>");
             }
             sb.append("</ol>");

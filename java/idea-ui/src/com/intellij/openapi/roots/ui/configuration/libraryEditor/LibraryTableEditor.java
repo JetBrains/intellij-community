@@ -1061,10 +1061,9 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
             modelRef.set(model);
             return model;
           }
-          else if (Arrays.asList(myTableModifiableModel.getLibraries()).contains(library)) {
+          else {
             return getLibraryEditor(library).getModel();
           }
-          return null;
         }
       };
       final Runnable successRunnable = new Runnable() {

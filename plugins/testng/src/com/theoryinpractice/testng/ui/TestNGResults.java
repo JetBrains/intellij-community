@@ -70,7 +70,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private int count;
   private int total;
   private final Set<TestProxy> failed = new HashSet<TestProxy>();
-  private final Map<TestResultMessage, TestProxy> started = new HashMap<TestResultMessage, TestProxy>();
+  private final Map<TestResultMessage, List<TestProxy>> started = new HashMap<TestResultMessage, List<TestProxy>>();
   private TestProxy failedToStart = null;
   private long start;
   private long end;
@@ -83,6 +83,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   private TestNGResults.OpenSourceSelectionListener openSourceListener;
   private final TestNGConsoleView myConsole;
   private int myStatus = MessageHelper.PASSED_TEST;
+  private Set<String> startedMethods = new HashSet<String>();
 
   public TestNGResults(final JComponent component,
                        final TestNGConfiguration configuration,
@@ -192,7 +193,20 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     TestProxy proxy = new TestProxy();
     proxy.setParent(classNode);
     proxy.setResultMessage(result);
-    started.put(result, proxy);
+    synchronized (started) {
+      List<TestProxy> dups = started.get(result);
+      if (dups == null) {
+        dups = new ArrayList<TestProxy>();
+        started.put(result, dups);
+      }
+      dups.add(proxy);
+    }
+    final String testMethodDescriptor = result.getTestClass() + result.getMethod();
+    if (startedMethods.contains(testMethodDescriptor)) {
+      total++;
+    } else {
+      startedMethods.add(testMethodDescriptor);
+    }
     animator.setCurrentTestCase(proxy);
     treeBuilder.addItem(classNode, proxy);
     treeBuilder.repaintWithParents(proxy);
@@ -204,17 +218,17 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     return proxy;
   }
 
-  public boolean wasTestStarted(TestResultMessage resultMessage) {
-    return started.get(resultMessage) != null;
-  }
-
   public void addTestResult(final TestResultMessage result, List<Printable> output, int exceptionMark) {
     if (failedToStart != null) {
       output.addAll(failedToStart.getOutput());
       exceptionMark += failedToStart.getExceptionMark();
     }
 
-    TestProxy testCase = started.get(result);
+    TestProxy testCase;
+    synchronized (started) {
+      final List<TestProxy> dups = started.get(result);
+      testCase = dups == null || dups.isEmpty() ? null : dups.remove(0);
+    }
     if (testCase == null) {
       final PsiElement element = getPackageClassNodeFor(result).getPsiElement();
       if (element instanceof PsiClass) {
@@ -233,6 +247,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
     if (testCase != null) {
       testCase.setResultMessage(result);
+      testCase.setTearDownFailure(failedToStart != null);
       failedToStart = null;
 
       if (result.getResult() == MessageHelper.FAILED_TEST) {

@@ -91,9 +91,6 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
 
   public void addTestResult(TestResultMessage result) {
     if (testNGResults != null) {
-      if (!testNGResults.wasTestStarted(result)) {
-        flushOutput();
-      }
       int exceptionMark = myExceptionalMark == -1 ? 0 : myExceptionalMark;
       final String stackTrace = result.getStackTrace();
       if (stackTrace != null && stackTrace.length() > 10) {
@@ -119,12 +116,11 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
 
   public void testStarted(TestResultMessage result) {
     if (testNGResults != null) {
-      flushOutput();
       testNGResults.testStarted(result);
     }
   }
 
-  private void flushOutput() {
+  public void flushOutput() {
     synchronized (currentTestOutput) {
       if (!currentTestOutput.isEmpty()) { //non empty for first test only
         nonTestOutput.addAll(currentTestOutput);
