@@ -1753,6 +1753,21 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
+    public void testCancelUpdate() throws Exception {
+      super.testCancelUpdate();
+    }
+
+    @Override
+    public void testBatchUpdate() throws Exception {
+      super.testBatchUpdate();
+    }
+
+    @Override
+    public void testCancelUpdateBatch() throws Exception {
+      super.testCancelUpdateBatch();
+    }
+
+    @Override
     protected int getChildrenLoadingDelay() {
       return 300;
     }
