@@ -173,34 +173,103 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   public void testCaseFromSwitch() throws IncorrectOperationException {
     // Inspired by IDEADEV-22920
     getSettings().INDENT_CASE_FROM_SWITCH = false;
-    doTextTest("class Foo{\n" +
-               "void foo () {\n" +
-               "switch(someValue) {\n" +
-               " // This comment is correctly not-indented\n" +
-               " case 1:\n" +
-               "    doSomething();\n" +
-               "    break;\n" +
-               "\n" +
-               " // This comment should not be indented, but it is\n" +
-               " case 2:\n" +
-               "    doSomethingElse();\n" +
-               "    break;\n" +
-               "}\n" +
-               "}\n" +
-               "}", "class Foo {\n" +
-                    "    void foo() {\n" +
-                    "        switch (someValue) {\n" +
-                    "        // This comment is correctly not-indented\n" +
-                    "        case 1:\n" +
-                    "            doSomething();\n" +
-                    "            break;\n" +
-                    "\n" +
-                    "        // This comment should not be indented, but it is\n" +
-                    "        case 2:\n" +
-                    "            doSomethingElse();\n" +
-                    "            break;\n" +
-                    "        }\n" +
-                    "    }\n" +
-                    "}");
+    doTextTest(
+      "class Foo{\n" +
+      "void foo () {\n" +
+      "switch(someValue) {\n" +
+      " // This comment is correctly not-indented\n" +
+      " case 1:\n" +
+      "    doSomething();\n" +
+      "    break;\n" +
+      "\n" +
+      " // This comment should not be indented, but it is\n" +
+      " case 2:\n" +
+      "    doSomethingElse();\n" +
+      "    break;\n" +
+      "}\n" +
+      "}\n" +
+      "}",
+
+      "class Foo {\n" +
+      "    void foo() {\n" +
+      "        switch (someValue) {\n" +
+      "        // This comment is correctly not-indented\n" +
+      "        case 1:\n" +
+      "            doSomething();\n" +
+      "            break;\n" +
+      "\n" +
+      "        // This comment should not be indented, but it is\n" +
+      "        case 2:\n" +
+      "            doSomethingElse();\n" +
+      "            break;\n" +
+      "        }\n" +
+      "    }\n" +
+      "}");
+  }
+
+  public void testBinaryExpressionsWithRelativeIndents() {
+    // Inspired by IDEA-21795
+    getIndentOptions().USE_RELATIVE_INDENTS = true;
+    getIndentOptions().CONTINUATION_INDENT_SIZE = 4;
+
+    doTextTest(
+      "public class FormattingTest {\n" +
+      "\n" +
+      "    public boolean test1(int a, int b, int c, int d) {\n" +
+      "        return a == 1 &&\n" +
+      "      b == 2;\n" +
+      "    }\n" +
+      "\n" +
+      "    public boolean multilineSignOnCurrent(int a, int b, int c, int d) {\n" +
+      "        return a == 0 &&\n" +
+      "                                  (b == 0 ||\n" +
+      "     c == 0) &&\n" +
+      "  d == 0;\n" +
+      "    }\n" +
+      "\n" +
+      "    public boolean multilineSignOnNext(int a, int b, int c, int d) {\n" +
+      "        return a == 0\n" +
+      "       && (b == 0\n" +
+      "                                     || c == 0)\n" +
+      "   && d == 0;\n" +
+      "    }\n" +
+      "\n" +
+      "    public boolean expectedMultilineSignOnNext(int a, int b, int c, int d) {\n" +
+      "        return a == 0\n" +
+      "    && (b == 0\n" +
+      "     || c == 0)\n" +
+      "                       && d == 0;\n" +
+      "    }\n" +
+      "}",
+
+      "public class FormattingTest {\n" +
+      "\n" +
+      "    public boolean test1(int a, int b, int c, int d) {\n" +
+      "        return a == 1 &&\n" +
+      "                   b == 2;\n" +
+      "    }\n" +
+      "\n" +
+      "    public boolean multilineSignOnCurrent(int a, int b, int c, int d) {\n" +
+      "        return a == 0 &&\n" +
+      "                   (b == 0 ||\n" +
+      "                        c == 0) &&\n" +
+      "                   d == 0;\n" +
+      "    }\n" +
+      "\n" +
+      "    public boolean multilineSignOnNext(int a, int b, int c, int d) {\n" +
+      "        return a == 0\n" +
+      "                   && (b == 0\n" +
+      "                           || c == 0)\n" +
+      "                   && d == 0;\n" +
+      "    }\n" +
+      "\n" +
+      "    public boolean expectedMultilineSignOnNext(int a, int b, int c, int d) {\n" +
+      "        return a == 0\n" +
+      "                   && (b == 0\n" +
+      "                           || c == 0)\n" +
+      "                   && d == 0;\n" +
+      "    }\n" +
+      "}"
+    );
   }
 }
