@@ -18,5 +18,5 @@ package com.intellij.codeInsight.template.zencoding;
 /**
  * @author Eugene.Kudelevsky
  */
-class MarkerToken extends Token {
+public class MarkerToken extends Token {
 }
