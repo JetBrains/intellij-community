@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 
 import java.awt.*;
@@ -133,7 +134,7 @@ public abstract class AppIcon {
         int progressHeight = 20;
         int xInset = 15;
         int yInset = 10;
-        int arc = 25;
+        int bound = 2;
 
         Rectangle progressRec = new Rectangle(new Point(xInset, myAppImage.getHeight() - progressHeight - yInset),
                                               new Dimension(myAppImage.getWidth() - xInset * 2, progressHeight));
@@ -144,6 +145,11 @@ public abstract class AppIcon {
 
         g.drawImage(getAppImage(), null, null);
 
+        Rectangle bgRec = new Rectangle(progressRec.x - bound, progressRec.y - bound, progressRec.width + bound * 2, progressRec.height + bound * 2);
+        g.setColor(Color.white);
+        g.fillRect(bgRec.x, bgRec.y, bgRec.width, bgRec.height);
+
+
         g.setColor(Color.black);
         g.fillRect(progressRec.x, progressRec.y, progressRec.width, progressRec.height);
 
@@ -152,6 +158,7 @@ public abstract class AppIcon {
         int currentWidth = (int)Math.ceil(progressRec.width * value);
 
         g.fillRect(progressRec.x, progressRec.y, currentWidth, progressRec.height);
+
 
         setDockIcon(current);
 

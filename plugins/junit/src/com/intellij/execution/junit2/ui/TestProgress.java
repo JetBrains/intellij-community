@@ -31,7 +31,7 @@ import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import javax.swing.*;
 
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.AppIconScheme;
+import com.intellij.openapi.wm.AppIconScheme;
 import org.jetbrains.annotations.NonNls;
 
 public class TestProgress extends DefaultBoundedRangeModel implements Disposable {

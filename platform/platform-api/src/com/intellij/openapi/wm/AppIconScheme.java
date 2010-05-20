@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.openapi.wm;
 
 import java.awt.*;
 
@@ -34,6 +34,16 @@ public class AppIconScheme {
     static final Progress BUILD = new Progress() {
       public Color getOkColor() {
         return Color.blue;
+      }
+
+      public Color getErrorColor() {
+        return Color.red;
+      }
+    };
+
+    static final Progress INDEXING = new Progress() {
+      public Color getOkColor() {
+        return Color.yellow;
       }
 
       public Color getErrorColor() {
