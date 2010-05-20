@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgVersionCommand;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +17,7 @@ import java.util.Set;
  */
 class HgSetExecutablePathPanel extends TextFieldWithBrowseButton {
 
-  private Set<ActionListener> okListeners = new HashSet<ActionListener>();
+  private final Set<ActionListener> myOkListeners = new HashSet<ActionListener>();
 
   HgSetExecutablePathPanel() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
@@ -28,7 +27,7 @@ class HgSetExecutablePathPanel extends TextFieldWithBrowseButton {
         if (!command.isValid(path)) {
           throw new ConfigurationException(HgVcsMessages.message("hg4idea.configuration.executable.error", path));
         }
-        for (ActionListener okListener : okListeners) {
+        for (ActionListener okListener : myOkListeners) {
           okListener.actionPerformed(null);
         }
       }
@@ -36,8 +35,11 @@ class HgSetExecutablePathPanel extends TextFieldWithBrowseButton {
     addBrowseFolderListener(HgVcsMessages.message("hg4idea.configuration.title"), HgVcsMessages.message("hg4idea.configuration.description"), null, descriptor);
   }
 
+  /**
+   * Adds a listener which will be called when file chooser dialog is closed successfully.
+   */
   void addOKListener(ActionListener listener) {
-    okListeners.add(listener);
+    myOkListeners.add(listener);
   }
 
 }

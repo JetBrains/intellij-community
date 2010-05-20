@@ -21,10 +21,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class HgSetExecutableDialog extends DialogWrapper {
-  private JPanel centerPanel;
-  private HgSetExecutablePathPanel hgExecutablePath;
-  private JLabel infoLabel;
-  private JLabel errorLabel;
+  private JPanel myCenterPanel;
+  private HgSetExecutablePathPanel myHgExecutablePath;
+  private JLabel myInfoLabel;
 
   public HgSetExecutableDialog(Project project) {
     super(project, false);
@@ -33,23 +32,23 @@ public class HgSetExecutableDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return centerPanel;
+    return myCenterPanel;
   }
 
   public void setBadHgPath(String hgPath) {
-    hgExecutablePath.setText(hgPath);
-    errorLabel.setText(HgVcsMessages.message("hg4idea.configuration.executable.error", hgPath));
+    myHgExecutablePath.setText(hgPath);
+    setErrorText(HgVcsMessages.message("hg4idea.configuration.executable.error", hgPath));
   }
 
   public String getNewHgPath() {
-    return hgExecutablePath.getText();
+    return myHgExecutablePath.getText();
   }
 
   private void createUIComponents() {
-    hgExecutablePath = new HgSetExecutablePathPanel();
-    hgExecutablePath.addOKListener(new ActionListener() {
+    myHgExecutablePath = new HgSetExecutablePathPanel();
+    myHgExecutablePath.addOKListener(new ActionListener() {
       public void actionPerformed(ActionEvent event) {
-        errorLabel.setText("");
+        setErrorText("");
       }
     });
   }
