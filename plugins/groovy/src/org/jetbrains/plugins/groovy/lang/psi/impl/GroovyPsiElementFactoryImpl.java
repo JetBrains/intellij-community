@@ -346,9 +346,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   public GrMethod createMethodFromText(@NotNull String methodText) {
     GroovyFileBase file = createDummyFile(methodText);
-    GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
-    assert defintion != null && defintion instanceof GrMethod;
-    return ((GrMethod) defintion);
+    try {
+      GrTopLevelDefintion defintion = file.getTopLevelDefinitions()[0];
+      assert defintion != null && defintion instanceof GrMethod;
+      return ((GrMethod)defintion);
+    }
+    catch (Error error) {
+      throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
+    }
   }
 
   @Override
