@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -26,12 +25,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTokenType, PsiJavaToken {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsDocCommentImpl");
-
-  private final ClsElementImpl myParent;
+  private final PsiDocCommentOwner myParent;
   private final PsiDocTag[] myTags;
 
-  ClsDocCommentImpl(ClsElementImpl parent) {
+  ClsDocCommentImpl(PsiDocCommentOwner parent) {
     myParent = parent;
     
     PsiDocTag[] tags = new PsiDocTag[1];
@@ -63,10 +60,16 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     return myParent;
   }
 
+  public PsiDocCommentOwner getOwner() {
+    return myParent;
+  }
+
+  @NotNull
   public PsiElement[] getDescriptionElements() {
     return EMPTY_ARRAY;
   }
 
+  @NotNull
   public PsiDocTag[] getTags() {
     return myTags;
   }
@@ -76,6 +79,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     return getTags()[0];
   }
 
+  @NotNull
   public PsiDocTag[] findTagsByName(@NonNls String name) {
     if (!name.equals("deprecated")) return PsiDocTag.EMPTY_ARRAY;
     return getTags();
