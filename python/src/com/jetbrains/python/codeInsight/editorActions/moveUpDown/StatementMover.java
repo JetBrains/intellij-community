@@ -123,6 +123,9 @@ public class StatementMover extends LineMover {
     else {
       final int offset = editor.getCaretModel().getOffset();
       PsiElement element = file.findElementAt(offset);
+      if (element == null) {
+        return null;
+      }
       psiRange = new Pair<PsiElement, PsiElement>(element, element);
     }
 
