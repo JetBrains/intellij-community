@@ -16,13 +16,25 @@
 package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PsiDocComment extends PsiComment {
+  @Nullable
+  PsiDocCommentOwner getOwner();
+
+  @NotNull
   PsiElement[] getDescriptionElements();
+
+  @NotNull
   PsiDocTag[] getTags();
 
+  @Nullable
   PsiDocTag findTagByName(@NonNls String name);
+
+  @NotNull
   PsiDocTag[] findTagsByName(@NonNls String name);
 }
