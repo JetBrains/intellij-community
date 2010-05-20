@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.AppIconScheme;
-import com.intellij.openapi.wm.IdeFrame;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -32,9 +31,9 @@ public abstract class AppIcon {
   static AppIcon ourMacImpl;
   static AppIcon ourEmptyImpl;
 
-  public abstract boolean setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
+  public abstract boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
 
-  public abstract boolean hideProgress(IdeFrame frame, Object processId);
+  public abstract boolean hideProgress(Object processId);
 
   public abstract void setBadge(String text);
 
@@ -80,6 +79,9 @@ public abstract class AppIcon {
         myAppImage = img;
 
       }
+      catch (NoSuchMethodException e) {
+        return null;       
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -91,6 +93,9 @@ public abstract class AppIcon {
     public void setBadge(String text) {
       try {
         getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
+      }
+      catch (NoSuchMethodException e) {
+        return;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -111,7 +116,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public boolean hideProgress(IdeFrame frame, Object processId) {
+    public boolean hideProgress(Object processId) {
       if (getAppImage() == null) return false;
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
 
@@ -122,13 +127,13 @@ public abstract class AppIcon {
       return true;
     }
 
-    public boolean setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+    public boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       if (getAppImage() == null) return false;
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
 
       myCurrentProcessId = processId;
 
-      if (Math.abs(myLastValue - value) < 0.01d) return true;
+      if (Math.abs(myLastValue - value) < 0.02d) return true;
 
       try {
         int progressHeight = 20;
@@ -199,12 +204,12 @@ public abstract class AppIcon {
 
   private static class EmptyIcon extends AppIcon {
     @Override
-    public boolean setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+    public boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       return false;
     }
 
     @Override
-    public boolean hideProgress(IdeFrame frame, Object processId) {
+    public boolean hideProgress(Object processId) {
       return false;
     }
 

@@ -19,7 +19,6 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbModeAction;
-import com.intellij.openapi.wm.AppIconScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,14 +74,6 @@ public abstract class Task implements TaskInfo, Progressive {
   public final Task setTitle(@NotNull String title) {
     myTitle = title;
     return this;
-  }
-
-  public boolean isAppIconProcess() {
-    return false;
-  }
-
-  public AppIconScheme.Progress getAppIconScheme() {
-    return AppIconScheme.Progress.BUILD;
   }
 
   public final String getCancelText() {

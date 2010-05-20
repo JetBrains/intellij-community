@@ -47,10 +47,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
@@ -119,11 +116,6 @@ public class CompilerTask extends Task.Backgroundable {
 
   public boolean shouldStartInBackground() {
     return myIsBackgroundMode;
-  }
-
-  @Override
-  public boolean isAppIconProcess() {
-    return true;
   }
 
   public ProgressIndicator getIndicator() {
@@ -202,15 +194,13 @@ public class CompilerTask extends Task.Backgroundable {
       }
 
       private void stopAppIconProgress() {
-        if (isAppIconProcess()) {
-          AppIcon appIcon = AppIcon.getInstance();
-          if (appIcon.hideProgress(myIdeFrame, APP_ICON_ID)) {
-            if (myErrorCount > 0) {
-              appIcon.setBadge(String.valueOf(myErrorCount));
-              appIcon.requestAttention(true);
-            } else {
-              appIcon.setBadge(null);
-            }
+        AppIcon appIcon = AppIcon.getInstance();
+        if (appIcon.hideProgress(APP_ICON_ID)) {
+          if (myErrorCount > 0) {
+            appIcon.setBadge(String.valueOf(myErrorCount));
+            appIcon.requestAttention(true);
+          } else {
+            appIcon.setBadge(null);
           }
         }
       }
@@ -225,9 +215,7 @@ public class CompilerTask extends Task.Backgroundable {
 
       public void setFraction(final double fraction) {
         updateProgressText();
-        if (isAppIconProcess()) {
-          AppIcon.getInstance().setProgress(myIdeFrame, APP_ICON_ID, getAppIconScheme(), fraction, true);
-        }
+        AppIcon.getInstance().setProgress(APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
       }
 
       protected void onProgressChange() {
@@ -589,7 +577,7 @@ public class CompilerTask extends Task.Backgroundable {
             if (myIndicator.isRunning()) {
               cancel();
             }
-            if (AppIcon.getInstance().hideProgress(myIdeFrame, "compiler")) {
+            if (AppIcon.getInstance().hideProgress("compiler")) {
               AppIcon.getInstance().setBadge(null);
             }
           }
