@@ -168,12 +168,12 @@ public abstract class AbstractBlockWrapper {
   }
 
   public IndentData getChildOffset(AbstractBlockWrapper child, CodeStyleSettings.IndentOptions options, int targetBlockStartOffset) {
-    final boolean childOnNewLine = child.getWhiteSpace().containsLineFeeds();
+    final boolean childStartsNewLine = child.getWhiteSpace().containsLineFeeds();
     IndentImpl.Type childIndentType = child.getIndent().getType();
     final IndentData childIndent;
 
     // Calculate child indent.
-    if (childOnNewLine
+    if (childStartsNewLine
         || (!getWhiteSpace().containsLineFeeds() && RELATIVE_INDENT_TYPES.contains(childIndentType) && indentAlreadyUsedBefore(child)))
     {
       childIndent = getIndent(options, child, targetBlockStartOffset);
@@ -184,7 +184,7 @@ public abstract class AbstractBlockWrapper {
 
 
     // Use child indent if it's absolute and the child is contained on new line.
-    if (childOnNewLine) {
+    if (childStartsNewLine) {
       if (child.getIndent().isAbsolute()) {
         myFlags &= ~CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT;
         AbstractBlockWrapper current = this;
