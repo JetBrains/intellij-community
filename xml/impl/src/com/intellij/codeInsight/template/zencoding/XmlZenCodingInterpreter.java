@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -310,27 +311,38 @@ class XmlZenCodingInterpreter {
     if (token instanceof XmlTemplateToken && token.getTemplate() != null) {
       XmlTemplateToken xmlTemplateToken = (XmlTemplateToken)token;
       List<Pair<String, String>> attr2value = new ArrayList<Pair<String, String>>(xmlTemplateToken.getAttribute2Value());
-      if (attr2value.size() > 0 || XmlZenCodingTemplate.isTrueXml(callback)) {
-        TemplateImpl modifiedTemplate = token.getTemplate().copy();
-        XmlTag tag = xmlTemplateToken.getTag();
-        if (tag != null) {
-          for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
-            Pair<String, String> pair = iterator.next();
-            if (tag.getAttribute(pair.first) != null) {
-              tag.setAttribute(pair.first, ZenCodingUtil.getValue(pair, numberInIteration));
-              iterator.remove();
-            }
+      TemplateImpl modifiedTemplate = token.getTemplate().copy();
+      XmlTag tag = xmlTemplateToken.getTag();
+      if (tag != null) {
+        for (Iterator<Pair<String, String>> iterator = attr2value.iterator(); iterator.hasNext();) {
+          Pair<String, String> pair = iterator.next();
+          if (tag.getAttribute(pair.first) != null) {
+            tag.setAttribute(pair.first, ZenCodingUtil.getValue(pair, numberInIteration));
+            iterator.remove();
           }
-          String s = filterXml(tag, callback, filter);
-          assert s != null;
-          modifiedTemplate.setString(s);
-          removeVariablesWhichHasNoSegment(modifiedTemplate);
-          Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration, callback);
-          callback.expandTemplate(modifiedTemplate, predefinedValues);
-          return;
         }
+        String s = filterXml(tag, callback, filter);
+        assert s != null;
+        if (HtmlUtil.isHtmlBlockTagL(tag.getName())) {
+          boolean newLineBefore = callback.newLineBefore();
+          boolean newLineAfter = callback.newLineAfter();
+          if (!newLineBefore || !newLineAfter) {
+            StringBuilder builder = new StringBuilder();
+            if (!newLineBefore) {
+              builder.append('\n');
+            }
+            builder.append(s);
+            if (!newLineAfter) {
+              builder.append('\n');
+            }
+            s = builder.toString();
+          }
+        }
+        modifiedTemplate.setString(s);
+        removeVariablesWhichHasNoSegment(modifiedTemplate);
+        Map<String, String> predefinedValues = buildPredefinedValues(attr2value, numberInIteration, callback);
+        callback.expandTemplate(modifiedTemplate, predefinedValues);
       }
-      callback.expandTemplate(token.getTemplate(), null);
     }
     else {
       // for CSS
