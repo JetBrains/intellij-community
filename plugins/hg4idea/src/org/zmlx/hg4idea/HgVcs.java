@@ -203,7 +203,7 @@ public class HgVcs extends AbstractVcs {
           addListeners();
         }
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @Override
