@@ -35,4 +35,9 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   public String getConfigurableDisplayName() {
     return "Python";
   }
+
+  @Override
+  public boolean hasSettingsPage() {
+    return false;
+  }
 }
