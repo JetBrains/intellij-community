@@ -22,7 +22,9 @@ import com.intellij.util.IncorrectOperationException;
  * @author Denis Zhdanov
  * @since May 11, 2010 5:30:28 PM
  */
-public class AutoIndentLinesTest extends AbstractJavaFormatterTest {
+public class JavaIndenterTest extends AbstractJavaFormatterTest {
+
+  private static final String CARET_TOKEN = "<caret>";
 
   public void testIndentAlignedMethodParameter() {
     // Inspired by IDEA-22020
@@ -41,7 +43,7 @@ public class AutoIndentLinesTest extends AbstractJavaFormatterTest {
     int end = initial.indexOf("\n", start);
     myTextRange = new TextRange(start, end);
 
-    doTextTest(Action.INDENT, initial,                     
+    doTextTest(initial,                     
       "class BrokenAlignment {\n" +
       "    public\n" +
       "\tstatic int foo(String a, String b, String c,\n" +
@@ -52,8 +54,41 @@ public class AutoIndentLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testMethodBodyShiftedToComment() {
+    // Inspired by IDEA-53778
+
+    doTextTest(
+      "class Test {\n" +
+      "   // some comment\n" +
+      "        public void doSmth(int[] p) {\n" +
+      "<caret>\n" +
+      "        }" +
+      "}",
+      
+      "class Test {\n" +
+      "   // some comment\n" +
+      "        public void doSmth(int[] p) {\n" +
+      "            \n" +
+      "        }" +
+      "}");
+  }
+
   @Override
   public void doTextTest(String text, String textAfter) throws IncorrectOperationException {
-    doTextTest(Action.INDENT, text, textAfter);
+    doTextTest(Action.INDENT, adjustTextIfNecessary(text), textAfter);
+  }
+
+  private String adjustTextIfNecessary(String text) {
+    int caretIndex = text.indexOf(CARET_TOKEN);
+    if (caretIndex < 0) {
+      return text;
+    }
+
+    if (caretIndex < text.length() && text.indexOf(CARET_TOKEN, caretIndex + 1) >= 0) {
+      fail(String.format("Invalid indentation test 'before' text - it contains more than one caret meta-token (%s). Text: %n%s",
+                         CARET_TOKEN, text));
+    }
+    myTextRange = new TextRange(caretIndex, caretIndex);
+    return text.substring(0, caretIndex) + text.substring(caretIndex + CARET_TOKEN.length());
   }
 }

@@ -171,6 +171,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
         }
       }
 
+      if (getUi() == null) return false;
+
       return super.updateNodeDescriptor(descriptor);
     }
 

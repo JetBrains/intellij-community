@@ -8,9 +8,12 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,7 +61,10 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   @NotNull 
   private Library getSourceOrThis() {
-    final Library source = ((LibraryImpl)myLibrary).getSource();
+    final InvocationHandler invocationHandler = Proxy.isProxyClass(myLibrary.getClass()) ? Proxy.getInvocationHandler(myLibrary) : null;
+    final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor ?
+                                (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler).getDelegate() : myLibrary;
+    final Library source = realLibrary instanceof LibraryImpl? ((LibraryImpl)realLibrary).getSource() : null;
     return source != null ? source : myLibrary;
   }
   

@@ -87,7 +87,6 @@ public class RepositoryAttachDialog extends DialogWrapper {
       @Override
       protected void textChanged(DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
           public void run() {
             if (myProgressIcon.isDisposed()) return;
             updateComboboxSelection(false);
@@ -191,8 +190,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
         updateComboboxSelection(prevSize != myCoordinates.size());
         return true;
       }
-    }, new Processor<Collection<RepositoryType>>() {
-      @Override
+    }, new Processor<Collection<RepositoryType>>() {      
       public boolean process(Collection<RepositoryType> repositoryTypes) {
         for (RepositoryType repositoryType : repositoryTypes) {
           if (!myRepositories.containsKey(repositoryType.getContentResourceURI())) {

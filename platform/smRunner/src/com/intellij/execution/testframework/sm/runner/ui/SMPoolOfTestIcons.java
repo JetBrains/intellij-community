@@ -17,7 +17,6 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +27,6 @@ import javax.swing.*;
  */
 public class SMPoolOfTestIcons implements PoolOfTestIcons {
   // Error flag icon
-  private static final Icon ERROR_ICON_MARK = IconLoader.getIcon("/nodes/errorMark.png");
 
   public static final Icon SKIPPED_E_ICON = addErrorMarkTo(SKIPPED_ICON);
   public static final Icon PASSED_E_ICON = addErrorMarkTo(PASSED_ICON);

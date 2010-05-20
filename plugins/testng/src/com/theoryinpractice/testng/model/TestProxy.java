@@ -51,6 +51,7 @@ public class TestProxy implements AbstractTestProxy {
   private SmartPsiElementPointer psiElement;
   private boolean inProgress;
   private int myExceptionMark;
+  private boolean myTearDownFailure;
 
   public TestProxy() {}
 
@@ -296,5 +297,16 @@ public class TestProxy implements AbstractTestProxy {
 
   public boolean isInterrupted() {
     return !isInProgress() && inProgress;
+  }
+
+  public boolean isTearDownFailure() {
+    for (TestProxy result : results) {
+      if (result.isTearDownFailure()) return true;
+    }
+    return myTearDownFailure;
+  }
+
+  public void setTearDownFailure(boolean tearDownFailure) {
+    myTearDownFailure = tearDownFailure;
   }
 }

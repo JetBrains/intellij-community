@@ -225,10 +225,14 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
       beforeUpdate(eachPass).doWhenDone(new Runnable() {
         public void run() {
-          myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
+          try {
+            myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
+          }
+          catch (ProcessCanceledException e) {
+            requeueViewUpdateIfNeeded();
+          }
         }
       });
-
     }
 
     myTreeBuilder.getUi().maybeReady();
@@ -373,7 +377,12 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public void reset() {
+    TreeUpdatePass[] passes = myNodeQueue.toArray(new TreeUpdatePass[myNodeQueue.size()]);
     myNodeQueue.clear();
     myUpdateQueue.cancelAllUpdates();
+
+    for (TreeUpdatePass each : passes) {
+      myTreeBuilder.getUi().addToCancelled(each.getNode());
+    }
   }
 }

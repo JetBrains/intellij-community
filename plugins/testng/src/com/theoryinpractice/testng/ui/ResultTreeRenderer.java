@@ -91,6 +91,9 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
             TestResultMessage result = node.getResultMessage();
             switch (result.getResult()) {
                 case MessageHelper.PASSED_TEST:
+                    if (node.isTearDownFailure()) {
+                        return PoolOfTestIcons.TEAR_DOWN_FAILURE;
+                    }
                     return PoolOfTestIcons.PASSED_ICON;
                 case MessageHelper.SKIPPED_TEST:
                     return PoolOfTestIcons.SKIPPED_ICON;
@@ -103,6 +106,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
             boolean hasFail = false;
             boolean hasSkipped = false;
             boolean hasTerminated = false;
+            boolean hasTearDownFailure = false;
             for (TestProxy result : node.getChildren()) {
                 Icon icon = getIcon(result);
                 if (icon == PoolOfTestIcons.FAILED_ICON) {
@@ -111,11 +115,14 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                     hasSkipped = true;
                 } else if (icon == PoolOfTestIcons.TERMINATED_ICON) {
                     hasTerminated = true;
+                } else if (result.isTearDownFailure()) {
+                    hasTearDownFailure = true;
                 }
             }
             if (hasTerminated) return PoolOfTestIcons.TERMINATED_ICON;
             if (hasFail) return PoolOfTestIcons.FAILED_ICON;
             if (hasSkipped) return PoolOfTestIcons.SKIPPED_ICON;
+            if (hasTearDownFailure) return PoolOfTestIcons.TEAR_DOWN_FAILURE;
         }
         return PoolOfTestIcons.PASSED_ICON;
     }

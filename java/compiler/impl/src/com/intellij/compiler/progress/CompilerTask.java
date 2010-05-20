@@ -47,12 +47,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.peer.PeerFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -73,6 +73,7 @@ public class CompilerTask extends Task.Backgroundable {
   private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   private static final int UPDATE_INTERVAL = 50; //msec. 20 frames per second.
   private static final Key<Key<?>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
+  private static final String APP_ICON_ID = "compiler";
   private Key<Key<?>> myContentIdKey = CONTENT_ID_KEY;
   private final Key<Key<?>> myContentId = Key.create("compile_content");
   private CompilerProgressDialog myDialog;
@@ -90,12 +91,14 @@ public class CompilerTask extends Task.Backgroundable {
   private Runnable myCompileWork;
   private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
   private Runnable myRestartWork;
+  private IdeFrame myIdeFrame;
 
   public CompilerTask(@NotNull Project project, boolean compileInBackground, String contentName, final boolean headlessMode) {
     super(project, contentName);
     myIsBackgroundMode = compileInBackground;
     myContentName = contentName;
     myHeadlessMode = headlessMode || IS_UNIT_TEST_MODE;
+    myIdeFrame = (IdeFrame)WindowManager.getInstance().getFrame(myProject);
   }
 
   public void setContentIdKey(Key<Key<?>> contentIdKey) {
@@ -179,12 +182,26 @@ public class CompilerTask extends Task.Backgroundable {
       public void cancel() {
         super.cancel();
         closeUI();
+        stopAppIconProgress();
       }
 
       public void stop() {
         super.stop();
         if (!isCanceled()) {
           closeUI();
+        }
+        stopAppIconProgress();
+      }
+
+      private void stopAppIconProgress() {
+        AppIcon appIcon = AppIcon.getInstance();
+        if (appIcon.hideProgress(APP_ICON_ID)) {
+          if (myErrorCount > 0) {
+            appIcon.setBadge(String.valueOf(myErrorCount));
+            appIcon.requestAttention(true);
+          } else {
+            appIcon.setBadge(null);
+          }
         }
       }
 
@@ -198,6 +215,7 @@ public class CompilerTask extends Task.Backgroundable {
 
       public void setFraction(final double fraction) {
         updateProgressText();
+        AppIcon.getInstance().setProgress(APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
       }
 
       protected void onProgressChange() {
@@ -558,6 +576,9 @@ public class CompilerTask extends Task.Backgroundable {
             myErrorTreeView = null;
             if (myIndicator.isRunning()) {
               cancel();
+            }
+            if (AppIcon.getInstance().hideProgress("compiler")) {
+              AppIcon.getInstance().setBadge(null);
             }
           }
         }
