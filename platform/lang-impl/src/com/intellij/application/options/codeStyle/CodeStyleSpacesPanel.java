@@ -93,7 +93,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
 
     initBooleanField("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", ApplicationBundle.message("checkbox.spaces.after.comma"), TYPE_ARGUMENTS);
 
-    initBooleanField("SPACE_AFTER_LABEL", ApplicationBundle.message("checkbox.spaces.after.colon.in.label.declaration"), OTHER);
+    //TODO looks like this option is never implemented: initBooleanField("SPACE_AFTER_LABEL", ApplicationBundle.message("checkbox.spaces.after.colon.in.label.declaration"), OTHER);
     initBooleanField("SPACE_WITHIN_BRACKETS", ApplicationBundle.message("checkbox.spaces.within.brackets"), OTHER);
     initBooleanField("SPACE_WITHIN_ARRAY_INITIALIZER_BRACES", ApplicationBundle.message("checkbox.spaces.within.array.initializer.braces"), OTHER);
     initBooleanField("SPACE_AFTER_COMMA", ApplicationBundle.message("checkbox.spaces.after.comma"), OTHER);
