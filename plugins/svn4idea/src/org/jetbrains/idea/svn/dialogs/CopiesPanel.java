@@ -262,7 +262,7 @@ public class CopiesPanel {
   private void mergeFrom(final WCInfo wcInfo, final VirtualFile root, final LinkLabel mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
-        new QuickMerge(project, url, wcInfo, configuration.getBaseName(url)).execute();
+        new QuickMerge(project, url, wcInfo, configuration.getBaseName(url), configuration).execute();
       }
     }, "Select branch", mergeLabel);
   }
