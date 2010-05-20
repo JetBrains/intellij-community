@@ -189,7 +189,7 @@ public class HgVcs extends AbstractVcs {
   }
 
   @Override
-  protected void start() throws VcsException {
+  protected void activate() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -203,7 +203,7 @@ public class HgVcs extends AbstractVcs {
           addListeners();
         }
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @Override

@@ -98,6 +98,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
     return list.toArray(new GrDocTag[list.size()]);
   }
 
+  @NotNull
   public PsiElement[] getDescriptionElements() {
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
