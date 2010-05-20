@@ -33,4 +33,8 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testParametersModification() throws Exception {
     doTest();
   }
+
+  public void testPassArray2VarargMethodCall() throws Exception {
+    doTest();
+  }
 }
