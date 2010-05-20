@@ -17,7 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.AppIconScheme;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -31,9 +31,9 @@ public abstract class AppIcon {
   static AppIcon ourMacImpl;
   static AppIcon ourEmptyImpl;
 
-  public abstract void setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
+  public abstract boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
 
-  public abstract void hideProgress(IdeFrame frame, Object processId);
+  public abstract boolean hideProgress(Object processId);
 
   public abstract void setBadge(String text);
 
@@ -60,7 +60,6 @@ public abstract class AppIcon {
 
     private Object myCurrentProcessId;
 
-    private double myUpdateFraction = 0.05d;
     private double myLastValue;
 
     private BufferedImage getAppImage() {
@@ -80,6 +79,9 @@ public abstract class AppIcon {
         myAppImage = img;
 
       }
+      catch (NoSuchMethodException e) {
+        return null;       
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -92,6 +94,9 @@ public abstract class AppIcon {
       try {
         getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
       }
+      catch (NoSuchMethodException e) {
+        return;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -100,46 +105,43 @@ public abstract class AppIcon {
     @Override
     public void requestAttention(boolean critical) {
       try {
-        getAppMethod("requestUserAttention", Boolean.class).invoke(getApp(), Boolean.valueOf(critical));
+        getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
       }
       catch (NoSuchMethodException e) {
         return;
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.error(e);
       }
     }
 
     @Override
-    public void hideProgress(IdeFrame frame, Object processId) {
-      if (getAppImage() == null) return;
+    public boolean hideProgress(Object processId) {
+      if (getAppImage() == null) return false;
+      if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
 
-      try {
-        if (myCurrentProcessId != null && myCurrentProcessId.equals(processId)) {
-          setDockIcon(getAppImage());
-        }
-      }
-      finally {
-        myCurrentProcessId = null;
-        myLastValue = 0;
-      }
+      setDockIcon(getAppImage());
+      myCurrentProcessId = null;
+      myLastValue = 0;
+
+      return true;
     }
 
-    public void setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
-      if (getAppImage() == null) return;
-
-      if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return;
+    public boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      if (getAppImage() == null) return false;
+      if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
 
       myCurrentProcessId = processId;
 
-      if (Math.abs(myLastValue - value) < myUpdateFraction) return;
+      if (Math.abs(myLastValue - value) < 0.02d) return true;
 
       try {
-        int progressHeight = 65;
-        int xInset = 30;
-        int yInset = 25;
-        int arc = 25;
+        int progressHeight = 20;
+        int xInset = 15;
+        int yInset = 10;
+        int bound = 2;
 
-        Rectangle progressRec = new Rectangle(new Point(xInset, myAppImage.getHeight() - yInset - progressHeight),
+        Rectangle progressRec = new Rectangle(new Point(xInset, myAppImage.getHeight() - progressHeight - yInset),
                                               new Dimension(myAppImage.getWidth() - xInset * 2, progressHeight));
 
         BufferedImage current = new BufferedImage(myAppImage.getWidth(), myAppImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -148,14 +150,20 @@ public abstract class AppIcon {
 
         g.drawImage(getAppImage(), null, null);
 
+        Rectangle bgRec = new Rectangle(progressRec.x - bound, progressRec.y - bound, progressRec.width + bound * 2, progressRec.height + bound * 2);
+        g.setColor(Color.white);
+        g.fillRect(bgRec.x, bgRec.y, bgRec.width, bgRec.height);
+
+
         g.setColor(Color.black);
-        g.fillRoundRect(progressRec.x, progressRec.y, progressRec.width, progressRec.height, arc, arc);
+        g.fillRect(progressRec.x, progressRec.y, progressRec.width, progressRec.height);
 
         g.setColor(isOk ? scheme.getOkColor() : scheme.getErrorColor());
 
         int currentWidth = (int)Math.ceil(progressRec.width * value);
 
-        g.fillRoundRect(progressRec.x, progressRec.y, currentWidth, progressRec.height, arc, arc);
+        g.fillRect(progressRec.x, progressRec.y, currentWidth, progressRec.height);
+
 
         setDockIcon(current);
 
@@ -163,9 +171,12 @@ public abstract class AppIcon {
       }
       catch (Exception e) {
         LOG.error(e);
-      } finally {
+      }
+      finally {
         myCurrentProcessId = null;
       }
+
+      return true;
     }
 
     private void setDockIcon(BufferedImage image) {
@@ -188,16 +199,18 @@ public abstract class AppIcon {
     private Class<?> getAppClass() throws ClassNotFoundException {
       return Class.forName("com.apple.eawt.Application");
     }
-    
+
   }
 
   private static class EmptyIcon extends AppIcon {
     @Override
-    public void setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+    public boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      return false;
     }
 
     @Override
-    public void hideProgress(IdeFrame frame, Object processId) {
+    public boolean hideProgress(Object processId) {
+      return false;
     }
 
     @Override
