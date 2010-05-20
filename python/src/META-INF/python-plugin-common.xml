@@ -373,9 +373,5 @@
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-
-    <group id="TypeHierarchyPopupMenu">
-       <action id="AnalyzeJavaMenu" class="com.jetbrains.django.console.RunDjangoConsoleAction"></action>
-    </group>
     </actions>
 </idea-plugin>
