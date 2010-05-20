@@ -16,28 +16,21 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel {
-  private JTextField myKeepBlankLinesInDeclarations;
-  private JTextField myKeepBlankLinesInCode;
-  private JTextField myBlankLinesBeforePackage;
-  private JTextField myBlankLinesAfterPackage;
-  private JTextField myBlankLinesBeforeImports;
-  private JTextField myBlankLinesAfterImports;
-  private JTextField myBlankLinesAroundClass;
-  private JTextField myBlankLinesAroundField;
-  private JTextField myBlankLinesAroundMethod;
-  private JTextField myBlankLinesBeforeMethodBody;
-  private JTextField myBlankLinesAroundFieldI;
-  private JTextField myBlankLinesAroundMethodI;
-  private JTextField myBlankLinesAfterClassHeader;
-  private JTextField myKeepBlankLinesBeforeRBrace;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
+
+  private List<IntOption> myOptions = new ArrayList<IntOption>();
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
@@ -69,38 +62,17 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   private JPanel createBlankLinesPanel() {
     OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.blank.lines"));
 
-    myBlankLinesBeforePackage = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.before.package.statement")), myBlankLinesBeforePackage);
-
-    myBlankLinesAfterPackage = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.after.package.statement")), myBlankLinesAfterPackage);
-
-    myBlankLinesBeforeImports = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.before.imports")), myBlankLinesBeforeImports);
-
-    myBlankLinesAfterImports = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.after.imports")), myBlankLinesAfterImports);
-
-    myBlankLinesAroundClass = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.around.class")), myBlankLinesAroundClass);
-
-    myBlankLinesAroundField = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.around.field")), myBlankLinesAroundField);
-
-    myBlankLinesAroundMethod = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.around.method")), myBlankLinesAroundMethod);
-
-    myBlankLinesBeforeMethodBody = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.before.method.body")), myBlankLinesBeforeMethodBody);
-
-    myBlankLinesAroundFieldI = createTextField();
-    optionGroup.add(new JLabel("Around field in interface:"), myBlankLinesAroundFieldI);
-
-    myBlankLinesAroundMethodI = createTextField();
-    optionGroup.add(new JLabel("Around method in interface:"), myBlankLinesAroundMethodI);
-
-    myBlankLinesAfterClassHeader = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.blanklines.after.class.header")), myBlankLinesAfterClassHeader);
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.package.statement"), "BLANK_LINES_BEFORE_PACKAGE");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.package.statement"), "BLANK_LINES_AFTER_PACKAGE");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.imports"), "BLANK_LINES_BEFORE_IMPORTS");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.imports"), "BLANK_LINES_AFTER_IMPORTS");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.class"), "BLANK_LINES_AROUND_CLASS");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.field"), "BLANK_LINES_AROUND_FIELD");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.around.method"), "BLANK_LINES_AROUND_METHOD");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.before.method.body"), "BLANK_LINES_BEFORE_METHOD_BODY");
+    createOption(optionGroup, "Around field in interface:", "BLANK_LINES_AROUND_FIELD_IN_INTERFACE");
+    createOption(optionGroup, "Around method in interface:", "BLANK_LINES_AROUND_METHOD_IN_INTERFACE");
+    createOption(optionGroup, ApplicationBundle.message("editbox.blanklines.after.class.header"), "BLANK_LINES_AFTER_CLASS_HEADER");
 
     return optionGroup.createPanel();
   }
@@ -108,97 +80,39 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   private JPanel createKeepBlankLinesPanel() {
     OptionGroup optionGroup = new OptionGroup(ApplicationBundle.message("title.keep.blank.lines"));
 
-    myKeepBlankLinesInDeclarations = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.keep.blanklines.in.declarations")), myKeepBlankLinesInDeclarations);
-
-    myKeepBlankLinesInCode = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.keep.blanklines.in.code")), myKeepBlankLinesInCode);
-
-    myKeepBlankLinesBeforeRBrace = createTextField();
-    optionGroup.add(new JLabel(ApplicationBundle.message("editbox.keep.blanklines.before.rbrace")), myKeepBlankLinesBeforeRBrace);
+    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.declarations"), "KEEP_BLANK_LINES_IN_DECLARATIONS");
+    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.in.code"), "KEEP_BLANK_LINES_IN_CODE");
+    createOption(optionGroup, ApplicationBundle.message("editbox.keep.blanklines.before.rbrace"), "KEEP_BLANK_LINES_BEFORE_RBRACE");
 
     return optionGroup.createPanel();
   }
 
-  protected void resetImpl(final CodeStyleSettings settings) {
-    myKeepBlankLinesInDeclarations.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_DECLARATIONS));
-    myKeepBlankLinesInCode.setText(String.valueOf(settings.KEEP_BLANK_LINES_IN_CODE));
-    myKeepBlankLinesBeforeRBrace.setText(String.valueOf(settings.KEEP_BLANK_LINES_BEFORE_RBRACE));
-    myBlankLinesBeforePackage.setText(String.valueOf(settings.BLANK_LINES_BEFORE_PACKAGE));
-    myBlankLinesAfterPackage.setText(String.valueOf(settings.BLANK_LINES_AFTER_PACKAGE));
-    myBlankLinesBeforeImports.setText(String.valueOf(settings.BLANK_LINES_BEFORE_IMPORTS));
-    myBlankLinesAfterImports.setText(String.valueOf(settings.BLANK_LINES_AFTER_IMPORTS));
-    myBlankLinesAroundClass.setText(String.valueOf(settings.BLANK_LINES_AROUND_CLASS));
-    myBlankLinesAroundField.setText(String.valueOf(settings.BLANK_LINES_AROUND_FIELD));
-    myBlankLinesAroundMethod.setText(String.valueOf(settings.BLANK_LINES_AROUND_METHOD));
-    myBlankLinesBeforeMethodBody.setText(String.valueOf(settings.BLANK_LINES_BEFORE_METHOD_BODY));
-    myBlankLinesAroundFieldI.setText(String.valueOf(settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE));
-    myBlankLinesAroundMethodI.setText(String.valueOf(settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE));
-    myBlankLinesAfterClassHeader.setText(String.valueOf(settings.BLANK_LINES_AFTER_CLASS_HEADER));
+  private void createOption(OptionGroup optionGroup, String label, String fieldName) {
+    IntOption option = new IntOption(CodeStyleSettings.class, fieldName);
+    optionGroup.add(new JLabel(label), option.myTextField);
+    myOptions.add(option);
+  }
 
+  protected void resetImpl(final CodeStyleSettings settings) {
+    for (IntOption option : myOptions) {
+      option.setValue(option.getFieldValue(settings));
+    }
   }
 
   public void apply(CodeStyleSettings settings) {
-    settings.KEEP_BLANK_LINES_IN_DECLARATIONS = getValue(myKeepBlankLinesInDeclarations);
-    settings.KEEP_BLANK_LINES_IN_CODE = getValue(myKeepBlankLinesInCode);
-    settings.KEEP_BLANK_LINES_BEFORE_RBRACE = getValue(myKeepBlankLinesBeforeRBrace);
-    settings.BLANK_LINES_BEFORE_PACKAGE = getValue(myBlankLinesBeforePackage);
-    settings.BLANK_LINES_AFTER_PACKAGE = getValue(myBlankLinesAfterPackage);
-    settings.BLANK_LINES_BEFORE_IMPORTS = getValue(myBlankLinesBeforeImports);
-    settings.BLANK_LINES_AFTER_IMPORTS = getValue(myBlankLinesAfterImports);
-    settings.BLANK_LINES_AROUND_CLASS = getValue(myBlankLinesAroundClass);
-    settings.BLANK_LINES_AROUND_FIELD = getValue(myBlankLinesAroundField);
-    settings.BLANK_LINES_AROUND_METHOD = getValue(myBlankLinesAroundMethod);
-    settings.BLANK_LINES_BEFORE_METHOD_BODY = getValue(myBlankLinesBeforeMethodBody);
-
-    settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE = getValue(myBlankLinesAroundFieldI);
-    settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE = getValue(myBlankLinesAroundMethodI);
-
-    settings.BLANK_LINES_AFTER_CLASS_HEADER = getValue(myBlankLinesAfterClassHeader);
-
+    for (IntOption option : myOptions) {
+      option.setFieldValue(settings, option.getValue());
+    }
   }
 
   public boolean isModified(CodeStyleSettings settings) {
-    boolean isModified;
-    isModified = settings.KEEP_BLANK_LINES_IN_DECLARATIONS != getValue(myKeepBlankLinesInDeclarations);
-    isModified |= settings.KEEP_BLANK_LINES_IN_CODE != getValue(myKeepBlankLinesInCode);
-    isModified |= settings.KEEP_BLANK_LINES_BEFORE_RBRACE != getValue(myKeepBlankLinesBeforeRBrace);
-    isModified |= settings.BLANK_LINES_BEFORE_PACKAGE != getValue(myBlankLinesBeforePackage);
-    isModified |= settings.BLANK_LINES_AFTER_PACKAGE != getValue(myBlankLinesAfterPackage);
-    isModified |= settings.BLANK_LINES_BEFORE_IMPORTS != getValue(myBlankLinesBeforeImports);
-    isModified |= settings.BLANK_LINES_AFTER_IMPORTS != getValue(myBlankLinesAfterImports);
-    isModified |= settings.BLANK_LINES_AROUND_CLASS != getValue(myBlankLinesAroundClass);
-    isModified |= settings.BLANK_LINES_AROUND_FIELD != getValue(myBlankLinesAroundField);
-    isModified |= settings.BLANK_LINES_AROUND_METHOD != getValue(myBlankLinesAroundMethod);
-    isModified |= settings.BLANK_LINES_BEFORE_METHOD_BODY != getValue(myBlankLinesBeforeMethodBody);
-    isModified |= settings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE != getValue(myBlankLinesAroundFieldI);
-    isModified |= settings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE != getValue(myBlankLinesAroundMethodI);
-    isModified |= settings.BLANK_LINES_AFTER_CLASS_HEADER != getValue(myBlankLinesAfterClassHeader);
-    return isModified;
-
-  }
-
-  private static int getValue(JTextField textField) {
-    int ret = 0;
-    try {
-      ret = Integer.parseInt(textField.getText());
-      if (ret < 0) {
-        ret = 0;
-      }
-      if (ret > 10) {
-        ret = 10;
+    for (IntOption option : myOptions) {
+      if (option.getFieldValue(settings) != option.getValue()) {
+        return true;
       }
     }
-    catch (NumberFormatException e) {
-      //bad number entered
-    }
-    return ret;
-  }
+    return false;
 
-  private static JTextField createTextField() {
-    JTextField field = new JTextField(6);
-    field.setMinimumSize(new Dimension(30, field.getMinimumSize().height));
-    return field;
   }
 
   protected int getRightMargin() {
@@ -212,4 +126,60 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   protected void prepareForReformat(final PsiFile psiFile) {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
+
+  private static class IntOption {
+    private final JTextField myTextField;
+    private final Field myTarget;
+
+    private IntOption(Class targetClass, String fieldName) {
+      try {
+        myTarget = targetClass.getField(fieldName);
+      }
+      catch (NoSuchFieldException e) {
+        throw new RuntimeException(e);
+      }
+      myTextField = new JTextField(6);
+      myTextField.setMinimumSize(new Dimension(30, myTextField.getMinimumSize().height));
+    }
+
+    private int getFieldValue(CodeStyleSettings settings) {
+      try {
+        return myTarget.getInt(settings);
+      }
+      catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    public void setFieldValue(CodeStyleSettings settings, int value) {
+      try {
+        myTarget.setInt(settings, value);
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+    }
+
+    private int getValue() {
+      int ret = 0;
+      try {
+        ret = Integer.parseInt(myTextField.getText());
+        if (ret < 0) {
+          ret = 0;
+        }
+        if (ret > 10) {
+          ret = 10;
+        }
+      }
+      catch (NumberFormatException e) {
+        //bad number entered
+      }
+      return ret;
+    }
+
+    public void setValue(int fieldValue) {
+      myTextField.setText(String.valueOf(fieldValue));
+    }
+  }
+  
 }
