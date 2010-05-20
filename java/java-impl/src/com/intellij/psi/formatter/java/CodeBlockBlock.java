@@ -86,7 +86,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           child = processCaseAndStatementAfter(result, child, childAlignment, childWrap, indent);
         }
         else if (myNode.getElementType() == ElementType.CLASS && child.getElementType() == ElementType.LBRACE) {
-          child = composeCodeBlock(result, child, getCodeBlockExternalIndent());
+          child = composeCodeBlock(result, child, getCodeBlockExternalIndent(), myChildrenIndent);
         }
         else {
           child = processChild(result, child, childAlignment, childWrap, indent);
@@ -96,35 +96,6 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         child = child.getTreeNext();
       }
     }
-  }
-
-  @Nullable
-  private ASTNode composeCodeBlock(final ArrayList<Block> result, ASTNode child, final Indent indent) {
-    final ArrayList<Block> localResult = new ArrayList<Block>();
-    processChild(localResult, child, null, null, Indent.getNoneIndent());
-    child = child.getTreeNext();
-    while (child != null) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        final boolean rBrace = isRBrace(child);
-        final Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(myChildrenIndent);
-        child = processChild(localResult, child, null, null, childIndent);
-        if (rBrace) {
-          result.add(createCodeBlockBlock(localResult, indent));
-          return child;
-        }
-      }
-      if (child != null) {
-        child = child.getTreeNext();
-      }
-    }
-    result.add(createCodeBlockBlock(localResult, indent));
-    return null;
-  }
-
-  private SyntheticCodeBlock createCodeBlockBlock(final ArrayList<Block> localResult, final Indent indent) {
-    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), indent, null);
-    result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(myChildrenIndent), null));
-    return result;
   }
 
   @Nullable
@@ -251,10 +222,6 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         return getCodeBlockInternalIndent(myChildrenIndent);
       }
     }
-  }
-
-  private static boolean isRBrace(final ASTNode child) {
-    return child.getElementType() == ElementType.RBRACE;
   }
 
   @Override

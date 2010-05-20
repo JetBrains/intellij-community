@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -52,6 +53,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
 
   private void buildChildren(final ArrayList<Block> result, final Alignment childAlignment, final Wrap childWrap) {
     ASTNode child = myNode.getFirstChildNode();
+    ASTNode prevChild = null;
 
     int state = BEFORE_FIRST;
 
@@ -60,7 +62,26 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         final Indent indent = calcIndent(child,  state);
         myIndentsBefore.add(calcIndentBefore(child,  state));
         state = calcNewState(child, state);
-        child = processChild(result, child, childAlignment, childWrap, indent);
+
+        // The general idea is that it's possible that there are comment lines before method declaration line and that they have
+        // different indents. Example:
+        //
+        //     // This is comment before method
+        //               void foo() {}
+        //
+        // We want to have the comment and method as distinct blocks then in order to correctly process indentation for inner method
+        // elements. See IDEA-53778 for example of situation when it is significant.
+        if (prevChild != null && myNode.getElementType() == ElementType.METHOD
+            && JavaTokenType.COMMENT_BIT_SET.contains(prevChild.getElementType())
+            && !JavaTokenType.COMMENT_BIT_SET.contains(child.getElementType()))
+        {
+          prevChild = child;
+          child = composeCodeBlock(result, child, Indent.getNoneIndent(), 0);
+        }
+        else {
+          prevChild = child;
+          child = processChild(result, child, childAlignment, childWrap, indent);
+        }                
         for (int i = myIndentsBefore.size(); i < result.size(); i++) {
           myIndentsBefore.add(Indent.getContinuationIndent());
         }

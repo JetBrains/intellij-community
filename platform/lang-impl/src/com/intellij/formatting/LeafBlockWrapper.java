@@ -151,8 +151,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
     return new IndentData(indentSpaces, spaces);
   }
 
-
-
   public void dispose() {
     super.dispose();
     myPreviousBlock = null;
@@ -230,9 +228,4 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   public TextRange getTextRange() {
     return new TextRange(myStart, myEnd);
   }
-
-  private void calculateNumberOfSymbolsAtLastLine() {
-    
-  }
-
 }

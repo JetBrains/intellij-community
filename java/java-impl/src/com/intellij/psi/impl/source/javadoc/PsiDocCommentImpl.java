@@ -18,10 +18,7 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
@@ -57,18 +54,32 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     super(JavaDocElementType.DOC_COMMENT, text);
   }
 
+  public PsiDocCommentOwner getOwner() {
+    final PsiElement parent = getParent();
+    if (parent instanceof PsiDocCommentOwner) {
+      final PsiDocCommentOwner owner = (PsiDocCommentOwner)parent;
+      if (owner.getDocComment() == this) {
+        return owner;
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
   public PsiElement[] getDescriptionElements() {
-    ArrayList<ASTNode> array = new ArrayList<ASTNode>();
+    ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType i = child.getElementType();
       if (i == DOC_TAG) break;
       if (i != DOC_COMMENT_START && i != DOC_COMMENT_END && i != DOC_COMMENT_LEADING_ASTERISKS) {
-        array.add(child);
+        array.add(child.getPsi());
       }
     }
     return array.toArray(new PsiElement[array.size()]);
   }
 
+  @NotNull
   public PsiDocTag[] getTags() {
     return getChildrenAsPsiElements(TAG_BIT_SET, PSI_TAG_ARRAY_CONSTRUCTOR);
   }
@@ -92,6 +103,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     return null;
   }
 
+  @NotNull
   public PsiDocTag[] findTagsByName(String name) {
     ArrayList<PsiDocTag> array = new ArrayList<PsiDocTag>();
     PsiDocTag[] tags = getTags();

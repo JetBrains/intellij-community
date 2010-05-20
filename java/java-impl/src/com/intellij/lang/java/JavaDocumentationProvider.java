@@ -430,22 +430,26 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
-  public PsiComment findExistingDocComment(final PsiComment _element) {
-    PsiElement parentElement = _element.getParent();
-
-    return parentElement instanceof PsiDocCommentOwner ? ((PsiDocCommentOwner)parentElement).getDocComment() : null;
+  public PsiComment findExistingDocComment(final PsiComment comment) {
+    if (comment instanceof PsiDocComment) {
+      final PsiDocCommentOwner owner = ((PsiDocComment)comment).getOwner();
+      if (owner != null) {
+        return owner.getDocComment();
+      }
+    }
+    return null;
   }
 
-  public String generateDocumentationContentStub(PsiComment _element) {
-    PsiElement parentElement = _element.getParent();
-    final Project project = _element.getProject();
+  public String generateDocumentationContentStub(PsiComment _comment) {
+    final PsiDocCommentOwner commentOwner = ((PsiDocComment)_comment).getOwner();
+    final Project project = commentOwner.getProject();
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
-      if (parentElement instanceof PsiMethod) {
-        PsiMethod psiMethod = (PsiMethod)parentElement;
+      final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
+        .forLanguage(commentOwner.getLanguage());
+      if (commentOwner instanceof PsiMethod) {
+        PsiMethod psiMethod = (PsiMethod)commentOwner;
         final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-        final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
-          .forLanguage(parentElement.getLanguage());
         final Map<String, String> param2Description = new HashMap<String, String>();
         final PsiMethod[] superMethods = psiMethod.findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
@@ -499,11 +503,9 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
           builder.append(LINE_SEPARATOR);
         }
       }
-      else if (parentElement instanceof PsiClass) {
-        final PsiTypeParameterList typeParameterList = ((PsiClass)parentElement).getTypeParameterList();
+      else if (commentOwner instanceof PsiClass) {
+        final PsiTypeParameterList typeParameterList = ((PsiClass)commentOwner).getTypeParameterList();
         if (typeParameterList != null) {
-          final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
-            .forLanguage(parentElement.getLanguage());
           createTypeParamsListComment(builder, project, commenter, typeParameterList);
         }
       }
