@@ -130,12 +130,17 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
     super.setValue(n);
     AppIcon icon = AppIcon.getInstance();
     if (n < getMaximum()) {
-      icon.setProgress(null, TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)getMaximum(), myProblemsCounter == 0);
+      if (icon.setProgress(null, TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)getMaximum(), myProblemsCounter == 0)) {
+        if (myProblemsCounter > 0) {
+          icon.setBadge(String.valueOf(myProblemsCounter));
+        }
+      }
     } else {
-      icon.hideProgress(null, TESTS);
-      if (myProblemsCounter > 0) {
-        icon.setBadge(String.valueOf(myProblemsCounter));
-        icon.requestAttention(false);
+      if (icon.hideProgress(null, TESTS)) {
+        if (myProblemsCounter > 0) {
+          icon.setBadge(String.valueOf(myProblemsCounter));
+          icon.requestAttention(true);
+        }
       }
     }
   }
