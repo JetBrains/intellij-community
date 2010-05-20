@@ -150,10 +150,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (i < argTypes.length) {
       PsiType argType = argTypes[i];
       final GroovyPsiElement context = (GroovyPsiElement)myPlace;
-      /*if (!TypesUtil.isAssignable(paramType, argType, context.getManager(), context.getResolveScope(), false) &&
+      if (!TypesUtil.isAssignable(paramType, argType, context.getManager(), context.getResolveScope(), false) &&
           TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
         return paramType;
-      }*/
+      }
       return argType;
     }
     return PsiType.NULL;
