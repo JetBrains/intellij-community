@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,12 @@ public abstract class LanguageCodeStyleSettingsProvider {
   public abstract Language getLanguage();
 
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
+
+  public void customizeSpacingOptions(CodeStyleCustomizationsConsumer consumer) {
+  }
+
+  public void customizeBlankLinesOptions(CodeStyleCustomizationsConsumer consumer) {
+  }
 
   public static Language[] getLanguagesWithCodeStyleSettings() {
     ArrayList<Language> langs = new ArrayList<Language>();

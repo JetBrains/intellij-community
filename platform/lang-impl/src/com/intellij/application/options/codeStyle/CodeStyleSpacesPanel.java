@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.psi.codeStyle.CodeStyleOptionsCustomizer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
@@ -47,8 +46,8 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements 
   protected void initTables() {
     myAllowedOptions = new HashSet<String>();
     myCustomOptions = new MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>>();
-    for(CodeStyleOptionsCustomizer contributor: Extensions.getExtensions(CodeStyleOptionsCustomizer.EP_NAME)) {
-      contributor.customizeSpacingOptions(this);
+    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      provider.customizeSpacingOptions(this);
     }
 
     initBooleanField("SPACE_BEFORE_METHOD_CALL_PARENTHESES", ApplicationBundle.message("checkbox.spaces.method.call.parentheses"), BEFORE_PARENTHESES);

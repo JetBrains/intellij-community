@@ -720,8 +720,6 @@
 
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
 
-    <codeStyleOptionsCustomizer implementation="com.intellij.application.options.JavaCodeStyleOptionsCustomizer"/>
-
     <!-- new project wizard -->
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromScratchMode"/>
     <wizardMode implementation="com.intellij.ide.util.newProjectWizard.modes.CreateFromSourcesMode"/>

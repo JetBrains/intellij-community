@@ -59,8 +59,6 @@
 
   <extensionPoint name="codeStyleSettingsProvider"
                   interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider"/>
-  <extensionPoint name="codeStyleOptionsCustomizer"
-                  interface="com.intellij.psi.codeStyle.CodeStyleOptionsCustomizer"/>
 
   <extensionPoint name="daemon.highlightInfoFilter"
                   interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
