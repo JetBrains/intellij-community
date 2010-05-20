@@ -15,28 +15,15 @@
  */
 package com.intellij.codeInsight.template.zencoding;
 
-import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.openapi.util.Pair;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class TemplateToken extends Token {
-  private final String myKey;
-  private TemplateImpl myTemplate;
+public class ZenCodingUtil {
+  static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
 
-  public TemplateToken(String key) {
-    myKey = key;
-  }
-
-  public String getKey() {
-    return myKey;
-  }
-
-  public void setTemplate(TemplateImpl template) {
-    myTemplate = template;
-  }
-
-  public TemplateImpl getTemplate() {
-    return myTemplate;
+  public static String getValue(Pair<String, String> pair, int numberInIteration) {
+    return pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
   }
 }

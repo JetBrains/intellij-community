@@ -15,28 +15,17 @@
  */
 package com.intellij.codeInsight.template.zencoding;
 
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-
 /**
  * @author Eugene.Kudelevsky
  */
-public class TemplateToken extends Token {
-  private final String myKey;
-  private TemplateImpl myTemplate;
+public class FilterToken extends Token {
+  private final String mySuffix;
 
-  public TemplateToken(String key) {
-    myKey = key;
+  public FilterToken(String suffix) {
+    mySuffix = suffix;
   }
 
-  public String getKey() {
-    return myKey;
-  }
-
-  public void setTemplate(TemplateImpl template) {
-    myTemplate = template;
-  }
-
-  public TemplateImpl getTemplate() {
-    return myTemplate;
+  public String getSuffix() {
+    return mySuffix;
   }
 }
