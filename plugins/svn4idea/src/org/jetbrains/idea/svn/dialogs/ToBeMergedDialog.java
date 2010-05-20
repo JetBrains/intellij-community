@@ -61,7 +61,6 @@ public class ToBeMergedDialog extends DialogWrapper {
   private Splitter mySplitter;
 
   private final QuantitySelection<Long> myWiseSelection;
-  private List<Change> myChanges;
   private final BranchInfo myBranchInfo;
 
   private final Set<Change> myAlreadyMerged;
@@ -73,7 +72,6 @@ public class ToBeMergedDialog extends DialogWrapper {
     myProject = project;
 
     myListsEngine = new BasePageEngine<CommittedChangeList>(lists, ourPageSize);
-    myChanges = CommittedChangesTreeBrowser.collectChanges(lists, false);
 
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<Long>(true);
@@ -114,7 +112,6 @@ public class ToBeMergedDialog extends DialogWrapper {
   }
 
   private void initUI() {
-    final JTabbedPane pane = new JTabbedPane();
     myRevisionsList = new JList();
     final PagedListWithActions.InnerComponentManager<CommittedChangeList> listsManager =
       new PagedListWithActions.InnerComponentManager<CommittedChangeList>() {
@@ -146,14 +143,7 @@ public class ToBeMergedDialog extends DialogWrapper {
 
     addRevisionListListeners();
 
-    pane.add("Revisions", mySplitter);
-
-    final RepositoryChangesBrowser browser =
-      new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), Collections.<Change>emptyList(), null);
-    browser.setChangesToDisplay(myChanges);
-    pane.add("Files", browser);
-
-    myPanel.add(pane, BorderLayout.CENTER);
+    myPanel.add(mySplitter, BorderLayout.CENTER);
   }
 
   private void setChangesDecorator() {
