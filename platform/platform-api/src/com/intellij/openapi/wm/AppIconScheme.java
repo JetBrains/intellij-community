@@ -33,7 +33,7 @@ public class AppIconScheme {
 
     static final Progress BUILD = new Progress() {
       public Color getOkColor() {
-        return Color.blue;
+        return new Color(51, 102, 255);
       }
 
       public Color getErrorColor() {

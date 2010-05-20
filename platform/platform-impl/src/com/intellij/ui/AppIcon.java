@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -63,6 +65,8 @@ public abstract class AppIcon {
     private double myLastValue;
 
     private BufferedImage getAppImage() {
+      assertIsDispatchThread();
+
       try {
         if (myAppImage != null) return myAppImage;
 
@@ -91,6 +95,8 @@ public abstract class AppIcon {
 
     @Override
     public void setBadge(String text) {
+      assertIsDispatchThread();
+
       try {
         getAppMethod("setDockIconBadge", String.class).invoke(getApp(), text);
       }
@@ -104,6 +110,8 @@ public abstract class AppIcon {
 
     @Override
     public void requestAttention(boolean critical) {
+      assertIsDispatchThread();
+
       try {
         getAppMethod("requestUserAttention", boolean.class).invoke(getApp(), critical);
       }
@@ -117,6 +125,8 @@ public abstract class AppIcon {
 
     @Override
     public boolean hideProgress(Object processId) {
+      assertIsDispatchThread();
+
       if (getAppImage() == null) return false;
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
 
@@ -128,6 +138,8 @@ public abstract class AppIcon {
     }
 
     public boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      assertIsDispatchThread();
+
       if (getAppImage() == null) return false;
       if (myCurrentProcessId != null && !myCurrentProcessId.equals(processId)) return false;
 
@@ -136,10 +148,10 @@ public abstract class AppIcon {
       if (Math.abs(myLastValue - value) < 0.02d) return true;
 
       try {
-        int progressHeight = 20;
-        int xInset = 15;
-        int yInset = 10;
-        int bound = 2;
+        int progressHeight = (int)(myAppImage.getHeight() * 0.15);
+        int xInset = (int)(myAppImage.getWidth() * 0.05);
+        int yInset = (int)(myAppImage.getHeight() * 0.15);
+        int bound = (int)(myAppImage.getWidth() * 0.03);
 
         Rectangle progressRec = new Rectangle(new Point(xInset, myAppImage.getHeight() - progressHeight - yInset),
                                               new Dimension(myAppImage.getWidth() - xInset * 2, progressHeight));
@@ -147,22 +159,19 @@ public abstract class AppIcon {
         BufferedImage current = new BufferedImage(myAppImage.getWidth(), myAppImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = current.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
         g.drawImage(getAppImage(), null, null);
 
         Rectangle bgRec = new Rectangle(progressRec.x - bound, progressRec.y - bound, progressRec.width + bound * 2, progressRec.height + bound * 2);
         g.setColor(Color.white);
         g.fillRect(bgRec.x, bgRec.y, bgRec.width, bgRec.height);
-
-
-        g.setColor(Color.black);
-        g.fillRect(progressRec.x, progressRec.y, progressRec.width, progressRec.height);
-
+        
         g.setColor(isOk ? scheme.getOkColor() : scheme.getErrorColor());
 
         int currentWidth = (int)Math.ceil(progressRec.width * value);
-
         g.fillRect(progressRec.x, progressRec.y, currentWidth, progressRec.height);
+
+        g.setColor(Color.black);
+        g.drawRect(bgRec.x, bgRec.y, bgRec.width - 1, bgRec.height - 1);
 
 
         setDockIcon(current);
@@ -222,5 +231,15 @@ public abstract class AppIcon {
     }
   }
 
+  private static void assertIsDispatchThread() {
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      if (!app.isUnitTestMode()) {
+        app.assertIsDispatchThread();
+      }
+    } else {
+      assert EventQueue.isDispatchThread();
+    }
+  }
 
 }
