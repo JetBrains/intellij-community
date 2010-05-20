@@ -642,7 +642,7 @@ public class ContainerUtil {
     return result;
   }
 
-  public static <T, V> List<V> mapNotNull(T[] array, Function<T, V> mapping) {
+  public static <T, V> List<V> mapNotNull(@NotNull T[] array, Function<T, V> mapping) {
     return mapNotNull(Arrays.asList(array), mapping);
   }
 

@@ -40,8 +40,6 @@ import java.util.Set;
  */
 public abstract class JspManager implements IBaseJspManager {
 
-  public static final Key<VirtualFile[]> DIRECTORIES_KEY = Key.create("TagDirOriginalDirs");
-
   public static JspManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, JspManager.class);
   }
