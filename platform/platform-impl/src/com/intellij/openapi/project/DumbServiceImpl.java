@@ -37,6 +37,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -271,16 +272,24 @@ public class DumbServiceImpl extends DumbService {
           if (indicator instanceof ProgressIndicatorEx) {
             ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
               @Override
-              public void setFraction(double fraction) {
-                AppIcon.getInstance().setProgress("indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
+              public void setFraction(final double fraction) {
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  public void run() {
+                    AppIcon.getInstance().setProgress("indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
+                  }
+                });
               }
 
               @Override
               public void finish(@NotNull TaskInfo task) {
-                AppIcon appIcon = AppIcon.getInstance();
-                if (appIcon.hideProgress("indexUpdate")) {
-                  appIcon.requestAttention(false);
-                }
+                UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                  public void run() {
+                    AppIcon appIcon = AppIcon.getInstance();
+                    if (appIcon.hideProgress("indexUpdate")) {
+                      appIcon.requestAttention(false);
+                    }
+                  }
+                });
               }
             });
           }

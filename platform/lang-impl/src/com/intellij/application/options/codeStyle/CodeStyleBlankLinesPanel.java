@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
-import com.intellij.psi.codeStyle.CodeStyleOptionsCustomizer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
@@ -43,8 +42,8 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   public CodeStyleBlankLinesPanel(CodeStyleSettings settings) {
     super(settings);
 
-    for(CodeStyleOptionsCustomizer customizer: Extensions.getExtensions(CodeStyleOptionsCustomizer.EP_NAME)) {
-      customizer.customizeBlankLinesOptions(this);
+    for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
+      provider.customizeBlankLinesOptions(this);
     }
 
     myPanel
