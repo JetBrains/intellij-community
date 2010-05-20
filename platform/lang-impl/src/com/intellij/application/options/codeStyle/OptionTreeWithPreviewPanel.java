@@ -18,10 +18,12 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -198,7 +200,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   }
 
-  private boolean isModified(TreeNode node, final CodeStyleSettings settings) {
+  private static boolean isModified(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
       if (isToggleNodeModified((MyToggleTreeNode)node, settings)) {
         return true;
@@ -233,6 +235,19 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       Field field = styleSettingsClass.getField(fieldName);
       BooleanOptionKey key = new BooleanOptionKey(groupName, cbName, field);
       myKeys.add(key);
+    }
+    catch (NoSuchFieldException e) {
+      LOG.error(e);
+    }
+    catch (SecurityException e) {
+      LOG.error(e);
+    }
+  }
+
+  protected <T extends CustomCodeStyleSettings> void initCustomBooleanField(@NotNull Class<T> customClass, String fieldName, String cbName, String groupName) {
+    try {
+      Field field = customClass.getField(fieldName);
+      myKeys.add(new CustomBooleanOptionKey(groupName, cbName, customClass, field));
     }
     catch (NoSuchFieldException e) {
       LOG.error(e);
@@ -376,6 +391,32 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     public boolean getValue(CodeStyleSettings settings) throws IllegalAccessException {
       return field.getBoolean(settings);
+    }
+  }
+
+  private static class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
+    private final Class<T> mySettingsClass;
+
+    public CustomBooleanOptionKey(String groupName, String cbName, Class<T> settingsClass, Field field) {
+      super(groupName, cbName, field);
+      mySettingsClass = settingsClass;
+    }
+
+    @Override
+    public void setValue(CodeStyleSettings settings, Boolean aBoolean) {
+      final CustomCodeStyleSettings customSettings = settings.getCustomSettings(mySettingsClass);
+      try {
+        field.set(customSettings, aBoolean);
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+    }
+
+    @Override
+    public boolean getValue(CodeStyleSettings settings) throws IllegalAccessException {
+      final CustomCodeStyleSettings customSettings = settings.getCustomSettings(mySettingsClass);
+      return field.getBoolean(customSettings);
     }
   }
 
