@@ -44,4 +44,8 @@ public abstract class CodeStyleSettingsProvider {
   public String getConfigurableDisplayName() {
     return null;
   }
+
+  public boolean hasSettingsPage() {
+    return true;
+  }
 }

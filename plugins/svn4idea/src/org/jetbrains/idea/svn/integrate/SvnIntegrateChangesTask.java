@@ -56,16 +56,20 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private final List<VcsException> myExceptions;
 
-  private final UpdateEventHandler myHandler;
-  private final IMerger myMerger;
-  private final ResolveWorker myResolveWorker;
+  private UpdateEventHandler myHandler;
+  private IMerger myMerger;
+  private ResolveWorker myResolveWorker;
   private FilePathImpl myMergeTarget;
   private final String myTitle;
+  private final MergerFactory myMergerFactory;
+  private final SVNURL myCurrentBranchUrl;
   private boolean myDryRun;
 
   public SvnIntegrateChangesTask(final SvnVcs vcs, final WorkingCopyInfo info, final MergerFactory mergerFactory,
                                  final SVNURL currentBranchUrl, final String title, final boolean dryRun) {
     super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
+    myMergerFactory = mergerFactory;
+    myCurrentBranchUrl = currentBranchUrl;
     myDryRun = dryRun;
     myTitle = title;
 
@@ -76,10 +80,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     myAccomulatedFiles = new UpdatedFilesReverseSide(UpdatedFiles.create());
     myExceptions = new ArrayList<VcsException>();
-
-    myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    myMerger = mergerFactory.createMerger(myVcs, new File(info.getLocalPath()), myHandler, currentBranchUrl);
-    myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
   }
 
   private void indicatorOnStart() {
@@ -93,6 +93,10 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   public void run(@NotNull final ProgressIndicator indicator) {
+    myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
+    myMerger = myMergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, myCurrentBranchUrl);
+    myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
+
     BlockReloadingUtil.block();
     myProjectLevelVcsManager.startBackgroundVcsOperation();
 

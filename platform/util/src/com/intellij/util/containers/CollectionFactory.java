@@ -47,6 +47,10 @@ public class CollectionFactory {
     return new ArrayList<T>();
   }
 
+  public static <T> HashSet<T> hashSet() {
+    return new HashSet<T>();
+  }
+
   public static <T, V> LinkedHashMap<T, V> linkedMap() {
     return new LinkedHashMap<T,V>();
   }
