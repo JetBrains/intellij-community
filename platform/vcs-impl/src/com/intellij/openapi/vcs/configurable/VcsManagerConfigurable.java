@@ -142,7 +142,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     });
   }
 
-  private Configurable createVcsComposeConfigurable(final AbstractVcs[] vcses) {
+  private static Configurable createVcsComposeConfigurable(final AbstractVcs[] vcses) {
     return new SearchableConfigurable.Parent.Abstract(){
       protected Configurable[] buildConfigurables() {
         List<Configurable> result = new ArrayList<Configurable>();
@@ -171,7 +171,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     };
   }
 
-  private Configurable createVcsConfigurableWrapper(final AbstractVcs vcs) {
+  private static Configurable createVcsConfigurableWrapper(final AbstractVcs vcs) {
     final Configurable delegate = vcs.getConfigurable();
     return new SearchableConfigurable(){
       @Nls
@@ -208,11 +208,11 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       }
 
       public String getId() {
-        return getHelpTopic();
+        return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable) delegate).getId() : getHelpTopic();
       }
 
       public Runnable enableSearch(String option) {
-        return null;
+        return delegate instanceof SearchableConfigurable ? ((SearchableConfigurable) delegate).enableSearch(option) : null;
       }
     };
   }
