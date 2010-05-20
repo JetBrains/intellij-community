@@ -230,6 +230,10 @@
 
     <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
 
+    <lang.surroundDescriptor language="DjangoTemplate" implementationClass="com.jetbrains.django.surround.DjangoTemplateSurroundDescriptor" order="first"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="first"/>
+    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.surround.DjangoXmlSurroundDescriptor" order="first"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
 
@@ -369,5 +373,9 @@
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-  </actions>
+
+    <group id="TypeHierarchyPopupMenu">
+       <action id="AnalyzeJavaMenu" class="com.jetbrains.django.console.RunDjangoConsoleAction"></action>
+    </group>
+    </actions>
 </idea-plugin>
