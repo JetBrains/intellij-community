@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -68,7 +67,8 @@ public class PyQualifiedName {
       return false;
     }
     for (int i = 0; i < prefix.getComponentCount(); i++) {
-      if (!getComponents().get(i).equals(prefix.getComponents().get(i))) {
+      final String component = getComponents().get(i);
+      if (component == null || !component.equals(prefix.getComponents().get(i))) {
         return false;
       }
     }
