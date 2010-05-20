@@ -13,7 +13,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_AROUND_EQ_IN_NAMED_PARAMETER = false;
   public boolean SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = false;
 
-  protected PyCodeStyleSettings(CodeStyleSettings container) {
+  public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
   }
 }
