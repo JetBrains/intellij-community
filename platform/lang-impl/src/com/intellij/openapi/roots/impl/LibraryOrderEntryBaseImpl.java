@@ -60,7 +60,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
       }
       return getRootFiles(OrderRootType.CLASSES);
     }
-    else if (type == OrderRootType.CLASSES_AND_OUTPUT || type == OrderRootType.CLASSES) {
+    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
       return myScope == DependencyScope.PROVIDED ? VirtualFile.EMPTY_ARRAY : getRootFiles(OrderRootType.CLASSES);
     }
     return getRootFiles(type);
@@ -80,7 +80,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
       }
       return rootProvider.getUrls(OrderRootType.CLASSES);
     }
-    else if (type == OrderRootType.CLASSES_AND_OUTPUT || type == OrderRootType.CLASSES) {
+    else if (type == OrderRootType.CLASSES_AND_OUTPUT) {
       return myScope == DependencyScope.PROVIDED ? ArrayUtil.EMPTY_STRING_ARRAY : rootProvider.getUrls(OrderRootType.CLASSES);
     }
     return rootProvider.getUrls(type);
