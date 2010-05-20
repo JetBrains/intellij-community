@@ -13,37 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.application.options;
 
-import java.awt.*;
+import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
+import com.intellij.psi.codeStyle.CodeStyleOptionsCustomizer;
 
-public class AppIconScheme {
-
-  public interface Progress {
-
-    static final Progress TESTS = new Progress() {
-      public Color getOkColor() {
-        return Color.green;
-      }
-
-      public Color getErrorColor() {
-        return Color.red;
-      }
-    };
-
-    static final Progress BUILD = new Progress() {
-      public Color getOkColor() {
-        return Color.blue;
-      }
-
-      public Color getErrorColor() {
-        return Color.red;
-      }
-    };
-
-    Color getOkColor();
-    Color getErrorColor();
-
+/**
+ * @author yole
+ */
+public class JavaCodeStyleOptionsCustomizer extends CodeStyleOptionsCustomizer {
+  @Override
+  public void customizeSpacingOptions(CodeStyleCustomizationsConsumer consumer) {
+    consumer.showAllStandardOptions();
   }
 
+  @Override
+  public void customizeBlankLinesOptions(CodeStyleCustomizationsConsumer consumer) {
+    consumer.showAllStandardOptions();
+  }
 }

@@ -18,11 +18,12 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -40,7 +41,6 @@ import java.util.ArrayList;
 public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
   private final JTree myOptionsTree;
-  private final HashMap<BooleanOptionKey, Field> myKeyToFieldMap = new HashMap<BooleanOptionKey, Field>();
   private final ArrayList<BooleanOptionKey> myKeys = new ArrayList<BooleanOptionKey>();
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
@@ -144,7 +144,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     resetNode(root, settings);
   }
 
-  private void resetNode(TreeNode node, final CodeStyleSettings settings) {
+  private static void resetNode(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
       resetMyTreeNode((MyToggleTreeNode)node, settings);
       return;
@@ -155,11 +155,10 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  private void resetMyTreeNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
+  private static void resetMyTreeNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
     try {
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
-      Field field = myKeyToFieldMap.get(key);
-      childNode.setSelected(field.getBoolean(settings));
+      childNode.setSelected(key.getValue(settings));
     }
     catch (IllegalArgumentException e) {
       LOG.error(e);
@@ -175,7 +174,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     applyNode(root, settings);
   }
 
-  private void applyNode(TreeNode node, final CodeStyleSettings settings) {
+  private static void applyNode(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
       applyToggleNode((MyToggleTreeNode)node, settings);
       return;
@@ -186,18 +185,9 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
-  private void applyToggleNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
-    try {
-      BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
-      Field field = myKeyToFieldMap.get(key);
-      field.set(settings, childNode.isSelected() ? Boolean.TRUE : Boolean.FALSE);
-    }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-    }
+  private static void applyToggleNode(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
+    BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
+    key.setValue(settings, childNode.isSelected() ? Boolean.TRUE : Boolean.FALSE);
   }
 
   public boolean isModified(CodeStyleSettings settings) {
@@ -210,7 +200,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   }
 
-  private boolean isModified(TreeNode node, final CodeStyleSettings settings) {
+  private static boolean isModified(TreeNode node, final CodeStyleSettings settings) {
     if (node instanceof MyToggleTreeNode) {
       if (isToggleNodeModified((MyToggleTreeNode)node, settings)) {
         return true;
@@ -225,11 +215,10 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     return false;
   }
 
-  private boolean isToggleNodeModified(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
+  private static boolean isToggleNodeModified(MyToggleTreeNode childNode, final CodeStyleSettings settings) {
     try {
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
-      Field field = myKeyToFieldMap.get(key);
-      return childNode.isSelected() != field.getBoolean(settings);
+      return childNode.isSelected() != key.getValue(settings);
     }
     catch (IllegalArgumentException e) {
       LOG.error(e);
@@ -244,13 +233,27 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     try {
       Class styleSettingsClass = CodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
-      BooleanOptionKey key = new BooleanOptionKey(groupName, cbName);
-      myKeyToFieldMap.put(key, field);
+      BooleanOptionKey key = new BooleanOptionKey(groupName, cbName, field);
       myKeys.add(key);
     }
     catch (NoSuchFieldException e) {
+      LOG.error(e);
     }
     catch (SecurityException e) {
+      LOG.error(e);
+    }
+  }
+
+  protected <T extends CustomCodeStyleSettings> void initCustomBooleanField(@NotNull Class<T> customClass, String fieldName, String cbName, String groupName) {
+    try {
+      Field field = customClass.getField(fieldName);
+      myKeys.add(new CustomBooleanOptionKey(groupName, cbName, customClass, field));
+    }
+    catch (NoSuchFieldException e) {
+      LOG.error(e);
+    }
+    catch (SecurityException e) {
+      LOG.error(e);
     }
   }
 
@@ -359,10 +362,12 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
   private static class BooleanOptionKey {
     final String groupName;
     final String cbName;
+    final Field field;
 
-    public BooleanOptionKey(String groupName, String cbName) {
+    public BooleanOptionKey(String groupName, String cbName, Field field) {
       this.groupName = groupName;
       this.cbName = cbName;
+      this.field = field;
     }
 
     public boolean equals(Object obj) {
@@ -373,6 +378,45 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
     public int hashCode() {
       return cbName.hashCode();
+    }
+
+    public void setValue(CodeStyleSettings settings, Boolean aBoolean) {
+      try {
+        field.set(settings, aBoolean);
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+    }
+
+    public boolean getValue(CodeStyleSettings settings) throws IllegalAccessException {
+      return field.getBoolean(settings);
+    }
+  }
+
+  private static class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
+    private final Class<T> mySettingsClass;
+
+    public CustomBooleanOptionKey(String groupName, String cbName, Class<T> settingsClass, Field field) {
+      super(groupName, cbName, field);
+      mySettingsClass = settingsClass;
+    }
+
+    @Override
+    public void setValue(CodeStyleSettings settings, Boolean aBoolean) {
+      final CustomCodeStyleSettings customSettings = settings.getCustomSettings(mySettingsClass);
+      try {
+        field.set(customSettings, aBoolean);
+      }
+      catch (IllegalAccessException e) {
+        LOG.error(e);
+      }
+    }
+
+    @Override
+    public boolean getValue(CodeStyleSettings settings) throws IllegalAccessException {
+      final CustomCodeStyleSettings customSettings = settings.getCustomSettings(mySettingsClass);
+      return field.getBoolean(customSettings);
     }
   }
 

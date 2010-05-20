@@ -222,11 +222,6 @@ public class CustomTemplateCallback {
     myBuilder.insertText(offset, text);
   }
 
-  public void insertNewLine() {
-    myBuilder.insertText(myOffset, "\n");
-    myOffset++;
-  }
-
   public boolean newLineBefore() {
     int i = myOffset - 1;
     CharSequence text = myBuilder.getText();

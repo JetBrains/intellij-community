@@ -22,13 +22,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ui.AppIcon;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -264,6 +268,24 @@ public class DumbServiceImpl extends DumbService {
 
         // /*no override for interfaces in jdk 1.5 */ @Override
         public void run(@NotNull final ProgressIndicator indicator) {
+          if (indicator instanceof ProgressIndicatorEx) {
+            ((ProgressIndicatorEx)indicator).addStateDelegate(new ProgressIndicatorBase() {
+              @Override
+              public void setFraction(double fraction) {
+                AppIcon.getInstance().setProgress("indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
+              }
+
+              @Override
+              public void finish(@NotNull TaskInfo task) {
+                AppIcon appIcon = AppIcon.getInstance();
+                if (appIcon.hideProgress("indexUpdate")) {
+                  appIcon.requestAttention(false);
+                }
+              }
+            });
+          }
+
+
           final ProgressIndicator proxy =
             (ProgressIndicator)Proxy.newProxyInstance(indicator.getClass().getClassLoader(), new Class[]{ProgressIndicator.class}, new InvocationHandler() {
               public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {

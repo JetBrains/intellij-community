@@ -31,7 +31,7 @@ import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import javax.swing.*;
 
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.AppIconScheme;
+import com.intellij.openapi.wm.AppIconScheme;
 import org.jetbrains.annotations.NonNls;
 
 public class TestProgress extends DefaultBoundedRangeModel implements Disposable {
@@ -130,18 +130,23 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
     super.setValue(n);
     AppIcon icon = AppIcon.getInstance();
     if (n < getMaximum()) {
-      icon.setProgress(null, TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)getMaximum(), myProblemsCounter == 0);
+      if (icon.setProgress(TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)getMaximum(), myProblemsCounter == 0)) {
+        if (myProblemsCounter > 0) {
+          icon.setBadge(String.valueOf(myProblemsCounter));
+        }
+      }
     } else {
-      icon.hideProgress(null, TESTS);
-      if (myProblemsCounter > 0) {
-        icon.setBadge(String.valueOf(myProblemsCounter));
-        icon.requestAttention(false);
+      if (icon.hideProgress(TESTS)) {
+        if (myProblemsCounter > 0) {
+          icon.setBadge(String.valueOf(myProblemsCounter));
+          icon.requestAttention(true);
+        }
       }
     }
   }
 
   public void dispose() {
-    AppIcon.getInstance().hideProgress(null, TESTS);
+    AppIcon.getInstance().hideProgress(TESTS);
     AppIcon.getInstance().setBadge(null);
   }
 }
