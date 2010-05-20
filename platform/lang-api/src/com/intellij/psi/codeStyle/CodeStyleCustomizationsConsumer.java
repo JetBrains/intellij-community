@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 /**
  * @author yole
  */
-public interface SpacingOptionsConsumer {
+public interface CodeStyleCustomizationsConsumer {
   void showAllStandardOptions();
   void showStandardOptions(String... optionNames);
   void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass, String fieldName, String optionName, String groupName);

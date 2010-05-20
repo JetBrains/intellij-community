@@ -20,8 +20,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 /**
  * @author yole
  */
-public interface CodeStyleOptionsCustomizer {
-  ExtensionPointName<CodeStyleOptionsCustomizer> EP_NAME = ExtensionPointName.create("com.intellij.codeStyleOptionsCustomizer");
+public abstract class CodeStyleOptionsCustomizer {
+  public static final ExtensionPointName<CodeStyleOptionsCustomizer> EP_NAME = ExtensionPointName.create("com.intellij.codeStyleOptionsCustomizer");
   
-  void customizeSpacingOptions(SpacingOptionsConsumer consumer);
+  public void customizeSpacingOptions(CodeStyleCustomizationsConsumer consumer) {
+  }
+
+  public void customizeBlankLinesOptions(CodeStyleCustomizationsConsumer consumer) {
+  }
 }

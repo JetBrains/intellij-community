@@ -17,25 +17,35 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
+import com.intellij.psi.codeStyle.CodeStyleOptionsCustomizer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.OptionGroup;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
-public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel {
+public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel implements CodeStyleCustomizationsConsumer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
 
   private List<IntOption> myOptions = new ArrayList<IntOption>();
+  private Set<String> myAllowedOptions = new HashSet<String>();
+  private boolean myAllOptionsAllowed = false;
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
 
   public CodeStyleBlankLinesPanel(CodeStyleSettings settings) {
     super(settings);
+
+    for(CodeStyleOptionsCustomizer customizer: Extensions.getExtensions(CodeStyleOptionsCustomizer.EP_NAME)) {
+      customizer.customizeBlankLinesOptions(this);
+    }
 
     myPanel
       .add(createKeepBlankLinesPanel(),
@@ -88,9 +98,11 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
   }
 
   private void createOption(OptionGroup optionGroup, String label, String fieldName) {
-    IntOption option = new IntOption(CodeStyleSettings.class, fieldName);
-    optionGroup.add(new JLabel(label), option.myTextField);
-    myOptions.add(option);
+    if (myAllOptionsAllowed || myAllowedOptions.contains(fieldName)) {
+      IntOption option = new IntOption(CodeStyleSettings.class, fieldName);
+      optionGroup.add(new JLabel(label), option.myTextField);
+      myOptions.add(option);
+    }
   }
 
   protected void resetImpl(final CodeStyleSettings settings) {
@@ -125,6 +137,21 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
 
   protected void prepareForReformat(final PsiFile psiFile) {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+  }
+
+  public void showAllStandardOptions() {
+    myAllOptionsAllowed = true;
+  }
+
+  public void showStandardOptions(String... optionNames) {
+    Collections.addAll(myAllowedOptions, optionNames);
+  }
+
+  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
+                               String fieldName,
+                               String optionName,
+                               String groupName) {
+    throw new UnsupportedOperationException();
   }
 
   private static class IntOption {

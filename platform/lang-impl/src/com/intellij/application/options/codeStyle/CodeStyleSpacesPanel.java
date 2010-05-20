@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.codeStyle.CodeStyleOptionsCustomizer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.SpacingOptionsConsumer;
+import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements SpacingOptionsConsumer {
+public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel implements CodeStyleCustomizationsConsumer {
   private boolean myShowAllStandardOptions = false;
   private Set<String> myAllowedOptions;
   private MultiMap<String, Trinity<Class<? extends CustomCodeStyleSettings>, String, String>> myCustomOptions;

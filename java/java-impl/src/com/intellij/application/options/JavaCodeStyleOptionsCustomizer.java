@@ -15,14 +15,20 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.psi.codeStyle.SpacingOptionsConsumer;
+import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
 import com.intellij.psi.codeStyle.CodeStyleOptionsCustomizer;
 
 /**
  * @author yole
  */
-public class JavaCodeStyleOptionsCustomizer implements CodeStyleOptionsCustomizer {
-  public void customizeSpacingOptions(SpacingOptionsConsumer consumer) {
+public class JavaCodeStyleOptionsCustomizer extends CodeStyleOptionsCustomizer {
+  @Override
+  public void customizeSpacingOptions(CodeStyleCustomizationsConsumer consumer) {
+    consumer.showAllStandardOptions();
+  }
+
+  @Override
+  public void customizeBlankLinesOptions(CodeStyleCustomizationsConsumer consumer) {
     consumer.showAllStandardOptions();
   }
 }
