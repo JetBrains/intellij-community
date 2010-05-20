@@ -154,6 +154,9 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
   @Override
   protected void reformat(PsiElement atCaret) throws IncorrectOperationException {
+    if (atCaret == null) {
+      return;
+    }
     PsiElement parent = atCaret.getParent();
     if (parent instanceof PsiCodeBlock) {
       final PsiCodeBlock block = (PsiCodeBlock) parent;
