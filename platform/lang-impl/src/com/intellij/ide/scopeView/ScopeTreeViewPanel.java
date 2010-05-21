@@ -37,6 +37,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -112,7 +113,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private final DependencyValidationManager myDependencyValidationManager;
   private final WolfTheProblemSolver.ProblemListener myProblemListener = new MyProblemListener();
 
-  private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, myTree.isShowing(), myTree);
+  private final MergingUpdateQueue myUpdateQueue = new MergingUpdateQueue("ScopeViewUpdate", 300, isTreeShowing(), myTree);
 
   public ScopeTreeViewPanel(final Project project) {
     super(new BorderLayout());
@@ -126,6 +127,10 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(myTree, myUpdateQueue);
     Disposer.register(this, myUpdateQueue);
     Disposer.register(this, uiNotifyConnector);
+
+    if (isTreeShowing()) {
+      myUpdateQueue.showNotify();
+    }
   }
 
   public void initListeners() {
@@ -545,7 +550,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
           myTreeExpansionMonitor.restore();
         }
       };
-      if (updateImmediately && myTree.isShowing()) {
+      if (updateImmediately && isTreeShowing()) {
         myUpdateQueue.run(new Update(request) {
           public void run() {
             wrapped.run();
@@ -559,7 +564,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
           }
 
           public boolean isExpired() {
-            return !myTree.isShowing();
+            return !isTreeShowing();
           }
         });
       }
@@ -589,7 +594,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         }
 
         public boolean isExpired() {
-          return !myTree.isShowing();
+          return !isTreeShowing();
         }
       });
     }
@@ -729,9 +734,13 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
         }
 
         public boolean isExpired() {
-          return !myTree.isShowing();
+          return !isTreeShowing();
         }
       });
     }
+  }
+  
+  private boolean isTreeShowing() {
+    return myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode();
   }
 }
