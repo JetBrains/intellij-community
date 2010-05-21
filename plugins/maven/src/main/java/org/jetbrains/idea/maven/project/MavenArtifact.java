@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.idea.maven.project.MavenId.append;
@@ -85,7 +86,7 @@ public class MavenArtifact implements Serializable {
               : new ArrayList<String>(originalTrail.subList(1, originalTrail.size()));
   }
 
-  public MavenArtifact(ComponentDependency dependency, File localRepository) {
+  public MavenArtifact(ComponentDependency dependency, File localRepository, String scope) {
     myGroupId = dependency.getGroupId();
     myArtifactId = dependency.getArtifactId();
     myVersion = dependency.getVersion();
@@ -93,7 +94,7 @@ public class MavenArtifact implements Serializable {
     myType = dependency.getType();
     myClassifier = null;
 
-    myScope = MavenConstants.SCOPE_TEST;
+    myScope = scope;
     myOptional = false;
 
     myExtension = myType;
@@ -102,6 +103,8 @@ public class MavenArtifact implements Serializable {
 
     myResolved = true;
     myStubbed = false;
+
+    myTrail = Collections.emptyList();
   }
 
   private String getExtension(Artifact artifact) {
