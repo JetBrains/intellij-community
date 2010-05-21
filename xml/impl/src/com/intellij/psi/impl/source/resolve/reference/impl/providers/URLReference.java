@@ -12,7 +12,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -166,7 +165,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     assert element instanceof PsiFile;
 
-    if (!URIReferenceProvider.isUrlText(getCanonicalText())) {
+    if (!URIReferenceProvider.isUrlText(getCanonicalText(), element.getProject())) {
       // TODO: this should work!
       final VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       assert virtualFile != null;
