@@ -800,11 +800,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     };
 
     final ActionCallback done = new ActionCallback();
-
+    final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
     invokeLaterIfNeeded(new Runnable() {
       public void run() {
         getBuilder().batch(new Progressive() {
           public void run(@NotNull ProgressIndicator indicator) {
+            indicatorRef.set(indicator);
             expandNext(toExpand, 0, indicator, done);
           }
         }).notify(done);
@@ -829,6 +830,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +eclipse\n" +
                " -xunit\n" +
                "  runner\n");
+
+    assertFalse(indicatorRef.get().isCanceled());
   }
 
 
@@ -889,6 +892,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertNull(myCancelRequest);
     assertTrue(done.isRejected());
     assertTrue(indicatorRef.get().isCanceled());
+
+    assertFalse(getBuilder().getUi().isCancelProcessed());
   }
 
   private void expandNext(final NodeElement[] elements, final int index, final ProgressIndicator indicator, final ActionCallback callback) {
@@ -1697,8 +1702,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testBatchUpdate() throws Exception {
-      super.testBatchUpdate();
+    public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
+      super.testThrowingProcessCancelledInterruptsUpdate();
     }
   }
 
@@ -1745,6 +1750,21 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class BgLoadingSyncUpdate extends TreeUiTest {
     public BgLoadingSyncUpdate() {
       super(false, true);
+    }
+
+    @Override
+    public void testCancelUpdate() throws Exception {
+      super.testCancelUpdate();
+    }
+
+    @Override
+    public void testBatchUpdate() throws Exception {
+      super.testBatchUpdate();
+    }
+
+    @Override
+    public void testCancelUpdateBatch() throws Exception {
+      super.testCancelUpdateBatch();
     }
 
     @Override

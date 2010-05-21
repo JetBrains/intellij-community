@@ -245,15 +245,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (getParent() instanceof GrReferenceExpression) {
         result = facade.getElementFactory().createType((PsiClass) resolved);
       } else {
-        PsiClass javaLangClass = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, getResolveScope());
-        if (javaLangClass != null) {
-          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-          final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
-          if (typeParameters.length == 1) {
-            substitutor = substitutor.put(typeParameters[0], facade.getElementFactory().createType((PsiClass) resolved));
-          }
-          result = facade.getElementFactory().createType(javaLangClass, substitutor);
-        }
+        result = createJavaLangClassType(facade, facade.getElementFactory().createType((PsiClass)resolved));
       }
     } else if (resolved instanceof GrVariableBase) {
       result = ((GrVariableBase) resolved).getDeclaredType();
@@ -291,22 +283,23 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       }
     } else if (resolved == null) {
       if ("class".equals(getReferenceName())) {
-        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName("java.lang.Class",
-                getResolveScope());
+        result = createJavaLangClassType(JavaPsiFacade.getInstance(getProject()), JavaPsiFacade.getElementFactory(getProject())
+          .createTypeByFQClassName(getText(), getResolveScope()));
       }
-
-      GrExpression qualifier = getQualifierExpression();
-      if (qualifier != null) {
-        PsiType qType = qualifier.getType();
-        if (qType instanceof PsiClassType) {
-          PsiClassType.ClassResolveResult qResult = ((PsiClassType) qType).resolveGenerics();
-          PsiClass clazz = qResult.getElement();
-          if (clazz != null) {
-            PsiClass mapClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, getResolveScope());
-            if (mapClass != null && mapClass.getTypeParameters().length == 2) {
-              PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
-              if (substitutor != null) {
-                return substitutor.substitute(mapClass.getTypeParameters()[1]);
+      else {
+        GrExpression qualifier = getQualifierExpression();
+        if (qualifier != null) {
+          PsiType qType = qualifier.getType();
+          if (qType instanceof PsiClassType) {
+            PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
+            PsiClass clazz = qResult.getElement();
+            if (clazz != null) {
+              PsiClass mapClass = facade.findClass(CommonClassNames.JAVA_UTIL_MAP, getResolveScope());
+              if (mapClass != null && mapClass.getTypeParameters().length == 2) {
+                PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
+                if (substitutor != null) {
+                  result = TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
+                }
               }
             }
           }
@@ -326,12 +319,26 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   @Nullable
+  private PsiType createJavaLangClassType(JavaPsiFacade facade, PsiClassType type) {
+    PsiType result = null;
+    PsiClass javaLangClass = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, getResolveScope());
+    if (javaLangClass != null) {
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      final PsiTypeParameter[] typeParameters = javaLangClass.getTypeParameters();
+      if (typeParameters.length == 1) {
+        substitutor = substitutor.put(typeParameters[0], type);
+      }
+      result = facade.getElementFactory().createType(javaLangClass, substitutor);
+    }
+    return result;
+  }
+
+  @Nullable
   private PsiType getTypeForObjectGetClass(JavaPsiFacade facade, PsiMethod method) {
     PsiType type = PsiUtil.getSmartReturnType(method);
     if (type instanceof PsiClassType) {
       PsiClass clazz = ((PsiClassType) type).resolve();
-      if (clazz != null &&
-              "java.lang.Class".equals(clazz.getQualifiedName())) {
+      if (clazz != null && CommonClassNames.JAVA_LANG_CLASS.equals(clazz.getQualifiedName())) {
         PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
         if (typeParameters.length == 1) {
           PsiClass qualifierClass = null;

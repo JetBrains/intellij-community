@@ -78,7 +78,7 @@ public class MavenArtifact implements Serializable {
     myStubbed = artifact instanceof CustomArtifact && ((CustomArtifact)artifact).isStub();
   }
 
-  public MavenArtifact(ComponentDependency dependency, File localRepository) {
+  public MavenArtifact(ComponentDependency dependency, File localRepository, String scope) {
     myGroupId = dependency.getGroupId();
     myArtifactId = dependency.getArtifactId();
     myVersion = dependency.getVersion();
@@ -86,7 +86,7 @@ public class MavenArtifact implements Serializable {
     myType = dependency.getType();
     myClassifier = null;
 
-    myScope = MavenConstants.SCOPE_TEST;
+    myScope = scope;
     myOptional = false;
 
     myExtension = myType;

@@ -37,9 +37,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
  */
 public class BuiltInTypeFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
-    PsiElement previous = PsiImplUtil.realPrevious(context.getParent().getPrevSibling());
-    if (previous != null &&
-        GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
+    final PsiElement parent = context.getParent();
+    if (parent == null) return false;
+    PsiElement previous = PsiImplUtil.realPrevious(parent.getPrevSibling());
+    if (previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
       return false;
     }
     if (GroovyCompletionUtil.asSimpleVariable(context) ||
@@ -47,29 +48,29 @@ public class BuiltInTypeFilter implements ElementFilter {
         GroovyCompletionUtil.asVariableInBlock(context)) {
       return true;
     }
-    if ((context.getParent() instanceof GrParameter &&
-        ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
-        context.getParent() instanceof GrReferenceElement &&
-            !(context.getParent().getParent() instanceof GrImportStatement) &&
-            !(context.getParent().getParent() instanceof GrPackageDefinition) &&
-            !(context.getParent().getParent() instanceof GrArgumentList)) {
+    if ((parent instanceof GrParameter &&
+         ((GrParameter)parent).getTypeElementGroovy() == null) ||
+        parent instanceof GrReferenceElement &&
+        !(parent.getParent() instanceof GrImportStatement) &&
+        !(parent.getParent() instanceof GrPackageDefinition) &&
+        !(parent.getParent() instanceof GrArgumentList)) {
       PsiElement prevSibling = context.getPrevSibling();
-      if (context.getParent() instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
+      if (parent instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
         ASTNode node = prevSibling.getNode();
         return !GroovyTokenTypes.DOTS.contains(node.getElementType());
       } else {
         return true;
       }
     }
-    if (PsiImplUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
+    if (PsiImplUtil.realPrevious(parent.getPrevSibling()) instanceof GrModifierList) {
       return true;
     }
     if (PsiImplUtil.realPrevious(context.getPrevSibling()) instanceof GrModifierList) {
       return true;
     }
-    return context.getParent() instanceof GrExpression &&
-        context.getParent().getParent() instanceof GroovyFile &&
-        GroovyCompletionUtil.isNewStatement(context, false);
+    return parent instanceof GrExpression &&
+           parent.getParent() instanceof GroovyFile &&
+           GroovyCompletionUtil.isNewStatement(context, false);
   }
 
   public boolean isClassAcceptable(Class hintClass) {

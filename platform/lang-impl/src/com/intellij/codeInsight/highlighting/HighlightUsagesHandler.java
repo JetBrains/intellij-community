@@ -365,19 +365,22 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                       TextAttributes attributes, boolean clearHighlights) {
     List<TextRange> textRanges = new ArrayList<TextRange>(refs.size());
     for (PsiReference ref : refs) {
-      TextRange range = getRangeToHighlight(ref);
-      textRanges.add(range);
+      textRanges.addAll(getRangesToHighlight(ref));
     }
     highlightRanges(highlightManager, editor, attributes, clearHighlights, textRanges);
   }
 
-  public static TextRange getRangeToHighlight(final PsiReference ref) {
-    PsiElement element = ref.getElement();
-    TextRange rangeInElement = ref.getRangeInElement();
-    TextRange range = element.getTextRange().cutOut(rangeInElement);
-    // injection occurs
-    range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
-    return range;
+  public static List<TextRange> getRangesToHighlight(final PsiReference ref) {
+    final List<TextRange> relativeRanges = ReferenceRange.getRanges(ref);
+    List<TextRange> answer = new ArrayList<TextRange>(relativeRanges.size());
+    for (TextRange relativeRange : relativeRanges) {
+      PsiElement element = ref.getElement();
+      TextRange range = element.getTextRange().cutOut(relativeRange);
+      // injection occurs
+      answer.add(InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range));
+
+    }
+    return answer;
   }
 
   @Nullable

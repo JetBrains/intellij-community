@@ -99,7 +99,7 @@ public class Endpoint {
             return _retVal;
         }
 
-        public SearchResults getArtifactlistAsSearchResults(String q, String g, String a, String v, String c)
+        public SearchResults getArtifactlistAsSearchResults(String q, String g, String a, String v, String c, String cn)
             throws IOException, MalformedURLException, JAXBException
         {
             HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
@@ -109,6 +109,7 @@ public class Endpoint {
             _queryParameterValues.put("a", a);
             _queryParameterValues.put("v", v);
             _queryParameterValues.put("c", c);
+            _queryParameterValues.put("cn", cn);
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             Object _retVal = _jaxbDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             if (_retVal == null) {

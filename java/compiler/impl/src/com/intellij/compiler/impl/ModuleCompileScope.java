@@ -100,6 +100,9 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   public boolean belongs(final String url) {
+    if (myScopeModules.isEmpty()) {
+      return false; // optimization
+    }
     Module candidateModule = null;
     int maxUrlLength = 0;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();

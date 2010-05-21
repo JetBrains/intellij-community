@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
 import org.jetbrains.idea.maven.project.MavenId;
@@ -59,10 +59,17 @@ public class MavenArtifactUtil {
     return getArtifactFile(localRepository, id, type).exists();
   }
 
+  @NotNull
   public static File getArtifactFile(File localRepostiory, MavenId id, String type) {
     return getArtifactFile(localRepostiory, id.getGroupId(), id.getArtifactId(), id.getVersion(), type);
   }
 
+  @NotNull
+  public static File getArtifactFile(File localRepostiory, MavenId id) {
+    return getArtifactFile(localRepostiory, id.getGroupId(), id.getArtifactId(), id.getVersion(), "pom");
+  }
+
+  @NotNull
   public static File getArtifactFile(File localRepostiory, String groupId, String artifactId, String version, String type) {
     File dir = null;
     if (StringUtil.isEmpty(groupId)) {

@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.application.options.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.psi.codeStyle.CodeStyleCustomizationsConsumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,6 +44,17 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     return GENERAL_CODE_SAMPLE;
   }
+
+  @Override
+  public void customizeSpacingOptions(CodeStyleCustomizationsConsumer consumer) {
+    consumer.showAllStandardOptions();
+  }
+
+  @Override
+  public void customizeBlankLinesOptions(CodeStyleCustomizationsConsumer consumer) {
+    consumer.showAllStandardOptions();
+  }
+  
 
   private static final String GENERAL_CODE_SAMPLE = "public class Foo {\n" +
                                                     "  public int[] X = new int[]{1, 3, 5 7, 9, 11};\n" +

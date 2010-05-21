@@ -15,7 +15,12 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -27,6 +32,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
@@ -84,9 +90,9 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       final String coord = dialog.getCoordinateText();
       resolveLibrary(project, Collections.singleton(coord), dialog.getRepositories(), false, new Processor<Map<String, List<ArtifactType>>>() {
         public boolean process(final Map<String, List<ArtifactType>> stringListMap) {
+          final List<ArtifactType> result = stringListMap.get(coord);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              final List<ArtifactType> result = stringListMap.get(coord);
               final Library.ModifiableModel modifiableModel = modelProvider.compute();
               if (modifiableModel == null || result == null) {
                 callback.setRejected();
@@ -97,6 +103,28 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               }
             }
           });
+          final boolean nothingRetrieved = result == null || result.isEmpty();
+          final StringBuilder sb = new StringBuilder();
+          if (nothingRetrieved) sb.append("No files were downloaded for ").append(coord);
+          else {
+            sb.append("The following files were downloaded:<br>");
+            sb.append("<ol>");
+            for (ArtifactType artifactType : result) {
+              sb.append("<li>");
+              final String file = artifactType.getResourceUri();
+              sb.append(file.substring(file.lastIndexOf('/') + 1));
+              sb.append("</li>");
+            }
+            sb.append("</ol>");
+          }
+          final String title = "Attach Jars From Repository";
+          if (nothingRetrieved && ModalityState.current().dominates(ModalityState.NON_MODAL)) {
+            Messages.showErrorDialog(project, sb.toString(), title);
+          }
+          else {
+            Notifications.Bus.notify(new Notification("Repository", sb.toString(), title,
+                                                      nothingRetrieved? NotificationType.WARNING : NotificationType.INFORMATION), NotificationDisplayType.STICKY_BALLOON, project);
+          }
           return true;
         }
       });
@@ -154,15 +182,15 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         library.addRoot(targetUrl, OrderRootType.CLASSES);
       }
       catch (MalformedURLException e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
       catch (IOException e) {
-        e.printStackTrace();
+        LOG.warn(e);
       }
     }
   }
 
-  public static void searchArtifacts(final Project project, String coord, final PairProcessor<Collection<ArtifactType>, Collection<RepositoryType>> resultProcessor) {
+  public static void searchArtifacts(final Project project, String coord, final PairProcessor<Collection<ArtifactType>, Boolean> resultProcessor, final Processor<Collection<RepositoryType>> repoProcessor) {
     if (coord == null) return;
     final ArtifactType template = createTemplate(coord);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
@@ -171,6 +199,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         final MavenFacadeManager mavenManager = ServiceManager.getService(project, MavenFacadeManager.class);
         final Ref<List<ArtifactType>> result = Ref.create(Collections.<ArtifactType>emptyList());
         final Ref<List<RepositoryType>> result2 = Ref.create(Collections.<RepositoryType>emptyList());
+        final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
           final MavenFacade mavenFacade = mavenManager.getMavenFacade(project);
           final String[] nexusUrls = getDefaultNexusUrls();
@@ -182,10 +211,13 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               artifacts = mavenFacade.findArtifacts(template, nexusUrl);
             }
             catch (Exception ex) {
-              handleError(null, ex);
+              LOG.warn("Accessing Nexus at: "+nexusUrl, ex);
               continue;
             }
-            if (!artifacts.isEmpty()) {
+            if (artifacts == null) {
+              tooManyRef.set(Boolean.TRUE);
+            }
+            else if (!artifacts.isEmpty()) {
               final List<RepositoryType> repositories = mavenFacade.getRepositories(nexusUrl);
               final HashMap<String, RepositoryType> map = new HashMap<String, RepositoryType>();
               for (RepositoryType repository : repositories) {
@@ -208,7 +240,8 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
         finally {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              resultProcessor.process(result.get(), result2.get());
+              repoProcessor.process(result2.get());
+              resultProcessor.process(result.get(), tooManyRef.get());
             }
           });
         }
@@ -232,7 +265,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               repositories = mavenFacade.getRepositories(nexusUrl);
             }
             catch (Exception ex) {
-              handleError(null, ex);
+              LOG.warn("Accessing Nexus at: " + nexusUrl, ex);
               continue;
             }
             repoList.addAll(repositories);
@@ -276,9 +309,14 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   private static ArtifactType createTemplate(String coord) {
     final ArtifactType template = new ArtifactType();
     final String[] parts = coord.split(":");
-    template.setGroupId(parts.length > 0? parts[0] : null);
-    template.setArtifactId(parts.length > 1 ? parts[1] : null);
-    template.setVersion(parts.length > 2 ? parts[2] : null);
+    if (parts.length == 1 && parts[0].length() > 0 && Character.isUpperCase(parts[0].charAt(0))) {
+      template.setContextId(parts[0]);
+    }
+    else {
+      template.setGroupId(parts.length > 0 ? parts[0] : null);
+      template.setArtifactId(parts.length > 1 ? parts[1] : null);
+      template.setVersion(parts.length > 2 ? parts[2] : null);
+    }
     return template;
   }
 

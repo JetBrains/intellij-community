@@ -30,6 +30,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
 
   private JCheckBox myLabelIndentAbsolute;
   private JCheckBox myCbDontIndentTopLevelMembers;
+  private JCheckBox myCbUseRelativeIndent;
 
   protected void addComponents() {
     super.addComponents();
@@ -42,6 +43,9 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
 
     myCbDontIndentTopLevelMembers = new JCheckBox(ApplicationBundle.message("checkbox.do.not.indent.top.level.class.members"));
     add(myCbDontIndentTopLevelMembers);
+
+    myCbUseRelativeIndent = new JCheckBox(ApplicationBundle.message("checkbox.use.relative.indents"));
+    add(myCbUseRelativeIndent);
   }
 
   public boolean isModified(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
@@ -50,6 +54,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     isModified |= isFieldModified(myLabelIndent, options.LABEL_INDENT_SIZE);
     isModified |= isFieldModified(myLabelIndentAbsolute, options.LABEL_INDENT_ABSOLUTE);
     isModified |= isFieldModified(myCbDontIndentTopLevelMembers, settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
+    isModified |= isFieldModified(myCbUseRelativeIndent, options.USE_RELATIVE_INDENTS);
 
     return isModified;
   }
@@ -64,6 +69,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     }
     options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
     settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
+    options.USE_RELATIVE_INDENTS = myCbUseRelativeIndent.isSelected();
   }
 
   public void reset(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings.IndentOptions options) {
@@ -71,6 +77,7 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
     myLabelIndent.setText(Integer.toString(options.LABEL_INDENT_SIZE));
     myLabelIndentAbsolute.setSelected(options.LABEL_INDENT_ABSOLUTE);
     myCbDontIndentTopLevelMembers.setSelected(settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS);
+    myCbUseRelativeIndent.setSelected(options.USE_RELATIVE_INDENTS);
   }
 
   public void setEnabled(final boolean enabled) {

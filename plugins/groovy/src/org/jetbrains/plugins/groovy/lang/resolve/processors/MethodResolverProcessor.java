@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -150,7 +151,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (i < argTypes.length) {
       PsiType argType = argTypes[i];
       final GroovyPsiElement context = (GroovyPsiElement)myPlace;
-      if (!TypesUtil.isAssignable(paramType, argType, context.getManager(), context.getResolveScope(), false) &&
+      if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
           TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
         return paramType;
       }
@@ -263,19 +264,25 @@ public class MethodResolverProcessor extends ResolverProcessor {
       return true;
     }
 
-    //hack for default gdk methods
+    PsiType[] argTypes = myArgumentTypes;
     if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
       method1 = ((GrGdkMethod)method1).getStaticMethod();
       method2 = ((GrGdkMethod)method2).getStaticMethod();
+      if (myArgumentTypes != null) {
+        argTypes = new PsiType[argTypes.length + 1];
+        System.arraycopy(myArgumentTypes, 0, argTypes, 1, myArgumentTypes.length);
+        argTypes[0] = myThisType;
+      }
     }
-    if (myIsConstructor && myArgumentTypes != null && myArgumentTypes.length == 1) {
+
+    if (myIsConstructor && argTypes != null && argTypes.length == 1) {
       if (method1.getParameterList().getParametersCount() == 0) return true;
       if (method2.getParameterList().getParametersCount() == 0) return false;
     }
 
     PsiParameter[] params1 = method1.getParameterList().getParameters();
     PsiParameter[] params2 = method2.getParameterList().getParameters();
-    if (myArgumentTypes == null && params1.length != params2.length) return false;
+    if (argTypes == null && params1.length != params2.length) return false;
 
     if (params1.length < params2.length) {
       if (params1.length == 0) return false;
@@ -287,8 +294,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
       PsiType type1 = substitutor1.substitute(params1[i].getType());
       PsiType type2 = substitutor2.substitute(params2[i].getType());
 
-      if (myArgumentTypes != null && myArgumentTypes.length > i) {
-        PsiType argType = myArgumentTypes[i];
+      if (argTypes != null && argTypes.length > i) {
+        PsiType argType = argTypes[i];
         if (argType != null) {
           final boolean converts1 = TypesUtil.isAssignable(type1, argType, manager, scope, false);
           final boolean converts2 = TypesUtil.isAssignable(type2, argType, manager, scope, false);

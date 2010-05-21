@@ -15,11 +15,14 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Roman Chernyatchik
  */
 public class TestErrorState extends TestFailedState {
-  public TestErrorState(final String localizedMessage, final String stackTrace) {
+  public TestErrorState(@Nullable final String localizedMessage,
+                        @Nullable final String stackTrace) {
     super(localizedMessage, stackTrace);
   }
 

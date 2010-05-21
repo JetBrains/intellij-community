@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -50,7 +51,9 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
   public PsiReference getReference() {
     PsiReference cachedReference = myCachedReference;
     if (cachedReference != null) return cachedReference;
-    final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(this, PsiDocCommentOwner.class);
+    final PsiDocComment comment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
+    if (comment == null) return null;
+    final PsiDocCommentOwner owner = comment.getOwner();
     if (!(owner instanceof PsiMethod) &&
         !(owner instanceof PsiClass)) return null;
     final ASTNode valueToken = findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);

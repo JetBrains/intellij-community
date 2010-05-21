@@ -65,7 +65,7 @@ public class FileReferenceSet {
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
   private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
-  private FileType[] mySuitableFileTypes;
+  private @Nullable FileType[] mySuitableFileTypes;
 
   public FileReferenceSet(String str,
                           PsiElement element,
@@ -73,7 +73,7 @@ public class FileReferenceSet {
                           PsiReferenceProvider provider,
                           boolean caseSensitive,
                           boolean endingSlashNotAllowed,
-                          FileType[] suitableFileTypes) {
+                          @Nullable FileType[] suitableFileTypes) {
     myElement = element;
     myStartInElement = startInElement;
     myCaseSensitive = caseSensitive;

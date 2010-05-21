@@ -26,6 +26,10 @@ public class MockIntroduceFieldHandler extends IntroduceFieldHandler {
     return new Settings(name.names[0], true, myDeclareStatic, true, myInitializationPlace,
             PsiModifier.PUBLIC,
             null,
-            type, true, (TargetDestination)null, false, false);
+            getFieldType(type), true, (TargetDestination)null, false, false);
+  }
+
+  protected PsiType getFieldType(PsiType type) {
+    return type;
   }
 }

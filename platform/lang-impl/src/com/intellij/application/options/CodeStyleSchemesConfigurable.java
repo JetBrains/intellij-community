@@ -208,11 +208,13 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     myPanels = new ArrayList<CodeStyleConfigurableWrapper>();
 
     for (final CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
-      myPanels.add(new CodeStyleConfigurableWrapper(provider, new CodeStyleSettingsPanelFactory() {
-        public NewCodeStyleSettingsPanel createPanel(final CodeStyleScheme scheme) {
-          return new NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.getCodeStyleSettings(), ensureModel().getCloneSettings(scheme)));
-        }
-      }));
+      if (provider.hasSettingsPage()) {
+        myPanels.add(new CodeStyleConfigurableWrapper(provider, new CodeStyleSettingsPanelFactory() {
+          public NewCodeStyleSettingsPanel createPanel(final CodeStyleScheme scheme) {
+            return new NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.getCodeStyleSettings(), ensureModel().getCloneSettings(scheme)));
+          }
+        }));
+      }
     }
 
     return myPanels.toArray(new Configurable[myPanels.size()]);

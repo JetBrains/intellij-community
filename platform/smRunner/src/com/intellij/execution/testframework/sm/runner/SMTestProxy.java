@@ -282,7 +282,8 @@ public class SMTestProxy extends CompositePrintable implements PrintableTestProx
   }
 
   public void setTestFailed(@NotNull final String localizedMessage,
-                            @NotNull final String stackTrace, final boolean testError) {
+                            @Nullable final String stackTrace,
+                            final boolean testError) {
     myState = testError
               ? new TestErrorState(localizedMessage, stackTrace)
               : new TestFailedState(localizedMessage, stackTrace);

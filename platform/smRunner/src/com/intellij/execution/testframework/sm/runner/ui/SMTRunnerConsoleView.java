@@ -43,6 +43,13 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
     this(consoleProperties, runnerSettings, configurationPerRunnerSettings, null);
   }
 
+  /**
+   *
+   * @param consoleProperties
+   * @param runnerSettings
+   * @param configurationPerRunnerSettings
+   * @param splitterProperty Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
+   */
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties, final RunnerSettings runnerSettings,
                               final ConfigurationPerRunnerSettings configurationPerRunnerSettings,
                               @Nullable final String splitterProperty) {

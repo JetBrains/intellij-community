@@ -24,7 +24,11 @@ package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
@@ -91,9 +95,6 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
 
   public void addTestResult(TestResultMessage result) {
     if (testNGResults != null) {
-      if (!testNGResults.wasTestStarted(result)) {
-        flushOutput();
-      }
       int exceptionMark = myExceptionalMark == -1 ? 0 : myExceptionalMark;
       final String stackTrace = result.getStackTrace();
       if (stackTrace != null && stackTrace.length() > 10) {
@@ -101,7 +102,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
         String trimmed = trimStackTrace(stackTrace);
         List<Printable> printables = getPrintables(result, trimmed);
         for (Printable printable : printables) {
-          printable.print(getConsole()); //enable for root element
+          printable.printOn(wrapConsoleView(getConsole())); //enable for root element
         }
         synchronized (currentTestOutput) {
           exceptionMark = currentTestOutput.size();
@@ -119,12 +120,11 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
 
   public void testStarted(TestResultMessage result) {
     if (testNGResults != null) {
-      flushOutput();
       testNGResults.testStarted(result);
     }
   }
 
-  private void flushOutput() {
+  public void flushOutput() {
     synchronized (currentTestOutput) {
       if (!currentTestOutput.isEmpty()) { //non empty for first test only
         nonTestOutput.addAll(currentTestOutput);
@@ -188,7 +188,7 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     if (matcher.matches()) {
       printables.add(new Chunk(matcher.group(1), ConsoleViewContentType.ERROR_OUTPUT));
       //we have an assert with expected/actual, so we parse it out and create a diff hyperlink
-      TestNGDiffHyperLink link = new TestNGDiffHyperLink(matcher.group(2), matcher.group(3), null, (TestNGConsoleProperties) myProperties) {
+      DiffHyperlink link = new DiffHyperlink(matcher.group(2), matcher.group(3), null) {
         protected String getTitle() {
           //TODO should do some more farting about to find the equality assertion that failed and show that as title
           return result.getTestClass() + '#' + result.getMethod() + "() failed";
@@ -235,25 +235,43 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
       });
     }
     else {
-      getConsole().clear();
+      final ConsoleView consoleView = getConsole();
+      consoleView.clear();
       int idx = 0;
       int offset = 0;
       for (Printable chunk : new ArrayList<Printable>(output)) {
-        chunk.print(getConsole());
+        chunk.printOn(wrapConsoleView(consoleView));
         if (idx++ < i) {
-          offset = getConsole().getContentSize();
+          offset = consoleView.getContentSize();
         }
       }
-      getConsole().scrollTo(offset);
+      consoleView.scrollTo(offset);
     }
+  }
+
+  private static Printer wrapConsoleView(final ConsoleView consoleView) {
+    return new Printer() {
+      public void print(String text, ConsoleViewContentType contentType) {
+        consoleView.print(text, contentType);
+      }
+
+      public void onNewAvailable(Printable printable) {}
+
+      public void printHyperlink(String text, HyperlinkInfo info) {
+        consoleView.printHyperlink(text, info);
+      }
+
+      public void mark() {
+      }
+    };
   }
 
   public static class Chunk implements Printable {
     public String text;
     public ConsoleViewContentType contentType;
 
-    public void print(ConsoleView console) {
-      console.print(text, contentType);
+    public void printOn(Printer printer) {
+      printer.print(text, contentType);
     }
 
     public Chunk(String text, ConsoleViewContentType contentType) {
