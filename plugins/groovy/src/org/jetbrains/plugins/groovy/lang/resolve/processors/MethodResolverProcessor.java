@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -150,7 +151,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     if (i < argTypes.length) {
       PsiType argType = argTypes[i];
       final GroovyPsiElement context = (GroovyPsiElement)myPlace;
-      if (!TypesUtil.isAssignable(paramType, argType, context.getManager(), context.getResolveScope(), false) &&
+      if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
           TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
         return paramType;
       }
