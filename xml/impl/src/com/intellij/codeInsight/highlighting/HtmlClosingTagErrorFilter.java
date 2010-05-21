@@ -37,7 +37,7 @@ public class HtmlClosingTagErrorFilter extends HighlightErrorFilter {
     final PsiElement[] children = element.getChildren();
     if (children.length > 0) {
       if (children[0] instanceof XmlToken && XmlTokenType.XML_END_TAG_START == ((XmlToken)children[0]).getTokenType()) {
-        if (XmlErrorMessages.message("xml.parsing.closing.tag.mathes.nothing").equals(element.getErrorDescription())) {
+        if (XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing").equals(element.getErrorDescription())) {
           return false;
         }
       }
