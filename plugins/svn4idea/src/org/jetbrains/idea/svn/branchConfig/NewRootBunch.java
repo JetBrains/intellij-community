@@ -105,18 +105,28 @@ public class NewRootBunch implements SvnBranchConfigManager {
     try {
       final SvnBranchConfigurationNew configuration = myMap.get(root).getValue();
       final String group = configuration.getGroupToLoadToReachUrl(svnurl);
-      new BranchesLoadRunnable(myProject, this, group, InfoReliability.setByUser, root,
-                               new Consumer<List<SvnBranchItem>>() {
-                                 public void consume(List<SvnBranchItem> svnBranchItems) {
-                                   final SvnBranchConfigurationNew reloadedConfiguration = myMap.get(root).getValue();
-                                   try {
-                                     result.set(reloadedConfiguration.getWorkingBranch(svnurl));
+      final Runnable runnable = new Runnable() {
+        public void run() {
+          final SvnBranchConfigurationNew reloadedConfiguration = myMap.get(root).getValue();
+          try {
+            result.set(reloadedConfiguration.getWorkingBranch(svnurl));
+          }
+          catch (SVNException e) {
+            //
+          }
+        }
+      };
+
+      if (group == null) {
+        runnable.run();
+      } else {
+        new BranchesLoadRunnable(myProject, this, group, InfoReliability.setByUser, root,
+                                 new Consumer<List<SvnBranchItem>>() {
+                                   public void consume(List<SvnBranchItem> svnBranchItems) {
+                                     runnable.run();
                                    }
-                                   catch (SVNException e) {
-                                     //
-                                   }
-                                 }
-                               }).run();
+                                 }).run();
+      }
     }
     catch (SVNException e) {
       //
