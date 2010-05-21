@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -28,7 +27,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.Function;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +104,22 @@ public class LibrariesUtil {
   }
 
   @Nullable
-  public static String getGroovyHomePath(Module module) {
+  public static String getGroovyHomePath(@NotNull Module module) {
+    final PsiClass cUnit = JavaPsiFacade.getInstance(module.getProject())
+      .findClass("org.codehaus.groovy.control.CompilationUnit", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    if (cUnit != null) {
+      final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(cUnit.getContainingFile().getVirtualFile());
+      if (local != null) {
+        final VirtualFile parent = local.getParent();
+        if (parent != null) {
+          if (("lib".equals(parent.getName()) || "embeddable".equals(parent.getName())) && parent.getParent() != null) {
+            return parent.getParent().getPath();
+          }
+          return parent.getPath();
+        }
+      }
+    }
+
     final String home = getGroovyLibraryHome(ModuleRootManager.getInstance(module).getFiles(OrderRootType.CLASSES));
     return StringUtil.isEmpty(home) ? null : home;
   }
@@ -114,6 +130,7 @@ public class LibrariesUtil {
     }
     return getEmbeddableGroovyJar(classRoots) != null;
   }
+
 
   @Nullable
   private static String getGroovySdkHome(VirtualFile[] classRoots) {
@@ -182,22 +199,6 @@ public class LibrariesUtil {
       }
     }
     return libFile;
-  }
-
-  public static String generateNewLibraryName(String version, String prefix, final Project project) {
-    List<Object> libNames = ContainerUtil.map(GroovyConfigUtils.getInstance().getAllSDKLibraries(project), new Function<Library, Object>() {
-      public Object fun(Library library) {
-        return library.getName();
-      }
-    });
-    String originalName = prefix + version;
-    String newName = originalName;
-    int index = 1;
-    while (libNames.contains(newName)) {
-      newName = originalName + " (" + index + ")";
-      index++;
-    }
-    return newName;
   }
 
   public static void placeEntryToCorrectPlace(ModifiableRootModel model, LibraryOrderEntry addedEntry) {
