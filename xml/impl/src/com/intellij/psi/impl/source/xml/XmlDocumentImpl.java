@@ -240,7 +240,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return null;
   }
 
-  private XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile) {
+  XmlNSDescriptor getNsDescriptorFormDocType(final XmlDoctype doctype, final XmlFile containingFile) {
     XmlNSDescriptor descr = null;
     if (doctype.getMarkupDecl() != null){
       descr = (XmlNSDescriptor)doctype.getMarkupDecl().getMetaData();

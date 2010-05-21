@@ -945,13 +945,13 @@ public class XmlUtil {
 
   @Nullable
   public static String getDtdUri(XmlDocument document) {
-    if (document.getProlog() != null) {
-      final XmlDoctype doctype = document.getProlog().getDoctype();
-      if (doctype != null) {
-        return doctype.getDtdUri();
-      }
-    }
-    return null;
+    XmlDoctype docType = getDocType(document);
+    return docType != null ? docType.getDtdUri() : null;
+  }
+
+  public @Nullable static XmlDoctype getDocType(XmlDocument document) {
+    XmlProlog prolog = document.getProlog();
+    return prolog != null ? prolog.getDoctype():null;
   }
 
   private static void computeTag(XmlTag tag,
