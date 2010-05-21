@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 
 import java.awt.*;
@@ -31,6 +32,7 @@ public abstract class AppIcon {
   static Logger LOG = Logger.getInstance("AppIcon");
 
   static AppIcon ourMacImpl;
+  static AppIcon ourWin7Impl;
   static AppIcon ourEmptyImpl;
 
   public abstract boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
@@ -44,19 +46,57 @@ public abstract class AppIcon {
   public static AppIcon getInstance() {
     if (ourMacImpl == null) {
       ourMacImpl = new MacAppIcon();
+      ourWin7Impl = new Win7AppIcon();
       ourEmptyImpl = new EmptyIcon();
     }
 
     if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.6")) {
       return ourMacImpl;
-    }
-    else {
+    } else if (SystemInfo.isWindows7) {
+      return ourWin7Impl;
+    } else {
       return ourEmptyImpl;
     }
   }
 
+  private static abstract class BaseIcon extends AppIcon {
+    @Override
+    public final boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      if (!Registry.is("ide.appIcon.progress")) return false;
+      return _setProgress(processId, scheme, value, isOk);
+    }
 
-  private static class MacAppIcon extends AppIcon {
+    @Override
+    public final boolean hideProgress(Object processId) {
+      if (!Registry.is("ide.appIcon.progress")) return false;
+      return _hideProgress(processId);
+    }
+
+    @Override
+    public final void setBadge(String text) {
+      if (Registry.is("ide.appIcon.badge")) {
+        _setBadge(text);
+      }
+    }
+
+    @Override
+    public final void requestAttention(boolean critical) {
+      if (Registry.is("ide.appIcon.requestAttention")) {
+        _requestAttention(critical);
+      }
+    }
+
+    public abstract boolean _setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
+
+    public abstract boolean _hideProgress(Object processId);
+
+    public abstract void _setBadge(String text);
+
+    public abstract void _requestAttention(boolean critical);
+  }
+
+
+  private static class MacAppIcon extends BaseIcon {
 
     private static BufferedImage myAppImage;
 
@@ -94,7 +134,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void setBadge(String text) {
+    public void _setBadge(String text) {
       assertIsDispatchThread();
 
       try {
@@ -109,7 +149,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public void requestAttention(boolean critical) {
+    public void _requestAttention(boolean critical) {
       assertIsDispatchThread();
 
       try {
@@ -124,7 +164,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public boolean hideProgress(Object processId) {
+    public boolean _hideProgress(Object processId) {
       assertIsDispatchThread();
 
       if (getAppImage() == null) return false;
@@ -137,7 +177,7 @@ public abstract class AppIcon {
       return true;
     }
 
-    public boolean setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+    public boolean _setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
       assertIsDispatchThread();
 
       if (getAppImage() == null) return false;
@@ -209,6 +249,26 @@ public abstract class AppIcon {
       return Class.forName("com.apple.eawt.Application");
     }
 
+  }
+
+  private static class Win7AppIcon extends BaseIcon {
+    @Override
+    public boolean _setProgress(Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      return false;
+    }
+
+    @Override
+    public boolean _hideProgress(Object processId) {
+      return false;
+    }
+
+    @Override
+    public void _setBadge(String text) {
+    }
+
+    @Override
+    public void _requestAttention(boolean critical) {
+    }
   }
 
   private static class EmptyIcon extends AppIcon {

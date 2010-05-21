@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
+import java.util.List;
+
 public class ApplySwitchAction extends AnAction {
 
   @Override
@@ -33,10 +35,16 @@ public class ApplySwitchAction extends AnAction {
     SwitchManager mgr = SwitchManager.getInstance(project);
 
     boolean switchActionActive = mgr != null && mgr.isSessionActive();
-    e.getPresentation().setEnabled(switchActionActive);
-    if (!switchActionActive) {
+    if (switchActionActive && mgr.isSelectionWasMoved()) {
+      e.getPresentation().setEnabled(true);      
+    } else {
       QuickActionProvider quickActionProvider = QuickActionProvider.KEY.getData(e.getDataContext());
-      e.getPresentation().setEnabled(quickActionProvider != null);
+      if (quickActionProvider == null) {
+        e.getPresentation().setEnabled(false);
+      } else {
+        List<AnAction> actions = quickActionProvider.getActions(true);
+        e.getPresentation().setEnabled(actions != null && actions.size() > 0);
+      }
     }
   }
 

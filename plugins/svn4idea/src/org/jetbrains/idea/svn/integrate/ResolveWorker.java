@@ -42,6 +42,7 @@ public class ResolveWorker {
     myChangesUnderProjectRoot = changesUnderProjectRoot;
     myProject = project;
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    myConflictedVirtualFiles = new ArrayList<VirtualFile>();
   }
 
   private void refreshChangeListsFindConflicts(final UpdatedFiles updatedFiles) {
@@ -63,8 +64,6 @@ public class ResolveWorker {
   }
 
   public boolean needsInteraction(final UpdatedFiles updatedFiles) {
-    myConflictedVirtualFiles = new ArrayList<VirtualFile>();
-
     if (myChangesUnderProjectRoot) {
       refreshChangeListsFindConflicts(updatedFiles);
     } else {

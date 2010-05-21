@@ -240,4 +240,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testClosureCallWithTupleTypeArgument() throws Exception {doTest();}
 
   public void testMethodDuplicates() throws Exception {doTest();}
+
+  public void testPutValueToEmptyMap() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+  public void testPutIncorrectValueToMap() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
+
+  public void testAmbiguousCodeBlock() throws Exception {doTest();}
+  public void testNotAmbiguousClosableBlock() throws Exception {doTest();}
+  public void testDuplicateParameterInClosableBlock() throws Exception {doTest();}
 }

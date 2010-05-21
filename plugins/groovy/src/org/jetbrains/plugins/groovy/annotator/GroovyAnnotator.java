@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
@@ -71,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -319,9 +321,21 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       highlightMember(myHolder, ((GrMember)variable));
       checkStaticDeclarationsInInnerClass((GrMember)variable, myHolder);
     }
-    PropertyResolverProcessor processor = new DuplicateVariablesProcessor(variable);
-    final GroovyPsiElement duplicate =
-      ResolveUtil.resolveExistingElement(variable, processor, GrVariable.class, GrReferenceExpression.class);
+
+    GroovyPsiElement duplicate =
+      ResolveUtil
+        .resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrVariable.class, GrReferenceExpression.class);
+    if (duplicate == null) {
+      PsiElement context = variable;
+      if (variable instanceof GrParameter) {
+        final PsiElement parent = context.getContext().getContext();
+        if (parent instanceof GrClosableBlock) {
+          context = parent;
+          duplicate = ResolveUtil
+            .resolveExistingElement(context, new DuplicateVariablesProcessor(variable), GrVariable.class, GrReferenceExpression.class);
+        }
+      }
+    }
 
     if (duplicate instanceof GrVariable) {
       if (duplicate instanceof GrField && !(variable instanceof GrField)) {
@@ -539,6 +553,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     final GrModifierList modifierList = packageDefinition.getAnnotationList();
     checkAnnotationList(myHolder, modifierList, GroovyBundle.message("package.definition.cannot.have.modifiers"));
+  }
+
+  @Override
+  public void visitClosure(GrClosableBlock closure) {
+    super.visitClosure(closure);
+    if (!closure.hasParametersSection()) {
+      final PsiElement parent = closure.getParent();
+      if (parent instanceof GrCodeBlock || parent instanceof GroovyFile) {
+        myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
+      }
+    }
   }
 
   @Override

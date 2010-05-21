@@ -180,4 +180,9 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
   public PsiReference getReference() {
     return this;
   }
+
+  @NotNull
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
+    return multiResolveConstructor();
+  }
 }

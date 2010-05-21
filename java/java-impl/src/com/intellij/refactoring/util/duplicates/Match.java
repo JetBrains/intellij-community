@@ -153,7 +153,9 @@ public final class Match {
       }
       if (isVararg) {
         if (!parameterType.isAssignableFrom(type)) return false;
-        currentValue.add(value);
+        if (!((PsiEllipsisType)psiVariable.getType()).toArrayType().equals(type)){
+          currentValue.add(value);
+        }
       }
       myParameterOccurences.get(psiVariable).add(value);
       return true;

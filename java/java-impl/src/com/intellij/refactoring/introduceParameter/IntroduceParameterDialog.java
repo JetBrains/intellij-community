@@ -290,6 +290,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox();
         myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));
+        myCbUseInitializer.setSelected(settings.INTRODUCE_PARAMETER_USE_INITIALIZER);
 
         gbConstraints.gridy++;
         panel.add(myCbUseInitializer, gbConstraints);
@@ -419,6 +420,10 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if(myCbDeleteLocalVariable != null) {
       settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE =
               myCbDeleteLocalVariable.isSelectedWhenSelectable();
+    }
+
+    if (myCbUseInitializer != null) {
+      settings.INTRODUCE_PARAMETER_USE_INITIALIZER = myCbUseInitializer.isSelectedWhenSelectable();
     }
 
     myNameSuggestionsManager.nameSelected();

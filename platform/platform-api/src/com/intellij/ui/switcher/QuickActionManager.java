@@ -68,7 +68,7 @@ public class QuickActionManager implements ProjectComponent {
         if (provider == null) return;
 
         List<AnAction> actions = provider.getActions(true);
-        if (actions != null) {
+        if (actions != null && actions.size() > 0) {
           DefaultActionGroup group = new DefaultActionGroup();
           for (AnAction each : actions) {
             group.add(each);

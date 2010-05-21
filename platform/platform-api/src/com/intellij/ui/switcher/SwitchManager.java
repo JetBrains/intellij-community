@@ -238,4 +238,9 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   public void resetSession() {
     disposeSession(mySession);
   }
+
+  public boolean isSelectionWasMoved() {
+    if (!isSessionActive()) return false;
+    return mySession.isSelectionWasMoved();
+  }
 }
