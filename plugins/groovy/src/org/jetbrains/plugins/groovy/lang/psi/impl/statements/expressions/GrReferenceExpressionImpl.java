@@ -298,7 +298,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
               if (mapClass != null && mapClass.getTypeParameters().length == 2) {
                 PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
                 if (substitutor != null) {
-                  result = substitutor.substitute(mapClass.getTypeParameters()[1]);
+                  result = TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
                 }
               }
             }
