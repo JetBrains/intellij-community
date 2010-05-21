@@ -73,6 +73,10 @@ public abstract class FileSetTestCase extends TestSuite {
     }
   }
 
+  protected String getDelimiter() {
+    return "---";
+  }
+
   private class ActualTest extends LightPlatformTestCase {
     private final File myTestFile;
 
@@ -104,7 +108,7 @@ public abstract class FileSetTestCase extends TestSuite {
 
       content = StringUtil.replace(content, "\r", "");
 
-      while ((separatorIndex = content.indexOf("---")) >= 0) {
+      while ((separatorIndex = content.indexOf(getDelimiter())) >= 0) {
         input.add(content.substring(0, separatorIndex));
         content = content.substring(separatorIndex);
         while (StringUtil.startsWithChar(content, '-') || StringUtil.startsWithChar(content, '\n')) content = content.substring(1);
