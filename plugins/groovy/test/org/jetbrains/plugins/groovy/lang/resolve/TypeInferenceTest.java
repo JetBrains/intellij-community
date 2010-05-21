@@ -105,7 +105,11 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testLeastUpperBoundClosureType() throws Exception {
     GrReferenceExpression ref= (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").getElement();
-    System.out.println(ref.getType());
     assertInstanceOf(ref.getType(), GrClosureType.class);
+  }
+
+  public void testJavaLangClassType() throws Exception {
+    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("javaLangClassType/A.groovy").getElement();
+    assertEquals("java.lang.String", ref.getType().getCanonicalText());
   }
 }

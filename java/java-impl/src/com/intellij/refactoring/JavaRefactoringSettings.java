@@ -80,6 +80,7 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   public int EXTRACT_SUPERCLASS_JAVADOC;
   public boolean TURN_REFS_TO_SUPER_PREVIEW_USAGES;
   public boolean INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE;
+  public boolean INTRODUCE_PARAMETER_USE_INITIALIZER;
   public String INTRODUCE_FIELD_VISIBILITY;
   public int PULL_UP_MEMBERS_JAVADOC;
   public boolean PUSH_DOWN_PREVIEW_USAGES;
