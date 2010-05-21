@@ -18,14 +18,14 @@ package com.intellij.codeInsight.template.zencoding;
 /**
  * @author Eugene.Kudelevsky
  */
-public class NumberToken extends Token {
-  private final int myNumber;
+public class FilterToken extends Token {
+  private final String mySuffix;
 
-  NumberToken(int number) {
-    myNumber = number;
+  public FilterToken(String suffix) {
+    mySuffix = suffix;
   }
 
-  public int getNumber() {
-    return myNumber;
+  public String getSuffix() {
+    return mySuffix;
   }
 }

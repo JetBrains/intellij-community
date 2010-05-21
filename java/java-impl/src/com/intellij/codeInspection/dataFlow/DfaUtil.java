@@ -143,7 +143,6 @@ public class DfaUtil {
     return codeBlock;
   }
 
-  @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<? extends PsiElement> getPossibleInitializationElements(final PsiElement qualifierExpression) {
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       return Collections.singletonList(qualifierExpression);
@@ -152,8 +151,7 @@ public class DfaUtil {
       final PsiElement targetElement = ((PsiReferenceExpression)qualifierExpression).resolve();
       if (targetElement instanceof PsiVariable) {
         final Collection<? extends PsiElement> variableValues = getCachedVariableValues((PsiVariable)targetElement, qualifierExpression);
-        if (variableValues == null) return null;
-        if (variableValues.isEmpty() && targetElement instanceof PsiField) {
+        if ((variableValues == null || variableValues.isEmpty())) {
           return getVariableAssignmentsInFile((PsiVariable)targetElement, false);
         }
         return variableValues;

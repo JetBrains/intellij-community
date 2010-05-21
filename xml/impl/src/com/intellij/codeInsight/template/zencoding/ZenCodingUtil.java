@@ -15,17 +15,15 @@
  */
 package com.intellij.codeInsight.template.zencoding;
 
+import com.intellij.openapi.util.Pair;
+
 /**
  * @author Eugene.Kudelevsky
  */
-public class NumberToken extends Token {
-  private final int myNumber;
+public class ZenCodingUtil {
+  static final String NUMBER_IN_ITERATION_PLACE_HOLDER = "$";
 
-  NumberToken(int number) {
-    myNumber = number;
-  }
-
-  public int getNumber() {
-    return myNumber;
+  public static String getValue(Pair<String, String> pair, int numberInIteration) {
+    return pair.second.replace(NUMBER_IN_ITERATION_PLACE_HOLDER, Integer.toString(numberInIteration + 1));
   }
 }
