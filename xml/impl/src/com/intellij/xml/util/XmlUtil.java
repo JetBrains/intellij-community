@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -35,6 +36,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -47,6 +49,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.XmlTagFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -68,6 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 
@@ -942,14 +946,31 @@ public class XmlUtil {
     return null;
   }
 
-
+  private static final String HTML5_SCHEMA_LOCATION;
+  
+  static {
+    URL schemaLocation = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
+    HTML5_SCHEMA_LOCATION = FileUtil.toSystemIndependentName(schemaLocation.getPath().substring(1));
+  }
+  
   @Nullable
   public static String getDtdUri(XmlDocument document) {
-    if (document.getProlog() != null) {
-      final XmlDoctype doctype = document.getProlog().getDoctype();
-      if (doctype != null) {
-        return doctype.getDtdUri();
+    XmlProlog prolog = document.getProlog();
+    if (prolog != null) {
+      return getDtdUri( prolog.getDoctype() );
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getDtdUri(XmlDoctype doctype) {    
+    if (doctype != null) {
+      String docType = doctype.getDtdUri();
+      if (docType == null && 
+          PsiTreeUtil.getParentOfType(doctype, XmlDocument.class) instanceof HtmlDocumentImpl) {
+        docType = HTML5_SCHEMA_LOCATION;
       }
+      return docType;
     }
     return null;
   }
