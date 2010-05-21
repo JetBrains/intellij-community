@@ -28,10 +28,11 @@ import com.intellij.openapi.vcs.changes.committed.RunBackgroundable;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -59,15 +60,18 @@ public class QuickMerge {
   private final Project myProject;
   private final String myBranchName;
   private final SvnBranchConfigurationNew myConfiguration;
+  private final VirtualFile myRoot;
   private final WCInfo myWcInfo;
   private String mySourceUrl;
   private SvnVcs myVcs;
   private final String myTitle;
 
-  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final SvnBranchConfigurationNew configuration) {
+  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final SvnBranchConfigurationNew configuration,
+                    final VirtualFile root) {
     myProject = project;
     myBranchName = branchName;
     myConfiguration = configuration;
+    myRoot = root;
     myVcs = SvnVcs.getInstance(project);
     mySourceUrl = sourceUrl;
     myWcInfo = wcInfo;
@@ -75,14 +79,15 @@ public class QuickMerge {
   }
 
   private void correctSourceUrl() throws SVNException {
-    final SVNURL branch = myConfiguration.getWorkingBranch(myWcInfo.getUrl());
+    final SVNURL branch = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager().getWorkingBranchWithReload(myWcInfo.getUrl(), myRoot);
+    //final SVNURL branch = myConfiguration.getWorkingBranch(myWcInfo.getUrl());
     if (branch != null && (! myWcInfo.getUrl().equals(branch))) {
       final String branchString = branch.toString();
       if (SVNPathUtil.isAncestor(branchString, myWcInfo.getRootUrl())) {
         final String subPath = SVNPathUtil.getRelativePath(branchString, myWcInfo.getRootUrl());
         mySourceUrl = SVNPathUtil.append(mySourceUrl, subPath);
       }
-    }
+    } 
   }
 
   private boolean prompt(final String question) {
@@ -193,13 +198,14 @@ public class QuickMerge {
 
           myIsReintegrate = ! copyData.isTrunkSupposedCorrect();
           if (! myWcInfo.getFormat().supportsMergeInfo()) return;
-          final long localLatest = Math.max(copyData.getCopyTargetRevision(), copyData.getCopySourceRevision());
+          final long localLatest = !copyData.isTrunkSupposedCorrect() ? copyData.getCopyTargetRevision() : copyData.getCopySourceRevision();
           myBranchInfo = new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl, mySourceUrl, myVcs.createWCClient());
 
           final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider =
             myVcs.getCommittedChangesProvider();
           final ChangeBrowserSettings settings = new ChangeBrowserSettings();
           settings.CHANGE_AFTER = Long.toString(localLatest);
+          settings.USE_CHANGE_AFTER_FILTER = true;
           try {
             committedChangesProvider.loadCommittedChanges(settings, new SvnRepositoryLocation(mySourceUrl),
                                           committedChangesProvider.getUnlimitedCountValue(), new AsynchConsumer<CommittedChangeList>() {
@@ -230,18 +236,20 @@ public class QuickMerge {
       onSuccess();
     }
 
-    @Nullable
-    private MergerFactory askParameters() {
-      final MergerFactory factory;
+    private void askParametersAndMerge() {
       final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, myNotMerged, myMergeTitle, myBranchInfo);
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
-        return null;
+        return;
       }
-      final List<CommittedChangeList> lists = dialog.getSelected();
-      if (lists.isEmpty()) return null;
-      factory = new ChangeListsMergerFactory(lists);
-      return factory;
+      if (dialog.getExitCode() == ToBeMergedDialog.MERGE_ALL_CODE) {
+        mergeAll();
+      } else {
+        final List<CommittedChangeList> lists = dialog.getSelected();
+        if (lists.isEmpty()) return;
+        final MergerFactory factory = new ChangeListsMergerFactory(lists);
+        doMerge(factory, myMergeTitle);
+      }
     }
 
     @Override
@@ -250,9 +258,7 @@ public class QuickMerge {
         ChangesViewBalloonProblemNotifier.showMe(myProject, "Everything is up-to-date", MessageType.WARNING);
         return;
       }
-      final MergerFactory factory = askParameters();
-      if (factory == null) return;
-      doMerge(factory, myMergeTitle);
+      askParametersAndMerge();
     }
   }
 }
