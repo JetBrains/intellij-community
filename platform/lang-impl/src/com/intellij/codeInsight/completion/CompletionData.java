@@ -24,9 +24,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
-import static com.intellij.patterns.StandardPatterns.character;
-import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
@@ -40,6 +39,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.patterns.StandardPatterns.character;
+import static com.intellij.patterns.StandardPatterns.not;
 
 /**
  * @deprecated see {@link com.intellij.codeInsight.completion.CompletionContributor}
@@ -181,17 +183,23 @@ public class CompletionData {
   public static String getReferencePrefix(@NotNull PsiElement insertedElement, int offsetInFile) {
     final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(offsetInFile);
     if(ref != null) {
+      final List<TextRange> ranges = ReferenceRange.getRanges(ref);
       final PsiElement element = ref.getElement();
-      final int endIndex = offsetInFile - element.getTextRange().getStartOffset();
-      final int beginIndex = ref.getRangeInElement().getStartOffset();
-      if (beginIndex > endIndex) {
-        LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element + " text=" + element.getText());
+      final int elementStart = element.getTextRange().getStartOffset();
+      for (TextRange refRange : ranges) {
+        if (refRange.contains(offsetInFile - elementStart)) {
+          final int endIndex = offsetInFile - elementStart;
+          final int beginIndex = refRange.getStartOffset();
+          if (beginIndex > endIndex) {
+            LOG.error("Inconsistent reference (found at offset not included in its range): ref=" + ref + " element=" + element + " text=" + element.getText());
+          }
+          if (beginIndex < 0) {
+            LOG.error("Inconsistent reference (begin < 0): ref=" + ref + " element=" + element + "; begin=" + beginIndex + " text=" + element.getText());
+          }
+          LOG.assertTrue(endIndex >= 0);
+          return element.getText().substring(beginIndex, endIndex);
+        }
       }
-      if (beginIndex < 0) {
-        LOG.error("Inconsistent reference (begin < 0): ref=" + ref + " element=" + element + "; begin=" + beginIndex + " text=" + element.getText());
-      }
-      LOG.assertTrue(endIndex >= 0);
-      return element.getText().substring(beginIndex, endIndex);
     }
     return null;
   }

@@ -98,12 +98,12 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       final PsiElement finalMyTarget = myTarget;
       ReferencesSearch.search(myTarget, new LocalSearchScope(myFile)).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference psiReference) {
-          final TextRange textRange = HighlightUsagesHandler.getRangeToHighlight(psiReference);
+          final List<TextRange> textRanges = HighlightUsagesHandler.getRangesToHighlight(psiReference);
           if (detector == null || detector.getReferenceAccess(finalMyTarget, psiReference) == ReadWriteAccessDetector.Access.Read) {
-            myReadAccessRanges.add(textRange);
+            myReadAccessRanges.addAll(textRanges);
           }
           else {
-            myWriteAccessRanges.add(textRange);
+            myWriteAccessRanges.addAll(textRanges);
           }
           return true;
         }

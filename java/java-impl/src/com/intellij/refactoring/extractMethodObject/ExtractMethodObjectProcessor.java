@@ -21,6 +21,7 @@
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -41,14 +42,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.extractMethod.AbstractExtractDialog;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.usageView.UsageInfo;
@@ -57,6 +57,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -150,6 +151,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           }
         }
 
+        if (myExtractProcessor.generatesConditionalExit()) {
+          myInnerClass.add(myElementFactory.createField("myResult", PsiPrimitiveType.BOOLEAN));
+          myInnerClass.add(myElementFactory.createMethodFromText("boolean is(){return myResult;}", myInnerClass));
+        }
+
         final PsiParameter[] parameters = getMethod().getParameterList().getParameters();
         if (parameters.length > 0) {
           createInnerClassConstructor(parameters);
@@ -181,8 +187,17 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  protected void moveUsedMethodsToInner() {
+  public void moveUsedMethodsToInner() {
     if (!myUsages.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        for (MethodToMoveUsageInfo usage : myUsages) {
+          final PsiMember member = (PsiMember)usage.getElement();
+          LOG.assertTrue(member != null);
+          myInnerClass.add(member.copy());
+          member.delete();
+        }
+        return;
+      }
       final List<MemberInfo> memberInfos = new ArrayList<MemberInfo>();
       for (MethodToMoveUsageInfo usage : myUsages) {
         memberInfos.add(new MemberInfo((PsiMethod)usage.getElement()));
@@ -244,11 +259,13 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(body != null);
     final List<PsiLocalVariable> vars = new ArrayList<PsiLocalVariable>();
     final Map<PsiElement, PsiElement> replacementMap = new LinkedHashMap<PsiElement, PsiElement>();
+    final List<PsiReturnStatement> returnStatements = new ArrayList<PsiReturnStatement>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReturnStatement(final PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         try {
+          returnStatements.add(statement);
           replacementMap.put(statement, myElementFactory.createStatementFromText("return this;", statement));
         }
         catch (IncorrectOperationException e) {
@@ -293,6 +310,17 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
       }
     });
+
+    if (myExtractProcessor.generatesConditionalExit()) {
+      for (int i = 0; i < returnStatements.size() - 1; i++) {
+        final PsiReturnStatement condition = returnStatements.get(i);
+        condition.getParent().addBefore(myElementFactory.createStatementFromText("myResult = true;", condition), condition);
+      }
+
+      LOG.assertTrue(!returnStatements.isEmpty());
+      final PsiReturnStatement returnStatement = returnStatements.get(returnStatements.size() - 1);
+      returnStatement.getParent().addBefore(myElementFactory.createStatementFromText("myResult = false;", returnStatement), returnStatement);
+    }
 
     for (PsiLocalVariable var : vars) {
       final String fieldName = var2FieldNames.get(var.getName());
@@ -652,8 +680,15 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         final String object = StringUtil.decapitalize(myInnerClassName);
         final PsiStatement methodCallStatement = PsiTreeUtil.getParentOfType(getMethodCall(), PsiStatement.class);
         LOG.assertTrue(methodCallStatement != null);
-        methodCallStatement.replace(
-          myElementFactory.createStatementFromText(myInnerClassName + " " + object + " = " + getMethodCall().getText() + ";", myInnerMethod));
+        final PsiStatement declarationStatement = myElementFactory
+          .createStatementFromText(myInnerClassName + " " + object + " = " + getMethodCall().getText() + ";", myInnerMethod);
+        if (methodCallStatement instanceof PsiIfStatement) {
+          methodCallStatement.getParent().addBefore(declarationStatement, methodCallStatement);
+          final PsiExpression conditionExpression = ((PsiIfStatement)methodCallStatement).getCondition();
+          conditionExpression.replace(myElementFactory.createExpressionFromText(object + ".is()", myInnerMethod));
+        } else {
+          methodCallStatement.replace(declarationStatement);
+        }
 
         final List<PsiVariable> usedVariables = myControlFlowWrapper.getUsedVariables();
         Collection<ControlFlowUtil.VariableInfo> reassigned = myControlFlowWrapper.getInitializedTwice();
@@ -687,5 +722,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    public boolean generatesConditionalExit() {
+      return myGenerateConditionalExit;
+    }
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.ide.DataManager;
@@ -45,7 +46,7 @@ import java.util.List;
  * User: anna
  * Date: 27-Mar-2006
  */
-public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettingsImpl> {
+public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings> {
   public static DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
   private JPanel myComponentPlace;
   private JCheckBox myCbStoreProjectConfiguration;
@@ -59,13 +60,13 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private final ConfigurationSettingsEditor myEditor;
 
-  public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettingsImpl settings) {
+  public ConfigurationSettingsEditorWrapper(final RunnerAndConfigurationSettings settings) {
     myEditor = new ConfigurationSettingsEditor(settings);
     Disposer.register(this, myEditor);
     doReset(settings);
   }
 
-  private void doReset(RunnerAndConfigurationSettingsImpl settings) {
+  private void doReset(RunnerAndConfigurationSettings settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
 
@@ -126,23 +127,23 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   protected void disposeEditor() {
   }
 
-  public void resetEditorFrom(final RunnerAndConfigurationSettingsImpl settings) {
+  public void resetEditorFrom(final RunnerAndConfigurationSettings settings) {
     myEditor.resetEditorFrom(settings);
     doReset(settings);
   }
 
-  public void applyEditorTo(final RunnerAndConfigurationSettingsImpl settings) throws ConfigurationException {
+  public void applyEditorTo(final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
     doApply(settings);
   }
 
-  public RunnerAndConfigurationSettingsImpl getSnapshot() throws ConfigurationException {
-    RunnerAndConfigurationSettingsImpl result = myEditor.getSnapshot();
+  public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+    RunnerAndConfigurationSettings result = myEditor.getSnapshot();
     doApply(result);
     return result;
   }
 
-  private void doApply(final RunnerAndConfigurationSettingsImpl settings) {
+  private void doApply(final RunnerAndConfigurationSettings settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     runManager.setBeforeRunTasks(runConfiguration, myStepsBeforeLaunch);

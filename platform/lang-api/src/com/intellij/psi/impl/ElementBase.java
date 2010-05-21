@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +47,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   private Map<Integer, Icon> myBaseIcon;
 
   private static final Icon VISIBILITY_ICON_PLACHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
-  private static final Icon ICON_PLACHOLDER = new EmptyIcon(Icons.CLASS_ICON);
+  private static final Icon ICON_PLACHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
 
   @Nullable
   public Icon getIcon(int flags) {
@@ -135,6 +136,9 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   protected Icon getElementIcon(final int flags) {
     final PsiElement element = (PsiElement)this;
+
+    if (!element.isValid()) return null;
+
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
@@ -182,7 +186,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   public static int transformFlags(PsiElement element, int _flags) {
-    int flags = 0;
+    int flags = _flags & ~(ICON_FLAG_READ_STATUS);
     final boolean isLocked = (_flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;

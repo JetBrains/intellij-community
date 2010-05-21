@@ -30,12 +30,17 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
+import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
@@ -45,9 +50,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.ui.ScrollPaneFactory;
@@ -70,6 +77,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.List;
 
@@ -91,6 +100,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
   private JButton myAttachUrlJavadocsButton;
   private JPanel myTreePanel;
   private JButton myAttachAnnotationsButton;
+  private JButton myAttachMoreButton;
   private Tree myTree;
   private final Map<Library, LibraryEditor> myLibraryToEditorMap = new HashMap<Library, LibraryEditor>();
 
@@ -184,6 +194,13 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
     myAttachJavadocsButton.addActionListener(new AttachJavadocAction());
     myAttachUrlJavadocsButton.addActionListener(new AttachUrlJavadocAction());
     myAttachAnnotationsButton.addActionListener(new AttachAnnotationsAction());
+
+    final LibraryTableAttachHandler[] handlers = LibraryTableAttachHandler.EP_NAME.getExtensions();
+    if (handlers.length == 0 || myProject == null) myAttachMoreButton.setVisible(false);
+    else if (handlers.length == 1) {
+      myAttachMoreButton.setText(handlers[0].getLongName());
+    }
+    myAttachMoreButton.addActionListener(new AttachMoreAction(handlers));
 
     treeSelectionListener.updateButtons();
 
@@ -916,6 +933,7 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
       myAttachSourcesButton.setEnabled(attachActionsEnabled);
       myAttachAnnotationsButton.setEnabled(attachActionsEnabled);
       myAttachJarDirectoriesButton.setEnabled(attachActionsEnabled);
+      myAttachMoreButton.setEnabled(attachActionsEnabled);
     }
 
     @Nullable
@@ -1029,6 +1047,88 @@ public class LibraryTableEditor implements Disposable, LibraryEditorListener {
         }
       }
       return false;
+    }
+  }
+
+  private class AttachMoreAction implements ActionListener {
+    private final LibraryTableAttachHandler[] myHandlers;
+
+    public AttachMoreAction(LibraryTableAttachHandler[] handlers) {
+      myHandlers = handlers;
+    }
+
+    public void actionPerformed(ActionEvent e) {
+      final Library library = getSelectedLibrary();
+      assert library != null;
+      final Ref<Library.ModifiableModel> modelRef = Ref.create(null);
+      final NullableComputable<Library.ModifiableModel> computable = new NullableComputable<Library.ModifiableModel>() {
+        public Library.ModifiableModel compute() {
+          if (myTreeBuilder == null) {
+            // The following lines were born in severe pain & suffering, please respect
+            final InvocationHandler invocationHandler = Proxy.isProxyClass(library.getClass())? Proxy.getInvocationHandler(library) : null;
+            final Library realLibrary = invocationHandler instanceof ModuleEditor.ProxyDelegateAccessor? (Library)((ModuleEditor.ProxyDelegateAccessor)invocationHandler)
+              .getDelegate() : library;
+            final Module module = realLibrary instanceof LibraryImpl && ((LibraryImpl)realLibrary).isDisposed()? ((LibraryImpl)realLibrary).getModule() : null;
+            if (module != null && module.isDisposed()) return null; // no way
+            final Library targetLibrary = module != null? LibraryUtil.findLibrary(module, realLibrary.getName()) : realLibrary;
+            final Library.ModifiableModel model = targetLibrary.getModifiableModel();
+            modelRef.set(model);
+            return model;
+          }
+          else {
+            return getLibraryEditor(library).getModel();
+          }
+        }
+      };
+      final Runnable successRunnable = new Runnable() {
+        public void run() {
+          if (modelRef.get() != null) {
+            modelRef.get().commit();
+          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              if (myTreeBuilder != null) myTreeBuilder.queueUpdate();
+              if (myProject != null) {
+                ModuleStructureConfigurable.getInstance(myProject).fireItemsChangeListener(library);
+              }
+            }
+          });
+        }
+      };
+      final Runnable rejectRunnable = new Runnable() {
+        public void run() {
+          if (modelRef.get() != null) {
+            Disposer.dispose(modelRef.get());
+          }
+        }
+      };
+      if (myHandlers.length == 1) {
+        myHandlers[0].performAttach(myProject, computable).doWhenDone(successRunnable).doWhenRejected(rejectRunnable);
+      }
+      else {
+        final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<LibraryTableAttachHandler>(null, myHandlers) {
+          @NotNull
+          public String getTextFor(final LibraryTableAttachHandler handler) {
+            return handler.getShortName();
+          }
+
+          public Icon getIconFor(final LibraryTableAttachHandler handler) {
+            return handler.getIcon();
+          }
+
+          public PopupStep onChosen(final LibraryTableAttachHandler handler, final boolean finalChoice) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                getSelectedLibrary();
+                handler.performAttach(myProject, computable).doWhenProcessed(successRunnable).doWhenRejected(rejectRunnable);
+              }
+            });
+            return PopupStep.FINAL_CHOICE;
+          }
+        });
+        popup.showUnderneathOf(myAttachMoreButton);
+
+      }
     }
   }
 }

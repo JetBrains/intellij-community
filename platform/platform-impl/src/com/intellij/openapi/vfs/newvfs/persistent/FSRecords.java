@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 public class FSRecords implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 11;
+  private static final int VERSION = 12;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -1049,7 +1049,9 @@ public class FSRecords implements Disposable, Forceable {
   public int storeUnlinkedContent(byte[] bytes) {
     try {
       int recordId = getContentStorage().acquireNewRecord();
-      getContentStorage().writeBytes(recordId, bytes);
+      AbstractStorage.StorageDataOutput output = getContentStorage().writeStream(recordId);
+      output.write(bytes);
+      output.close();
       return recordId;
     }
     catch (IOException e) {

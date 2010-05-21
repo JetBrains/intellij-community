@@ -15,27 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
-import com.intellij.execution.LocatableConfigurationType;
-import com.intellij.execution.Location;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
 import javax.swing.*;
-import java.io.File;
 
-public class XsltRunConfigType implements ConfigurationType, LocatableConfigurationType {
+public class XsltRunConfigType implements ConfigurationType {
     private final ConfigurationFactory myFactory = new MyConfigurationFactory();
 
     public String getDisplayName() {
@@ -70,32 +60,5 @@ public class XsltRunConfigType implements ConfigurationType, LocatableConfigurat
         }
     }
 
-    @SuppressWarnings({"RawUseOfParameterizedType"})
-    public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-        final XmlFile file = PsiTreeUtil.getParentOfType(location.getPsiElement(), XmlFile.class, false);
-        if (file != null) {
-            if (file.isPhysical() && XsltSupport.isXsltFile(file)) {
-                final Project project = file.getProject();
-                final RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createRunConfiguration(file.getName(), myFactory);
-                ((XsltRunConfiguration)settings.getConfiguration()).initFromFile(file);
-                return settings;
-            }
-        }
-        return null;
-    }
 
-    public boolean isConfigurationByLocation(RunConfiguration runConfiguration, Location location) {
-        return isConfigurationByElement(runConfiguration, location.getPsiElement());
-    }
-
-    public boolean isConfigurationByElement(RunConfiguration configuration, PsiElement element) {
-        final XmlFile file = PsiTreeUtil.getParentOfType(element, XmlFile.class, false);
-        if (configuration instanceof XsltRunConfiguration) {
-            if (file != null && file.isPhysical() && XsltSupport.isXsltFile(file)) {
-                //noinspection ConstantConditions
-                return file.getVirtualFile().getPath().replace('/', File.separatorChar).equals(((XsltRunConfiguration)configuration).getXsltFile());
-            }
-        }
-        return false;
-    }
 }

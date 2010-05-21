@@ -22,11 +22,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.AbstractCalledLater;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -89,6 +91,7 @@ public class GitLogTree implements GitTreeViewI {
 
   private final Alarm myWaitAlarm;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
+  private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.GitLogTree");
 
   public GitLogTree(final Project project, final VirtualFile root) {
     myProject = project;
@@ -164,6 +167,7 @@ public class GitLogTree implements GitTreeViewI {
             final GitCommit commit = commitsToShow.get(i);
             if (commit.getHash().equals(jumpTarget)) {
               myCommitsList.setSelectedIndex(i);
+              myCommitsList.ensureIndexIsVisible(i);
               break;
             }
           }
@@ -383,8 +387,8 @@ public class GitLogTree implements GitTreeViewI {
     return myPanel;
   }
 
-  // todo details?
-  public void acceptError(final String text) {
+  public void acceptError(final String text, final VcsException e) {
+    LOG.info(e);
     myErrorRefresher.setText(text);
     myErrorRefresher.callMe();
   }

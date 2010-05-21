@@ -153,7 +153,9 @@ public final class Match {
       }
       if (isVararg) {
         if (!parameterType.isAssignableFrom(type)) return false;
-        currentValue.add(value);
+        if (!((PsiEllipsisType)psiVariable.getType()).toArrayType().equals(type)){
+          currentValue.add(value);
+        }
       }
       myParameterOccurences.get(psiVariable).add(value);
       return true;
@@ -426,7 +428,10 @@ public final class Match {
             final int idx = ArrayUtil.find(expressions, getMatchEnd());
             final PsiParameter[] psiParameters = method.getParameterList().getParameters();
             if (idx >= 0 && idx < psiParameters.length) {
-              final PsiType type = result.getSubstitutor().substitute(psiParameters[idx].getType());
+              PsiType type = result.getSubstitutor().substitute(psiParameters[idx].getType());
+              if (type instanceof PsiEllipsisType) {
+                type = ((PsiEllipsisType)type).getComponentType();
+              }
               if (weakerType(psiMethod, returnType, type)){
                 return type;
               }

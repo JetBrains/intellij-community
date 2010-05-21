@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +28,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -34,20 +37,22 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Vector;
 
 public class StaticImportMethodFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix");
   private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
   private List<PsiMethod> candidates;
-  private static final int OPTIONS = PsiFormatUtil.SHOW_NAME;
 
   public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
@@ -57,7 +62,7 @@ public class StaticImportMethodFix implements IntentionAction {
   public String getText() {
     String text = QuickFixBundle.message("static.import.method.text");
     if (candidates.size() == 1) {
-      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, OPTIONS, 0)+"'";
+      text += " '" + PsiFormatUtil.formatMethod(candidates.get(0), PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS  | PsiFormatUtil.SHOW_FQ_NAME, 0)+"'";
     }
     else {
       text += "...";
@@ -72,7 +77,6 @@ public class StaticImportMethodFix implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return PsiUtil.isLanguageLevel5OrHigher(file)
-           && myMethodCall != null
            && myMethodCall.getElement() != null
            && myMethodCall.getElement().isValid()
            && myMethodCall.getElement().getMethodExpression().getQualifierExpression() == null
@@ -89,7 +93,7 @@ public class StaticImportMethodFix implements IntentionAction {
     PsiReferenceExpression reference = element.getMethodExpression();
     PsiExpressionList argumentList = element.getArgumentList();
     String name = reference.getReferenceName();
-    ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    List<PsiMethod> list = new ArrayList<PsiMethod>();
     if (name == null) return list;
     GlobalSearchScope scope = element.getResolveScope();
     PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, 20);
@@ -112,6 +116,7 @@ public class StaticImportMethodFix implements IntentionAction {
     }
     List<PsiMethod> result = applicableList.isEmpty() ? list : applicableList;
     for (int i = result.size() - 1; i >= 0; i--) {
+      ProgressManager.checkCanceled();
       PsiMethod method = result.get(i);
       PsiClass containingClass = method.getContainingClass();
       for (int j = i+1; j<result.size() ;j++) {
@@ -124,9 +129,24 @@ public class StaticImportMethodFix implements IntentionAction {
         result.remove(i);
         break;
       }
+      // check for manually excluded
+      if (isExcluded(method)) {
+        result.remove(i);
+      }
     }
     Collections.sort(result, new PsiProximityComparator(argumentList));
     return result;
+  }
+
+  private static boolean isExcluded(PsiMethod method) {
+    String name = getQName(method);
+    CodeInsightSettings cis = CodeInsightSettings.getInstance();
+    for (String excluded : cis.EXCLUDED_PACKAGES) {
+      if (name.equals(excluded) || name.startsWith(excluded + ".")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
@@ -136,7 +156,7 @@ public class StaticImportMethodFix implements IntentionAction {
       doImport(toImport);
     }
     else {
-      chooseAndImport(editor);
+      chooseAndImport(editor, project);
     }
   }
 
@@ -162,21 +182,94 @@ public class StaticImportMethodFix implements IntentionAction {
 
   }
 
-  private void chooseAndImport(Editor editor) {
-    final JList list = new JList(new Vector<PsiMethod>(candidates));
-    list.setCellRenderer(new MethodCellRenderer(true, OPTIONS));
-    new PopupChooserBuilder(list).
-      setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).
-      setMovable(true).
-      setItemChoosenCallback(new Runnable() {
-        public void run() {
-          PsiMethod selectedValue = (PsiMethod)list.getSelectedValue();
-          if (selectedValue == null) return;
-          LOG.assertTrue(selectedValue.isValid());
-          doImport(selectedValue);
+  private void chooseAndImport(Editor editor, final Project project) {
+    final BaseListPopupStep<PsiMethod> step =
+      new BaseListPopupStep<PsiMethod>(QuickFixBundle.message("class.to.import.chooser.title"), candidates) {
+
+        @Override
+        public PopupStep onChosen(PsiMethod selectedValue, boolean finalChoice) {
+          if (selectedValue == null) {
+            return FINAL_CHOICE;
+          }
+
+          if (finalChoice) {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+            LOG.assertTrue(selectedValue.isValid());
+            doImport(selectedValue);
+            return FINAL_CHOICE;
+          }
+
+          String qname = getQName(selectedValue);
+          if (qname == null) return FINAL_CHOICE;
+          List<String> excludableStrings = AddImportAction.getAllExcludableStrings(qname);
+          return new BaseListPopupStep<String>(null, excludableStrings) {
+            @NotNull
+            @Override
+            public String getTextFor(String value) {
+              return "Exclude '" + value + "' from auto-import";
+            }
+
+            @Override
+            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+              if (finalChoice) {
+                AddImportAction.excludeFromImport(project, selectedValue);
+              }
+
+              return super.onChosen(selectedValue, finalChoice);
+            }
+          };
         }
-      }).createPopup().
-      showInBestPositionFor(editor);
+
+        @Override
+        public boolean hasSubstep(PsiMethod selectedValue) {
+          return true;
+        }
+
+        @NotNull
+        @Override
+        public String getTextFor(PsiMethod value) {
+          return ObjectUtils.assertNotNull(value.getName());
+        }
+
+        @Override
+        public Icon getIconFor(PsiMethod aValue) {
+          return aValue.getIcon(0);
+        }
+      };
+
+    final ListPopupImpl popup = new ListPopupImpl(step) {
+      final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
+      @Override
+      protected ListCellRenderer getListElementRenderer() {
+        return new MethodCellRenderer(true, PsiFormatUtil.SHOW_NAME){
+          @Override
+          protected DefaultListCellRenderer getRightCellRenderer() {
+            final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer();
+            return new DefaultListCellRenderer(){
+              @Override
+              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                Component rightArrowComponent = rightArrow.getNextStepLabel();
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.add(moduleComponent, BorderLayout.CENTER);
+                panel.add(rightArrowComponent, BorderLayout.EAST);
+                return panel;
+              }
+            };
+          }
+        };
+      }
+    };
+    popup.showInBestPositionFor(editor);
+  }
+
+  private static String getQName(PsiMethod selectedValue) {
+    PsiClass containingClass = selectedValue.getContainingClass();
+    if (containingClass == null) return null;
+    String className = containingClass.getQualifiedName();
+    if (className == null) return null;
+    return className + "." + selectedValue.getName();
   }
 
   public boolean startInWriteAction() {

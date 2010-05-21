@@ -103,7 +103,11 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
   @Nullable
   private static DomExtension registerChild(DomExtensionsRegistrar registrar, DomGenericInfo elementInfo, String childName) {
     if (elementInfo.getCollectionChildDescription(childName) == null) { // register if not yet defined statically
-      return registrar.registerCollectionChildrenExtension(new XmlName(childName), AntDomElement.class);
+      Class<? extends AntDomElement> implClass = AntDomElement.class;
+      if ("property".equals(childName)) {
+        implClass = AntDomProperty.class;
+      }
+      return registrar.registerCollectionChildrenExtension(new XmlName(childName), implClass);
     }
     return null;
   }

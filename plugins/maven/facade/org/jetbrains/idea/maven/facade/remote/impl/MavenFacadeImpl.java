@@ -29,6 +29,7 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.settings.MavenSettingsBuilder;
 import org.apache.maven.settings.RuntimeInfo;
 import org.apache.maven.settings.Settings;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.events.TransferListener;
 import org.codehaus.classworlds.ClassWorld;
@@ -36,13 +37,16 @@ import org.codehaus.plexus.DefaultPlexusContainer;
 import org.codehaus.plexus.PlexusContainerException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
 import org.jetbrains.idea.maven.facade.nexus.Endpoint;
+import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 import org.jetbrains.idea.maven.facade.nexus.SearchResults;
 import org.jetbrains.idea.maven.facade.remote.MavenFacade;
 import org.jetbrains.idea.maven.facade.remote.RemoteTransferListener;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -120,22 +124,72 @@ public class MavenFacadeImpl extends RemoteImpl implements MavenFacade {
 
   }
 
-  public List<ArtifactType> findArtifacts(ArtifactType template) throws RemoteException {
-    final HashMap<String, ArtifactType> result = new HashMap<String, ArtifactType>();
-    for (String url : mySettings.getNexusUrls()) {
-      try {
-        final SearchResults results = new Endpoint.DataIndex(url)
-          .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
-                                          template.getClassifier());
-        for (ArtifactType artifact : results.getData().getArtifact()) {
-          result.put(artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion(), artifact);
+  public List<RepositoryType> getRepositories(String nexusUrl) throws RemoteException {
+    try {
+      return new Endpoint.Repositories(nexusUrl).getRepolistAsRepositories().getData().getRepositoriesItem();
+    }
+    catch (Exception ex) {
+      handleException(ex);
+      throw new AssertionError();
+    }
+  }
+
+  @Nullable
+  public List<ArtifactType> findArtifacts(ArtifactType template, String nexusUrl) throws RemoteException {
+    try {
+      SearchResults results = new Endpoint.DataIndex(nexusUrl)
+        .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
+                                        template.getClassifier(), template.getContextId());
+      final boolean canTrySwitchGAV = template.getArtifactId() == null && template.getGroupId() != null;
+      final boolean tooManyResults = results.isTooManyResults();
+      if (canTrySwitchGAV && (tooManyResults || BigInteger.ZERO.equals(results.getTotalCount()))) {
+        results = new Endpoint.DataIndex(nexusUrl)
+          .getArtifactlistAsSearchResults(null, null, template.getGroupId(), template.getVersion(),
+                                          template.getClassifier(), template.getContextId());
+      }
+      if (tooManyResults || results.isTooManyResults()) return null;
+      return new ArrayList<ArtifactType>(results.getData().getArtifact());
+    }
+    catch (Exception ex) {
+      handleException(ex);
+      throw new AssertionError();
+    }
+  }
+
+  private void addMissingVersions(final Map<String, ArtifactType> result) {
+    try {
+      final ArtifactMetadataSource metadataSource = (ArtifactMetadataSource)ourContainer.lookup(ArtifactMetadataSource.ROLE);
+      final ArtifactFactory artifactFactory = (ArtifactFactory)ourContainer.lookup(ArtifactFactory.ROLE);
+      final ArtifactRepository localRepo = getRepository(mySettings.getLocalRepository());
+      final List<ArtifactRepository> remoteRepos = new ArrayList<ArtifactRepository>();
+      for (Repository repository : mySettings.getRemoteRepositories()) {
+        remoteRepos.add(getRepository(repository));
+      }
+      final HashSet<String> visitedIds = new HashSet<String>();
+      for (ArtifactType artifactType : result.values()) {
+        if (!visitedIds.add(artifactType.getGroupId()+":"+artifactType.getArtifactId())) continue;
+        if (artifactType.getPackaging() == null) continue;
+        final Artifact artifact = createArtifact(artifactFactory, artifactType);
+        try {
+          final List<ArtifactVersion> list = metadataSource.retrieveAvailableVersions(artifact, localRepo, remoteRepos);
+          for (ArtifactVersion version : list) {
+            final String coord = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + version;
+            if (!result.containsKey(coord)) {
+              final ArtifactType type = new ArtifactType(artifactType.getGroupId(), artifactType.getArtifactId(), version.toString());
+              type.setPackaging(artifact.getType());
+              result.put(coord, type);
+            }
+          }
+        }
+        catch (Exception ex) {
+          ex.printStackTrace();
         }
       }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
     }
-    return new ArrayList<ArtifactType>(result.values());
+    catch (Exception e) {
+      handleException(e);
+      throw new AssertionError();
+    }
   }
 
   public Map<String, List<ArtifactType>> resolveDependencies(List<ArtifactType> artifacts) throws RemoteException {
@@ -249,21 +303,9 @@ public class MavenFacadeImpl extends RemoteImpl implements MavenFacade {
     final Artifact project = artifactFactory.createBuildArtifact("local", "project", "1.0", "pom");
     final Set<Artifact> toResolve = new HashSet<Artifact>();
     for (ArtifactType template : artifactsToResolve) {
-      final Artifact artifact = artifactFactory.createDependencyArtifact(
-        template.getGroupId(),
-        template.getArtifactId(),
-        template.getVersion() == null? null :VersionRange.createFromVersion(template.getVersion()),
-        template.getPackaging(),
-        null,
-        "runtime");
-      toResolve.add(artifact);
+      toResolve.add(createArtifact(artifactFactory, template));
     }
 
-//        resolver.resolve(artifact, remoteRepos, localRepo);
-//    final List<ArtifactVersion> list = (List<ArtifactVersion>)metadataSource.retrieveAvailableVersions(artifact, localRepo, remoteRepos);
-//    for (ArtifactVersion o : list) {
-//      System.out.println("avail version: " + o);
-//    }
     final Map<String, List<ArtifactType>> resultMap = new HashMap<String, List<ArtifactType>>();
     for (Artifact artifact : toResolve) {
       try {
@@ -287,6 +329,16 @@ public class MavenFacadeImpl extends RemoteImpl implements MavenFacade {
       }
     }
     return resultMap;
+  }
+
+  private Artifact createArtifact(ArtifactFactory artifactFactory, ArtifactType template) {
+    return artifactFactory.createDependencyArtifact(
+          template.getGroupId(),
+          template.getArtifactId(),
+          template.getVersion() == null? null : VersionRange.createFromVersion(template.getVersion()),
+          template.getPackaging(),
+          null,
+          "runtime");
   }
 
   private static ArtifactRepository getRepository(Repository r) throws ComponentLookupException {

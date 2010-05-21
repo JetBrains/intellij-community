@@ -83,12 +83,7 @@ public class SimpleTimer {
     myNextScheduledTime = targetTime;
     myNextProcessingTask = new TimerTask() {
       public void run() {
-        try {
-          processNext();
-        }
-        catch (Exception e) {
-          LOG.error(e);            
-        }
+        processNext();
       }
     };
     ourTimer.schedule(myNextProcessingTask, delay);
@@ -136,7 +131,12 @@ public class SimpleTimer {
     final ArrayList<SimpleTimerTask> toRun = tasks.get();
     if (toRun != null) {
       for (SimpleTimerTask each : toRun) {
-        each.run();
+        try {
+          each.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }

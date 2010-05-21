@@ -199,6 +199,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
     public boolean SMART_TABS = false;
     public int LABEL_INDENT_SIZE = 0;
     public boolean LABEL_INDENT_ABSOLUTE = false;
+    public boolean USE_RELATIVE_INDENTS = false;
 
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
@@ -228,6 +229,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       if (CONTINUATION_INDENT_SIZE != that.CONTINUATION_INDENT_SIZE) return false;
       if (INDENT_SIZE != that.INDENT_SIZE) return false;
       if (LABEL_INDENT_ABSOLUTE != that.LABEL_INDENT_ABSOLUTE) return false;
+      if (USE_RELATIVE_INDENTS != that.USE_RELATIVE_INDENTS) return false;
       if (LABEL_INDENT_SIZE != that.LABEL_INDENT_SIZE) return false;
       if (SMART_TABS != that.SMART_TABS) return false;
       if (TAB_SIZE != that.TAB_SIZE) return false;
@@ -245,6 +247,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       result = 31 * result + (SMART_TABS ? 1 : 0);
       result = 31 * result + LABEL_INDENT_SIZE;
       result = 31 * result + (LABEL_INDENT_ABSOLUTE ? 1 : 0);
+      result = 31 * result + (USE_RELATIVE_INDENTS ? 1 : 0);
       return result;
     }
 
@@ -452,6 +455,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public int BLANK_LINES_AROUND_CLASS = 1;
   public int BLANK_LINES_AROUND_FIELD = 0;
   public int BLANK_LINES_AROUND_METHOD = 1;
+  public int BLANK_LINES_BEFORE_METHOD_BODY = 0;
 
   public int BLANK_LINES_AROUND_FIELD_IN_INTERFACE = 0;
   public int BLANK_LINES_AROUND_METHOD_IN_INTERFACE = 1;
@@ -503,6 +507,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_AROUND_SHIFT_OPERATORS = true;
 
   public boolean SPACE_AFTER_COMMA = true;
+  public boolean SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = true;
   public boolean SPACE_BEFORE_COMMA = false;
   public boolean SPACE_AFTER_SEMICOLON = true; // in for-statement
   public boolean SPACE_BEFORE_SEMICOLON = false; // in for-statement
@@ -592,6 +597,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
+  public boolean SPACE_AFTER_UNARY_OPERATOR = false;
 
   /**
    * "f (x)"

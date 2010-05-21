@@ -173,7 +173,7 @@ public class PsiUtil {
 
       GrExpression[] expressions = call.getExpressionArguments();
       for (GrExpression expression : expressions) {
-        PsiType type = getArgumentType(expression);
+        PsiType type = expression.getType();
         if (type == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(call));
         } else {
@@ -204,7 +204,7 @@ public class PsiUtil {
 
       GrExpression[] expressions = argList.getExpressionArguments();
       for (GrExpression expression : expressions) {
-        PsiType type = getArgumentType(expression);
+        PsiType type = expression.getType();
         if (type == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(argList));
         } else {
@@ -224,7 +224,7 @@ public class PsiUtil {
         result.add(createMapType(place.getManager(), place.getResolveScope()));
       }
       for (GrExpression arg : args) {
-        PsiType argType = getArgumentType(arg);
+        PsiType argType = arg.getType();
         if (argType == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(parent));
         }
@@ -244,7 +244,7 @@ public class PsiUtil {
 
       GrExpression[] expressions = argList.getExpressionArguments();
       for (GrExpression expression : expressions) {
-        PsiType type = getArgumentType(expression);
+        PsiType type = expression.getType();
         if (type == null) {
           result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(argList));
         } else {
@@ -256,20 +256,6 @@ public class PsiUtil {
     }
 
     return null;
-  }
-
-  @Nullable
-  private static PsiType getArgumentType(GrExpression expression) {
-    if (expression instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
-      if (resolved instanceof PsiClass) {
-        //this argument is passed as java.lang.Class
-        return JavaPsiFacade.getInstance(resolved.getProject()).getElementFactory()
-          .createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLASS, expression.getResolveScope());
-      }
-    }
-
-    return expression.getType();
   }
 
   public static SearchScope restrictScopeToGroovyFiles(final Computable<SearchScope> originalScopeComputation) { //important to compute originalSearchScope in read action!

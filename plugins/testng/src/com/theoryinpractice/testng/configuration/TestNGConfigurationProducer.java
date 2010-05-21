@@ -20,11 +20,45 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.Location;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiElement;
+import com.theoryinpractice.testng.model.TestData;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class TestNGConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
 
   public TestNGConfigurationProducer() {
     super(TestNGConfigurationType.getInstance());
+  }
+
+  @Override
+  protected RunnerAndConfigurationSettings findExistingByElement(Location location,
+                                                                     @NotNull RunnerAndConfigurationSettings[] existingConfigurations
+  ) {
+    final Module predefinedModule =
+      ((TestNGConfiguration)((RunManagerImpl)RunManagerEx.getInstanceEx(location.getProject()))
+        .getConfigurationTemplate(getConfigurationFactory())
+        .getConfiguration()).getConfigurationModule().getModule();
+    for (RunnerAndConfigurationSettings existingConfiguration : existingConfigurations) {
+      TestNGConfiguration config = (TestNGConfiguration)existingConfiguration.getConfiguration();
+      TestData testobject = config.getPersistantData();
+      if (testobject != null){
+        final PsiElement element = location.getPsiElement();
+        if (testobject.isConfiguredByElement(element)) {
+          final Module configurationModule = config.getConfigurationModule().getModule();
+          if (Comparing.equal(location.getModule(), configurationModule)) return existingConfiguration;
+          if(Comparing.equal(predefinedModule, configurationModule)) {
+            return existingConfiguration;
+          }
+        }
+      }
+    }
+    return null;
   }
 }

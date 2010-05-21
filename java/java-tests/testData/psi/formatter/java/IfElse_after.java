@@ -14,7 +14,7 @@ public class Foo {
                     if (x < 0) {
                         int someVariable = (y +
                                             z
-                        );
+                                           );
                         someVariable = x =
                                 x +
                                 y;
@@ -23,9 +23,7 @@ public class Foo {
                         label2:
                         for (int i = 0;
                              i < 5;
-                             i++) {
-                            doSomething(i);
-                        }
+                             i++) { doSomething(i); }
                     }
                 switch (a) {
                     case 0:

@@ -76,10 +76,6 @@ public class CustomTemplateCallback {
     }
   }
 
-  public boolean isLiveTemplateApplicable(@NotNull String key) {
-    return findApplicableTemplate(key) != null;
-  }
-
   @Nullable
   public TemplateImpl findApplicableTemplate(@NotNull String key) {
     List<TemplateImpl> templates = findApplicableTemplates(key);
@@ -224,6 +220,30 @@ public class CustomTemplateCallback {
 
   public void insertString(int offset, String text) {
     myBuilder.insertText(offset, text);
+  }
+
+  public boolean newLineBefore() {
+    int i = myOffset - 1;
+    CharSequence text = myBuilder.getText();
+    while (i >= 0 && Character.isWhitespace(text.charAt(i))) {
+      if (text.charAt(i) == '\n') {
+        return true;
+      }
+      i--;
+    }
+    return i < 0;
+  }
+
+  public boolean newLineAfter() {
+    int i = myOffset;
+    CharSequence text = myBuilder.getText();
+    while (i < text.length() && Character.isWhitespace(text.charAt(i))) {
+      if (text.charAt(i) == '\n') {
+        return true;
+      }
+      i++;
+    }
+    return i == text.length();
   }
 
   public void deleteTemplateKey(String key) {

@@ -82,7 +82,7 @@ public class GitInit extends DumbAwareAction {
       return;
     }
     GitVcs.getInstance(project).runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         root.refresh(false, false);
         final String path = root.equals(baseDir) ? "" : root.getPath();

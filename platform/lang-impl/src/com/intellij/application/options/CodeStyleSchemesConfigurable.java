@@ -48,9 +48,11 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   private boolean myApplyCompleted = false;
   private final Project myProject;
+  private final LanguageSelector myLangSelector;
 
   public CodeStyleSchemesConfigurable(Project project) {
     myProject = project;
+    myLangSelector = new LanguageSelector();
   }
 
   public JComponent createComponent() {
@@ -206,11 +208,13 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     myPanels = new ArrayList<CodeStyleConfigurableWrapper>();
 
     for (final CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
-      myPanels.add(new CodeStyleConfigurableWrapper(provider, new CodeStyleSettingsPanelFactory() {
-        public NewCodeStyleSettingsPanel createPanel(final CodeStyleScheme scheme) {
-          return new NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.getCodeStyleSettings(), ensureModel().getCloneSettings(scheme)));
-        }
-      }));
+      if (provider.hasSettingsPage()) {
+        myPanels.add(new CodeStyleConfigurableWrapper(provider, new CodeStyleSettingsPanelFactory() {
+          public NewCodeStyleSettingsPanel createPanel(final CodeStyleScheme scheme) {
+            return new NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.getCodeStyleSettings(), ensureModel().getCloneSettings(scheme)));
+          }
+        }));
+      }
     }
 
     return myPanels.toArray(new Configurable[myPanels.size()]);
@@ -322,7 +326,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     private CodeStyleMainPanel ensurePanel() {
       if (myPanel == null) {
-        myPanel = new CodeStyleMainPanel(ensureModel(), myFactory);
+        myPanel = new CodeStyleMainPanel(ensureModel(), myLangSelector, myFactory);
       }
       return myPanel;
     }

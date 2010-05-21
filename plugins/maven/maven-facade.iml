@@ -92,7 +92,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="XmlBeans" level="project" />
+    <orderEntry type="library" exported="" name="XmlBeans" level="project" />
   </component>
   <component name="copyright">
     <Base>

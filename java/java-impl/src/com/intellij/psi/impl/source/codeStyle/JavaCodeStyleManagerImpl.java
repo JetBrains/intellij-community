@@ -108,7 +108,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return new ImportHelper(getSettings()).addImport(file, refClass);
   }
 
-  public void removeRedundantImports(final @NotNull PsiJavaFile file) throws IncorrectOperationException {
+  public void removeRedundantImports(@NotNull final PsiJavaFile file) throws IncorrectOperationException {
     final PsiImportList importList = file.getImportList();
     if (importList == null) return;
     final PsiImportStatementBase[] imports = importList.getAllImportStatements();
@@ -373,12 +373,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     if (InheritanceUtil.isInheritorOrSelf(element, collectionClass, true)) {
       final PsiSubstitutor substitutor;
-      if (!manager.areElementsEquivalent(element, collectionClass)) {
-        substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, element,
-                                                             PsiSubstitutor.EMPTY);
+      if (manager.areElementsEquivalent(element, collectionClass)) {
+        substitutor = PsiSubstitutor.EMPTY;
       }
       else {
-        substitutor = PsiSubstitutor.EMPTY;
+        substitutor = TypeConversionUtil.getClassSubstitutor(collectionClass, element, PsiSubstitutor.EMPTY);
       }
 
       PsiTypeParameterList typeParameterList = collectionClass.getTypeParameterList();
@@ -885,7 +884,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   public String suggestUniqueVariableName(String baseName, PsiElement place, boolean lookForward) {
     int index = 0;
     final PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class);
-    NextName: while (true) {
+    NextName:
+    while (true) {
       String name = baseName;
       if (index > 0) {
         name += index;
@@ -938,7 +938,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     };
   }
 
-  private void sortVariableNameSuggestions(String[] names,
+  private static void sortVariableNameSuggestions(String[] names,
                                            final VariableKind variableKind,
                                            final String propertyName,
                                            final PsiType type) {

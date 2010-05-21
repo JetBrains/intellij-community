@@ -40,7 +40,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
@@ -432,12 +435,14 @@ public class I18nInspection extends BaseLocalInspectionTool {
           fixes.add(createIntroduceConstantFix(expression));
         }
 
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getManager().getProject());
+        final Project project = expression.getManager().getProject();
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing()) {
           for (PsiModifierListOwner element : nonNlsTargets) {
-            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true) &&
-                facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-              fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true)) {
+              if (!element.getManager().isInProject(element) || facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
+                fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
+              }
             }
           }
         }

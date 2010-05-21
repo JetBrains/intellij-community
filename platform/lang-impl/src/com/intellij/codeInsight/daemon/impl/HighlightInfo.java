@@ -53,11 +53,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class HighlightInfo {
-  public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.HighlightInfo");
+
+  public static final Comparator<HighlightInfo> BY_START_OFFSET = new Comparator<HighlightInfo>() {
+    public int compare(HighlightInfo o1, HighlightInfo o2) {
+      return o1.startOffset - o2.startOffset;
+    }
+  };
+  public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   private final boolean myNeedsUpdateOnTyping;
   public JComponent fileLevelComponent;
   public final TextAttributes forcedTextAttributes;
@@ -364,10 +371,10 @@ public class HighlightInfo {
   }
 
   public int getActualStartOffset() {
-    return highlighter == null ? startOffset : highlighter.getStartOffset();
+    return highlighter == null || !highlighter.isValid() ? startOffset : highlighter.getStartOffset();
   }
   public int getActualEndOffset() {
-    return highlighter == null ? endOffset : highlighter.getEndOffset();
+    return highlighter == null || !highlighter.isValid() ? endOffset : highlighter.getEndOffset();
   }
 
   public static class IntentionActionDescriptor {

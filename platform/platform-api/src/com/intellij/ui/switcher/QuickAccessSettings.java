@@ -54,11 +54,11 @@ public class QuickAccessSettings implements ApplicationComponent, SearchableConf
 
   private Set<Integer> myModifierVks = new HashSet<Integer>();
   private Keymap myKeymap;
-  @NonNls private static final String SWITCH_UP = "SwitchUp";
-  @NonNls private static final String SWITCH_DOWN = "SwitchDown";
-  @NonNls private static final String SWITCH_LEFT = "SwitchLeft";
-  @NonNls private static final String SWITCH_RIGHT = "SwitchRight";
-  @NonNls private static final String SWITCH_APPLY = "SwitchApply";
+  @NonNls public static final String SWITCH_UP = "SwitchUp";
+  @NonNls public static final String SWITCH_DOWN = "SwitchDown";
+  @NonNls public static final String SWITCH_LEFT = "SwitchLeft";
+  @NonNls public static final String SWITCH_RIGHT = "SwitchRight";
+  @NonNls public static final String SWITCH_APPLY = "SwitchApply";
 
   private QuickAccessSettings.Ui myUi;
   private RegistryValue myModifiersValue;

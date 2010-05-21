@@ -16,9 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -39,31 +37,26 @@ public abstract class RunManagerEx extends RunManager {
   }
 
   @Nullable
-  public abstract RunnerAndConfigurationSettingsImpl getSelectedConfiguration();
+  public abstract RunnerAndConfigurationSettings getSelectedConfiguration();
 
-  public abstract boolean isTemporary(RunnerAndConfigurationSettingsImpl configuration);
+  public abstract boolean isTemporary(RunnerAndConfigurationSettings configuration);
 
-  public abstract void setActiveConfiguration(RunnerAndConfigurationSettingsImpl configuration);
+  public abstract void setActiveConfiguration(RunnerAndConfigurationSettings configuration);
 
-  public abstract void setSelectedConfiguration(RunnerAndConfigurationSettingsImpl configuration);
+  public abstract void setSelectedConfiguration(RunnerAndConfigurationSettings configuration);
 
-  public abstract void setTemporaryConfiguration(RunnerAndConfigurationSettingsImpl tempConfiguration);
+  public abstract void setTemporaryConfiguration(RunnerAndConfigurationSettings tempConfiguration);
 
   public abstract RunManagerConfig getConfig();
 
   @NotNull
-  public abstract RunnerAndConfigurationSettingsImpl createConfiguration(String name, ConfigurationFactory type);
+  public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
 
-  @NotNull
-  public abstract RunnerAndConfigurationSettingsImpl createConfiguration(RunConfiguration runConfiguration, ConfigurationFactory factory);
+  public abstract void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks);
 
-  public abstract RunnerAndConfigurationSettingsImpl[] getConfigurationSettings(ConfigurationType type);
+  public abstract void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared);
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettingsImpl settings, boolean isShared, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks);
-
-  public abstract void addConfiguration(final RunnerAndConfigurationSettingsImpl settings, final boolean isShared);
-
-  public abstract boolean isConfigurationShared(RunnerAndConfigurationSettingsImpl settings);
+  public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
 
   @NotNull
   public abstract <T extends BeforeRunTask> Map<Key<T>, BeforeRunTask> getBeforeRunTasks(RunConfiguration settings);
@@ -74,11 +67,11 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
 
-  public abstract RunnerAndConfigurationSettingsImpl findConfigurationByName(@NotNull final String name);
+  public abstract RunnerAndConfigurationSettings findConfigurationByName(@NotNull final String name);
 
-  public abstract Collection<RunnerAndConfigurationSettingsImpl> getSortedConfigurations();
+  public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();
 
-  public abstract void removeConfiguration(RunnerAndConfigurationSettingsImpl settings);
+  public abstract void removeConfiguration(RunnerAndConfigurationSettings settings);
 
   public abstract void addRunManagerListener(RunManagerListener listener);
   public abstract void removeRunManagerListener(RunManagerListener listener);

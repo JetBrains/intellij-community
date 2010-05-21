@@ -42,7 +42,7 @@ class TypeTemplatesConfigurable implements Configurable {
     final ConfigurationFactory[] factories = getFactories();
     for (int i = 0; i < factories.length; i++) {
       final ConfigurationFactory factory = factories[i];
-      final RunnerAndConfigurationSettingsImpl template = runManager.getConfigurationTemplate(factory);
+      final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(factory);
       final Configurable configurable = new TemplateConfigurable(template);
       myConfigurables[i] = configurable;
       myTabbedPane.addTab(factory.getName(), configurable.getIcon(), configurable.createComponent(), null);
@@ -106,10 +106,10 @@ class TypeTemplatesConfigurable implements Configurable {
            : new TypeTemplatesConfigurable(type, runManager, project);
   }
 
-  private static class TemplateConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettingsImpl> {
+  private static class TemplateConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
     private final RunnerAndConfigurationSettings myTemplate;
 
-    public TemplateConfigurable(RunnerAndConfigurationSettingsImpl template) {
+    public TemplateConfigurable(RunnerAndConfigurationSettings template) {
       super(new ConfigurationSettingsEditorWrapper(template), template);
       myTemplate = template;
     }

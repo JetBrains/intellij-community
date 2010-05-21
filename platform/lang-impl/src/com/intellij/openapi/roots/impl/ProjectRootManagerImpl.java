@@ -81,7 +81,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   private final MyVirtualFilePointerListener myVirtualFilePointerListener = new MyVirtualFilePointerListener();
 
-  private ApplicationListener myApplicationListener;
+  private AppListener myApplicationListener;
 
   private String myProjectJdkName;
   private String myProjectJdkType;
@@ -103,24 +103,24 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final BatchUpdateListener myHandler;
   private final StartupManager myStartupManager;
 
-  class BatchSession {
-    int myBatchLevel = 0;
-    boolean myChanged = false;
+  private class BatchSession {
+    private int myBatchLevel = 0;
+    private boolean myChanged = false;
 
-    final boolean myFileTypes;
+    private final boolean myFileTypes;
 
-    protected BatchSession(final boolean fileTypes) {
+    private BatchSession(final boolean fileTypes) {
       myFileTypes = fileTypes;
     }
 
-    void levelUp() {
+    private void levelUp() {
       if (myBatchLevel == 0) {
         myChanged = false;
       }
       myBatchLevel += 1;
     }
 
-    public void levelDown() {
+    private void levelDown() {
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
         try {
@@ -132,11 +132,11 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    boolean fireChange() {
+    private boolean fireChange() {
       return fireRootsChanged(myFileTypes);
     }
 
-    public void beforeRootsChanged() {
+    private void beforeRootsChanged() {
       if (myBatchLevel == 0 || !myChanged) {
         if (fireBeforeRootsChanged(myFileTypes)) {
           myChanged = true;
@@ -144,7 +144,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    public void rootsChanged(boolean force) {
+    private void rootsChanged(boolean force) {
       if (myBatchLevel == 0) {
         if (fireChange()) {
           myChanged = false;
@@ -365,7 +365,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void projectOpened() {
     addRootsToWatch();
-    myApplicationListener = new ApplicationListener();
+    myApplicationListener = new AppListener();
     ApplicationManager.getApplication().addApplicationListener(myApplicationListener);
   }
 
@@ -454,7 +454,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  public void beforeRootsChange(boolean filetypes) {
+  private void beforeRootsChange(boolean filetypes) {
     if (myProject.isDisposed()) return;
     getBatchSession(filetypes).beforeRootsChanged();
   }
@@ -471,7 +471,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  public void rootsChanged(boolean filetypes) {
+  private void rootsChanged(boolean filetypes) {
     getBatchSession(filetypes).rootsChanged(false);
   }
 
@@ -552,7 +552,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private static class LibrariesOnlyScope extends GlobalSearchScope {
     private final GlobalSearchScope myOriginal;
 
-    public LibrariesOnlyScope(final GlobalSearchScope original) {
+    private LibrariesOnlyScope(final GlobalSearchScope original) {
       super(original.getProject());
       myOriginal = original;
     }
@@ -754,7 +754,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private int myInsideRefresh = 0;
   private boolean myPointerChangesDetected = false;
 
-  private class ApplicationListener extends ApplicationAdapter {
+  private class AppListener extends ApplicationAdapter {
     public void beforeWriteActionStart(Object action) {
       myInsideRefresh++;
     }

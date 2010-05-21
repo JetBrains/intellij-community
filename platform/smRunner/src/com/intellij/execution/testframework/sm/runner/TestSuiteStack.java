@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,25 +51,54 @@ public class TestSuiteStack {
 
   /**
    * Pop element form stack and checks consistency
-   * @param suiteName Predictable name of top suite in stack
+   * @param suiteName Predictable name of top suite in stack. May be null if 
    */
-  @NotNull
+  @Nullable
   public SMTestProxy popSuite(final String suiteName) throws EmptyStackException {
     if (myStack.isEmpty()) {
-      LOG.error(
-        "Pop error: Test runner tried to close test suite which has been already closed or wasn't started at all. Unexpected suite name [" +
-        suiteName + "]");
+      if (SMTestRunnerConnectionUtil.isInDebugMode()) {
+        LOG.error(
+          "Pop error: Tests/suites stack is empty. Test runner tried to close test suite " +
+          "which has been already closed or wasn't started at all. Unexpected suite name [" +
+          suiteName + "]");
+      }
       return null;
     }
-    final SMTestProxy currentSuite = myStack.pop();
+    final SMTestProxy topSuite = myStack.peek();
 
-    if (!suiteName.equals(currentSuite.getName())) {
-      LOG.error("Pop error: Unexpected closing suite. Expected [" + suiteName + "] but [" + currentSuite.getName() +
-                "] was found. Rest of stack: " + getSuitePathPresentation());
+    if (!suiteName.equals(topSuite.getName())) {
+      if (SMTestRunnerConnectionUtil.isInDebugMode()) {
+        LOG.error("Pop error: Unexpected closing suite. Expected [" + suiteName + "] but [" + topSuite.getName() +
+                  "] was found. Rest of stack: " + getSuitePathPresentation());
+      } else {
+        // let's try to switch to consistent state
+        // 1. If expected suite name is somewhere in stack - let's find it and drop rest head of the stack
+        SMTestProxy expectedProxy = null;
+        for (SMTestProxy candidateProxy : myStack) {
+          if (suiteName.equals(candidateProxy.getName())) {
+            expectedProxy = candidateProxy;
+            break;
+          }
+        }
+        if (expectedProxy != null) {
+          // drop all tests above it
+          SMTestProxy proxy = topSuite;
+          while (proxy != expectedProxy) {
+            proxy = myStack.pop();
+          }
+
+          return expectedProxy;
+        } else {
+          // 2. if expected suite wasn't found let's skip it and return null
+          return null;
+        }
+      }
       return null;
+    } else {
+      myStack.pop();
     }
 
-    return currentSuite;
+    return topSuite;
   }
 
   public final boolean isEmpty() {

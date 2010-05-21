@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -52,6 +53,8 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
 
         if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT) || psiClass.isInterface()) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.smarttype.anonymous");
+
+          PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
 
           final Editor editor = context.getEditor();
           final int offset = context.getTailOffset();

@@ -165,19 +165,12 @@ public class TestPackage extends TestObject {
     return RefactoringListeners.getListener((PsiPackage)element, configuration.myPackage);
   }
 
-  public boolean isConfiguredByElement(final JUnitConfiguration configuration, final PsiElement element) {
-    final PsiPackage aPackage;
-    if (element instanceof PsiPackage) {
-      aPackage = (PsiPackage)element;
-    }
-    else if (element instanceof PsiDirectory) {
-      aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
-    }
-    else {
-      return false;
-    }
-    return aPackage != null
-           && Comparing.equal(aPackage.getQualifiedName(), configuration.getPersistentData().getPackageName());
+  public boolean isConfiguredByElement(final JUnitConfiguration configuration,
+                                       PsiClass testClass,
+                                       PsiMethod testMethod,
+                                       PsiPackage testPackage) {
+    return testPackage != null
+           && Comparing.equal(testPackage.getQualifiedName(), configuration.getPersistentData().getPackageName());
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
@@ -207,7 +200,7 @@ public class TestPackage extends TestObject {
       new Task.Backgroundable(classFilter.getProject(), ExecutionBundle.message("seaching.test.progress.title"), true) {
         private Socket mySocket;
 
-        @Override
+        
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             mySocket = serverSocket.accept();

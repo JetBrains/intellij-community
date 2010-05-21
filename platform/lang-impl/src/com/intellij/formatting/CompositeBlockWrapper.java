@@ -75,7 +75,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   }
 
   @Override
-  protected AbstractBlockWrapper getPreviousBlock() {
+  protected LeafBlockWrapper getPreviousBlock() {
     if (myChildren == null || myChildren.isEmpty()) {
       return null;
     }

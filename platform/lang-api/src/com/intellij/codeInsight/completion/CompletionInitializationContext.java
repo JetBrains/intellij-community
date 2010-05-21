@@ -17,12 +17,16 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ReferenceRange;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -62,6 +66,13 @@ public class CompletionInitializationContext {
     try {
       final PsiReference reference = file.findReferenceAt(selectionEndOffset);
       if(reference != null){
+        final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
+        for (TextRange range : ranges) {
+          if (range.contains(selectionEndOffset)) {
+            return range.getEndOffset();
+          }
+        }
+
         return reference.getElement().getTextRange().getStartOffset() + reference.getRangeInElement().getEndOffset();
       }
     }

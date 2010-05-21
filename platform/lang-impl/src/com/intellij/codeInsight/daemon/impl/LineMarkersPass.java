@@ -29,7 +29,11 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -41,6 +45,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -165,5 +170,21 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   public double getProgress() {
     // do not show progress of visible highlighters update
     return myUpdateAll ? super.getProgress() : -1;
+  }
+
+  public static @NotNull LineMarkerInfo createMethodSeparatorLineMarker(PsiElement startFrom, EditorColorsManager colorsManager) {
+    LineMarkerInfo info = new LineMarkerInfo<PsiElement>(
+      startFrom, 
+      startFrom.getTextRange(), 
+      null, 
+      Pass.UPDATE_ALL, 
+      NullableFunction.NULL, 
+      null, 
+      GutterIconRenderer.Alignment.RIGHT
+    );
+    EditorColorsScheme scheme = colorsManager.getGlobalScheme();
+    info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
+    info.separatorPlacement = SeparatorPlacement.TOP;
+    return info;
   }
 }

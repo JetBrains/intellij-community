@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.dom.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -30,7 +31,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenId;
 
-public class AddMavenDependencyQuickFix implements IntentionAction {
+public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityAction {
   private final PsiJavaCodeReferenceElement myRef;
 
   public AddMavenDependencyQuickFix(PsiJavaCodeReferenceElement ref) {

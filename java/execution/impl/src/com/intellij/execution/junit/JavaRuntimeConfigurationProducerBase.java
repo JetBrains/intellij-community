@@ -15,11 +15,11 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -74,7 +74,6 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
   }
 
   protected TestSearchScope setupPackageConfiguration(ConfigurationContext context, Project project, ModuleBasedConfiguration configuration, TestSearchScope scope) {
-    copyStepsBeforeRun(project, configuration);
     if (scope != TestSearchScope.WHOLE_PROJECT) {
       if (!setupConfigurationModule(context, configuration)) {
         return TestSearchScope.WHOLE_PROJECT;
@@ -85,7 +84,7 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
 
   protected boolean setupConfigurationModule(@Nullable ConfigurationContext context, ModuleBasedConfiguration configuration) {
     if (context != null) {
-      final RunnerAndConfigurationSettingsImpl template =
+      final RunnerAndConfigurationSettings template =
         ((RunManagerImpl)context.getRunManager()).getConfigurationTemplate(getConfigurationFactory());
       final Module contextModule = context.getModule();
       final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();

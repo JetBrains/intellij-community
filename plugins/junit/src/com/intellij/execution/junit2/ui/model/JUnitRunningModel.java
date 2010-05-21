@@ -57,6 +57,7 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     myProperties = properties;
     myRoot.setEventsConsumer(myNotifier);
     myProgress = new TestProgress(this);
+    Disposer.register(this, myProgress);
     Disposer.register(this, myTreeListener);
     Disposer.register(this, new Disposable() {
       public void dispose() {

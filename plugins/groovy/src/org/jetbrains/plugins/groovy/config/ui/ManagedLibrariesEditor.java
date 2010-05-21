@@ -19,8 +19,6 @@ import com.intellij.facet.impl.ui.FacetContextChangeListener;
 import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.ui.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
@@ -248,7 +246,7 @@ public class ManagedLibrariesEditor {
           }
           final LibraryTableModifiableModelProvider provider =
             ProjectStructureConfigurable.getInstance(myModule.getProject()).getContext().createModifiableModelProvider(table.getTableLevel(), false);
-          LibraryTableEditor.editLibrary(provider, library).openDialog(myComponent, Collections.singletonList(library), true);
+          LibraryTableEditor.editLibrary(provider, library, myModule.getProject()).openDialog(myComponent, Collections.singletonList(library), true);
         }
 
       }
@@ -309,7 +307,7 @@ public class ManagedLibrariesEditor {
   public static LibraryManager findManagerFor(@NotNull Library library, final LibraryManager[] managers, final LibrariesContainer container) {
     for (final LibraryManager manager : managers) {
       final String name = library.getName();
-      if (name != null && name.startsWith(manager.getLibraryPrefix())) {
+      if (name != null && manager.managesName(name) && manager.managesLibrary(library, container)) {
         return manager;
       }
     }

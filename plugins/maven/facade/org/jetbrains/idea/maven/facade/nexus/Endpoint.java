@@ -99,7 +99,7 @@ public class Endpoint {
             return _retVal;
         }
 
-        public SearchResults getArtifactlistAsSearchResults(String q, String g, String a, String v, String c)
+        public SearchResults getArtifactlistAsSearchResults(String q, String g, String a, String v, String c, String cn)
             throws IOException, MalformedURLException, JAXBException
         {
             HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
@@ -109,6 +109,7 @@ public class Endpoint {
             _queryParameterValues.put("a", a);
             _queryParameterValues.put("v", v);
             _queryParameterValues.put("c", c);
+            _queryParameterValues.put("cn", cn);
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
             Object _retVal = _jaxbDispatcher.doGET(_url, _headerParameterValues, "application/xml");
             if (_retVal == null) {
@@ -241,9 +242,10 @@ public class Endpoint {
 
         /**
          * Create new instance
-         * 
+         *
+         * @param url
          */
-        public Repositories()
+        public Repositories(String url)
             throws JAXBException
         {
             _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.facade.nexus");
@@ -251,7 +253,7 @@ public class Endpoint {
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
             List<String> _matrixParamSet;
-            _matrixParamSet = _uriBuilder.addPathSegment("http://repository.sonatype.org/service/local/");
+            _matrixParamSet = _uriBuilder.addPathSegment(url);
             _matrixParamSet = _uriBuilder.addPathSegment("repositories");
             _templateAndMatrixParameterValues = new HashMap<String, Object>();
         }
@@ -266,7 +268,7 @@ public class Endpoint {
             return _retVal;
         }
 
-        public Repositories getRepolistAsRepositories()
+        public org.jetbrains.idea.maven.facade.nexus.Repositories getRepolistAsRepositories()
             throws IOException, MalformedURLException, JAXBException
         {
             HashMap<String, Object> _queryParameterValues = new HashMap<String, Object>();
@@ -280,7 +282,7 @@ public class Endpoint {
                 JAXBElement jaxbElement = ((JAXBElement) _retVal);
                 _retVal = jaxbElement.getValue();
             }
-            return ((Repositories) _retVal);
+            return ((org.jetbrains.idea.maven.facade.nexus.Repositories) _retVal);
         }
 
     }

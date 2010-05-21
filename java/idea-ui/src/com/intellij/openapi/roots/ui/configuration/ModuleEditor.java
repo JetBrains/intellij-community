@@ -45,6 +45,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -394,6 +395,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         }
         return result;
       }
+      catch (InvocationTargetException e) {
+        throw e.getCause();
+      }
       finally {
         if (needUpdate) {
           updateOrderEntriesInEditors();
@@ -433,6 +437,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         }
         return result;
       }
+      catch (InvocationTargetException e) {
+        throw e.getCause();
+      }
       finally {
         if (needUpdate) {
           updateOrderEntriesInEditors();
@@ -450,12 +457,17 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
 
     public Object invoke(Object object, Method method, Object[] params) throws Throwable {
-      final Object result = method.invoke(myDelegateLibrary, unwrapParams(params));
-      if (result instanceof Library.ModifiableModel) {
-        return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Library.ModifiableModel.class},
-                                      new LibraryModifiableModelInvocationHandler((Library.ModifiableModel)result));
+      try {
+        final Object result = method.invoke(myDelegateLibrary, unwrapParams(params));
+        if (result instanceof Library.ModifiableModel) {
+          return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Library.ModifiableModel.class},
+                                        new LibraryModifiableModelInvocationHandler((Library.ModifiableModel)result));
+        }
+        return result;
       }
-      return result;
+      catch (InvocationTargetException e) {
+        throw e.getCause();
+      }
     }
 
     public Object getDelegate() {
@@ -474,6 +486,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       final boolean needUpdate = METHOD_COMMIT.equals(method.getName());
       try {
         return method.invoke(myDelegateModel, unwrapParams(params));
+      }
+      catch (InvocationTargetException e) {
+        throw e.getCause();
       }
       finally {
         if (needUpdate) {
@@ -509,6 +524,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
                                  new LibraryInvocationHandler((Library)result));
         }
         return result;
+      }
+      catch (InvocationTargetException e) {
+        throw e.getCause();
       }
       finally {
         if (needUpdate) {

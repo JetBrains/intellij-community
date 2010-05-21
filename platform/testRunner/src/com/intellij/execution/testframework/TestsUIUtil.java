@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.*;
+import java.util.List;
 
 public class TestsUIUtil {
   @NonNls private static final String ICONS_ROOT = "/runConfigurations/";
@@ -101,21 +104,41 @@ public class TestsUIUtil {
     return IconLoader.getIcon(fullIconName);
   }
 
-  public static void notifyByBalloon(@NotNull final Project project, final AbstractTestProxy root, final TestConsoleProperties properties,
-                                     @NotNull final Filter filter) {
+  public static void notifyByBalloon(@NotNull final Project project, final AbstractTestProxy root, final TestConsoleProperties properties) {
     if (project.isDisposed()) return;
-    final int failed = root != null ? filter.select(root.getAllTests()).size() : -1;
     if (properties == null) return;
+
     final String testRunDebugId = properties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
-      toolWindowManager
-        .notifyByBalloon(testRunDebugId, failed == -1 ? MessageType.WARNING : (failed > 0 ? MessageType.ERROR : MessageType.INFO),
-                         failed == -1
-                         ? ExecutionBundle.message("test.not.started.progress.text")
-                         : (failed > 0
-                            ? failed + " " + ExecutionBundle.message("junit.runing.info.tests.failed.label")
-                            : ExecutionBundle.message("junit.runing.info.tests.passed.label")), null, null);
+
+    String title;
+    String text;
+    String balloonText;
+    MessageType type;
+    if (root == null) {
+      balloonText = title = ExecutionBundle.message("test.not.started.progress.text");
+      text = "";
+      type = MessageType.WARNING;
+    } else{
+      List allTests = Filter.LEAF.select(root.getAllTests());
+      int failedCount = Filter.DEFECTIVE_LEAF.select(allTests).size();
+      int passedCount = allTests.size() - failedCount;
+
+      if (failedCount > 0) {
+        title = ExecutionBundle.message("junit.runing.info.tests.failed.label");
+        text = passedCount + " passed, " + failedCount + " failed";
+        type = MessageType.ERROR;
+      } else {
+        title = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+        text = passedCount + " passed";
+        type = MessageType.INFO;
+      }
+      balloonText = title + ": " + text;
     }
+
+    if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
+      toolWindowManager.notifyByBalloon(testRunDebugId, type, balloonText, null, null);
+    }
+    SystemNotifications.getInstance().notify("TestRunner", title, text);
   }
 }

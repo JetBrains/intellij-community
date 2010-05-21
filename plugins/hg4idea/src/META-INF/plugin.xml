@@ -1,0 +1,99 @@
+<idea-plugin>
+  <id>hg4idea</id>
+  <name>hg4idea</name>
+  <description>
+  <![CDATA[
+  <b>IntelliJ IDEA</b> plugin for Mercurial integration.<br>
+  RubyMine and WebIDE should work but hg4idea was never tested against them.
+  <p>
+  System Requirements:
+  <ul>
+    <li>IntelliJ IDEA (Ultimate or Community)
+    <li>Java 5+
+    <li>Mercurial 1.5+
+  </ul>
+  <p>
+  If you found a bug or would like to see some features added to hg4idea please open a ticket in <a href="http://www.bitbucket.org/viacoban/hg4idea/issues/">bugtracker</a>.
+  <p>
+  When opening bugs don't forget to include:
+  <ul>
+    <li>IntelliJ IDEA version
+    <li>hg4idea version
+    <li>Mercurial version
+    <li>Exact steps to reproduce
+  </ul>
+  ]]>
+  </description>
+  <category>VCS Integration</category>
+  <version>10.0</version>
+  <vendor email="victor.iacoban@gmail.com" logo="/images/mercurial.png" url="http://www.bitbucket.org/viacoban/hg4idea">Victor Iacoban</vendor>
+  <depends>com.intellij.modules.vcs</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs"/>
+    <applicationConfigurable implementation="org.zmlx.hg4idea.HgIdeConfigurable"/>
+  </extensions>
+  <actions>
+    <group id="hg4idea.file.menu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
+      <reference id="ChangesView.AddUnversioned"/>
+      <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
+      <separator/>
+      <reference id="Annotate"/>
+      <reference id="Vcs.ShowTabbedFileHistory"/>
+      <reference id="Vcs.ShowHistoryForBlock"/>
+      <add-to-group group-id="VcsGroup" anchor="last"/>
+    </group>
+    <group id="hg4idea.global.submenu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
+      <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
+      <action id="hg4idea.mq.rebase" class="org.zmlx.hg4idea.action.HgMqRebaseAction"/>
+      <separator/>
+      <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
+      <action id="hg4idea.switch" class="org.zmlx.hg4idea.action.HgSwitchWorkingDirectoryAction"/>
+      <add-to-group group-id="VcsGlobalGroup" anchor="last"/>
+    </group>
+    <group id="hg4idea.global.menu" popup="false">
+      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction"/>
+      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction"/>
+      <add-to-group group-id="VcsGlobalGroup" relative-to-action="Vcs.IntegrateProject" anchor="after"/>
+    </group>
+  </actions>
+  <application-components>
+    <component>
+      <implementation-class>org.zmlx.hg4idea.HgGlobalSettings</implementation-class>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <implementation-class>org.zmlx.hg4idea.command.HgCommandService</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.zmlx.hg4idea.HgProjectSettings</implementation-class>
+    </component>
+  </project-components>
+  <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>
+  <change-notes>
+  <![CDATA[
+  <h3>Changes since 0.6.0</h3>
+  <ul>
+    <li>[feature] Folders under mercurial control are auto-detected on project creation
+    <li>[feature] New status notifications for incoming and outgoing changesets
+    <li>[enhancement] User was required to enter the hg executable path for every project
+    <li>[enhancement] Added support for multi-line commit messages
+  </ul>
+  <h3>Changes since 0.5</h3>
+  <ul>
+    <li>[feature] Unresolved files show in red
+    <li>[feature] Added new action to resolve all conflicts, will open the merge dialog
+    <li>[feature] Added mercurial context action to mark a file as resolved
+    <li>[feature] New Mercurial menu action to rebase MQ patches
+    <li>[enhancement] When file is moved/renamed, it has a status of modified
+    <li>[enhancement] Added tooltip to mercurial status component
+    <li>[bugfix] exception clicking annotate in history view
+    <li>[bugfix] NPE on project integration
+    <li>Re-organized mercurial menu
+    <li>Performance improvements
+  </ul>
+  For full changelog visit <a href="http://bitbucket.org/viacoban/hg4idea/wiki/Changelog">wiki changelog page</a>.
+  ]]>
+  </change-notes>
+</idea-plugin>

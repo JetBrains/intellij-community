@@ -78,7 +78,6 @@ public class VcsHistoryProviderBackgroundableProxy {
 
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"),
                                                               true, BackgroundFromStartOption.getInstance()) {
-      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           myDelegate.reportAppendableHistory(filePath, partner);

@@ -52,7 +52,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements RunJavaConfiguration, RefactoringListenerProvider {
+public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
+  implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider {
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
   protected transient Project project;
@@ -166,12 +167,45 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     return data.getGroupName();
   }
 
-  public void setProperty(int type, String value) {
-    data.setProperty(type, value, project);
+  public void setVMParameters(String value) {
+    data.setVMParameters(value);
   }
 
-  public String getProperty(int type) {
-    return data.getProperty(type, project);
+  public String getVMParameters() {
+    return data.getVMParameters();
+  }
+
+  public void setProgramParameters(String value) {
+    data.setProgramParameters(value);
+  }
+
+  public String getProgramParameters() {
+    return data.getProgramParameters();
+  }
+
+  public void setWorkingDirectory(String value) {
+    data.setWorkingDirectory(value);
+  }
+
+  public String getWorkingDirectory() {
+    return data.getWorkingDirectory(project);
+  }
+
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    data.setEnvs(envs);
+  }
+
+  @NotNull
+  public Map<String, String> getEnvs() {
+    return data.getEnvs();
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    data.PASS_PARENT_ENVS = passParentEnvs;
+  }
+
+  public boolean isPassParentEnvs() {
+    return data.PASS_PARENT_ENVS;
   }
 
   public boolean isAlternativeJrePathEnabled() {
@@ -186,8 +220,8 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
      return ALTERNATIVE_JRE_PATH;
    }
 
-   public void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH) {
-     this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
+   public void setAlternativeJrePath(String path) {
+     this.ALTERNATIVE_JRE_PATH = path;
    }
 
   public String getRunClass() {

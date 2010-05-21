@@ -48,7 +48,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements RunJavaConfiguration, SingleClassConfiguration, RefactoringListenerProvider {
+public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
+  implements CommonJavaRunConfigurationParameters, SingleClassConfiguration, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.application.ApplicationConfiguration");
 
   public String MAIN_CLASS_NAME;
@@ -82,7 +83,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable2(getProject()));
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));
     RunConfigurationExtension.appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel());
     return group;
@@ -144,33 +145,45 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     RunConfigurationExtension.checkConfigurationIsValid(this);
   }
 
-  public void setProperty(final int property, final String value) {
-    switch (property) {
-      case PROGRAM_PARAMETERS_PROPERTY:
-        PROGRAM_PARAMETERS = value;
-        break;
-      case VM_PARAMETERS_PROPERTY:
-        VM_PARAMETERS = value;
-        break;
-      case WORKING_DIRECTORY_PROPERTY:
-        WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
-        break;
-      default:
-        throw new RuntimeException("Unknown property: " + property);
-    }
+  public void setVMParameters(String value) {
+    VM_PARAMETERS = value;
   }
 
-  public String getProperty(final int property) {
-    switch (property) {
-      case PROGRAM_PARAMETERS_PROPERTY:
-        return PROGRAM_PARAMETERS;
-      case VM_PARAMETERS_PROPERTY:
-        return VM_PARAMETERS;
-      case WORKING_DIRECTORY_PROPERTY:
-        return getWorkingDirectory();
-      default:
-        throw new RuntimeException("Unknown property: " + property);
-    }
+  public String getVMParameters() {
+    return VM_PARAMETERS;
+  }
+
+  public void setProgramParameters(String value) {
+    PROGRAM_PARAMETERS = value;
+  }
+
+  public String getProgramParameters() {
+    return PROGRAM_PARAMETERS;
+  }
+
+  public void setWorkingDirectory(String value) {
+    WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+  }
+
+  public String getWorkingDirectory() {
+    return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    PASS_PARENT_ENVS = passParentEnvs;
+  }
+
+  @NotNull
+  public Map<String, String> getEnvs() {
+    return myEnvs;
+  }
+
+  public void setEnvs(@NotNull final Map<String, String> envs) {
+    this.myEnvs = envs;
+  }
+
+  public boolean isPassParentEnvs() {
+    return PASS_PARENT_ENVS;
   }
 
   @Nullable
@@ -182,7 +195,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public String getPackage() {
     return null;
   }
-
 
   public boolean isAlternativeJrePathEnabled() {
      return ALTERNATIVE_JRE_PATH_ENABLED;
@@ -196,14 +208,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
      return ALTERNATIVE_JRE_PATH;
    }
 
-   public void setAlternativeJrePath(String ALTERNATIVE_JRE_PATH) {
-     this.ALTERNATIVE_JRE_PATH = ALTERNATIVE_JRE_PATH;
+   public void setAlternativeJrePath(String path) {
+     this.ALTERNATIVE_JRE_PATH = path;
    }
-
-
-  private String getWorkingDirectory() {
-    return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
-  }
 
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
@@ -231,14 +238,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
-  public Map<String, String> getEnvs() {
-    return myEnvs;
-  }
-
-  public void setEnvs(final Map<String, String> envs) {
-    this.myEnvs = envs;
-  }
-
   private class MyJavaCommandLineState extends JavaCommandLineState {
     public MyJavaCommandLineState(final ExecutionEnvironment environment) {
       super(environment);
@@ -246,7 +245,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
-      params.setupEnvs(getEnvs(), PASS_PARENT_ENVS);
       final int classPathType = JavaParametersUtil.getClasspathType(getConfigurationModule(), MAIN_CLASS_NAME, false);
       JavaParametersUtil.configureModule(getConfigurationModule(), params, classPathType, ALTERNATIVE_JRE_PATH_ENABLED ? ALTERNATIVE_JRE_PATH : null);
       JavaParametersUtil.configureConfiguration(params, ApplicationConfiguration.this);

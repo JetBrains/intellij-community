@@ -18,6 +18,10 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -55,7 +59,15 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
     return InspectionGadgetsBundle.message("static.inheritance.replace.quickfix", scope);
   }
 
-  public void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public void doFix(final Project project, final ProblemDescriptor descriptor) throws IncorrectOperationException {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        dodoFix(project, descriptor);
+      }
+    }, ModalityState.NON_MODAL, project.getDisposed());
+  }
+
+  private void dodoFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
     final PsiClass iface = (PsiClass)referenceElement.resolve();
     assert iface != null;
@@ -64,8 +76,10 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
     final PsiClass implementingClass = ClassUtils.getContainingClass(referenceElement);
     final PsiManager manager = referenceElement.getManager();
     assert implementingClass != null;
+    final PsiFile file = implementingClass.getContainingFile();
+
     ProgressManager.getInstance().run(new Task.Modal(project, "Replacing usages of "+iface.getName(), false) {
-      @Override
+      
       public void run(@NotNull ProgressIndicator indicator) {
         for (final PsiField field : allFields) {
           final Query<PsiReference> search = ReferencesSearch.search(field, implementingClass.getUseScope(), false);
@@ -84,7 +98,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
               }
               if (!isInheritor) continue;
             }
-            Runnable runnable = new Runnable() {
+            final Runnable runnable = new Runnable() {
               public void run() {
                 if (isQuickFixOnReadOnlyFile(referenceExpression)) {
                   return;
@@ -99,34 +113,38 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
                 qualifier.bindToElement(containingClass);
               }
             };
-            try {
-              GuiUtils.runOrInvokeAndWait(runnable);
-            }
-            catch (InvocationTargetException e) {
-              LOG.error(e);
-            }
-            catch (InterruptedException e) {
-              LOG.error(e);
-            }
+            invokeWriteAction(runnable, file);
           }
         }
-        Runnable runnable = new Runnable() {
+        final Runnable runnable = new Runnable() {
           public void run() {
             PsiClassType classType = JavaPsiFacade.getInstance(project).getElementFactory().createType(iface);
             IntentionAction fix = QuickFixFactory.getInstance().createExtendsListFix(implementingClass, classType, false);
-            fix.invoke(project, null, implementingClass.getContainingFile());
+            fix.invoke(project, null, file);
           }
         };
-        try {
-          GuiUtils.runOrInvokeAndWait(runnable);
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
+        invokeWriteAction(runnable, file);
       }
     });
+  }
+
+  private static void invokeWriteAction(final Runnable runnable, final PsiFile file) {
+    try {
+      GuiUtils.runOrInvokeAndWait(new Runnable() {
+        public void run() {
+          new WriteCommandAction(file.getProject(), file) {
+            protected void run(Result result) throws Throwable {
+              runnable.run();
+            }
+          }.execute();
+        }
+      });
+    }
+    catch (InvocationTargetException e) {
+      LOG.error(e);
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
   }
 }

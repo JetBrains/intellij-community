@@ -19,10 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -65,7 +62,7 @@ public class SimpleAccessorReferenceSearcher implements QueryExecutor<PsiReferen
       public boolean execute(PsiElement element, int offsetInElement) {
         final PsiReference[] refs = element.getReferences();
         for (PsiReference ref : refs) {
-          if (ref.getRangeInElement().contains(offsetInElement)) {
+          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
             if (ref.isReferenceTo(refElement)) {
               return consumer.process(ref);
             }

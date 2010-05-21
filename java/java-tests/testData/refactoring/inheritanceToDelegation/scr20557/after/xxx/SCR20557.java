@@ -12,6 +12,7 @@ import java.net.URL;
  * @author dsl
  */
 public class SCR20557 {
+
     private final MyResultSet myResultSet = new MyResultSet();
 
     public Date getDate(int columnIndex) throws SQLException {

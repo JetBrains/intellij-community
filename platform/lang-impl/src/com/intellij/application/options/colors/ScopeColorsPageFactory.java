@@ -16,6 +16,8 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.ide.util.scopeChooser.EditScopesDialog;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -69,7 +71,13 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
       public void actionPerformed(ActionEvent e) {
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
         if (optionsEditor != null) {
-          optionsEditor.select(ScopeChooserConfigurable.getInstance(project));
+          try {
+          final ScopeChooserConfigurable projectConfigurable =
+            ShowSettingsUtil.getInstance().findProjectConfigurable(project, ScopeChooserConfigurable.class);
+            optionsEditor.select(projectConfigurable);
+          } catch (IllegalStateException ex) {
+            EditScopesDialog.editConfigurable(project, null);
+          }
         }
       }
     });

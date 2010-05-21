@@ -24,7 +24,6 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +42,7 @@ public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProduce
   }
 
   @Nullable
-  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
     final PsiElement element = location.getPsiElement();
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
@@ -60,9 +59,8 @@ public class TestNGSuiteConfigurationProducer extends TestNGConfigurationProduce
     configuration.getPersistantData().TEST_OBJECT = TestType.SUITE.getType();
     configuration.restoreOriginalModule(originalModule);
     settings.setName(configuration.getName());
-    copyStepsBeforeRun(project, configuration);
     RunConfigurationExtension.patchCreatedConfiguration(configuration);
-    return (RunnerAndConfigurationSettingsImpl)settings;
+    return settings;
   }
 
   public int compareTo(Object o) {

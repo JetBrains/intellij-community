@@ -213,6 +213,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
   }
 
+  protected static boolean isRBrace(final ASTNode child) {
+    return child.getElementType() == ElementType.RBRACE;
+  }
+
   public Spacing getSpacing(Block child1, Block child2) {
     return JavaSpacePropertyProcessor.getSpacing(getTreeNode(child2), mySettings);
   }
@@ -838,6 +842,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.createDoNotAlingCommaStrategy(createAlignment(doAlign, null));
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
+    Alignment bracketAlignment = mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION ? Alignment.createAlignment() : null;
 
     boolean isAfterIncomplete = false;
 
@@ -847,13 +852,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                           child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (child.getElementType() == from) {
-          result.add(createJavaBlock(child, mySettings, externalIndent, null, null));
+          result.add(createJavaBlock(child, mySettings, externalIndent, null, bracketAlignment));
         }
         else if (child.getElementType() == to) {
           result.add(createJavaBlock(child, mySettings,
                                      isAfterIncomplete ? internalIndent : externalIndent,
                                      null,
-                                     isAfterIncomplete ? alignmentStrategy.getAlignment(null) : null));
+                                     isAfterIncomplete ? alignmentStrategy.getAlignment(null) : bracketAlignment));
           return child;
         }
         else {
@@ -1079,4 +1084,32 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return JavaBlockUtil.mayShiftIndentInside(myNode);
   }
 
+  @Nullable
+  protected ASTNode composeCodeBlock(final ArrayList<Block> result, ASTNode child, final Indent indent, final int childrenIndent) {
+    final ArrayList<Block> localResult = new ArrayList<Block>();
+    processChild(localResult, child, null, null, Indent.getNoneIndent());
+    child = child.getTreeNext();
+    while (child != null) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
+        final boolean rBrace = isRBrace(child);
+        final Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent);
+        child = processChild(localResult, child, null, null, childIndent);
+        if (rBrace) {
+          result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
+          return child;
+        }
+      }
+      if (child != null) {
+        child = child.getTreeNext();
+      }
+    }
+    result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
+    return null;
+  }
+
+  private SyntheticCodeBlock createCodeBlockBlock(final ArrayList<Block> localResult, final Indent indent, final int childrenIndent) {
+    final SyntheticCodeBlock result = new SyntheticCodeBlock(localResult, null, getSettings(), indent, null);
+    result.setChildAttributes(new ChildAttributes(getCodeBlockInternalIndent(childrenIndent), null));
+    return result;
+  }
 }

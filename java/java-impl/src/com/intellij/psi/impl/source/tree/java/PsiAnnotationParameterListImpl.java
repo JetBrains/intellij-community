@@ -62,13 +62,14 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
     else if (i == RPARENTH) {
       return ChildRole.RPARENTH;
     }
+    else if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())
+             || (i == NAME_VALUE_PAIR && child.getFirstChildNode() != null
+                 && child.getFirstChildNode().getElementType() == ANNOTATION_ARRAY_INITIALIZER))
+    {
+      return ChildRole.ANNOTATION_VALUE;
+    }
     else {
-      if (ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
-        return ChildRole.ANNOTATION_VALUE;
-      }
-      else {
-        return ChildRoleBase.NONE;
-      }
+      return ChildRoleBase.NONE;
     }
   }
 

@@ -17,8 +17,10 @@ package com.intellij.pom;
 
 public interface Navigatable {
   /**
-   * Open editor and select/navigate to the object there if possible. Just do nothing if navigation is not possible like in case of a package
-   * @param requestFocus
+   * Open editor and select/navigate to the object there if possible.
+   * Just do nothing if navigation is not possible like in case of a package
+   *
+   * @param requestFocus <code>true</code> if focus requesting is necessary
    */
   void navigate(boolean requestFocus);
 
@@ -28,7 +30,25 @@ public interface Navigatable {
   boolean canNavigate();
 
   /**
-   * @return <code>false</code> if navigation to source is not possible for any reason. Source means some kind of editor
+   * @return <code>false</code> if navigation to source is not possible for any reason.
+   * Source means some kind of editor
    */
   boolean canNavigateToSource();
+
+/**
+ * Very often both methods <code>canNavigate</code> and <code>canNavigateToSource</code>
+ * return <code>true</code>. This adapter class lets focus on navigation
+ * routine only.
+ *
+ * @author Konstantin Bulenkov
+ */
+  abstract class Adapter implements Navigatable {
+    public boolean canNavigate() {
+      return true;
+    }
+
+    public boolean canNavigateToSource() {
+      return true;
+    }
+  }
 }

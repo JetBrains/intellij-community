@@ -22,7 +22,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,7 +60,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   private AnAction[] getChildren(DataContext dataContext) {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
-    final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
       final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
       if (producers.size() > 1) {
@@ -109,7 +108,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   @Override
   public boolean canBePerformed(DataContext dataContext) {
     final ConfigurationContext context = new ConfigurationContext(dataContext);
-    final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
       final List<RuntimeConfigurationProducer> producers = getEnabledProducers(context);
       return producers.size() <= 1;
@@ -120,7 +119,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final ConfigurationContext context = new ConfigurationContext(dataContext);
-    final RunnerAndConfigurationSettingsImpl existing = context.findExisting();
+    final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {
       final List<RuntimeConfigurationProducer> producers = PreferedProducerFind.findPreferredProducers(context.getLocation(), context, true);
       if (producers == null) return;

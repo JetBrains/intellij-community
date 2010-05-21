@@ -20,13 +20,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Map;
+
 
 public abstract class AbstractDomGenerateProvider<T extends DomElement> extends DefaultGenerateElementProvider<T> {
+  public static final String NAMESPACE_PREFIX_VAR = "NS_PREFIX";
 
   @Nullable private final String myMappingId;
 
@@ -40,15 +47,49 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
   }
 
   public T generate(final Project project, final Editor editor, final PsiFile file) {
-    final T t = super.generate(project, editor, file);
+    DomElement parentDomElement = getParentDomElement(project, editor, file);
 
-    runTemplate(editor, file, t);
+    final T t = generate(parentDomElement, editor);
+
+    runTemplate(editor, file, t, getPredefinedVars(parentDomElement, t, editor, file));
 
     return t;
   }
 
+  protected Map<String, String> getPredefinedVars(@Nullable DomElement parentDomElement,
+                                                  @Nullable T t,
+                                                  @NotNull Editor editor,
+                                                  @NotNull PsiFile file) {
+    return createNamespacePrefixMap(parentDomElement);
+  }
+
+  @NotNull
+  public static Map<String, String> createNamespacePrefixMap(@Nullable DomElement domElement) {
+    Map<String, String> vars = new HashMap<String, String>();
+
+    addNamespacePrefix(domElement, vars);
+
+    return vars;
+  }
+
+  public static void addNamespacePrefix(@Nullable DomElement domElement, @NotNull Map<String, String> vars) {
+    if (domElement != null) {
+      XmlTag tag = domElement.getXmlTag();
+      if (tag != null) {
+        String namespacePrefix = tag.getNamespacePrefix();
+        if (!StringUtil.isEmptyOrSpaces(namespacePrefix)) {
+          vars.put(NAMESPACE_PREFIX_VAR, namespacePrefix + ":");
+        }
+      }
+    }
+  }
+
   protected void runTemplate(final Editor editor, final PsiFile file, final T t) {
-    DomTemplateRunner.getInstance(file.getProject()).runTemplate(t, myMappingId, editor);
+    DomTemplateRunner.getInstance(file.getProject()).runTemplate(t, myMappingId, editor, new HashMap<String, String>());
+  }
+
+  protected void runTemplate(final Editor editor, final PsiFile file, final T t, Map<String, String> predefinedVars) {
+    DomTemplateRunner.getInstance(file.getProject()).runTemplate(t, myMappingId, editor, predefinedVars);
   }
 
   protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);

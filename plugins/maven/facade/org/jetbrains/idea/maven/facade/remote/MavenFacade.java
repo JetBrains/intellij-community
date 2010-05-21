@@ -15,7 +15,9 @@
  */
 package org.jetbrains.idea.maven.facade.remote;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.facade.nexus.ArtifactType;
+import org.jetbrains.idea.maven.facade.nexus.RepositoryType;
 
 import java.io.Serializable;
 import java.rmi.Remote;
@@ -29,7 +31,10 @@ import java.util.Map;
  */
 public interface MavenFacade extends Remote {
 
-  List<ArtifactType> findArtifacts(ArtifactType template) throws RemoteException;
+  List<RepositoryType> getRepositories(String nexusUrl) throws RemoteException;
+
+  @Nullable
+  List<ArtifactType> findArtifacts(ArtifactType template, String nexusUrl) throws RemoteException;
 
   Map<String, List<ArtifactType>> resolveDependencies(List<ArtifactType> artifacts) throws RemoteException;
 
@@ -40,7 +45,6 @@ public interface MavenFacade extends Remote {
   class MavenFacadeSettings implements Serializable {
     private Repository myLocalRepository;
     private final List<Repository> myRemoteRepositories = new ArrayList<Repository>();
-    private final List<String> myNexusUrls = new ArrayList<String>();
 
     public Repository getLocalRepository() {
       return myLocalRepository;
@@ -52,10 +56,6 @@ public interface MavenFacade extends Remote {
 
     public List<Repository> getRemoteRepositories() {
       return myRemoteRepositories;
-    }
-
-    public List<String> getNexusUrls() {
-      return myNexusUrls;
     }
   }
 

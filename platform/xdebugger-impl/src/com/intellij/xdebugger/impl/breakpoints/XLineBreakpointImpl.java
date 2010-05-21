@@ -199,7 +199,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
   }
 
-  private Icon getIcon() {
+  public Icon getIcon() {
     if (myIcon == null) {
       updateIcon();
     }
@@ -270,7 +270,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Nullable
-  private String getErrorMessage() {
+  public String getErrorMessage() {
     final XDebugSessionImpl currentSession = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (currentSession != null) {
       CustomizedBreakpointPresentation presentation = currentSession.getBreakpointPresentation(this);

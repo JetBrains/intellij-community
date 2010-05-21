@@ -550,6 +550,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkVariableAlreadyDefined(PsiVariable variable) {
+    if (variable instanceof ExternallyDefinedPsiElement) return null;
     boolean isIncorrect = false;
     PsiIdentifier identifier = variable.getNameIdentifier();
     String name = variable.getName();
