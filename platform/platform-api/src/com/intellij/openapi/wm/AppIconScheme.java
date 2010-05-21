@@ -33,7 +33,7 @@ public class AppIconScheme {
 
     static final Progress BUILD = new Progress() {
       public Color getOkColor() {
-        return Color.blue;
+        return new Color(51, 102, 255);
       }
 
       public Color getErrorColor() {
@@ -43,7 +43,7 @@ public class AppIconScheme {
 
     static final Progress INDEXING = new Progress() {
       public Color getOkColor() {
-        return Color.yellow;
+        return new Color(255, 153, 0);
       }
 
       public Color getErrorColor() {

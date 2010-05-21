@@ -187,11 +187,9 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
           performUpdate();
         }
         catch (ProcessCanceledException e) {
-          requeueViewUpdateIfNeeded();
           throw e;
         }
         catch (RuntimeException e) {
-          requeueViewUpdateIfNeeded();
           LOG.error(myTreeBuilder.getClass().getName(), e);
         }
       }
@@ -229,7 +227,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
             myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
           }
           catch (ProcessCanceledException e) {
-            requeueViewUpdateIfNeeded();
+            return;
           }
         }
       });

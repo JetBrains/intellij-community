@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin>
   <id>hg4idea</id>
   <name>hg4idea</name>
@@ -32,6 +31,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs"/>
+    <applicationConfigurable implementation="org.zmlx.hg4idea.HgIdeConfigurable"/>
   </extensions>
   <actions>
     <group id="hg4idea.file.menu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
@@ -60,9 +60,6 @@
   <application-components>
     <component>
       <implementation-class>org.zmlx.hg4idea.HgGlobalSettings</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.zmlx.hg4idea.HgIdeConfigurable</implementation-class>
     </component>
   </application-components>
   <project-components>

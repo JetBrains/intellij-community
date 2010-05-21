@@ -53,9 +53,10 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
       return "Collapse conditional expression";
     }
 
-    public void doFix(Project project, ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof GrConditionalExpression)) return;
+      final GrConditionalExpression expression = (GrConditionalExpression)element;
       final GrExpression thenBranch = expression.getThenBranch();
       replaceExpression(expression, thenBranch.getText());
     }

@@ -58,6 +58,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,28 +195,39 @@ public class CompilerTask extends Task.Backgroundable {
       }
 
       private void stopAppIconProgress() {
-        AppIcon appIcon = AppIcon.getInstance();
-        if (appIcon.hideProgress(APP_ICON_ID)) {
-          if (myErrorCount > 0) {
-            appIcon.setBadge(String.valueOf(myErrorCount));
-            appIcon.requestAttention(true);
-          } else {
-            appIcon.setBadge(null);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            AppIcon appIcon = AppIcon.getInstance();
+            if (appIcon.hideProgress(APP_ICON_ID)) {
+              if (myErrorCount > 0) {
+                appIcon.setBadge(String.valueOf(myErrorCount));
+                appIcon.requestAttention(true);
+              } else {
+                appIcon.setBadge(null);
+              }
+            }
           }
-        }
+        });
       }
 
       public void setText(final String text) {
+        super.setText(text);
         updateProgressText();
       }
 
       public void setText2(final String text) {
+        super.setText2(text);
         updateProgressText();
       }
 
       public void setFraction(final double fraction) {
+        super.setFraction(fraction);
         updateProgressText();
-        AppIcon.getInstance().setProgress(APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            AppIcon.getInstance().setProgress(APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true);
+          }
+        });
       }
 
       protected void onProgressChange() {

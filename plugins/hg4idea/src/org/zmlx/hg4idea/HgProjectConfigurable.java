@@ -12,15 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.zmlx.hg4idea.ui.HgConfigurationProjectPanel;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
+import javax.swing.*;
 
-public class HgProjectConfigurable implements Configurable {
+public class HgProjectConfigurable implements SearchableConfigurable {
 
   private final HgConfigurationProjectPanel hgConfigurationProjectPanel;
 
@@ -60,4 +59,11 @@ public class HgProjectConfigurable implements Configurable {
   public void disposeUIResources() {
   }
 
+  public String getId() {
+    return "Mercurial.Project";
+  }
+
+  public Runnable enableSearch(String option) {
+    return null;
+  }
 }
