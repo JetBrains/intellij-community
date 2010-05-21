@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +37,9 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, List<String> result) {
     String initialName = UsageViewUtil.getShortName(element);
     SuggestedNameInfo info = suggestNamesForElement(element);
+    if (info != null) {
+      info = JavaCodeStyleManager.getInstance(element.getProject()).suggestUniqueVariableName(info, element, true);
+    }
 
     String parameterName = null;
     String superMethodName = null;
@@ -81,28 +83,6 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     }
     final String[] strings = info != null ? info.names : ArrayUtil.EMPTY_STRING_ARRAY;
     ArrayList<String> list = new ArrayList<String>(Arrays.asList(strings));
-    final Set<String> alreadyDefined = new HashSet<String>();
-    final JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        final PsiElement psiElement = expression.resolve();
-        if (psiElement instanceof PsiVariable) {
-          alreadyDefined.add(((PsiVariable)psiElement).getName());
-        }
-        super.visitReferenceExpression(expression);
-      }
-    };
-    if (element instanceof PsiLocalVariable) {
-      final PsiCodeBlock block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-      if (block != null) {
-        block.accept(visitor);
-      }
-    } else if (element instanceof PsiParameter) {
-      ((PsiParameter)element).getDeclarationScope().accept(visitor);
-    } else if (element instanceof PsiField) {
-      element.getParent().accept(visitor);
-    }
-    list.removeAll(alreadyDefined);
     final String[] properlyCased = suggestProperlyCasedName(element);
     if (!list.contains(initialName)) {
       list.add(0, initialName);
