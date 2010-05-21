@@ -45,7 +45,7 @@ public class ExpectedTypeUtil {
       if (acc.isEmpty()) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
-      result = acc;
+      result = new ExpectedTypeInfos(acc.toArray());
     }
 
     return result.toArray();
