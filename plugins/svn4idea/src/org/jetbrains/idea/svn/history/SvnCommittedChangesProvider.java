@@ -259,7 +259,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionBefore = SVNRevision.create(changeTo.longValue());
       }
       else {
-        revisionBefore = SVNRevision.HEAD;
+        revisionBefore = SVNRevision.create(myVcs.createRepository(url).getLatestRevision());
       }
       final SVNRevision revisionAfter;
       if (dateFrom != null) {

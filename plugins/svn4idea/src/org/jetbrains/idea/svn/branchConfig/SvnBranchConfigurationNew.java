@@ -177,6 +177,18 @@ public class SvnBranchConfigurationNew {
     return branchSearcher.getResult();
   }
 
+  // todo +-
+  @Nullable
+  public String getGroupToLoadToReachUrl(final SVNURL url) throws SVNException {
+    final BranchSearcher branchSearcher = new BranchSearcher(url);
+    for (String group : myBranchMap.keySet()) {
+      if (branchSearcher.accept(group)) {
+        return group;
+      }
+    }
+    return null;
+  }
+
   private void iterateUrls(final UrlListener listener) throws SVNException {
     if (listener.accept(myTrunkUrl)) {
       return;
@@ -191,9 +203,9 @@ public class SvnBranchConfigurationNew {
         }
       }
 
-      if (listener.accept(branchUrl)) {
+      /*if (listener.accept(branchUrl)) {
         return;
-      }
+      }*/
     }
   }
 

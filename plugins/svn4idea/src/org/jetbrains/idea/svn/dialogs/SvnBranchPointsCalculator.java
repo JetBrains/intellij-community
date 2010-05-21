@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class SvnBranchPointsCalculator {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator");
   private final FactsCalculator<KeyData, WrapperInvertor<BranchCopyData>> myCalculator;
 
   private PersistentHolder myPersistentHolder;
@@ -56,14 +58,21 @@ public class SvnBranchPointsCalculator {
       cache = new ValueHolder<WrapperInvertor<BranchCopyData>, KeyData>() {
         public WrapperInvertor<BranchCopyData> getValue(KeyData dataHolder) {
           try {
-            return myPersistentHolder.getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
+            final WrapperInvertor<BranchCopyData> result =
+              myPersistentHolder.getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Persistent for: " + dataHolder.toString() + " returned: " + (result == null ? null : result.toString()));
+            }
+            return result;
           } catch (IOException e) {
           }
           return null;
         }
-        // todo carefully check
         public void setValue(WrapperInvertor<BranchCopyData> value, KeyData dataHolder) {
           try {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Put into persistent: key: " + dataHolder.toString() + " value: " + value.toString());
+            }
             myPersistentHolder.put(dataHolder.getRepoUrl(),
                                    value.isInvertedSense() ? dataHolder.getSourceUrl() : dataHolder.getTargetUrl(), value.getWrapped());
           }
@@ -138,6 +147,11 @@ public class SvnBranchPointsCalculator {
 
     public T inverted() {
       return myWrapped.invertSelf();
+    }
+
+    @Override
+    public String toString() {
+      return "inverted: " + myInvertedSense + " wrapped: " + myWrapped.toString();
     }
   }
 
@@ -265,7 +279,12 @@ public class SvnBranchPointsCalculator {
           }
         }
       }).run();
-      return result.get();
+
+      final WrapperInvertor<BranchCopyData> invertor = result.get();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Loader returned: for key: " + keyData.toString() + " result: " + (invertor == null ? null : invertor.toString()));
+      }
+      return invertor;
     }
   }
 
@@ -291,6 +310,11 @@ public class SvnBranchPointsCalculator {
     public String getTargetUrl() {
       return myTargetUrl;
     }
+
+    @Override
+    public String toString() {
+      return "repoURL: " + myRepoUrl + " sourceUrl:" + mySourceUrl + " targetUrl: " + myTargetUrl;
+    }
   }
 
   public static class BranchCopyData implements Invertor<BranchCopyData> {
@@ -304,6 +328,11 @@ public class SvnBranchPointsCalculator {
       mySourceRevision = sourceRevision;
       myTarget = target;
       myTargetRevision = targetRevision;
+    }
+
+    @Override
+    public String toString() {
+      return "source: " + mySource + "@" + mySourceRevision + " target: " + myTarget + "@" + myTargetRevision;
     }
 
     public String getSource() {

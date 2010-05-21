@@ -15,12 +15,14 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
+import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.integrate.SvnBranchItem;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,9 @@ public interface SvnBranchConfigManager {
 
   void reloadBranches(@NotNull VirtualFile root, @NotNull String branchParentUrl,
                              Consumer<List<SvnBranchItem>> callback);
-
+  @Nullable
+  @CalledInBackground
+  SVNURL getWorkingBranchWithReload(final SVNURL svnurl, final VirtualFile root);
+  
   Map<VirtualFile, SvnBranchConfigurationNew> getMapCopy();
 }

@@ -45,14 +45,12 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
 public class ToBeMergedDialog extends DialogWrapper {
+  public static final int MERGE_ALL_CODE = 222;
   private final JPanel myPanel;
   private final Project myProject;
   private final PageEngine<List<CommittedChangeList>> myListsEngine;
@@ -61,7 +59,6 @@ public class ToBeMergedDialog extends DialogWrapper {
   private Splitter mySplitter;
 
   private final QuantitySelection<Long> myWiseSelection;
-  private List<Change> myChanges;
   private final BranchInfo myBranchInfo;
 
   private final Set<Change> myAlreadyMerged;
@@ -73,13 +70,23 @@ public class ToBeMergedDialog extends DialogWrapper {
     myProject = project;
 
     myListsEngine = new BasePageEngine<CommittedChangeList>(lists, ourPageSize);
-    myChanges = CommittedChangesTreeBrowser.collectChanges(lists, false);
 
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<Long>(true);
     myAlreadyMerged = new HashSet<Change>();
+    setOKButtonText("Merge Selected");
     initUI();
     init();
+  }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {
+      @Override
+      protected void doAction(ActionEvent e) {
+        close(MERGE_ALL_CODE);
+      }
+    }, getCancelAction()};
   }
 
   public List<CommittedChangeList> getSelected() {
@@ -114,7 +121,6 @@ public class ToBeMergedDialog extends DialogWrapper {
   }
 
   private void initUI() {
-    final JTabbedPane pane = new JTabbedPane();
     myRevisionsList = new JList();
     final PagedListWithActions.InnerComponentManager<CommittedChangeList> listsManager =
       new PagedListWithActions.InnerComponentManager<CommittedChangeList>() {
@@ -146,14 +152,7 @@ public class ToBeMergedDialog extends DialogWrapper {
 
     addRevisionListListeners();
 
-    pane.add("Revisions", mySplitter);
-
-    final RepositoryChangesBrowser browser =
-      new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), Collections.<Change>emptyList(), null);
-    browser.setChangesToDisplay(myChanges);
-    pane.add("Files", browser);
-
-    myPanel.add(pane, BorderLayout.CENTER);
+    myPanel.add(mySplitter, BorderLayout.CENTER);
   }
 
   private void setChangesDecorator() {
