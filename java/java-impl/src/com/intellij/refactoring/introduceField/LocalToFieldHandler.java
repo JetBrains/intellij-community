@@ -111,7 +111,7 @@ public abstract class LocalToFieldHandler {
 
           final PsiMethod enclosingConstructor = BaseExpressionToFieldHandler.getEnclosingConstructor(aaClass, local);
           PsiField field = settings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(aaClass, local, fieldName)
-                                                              : createField(local, fieldName, initializerPlace == IN_FIELD_DECLARATION);
+                                                              : createField(local, settings.getForcedType(), fieldName, initializerPlace == IN_FIELD_DECLARATION);
           field = (PsiField)aaClass.add(field);
           BaseExpressionToFieldHandler.setModifiers(field, settings, isStatic);
           if (!settings.isIntroduceEnumConstant()) {
@@ -175,7 +175,7 @@ public abstract class LocalToFieldHandler {
     return true;
   }
 
-  private PsiField createField(PsiLocalVariable local, String fieldName, boolean includeInitializer) {
+  private PsiField createField(PsiLocalVariable local, PsiType forcedType, String fieldName, boolean includeInitializer) {
     @NonNls StringBuilder pattern = new StringBuilder();
     pattern.append("private int ");
     pattern.append(fieldName);
@@ -191,10 +191,10 @@ public abstract class LocalToFieldHandler {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
       field = (PsiField)CodeStyleManager.getInstance(myProject).reformat(field);
 
-      field.getTypeElement().replace(factory.createTypeElement(local.getType()));
+      field.getTypeElement().replace(factory.createTypeElement(forcedType));
       if (includeInitializer) {
         PsiExpression initializer =
-          RefactoringUtil.convertInitializerToNormalExpression(local.getInitializer(), local.getType());
+          RefactoringUtil.convertInitializerToNormalExpression(local.getInitializer(), forcedType);
         field.getInitializer().replace(initializer);
       }
 

@@ -1,5 +1,7 @@
 package com.intellij.refactoring;
 
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.JavaTestUtil;
@@ -33,5 +35,16 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
 
   private static void performRefactoring(final BaseExpressionToFieldHandler.InitializationPlace initializationPlace, final boolean declareStatic) {
     new MockIntroduceFieldHandler(initializationPlace, declareStatic).invoke(getProject(), myEditor, myFile, null);
+  }
+
+  public void testForcedFieldType() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeForcedFieldType.java");
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false){
+      @Override
+      protected PsiType getFieldType(PsiType type) {
+        return PsiPrimitiveType.INT;
+      }
+    }.invoke(getProject(), myEditor, myFile, null);
+    checkResultByFile("/refactoring/introduceField/afterForcedFieldType.java");
   }
 }
