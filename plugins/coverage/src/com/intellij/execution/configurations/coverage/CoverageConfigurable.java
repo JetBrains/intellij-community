@@ -17,7 +17,10 @@
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.coverage.*;
+import com.intellij.coverage.CoverageDataManager;
+import com.intellij.coverage.CoverageRunner;
+import com.intellij.coverage.CoverageSuite;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.util.JreVersionDetector;
