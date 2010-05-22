@@ -2,10 +2,12 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -13,10 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.MatchOptions;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
@@ -61,9 +60,15 @@ public class PatternCompiler {
     final CompileContext context = new CompileContext();
     if (ApplicationManager.getApplication().isUnitTestMode()) lastTestingContext = context;
 
-    CompiledPattern result = options.getFileType() == StdFileTypes.JAVA ?
-                             new CompiledPattern.JavaCompiledPattern() :
-                             new CompiledPattern.XmlCompiledPattern();
+    /*CompiledPattern result = options.getFileType() == StdFileTypes.JAVA ?
+                             new JavaCompiledPattern() :
+                             new XmlCompiledPattern();*/
+    FileType fileType = options.getFileType();
+    assert fileType instanceof LanguageFileType;
+    Language language = ((LanguageFileType)fileType).getLanguage();
+    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
+    assert profile != null;
+    CompiledPattern result = profile.createCompiledPattern();
 
     try {
       context.init(result, options,project, options.getScope() instanceof GlobalSearchScope);

@@ -1,9 +1,9 @@
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.CompositeFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
@@ -16,12 +16,12 @@ import java.util.ArrayList;
 /**
  * @author maxim
  */
-class GlobalCompilingVisitor {
+public class GlobalCompilingVisitor {
   private CompileContext context;
   private final ArrayList<PsiElement> myLexicalNodes = new ArrayList<PsiElement>();
 
-  private final JavaCompilingVisitor myJavaVisitor = new JavaCompilingVisitor(this);
-  private final PsiElementVisitor myXmlVisitor = new XmlCompilingVisitor(this);
+  //private final JavaCompilingVisitor myJavaVisitor = new JavaCompilingVisitor(this);
+  //private final PsiElementVisitor myXmlVisitor = new XmlCompilingVisitor(this);
 
   private int myCodeBlockLevel;
 
@@ -107,12 +107,15 @@ class GlobalCompilingVisitor {
   void compile(PsiElement element, CompileContext context) {
     myCodeBlockLevel = 0;
     this.context = context;
-    if (element instanceof XmlElement) {
+    /*if (element instanceof XmlElement) {
       element.accept(myXmlVisitor);
     }
     else {
       element.accept(myJavaVisitor);
-    }
+    }*/
+    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+    assert profile != null;
+    element.accept(profile.createCompilingVisitor(this));
 
     if (context.getPattern().getStrategy() == null) {
       context.getPattern().setStrategy(ExprMatchingStrategy.getInstance());

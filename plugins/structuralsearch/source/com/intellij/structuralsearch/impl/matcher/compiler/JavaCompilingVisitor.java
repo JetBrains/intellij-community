@@ -6,6 +6,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
@@ -27,7 +28,7 @@ import static com.intellij.structuralsearch.MatchOptions.PACKAGE_LOCAL_MODIFIER_
 /**
  * @author Eugene.Kudelevsky
  */
-class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
+public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private final GlobalCompilingVisitor myCompilingVisitor;
 
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
@@ -142,20 +143,24 @@ class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitField(PsiField psiField) {
     super.visitField(psiField);
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiField);
+    CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final MatchingHandler handler = pattern.getHandler(psiField);
 
     if (needsSupers(psiField, handler)) {
-      myCompilingVisitor.getContext().getPattern().setRequestsSuperFields(true);
+      assert pattern instanceof JavaCompiledPattern;
+      ((JavaCompiledPattern)pattern).setRequestsSuperFields(true);
     }
   }
 
   @Override
   public void visitMethod(PsiMethod psiMethod) {
     super.visitMethod(psiMethod);
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiMethod);
+    CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final MatchingHandler handler = pattern.getHandler(psiMethod);
 
     if (needsSupers(psiMethod, handler)) {
-      myCompilingVisitor.getContext().getPattern().setRequestsSuperMethods(true);
+      assert pattern instanceof JavaCompiledPattern;
+      ((JavaCompiledPattern)pattern).setRequestsSuperMethods(true);
     }
 
     GlobalCompilingVisitor.setFilter(handler, MethodFilter.getInstance());
@@ -334,10 +339,11 @@ class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitClass(PsiClass psiClass) {
     super.visitClass(psiClass);
-    final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(psiClass);
+    CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    final MatchingHandler handler = pattern.getHandler(psiClass);
 
     if (needsSupers(psiClass, handler)) {
-      myCompilingVisitor.getContext().getPattern().setRequestsSuperInners(true);
+      ((JavaCompiledPattern)pattern).setRequestsSuperInners(true);
     }
 
     GlobalCompilingVisitor.setFilter(handler, ClassFilter.getInstance());

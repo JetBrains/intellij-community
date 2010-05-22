@@ -1,11 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
@@ -13,10 +14,11 @@ import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterato
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.util.containers.HashMap;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Visitor class to manage pattern matching
@@ -26,24 +28,20 @@ public class GlobalMatchingVisitor {
 
   // the pattern element for visitor check
   private PsiElement myElement;
-  
+
   // the result of matching in visitor
   private boolean myResult;
 
   // context of matching
   private MatchContext matchContext;
 
-  private final PsiElementVisitor myXmlVisitor = new XmlMatchingVisitor(this);
-  private final PsiElementVisitor myJavaVisitor = new JavaMatchingVisitor(this);
+  //private final PsiElementVisitor myXmlVisitor = new XmlMatchingVisitor(this);
+  //private final PsiElementVisitor myJavaVisitor = new JavaMatchingVisitor(this);
 
-  public static final String[] MODIFIERS = {
-    PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC, PsiModifier.ABSTRACT, PsiModifier.FINAL,
-    PsiModifier.NATIVE, PsiModifier.SYNCHRONIZED, PsiModifier.STRICTFP, PsiModifier.TRANSIENT, PsiModifier.VOLATILE
-  };
+  private Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
 
-  static {
-    Arrays.sort(MODIFIERS);
-  }
+  /*private Language myLastLanguage;
+  private PsiElementVisitor myLastVisitor;*/
 
   public PsiElement getElement() {
     return myElement;
@@ -126,12 +124,14 @@ public class GlobalMatchingVisitor {
     myElement = el2;
 
     try {
-      if (el1 instanceof XmlElement) {
+      /*if (el1 instanceof XmlElement) {
         el1.accept(myXmlVisitor);
       }
       else {
         el1.accept(myJavaVisitor);
-      }
+      }*/
+      PsiElementVisitor visitor = getVisitorForElement(el1);
+      el1.accept(visitor);
     }
     catch (ClassCastException ex) {
       myResult = false;
@@ -141,6 +141,38 @@ public class GlobalMatchingVisitor {
     }
 
     return myResult;
+  }
+
+  private PsiElementVisitor getVisitorForElement(PsiElement element) {
+    Language language = element.getLanguage();
+    /*if (myLanguage2MatchingVisitor == null) {
+      if (myLastLanguage == null) {
+        myLastLanguage = language;
+        myLastVisitor = createMatchingVisitor(language);
+        return myLastVisitor;
+      }
+      if (language.equals(myLastLanguage)) {
+        return myLastVisitor;
+      }
+      myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
+      myLanguage2MatchingVisitor.put(myLastLanguage, myLastVisitor);
+      myLastLanguage = null;
+      myLastVisitor = null;
+    }*/
+    PsiElementVisitor visitor = myLanguage2MatchingVisitor.get(language);
+    if (visitor == null) {
+      visitor = createMatchingVisitor(language);
+      myLanguage2MatchingVisitor.put(language, visitor);
+    }
+    return visitor;
+  }
+
+  private PsiElementVisitor createMatchingVisitor(Language language) {
+    PsiElementVisitor visitor;
+    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
+    assert profile != null;
+    visitor = profile.createMatchingVisitor(this);
+    return visitor;
   }
 
   public boolean shouldAdvanceThePattern(final PsiElement element, PsiElement match) {

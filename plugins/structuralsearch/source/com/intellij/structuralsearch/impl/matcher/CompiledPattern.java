@@ -15,9 +15,6 @@ import java.util.HashMap;
  * Class to hold compiled pattern information
  */
 public abstract class CompiledPattern {
-  private boolean requestsSuperFields;
-  private boolean requestsSuperMethods;
-  private boolean requestsSuperInners;
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;
@@ -47,32 +44,6 @@ public abstract class CompiledPattern {
     this.optionsHashStamp = optionsHashStamp;
   }
 
-  public static class JavaCompiledPattern extends CompiledPattern {
-    public String getTypedVarPrefix() {
-      return TYPED_VAR_PREFIX;
-    }
-
-    public boolean isTypedVar(final String str) {
-      if (str.charAt(0)=='@') {
-        return str.regionMatches(1,TYPED_VAR_PREFIX,0,TYPED_VAR_PREFIX.length());
-      } else {
-        return str.startsWith(TYPED_VAR_PREFIX);
-      }
-    }
-  }
-
-  public static class XmlCompiledPattern extends CompiledPattern {
-    public String getTypedVarPrefix() {
-      return XML_TYPED_VAR_PREFIX;
-    }
-
-    public boolean isTypedVar(final String str) {
-      return str.startsWith(XML_TYPED_VAR_PREFIX);
-    }
-  }
-
-  private static final String TYPED_VAR_PREFIX = "__$_";
-  private static final String XML_TYPED_VAR_PREFIX = "__";
   public static final Key<PsiElement> ALL_CLASS_CONTENT_VAR_KEY = Key.create("AllClassContent");
   
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
@@ -161,30 +132,6 @@ public abstract class CompiledPattern {
     handlers.put(compiledName,handler);
 
     return handler;
-  }
-
-  public boolean isRequestsSuperFields() {
-    return requestsSuperFields;
-  }
-
-  public void setRequestsSuperFields(boolean requestsSuperFields) {
-    this.requestsSuperFields = requestsSuperFields;
-  }
-
-  public boolean isRequestsSuperInners() {
-    return requestsSuperInners;
-  }
-
-  public void setRequestsSuperInners(boolean requestsSuperInners) {
-    this.requestsSuperInners = requestsSuperInners;
-  }
-
-  public boolean isRequestsSuperMethods() {
-    return requestsSuperMethods;
-  }
-
-  public void setRequestsSuperMethods(boolean requestsSuperMethods) {
-    this.requestsSuperMethods = requestsSuperMethods;
   }
 
   public SearchScope getScope() {

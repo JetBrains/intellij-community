@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -26,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
@@ -125,7 +123,7 @@ public class MatcherImpl {
       private void checkModifier(final String name) {
         if (!MatchOptions.INSTANCE_MODIFIER_NAME.equals(name) &&
             !MatchOptions.PACKAGE_LOCAL_MODIFIER_NAME.equals(name) &&
-            Arrays.binarySearch(GlobalMatchingVisitor.MODIFIERS, name) < 0
+            Arrays.binarySearch(JavaMatchingVisitor.MODIFIERS, name) < 0
            ) {
           throw new MalformedPatternException(SSRBundle.message("invalid.modifier.type",name));
         }
@@ -278,14 +276,21 @@ public class MatcherImpl {
 
     if (searchScope instanceof GlobalSearchScope) {
       final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
+      LanguageFileType languageFileType = (LanguageFileType)options.getFileType();
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(languageFileType.getLanguage());
+      assert profile != null;
       final ContentIterator ci = new ContentIterator() {
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
             final PsiFile file = PsiManager.getInstance(project).findFile(fileOrDir);
+            if (file == null) {
+              return true;
+            }
 
-            if (options.getFileType() == StdFileTypes.JAVA && file instanceof PsiJavaFile ||
+            if (profile.isMyLanguage(file.getLanguage())) {
+            /*if (options.getFileType() == StdFileTypes.JAVA && file instanceof PsiJavaFile ||
                 options.getFileType() != StdFileTypes.JAVA && file instanceof XmlFile
-               ) {
+               ) {*/
               final FileViewProvider viewProvider = file.getViewProvider();
 
               for(Language lang: viewProvider.getLanguages()) {

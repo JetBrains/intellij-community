@@ -14,7 +14,7 @@ import com.intellij.structuralsearch.impl.matcher.strategies.XmlMatchingStrategy
 /**
 * @author Eugene.Kudelevsky
 */
-class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
+public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   private final GlobalCompilingVisitor myCompilingVisitor;
 
   public XmlCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {

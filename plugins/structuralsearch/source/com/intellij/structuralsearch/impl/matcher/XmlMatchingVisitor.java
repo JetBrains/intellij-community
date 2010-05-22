@@ -11,7 +11,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeItera
 /**
 * @author Eugene.Kudelevsky
 */
-class XmlMatchingVisitor extends XmlElementVisitor {
+public class XmlMatchingVisitor extends XmlElementVisitor {
   private final GlobalMatchingVisitor myMatchingVisitor;
 
   public XmlMatchingVisitor(GlobalMatchingVisitor matchingVisitor) {
