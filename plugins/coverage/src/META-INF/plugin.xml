@@ -14,7 +14,7 @@
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->
     <coverageRunner implementation="com.intellij.coverage.IDEACoverageRunner"/>
     <coverageSupport implementation="com.intellij.coverage.JavaCoverageSupportProvider" order = "last"/>
-    <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewNodeDecorator"/>
+    <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewClassNodeDecorator"/>
     <junitListener implementation="com.intellij.coverage.listeners.IDEAJUnitCoverageListener"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
