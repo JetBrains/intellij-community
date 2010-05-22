@@ -132,7 +132,6 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
 
   private void cancelWaitingForAutoInit() {
     myWaitingForAutoInitSession = false;
-    myAutoInitSessionEvent = null;
     myInitSessionAlarm.cancelAllRequests();
   }
 

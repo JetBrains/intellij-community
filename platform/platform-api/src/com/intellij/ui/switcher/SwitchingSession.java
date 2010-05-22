@@ -17,6 +17,7 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
@@ -25,12 +26,15 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Area;
+import java.awt.geom.RoundRectangle2D;
 import java.util.*;
 import java.util.List;
 
@@ -45,8 +49,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private LinkedHashSet<SwitchTarget> myTargets = new LinkedHashSet<SwitchTarget>();
   private IdeGlassPane myGlassPane;
 
-  private Map<SwitchTarget, TargetPainer> myPainters = new Hashtable<SwitchTarget, TargetPainer>();
-  private JComponent myRootComponent;
+  private Component myRootComponent;
 
   private SwitchTarget mySelection;
   private SwitchTarget myStartSelection;
@@ -62,6 +65,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     }
   };
   private SwitchManager myManager;
+  private Spotlight mySpotlight;
 
   public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
     myManager = mgr;
@@ -103,15 +107,68 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     myStartSelection = mySelection;
 
     myGlassPane = IdeGlassPaneUtil.find(myProvider.getComponent());
-    for (SwitchTarget each : myTargets) {
-      TargetPainer eachPainter = new TargetPainer(each);
-      Disposer.register(this, eachPainter);
+    myRootComponent = myProvider.getComponent().getRootPane().getContentPane();
+    mySpotlight = new Spotlight(myRootComponent);
+    myGlassPane.addPainter(myRootComponent, mySpotlight, this);
+   }
 
-      myRootComponent = myProvider.getComponent();
-      myGlassPane.addPainter(each.getComponent(), eachPainter, this);
-      myPainters.put(each, eachPainter);
+
+  private class Spotlight extends AbstractPainter {
+
+    private Component myRoot;
+
+    private Area myArea;
+
+    private Spotlight(Component root) {
+      myRoot = root;
+      myArea = new Area(new Rectangle(new Point(), myRoot.getSize()));
+      setNeedsRepaint(true);
     }
 
+    @Override
+    public boolean needsRepaint() {
+      return true;
+    }
+
+    @Override
+    public void executePaint(Component component, Graphics2D g) {
+
+      double inset = 0;
+      double selectedInset = -4;
+
+      Set<Area> shapes = new HashSet<Area>();
+      Area selected = null;
+      for (SwitchTarget each : myTargets) {
+        RelativeRectangle eachSimpleRec = each.getRectangle();
+        if (eachSimpleRec == null) continue;
+        Rectangle eachRec = eachSimpleRec.getRectangleOn(myRoot);
+        Shape eachShape;
+        if (each.equals(mySelection)) {
+          eachShape = new RoundRectangle2D.Double(eachRec.getX() + selectedInset,
+                                                  eachRec.getY() + selectedInset,
+                                                  eachRec.width - selectedInset -selectedInset,
+                                                  eachRec.height - selectedInset -selectedInset,
+                                                  6, 6);
+          selected = new Area(eachShape);
+        } else {
+          eachShape = new RoundRectangle2D.Double(eachRec.getX() + inset, eachRec.getY() + inset, eachRec.width - inset -inset, eachRec.height - inset -inset, 6, 6);
+        }
+        shapes.add(new Area(eachShape));
+        myArea.subtract(new Area(eachShape));
+      }
+
+      g.setColor(new Color(0f, 0f, 0f, 0.15f));
+      g.fill(myArea);
+
+      for (Shape each : shapes) {
+        if (each.equals(selected)) {
+          g.setColor(Color.gray);
+        } else {
+          g.setColor(Color.lightGray);
+        }
+        g.draw(each);
+      }
+    }
   }
 
   public boolean dispatchKeyEvent(KeyEvent e) {
@@ -212,9 +269,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     mySelectionWasMoved = !mySelection.equals(myStartSelection);
 
-    for (TargetPainer each : myPainters.values()) {
-      each.setNeedsRepaint(true);
-    }
+    mySpotlight.setNeedsRepaint(true);
 
     myAutoApply.cancelAllRequests();
     myAutoApply.addRequest(myAutoApplyRunnable, Registry.intValue("actionSystem.autoSelectTimeout"));
@@ -263,13 +318,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
         }
         points.add(selected);
         target2Point.put(each, selected);
-
-        myPainters.get(each).setPoint(new RelativePoint(myRootComponent, selected));
       } else {
         points.add(eachPoint);
         target2Point.put(each, eachPoint);
-
-        myPainters.get(each).setPoint(new RelativePoint(myRootComponent, eachPoint));
       }
     }
 
