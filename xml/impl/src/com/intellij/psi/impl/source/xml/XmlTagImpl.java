@@ -191,12 +191,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (document == null) {
       return null;
     }
-
-    XmlDoctype docType = XmlUtil.getDocType(document);
-    if (document instanceof XmlDocumentImpl && docType != null) {
-      return ((XmlDocumentImpl)document).getNsDescriptorFormDocType(docType, containingFile);
+    final String url = XmlUtil.getDtdUri(document);
+    if (url == null) {
+      return null;
     }
-    return null;
+    return document.getDefaultNSDescriptor(url, true);
   }
 
   public boolean isEmpty() {
