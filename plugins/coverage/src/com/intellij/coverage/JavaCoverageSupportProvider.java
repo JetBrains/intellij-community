@@ -1,6 +1,6 @@
 package com.intellij.coverage;
 
-import com.intellij.execution.RunJavaConfiguration;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
@@ -28,7 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
-import com.intellij.rt.coverage.util.SourceLineCounter;
+import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class JavaCoverageSupportProvider extends CoverageSupportProvider {
 
   @Override
   public CoverageEnabledConfiguration createCoverageEnabledConfiguration(final ModuleBasedConfiguration conf) {
-    if (conf instanceof RunJavaConfiguration) {
+    if (conf instanceof CommonJavaRunConfigurationParameters) {
       return new JavaCoverageEnabledConfiguration(conf, this);
     }
     return null;
