@@ -7,8 +7,9 @@ package com.intellij.execution.coverage;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSupportProvider;
 import com.intellij.coverage.IDEACoverageRunner;
+import com.intellij.coverage.listeners.CoverageListener;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.configurations.coverage.CoverageConfigurable;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
@@ -35,7 +36,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Nullable
-  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> SettingsEditor createEditor(T configuration) {
+  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> SettingsEditor createEditor(T configuration) {
     if (!isApplicableFor(configuration)) {
       return null;
     }
@@ -52,14 +53,14 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Nullable
-  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> Icon getIcon(T runConfiguration) {
+  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> Icon getIcon(T runConfiguration) {
     if (!isApplicableFor(runConfiguration)) {
       return null;
     }
     return CoverageSupportProvider.getIcon(runConfiguration);
   }
 
-  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) {
+  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void updateJavaParameters(T configuration, JavaParameters params, RunnerSettings runnerSettings) {
     if (!isApplicableFor(configuration)) {
       return;
     }
@@ -96,7 +97,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void patchConfiguration(T runJavaConfiguration) {
+  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void patchConfiguration(T runJavaConfiguration) {
     if (!isApplicableFor(runJavaConfiguration)) {
       return;
     }
@@ -106,7 +107,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public <T extends ModuleBasedConfiguration & RunJavaConfiguration> void checkConfiguration(T runJavaConfiguration)
+  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> void checkConfiguration(T runJavaConfiguration)
     throws RuntimeConfigurationException {
     if (!isApplicableFor(runJavaConfiguration)) {
       return;
@@ -117,6 +118,16 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (configuration.isCoverageEnabled() && configuration.getCoverageRunner() == null) {
       throw new RuntimeConfigurationException("Coverage runner is not set");
     }
+  }
+
+
+  @Override
+  public <T extends ModuleBasedConfiguration & CommonJavaRunConfigurationParameters> boolean isListenerDisabled(T configuration, Object listener) {
+    if (listener instanceof CoverageListener) {
+      final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.get(configuration);
+      return !(coverageEnabledConfiguration.isCoverageEnabled() && coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner);
+    }
+    return false;
   }
 
   private boolean isApplicableFor(final ModuleBasedConfiguration configuration) {
