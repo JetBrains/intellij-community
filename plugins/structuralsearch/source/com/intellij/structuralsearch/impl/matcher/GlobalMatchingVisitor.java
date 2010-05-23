@@ -15,8 +15,9 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -99,7 +100,7 @@ public class GlobalMatchingVisitor {
     );
   }
 
-  protected final boolean handleTypedElement(final PsiElement typedElement, final PsiElement match) {
+  public final boolean handleTypedElement(final PsiElement typedElement, final PsiElement match) {
     final SubstitutionHandler handler = (SubstitutionHandler)matchContext.getPattern().getHandler(typedElement);
     return handler.handle(match, matchContext);
   }
@@ -145,20 +146,6 @@ public class GlobalMatchingVisitor {
 
   private PsiElementVisitor getVisitorForElement(PsiElement element) {
     Language language = element.getLanguage();
-    /*if (myLanguage2MatchingVisitor == null) {
-      if (myLastLanguage == null) {
-        myLastLanguage = language;
-        myLastVisitor = createMatchingVisitor(language);
-        return myLastVisitor;
-      }
-      if (language.equals(myLastLanguage)) {
-        return myLastVisitor;
-      }
-      myLanguage2MatchingVisitor = new HashMap<Language, PsiElementVisitor>(1);
-      myLanguage2MatchingVisitor.put(myLastLanguage, myLastVisitor);
-      myLastLanguage = null;
-      myLastVisitor = null;
-    }*/
     PsiElementVisitor visitor = myLanguage2MatchingVisitor.get(language);
     if (visitor == null) {
       visitor = createMatchingVisitor(language);
@@ -186,7 +173,7 @@ public class GlobalMatchingVisitor {
   // @param el2 the tree element for matching
   // @return if they are equal and false otherwise
 
-  protected boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
+  public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
     return continueMatchingSequentially(nodes, nodes2, matchContext);
   }
 
@@ -221,7 +208,7 @@ public class GlobalMatchingVisitor {
     final CompiledPattern pattern = matchContext.getPattern();
     final NodeIterator patternNodes = pattern.getNodes().clone();
     final MatchResultImpl saveResult = matchContext.hasResult() ? matchContext.getResult() : null;
-    final LinkedList<PsiElement> saveMatchedNodes = matchContext.getMatchedNodes();
+    final List<PsiElement> saveMatchedNodes = matchContext.getMatchedNodes();
 
     try {
       matchContext.setResult(null);
@@ -243,7 +230,7 @@ public class GlobalMatchingVisitor {
           }
         }
 
-        final LinkedList<PsiElement> matchedNodes = matchContext.getMatchedNodes();
+        final List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
 
         if (matched) {
           dispatchMatched(matchedNodes, matchContext.getResult());
@@ -325,8 +312,37 @@ public class GlobalMatchingVisitor {
     }
   }
 
-  void setMatchContext(MatchContext matchContext) {
+  public void setMatchContext(MatchContext matchContext) {
     this.matchContext = matchContext;
   }
 
+  // Matches the sons of given elements to find equality
+  // @param el1 the pattern element for matching
+  // @param el2 the tree element for matching
+  // @return if they are equal and false otherwise
+
+  public boolean matchSons(final PsiElement el1, final PsiElement el2) {
+    if (el1 == null || el2 == null) return el1 == el2;
+    return matchSequentially(el1.getFirstChild(), el2.getFirstChild());
+  }
+
+  public boolean matchSonsOptionally(final PsiElement element, final PsiElement element2) {
+    return (element == null && matchContext.getOptions().isLooseMatching()) ||
+           matchSons(element, element2);
+  }
+
+  public boolean matchOptionally(@NotNull PsiElement[] elements1, @NotNull PsiElement[] elements2) {
+    return (elements1.length == 0 && matchContext.getOptions().isLooseMatching()) ||
+           matchSequentially(elements1, elements2);
+  }
+
+  public boolean matchOptionally(@Nullable PsiElement element1, @Nullable PsiElement element2) {
+    return element1 == null && matchContext.getOptions().isLooseMatching() || 
+           match(element1, element2);
+  }
+
+  public boolean matchSequentially(@NotNull PsiElement[] elements1, @NotNull PsiElement[] element2) {
+    return matchSequentially(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements1)),
+                             new FilteringNodeIterator(new ArrayBackedNodeIterator(element2)));
+  }
 }

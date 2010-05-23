@@ -6,7 +6,7 @@ import com.intellij.psi.xml.XmlText;
 /**
 * @author Eugene.Kudelevsky
 */
-class XmlLexicalNodesFilter extends XmlElementVisitor {
+public class XmlLexicalNodesFilter extends XmlElementVisitor {
   private final LexicalNodesFilter myLexicalNodesFilter;
 
   public XmlLexicalNodesFilter(LexicalNodesFilter lexicalNodesFilter) {

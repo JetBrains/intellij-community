@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -29,7 +30,7 @@ class ReplacementContext {
       PsiCodeBlock search;
       search = (PsiCodeBlock)MatcherImplUtil.createTreeFromText(
         options.getMatchOptions().getSearchPattern(),
-        MatcherImplUtil.TreeContext.Block, 
+        PatternTreeContext.Block,
         options.getMatchOptions().getFileType(),
         project
       )[0].getParent();

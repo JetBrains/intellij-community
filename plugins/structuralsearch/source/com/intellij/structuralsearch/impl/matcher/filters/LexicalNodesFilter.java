@@ -1,6 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Filter for lexical nodes
@@ -9,8 +15,10 @@ public final class LexicalNodesFilter  implements NodeFilter {
   private boolean careKeyWords;
   private boolean result;
 
-  private final PsiElementVisitor myJavaVisitor = new JavaLexicalNodesFilter(this);
-  private final PsiElementVisitor myXmlVistVisitor = new XmlLexicalNodesFilter(this);
+  //private final PsiElementVisitor myJavaVisitor = new JavaLexicalNodesFilter(this);
+  //private final PsiElementVisitor myXmlVistVisitor = new XmlLexicalNodesFilter(this);
+
+  private List<PsiElementVisitor> myCachedFilters;
 
   private LexicalNodesFilter() {
   }
@@ -45,8 +53,15 @@ public final class LexicalNodesFilter  implements NodeFilter {
   public boolean accepts(PsiElement element) {
     result = false;
     if (element!=null) {
-      element.accept(myJavaVisitor);
-      element.accept(myXmlVistVisitor);
+      if (myCachedFilters == null) {
+        myCachedFilters = new ArrayList<PsiElementVisitor>();
+        for (StructuralSearchProfile profile : StructuralSearchUtil.getAllProfiles()) {
+          myCachedFilters.add(profile.createLexicalNodesFilter(this));
+        }
+      }
+      for (PsiElementVisitor filter : myCachedFilters) {
+        element.accept(filter);
+      }
     }
     return result;
   }

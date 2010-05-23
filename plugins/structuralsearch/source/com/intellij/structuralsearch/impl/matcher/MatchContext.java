@@ -19,13 +19,13 @@ public class MatchContext {
   private GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
 
-  private LinkedList<PsiElement> myMatchedNodes;
+  private List<PsiElement> myMatchedNodes;
 
-  public LinkedList<PsiElement> getMatchedNodes() {
+  public List<PsiElement> getMatchedNodes() {
     return myMatchedNodes;
   }
 
-  public void setMatchedNodes(final LinkedList<PsiElement> matchedNodes) {
+  public void setMatchedNodes(final List<PsiElement> matchedNodes) {
     myMatchedNodes = matchedNodes;
   }
 
@@ -85,7 +85,7 @@ public class MatchContext {
     return pattern;
   }
 
-  void setPattern(CompiledPattern pattern) {
+  public void setPattern(CompiledPattern pattern) {
     this.pattern = pattern;
   }
 
@@ -93,7 +93,7 @@ public class MatchContext {
     return sink;
   }
 
-  void setSink(MatchResultSink sink) {
+  public void setSink(MatchResultSink sink) {
     this.sink = sink;
   }
 

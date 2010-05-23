@@ -43,7 +43,7 @@ public class GlobalCompilingVisitor {
     }
   }
 
-  protected final void handle(PsiElement element) {
+  public final void handle(PsiElement element) {
 
     if ((!ourFilter.accepts(element) ||
          element instanceof PsiIdentifier) &&
@@ -79,7 +79,7 @@ public class GlobalCompilingVisitor {
     this.myCodeBlockLevel = codeBlockLevel;
   }
 
-  protected static void setFilter(MatchingHandler handler, NodeFilter filter) {
+  static void setFilter(MatchingHandler handler, NodeFilter filter) {
     if (handler.getFilter() != null &&
         handler.getFilter().getClass() != filter.getClass()
       ) {
@@ -115,7 +115,7 @@ public class GlobalCompilingVisitor {
     }*/
     StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     assert profile != null;
-    element.accept(profile.createCompilingVisitor(this));
+    profile.compile(element, this);
 
     if (context.getPattern().getStrategy() == null) {
       context.getPattern().setStrategy(ExprMatchingStrategy.getInstance());

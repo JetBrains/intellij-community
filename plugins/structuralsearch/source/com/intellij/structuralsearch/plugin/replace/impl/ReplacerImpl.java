@@ -20,6 +20,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
@@ -63,7 +64,7 @@ public class ReplacerImpl {
       if (options.getMatchOptions().getScope() == null) {
         PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           in,
-          filePattern ? MatcherImplUtil.TreeContext.File : MatcherImplUtil.TreeContext.Block,
+          filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
           this.options.getMatchOptions().getFileType(),
           project
         );
@@ -249,8 +250,8 @@ public class ReplacerImpl {
     PsiElement[] statements = MatcherImplUtil.createTreeFromText(
       replacementToMake,
       el instanceof PsiMember && !isSymbolReplacement(el, context)?
-      MatcherImplUtil.TreeContext.Class :
-      MatcherImplUtil.TreeContext.Block,
+      PatternTreeContext.Class :
+      PatternTreeContext.Block,
       options.getMatchOptions().getFileType(),
       project
     );
@@ -742,7 +743,7 @@ public class ReplacerImpl {
       if (fileType==StdFileTypes.JAVA) {
         PsiElement[] statements = MatcherImplUtil.createTreeFromText(
           search,
-          MatcherImplUtil.TreeContext.Block,
+          PatternTreeContext.Block,
           fileType,
           project
         );
@@ -757,7 +758,7 @@ public class ReplacerImpl {
 
         PsiElement[] statements2 = MatcherImplUtil.createTreeFromText(
           replacement,
-          MatcherImplUtil.TreeContext.Block,
+          PatternTreeContext.Block,
           fileType,
           project
         );

@@ -7,7 +7,6 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -17,7 +16,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -40,8 +39,10 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -82,17 +83,24 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
   protected final ExistingTemplatesComponent existingTemplatesComponent;
 
+  private static final String DEFAULT_TYPE_NAME = getPresentableName(StructuralSearchUtil.DEFAULT_FILE_TYPE);
+
   private boolean useLastConfiguration;
 
   private static boolean ourOpenInNewTab;
   private static boolean ourUseMaxCount;
-  @NonNls private static String ourFileType = "java";
+  @NonNls private static String ourFileType = DEFAULT_TYPE_NAME;
   private final boolean myShowScopePanel;
   private final boolean myRunFindActionOnClose;
   private boolean myDoingOkAction;
 
   public SearchDialog(SearchContext searchContext) {
     this(searchContext, true, true);
+  }
+
+  @NotNull
+  private static String getPresentableName(FileType fileType) {
+    return fileType.getName().toLowerCase();
   }
 
   public SearchDialog(SearchContext searchContext, boolean showScope, boolean runFindActionOnClose) {
@@ -250,7 +258,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     maxMatches.setMaximumSize(new Dimension(50, 25));
 
     //noinspection HardCodedStringLiteral
-    fileTypes = new JComboBox(new String[]{"java", "xml", "html"});
+    java.util.List<String> typeNames = new ArrayList<String>();
+    for (StructuralSearchProfile profile : StructuralSearchUtil.getAllProfiles()) {
+      for (FileType type : profile.getFileTypes()) {
+        typeNames.add(getPresentableName(type));
+      }
+    }
+
+    fileTypes = new JComboBox(ArrayUtil.toStringArray(typeNames));
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     searchOptions.add(
@@ -265,32 +280,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     jLabel.setLabelFor(fileTypes);
 
-    final PsiFile file = searchContext.getFile();
-    if (file != null) {
-      Language contextLanguage = null;
-
-      if (searchContext.getEditor() != null) {
-        final PsiElement psiElement = file.findElementAt(searchContext.getEditor().getCaretModel().getOffset());
-        contextLanguage = psiElement != null ? psiElement.getParent().getLanguage():null;
-      }
-
-      if (file.getLanguage() == StdLanguages.HTML ||
-          ( file.getFileType() == StdFileTypes.JSP &&
-            contextLanguage == StdLanguages.HTML
-          )
-         ) {
-        ourFileType = "html";
-      }
-      else if (file.getLanguage() == StdLanguages.XHTML ||
-               ( file.getFileType() == StdFileTypes.JSPX &&
-                 contextLanguage == StdLanguages.HTML
-               )) {
-        ourFileType = "xml";
-      }
-      else {
-        ourFileType = "java";
-      }
-    }
+    detectFileType();
 
     fileTypes.setSelectedItem(ourFileType);
     fileTypes.addItemListener(new ItemListener() {
@@ -298,6 +288,51 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         if (e.getStateChange() == ItemEvent.SELECTED) initiateValidation();
       }
     });
+  }
+
+  private void detectFileType() {
+    final PsiFile file = searchContext.getFile();
+    if (file != null) {
+      Language contextLanguage = null;
+
+      PsiElement context = null;
+
+      if (searchContext.getEditor() != null) {
+        context = file.findElementAt(searchContext.getEditor().getCaretModel().getOffset());
+        if (context != null) {
+          context = context.getParent();
+        }
+      }
+      if (context == null) {
+        context = file;
+      }
+
+      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
+      if (profile != null) {
+        FileType fileType = profile.detectFileType(context);
+        ourFileType = getPresentableName(fileType);
+      }
+      else {
+        ourFileType = DEFAULT_TYPE_NAME;
+      }
+
+      /*if (file.getLanguage() == StdLanguages.HTML ||
+          (file.getFileType() == StdFileTypes.JSP &&
+           contextLanguage == StdLanguages.HTML
+          )
+        ) {
+        ourFileType = "html";
+      }
+      else if (file.getLanguage() == StdLanguages.XHTML ||
+               (file.getFileType() == StdFileTypes.JSPX &&
+                contextLanguage == StdLanguages.HTML
+               )) {
+        ourFileType = "xml";
+      }
+      else {
+        ourFileType = DEFAULT_TYPE_NAME;
+      }*/
+    }
   }
 
   protected boolean isRecursiveSearchEnabled() {
@@ -874,17 +909,29 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   private static FileType getFileTypeByString(String ourFileType) {
-    //noinspection HardCodedStringLiteral
-    if (ourFileType.equals("java")) {
+
+    for (StructuralSearchProfile profile : StructuralSearchUtil.getAllProfiles()) {
+      for (LanguageFileType fileType : profile.getFileTypes()) {
+        if (getPresentableName(fileType).equals(ourFileType)) {
+          return fileType;
+        }
+      }
+    }
+
+    assert false : "unknown file type: " + ourFileType;
+
+    return null;
+
+    /*if (ourFileType.equals("java")) {
       return StdFileTypes.JAVA;
     }
-    else //noinspection HardCodedStringLiteral
+    else
       if (ourFileType.equals("html")) {
         return StdFileTypes.HTML;
       }
       else {
         return StdFileTypes.XML;
-      }
+      }*/
   }
 
   protected boolean isSearchOnDemandEnabled() {

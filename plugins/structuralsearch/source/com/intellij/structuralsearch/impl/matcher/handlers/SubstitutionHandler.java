@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Matching handler that manages substitutions matching
@@ -305,7 +306,7 @@ public class SubstitutionHandler extends MatchingHandler {
     MatchResultImpl substitution = context.getResult().findSon(name);
 
     if (substitution!=null) {
-      final LinkedList<PsiElement> matchedNodes = context.getMatchedNodes();
+      final List<PsiElement> matchedNodes = context.getMatchedNodes();
 
       if (substitution.hasSons()) {
         final LinkedList<MatchResult> sons = (LinkedList<MatchResult>) substitution.getMatches();

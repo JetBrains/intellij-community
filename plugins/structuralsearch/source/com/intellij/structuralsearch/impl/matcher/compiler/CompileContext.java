@@ -12,7 +12,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
  * Time: 19:26:37
  * To change this template use File | Settings | File Templates.
  */
-class CompileContext {
+public class CompileContext {
   private OptimizingSearchHelper searchHelper;
   
   private CompiledPattern pattern;
@@ -45,7 +45,7 @@ class CompileContext {
     this.searchHelper = searchHelper;
   }
 
-  CompiledPattern getPattern() {
+  public CompiledPattern getPattern() {
     return pattern;
   }
 

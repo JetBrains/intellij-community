@@ -157,7 +157,7 @@ public class MatcherImpl {
     MatchingHandler matchingHandler = pattern.getHandler(element);
     return matchingHandler.canMatch(element, elt);
   }
-  
+
   public void processMatchesInElement(MatchContext context, Configuration configuration,
                                       PsiElement element,
                                       PairProcessor<MatchResult, Configuration> processor) {
@@ -165,8 +165,8 @@ public class MatcherImpl {
     context.setShouldRecursivelyMatch(false);
     visitor.matchContext(new ArrayBackedNodeIterator(new PsiElement[] {element}));
   }
-  
-  public boolean processMatchesInFile(MatchContext context, Configuration configuration, PsiFile psiFile, 
+
+  public boolean processMatchesInFile(MatchContext context, Configuration configuration, PsiFile psiFile,
                                       PairProcessor<MatchResult, Configuration> processor) {
     configureOptions(context, configuration, psiFile, processor);
     match(psiFile);
@@ -236,6 +236,22 @@ public class MatcherImpl {
     return new CompiledOptions(contexts);
   }
 
+  MatchContext getMatchContext() {
+    return matchContext;
+  }
+
+  Project getProject() {
+    return project;
+  }
+
+  ProgressIndicator getProgress() {
+    return progress;
+  }
+
+  TaskScheduler getScheduler() {
+    return scheduler;
+  }
+
   /**
    * Finds the matches of given pattern starting from given tree element.
    * @throws MalformedPatternException
@@ -244,30 +260,60 @@ public class MatcherImpl {
   protected void findMatches(MatchResultSink sink, final MatchOptions options) throws MalformedPatternException, UnsupportedPatternException
   {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     CompiledPattern compiledPattern = prepareMatching(sink, options);
     if (compiledPattern== null) {
       return;
     }
+
     matchContext.getSink().setMatchingProcess( scheduler );
     scheduler.init();
     progress = matchContext.getSink().getProgressIndicator();
 
-    if(isTesting) {
-      // testing mode;
-      final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
-
-      if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(elements[0].getParent())) {
-        visitor.matchContext(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
-      } else {
-        for (PsiElement element : elements) {
-          match(element);
-        }
+    if (TokenBasedSearcher.canProcess(project, options)) {
+      TokenBasedSearcher searcher = new TokenBasedSearcher(this);
+      searcher.search(compiledPattern);
+      if (isTesting) {
+        matchContext.getSink().matchingFinished();
+        return;
       }
+    }
+    else {
+      if (isTesting) {
+        // testing mode;
+        final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
 
-      matchContext.getSink().matchingFinished();
-      return;
+        if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(elements[0].getParent())) {
+          visitor.matchContext(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
+        }
+        else {
+          for (PsiElement element : elements) {
+            match(element);
+          }
+        }
+
+        matchContext.getSink().matchingFinished();
+        return;
+      }
+      if (!findMatches(options, compiledPattern)) {
+        return;
+      }
     }
 
+    if (scheduler.getTaskQueueEndAction()==null) {
+      scheduler.setTaskQueueEndAction(
+        new Runnable() {
+          public void run() {
+            matchContext.getSink().matchingFinished();
+          }
+        }
+      );
+    }
+
+    scheduler.executeNext();
+  }
+
+  private boolean findMatches(MatchOptions options, CompiledPattern compiledPattern) {
     final Language ourPatternLanguage = ((LanguageFileType)options.getFileType()).getLanguage();
     final Language ourPatternLanguage2 = ourPatternLanguage == StdLanguages.XML ? StdLanguages.XHTML:null;
     SearchScope searchScope = compiledPattern.getScope();
@@ -296,7 +342,7 @@ public class MatcherImpl {
               for(Language lang: viewProvider.getLanguages()) {
                 if (lang != ourPatternLanguage && lang != ourPatternLanguage2) continue;
                 ++totalFilesToScan;
-                scheduler.addOneTask( new MatchOneFile(viewProvider.getPsi(lang)));
+                scheduler.addOneTask ( new MatchOneFile(viewProvider.getPsi(lang)));
               }
             }
           }
@@ -351,7 +397,7 @@ public class MatcherImpl {
     }
     else {
       final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
-      if (elementsToScan == null) return;
+      if (elementsToScan == null) return false;
       totalFilesToScan = elementsToScan.length;
 
       for (int i = 0; i < elementsToScan.length; ++i) {
@@ -365,18 +411,7 @@ public class MatcherImpl {
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
-
-    if (scheduler.getTaskQueueEndAction()==null) {
-      scheduler.setTaskQueueEndAction(
-        new Runnable() {
-          public void run() {
-            matchContext.getSink().matchingFinished();
-          }
-        }
-      );
-    }
-
-    scheduler.executeNext();
+    return true;
   }
 
   private CompiledPattern prepareMatching(final MatchResultSink sink, final MatchOptions options) {
@@ -458,7 +493,7 @@ public class MatcherImpl {
     try {
       PsiElement[] elements = MatcherImplUtil.createTreeFromText(
         source,
-        filePattern ? MatcherImplUtil.TreeContext.File : MatcherImplUtil.TreeContext.Block, 
+        filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
         options.getFileType(),
         project
       );
@@ -474,7 +509,7 @@ public class MatcherImpl {
     return sink.getMatches();
   }
 
-  private class TaskScheduler implements MatchingProcess {
+  class TaskScheduler implements MatchingProcess {
     private LinkedList<Runnable> tasks = new LinkedList<Runnable>();
     private boolean ended;
     private Runnable taskQueueEndAction;
@@ -616,7 +651,7 @@ public class MatcherImpl {
 
   // Initiates the matching process for given element
   // @param element the current search tree element
-  private void match(PsiElement element) {
+  public void match(PsiElement element) {
     MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
     if (strategy.continueMatching(element)) {

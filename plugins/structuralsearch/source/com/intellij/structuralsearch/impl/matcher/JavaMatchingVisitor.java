@@ -282,7 +282,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitCodeBlock(PsiCodeBlock block) {
-    myMatchingVisitor.setResult(matchSons(block, myMatchingVisitor.getElement()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchSons(block, myMatchingVisitor.getElement()));
   }
 
   @Override
@@ -360,7 +360,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(clazz.getFirstChild());
 
     myMatchingVisitor.setResult((myMatchingVisitor.match(clazz.getBaseClassReference(), clazz2.getBaseClassReference()) || isTypedVar) &&
-                                matchSons(clazz.getArgumentList(), clazz2.getArgumentList()) &&
+                                myMatchingVisitor.matchSons(clazz.getArgumentList(), clazz2.getArgumentList()) &&
                                 compareClasses(clazz, clazz2));
 
     if (myMatchingVisitor.getResult() && isTypedVar) {
@@ -813,7 +813,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiConditionalExpression cond2 = (PsiConditionalExpression)myMatchingVisitor.getElement();
 
     myMatchingVisitor.setResult(myMatchingVisitor.match(cond.getCondition(), cond2.getCondition()) &&
-                                matchSons(cond, cond2));
+                                myMatchingVisitor.matchSons(cond, cond2));
   }
 
   @Override
@@ -881,18 +881,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
     else {
-      myMatchingVisitor.setResult((arrayDims == arrayDims2) && matchSons(new1.getArgumentList(), new2.getArgumentList()));
+      myMatchingVisitor.setResult((arrayDims == arrayDims2) && myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
     }
-  }
-
-  // Matches the sons of given elements to find equality
-  // @param el1 the pattern element for matching
-  // @param el2 the tree element for matching
-  // @return if they are equal and false otherwise
-
-  private boolean matchSons(final PsiElement el1, final PsiElement el2) {
-    if (el1 == null || el2 == null) return el1 == el2;
-    return myMatchingVisitor.matchSequentially(el1.getFirstChild(), el2.getFirstChild());
   }
 
   private void saveOrDropResult(final PsiIdentifier methodNameNode, final boolean typedVar, final PsiIdentifier methodNameNode2) {
@@ -992,7 +982,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return;
     }
 
-    myMatchingVisitor.setResult(matchSons(mcall.getArgumentList(), mcall2.getArgumentList()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchSons(mcall.getArgumentList(), mcall2.getArgumentList()));
 
     if (myMatchingVisitor.getResult() && isTypedVar) {
       boolean res = myMatchingVisitor.getResult();
@@ -1057,7 +1047,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiSwitchStatement switch2 = (PsiSwitchStatement)myMatchingVisitor.getElement();
 
     myMatchingVisitor.setResult(myMatchingVisitor.match(switch1.getExpression(), switch2.getExpression()) &&
-                                matchSons(switch1.getBody(), switch2.getBody()));
+                                myMatchingVisitor.matchSons(switch1.getBody(), switch2.getBody()));
   }
 
   @Override
@@ -1095,11 +1085,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (myMatchingVisitor.getElement() instanceof PsiCodeBlock &&
         !(myMatchingVisitor.getElement().getParent() instanceof PsiBlockStatement)
       ) {
-      myMatchingVisitor.setResult(matchSons(block.getCodeBlock(), myMatchingVisitor.getElement()));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(block.getCodeBlock(), myMatchingVisitor.getElement()));
     }
     else {
       final PsiBlockStatement block2 = (PsiBlockStatement)myMatchingVisitor.getElement();
-      myMatchingVisitor.setResult(matchSons(block, block2));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(block, block2));
     }
   }
 
@@ -1177,7 +1167,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiSynchronizedStatement synchronized2 = (PsiSynchronizedStatement)myMatchingVisitor.getElement();
 
     myMatchingVisitor.setResult(myMatchingVisitor.match(synchronized1.getLockExpression(), synchronized2.getLockExpression()) &&
-                                matchSons(synchronized1.getBody(), synchronized2.getBody()));
+                                myMatchingVisitor.matchSons(synchronized1.getBody(), synchronized2.getBody()));
   }
 
   @Override
@@ -1190,7 +1180,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitParenthesizedExpression(PsiParenthesizedExpression expr) {
     if (myMatchingVisitor.getElement() instanceof PsiParenthesizedExpression) {
-      myMatchingVisitor.setResult(matchSons(expr, myMatchingVisitor.getElement()));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(expr, myMatchingVisitor.getElement()));
     }
     else {
       myMatchingVisitor.setResult(false);
@@ -1213,7 +1203,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitTryStatement(final PsiTryStatement try1) {
     final PsiTryStatement try2 = (PsiTryStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(matchSons(try1.getTryBlock(), try2.getTryBlock()));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchSons(try1.getTryBlock(), try2.getTryBlock()));
 
     if (!myMatchingVisitor.getResult()) return;
 
@@ -1263,7 +1253,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       if (finally1 != null) {
-        myMatchingVisitor.setResult(matchSons(finally1, finally2));
+        myMatchingVisitor.setResult(myMatchingVisitor.matchSons(finally1, finally2));
       }
 
       if (myMatchingVisitor.getResult() &&
@@ -1297,7 +1287,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       ) {
       myMatchingVisitor.setResult(
         myMatchingVisitor.match(new1.getClassReference(), ((PsiVariable)myMatchingVisitor.getElement().getParent()).getTypeElement()));
-      matchSons(new1.getArrayInitializer(), myMatchingVisitor.getElement());
+      myMatchingVisitor.matchSons(new1.getArrayInitializer(), myMatchingVisitor.getElement());
       return;
     }
 
@@ -1310,7 +1300,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (new1.getClassReference() != null) {
       if (new2.getClassReference() != null) {
         myMatchingVisitor.setResult(myMatchingVisitor.match(new1.getClassReference(), new2.getClassReference()) &&
-                                    matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()));
+                                    myMatchingVisitor.matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()));
 
         if (myMatchingVisitor.getResult()) {
           // matching dims
@@ -1327,7 +1317,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(true);
 
           myMatchingVisitor.setResult(myMatchingVisitor.match(new1.getClassReference(), element.getNextSibling()) &&
-                                      matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()));
+                                      myMatchingVisitor.matchSons(new1.getArrayInitializer(), new2.getArrayInitializer()));
 
           ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(false);
           if (myMatchingVisitor.getResult()) {
@@ -1343,7 +1333,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (new1.getClassReference() == new2.getClassReference()) {
       // probably anonymous class or array of primitive type
       ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(true);
-      myMatchingVisitor.setResult(matchSons(new1, new2));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(new1, new2));
       ((LexicalNodesFilter)LexicalNodesFilter.getInstance()).setCareKeyWords(false);
     }
     else if (new1.getAnonymousClass() == null &&
@@ -1351,7 +1341,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
              new2.getAnonymousClass() != null) {
       // allow matching anonymous class without pattern
       myMatchingVisitor.setResult(myMatchingVisitor.match(new1.getClassReference(), new2.getAnonymousClass().getBaseClassReference()) &&
-                                  matchSons(new1.getArgumentList(), new2.getArgumentList()));
+                                  myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
     }
     else {
       myMatchingVisitor.setResult(false);
@@ -1490,20 +1480,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       myMatchingVisitor.setResult((method.getName().equals(method2.getName()) || isTypedVar) &&
                                   myMatchingVisitor.match(method.getModifierList(), method2.getModifierList()) &&
-                                  matchSons(method.getParameterList(), method2.getParameterList()) &&
+                                  myMatchingVisitor.matchSons(method.getParameterList(), method2.getParameterList()) &&
                                   myMatchingVisitor.match(method.getReturnTypeElement(), method2.getReturnTypeElement()) &&
                                   myMatchingVisitor.matchInAnyOrder(method.getThrowsList(), method2.getThrowsList()) &&
-                                  matchSonsOptionally(method.getBody(), method2.getBody()));
+                                  myMatchingVisitor.matchSonsOptionally(method.getBody(), method2.getBody()));
     }
     finally {
       final PsiIdentifier methodNameNode2 = method2.getNameIdentifier();
 
       saveOrDropResult(methodNameNode, isTypedVar, methodNameNode2);
     }
-  }
-
-  private boolean matchSonsOptionally(final PsiElement element, final PsiElement element2) {
-    return (element == null && myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) ||
-           matchSons(element, element2);
   }
 }

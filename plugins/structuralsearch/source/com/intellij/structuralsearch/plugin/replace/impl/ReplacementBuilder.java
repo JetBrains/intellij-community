@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.IncorrectOperationException;
@@ -111,7 +112,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     try {
       final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
         _replacement,
-        MatcherImplUtil.TreeContext.Block,
+        PatternTreeContext.Block,
         fileType,
         project
       );

@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
@@ -26,7 +26,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private boolean recursiveSearch;
   private boolean caseSensitiveMatch;
   private boolean resultIsContextMatch = false;
-  private FileType myFileType = StdFileTypes.JAVA;
+  private FileType myFileType = StructuralSearchUtil.DEFAULT_FILE_TYPE;
   private int maxMatches = DEFAULT_MAX_MATCHES_COUNT;
   public static final int DEFAULT_MAX_MATCHES_COUNT = 1000;
 
@@ -42,7 +42,6 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   //private static final String SCOPE_ATTRIBUTE_NAME = "scope";
   @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
-  @NonNls private static final String XML = "xml";
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
   @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
   @NonNls public static final String PACKAGE_LOCAL_MODIFIER_NAME = PsiModifier.PACKAGE_LOCAL;
@@ -180,9 +179,9 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
     //@TODO serialize scope!
 
-    if (myFileType != StdFileTypes.JAVA) {
+    //if (myFileType != StdFileTypes.JAVA) {
       element.setAttribute(FILE_TYPE_ATTR_NAME,myFileType.getName());
-    }
+    //}
 
     if (variableConstraints!=null) {
       for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
@@ -227,11 +226,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     attr = element.getAttribute(FILE_TYPE_ATTR_NAME);
     if (attr!=null) {
       String value = attr.getValue();
-      if (value.equalsIgnoreCase(XML)) {
-        myFileType = StdFileTypes.XML;
-      } else {
-        myFileType = StdFileTypes.JAVA;
-      }
+      myFileType = getFileTypeByName(value);
     }
 
     // @TODO deserialize scope
@@ -244,6 +239,18 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
         addVariableConstraint(constraint);
       }
     }
+  }
+
+  private static FileType getFileTypeByName(String value) {
+    if (value != null) {
+      for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+        if (value.equals(type.getName())) {
+          return type;
+        }
+      }
+    }
+
+    return StructuralSearchUtil.DEFAULT_FILE_TYPE;
   }
 
   public boolean equals(Object o) {
@@ -265,7 +272,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
                                                                                                       null) {
       return false;
     }
-      
+
     return myFileType == matchOptions.myFileType;
   }
 

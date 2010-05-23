@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
+import java.util.List;
 
 public final class TopLevelMatchingHandler extends MatchingHandler {
   private final MatchingHandler delegate;
@@ -22,7 +23,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler {
     final boolean matched = delegate.match(patternNode, matchedNode, matchContext);
 
     if (matched) {
-      LinkedList<PsiElement> matchedNodes = matchContext.getMatchedNodes();
+      List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
       if (matchedNodes == null) {
         matchedNodes = new LinkedList<PsiElement>();
         matchContext.setMatchedNodes(matchedNodes);

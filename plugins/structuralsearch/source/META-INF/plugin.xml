@@ -1,21 +1,31 @@
 <idea-plugin>
   <name>Structural Search</name>
   <description>Searching / replacing source code in terms of syntax (query / replace code by example :-).
-    </description>
+  </description>
   <version>9.0</version>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <depends>com.intellij.modules.ultimate</depends>
+  <depends optional="true" config-file="javascript.xml">JavaScript</depends>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
+                    interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
+    <extensionPoint qualifiedName="com.intellij.tokenindex.tokenizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
-      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-      <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
+    <fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>
   </extensions>
+
   <resource-bundle>messages.SSRBundle</resource-bundle>
   <project-components>
-      <component>
-        <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
-        <option name="workspace" value="true" />
-        <skipForDummyProject/>
-      </component>
+    <component>
+      <implementation-class>com.intellij.structuralsearch.plugin.StructuralSearchPlugin</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <actions>

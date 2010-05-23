@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="ultimate-verifier" />
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="JavaScriptLanguage" />
   </component>
   <component name="copyright">
     <Base>

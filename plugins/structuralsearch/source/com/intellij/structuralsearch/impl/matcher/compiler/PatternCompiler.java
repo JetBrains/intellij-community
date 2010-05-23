@@ -18,6 +18,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
@@ -231,7 +232,7 @@ public class PatternCompiler {
       PsiElement[] matchStatements;
 
       try {
-        matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), MatcherImplUtil.TreeContext.Block, options.getFileType(), project);
+        matchStatements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(), project);
         if (matchStatements.length==0) throw new MalformedPatternException();
         patternNode = matchStatements[0].getParent();
       } catch (IncorrectOperationException e) {

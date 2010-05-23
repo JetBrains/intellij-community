@@ -1,7 +1,11 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiElement;
+import com.intellij.tokenindex.LanguageTokenizer;
+import com.intellij.tokenindex.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +18,7 @@ import java.util.List;
  */
 public class StructuralSearchUtil {
   private static final List<StructuralSearchProfile> myRegisteredProfiles  = new ArrayList<StructuralSearchProfile>();
+  public static final FileType DEFAULT_FILE_TYPE = StdFileTypes.JAVA;
 
   static {
     Collections.addAll(myRegisteredProfiles, new JavaStructuralSearchProfile(), new XmlStructuralSearchProfile());
@@ -34,20 +39,23 @@ public class StructuralSearchUtil {
         return profile;
       }
     }
-    return null;
-  }
-
-  /*@Nullable
-  public static StructuralSearchProfile getProfileByFileType(@NotNull FileType fileType) {
-    for (StructuralSearchProfile profile : myRegisteredProfiles) {
-      if (ArrayUtil.contains(fileType, profile.getFileTypes())) {
+    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+      if (profile.isMyLanguage(language)) {
         return profile;
       }
     }
     return null;
-  }*/
+  }
 
   public static List<StructuralSearchProfile> getAllProfiles() {
-    return myRegisteredProfiles;
+    List<StructuralSearchProfile> profiles = new ArrayList<StructuralSearchProfile>();
+    profiles.addAll(myRegisteredProfiles);
+    Collections.addAll(profiles, StructuralSearchProfile.EP_NAME.getExtensions());
+    return profiles;
+  }
+
+  @Nullable
+  public static Tokenizer getTokenizerForLanguage(@NotNull Language language) {
+    return LanguageTokenizer.INSTANCE.forLanguage(language);
   }
 }

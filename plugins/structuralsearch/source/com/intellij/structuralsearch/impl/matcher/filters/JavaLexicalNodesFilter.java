@@ -6,7 +6,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 /**
 * @author Eugene.Kudelevsky
 */
-class JavaLexicalNodesFilter extends JavaElementVisitor {
+public class JavaLexicalNodesFilter extends JavaElementVisitor {
   private final LexicalNodesFilter myLexicalNodesFilter;
 
   public JavaLexicalNodesFilter(LexicalNodesFilter lexicalNodesFilter) {
