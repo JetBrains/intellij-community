@@ -16,6 +16,9 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
@@ -23,7 +26,6 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -41,158 +43,157 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testOneNewParameter() throws Exception {
-    doTest(null, new GrParameterInfo[]{
-      new SimpleInfo("p", -1, "\"5\"", null, createType(CommonClassNames.JAVA_LANG_STRING))
-    });
+    doTest(null, new SimpleInfo[]{
+      new SimpleInfo("p", -1, "\"5\"", null, createType(CommonClassNames.JAVA_LANG_STRING))});
   }
 
   public void testRemoveParameter() throws Exception {
-    doTest(null, new GrParameterInfo[0]);
+    doTest(null, new SimpleInfo[0]);
   }
 
   public void testInsertParameter() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(0),
       new SimpleInfo("p", -1, "5", "-3", PsiType.INT),
       new SimpleInfo(1)
-    });
+                                 });
   }
 
   public void testInsertOptionalParameter() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(1),
       new SimpleInfo("p", -1, "5", "-3", PsiType.INT)
-    });
+                                 });
   }
 
   public void testNamedParametersRemove() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(1),
       new SimpleInfo(2)
-    });
+                                 });
   }
 
   public void testNamedParametersOrder1() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(2)
-    });
+                                 });
   }
 
   public void testNamedParametersOrder2() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(0),
       new SimpleInfo("p", -1, "5", null, PsiType.INT),
       new SimpleInfo(2),
-    });
+                                 });
   }
 
   public void testNamedParametersOrder3() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(2),
       new SimpleInfo("p", -1, "5", null, PsiType.INT),
-    });
+                                 });
   }
 
   public void testMoveNamedParameters() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(1),
       new SimpleInfo(0)
-    });
+                                 });
   }
 
   public void testMoveVarArgParameters() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(1),
       new SimpleInfo(0)
-    });
+                                 });
   }
 
   public void testChangeVisibilityAndName() throws Exception {
-    doTest("protected", "newName", null, new GrParameterInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
+    doTest("protected", "newName", null, new SimpleInfo[]{new SimpleInfo(0)}, new ThrownExceptionInfo[0], false);
   }
 
   public void testImplicitConstructorInConstructor() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo("p", -1, "5", null, PsiType.INT)
-    });
+                                 });
   }
 
   public void testImplicitConstructorForClass() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo("p", -1, "5", null, PsiType.INT)
-    });
+                                 });
   }
 
   public void testAnonymousClassUsage() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo("p", -1, "5", null, PsiType.INT)
-    });
+                                 });
   }
 
   public void testGroovyDocReferences() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo(0),
       new SimpleInfo(2)
-    });
+                                 });
   }
 
   public void testOverriders() throws Exception {
-    doTest("public", "bar", null, new GrParameterInfo[]{
+    doTest("public", "bar", null, new SimpleInfo[]{
       new SimpleInfo(0)
-    }, new ThrownExceptionInfo[0], false);
+                                                  }, new ThrownExceptionInfo[0], false);
   }
 
   public void testParameterRename() throws Exception {
-    doTest(null, new GrParameterInfo[]{
+    doTest(null, new SimpleInfo[]{
       new SimpleInfo("newP", 0)
-    });
+                                 });
   }
 
   public void testAddReturnType() throws Exception {
-    doTest("int", new GrParameterInfo[]{new SimpleInfo(0)});
+    doTest("int", new SimpleInfo[]{new SimpleInfo(0)});
   }
 
   public void testChangeReturnType() throws Exception {
-    doTest("int", new GrParameterInfo[]{new SimpleInfo(0)});
+    doTest("int", new SimpleInfo[]{new SimpleInfo(0)});
   }
 
   public void testRemoveReturnType() throws Exception {
-    doTest("", new GrParameterInfo[]{new SimpleInfo(0)});
+    doTest("", new SimpleInfo[]{new SimpleInfo(0)});
   }
 
   public void testChangeParameterType() throws Exception {
-    doTest("", new GrParameterInfo[]{new SimpleInfo("p", 0, null, null, PsiType.INT)});
+    doTest("", new SimpleInfo[]{new SimpleInfo("p", 0, null, null, PsiType.INT)});
   }
 
   public void testGenerateDelegate() throws Exception {
-    doTest("", new GrParameterInfo[]{new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT)}, true);
+    doTest("", new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiType.INT)}, true);
   }
 
   public void testAddException() throws Exception {
     doTest("public", null, "",
-           new GrParameterInfo[]{new SimpleInfo(0)},
+           new SimpleInfo[]{new SimpleInfo(0)},
            new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
            false
-    );
+          );
   }
 
   public void testExceptionCaughtInUsage() throws Exception {
     doTest("public", null, "",
-           new GrParameterInfo[]{new SimpleInfo(0)},
+           new SimpleInfo[]{new SimpleInfo(0)},
            new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
            false
-    );
+          );
   }
 
   public void testExceptionInClosableBlock() throws Exception {
     doTest("public", null, "",
-           new GrParameterInfo[]{new SimpleInfo(0)},
+           new SimpleInfo[]{new SimpleInfo(0)},
            new ThrownExceptionInfo[]{new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))},
            false
-    );
+          );
   }
 
   private PsiType createType(String typeText) {
@@ -200,36 +201,51 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
   }
 
 
-  private void doTest(String newReturnType, GrParameterInfo[] parameterInfos) throws Exception {
+  private void doTest(String newReturnType, SimpleInfo[] parameterInfos) throws Exception {
     doTest("public", null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], false);
   }
 
-  private void doTest(String newReturnType, GrParameterInfo[] parameterInfos, final boolean generateDelegate) throws Exception {
+  private void doTest(String newReturnType, SimpleInfo[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest("public", null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }
 
   private void doTest(String newVisibility,
                       String newName,
                       String newReturnType,
-                      GrParameterInfo[] parameterInfo,
+                      SimpleInfo[] parameterInfo,
                       ThrownExceptionInfo[] exceptionInfo,
                       final boolean generateDelegate) throws Exception {
-    doTest(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo),
+    doTestForGroovy(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo), new SimpleExceptionsGen(exceptionInfo),
            generateDelegate);
   }
 
-  private void doTest(String newVisibility, String newName, @NonNls String newReturnType, GenParams gen, final boolean generateDelegate)
-    throws Exception {
-    doTest(newVisibility, newName, newReturnType, gen, new SimpleExceptionsGen(), generateDelegate);
-  }
-
-  private void doTest(String newVisibility,
+  private void doTestForGroovy(String newVisibility,
                       String newName,
                       String newReturnType,
                       GenParams genParams,
                       GenExceptions genExceptions,
                       final boolean generateDelegate) throws Exception {
     myFixture.configureByFile(getTestName(false) + ".groovy");
+    executeRefactoring(newVisibility, newName, newReturnType, genParams, genExceptions, generateDelegate);
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
+
+  private void doTestForJava(String newVisibility,
+                             String newName,
+                             String newReturnType,
+                             GenParams genParams,
+                             GenExceptions genExceptions,
+                             final boolean generateDelegate) throws Exception {
+    myFixture.configureByFiles(getTestName(false) + ".groovy", getTestName(false)+".java");
+    executeRefactoring(newVisibility, newName, newReturnType, genParams, genExceptions, generateDelegate);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  private void executeRefactoring(String newVisibility,
+                                  String newName,
+                                  String newReturnType,
+                                  GenParams genParams,
+                                  GenExceptions genExceptions, boolean generateDelegate) {
     final PsiElement targetElement =
       TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof GrMethod);
@@ -250,7 +266,6 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
                            newName != null ? newName : method.getName(), Arrays.asList(genParams.genParams(method)),
                            genExceptions.genExceptions(method), generateDelegate);
     new GrChangeSignatureProcessor(getProject(), changeInfo).run();
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
 
@@ -258,38 +273,53 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     GrParameterInfo[] genParams(GrMethod method) throws IncorrectOperationException;
   }
 
-  private static class SimpleParameterGen implements GenParams {
-    private final GrParameterInfo[] myInfos;
+  private class SimpleParameterGen implements GenParams {
+    private final SimpleInfo[] myInfos;
 
-    private SimpleParameterGen(GrParameterInfo[] infos) {
+    private SimpleParameterGen(SimpleInfo[] infos) {
       myInfos = infos;
     }
 
     public GrParameterInfo[] genParams(GrMethod method) {
       GrParameter[] params = method.getParameterList().getParameters();
-      for (int i = 0, myInfosLength = myInfos.length; i < myInfosLength; i++) {
-        int oldIndex = myInfos[i].getOldIndex();
+      GrParameterInfo[] result=new GrParameterInfo[myInfos.length];
+      for (int i = 0; i < myInfos.length; i++) {
+        final SimpleInfo sim = myInfos[i];
+        int oldIndex = sim.myOldIndex;
+        final GrParameterInfo info;
         if (oldIndex > -1) {
-          final String name = myInfos[i].getName();
-          final CanonicalTypes.Type wrapper = myInfos[i].getTypeWrapper();
-          myInfos[i] = new GrParameterInfo(params[oldIndex], oldIndex) {
-            @Override
-            public String getName() {
-              if (name != null) return name;
-              return super.getName();
-            }
-
-            @Override
-            public CanonicalTypes.Type getTypeWrapper() {
-              if (wrapper != null) {
-                return wrapper;
-              }
-              return super.getTypeWrapper();
-            }
-          };
+          info = new GrParameterInfo(params[oldIndex], oldIndex);
         }
+        else {
+          info = new GrParameterInfo(getProject(), method);
+        }
+        if (sim.myNewName != null) {
+          setText(info.getNameFragment(), sim.myNewName);
+        }
+        if (sim.myType != null) {
+          setText(info.getTypeFragment(), sim.myType.getCanonicalText());          
+        }
+        if (sim.myDefaultInitializer != null) {
+          setText(info.getDefaultInitializerFragment(), sim.myDefaultInitializer);
+        }
+        if (sim.myDefaultValue != null) {
+          setText(info.getDefaultValueFragment(), sim.myDefaultValue);
+        }
+        result[i] = info;
       }
-      return myInfos;
+      return result;
+    }
+
+    private void setText(final PsiCodeFragment codeFragment, final String newText) {
+      new WriteAction() {
+        @Override
+        protected void run(Result result) throws Throwable {
+          final PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
+          final Document document = docManager.getDocument(codeFragment);
+          document.setText(newText);
+          docManager.commitDocument(document);
+        }
+      }.execute();
     }
   }
 
@@ -316,12 +346,12 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  class SimpleInfo extends GrParameterInfo {
+  static class SimpleInfo {
     int myOldIndex;
     String myNewName;
     String myDefaultValue;
     String myDefaultInitializer;
-    CanonicalTypes.Type myTypeWrapper;
+    private PsiType myType;
 
     SimpleInfo(int oldIndex) {
       this(null, oldIndex);
@@ -331,63 +361,12 @@ public class ChangeSignatureTest extends LightCodeInsightFixtureTestCase {
       this(newName, oldIndex, "", null, null);
     }
 
-    SimpleInfo(
-      String newName,
-      int oldIndex,
-      String defaultValue,
-      String defaultInitializer,
-      PsiType type) {
-      super(myFixture.getProject(), myFixture.getFile());
+    SimpleInfo(String newName, int oldIndex, String defaultValue, String defaultInitializer, PsiType type) {
       myOldIndex = oldIndex;
       myNewName = newName;
       myDefaultValue = defaultValue;
-      if (type == null) {
-        myTypeWrapper = null;
-      }
-      else {
-        myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
-      }
       myDefaultInitializer = defaultInitializer;
-    }
-
-    @Override
-    public int getOldIndex() {
-      return myOldIndex;
-    }
-
-    @Override
-    public String getName() {
-      return myNewName;
-    }
-
-    @Override
-    public String getDefaultValue() {
-      return myDefaultValue;
-    }
-
-    @Override
-    public CanonicalTypes.Type getTypeWrapper() {
-      return myTypeWrapper;
-    }
-
-    @Override
-    public String getTypeText() {
-      return myTypeWrapper.getTypeText();
-    }
-
-    @Override
-    public PsiType createType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
-      return myTypeWrapper.getType(context, manager);
-    }
-
-    @Override
-    public String getDefaultInitializer() {
-      return myDefaultInitializer;
-    }
-
-    @Override
-    public boolean hasNoType() {
-      return myTypeWrapper == null;
+      myType = type;
     }
   }
 }

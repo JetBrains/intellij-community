@@ -36,8 +36,6 @@ public class GrParameterInfo implements JavaParameterInfo {
   private GroovyCodeFragment myDefaultInitializer;
   private final int myPosition;
   private CanonicalTypes.Type myTypeWrapper;
-  private boolean myWasOptional = false;
-  private boolean myWasVarArg = false;
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
@@ -46,7 +44,6 @@ public class GrParameterInfo implements JavaParameterInfo {
     final PsiType type = parameter.getDeclaredType();
     if (type != null) {
       myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type.getCanonicalText(), parameter, true, true);
-      myWasVarArg = myType instanceof PsiArrayType;
     }
     else {
       myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", parameter, true, true);
@@ -59,7 +56,6 @@ public class GrParameterInfo implements JavaParameterInfo {
       myDefaultInitializer = new GroovyCodeFragment(project, "");
     }
     myDefaultValue = new GroovyCodeFragment(project, "");
-    myWasOptional = parameter.isOptional();
   }
 
   public GrParameterInfo(Project project, PsiElement context) {
@@ -141,8 +137,8 @@ public class GrParameterInfo implements JavaParameterInfo {
     return getTypeText().endsWith("...") || getTypeText().endsWith("[]");
   }
 
-  public boolean wasOptional() {
-    return myWasOptional;
+  public boolean isUseAnySingleVariable() {
+    return false;
   }
 
   public boolean isOptional() {
@@ -151,10 +147,6 @@ public class GrParameterInfo implements JavaParameterInfo {
 
   public String getDefaultInitializer() {
     return myDefaultInitializer.getText().trim();
-  }
-
-  public boolean wasWasVarArg() {
-    return myWasVarArg;
   }
 
   public boolean hasNoType() {
