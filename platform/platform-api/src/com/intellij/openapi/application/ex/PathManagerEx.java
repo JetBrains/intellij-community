@@ -369,12 +369,16 @@ public class PathManagerEx {
           return;
         }
         if (file.isDirectory()) {
-          dispatch(file);
+          if (!isOutputPath(file)) dispatch(file);
         }
         else {
           check(file);
         }
       }
+    }
+
+    private static boolean isOutputPath(File file) {
+      return "out".equals(file.getName());
     }
 
     public void check(File file) {
