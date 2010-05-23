@@ -36,10 +36,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.StringPattern;
@@ -950,7 +950,9 @@ public class XmlUtil {
   
   static {
     URL schemaLocation = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "html5/xhtml5.xsd");
-    HTML5_SCHEMA_LOCATION = FileUtil.toSystemIndependentName(schemaLocation.getPath().substring(1));
+    VirtualFile relativeFile = schemaLocation != null ?
+                               VfsUtil.findRelativeFile(VfsUtil.fixURLforIDEA(schemaLocation.toExternalForm()), null):null;
+    HTML5_SCHEMA_LOCATION = relativeFile != null ? relativeFile.getPath():"";
   }
   
   @Nullable
