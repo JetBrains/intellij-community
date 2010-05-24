@@ -9,11 +9,10 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
@@ -37,6 +36,7 @@ public class GppStdLibSupport implements NonCodeMembersProcessor {
     "groovy.util.Iterations", "groovy.util.Mappers",
     "groovy.util.Sort", "groovy.util.Strings",
     "groovy.util.With",
+    "groovy.util.concurrent.Atomics",
     "org.mbte.groovypp.runtime.ArraysMethods",
     "org.mbte.groovypp.runtime.DefaultGroovyPPMethods"};
 
@@ -94,23 +94,36 @@ public class GppStdLibSupport implements NonCodeMembersProcessor {
       super(method, isStatic);
     }
 
-    public boolean dominates(@NotNull final PsiSubstitutor substitutor,
+    public boolean isMoreConcreteThan(@NotNull final PsiSubstitutor substitutor,
                              @NotNull PsiMethod another,
                              @NotNull PsiSubstitutor anotherSubstitutor,
                              @NotNull GroovyPsiElement context) {
-      if (another instanceof GrGdkMethodImpl && !(another instanceof GppGdkMethod) && another.getName().equals(getName())) {
-        final PsiType[] paramTypes =
-          ContainerUtil.map2Array(getParameterList().getParameters(), PsiType.class, new Function<PsiParameter, PsiType>() {
-            public PsiType fun(PsiParameter psiParameter) {
-              return substitutor.substitute(psiParameter.getType());
-            }
-          });
-        final GrClosureSignature anotherSignature = GrClosureSignatureUtil.createSignature(another, anotherSubstitutor);
-        if (GrClosureSignatureUtil.isSignatureApplicable(anotherSignature, paramTypes, context)) {
+      if (another instanceof GrGdkMethodImpl && another.getName().equals(getName())) {
+        final PsiParameter[] plusParameters = getParameterList().getParameters();
+        final PsiParameter[] defParameters = another.getParameterList().getParameters();
+
+        final PsiType[] paramTypes = new PsiType[plusParameters.length];
+        for (int i = 0; i < paramTypes.length; i++) {
+          paramTypes[i] = eliminateOneMethodInterfaces(plusParameters[i], defParameters, i);
+
+        }
+
+        final GrClosureSignature gdkSignature = GrClosureSignatureUtil.createSignature(another, anotherSubstitutor);
+        if (GrClosureSignatureUtil.isSignatureApplicable(gdkSignature, paramTypes, context)) {
           return true;
         }
       }
       return false;
+    }
+
+    private static PsiType eliminateOneMethodInterfaces(PsiParameter plusParameter, PsiParameter[] gdkParameters, int i) {
+      PsiType type = plusParameter.getType();
+      if (i < gdkParameters.length &&
+          gdkParameters[i].getType().equalsToText(GrClosableBlock.GROOVY_LANG_CLOSURE) &&
+          GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(type) != null) {
+        return gdkParameters[i].getType();
+      }
+      return type;
     }
   }
 }

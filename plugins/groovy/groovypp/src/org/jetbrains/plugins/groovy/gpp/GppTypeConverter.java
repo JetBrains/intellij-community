@@ -5,12 +5,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 
@@ -20,26 +20,26 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 public class GppTypeConverter extends GrTypeConverter {
 
   public static boolean hasTypedContext(PsiElement context) {
-    return isTyped(PsiTreeUtil.getContextOfType(context, GrMember.class, true));
-  }
-
-  private static boolean isTyped(@Nullable PsiModifierListOwner member) {
-    if (member == null) {
+    if (context == null) {
       return false;
     }
 
-    final PsiModifierList modifierList = member.getModifierList();
-    if (modifierList != null && modifierList.findAnnotation("groovy.lang.Typed") != null) {
+    if (context instanceof PsiModifierListOwner && isTyped(((PsiModifierListOwner)context).getModifierList())) {
       return true;
     }
 
-    final GrMember parentMember = PsiTreeUtil.getContextOfType(member, GrMember.class, true);
+    final GrMember parentMember = PsiTreeUtil.getContextOfType(context, GrMember.class, true);
     if (parentMember != null) {
-      return isTyped(parentMember);
+      return hasTypedContext(parentMember);
     }
 
-    final PsiFile file = member.getContainingFile();
+    final PsiFile file = context.getContainingFile();
     if (file instanceof GroovyFile) {
+      final GrPackageDefinition packageDefinition = ((GroovyFile)file).getPackageDefinition();
+      if (packageDefinition != null && isTyped(packageDefinition.getAnnotationList())) {
+        return true;
+      }
+
       final VirtualFile vfile = file.getVirtualFile();
       if (vfile != null) {
         final String extension = vfile.getExtension();
@@ -48,18 +48,17 @@ public class GppTypeConverter extends GrTypeConverter {
         }
       }
 
-      return isTyped(JavaPsiFacade.getInstance(member.getProject()).findPackage(((GroovyFile)file).getPackageName()));
+      return false;
     }
     return false;
   }
 
+  private static boolean isTyped(PsiModifierList modifierList) {
+    return modifierList != null && modifierList.findAnnotation("groovy.lang.Typed") != null;
+  }
+
   @Override
   public Boolean isConvertible(@NotNull PsiType lType, @NotNull PsiType rType, @NotNull GroovyPsiElement context) {
-    if (!hasTypedContext(context)) {
-      return null;
-    }
-
-
     if (rType instanceof GrTupleType) {
       final PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
 

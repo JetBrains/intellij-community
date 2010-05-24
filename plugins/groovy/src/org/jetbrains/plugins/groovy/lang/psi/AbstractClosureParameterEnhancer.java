@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 
 import java.util.Arrays;
@@ -31,7 +32,7 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
     @SuppressWarnings({"SuspiciousMethodCalls"})
     int index = Arrays.asList(closure.getAllParameters()).indexOf(variable);
     assert index >= 0;
-    return getClosureParameterType(closure, index);
+    return TypesUtil.boxPrimitiveType(getClosureParameterType(closure, index), closure.getManager(), closure.getResolveScope());
   }
 
   @Nullable

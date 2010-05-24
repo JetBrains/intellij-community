@@ -109,14 +109,20 @@ public class GroovyExpectedTypesProvider {
         myResult = new TypeConstraint[]{SubtypeConstraint.create("groovy.lang.Closure", methodCall)};
         return;
       }
+
+      final List<GrClosableBlock> closureArgs = Arrays.asList(methodCall.getClosureArguments());
       //noinspection SuspiciousMethodCalls
-      if (Arrays.asList(methodCall.getClosureArguments()).contains(myExpression)) {
+      final int closureIndex = closureArgs.indexOf(myExpression);
+      if (closureIndex >= 0) {
         List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
         for (GroovyResolveResult variant : methodCall.getMethodVariants()) {
           PsiParameter[] parameters = getCallParameters(variant);
           if (parameters == null || parameters.length == 0) continue;
 
-          constraints.add(SubtypeConstraint.create(variant.getSubstitutor().substitute(parameters[parameters.length - 1].getType())));
+          final int paramIndex = parameters.length - closureArgs.size() + closureIndex;
+          if (paramIndex >= 0) {
+            constraints.add(SubtypeConstraint.create(variant.getSubstitutor().substitute(parameters[paramIndex].getType())));
+          }
         }
         if (!constraints.isEmpty()) {
           myResult = constraints.toArray(new TypeConstraint[constraints.size()]);

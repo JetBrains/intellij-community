@@ -691,9 +691,22 @@ public class MavenProject {
   }
 
   public void addDependency(MavenArtifact dependency) {
+    addDependency(dependency, false);
+  }
+
+  public void addDependency(MavenArtifact dependency, boolean toBegin) {
     State state = myState;
-    List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies);
-    dependenciesCopy.add(dependency);
+    List<MavenArtifact> dependenciesCopy = new ArrayList<MavenArtifact>(state.myDependencies.size() + 1);
+
+    if (toBegin) {
+      dependenciesCopy.add(dependency);
+      dependenciesCopy.addAll(state.myDependencies);
+    }
+    else {
+      dependenciesCopy.addAll(state.myDependencies);
+      dependenciesCopy.add(dependency);
+    }
+
     state.myDependencies = dependenciesCopy;
   }
 

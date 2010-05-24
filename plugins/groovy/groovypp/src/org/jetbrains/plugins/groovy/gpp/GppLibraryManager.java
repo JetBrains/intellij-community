@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.gpp;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,7 +111,11 @@ public class GppLibraryManager extends AbstractGroovyLibraryManager {
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return "GroovyPP";
+    return "Groovy++";
+  }
+
+  public boolean managesName(@NotNull String name) {
+    return super.managesName(name) || StringUtil.startsWithIgnoreCase(name, "groovypp");
   }
 
   @Override

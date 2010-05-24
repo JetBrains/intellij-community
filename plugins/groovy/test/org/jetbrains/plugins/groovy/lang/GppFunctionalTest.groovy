@@ -1,18 +1,13 @@
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.navigation.ImplementationSearcher
+import com.intellij.codeInsight.navigation.GotoImplementationHandler
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -23,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.navigation.GotoImplementationHandler
+import com.intellij.psi.*
 
 /**
  * @author peter
@@ -39,7 +34,6 @@ class GppFunctionalTest extends LightCodeInsightFixtureTestCase {
 
   protected void setUp() {
     super.setUp()
-    myFixture.allowTreeAccessForFile JavaPsiFacade.getInstance(project).findClass(Object.name).containingFile.navigationElement.containingFile.virtualFile
   }
 
   public void testCastListToIterable() throws Exception {
@@ -91,19 +85,16 @@ Foo f = [name: 'aaa', foo: { println 'hi' }, anotherProperty: 42 ]
 
   void testAssignability(String text) {
     myFixture.enableInspections new GroovyAssignabilityCheckInspection()
-    PsiFile file = configureTyped(text)
+    PsiFile file = configureScript(text)
     myFixture.testHighlighting(true, false, false, file.virtualFile)
   }
 
-  private PsiFile configureTyped(String text) {
-    return myFixture.configureByText("a.groovy", """
-@Typed def foo() {
-  $text
-}""")
+  private PsiFile configureScript(String text) {
+    return myFixture.configureByText("a.groovy", text)
   }
 
   public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne() throws Exception {
-    configureTyped("""
+    configureScript("""
 File f = ['path']
 f.mk<caret>
 """)
@@ -121,7 +112,7 @@ public class Some {
 }
 """
 
-    configureTyped("""
+    configureScript("""
 Some s = [prop: 239]
 s.f_<caret>
 """)
@@ -178,7 +169,7 @@ Action a1 = { a = 2 -> println a }
   }
 
   public void testClosureParameterTypesInAssignment() throws Exception {
-    configureTyped "Function1<String, Object> f = { it.subs<caret> }"
+    configureScript "Function1<String, Object> f = { it.subs<caret> }"
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
@@ -243,6 +234,20 @@ class Foo<T> {
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
   }
 
+  public void testClosureInMapInstantiationBoxPrimitives() throws Exception {
+    myFixture.configureByText "a.groovy", """
+class Foo {
+  int foo(int a) {}
+}
+
+@Typed Foo bar() {
+    return [foo: { it.intV<caret>V }]
+}
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.lookupElementStrings, "intValue"
+  }
+
   public void testClosureInListInstantiation() throws Exception {
     myFixture.configureByText "a.groovy", """
 class Foo {
@@ -300,14 +305,58 @@ class BarImpl extends Bar {}
   }
 
   public void testResolveToStdLib() throws Exception {
-    configureTyped """
+    configureScript """
 @Typed def foo(List<String> l) {
   l.ea<caret>ch { l.substring(1) }
 }
 """
-    PsiMethod method = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve().navigationElement
+    PsiMethod method = resolveReference().navigationElement
     assertEquals "each", method.name
     assertEquals "groovy.util.Iterations", method.containingClass.qualifiedName
+  }
+
+  private PsiElement resolveReference() {
+    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+  }
+
+  public void testMethodTypeParameterInference() throws Exception {
+    configureScript """
+@Typed package aaa
+
+java.util.concurrent.atomic.AtomicReference<Integer> r = [2]
+r.apply { it.intV<caret>i }
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.getLookupElementStrings(), "intValue"
+  }
+
+  public void testMethodTypeParameterInference2() throws Exception {
+    configureScript """
+@Typed package aaa
+
+java.util.concurrent.atomic.AtomicReference<Integer> r = [2]
+r.apply { it.intV<caret>i } {}
+"""
+    myFixture.completeBasic()
+    assertSameElements myFixture.getLookupElementStrings(), "intValue"
+  }
+
+  public void testGotoDeclarationFromMapLiterals() throws Exception {
+    PsiClass point = myFixture.addClass("""
+class Point {
+  int y;
+  void setX(int x) {}
+  void move(int x, int y) {}
+}""")
+
+    configureScript "Point p = [<caret>y:2]"
+    assertEquals point.findFieldByName("y", false), resolveReference()
+
+    configureScript "Point p = [<caret>x:2]"
+    assertEquals point.findMethodsByName("setX", false)[0], resolveReference()
+
+    configureScript "Point p = [mo<caret>ve: { x, y -> z }]"
+    assertEquals point.findMethodsByName("move", false)[0], resolveReference()
   }
 
 }

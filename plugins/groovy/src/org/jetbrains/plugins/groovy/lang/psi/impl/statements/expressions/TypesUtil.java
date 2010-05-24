@@ -254,6 +254,10 @@ public class TypesUtil {
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, GroovyPsiElement context) {
     if (lType == null || rType == null) return false;
 
+    if (isAssignableByMethodCallConversion(lType, rType, context.getManager(), context.getResolveScope())) {
+      return true;
+    }
+
     for (GrTypeConverter converter : GrTypeConverter.EP_NAME.getExtensions()) {
       final Boolean result = converter.isConvertible(lType, rType, context);
       if (result != null) {
@@ -261,7 +265,7 @@ public class TypesUtil {
       }
     }
 
-    return isAssignableByMethodCallConversion(lType, rType, context.getManager(), context.getResolveScope());
+    return false;
   }
 
   public static boolean isAssignableByMethodCallConversion(PsiType lType, PsiType rType, PsiManager manager, GlobalSearchScope scope) {

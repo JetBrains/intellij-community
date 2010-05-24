@@ -1,9 +1,20 @@
 <idea-plugin url="http://www.jetbrains.net/confluence/display/GRVY/Groovy+Home">
   <id>org.intellij.groovy.gpp</id>
   <name>Groovy++ Support</name>
-  <description>Adds code assistance for the Groovy++ features</description>
-  <version>0.1</version>
-  <idea-version since-build="95.105" until-build="96.1"/>
+  <description><![CDATA[
+    Adds code assistance for the Groovy++. Features:
+    <ul>
+      <li> Detect Groovy++ distributions and allow compiler to work with them
+      <li> Support list-map-closure auto-casting
+      <li> Infer parameter types of such closures and suggest code completion for their members
+      <li> Make 'GoTo Declaration' work on properties and methods defined as map values
+      <li> Recognize traits as things that can be implemented, offer code completion for them
+      <li> Resolve & completion for Groovy++ stdlib classes
+    </ul></p>
+   ]]></description>
+
+  <version>0.2</version>
+  <idea-version since-build="95.162" until-build="96.0"/>
   <vendor logo="/org/jetbrains/plugins/groovy/images/groovy_16x16.png" url="http://www.jetbrains.com">JetBrains Inc.</vendor>
   <depends>org.intellij.groovy</depends>
 
@@ -15,5 +26,10 @@
     <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
     <nonCodeProcessor implementation="org.jetbrains.plugins.groovy.gpp.GppStdLibSupport"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
+  </extensions>
+
 
 </idea-plugin>
