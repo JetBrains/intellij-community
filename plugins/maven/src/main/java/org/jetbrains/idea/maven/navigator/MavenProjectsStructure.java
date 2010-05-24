@@ -473,9 +473,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
             if (xml != null) {
               final XmlTag rootTag = xml.getRootTag();
               if (rootTag != null) {
-                final XmlTag id = rootTag.findFirstSubTag("artifactId");
-                if (id != null) {
-                  offset = id.getValue().getTextRange().getStartOffset();
+                final XmlTag[] id = rootTag.findSubTags("artifactId", rootTag.getNamespace());
+                if (id.length > 0) {
+                  offset = id[0].getValue().getTextRange().getStartOffset();
                 }
               }
             }
@@ -1100,9 +1100,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public class DependencyNode extends BaseDependenciesNode {
     private final MavenArtifact myArtifact;
+    private final MavenArtifactNode myArtifactNode;
 
     public DependencyNode(MavenSimpleNode parent, MavenArtifactNode artifactNode, MavenProject mavenProject) {
       super(parent, mavenProject);
+      myArtifactNode = artifactNode;
       myArtifact = artifactNode.getArtifact();
       setUniformIcon(MavenIcons.DEPENDENCY_ICON);
     }
