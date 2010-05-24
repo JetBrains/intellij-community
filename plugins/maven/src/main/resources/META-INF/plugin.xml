@@ -318,9 +318,7 @@
       <separator/>
       <reference id="Maven.RunBuild"/>
       <reference id="Maven.ToggleOffline"/>
-      <reference id="Maven.ToggleSkipTests"/>
-      <separator/>
-      <reference id="Maven.ExpandAll"/>
+      <reference id="Maven.ToggleSkipTests"/>            
       <reference id="Maven.CollapseAll"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
