@@ -318,7 +318,7 @@ public class BranchInfo {
 
     final Map<String, SVNMergeRangeList> map;
     try {
-      map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
+      map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(value.getString())), null);
     }
     catch (SVNException e) {
       LOG.info(e);
@@ -362,6 +362,10 @@ public class BranchInfo {
     }
     myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
     return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
+  }
+
+  private String replaceSeparators(final String s) {
+    return s.replace('\r', '\n').replace("\n\n", "\n");
   }
 
   public boolean isMixedRevisionsFound() {
