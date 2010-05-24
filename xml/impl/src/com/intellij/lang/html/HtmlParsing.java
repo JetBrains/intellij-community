@@ -80,6 +80,18 @@ public class HtmlParsing {
       else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_CHAR_ENTITY_REF || tt == XmlTokenType.XML_DATA_CHARACTERS) {
         error = flushError(error);
         advance();
+      } else if (tt == XmlTokenType.XML_END_TAG_START) {
+        final PsiBuilder.Marker tagEndError = myBuilder.mark();
+
+        advance();
+        if (token() == XmlTokenType.XML_NAME) {
+          advance();
+          if (token() == XmlTokenType.XML_TAG_END) {
+            advance();
+          }
+        }
+
+        tagEndError.error(XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing"));
       }
       else {
         if (error == null) error = mark();
@@ -316,7 +328,7 @@ public class HtmlParsing {
             else {
               advance();
               if (token() == XmlTokenType.XML_TAG_END) advance();
-              footer.error(XmlErrorMessages.message("xml.parsing.closing.tag.mathes.nothing"));
+              footer.error(XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing"));
               continue;
             }
           }

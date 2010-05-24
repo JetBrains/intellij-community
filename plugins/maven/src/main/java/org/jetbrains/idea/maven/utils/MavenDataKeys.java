@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.idea.maven.project.MavenArtifact;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -26,4 +27,8 @@ public class MavenDataKeys {
   public static final DataKey<List<String>> MAVEN_GOALS = DataKey.create("MAVEN_GOALS");
   public static final DataKey<List<String>> MAVEN_PROFILES = DataKey.create("MAVEN_PROFILES");
   public static final DataKey<Collection<MavenArtifact>> MAVEN_DEPENDENCIES = DataKey.create("MAVEN_DEPENDENCIES");
+  public static final DataKey<JTree> MAVEN_PROJECTS_TREE = DataKey.create("MAVEN_PROJECTS_TREE");
+
+  private MavenDataKeys() {
+  }
 }

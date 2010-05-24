@@ -143,7 +143,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
         public boolean execute(PsiElement element) {
           if (element instanceof XmlDoctype) {
             XmlDoctype xmlDoctype = (XmlDoctype)element;
-            final String dtdUri = xmlDoctype.getDtdUri();
+            final String dtdUri = XmlUtil.getDtdUri(xmlDoctype);
             if (dtdUri != null) {
               final XmlFile xmlFile = XmlUtil.findNamespace(XmlUtil.getContainingFile(element), dtdUri);
               if (xmlFile != null) {
