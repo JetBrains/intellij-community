@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring;
 
+import com.intellij.codeInsight.codeFragment.CannotCreateCodeFragmentException;
 import com.intellij.codeInsight.codeFragment.CodeFragment;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,19 +68,24 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
       context = PsiTreeUtil.getParentOfType(context, ScopeOwner.class);
     }
     final StringBuffer buffer = new StringBuffer();
-    final CodeFragment fragment = PyCodeFragmentUtil.createCodeFragment((ScopeOwner)context, startElement, endElement);
-    if (fragment.isReturnInstructonInside()) {
-      buffer.append("Return instruction inside found").append("\n");
+    try {
+      final CodeFragment fragment = PyCodeFragmentUtil.createCodeFragment((ScopeOwner)context, startElement, endElement);
+      if (fragment.isReturnInstructonInside()) {
+        buffer.append("Return instruction inside found").append("\n");
+      }
+      buffer.append("In:\n");
+      for (String inputVariable : new TreeSet<String>(fragment.getInputVariables())) {
+        buffer.append(inputVariable).append('\n');
+      }
+      buffer.append("Out:\n");
+      for (String outputVariable : new TreeSet<String>(fragment.getOutputVariables())) {
+        buffer.append(outputVariable).append('\n');
+      }
     }
-    buffer.append("In:\n");
-    for (String inputVariable : new TreeSet<String>(fragment.getInputVariables())) {
-      buffer.append(inputVariable).append('\n');
+    catch (CannotCreateCodeFragmentException e) {
+      assertEquals(result.trim(), e.getMessage());
+      return;
     }
-    buffer.append("Out:\n");
-    for (String outputVariable : new TreeSet<String>(fragment.getOutputVariables())) {
-      buffer.append(outputVariable).append('\n');
-    }
-
     assertEquals(result.trim(), buffer.toString().trim());
   }
 
@@ -142,6 +148,10 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
   }
 
   public void testClass() throws Exception {
+    doTest();
+  }
+
+  public void testForIfReturn() throws Exception {
     doTest();
   }
 }
