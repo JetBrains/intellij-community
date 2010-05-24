@@ -126,10 +126,11 @@ public class LowLevelSearchUtil {
     return true;
   }
   //@RequiresReadAction
-  public static boolean processElementsContainingWordInElement(final TextOccurenceProcessor processor,
-                                                               final PsiElement scope,
-                                                               final StringSearcher searcher,
-                                                               final boolean ignoreInjectedPsi, ProgressIndicator progress) {
+  public static boolean processElementsContainingWordInElement(@NotNull TextOccurenceProcessor processor,
+                                                               @NotNull PsiElement scope,
+                                                               @NotNull StringSearcher searcher,
+                                                               final boolean ignoreInjectedPsi,
+                                                               ProgressIndicator progress) {
     if (progress != null) progress.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
@@ -139,6 +140,9 @@ public class LowLevelSearchUtil {
     int scopeStart = range.getStartOffset();
     int startOffset = scopeStart;
     int endOffset = range.getEndOffset();
+    if (endOffset > buffer.length()) {
+      LOG.error("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextLength());
+    }
 
     do {
       if (progress != null) progress.checkCanceled();
@@ -156,6 +160,7 @@ public class LowLevelSearchUtil {
   }
 
   public static int searchWord(@NotNull CharSequence text, int startOffset, int endOffset, @NotNull StringSearcher searcher, @Nullable ProgressIndicator progress) {
+    LOG.assertTrue(endOffset <= text.length());
     for (int index = startOffset; index < endOffset; index++) {
       if (progress != null) progress.checkCanceled();
       //noinspection AssignmentToForLoopParameter
@@ -164,7 +169,7 @@ public class LowLevelSearchUtil {
       if (!searcher.isJavaIdentifier()) {
         return index;
       }
-      
+
       if (index > startOffset) {
         char c = text.charAt(index - 1);
         if (Character.isJavaIdentifierPart(c) && c != '$') {

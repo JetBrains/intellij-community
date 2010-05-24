@@ -73,21 +73,23 @@ public class StringSearcher {
   }
   
   public int scan(CharSequence text, int _start, int _end) {
-    if (myForwardDirection){
+    LOG.assertTrue(_start <= _end, _start - _end);
+    LOG.assertTrue(_end <= text.length(), text.length() - _end);
+    if (myForwardDirection) {
       int start = _start;
       int end = _end - myPatternLength;
 
-      while(start <= end){
+      while (start <= end) {
         int i = myPatternLength - 1;
         char lastChar = text.charAt(start + i);
-        if (!myCaseSensitive){
+        if (!myCaseSensitive) {
           lastChar = StringUtil.toLowerCase(lastChar);
         }
-        if (myPatternArray[i] == lastChar){
+        if (myPatternArray[i] == lastChar) {
           i--;
-          while(i >= 0){
+          while (i >= 0) {
             char c = text.charAt(start + i);
-            if (!myCaseSensitive){
+            if (!myCaseSensitive) {
               c = StringUtil.toLowerCase(c);
             }
             if (myPatternArray[i] != c) break;
@@ -98,9 +100,9 @@ public class StringSearcher {
 
         int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
 
-        if (step <= 0){
+        if (step <= 0) {
           int index;
-          for(index = myPatternLength - 2; index >= 0; index--){
+          for (index = myPatternLength - 2; index >= 0; index--) {
             if (myPatternArray[index] == lastChar) break;
           }
           step = myPatternLength - index - 1;
@@ -114,17 +116,17 @@ public class StringSearcher {
     else {
       int start = 1;
       int end = text.length() - myPatternLength + 1;
-      while(start <= end){
+      while (start <= end) {
         int i = myPatternLength - 1;
         char lastChar = text.charAt(text.length() - (start + i));
-        if (!myCaseSensitive){
+        if (!myCaseSensitive) {
           lastChar = StringUtil.toLowerCase(lastChar);
         }
-        if (myPatternArray[myPatternLength - 1 - i] == lastChar){
+        if (myPatternArray[myPatternLength - 1 - i] == lastChar) {
           i--;
-          while(i >= 0){
+          while (i >= 0) {
             char c = text.charAt(text.length() - (start + i));
-            if (!myCaseSensitive){
+            if (!myCaseSensitive) {
               c = StringUtil.toLowerCase(c);
             }
             if (myPatternArray[myPatternLength - 1 - i] != c) break;
@@ -135,9 +137,9 @@ public class StringSearcher {
 
         int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
 
-        if (step <= 0){
+        if (step <= 0) {
           int index;
-          for(index = myPatternLength - 2; index >= 0; index--){
+          for (index = myPatternLength - 2; index >= 0; index--) {
             if (myPatternArray[myPatternLength - 1 - index] == lastChar) break;
           }
           step = myPatternLength - index - 1;
