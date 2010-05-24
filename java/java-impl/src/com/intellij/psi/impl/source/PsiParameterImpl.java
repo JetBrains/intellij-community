@@ -28,6 +28,7 @@ import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -226,6 +227,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @NotNull
   public SearchScope getUseScope() {
-    return new LocalSearchScope(getDeclarationScope());
+    final PsiElement declarationScope = getDeclarationScope();
+    if (declarationScope instanceof PsiMethod) {
+      final PsiDocComment comment = ((PsiMethod)declarationScope).getDocComment();
+      if (comment != null && !declarationScope.getTextRange().contains(comment.getTextRange())) {
+        return new LocalSearchScope(new PsiElement[]{declarationScope, comment});
+      }
+    }
+    return new LocalSearchScope(declarationScope);
   }
 }
