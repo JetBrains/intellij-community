@@ -168,13 +168,6 @@ public class BackspaceHandler extends EditorWriteActionHandler {
         return null;
       }
     }
-/*    // and character at caret is not.
-    if (startCheckRange + endCheckRange < charSeq.length()){
-      final char c = charSeq.charAt(startCheckRange + endCheckRange);
-      if (c == '\t' || c == ' ' || c == '\n'){
-        return null;
-      }
-    }*/
 
     // Decrease column down to indentation * n
     final int indent = CodeStyleSettingsManager.getSettings(file.getProject()).getIndentSize(file.getFileType());
