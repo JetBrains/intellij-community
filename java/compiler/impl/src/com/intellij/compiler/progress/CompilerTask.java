@@ -200,10 +200,11 @@ public class CompilerTask extends Task.Backgroundable {
             AppIcon appIcon = AppIcon.getInstance();
             if (appIcon.hideProgress(APP_ICON_ID)) {
               if (myErrorCount > 0) {
-                appIcon.setBadge(String.valueOf(myErrorCount));
+                appIcon.setErrorBadge(String.valueOf(myErrorCount));
                 appIcon.requestAttention(true);
               } else {
-                appIcon.setBadge(null);
+                appIcon.setOkBadge(true);
+                appIcon.requestAttention(false);
               }
             }
           }
@@ -590,7 +591,7 @@ public class CompilerTask extends Task.Backgroundable {
               cancel();
             }
             if (AppIcon.getInstance().hideProgress("compiler")) {
-              AppIcon.getInstance().setBadge(null);
+              AppIcon.getInstance().setErrorBadge(null);
             }
           }
         }
