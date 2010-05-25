@@ -177,6 +177,13 @@ public class GroovyPositionManager implements PositionManager {
       return getClassNameForJvm(psiClass) + "$" + typeDefinition.getName();
     }
 
+    for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
+      final String s = helper.customizeClassName(typeDefinition);
+      if (s != null) {
+        return s;
+      }
+    }
+
     return typeDefinition.getQualifiedName();
   }
 

@@ -15,9 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.extensions.debugger;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,4 +53,9 @@ public abstract class ScriptPositionManagerHelper {
    */
   @Nullable
   public abstract PsiFile getExtraScriptIfNotFound(ReferenceType refType, @NotNull String runtimeName, Project project);
+
+  @Nullable
+  public String customizeClassName(PsiClass psiClass) {
+    return null;
+  }
 }
