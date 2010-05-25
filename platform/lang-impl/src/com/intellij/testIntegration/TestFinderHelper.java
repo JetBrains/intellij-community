@@ -36,6 +36,7 @@ public class TestFinderHelper {
     for (TestFinder each : getFinders()) {
       result.addAll(each.findTestsForClass(element));
     }
+    /*if (!result.isEmpty())*/ result.add(null);
     return result;
   }
 
