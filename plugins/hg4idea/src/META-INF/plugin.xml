@@ -28,12 +28,22 @@
   <version>10.0</version>
   <vendor email="victor.iacoban@gmail.com" logo="/images/mercurial.png" url="http://www.bitbucket.org/viacoban/hg4idea">Victor Iacoban</vendor>
   <depends>com.intellij.modules.vcs</depends>
+  
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs"/>
     <applicationConfigurable implementation="org.zmlx.hg4idea.HgIdeConfigurable"/>
   </extensions>
+
   <actions>
+    
+    <group id="MercurialFileGroup">
+      <separator/>
+      <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository"/>
+      <separator/>
+      <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
+    </group>
+
     <group id="hg4idea.file.menu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
       <reference id="ChangesView.AddUnversioned"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
@@ -43,6 +53,7 @@
       <reference id="Vcs.ShowHistoryForBlock"/>
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
+
     <group id="hg4idea.global.submenu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
       <action id="hg4idea.mq.rebase" class="org.zmlx.hg4idea.action.HgMqRebaseAction"/>
@@ -51,12 +62,14 @@
       <action id="hg4idea.switch" class="org.zmlx.hg4idea.action.HgSwitchWorkingDirectoryAction"/>
       <add-to-group group-id="VcsGlobalGroup" anchor="last"/>
     </group>
+    
     <group id="hg4idea.global.menu" popup="false">
       <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction"/>
       <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction"/>
       <add-to-group group-id="VcsGlobalGroup" relative-to-action="Vcs.IntegrateProject" anchor="after"/>
     </group>
   </actions>
+
   <application-components>
     <component>
       <implementation-class>org.zmlx.hg4idea.HgGlobalSettings</implementation-class>
