@@ -42,7 +42,8 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
   public abstract GenericAttributeValue<String> getName();
 
   @Attribute("value")
-  public abstract GenericAttributeValue<String> getValue();
+  @Convert(value = AntDomPropertyValueConverter.class)
+  public abstract GenericAttributeValue<Object> getValue();
 
   @Attribute("location")
   @Convert(value = AntPathConverter.class)
