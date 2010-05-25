@@ -302,6 +302,27 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
+   * Allows to retrieve alignment applied to any block that conforms to the following conditions:
+   * <p/>
+   * <ul>
+   *   <li>that block is current block or its ancestor (direct or indirect parent);</li>
+   *   <li>that block starts at the same offset as the current one;</li>
+   * </ul>
+   *
+   * @return    alignment of the current block or it's ancestor that starts at the same offset as the current if any;
+   *            <code>null</code> otherwise
+   */
+  @Nullable
+  public AlignmentImpl getAlignmentAtStartOffset() {
+    for (AbstractBlockWrapper block = this; block != null && block.getStartOffset() == getStartOffset(); block = block.getParent()) {
+      if (block.getAlignment() != null) {
+        return block.getAlignment();
+      }
+    }
+    return null;
+  }
+
+  /**
    * Allows to answer if indent for the given child block should be calculated taking into consideration alignment
    * of the text at current block start.
    *
@@ -320,27 +341,6 @@ public abstract class AbstractBlockWrapper {
 
     LeafBlockWrapper anchorOffsetBlock = alignment.getOffsetRespBlockBefore(child);
     return anchorOffsetBlock == null || anchorOffsetBlock.getStartOffset() >= getStartOffset();
-  }
-
-  /**
-   * Allows to retrieve alignment applied to any block that conforms to the following conditions:
-   * <p/>
-   * <ul>
-   *   <li>that block is current block or its ancestor (direct or indirect parent);</li>
-   *   <li>that block starts at the same offset as the current one;</li>
-   * </ul>
-   *
-   * @return    alignment of the current block or it's ancestor that starts at the same offset as the current if any;
-   *            <code>null</code> otherwise
-   */
-  @Nullable
-  private AlignmentImpl getAlignmentAtStartOffset() {
-    for (AbstractBlockWrapper block = this; block != null && block.getStartOffset() == getStartOffset(); block = block.getParent()) {
-      if (block.getAlignment() != null) {
-        return block.getAlignment();
-      }
-    }
-    return null;
   }
 
   /**
