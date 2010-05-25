@@ -76,6 +76,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
   private JCheckBox myAlignExtendsList;
   private JCheckBox myAlignForStatement;
   private JCheckBox myAlignThrowsList;
+  private JCheckBox myAlignSubsequentDeclarations;
   private JCheckBox myAlignParenthesizedExpression;
   private JCheckBox myAlignBinaryExpression;
   private JCheckBox myAlignTernaryExpression;
@@ -211,6 +212,9 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     myAlignThrowsList = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.throws.list"));
     optionGroup.add(myAlignThrowsList);
 
+    myAlignSubsequentDeclarations = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.subsequent.declarations"));
+    optionGroup.add(myAlignSubsequentDeclarations);
+
     myAlignParenthesizedExpression = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.parenthesized.expression"));
     optionGroup.add(myAlignParenthesizedExpression);
 
@@ -327,6 +331,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     isModified |= isModified(myAlignParenthesizedExpression, settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
     isModified |= isModified(myAlignTernaryExpression, settings.ALIGN_MULTILINE_TERNARY_OPERATION);
     isModified |= isModified(myAlignThrowsList, settings.ALIGN_MULTILINE_THROWS_LIST);
+    isModified |= isModified(myAlignSubsequentDeclarations, settings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS);
     isModified |= isModified(myAlignArrayInitializerExpression, settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
 
     isModified |= settings.FOR_BRACE_FORCE != getForceBracesValue(myForForceCombo);
@@ -372,6 +377,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     myAlignParenthesizedExpression.setSelected(settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
     myAlignTernaryExpression.setSelected(settings.ALIGN_MULTILINE_TERNARY_OPERATION);
     myAlignThrowsList.setSelected(settings.ALIGN_MULTILINE_THROWS_LIST);
+    myAlignSubsequentDeclarations.setSelected(settings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS);
     myAlignArrayInitializerExpression.setSelected(settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
 
     setForceBracesComboValue(myForForceCombo, settings.FOR_BRACE_FORCE);
@@ -411,6 +417,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = myAlignParenthesizedExpression.isSelected();
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = myAlignTernaryExpression.isSelected();
     settings.ALIGN_MULTILINE_THROWS_LIST = myAlignThrowsList.isSelected();
+    settings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS = myAlignSubsequentDeclarations.isSelected();
     settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = myAlignArrayInitializerExpression.isSelected();
 //    mySettings.LABEL_INDENT =
 
