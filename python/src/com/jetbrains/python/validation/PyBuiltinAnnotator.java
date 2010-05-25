@@ -64,12 +64,12 @@ public class PyBuiltinAnnotator extends PyAnnotator {
           if (tgt != null) {
             Annotation ann = getHolder().createInfoAnnotation(tgt, null);
             ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_USAGE);
+            return true;
           }
         }
       }
-      return false;
     }
-    return true;
+    return false;
   }
 
 }
