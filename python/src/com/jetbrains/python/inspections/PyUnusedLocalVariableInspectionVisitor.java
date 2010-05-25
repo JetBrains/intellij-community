@@ -1,14 +1,19 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.PyControlFlowUtil;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -17,9 +22,11 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyForStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -169,12 +176,50 @@ class PyUnusedLocalVariableInspectionVisitor extends PyInspectionVisitor {
         registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name));
       }
       else {
-        registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name));
+        if (PyForStatementNavigator.getPyForStatementByIterable(element) != null){
+          registerProblem(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name),
+                          ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, new ReplaceWithWildCard());
+        } else {
+          registerWarning(element, PyBundle.message("INSP.unused.locals.local.variable.isnot.used", name));
+        }
       }
     }
   }
 
   private void registerWarning(final PsiElement element, final String msg) {
     registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null);
+  }
+
+  private static class ReplaceWithWildCard implements LocalQuickFix {
+    @NotNull
+    public String getName() {
+      return PyBundle.message("INSP.unused.locals.replace.with.wildcard");
+    }
+
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) {
+        return;
+      }
+      replace(descriptor.getPsiElement());
+    }
+
+    private void replace(final PsiElement psiElement) {
+      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile("for _ in tuples:\n  pass");
+      final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
+      CommandProcessor.getInstance().executeCommand(psiElement.getProject(), new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              psiElement.replace(target);
+            }
+          });
+        }
+      }, getName(), null);
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
   }
 }
