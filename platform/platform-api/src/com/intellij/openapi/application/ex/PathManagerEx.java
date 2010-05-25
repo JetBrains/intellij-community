@@ -27,7 +27,6 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.util.containers.ConcurrentHashMap;
-import com.intellij.util.containers.ConcurrentHashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +35,7 @@ import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
@@ -60,14 +60,12 @@ public class PathManagerEx {
     = new ConcurrentHashMap<Class, TestDataLookupStrategy>();
 
   /**
-   * Caches processed files.
+   * Holds names of the files that contain community test classes.
    * <p/>
-   * There is a possible case that particular file is processed but its test data lookup strategy is still not defined.
-   * <p/>
-   * We don't want to repeat the processing then during further requests for the same file, hence, we rememver paths of all
-   * processed files here.
+   * <b>Note:</b>  stored names are relative to the source roots.
    */
-  private static final Set<String> PROCESSED_FILES = new ConcurrentHashSet<String>();
+  private static final Set<String> COMMUNITY_TEST_FILES = new HashSet<String>();
+  private static final AtomicBoolean COMMUNITY_TEST_FILES_PARSED_FLAG = new AtomicBoolean();
 
   private PathManagerEx() {
   }
@@ -290,16 +288,12 @@ public class PathManagerEx {
     }
 
     String targetFile = toSystemDependentName(clazz.getName().replace('.', '/') + ".java");
-    if (PROCESSED_FILES.contains(targetFile)) {
-      return null;
+    if (COMMUNITY_TEST_FILES_PARSED_FLAG.compareAndSet(false, true)) {
+      parseCommunityTestFiles();
     }
 
-    FileSystemLocation classFileLocation = new FileSystemLocationResolver(targetFile).resolve();
-    PROCESSED_FILES.add(targetFile);
-
-    if (classFileLocation == null) {
-      return null;
-    }
+    FileSystemLocation classFileLocation = COMMUNITY_TEST_FILES.contains(targetFile) ? FileSystemLocation.COMMUNITY
+                                                                                     : FileSystemLocation.ULTIMATE;
 
     // We know that project location is ULTIMATE if control flow reaches this place.
     result = classFileLocation == FileSystemLocation.COMMUNITY ? TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE
@@ -315,6 +309,10 @@ public class PathManagerEx {
    */
   private static FileSystemLocation parseProjectLocation() {
     return new File(PathManager.getHomePath(), "community").isDirectory() ? FileSystemLocation.ULTIMATE : FileSystemLocation.COMMUNITY;
+  }
+
+  private static void parseCommunityTestFiles() {
+    new CommunityClassesResolver().dispatch(new File(PathManager.getHomePath(), "community"));
   }
 
   /**
@@ -338,51 +336,45 @@ public class PathManagerEx {
   }
 
   /**
-   * Allows to resolve {@link FileSystemLocation file type} by it's file system location.
+   * Recursively processes all files under directory given to {@link #dispatch(File)} and updates {@link #COMMUNITY_TEST_FILES} with
+   * all <code>'*.java'</code> files accordingly.
    */
-  private static class FileSystemLocationResolver {
+  private static class CommunityClassesResolver {
 
-    private final String rootPath = PathManager.getHomePath();
-    private final String myTargetFile;
-    private FileSystemLocation myResult;
-
-    FileSystemLocationResolver(String targetFile) {
-      myTargetFile = targetFile;
-    }
-
-    /**
-     * @return    resolved file system location type for the target file defined at constructor if possible; <code>null</code> otherwise
-     */
-    @Nullable
-    public FileSystemLocation resolve() {
-      myResult = null;
-      dispatch(new File(rootPath));
-      return myResult;
-    }
-
+    @SuppressWarnings({"MethodMayBeStatic"})
     public void dispatch(File dir) {
-      if (myResult != null) {
-        return;
-      }
       for (File file : dir.listFiles()) {
-        if (myResult != null) {
-          return;
-        }
         if (file.isDirectory()) {
-          dispatch(file);
+          if (!isOutputPath(file)) dispatch(file);
         }
         else {
-          check(file);
+          process(file);
         }
       }
     }
 
-    public void check(File file) {
+    private static boolean isOutputPath(File file) {
+      return "out".equals(file.getName());
+    }
+
+    private static void process(File file) {
       String path = file.getAbsolutePath();
-      if (path.endsWith(myTargetFile)) {
-        String targetPathSegment = path.substring(PathManager.getHomePath().length() + 1);
-        myResult = targetPathSegment.startsWith("community") ? FileSystemLocation.COMMUNITY : FileSystemLocation.ULTIMATE;
+      if (!path.endsWith(".java")) {
+        return;
       }
+
+      String src = "src";
+      String testSrc = "testSrc";
+
+      int srcIndex = path.indexOf(src);
+      int testSrcIndex = path.indexOf(testSrc);
+      int indexToUse = srcIndex > testSrcIndex ? srcIndex + src.length() : testSrcIndex + testSrc.length();
+      indexToUse++; // for path separator
+      if (indexToUse < 0 || indexToUse >= path.length()) {
+        // Never expect to be here.
+        return;
+      }
+      COMMUNITY_TEST_FILES.add(path.substring(indexToUse));
     }
   }
 }

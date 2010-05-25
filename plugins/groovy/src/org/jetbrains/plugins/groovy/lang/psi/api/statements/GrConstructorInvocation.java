@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstr
  * User: Dmitry.Krasilschikov
  * Date: 29.05.2007
  */
-public interface GrConstructorInvocation extends GrStatement, GrConstructorCall, PsiReference {
+public interface GrConstructorInvocation extends GrStatement, GrConstructorCall, PsiPolyVariantReference {
   boolean isSuperCall();
 
   boolean isThisCall();

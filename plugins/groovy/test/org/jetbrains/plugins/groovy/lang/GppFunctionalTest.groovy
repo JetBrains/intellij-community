@@ -164,7 +164,7 @@ Function1<String, Object> f2 = { x=42 -> println x }
 Function1<String, Object> f3 = <warning descr="Cannot assign 'Closure' to 'Function1<String, Object>'">{ int x -> println x }</warning>
 Runnable r = { println it }
 Action a = { println it }
-Action a1 = { a = 2 -> println a }
+Action a1 = { a2 = 2 -> println a2 }
 """
   }
 

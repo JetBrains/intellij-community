@@ -120,6 +120,27 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return false;
   }
 
+  public static Icon overlayIcons(Icon ... icons) {
+    final LayeredIcon icon = new LayeredIcon(icons.length);
+    int i = 0;
+    for(Icon ic:icons) icon.setIcon(ic, i++);
+    return icon;
+  }
+
+  public static RowIcon buildRowIcon(final Icon baseIcon, Icon visibilityIcon) {
+    RowIcon icon = new RowIcon(2);
+    icon.setIcon(baseIcon, 0);
+    icon.setIcon(visibilityIcon, 1);
+    return icon;
+  }
+
+  public static Icon iconWithVisibilityIfNeeded(int flags, Icon baseIcon, Icon visibility) {
+    return (flags & ICON_FLAG_VISIBILITY) != 0 ? buildRowIcon(
+      baseIcon,
+      visibility
+    ):baseIcon;
+  }
+
   public static class ElementIconRequest extends ComparableObject.Impl {
     public ElementIconRequest(PsiElement element, int flags) {
       super(new Object[] {element, flags});

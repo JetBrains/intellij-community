@@ -27,8 +27,7 @@ import javax.swing.*;
  * @author max
  */
 public class InspectionRootNode extends InspectionTreeNode {
-  private static final Icon INFO = IconLoader.getIcon("/general/ijLogo.png");
-  private static final Icon APP_ICON = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl()); 
+  private static final Icon APP_ICON = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
   private final Project myProject;
 
   public InspectionRootNode(Project project) {
@@ -46,6 +45,6 @@ public class InspectionRootNode extends InspectionTreeNode {
   }
 
   public Icon getIcon(boolean expanded) {
-    return isEmpty() ? INFO : APP_ICON;
+    return APP_ICON;
   }
 }
