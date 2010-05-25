@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -32,6 +34,10 @@ public class RenameParameterQuickFix implements LocalQuickFix {
         public void run() {
           final PyNamedParameter the_self = PyElementGenerator.getInstance(project).createParameter(myNewName);
           try {
+            // rename everything that referenced it
+            final PsiElement substitution = RenamePsiElementProcessor.forElement(elt).substituteElementToRename(elt, null);
+            new RenameProcessor(project, substitution, myNewName, false, true).run();
+            // rename the parameter
             elt.replace(the_self);
           }
           catch (IncorrectOperationException e) {
