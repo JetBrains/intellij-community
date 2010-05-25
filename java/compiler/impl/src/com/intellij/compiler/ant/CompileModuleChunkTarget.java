@@ -76,7 +76,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
             final Tag srcTag = new Tag("src", Pair.create("refid", BuildProperties.getSourcepathProperty(moduleChunkName)));
             myProductionTarget.add(new Mkdir(outputPathRef));
             createCustomCompilerTasks(project, moduleChunk, genOptions, false, customCompilers, compilerArgs, bootclasspathTag,
-                                      classpathTag, compilerExcludes, srcTag, outputPathRef);
+                                      classpathTag, compilerExcludes, srcTag, outputPathRef, myProductionTarget);
             if (customCompilers.length == 0 || genOptions.enableFormCompiler) {
                 final Javac javac = new Javac(genOptions, moduleChunk, outputPathRef);
                 javac.add(compilerArgs);
@@ -98,7 +98,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
             testClassPath.add(new PathElement(BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(moduleChunkName))));
             myTestsTarget.add(new Mkdir(testOutputPathRef));
             createCustomCompilerTasks(project, moduleChunk, genOptions, true, customCompilers, compilerArgs, bootclasspathTag,
-                                      testClassPath, compilerExcludes, srcTag, testOutputPathRef);
+                                      testClassPath, compilerExcludes, srcTag, testOutputPathRef, myTestsTarget);
             if (customCompilers.length == 0 || genOptions.enableFormCompiler) {
                 final Javac javac = new Javac(genOptions, moduleChunk, testOutputPathRef);
                 javac.add(compilerArgs);
@@ -132,6 +132,7 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
      * @param compilerExcludes the compiler excluded tag
      * @param srcTag           the soruce tag
      * @param outputPathRef    the output path references
+     * @param target           the target where to add custom compiler
      */
     private void createCustomCompilerTasks(Project project,
                                            ModuleChunk moduleChunk,
@@ -143,13 +144,14 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
                                            Tag classpathTag,
                                            PatternSetRef compilerExcludes,
                                            Tag srcTag,
-                                           String outputPathRef) {
+                                           String outputPathRef,
+                                           Target target) {
         if (customCompilers.length > 1) {
-            myProductionTarget.add(new Tag("fail", Pair.create("message", CompilerBundle.message(
+            target.add(new Tag("fail", Pair.create("message", CompilerBundle.message(
                     "generated.ant.build.compile.modules.fail.custom.comipilers"))));
         }
         for (ChunkCustomCompilerExtension ext : customCompilers) {
-            ext.generateCustomCompile(project, moduleChunk, genOptions, compileTests, myProductionTarget, compilerArgs, bootclasspathTag,
+            ext.generateCustomCompile(project, moduleChunk, genOptions, compileTests, target, compilerArgs, bootclasspathTag,
                                       classpathTag, compilerExcludes, srcTag, outputPathRef);
         }
     }
