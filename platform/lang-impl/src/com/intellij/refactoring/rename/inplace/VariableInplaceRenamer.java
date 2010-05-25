@@ -95,7 +95,11 @@ public class VariableInplaceRenamer {
   public boolean performInplaceRename() {
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
 
-    final PsiReference reference = myElementToRename.getContainingFile().findReferenceAt(myEditor.getCaretModel().getOffset());
+    PsiFile myEditorFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    // Note, that myEditorFile can be different from myElement.getContainingFile() e.g. in injections: myElement declaration in one 
+    // file / usage in another !
+    final PsiReference reference = (myEditorFile != null ? 
+      myEditorFile:myElementToRename.getContainingFile()).findReferenceAt(myEditor.getCaretModel().getOffset());
     if (reference != null && !refs.contains(reference)) {
       refs.add(reference);
     }
