@@ -56,9 +56,9 @@ public class NetUtils {
       sockets[i] = serverSocket;
       ports[i] = serverSocket.getLocalPort();
     }
-  //workaround for linux : calling close() immediately after opening socket
-  //may result that socket is not closed
-    synchronized (sockets) {
+    //workaround for linux : calling close() immediately after opening socket
+    //may result that socket is not closed
+    synchronized(sockets) {
       try {
         sockets.wait(1);
       }
