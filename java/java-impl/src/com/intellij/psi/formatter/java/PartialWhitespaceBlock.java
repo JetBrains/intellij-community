@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Indent;
@@ -35,7 +36,7 @@ public class PartialWhitespaceBlock extends SimpleJavaBlock {
                                 final Alignment alignment,
                                 final Indent indent,
                                 CodeStyleSettings settings) {
-    super(node, wrap, alignment, indent, settings);
+    super(node, wrap, AlignmentStrategy.wrap(alignment), indent, settings);
     myRange = range;
   }
 
