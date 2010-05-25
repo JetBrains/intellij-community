@@ -67,7 +67,6 @@ public class GenerationUtils {
      * @param baseDir                       base director for relative path calculation
      * @param baseDirPropertyName           property name for the base directory
      * @param genOptions                    generation options
-     * @param useAbsolutePathsForOuterPaths if true absolute paths will be used for outer paths.
      * @return a relative path
      */
     @Nullable
@@ -103,12 +102,9 @@ public class GenerationUtils {
             }
             final String relativepath = FileUtil.getRelativePath(base, new File(path));
             if (relativepath != null) {
-                final boolean shouldUseAbsolutePath = relativepath.indexOf("..") >= 0;
-                if (!shouldUseAbsolutePath) {
-                    final String _relativePath = relativepath.replace(File.separatorChar, '/');
-                    final String root = BuildProperties.propertyRef(baseDirPropertyName);
-                    return ".".equals(_relativePath) ? root : root + "/" + _relativePath;
-                }
+              final String _relativePath = relativepath.replace(File.separatorChar, '/');
+              final String root = BuildProperties.propertyRef(baseDirPropertyName);
+              return ".".equals(_relativePath) ? root : root + "/" + _relativePath;
             }
         }
         return substitutedPath;
