@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,6 +150,14 @@ public class LightClass extends LightElement implements PsiClass {
   @NotNull
   public PsiClassInitializer[] getInitializers() {
     return myDelegate.getInitializers();
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, false);
   }
 
   @NotNull
