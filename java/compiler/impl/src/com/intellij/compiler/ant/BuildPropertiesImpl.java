@@ -57,6 +57,7 @@ public class BuildPropertiesImpl extends BuildProperties {
             javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jdom.jar")));
             javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm.jar")));
             javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm-commons.jar")));
+            javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jgoodies-forms.jar")));
             add(javac2);
             //noinspection HardCodedStringLiteral
             add(new Tag("taskdef", Pair.create("name", "javac2"), Pair.create("classname", "com.intellij.ant.Javac2"),
