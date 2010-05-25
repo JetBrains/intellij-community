@@ -18,14 +18,11 @@ package com.intellij.lang.ant.dom;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.xml.Attribute;
-import com.intellij.util.xml.Convert;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.NameValue;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +35,7 @@ import java.util.Map;
  *         Date: Apr 21, 2010
  */
 public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
-  private Map<String, String> myCachedPreperties;
+  private volatile Map<String, String> myCachedPreperties;
 
   @Attribute("name")
   @NameValue
@@ -102,10 +99,14 @@ public abstract class AntDomProperty extends AntDomPropertyDefiningElement{
   }
 
   public PsiElement getNavigationElement(final String propertyName) {
-    final XmlAttributeValue nameNavElement = getName().getXmlAttributeValue();
-    if (nameNavElement != null) {
-      return nameNavElement;
+    final DomTarget domTarget = DomTarget.getTarget(this);
+    if (domTarget != null) {
+      final PsiElement psi = PomService.convertToPsi(domTarget);
+      if (psi != null) {
+        return psi;
+      }
     }
+
     final PsiFileSystemItem psiFile = getFile().getValue();
     if (psiFile != null) {
       final String prefix = getPropertyPrefixValue();
