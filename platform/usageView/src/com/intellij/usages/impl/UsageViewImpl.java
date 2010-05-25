@@ -609,7 +609,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         usageSearcher.generate(new Processor<Usage>() {
           public boolean process(final Usage usage) {
             if (usageViewManager.searchHasBeenCancelled()) return false;
-            appendUsageLater(usage);
+            if (!com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets)) {
+              appendUsageLater(usage);
+            }
             ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
             return indicator == null || !indicator.isCanceled();
           }
