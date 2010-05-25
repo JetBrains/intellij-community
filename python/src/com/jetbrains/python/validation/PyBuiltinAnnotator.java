@@ -7,10 +7,7 @@ import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyHighlighter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 
 /**
@@ -23,23 +20,8 @@ public class PyBuiltinAnnotator extends PyAnnotator {
   public void visitPyReferenceExpression(PyReferenceExpression node) {
     final String name = node.getName();
     if (name == null) return; 
-    if (PyNames.UnderscoredAttributes.contains(name) || PyNames.BuiltinMethods.containsKey(name)) {
-      // things like __len__
-      if (
-        (node.getQualifier() != null) // foo.__len__
-        || (PyUtil.getConcealingParent(node) instanceof PyClass) // class Foo: ... __len__ = myLenImpl
-      ) {
-        final ASTNode astNode = node.getNode();
-        if (astNode != null) {
-          ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
-          if (tgt != null) {
-            Annotation ann = getHolder().createInfoAnnotation(tgt, null);
-            ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_USAGE);
-          }
-        }
-      }
-    }
-    else if (node.getQualifier() == null) {
+    boolean highlighted_as_attribute = highlightAsAttribute(node, name);
+    if (! highlighted_as_attribute && node.getQualifier() == null) {
       // things like len()
       ResolveResult[] resolved = node.getReference().multiResolve(false); // constructors, etc may give multiple results...
       if (resolved.length > 0) {
@@ -55,6 +37,39 @@ public class PyBuiltinAnnotator extends PyAnnotator {
         }
       }
     }
+  }
+
+  @Override
+  public void visitPyTargetExpression(PyTargetExpression node) {
+    final String name = node.getName();
+    if (name == null) return;
+    highlightAsAttribute(node, name);
+  }
+
+  /**
+   * Try to highlight a node as a class attribute.
+   * @param node what to work with
+   * @return true iff the node was highlighted.  
+   */
+  private boolean highlightAsAttribute(PyQualifiedExpression node, String name) {
+    if (PyNames.UnderscoredAttributes.contains(name) || PyNames.BuiltinMethods.containsKey(name)) {
+      // things like __len__
+      if (
+        (node.getQualifier() != null) // foo.__len__
+        || (PyUtil.getConcealingParent(node) instanceof PyClass) // class Foo: ... __len__ = myLenImpl
+      ) {
+        final ASTNode astNode = node.getNode();
+        if (astNode != null) {
+          ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
+          if (tgt != null) {
+            Annotation ann = getHolder().createInfoAnnotation(tgt, null);
+            ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_USAGE);
+          }
+        }
+      }
+      return false;
+    }
+    return true;
   }
 
 }
