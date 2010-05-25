@@ -21,10 +21,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * This is high performance Swing component which represents an icon
@@ -33,7 +39,7 @@ import java.util.ArrayList;
  *
  * @author Vladimir Kondratyev
  */
-public class SimpleColoredComponent extends JComponent {
+public class SimpleColoredComponent extends JComponent implements Accessible {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
   private final ArrayList<String> myFragments;
@@ -77,6 +83,8 @@ public class SimpleColoredComponent extends JComponent {
   private boolean myIconOpaque = true;
 
   private boolean myAutoInvalidate = true;
+
+  private AccessibleContext myContext = new MyAccessibleContext();
 
   public SimpleColoredComponent() {
     myFragments = new ArrayList<String>(3);
@@ -536,6 +544,43 @@ public class SimpleColoredComponent extends JComponent {
       runnable.run();
     } finally {
       myAutoInvalidate = old;
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    return myContext;
+  }
+
+  private static class MyAccessibleContext extends AccessibleContext {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.AWT_COMPONENT;
+    }
+
+    @Override
+    public AccessibleStateSet getAccessibleStateSet() {
+      return new AccessibleStateSet();
+    }
+
+    @Override
+    public int getAccessibleIndexInParent() {
+      return 0;
+    }
+
+    @Override
+    public int getAccessibleChildrenCount() {
+      return 0;
+    }
+
+    @Override
+    public Accessible getAccessibleChild(int i) {
+      return null;
+    }
+
+    @Override
+    public Locale getLocale() throws IllegalComponentStateException {
+      return Locale.getDefault();
     }
   }
 }

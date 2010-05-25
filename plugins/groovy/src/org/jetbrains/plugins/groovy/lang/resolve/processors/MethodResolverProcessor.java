@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -127,28 +128,9 @@ public class MethodResolverProcessor extends ResolverProcessor {
       PsiType[] parameterTypes = new PsiType[max];
       PsiType[] argumentTypes = new PsiType[max];
       for (int i = 0; i < parameterTypes.length; i++) {
-        if (i < parameters.length) {
-          final PsiType type = parameters[i].getType();
-          if (argTypes.length == parameters.length &&
-              type instanceof PsiEllipsisType &&
-              !(argTypes[argTypes.length - 1] instanceof PsiArrayType)) {
-            parameterTypes[i] = ((PsiEllipsisType) type).getComponentType();
-          } else {
-            parameterTypes[i] = type;
-          }
-        } else {
-          if (parameters.length > 0) {
-            final PsiType lastParameterType = parameters[parameters.length - 1].getType();
-            if (argTypes.length > parameters.length && lastParameterType instanceof PsiEllipsisType) {
-              parameterTypes[i] = ((PsiEllipsisType) lastParameterType).getComponentType();
-            } else {
-              parameterTypes[i] = lastParameterType;
-            }
-          } else {
-            parameterTypes[i] = PsiType.NULL;
-          }
-        }
-        argumentTypes[i] = i < argTypes.length ? argTypes[i] : PsiType.NULL;
+        final PsiType paramType = handleVarargs(argTypes, parameters, i);
+        parameterTypes[i] = paramType;
+        argumentTypes[i] = handleConversion(paramType, argTypes, i);
       }
 
       final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
@@ -163,6 +145,42 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
 
     return partialSubstitutor;
+  }
+
+  private PsiType handleConversion(PsiType paramType, PsiType[] argTypes, int i) {
+    if (i < argTypes.length) {
+      PsiType argType = argTypes[i];
+      final GroovyPsiElement context = (GroovyPsiElement)myPlace;
+      if (!TypesUtil.isAssignable(TypeConversionUtil.erasure(paramType), argType, context.getManager(), context.getResolveScope(), false) &&
+          TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
+        return paramType;
+      }
+      return argType;
+    }
+    return PsiType.NULL;
+  }
+
+  @NotNull
+  private static PsiType handleVarargs(PsiType[] argTypes, PsiParameter[] parameters, int index) {
+    if (index < parameters.length) {
+      final PsiType type = parameters[index].getType();
+      if (argTypes.length == parameters.length &&
+          type instanceof PsiEllipsisType &&
+          !(argTypes[argTypes.length - 1] instanceof PsiArrayType)) {
+        return ((PsiEllipsisType) type).getComponentType();
+      }
+      return type;
+    }
+
+    if (parameters.length > 0) {
+      final PsiType lastParameterType = parameters[parameters.length - 1].getType();
+      if (argTypes.length > parameters.length && lastParameterType instanceof PsiEllipsisType) {
+        return ((PsiEllipsisType) lastParameterType).getComponentType();
+      }
+      return lastParameterType;
+    }
+
+    return PsiType.NULL;
   }
 
   private PsiSubstitutor inferFromContext(PsiTypeParameter typeParameter, PsiType lType, PsiSubstitutor substitutor, PsiResolveHelper helper) {
@@ -242,7 +260,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean dominated(PsiMethod method1, PsiSubstitutor substitutor1, PsiMethod method2, PsiSubstitutor substitutor2, PsiManager manager, GlobalSearchScope scope) {  //method1 has more general parameter types thn method2
     if (!method1.getName().equals(method2.getName())) return false;
 
-    if (method1 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method1).dominates(substitutor1, method2, substitutor2, (GroovyPsiElement)myPlace)) {
+    if (method2 instanceof DominanceAwareMethod && ((DominanceAwareMethod)method2).isMoreConcreteThan(substitutor2, method1, substitutor1, (GroovyPsiElement)myPlace)) {
       return true;
     }
 

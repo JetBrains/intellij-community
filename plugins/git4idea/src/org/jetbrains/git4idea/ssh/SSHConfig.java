@@ -36,7 +36,13 @@ public class SSHConfig {
   /**
    * User home directory
    */
-  @NonNls private final static String USER_HOME = System.getProperty("user.home");
+  @NonNls private final static String USER_HOME;
+
+  static {
+    String e = System.getenv("HOME");
+    USER_HOME = e != null ? e : System.getProperty("user.home");
+  }
+
   /**
    * Allowed authentication methods
    */

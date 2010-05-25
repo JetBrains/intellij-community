@@ -187,35 +187,16 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
     final ArrayList<GroovyResolveResult> res = new ArrayList<GroovyResolveResult>();
 
-    final GroovyResolveResult[] variants = ((GrReferenceExpression)invoked).getSameNameVariants();
-    if (variants.length == 0) {
-      final PsiReference[] refs = invoked.getReferences();
-      for (PsiReference ref : refs) {
-        if (ref instanceof PsiPolyVariantReference) {
-          PsiPolyVariantReference reference = (PsiPolyVariantReference)ref;
-          final ResolveResult[] results = reference.multiResolve(false);
-          for (ResolveResult result : results) {
-            if (result instanceof GroovyResolveResult) {
-              res.add((GroovyResolveResult)result);
-            }
+    for (PsiReference ref : invoked.getReferences()) {
+      if (ref instanceof PsiPolyVariantReference) {
+        for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
+          if (result instanceof GroovyResolveResult) {
+            res.add((GroovyResolveResult)result);
           }
         }
       }
-      return res.toArray(new GroovyResolveResult[res.size()]);
     }
-    return variants;
+    return res.toArray(new GroovyResolveResult[res.size()]);
   }
 
-  /*
-  public PsiElement addNamedArgument(final GrNamedArgument argument) {
-    final GrArgumentList argList = getArgumentList();
-    if (argList != null) {
-      return argList.addNamedArgument(argument);
-    }
-    final GrClosableBlock[] clArgs = getClosureArguments();
-    //todo implement me!
-    return null;
-
-  }
-  */
 }

@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -243,7 +242,7 @@ public class SSHMain {
             return;
           }
           else {
-            myLastError = GitBundle.getString("sshmain.keyboard.interactive.failed");
+            myLastError = SSHMainBundle.getString("sshmain.keyboard.interactive.failed");
           }
           if (interactiveSupport.myPromptCount == 0 || interactiveSupport.myCancelled) {
             // the interactive callback has never been asked or it was cancelled, exit the loop
@@ -259,8 +258,8 @@ public class SSHMain {
         if (!c.isAuthMethodAvailable(myHost.getUser(), PASSWORD_METHOD)) {
           continue;
         }
-        for (int i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
-          String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), myLastError);
+        for (int i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
+          String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), i != 0, myLastError);
           if (password == null) {
             break;
           }
@@ -270,7 +269,7 @@ public class SSHMain {
               return;
             }
             else {
-              myLastError = GitBundle.getString("sshmain.password.failed");
+              myLastError = SSHMainBundle.getString("sshmain.password.failed");
             }
           }
         }
@@ -304,8 +303,8 @@ public class SSHMain {
         if (isEncryptedKey(text)) {
           // need to ask passphrase from user
           int i;
-          for (i = myHost.getNumberOfPasswordPrompts(); i > 0; i--) {
-            passphrase = myXmlRpcClient.askPassphrase(myHandlerNo, getUserHostString(), keyPath, myLastError);
+          for (i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
+            passphrase = myXmlRpcClient.askPassphrase(myHandlerNo, getUserHostString(), keyPath, i != 0, myLastError);
             if (passphrase == null) {
               // if no passphrase was entered, just return false and try something other
               return false;
@@ -317,14 +316,14 @@ public class SSHMain {
               }
               catch (IOException e) {
                 // decoding failed
-                myLastError = GitBundle.message("sshmain.invalidpassphrase", keyPath);
+                myLastError = SSHMainBundle.message("sshmain.invalidpassphrase", keyPath);
                 continue;
               }
               break;
             }
           }
-          if (i == 0) {
-            myLastError = GitBundle.message("sshmain.too.mush.passphrase.guesses", keyPath, myHost.getNumberOfPasswordPrompts());
+          if (i == myHost.getNumberOfPasswordPrompts()) {
+            myLastError = SSHMainBundle.message("sshmain.too.mush.passphrase.guesses", keyPath, myHost.getNumberOfPasswordPrompts());
             return false;
           }
         }
@@ -336,7 +335,7 @@ public class SSHMain {
         else {
           if (passphrase != null) {
             // mark as failed authentication only if passphrase were asked
-            myLastError = GitBundle.message("sshmain.pk.authenitication.failed", keyPath);
+            myLastError = SSHMainBundle.message("sshmain.pk.authenitication.failed", keyPath);
           }
           else {
             myLastError = "";
@@ -407,7 +406,7 @@ public class SSHMain {
           }
         }
         catch (IOException e) {
-          System.err.println(GitBundle.message("sshmain.forwarding.failed", name, e.getMessage()));
+          System.err.println(SSHMainBundle.message("sshmain.forwarding.failed", name, e.getMessage()));
           e.printStackTrace();
           myExitCode = 1;
           if (releaseSemaphore) {
@@ -452,7 +451,7 @@ public class SSHMain {
    */
   private static SSHMain parseArguments(String[] args) throws IOException {
     if (args.length != 3 && args.length != 5) {
-      System.err.println(GitBundle.message("sshmain.invalid.amount.of.arguments", Arrays.asList(args)));
+      System.err.println(SSHMainBundle.message("sshmain.invalid.amount.of.arguments", Arrays.asList(args)));
       System.exit(1);
     }
     int i = 0;
@@ -564,12 +563,12 @@ public class SSHMain {
           return true;
         }
         else {
-          System.err.println(GitBundle.message("sshmain.invald.host.key", serverHostKeyAlgorithm, fingerprint));
+          System.err.println(SSHMainBundle.message("sshmain.invald.host.key", serverHostKeyAlgorithm, fingerprint));
           return false;
         }
       }
       catch (Throwable t) {
-        System.err.println(GitBundle.message("sshmain.failed.to.verify.key", t.getMessage()));
+        System.err.println(SSHMainBundle.message("sshmain.failed.to.verify.key", t.getMessage()));
         t.printStackTrace();
         return false;
       }

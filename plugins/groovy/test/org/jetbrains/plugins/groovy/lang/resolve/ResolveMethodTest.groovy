@@ -511,6 +511,21 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertInstanceOf(ref.resolve(), GrGdkMethod.class);
   }
 
+  public void testSubstituteWhenDisambiguating() throws Exception {
+    myFixture.configureByText "a.groovy", """
+class Zoo {
+  def Object find(Object x) {}
+  def <T> T find(Collection<T> c) {}
+
+  {
+    fin<caret>d(["a"])
+  }
+
+}"""
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertEquals 1, ((PsiMethod) ref.resolve()).typeParameters.length
+  }
+
   public void testFooMethodInAnonymousClass() throws Exception {
     PsiReference ref = configureByFile("fooMethodInAnonymousClass/A.groovy");
     final PsiElement resolved = ref.resolve();
