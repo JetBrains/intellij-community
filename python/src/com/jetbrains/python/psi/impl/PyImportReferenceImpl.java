@@ -17,6 +17,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -82,6 +83,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
       Condition<PsiElement> node_filter = new PyResolveUtil.FilterNameNotIn(names_already);
       Condition<String> underscore_filter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(ref_name));
       boolean is_importing_from_a_module = false;
+      boolean already_has_import_keyword = false;
 
       // are we in "import _" or "from foo import _"?
       PyFromImportStatement from_import = PsiTreeUtil.getParentOfType(myElement, PyFromImportStatement.class);
@@ -133,6 +135,15 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         if (from_import != null) {
           addImportedNames(from_import.getImportElements(), names_already, underscore_filter);
           is_importing_from_a_module = true;
+          ASTNode node = myElement.getNode();
+          while (node != null) {
+            final IElementType node_type = node.getElementType();
+            if (node_type == PyTokenTypes.IMPORT_KEYWORD) {
+              already_has_import_keyword = true;
+              break;
+            }
+            node = node.getTreeNext();
+          }
         }
         else {
           names_already.add(PyNames.FUTURE_MODULE); // never add it to "import ..."
@@ -146,7 +157,7 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
           fillFromDir(
             ResolveImportUtil.stepBackFrom(current_file, relative_level),
             current_file, underscore_filter, variants,
-            is_importing_from_a_module? ImportKeywordHandler.INSTANCE : null
+            is_importing_from_a_module && ! already_has_import_keyword? ImportKeywordHandler.INSTANCE : null
           );
         }
       }
@@ -161,7 +172,9 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
             if (PyNames.isIdentifier(name) && underscore_filter.value(name)) {
               if (is_importing_from_a_module) {
                 LookupElementBuilder lookup_item = LookupElementBuilder.create(name);
-                if (! result.hasSubmodules()) lookup_item = lookup_item.setInsertHandler(ImportKeywordHandler.INSTANCE);
+                if (! result.hasSubmodules() && ! already_has_import_keyword) {
+                  lookup_item = lookup_item.setInsertHandler(ImportKeywordHandler.INSTANCE);
+                }
                 variants.add(lookup_item);
               }
               else variants.add(name);
