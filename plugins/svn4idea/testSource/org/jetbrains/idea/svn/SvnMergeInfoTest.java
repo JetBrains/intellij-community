@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
+import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNURL;
@@ -77,9 +78,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
                                                    new SvnRepositoryLocation(myRepoUrl + "/trunk"), 0);
 
     final SvnChangeList changeList = changeListList.get(0);
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, myRepoUrl, myRepoUrl + "/branch", myRepoUrl + "/trunk", myRepoUrl + "/trunk", vcs.createWCClient());
-    final SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
+    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
   }
 
@@ -132,9 +133,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     final SvnChangeList changeList = changeListList.get(0);
     final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk", vcs.createWCClient());
-    final SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
+    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
   }
 
@@ -197,9 +198,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     final SvnChangeList changeList = changeListList.get(0);
     final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk", vcs.createWCClient());
-    final SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
+    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
   }
 
@@ -252,9 +253,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     final SvnChangeList changeList = changeListList.get(0);
     final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk", vcs.createWCClient());
-    final SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
+    final SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
   }
 
@@ -323,11 +324,11 @@ public class SvnMergeInfoTest extends SvnTestCase {
     assert changeList3.getNumber() == 3;
 
     final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk", vcs.createWCClient());
-    SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
+    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
-    result = branchInfo.checkList(changeList4, myBranchVcsRoot.getAbsolutePath());
+    result = mergeChecker.checkList(changeList4, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
   }
 
@@ -394,9 +395,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
     assert changeList3.getNumber() == 3;
 
     final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk", vcs.createWCClient());
-    SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
+    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
   }
 
@@ -456,9 +457,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
     assert changeList3.getNumber() == 3;
 
     final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk", vcs.createWCClient());
-    SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
+    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList3, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
   }
 
@@ -514,17 +515,17 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     final SvnChangeList changeList = changeListList.get(0);
     final String encodedRepoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    final BranchInfo branchInfo =
+    final MergeChecker mergeChecker =
       new BranchInfo(vcs, encodedRepoUrl, encodedRepoUrl + "/branch", encodedRepoUrl + "/trunk", encodedRepoUrl + "/trunk", vcs.createWCClient());
-    SvnMergeInfoCache.MergeCheckResult result = branchInfo.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
+    SvnMergeInfoCache.MergeCheckResult result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(result);
 
     // and after update
     verify(runSvn("up", myBranchVcsRoot.getAbsolutePath()));
     Thread.sleep(100);
 
-    branchInfo.clear();
-    result = branchInfo.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
+    mergeChecker.clear();
+    result = mergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath());
     assert SvnMergeInfoCache.MergeCheckResult.MERGED.equals(result);
   }
 }

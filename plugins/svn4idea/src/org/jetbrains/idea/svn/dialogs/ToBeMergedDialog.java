@@ -39,7 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
+import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -59,13 +59,13 @@ public class ToBeMergedDialog extends DialogWrapper {
   private Splitter mySplitter;
 
   private final QuantitySelection<Long> myWiseSelection;
-  private final BranchInfo myBranchInfo;
+  private final MergeChecker myMergeChecker;
 
   private final Set<Change> myAlreadyMerged;
 
-  public ToBeMergedDialog(final Project project, final List<CommittedChangeList> lists, final String title, BranchInfo branchInfo) {
+  public ToBeMergedDialog(final Project project, final List<CommittedChangeList> lists, final String title, MergeChecker mergeChecker) {
     super(project, true);
-    myBranchInfo = branchInfo;
+    myMergeChecker = mergeChecker;
     setTitle(title);
     myProject = project;
 
@@ -218,7 +218,7 @@ public class ToBeMergedDialog extends DialogWrapper {
               public CommittedChangeList convert(Object o) {
                 if (o instanceof CommittedChangeList) {
                   final CommittedChangeList cl = (CommittedChangeList)o;
-                  final Collection<String> notMerged = myBranchInfo.getNotMergedPaths(cl.getNumber());
+                  final Collection<String> notMerged = myMergeChecker.getNotMergedPaths(cl.getNumber());
                   final SvnChangeList svnList = (SvnChangeList) cl;
 
                   final Collection<String> forCheck = new HashSet<String>();

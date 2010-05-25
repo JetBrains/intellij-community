@@ -180,6 +180,8 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
   public ActionCallback initSession(SwitchingSession session) {
+    cancelWaitingForAutoInit();
+
     disposeSession(mySession);
     mySession = session;
     return new ActionCallback.Done();

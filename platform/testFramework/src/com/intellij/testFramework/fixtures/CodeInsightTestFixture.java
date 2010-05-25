@@ -329,6 +329,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Nullable
   List<String> getLookupElementStrings();
 
+  @NotNull
+  PsiElement getElementAtCaret();
+
   void renameElementAtCaret(String newName) throws Exception;
 
   void renameElement(PsiElement element, String newName) throws Exception;

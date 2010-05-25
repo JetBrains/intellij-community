@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -35,6 +36,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -332,7 +334,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
     private VcsFileRevision myPrevious;
     private final SVNRevision myPegRevision;
     private final String myUrl;
-    private int myMergeLevel;
+    private final SvnMergeSourceTracker myTracker;
 
     public MyLogEntryHandler(final String url, final SVNRevision pegRevision, String lastPath, final Consumer<VcsFileRevision> result) {
       myLastPath = lastPath;
@@ -340,54 +342,51 @@ public class SvnHistoryProvider implements VcsHistoryProvider {
       myResult = result;
       myPegRevision = pegRevision;
       myUrl = url;
-      myMergeLevel = -1;
+      myTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
+        public void consume(final Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
+          final SVNLogEntry logEntry = svnLogEntryIntegerPair.getFirst();
+          
+          if (myIndicator != null) {
+            if (myIndicator.isCanceled()) {
+              SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
+            }
+            myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+          }
+          String copyPath = null;
+          SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(myLastPath);
+          if (entryPath != null) {
+            copyPath = entryPath.getCopyPath();
+          }
+          else {
+            String path = SVNPathUtil.removeTail(myLastPath);
+            while(path.length() > 0) {
+              entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
+              if (entryPath != null) {
+                String relativePath = myLastPath.substring(entryPath.getPath().length());
+                copyPath = entryPath.getCopyPath() + relativePath;
+                break;
+              }
+              path = SVNPathUtil.removeTail(path);
+            }
+          }
+          if (copyPath != null) {
+            myLastPath = copyPath;
+          }
+
+          final int mergeLevel = svnLogEntryIntegerPair.getSecond();
+          final SvnFileRevision revision = createRevision(logEntry, copyPath);
+          if (mergeLevel >= 0) {
+            addToListByLevel((SvnFileRevision) myPrevious, revision, mergeLevel);
+          } else {
+            myResult.consume(revision);
+            myPrevious = revision;
+          }
+        }
+      });
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-      if (myIndicator != null) {
-        if (myIndicator.isCanceled()) {
-          SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
-        }
-        myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
-      }
-      String copyPath = null;
-      SVNLogEntryPath entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(myLastPath);
-      if (entryPath != null) {
-        copyPath = entryPath.getCopyPath();
-      }
-      else {
-        String path = SVNPathUtil.removeTail(myLastPath);
-        while(path.length() > 0) {
-          entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
-          if (entryPath != null) {
-            String relativePath = myLastPath.substring(entryPath.getPath().length());
-            copyPath = entryPath.getCopyPath() + relativePath;
-            break;
-          }
-          path = SVNPathUtil.removeTail(path);
-        }
-      }
-      if (copyPath != null) {
-        myLastPath = copyPath;
-      }
-      addResultRevision(logEntry, copyPath);
-    }
-
-    protected void addResultRevision(final SVNLogEntry logEntry, final String copyPath) {
-      if (logEntry.getRevision() < 0) {
-        -- myMergeLevel;
-        return;
-      }
-      final SvnFileRevision revision = createRevision(logEntry, copyPath);
-      if (myMergeLevel >= 0) {
-        addToListByLevel((SvnFileRevision) myPrevious, revision, myMergeLevel);
-      } else {
-        myResult.consume(revision);
-        myPrevious = revision;
-      }
-      if (logEntry.hasChildren()) {
-        ++ myMergeLevel;
-      }
+      myTracker.consume(logEntry);
     }
 
     private void addToListByLevel(final SvnFileRevision revision, final SvnFileRevision revisionToAdd, final int level) {

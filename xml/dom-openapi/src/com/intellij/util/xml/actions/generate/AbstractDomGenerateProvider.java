@@ -84,10 +84,6 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     }
   }
 
-  protected void runTemplate(final Editor editor, final PsiFile file, final T t) {
-    DomTemplateRunner.getInstance(file.getProject()).runTemplate(t, myMappingId, editor, new HashMap<String, String>());
-  }
-
   protected void runTemplate(final Editor editor, final PsiFile file, final T t, Map<String, String> predefinedVars) {
     DomTemplateRunner.getInstance(file.getProject()).runTemplate(t, myMappingId, editor, predefinedVars);
   }
