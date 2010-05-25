@@ -12,6 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddSelfQuickFix;
 import com.jetbrains.python.actions.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 
 /**
- * Looks for the 'self'.
+ * Looks for the 'self' or its equivalents.
  * User: dcheryasov
  * Date: Nov 17, 2008
  */
@@ -73,9 +74,20 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
         Set<PyFunction.Flag> flags = PyUtil.detectDecorationsAndWrappersOf(node);
+        boolean is_special_metaclass_method = false;
+        PyClass type_cls = PyBuiltinCache.getInstance(node).getClass("type");
+        for (PyClass ancestor_cls : ((PyClass)cap).iterateAncestors()) {
+          if (ancestor_cls == type_cls) {
+            is_special_metaclass_method = true;
+            break;
+          }
+        }
+        final String method_name = node.getName();
+        is_special_metaclass_method &= PyNames.INIT.equals(method_name) || "__call__".equals(method_name);
+        final boolean is_staticmethod = flags.contains(STATICMETHOD);
         if (params.length == 0) {
           // check for "staticmetod"
-          if (flags.contains(STATICMETHOD)) return; // no params may be fine
+          if (is_staticmethod) return; // no params may be fine
           // check actual param list
           ASTNode name_node = node.getNameNode();
           if (name_node != null) {
@@ -85,7 +97,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
               open_paren != null && close_paren != null &&
               "(".equals(open_paren.getText()) && ")".equals(close_paren.getText())
             ) {
-              String paramName = flags.contains(CLASSMETHOD) ? "cls" : "self";
+              String paramName = flags.contains(CLASSMETHOD) || is_special_metaclass_method ? "cls" : "self";
               registerProblem(
                 plist, PyBundle.message("INSP.must.have.first.parameter", paramName),
                 ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix(paramName)
@@ -110,7 +122,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
               }
             }
             // TODO: check for style settings
-            if (flags.contains(CLASSMETHOD)) {
+            if (flags.contains(CLASSMETHOD) || is_special_metaclass_method) {
               String CLS = "cls";
               if (!CLS.equals(pname)) {
                 registerProblem(
@@ -120,7 +132,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
                 );
               }
             }
-            else if (!PyNames.CANONICAL_SELF.equals(pname) && ! flags.contains(STATICMETHOD)) {
+            else if (!PyNames.CANONICAL_SELF.equals(pname) && !is_staticmethod) {
               registerProblem(
                 PyUtil.sure(params[0].getNode()).getPsi(),
                 PyBundle.message("INSP.usually.named.self"),
@@ -129,7 +141,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
             }
           }
           else { // the unusual case of a method with first tuple param
-            if (! flags.contains(STATICMETHOD)) {
+            if (!is_staticmethod) {
               registerProblem(plist, PyBundle.message("INSP.first.param.must.not.be.tuple"));
             }
           }
