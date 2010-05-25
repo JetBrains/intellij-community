@@ -47,7 +47,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -1028,6 +1027,9 @@ public class FileBasedIndex implements ApplicationComponent {
       try {
         boolean allDocsProcessed = true;
         final Semaphore semaphore = myUnsavedDataIndexingSemaphores.get(indexId);
+
+        assert semaphore != null : "Semaphore for unsaved data indexing was not initialized for index " + indexId;
+
         semaphore.down();
         try {
           for (Document document : documents) {

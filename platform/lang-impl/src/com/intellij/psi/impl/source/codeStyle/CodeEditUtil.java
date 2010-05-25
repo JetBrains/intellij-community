@@ -239,7 +239,7 @@ public class CodeEditUtil {
       // handle tailing whitespaces if element on the left has been removed
       final ASTNode prevLeaf = TreeUtil.prevLeaf(left);
       left.getTreeParent().removeChild(left);
-      markToReformatBeforeOrInsertWhitespace(prevLeaf, right, right.getTreeParent().getPsi().getManager());
+      markToReformatBeforeOrInsertWhitespace(prevLeaf, right);
       left = right;
     }
     else if(left.getElementType() == TokenType.WHITE_SPACE && right.getElementType() == TokenType.WHITE_SPACE) {
@@ -271,7 +271,7 @@ public class CodeEditUtil {
       else if(left.getElementType() == TokenType.WHITE_SPACE){
         markWhitespaceForReformat(left);
       }
-      else markToReformatBeforeOrInsertWhitespace(left, right, right.getTreeParent().getPsi().getManager());
+      else markToReformatBeforeOrInsertWhitespace(left, right);
     }
     return left;
   }
@@ -282,20 +282,26 @@ public class CodeEditUtil {
     right.getTreeParent().replaceChild(right, merged);
   }
 
-  private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right, PsiManager manager) {
+  private static void markToReformatBeforeOrInsertWhitespace(final ASTNode left, @NotNull final ASTNode right) {
     final Language leftLang = left != null ? PsiUtilBase.getNotAnyLanguage(left) : null;
     final Language rightLang = PsiUtilBase.getNotAnyLanguage(right);
-    
+
     ASTNode generatedWhitespace = null;
-    if(leftLang == rightLang) {
+    if (leftLang != null && leftLang.isKindOf(rightLang)) {
       generatedWhitespace = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(leftLang).generateWhitespaceBetweenTokens(left, right);
     }
-    if(generatedWhitespace != null){
+    else if (rightLang.isKindOf(leftLang)) {
+      generatedWhitespace = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(rightLang).generateWhitespaceBetweenTokens(left, right);
+    }
+
+    if (generatedWhitespace != null) {
       final TreeUtil.CommonParentState parentState = new TreeUtil.CommonParentState();
       TreeUtil.prevLeaf((TreeElement)right, parentState);
       parentState.nextLeafBranchStart.getTreeParent().addChild(generatedWhitespace, parentState.nextLeafBranchStart);
     }
-    else markToReformatBefore(right, true);
+    else {
+      markToReformatBefore(right, true);
+    }
   }
 
   public static void markToReformatBefore(final ASTNode right, boolean value) {
