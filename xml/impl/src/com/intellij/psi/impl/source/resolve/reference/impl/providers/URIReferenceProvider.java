@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.IgnoreExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -76,6 +77,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       myReference = ref;
     }
 
+    @Nullable
     public PsiFile resolveResource() {
       final String canonicalText = getCanonicalText();
       return ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getContainingFile(), null);
@@ -123,7 +125,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         String url = tokenizer.nextToken();
 
         offset = text.indexOf(url);
-        if (isUrlText(url)) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), urlReference));
+        if (isUrlText(url, element.getProject())) refs.add(new DependentNSReference(element, new TextRange(offset,offset + url.length()), urlReference));
         else {
           refs.addAll(Arrays.asList(new FileReferenceSet(url, element, offset, this, false).getAllReferences()));
         }
@@ -132,7 +134,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return refs.toArray(new PsiReference[refs.size()]);
     }
 
-    if (isUrlText(s) ||
+    if (isUrlText(s, element.getProject()) ||
         (parent instanceof XmlAttribute &&
           ( ((XmlAttribute)parent).isNamespaceDeclaration() ||
             NAMESPACE_ATTR_NAME.equals(((XmlAttribute)parent).getName())
@@ -161,12 +163,12 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     return 0;
   }
 
-  static boolean isUrlText(final String s) {
+  static boolean isUrlText(final String s, Project project) {
     final boolean surelyUrl = s.startsWith(HTTP) || s.startsWith(URN);
     if (surelyUrl) return surelyUrl;
     int protocolIndex = s.indexOf(":/");
     if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
-    return false;
+    return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
   }
 
   private static URLReference[] getUrlReference(final PsiElement element, boolean soft) {
