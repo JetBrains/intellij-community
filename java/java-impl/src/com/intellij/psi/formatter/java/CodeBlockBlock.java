@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
+import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -88,6 +89,11 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         else if (myNode.getElementType() == ElementType.CLASS && child.getElementType() == ElementType.LBRACE) {
           child = composeCodeBlock(result, child, getCodeBlockExternalIndent(), myChildrenIndent);
         }
+        else if (myNode.getElementType() == ElementType.CODE_BLOCK && child.getElementType() == ElementType.LBRACE
+                 && myNode.getTreeParent().getElementType() == JavaElementType.METHOD)
+        {
+          child = composeCodeBlock(result, child, indent, myChildrenIndent);
+        }
         else {
           child = processChild(result, child, childAlignment, childWrap, indent);
         }
@@ -104,7 +110,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
                                                final Alignment childAlignment,
                                                final Wrap childWrap, final Indent indent) {
     final ArrayList<Block> localResult = new ArrayList<Block>();
-    processChild(localResult, child, null, null, Indent.getNoneIndent());
+    processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
     Indent childIndent = Indent.getNormalIndent();
     while (child != null) {
@@ -120,7 +126,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         }
 
         boolean breakOrReturn = isBreakOrReturn(child);
-        processChild(localResult, child, null, null, childIndent);
+        processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, childIndent);
         if (breakOrReturn) {
           result.add(createCaseSectionBlock(localResult, childAlignment, indent, childWrap));
           return child;
