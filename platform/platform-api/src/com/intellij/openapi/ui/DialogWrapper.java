@@ -1053,42 +1053,94 @@ public abstract class DialogWrapper {
   }
 
   public boolean isToDispatchTypeAhead() {
-    return isOK();   
+    return isOK();
   }
 
-  private class OkAction extends AbstractAction {
+  /**
+   * Base class for dialog wrapper actions that need to ensure that only
+   * one action for the dialog is running.
+   */
+  protected abstract class DialogWrapperAction extends AbstractAction {
+    /**
+     * The constructor
+     *
+     * @param name the action name (see {@link Action#NAME})
+     */
+    protected DialogWrapperAction(String name) {
+      putValue(NAME, name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void actionPerformed(ActionEvent e) {
+      if (myClosed) return;
+      if (myPerformAction) return;
+      try {
+        myPerformAction = true;
+        doAction(e);
+      }
+      finally {
+        myPerformAction = false;
+      }
+    }
+
+    /**
+     * Do actual work for the action. This method is called only if no other action
+     * is performed in parallel (checked using {@link com.intellij.openapi.ui.DialogWrapper#myPerformAction}),
+     * and dialog is active (checked using {@link com.intellij.openapi.ui.DialogWrapper#myClosed})
+     */
+    protected abstract void doAction(ActionEvent e);
+  }
+
+  private class OkAction extends DialogWrapperAction {
     private OkAction() {
-      putValue(NAME, CommonBundle.getOkButtonText());
+      super(CommonBundle.getOkButtonText());
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
-    public void actionPerformed(ActionEvent e) {
-      if (myClosed) return;
-      if (myPerformAction) return;
-      try {
-        myPerformAction = true;
-        doOKAction();
-      }
-      finally {
-        myPerformAction = false;
-      }
+    @Override
+    protected void doAction(ActionEvent e) {
+      doOKAction();
     }
   }
 
-  private class CancelAction extends AbstractAction {
+  private class CancelAction extends DialogWrapperAction {
     private CancelAction() {
-      putValue(NAME, CommonBundle.getCancelButtonText());
+      super(CommonBundle.getCancelButtonText());
     }
 
-    public void actionPerformed(ActionEvent e) {
-      if (myClosed) return;
-      if (myPerformAction) return;
-      try {
-        myPerformAction = true;
-        doCancelAction();
-      }
-      finally {
-        myPerformAction = false;
+    @Override
+    protected void doAction(ActionEvent e) {
+      doCancelAction();
+    }
+  }
+
+  /**
+   * The action that just closes dialog with the specified exit code
+   * (like the default behavior of the actions "Ok" and "Cancel").
+   */
+  protected class DialogWrapperExitAction extends DialogWrapperAction {
+    /**
+     * The exit code for the action
+     */
+    protected final int myExitCode;
+
+    /**
+     * The constructor
+     *
+     * @param name     the action name
+     * @param exitCode the exit code for dialog
+     */
+    public DialogWrapperExitAction(String name, int exitCode) {
+      super(name);
+      myExitCode = exitCode;
+    }
+
+    @Override
+    protected void doAction(ActionEvent e) {
+      if (isEnabled()) {
+        close(myExitCode);
       }
     }
   }
@@ -1123,7 +1175,7 @@ public abstract class DialogWrapper {
         }
         myErrorText.repaint();
       }
-    }, 300);
+    }, 300, null);
   }
 
   private void updateHeightForErrorText() {

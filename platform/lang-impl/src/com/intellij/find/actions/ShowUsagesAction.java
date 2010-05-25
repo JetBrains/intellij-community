@@ -23,6 +23,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.AbstractFindUsagesDialog;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -172,7 +173,7 @@ public class ShowUsagesAction extends AnAction {
     showElementUsages(handler, editor, popupPosition, maxUsages);
   }
 
-  private void showElementUsages(@NotNull FindUsagesHandler handler, final Editor editor, final RelativePoint popupPosition, final int maxUsages) {
+  private void showElementUsages(@NotNull final FindUsagesHandler handler, final Editor editor, final RelativePoint popupPosition, final int maxUsages) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setDetachedMode(true);
 
@@ -202,9 +203,14 @@ public class ShowUsagesAction extends AnAction {
     final List<Usage> usages = new ArrayList<Usage>();
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
     Processor<Usage> collect = new Processor<Usage>() {
+      final UsageTarget[] myUsageTarget = new UsageTarget[] {
+        new PsiElement2UsageTargetAdapter(handler.getPsiElement())
+      };
+
       public boolean process(@NotNull Usage usage) {
         synchronized (usages) {
           if (visibleNodes.size() > maxUsages) return false;
+          if(UsageViewManager.isSelfUsage(usage, myUsageTarget)) return true;
           UsageNode node = usageView.doAppendUsage(usage);
           if (node != null) {
             if (visibleNodes.size() == maxUsages) {

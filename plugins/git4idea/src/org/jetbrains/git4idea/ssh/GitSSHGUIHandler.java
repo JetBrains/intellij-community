@@ -15,17 +15,21 @@
  */
 package org.jetbrains.git4idea.ssh;
 
+import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.PasswordPromptDialog;
+import com.intellij.util.ui.UIUtil;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Swing GUI handler for the SSH events
@@ -60,48 +64,48 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     else {
       message = GitBundle.message("ssh.changed.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
     }
-    final int[] rc = new int[1];
-    try {
-      EventQueue.invokeAndWait(new Runnable() {
-        public void run() {
-          rc[0] = Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null);
-        }
-      });
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    return rc[0] == 0;
+    final AtomicBoolean rc = new AtomicBoolean();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      public void run() {
+        rc.set(0 == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null));
+      }
+    });
+    return rc.get();
   }
 
   /**
    * {@inheritDoc}
    */
-  public String askPassphrase(final String username, final String keyPath, final String lastError) {
-    final String[] rc = new String[1];
-    try {
-      EventQueue.invokeAndWait(new Runnable() {
+  public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
+    String error = processLastError(resetPassword, lastError);
+    String p = PasswordSafePromptDialog.askPassphrase(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
+                                                      GitBundle.message("ssh.askPassphrase.message", keyPath, username),
+                                                      GitSSHGUIHandler.class, "PASSPHRASE:" + keyPath, resetPassword, error);
+    return p == null ? "" : p;
+  }
+
+  /**
+   * Process the last error
+   *
+   * @param resetPassword true, if last entered password was incorrect
+   * @param lastError     the last error
+   * @return the error to show on the password dialo or null
+   */
+  @Nullable
+  private String processLastError(boolean resetPassword, final String lastError) {
+    String error;
+    if (lastError != null && lastError.length() != 0 && !resetPassword) {
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         public void run() {
           showError(lastError);
-          PasswordPromptDialog dialog = new PasswordPromptDialog(GitBundle.message("ssh.askPassphrase.message", keyPath, username),
-                                                                 GitBundle.getString("ssh.ask.passphrase.title"), "");
-          dialog.show();
-          if (dialog.isOK()) {
-            rc[0] = dialog.getPassword();
-          }
         }
       });
+      error = null;
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException("dialog failed", e);
+    else {
+      error = lastError != null && lastError.length() == 0 ? null : lastError;
     }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    return rc[0];
+    return error;
   }
 
   /**
@@ -126,7 +130,7 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
                                          final Vector<String> prompt,
                                          final Vector<Boolean> echo,
                                          final String lastError) {
-    final Vector<String>[] rc = new Vector[1];
+    final AtomicReference<Vector<String>> rc = new AtomicReference<Vector<String>>();
     try {
       EventQueue.invokeAndWait(new Runnable() {
         public void run() {
@@ -135,7 +139,7 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
             new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
           dialog.show();
           if (dialog.isOK()) {
-            rc[0] = dialog.getResults();
+            rc.set(dialog.getResults());
           }
         }
       });
@@ -146,31 +150,15 @@ public class GitSSHGUIHandler implements GitSSHService.Handler {
     catch (InvocationTargetException e) {
       throw new RuntimeException("dialog failed", e);
     }
-    return rc[0];
+    return rc.get();
   }
 
-  public String askPassword(final String username, final String lastError) {
-    final String[] rc = new String[1];
-    try {
-      EventQueue.invokeAndWait(new Runnable() {
-        public void run() {
-          showError(lastError);
-          PasswordPromptDialog dialog =
-            new PasswordPromptDialog(GitBundle.message("ssh.password.message", username), GitBundle.getString("ssh.password.title"), "");
-          dialog.show();
-          if (dialog.isOK()) {
-            rc[0] = dialog.getPassword();
-          }
-        }
-      });
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException("dialog failed", e);
-    }
-    return rc[0];
+  public String askPassword(final String username, boolean resetPassword, final String lastError) {
+    String error = processLastError(resetPassword, lastError);
+    String p = PasswordSafePromptDialog
+      .askPassword(myProject, GitBundle.getString("ssh.password.title"), GitBundle.message("ssh.password.message", username),
+                   GitSSHGUIHandler.class, "PASSWORD:" + username, resetPassword, error);
+    return p == null ? "" : p;
   }
 
   /**

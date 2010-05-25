@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.trilead.ssh2.KnownHosts;
 import git4idea.commands.ScriptGenerator;
-import git4idea.i18n.GitBundle;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
@@ -120,7 +119,7 @@ public class GitSSHService implements ApplicationComponent {
       generator.addInternal(Integer.toString(myXmlRpcServer.getPortNumber()));
       generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
       generator.addClasses(KnownHosts.class, FileUtil.class);
-      generator.addResource(GitBundle.class, "/git4idea/i18n/GitBundle.properties");
+      generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
       myScriptPath = generator.generate();
     }
     return myScriptPath;
@@ -231,10 +230,10 @@ public class GitSSHService implements ApplicationComponent {
      *
      * @param username  a user name
      * @param keyPath   a key path
-     * @param lastError the last error for the handler
-     * @return a passphrase or null if dialog was cancelled.
+     * @param resetPassword
+     *@param lastError the last error for the handler  @return a passphrase or null if dialog was cancelled.
      */
-    String askPassphrase(final String username, final String keyPath, final String lastError);
+    String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError);
 
     /**
      * Reply to challenge in keyboard-interactive scenario
@@ -261,10 +260,10 @@ public class GitSSHService implements ApplicationComponent {
      * Ask password
      *
      * @param username  a user name
-     * @param lastError the previous error
-     * @return a password or null if dialog was cancelled.
+     * @param resetPassword
+     *@param lastError the previous error  @return a password or null if dialog was cancelled.
      */
-    String askPassword(final String username, final String lastError);
+    String askPassword(final String username, boolean resetPassword, final String lastError);
 
   }
 
@@ -287,8 +286,8 @@ public class GitSSHService implements ApplicationComponent {
     /**
      * {@inheritDoc}
      */
-    public String askPassphrase(final int handler, final String username, final String keyPath, final String lastError) {
-      return adjustNull(getHandler(handler).askPassphrase(username, keyPath, lastError));
+    public String askPassphrase(final int handler, final String username, final String keyPath, final boolean resetPassword, final String lastError) {
+      return adjustNull(getHandler(handler).askPassphrase(username, keyPath, resetPassword, lastError));
     }
 
     /**
@@ -309,8 +308,8 @@ public class GitSSHService implements ApplicationComponent {
     /**
      * {@inheritDoc}
      */
-    public String askPassword(final int handlerNo, final String username, final String lastError) {
-      return adjustNull(getHandler(handlerNo).askPassword(username, lastError));
+    public String askPassword(final int handlerNo, final String username, final boolean resetPassword, final String lastError) {
+      return adjustNull(getHandler(handlerNo).askPassword(username, resetPassword, lastError));
     }
 
     /**
