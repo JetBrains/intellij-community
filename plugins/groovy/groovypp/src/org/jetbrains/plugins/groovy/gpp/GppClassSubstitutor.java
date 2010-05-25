@@ -22,7 +22,7 @@ public class GppClassSubstitutor extends GrClassSubstitutor {
     return null;
   }
 
-  private static class TraitClass extends LightClass implements GrClassSubstitution {
+  public static class TraitClass extends LightClass implements GrClassSubstitution {
     public TraitClass(PsiClass base) {
       super(base, GroovyFileType.GROOVY_LANGUAGE);
     }
