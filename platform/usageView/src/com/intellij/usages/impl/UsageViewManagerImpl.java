@@ -286,24 +286,16 @@ public class UsageViewManagerImpl extends UsageViewManager {
         public boolean process(final Usage usage) {
           checkSearchCanceled();
 
-          boolean incrementCounter = true;
           final int i = myUsageCountWithoutDefinition.get();
 
-          // Handle self reference (under definition we are invoked on) just to skip it
-          if (mySearchFor.length == 1 && usage instanceof PsiElementUsage &&  mySearchFor[0] instanceof PsiElementUsageTarget) {
-            final PsiElement element = ((PsiElementUsage)usage).getElement();
-            // TODO: self usage might be configurable
-            if (element != null && element.getParent() == ((PsiElementUsageTarget)mySearchFor[0]).getElement()) {
-              incrementCounter = false;
-            }
-          }
+          boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
 
           int usageCount = incrementCounter ? myUsageCountWithoutDefinition.incrementAndGet():i;
           if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
             myFirstUsage.compareAndSet(null, usage);
           }
           UsageViewImpl usageView = getUsageView();
-          if (usageView != null) {
+          if (usageView != null && incrementCounter) {
             usageView.appendUsageLater(usage);
           }
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -390,4 +382,5 @@ public class UsageViewManagerImpl extends UsageViewManager {
     rangeBlinker.resetMarkers(usageInfo.getRangeMarkers());
     rangeBlinker.startBlinking();
   }
+
 }
