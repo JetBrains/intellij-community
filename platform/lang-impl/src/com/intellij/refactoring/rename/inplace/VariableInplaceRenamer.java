@@ -93,6 +93,10 @@ public class VariableInplaceRenamer {
   }
 
   public boolean performInplaceRename() {
+    if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(myElementToRename)) {
+      return false;
+    }
+    
     final Collection<PsiReference> refs = ReferencesSearch.search(myElementToRename).findAll();
 
     PsiFile myEditorFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
