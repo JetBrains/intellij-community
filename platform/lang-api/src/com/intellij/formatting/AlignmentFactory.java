@@ -20,7 +20,21 @@ package com.intellij.formatting;
  */
 
 interface AlignmentFactory {
-  public Alignment createAlignment();
 
+  /**
+   * Provides implementation for {@link Alignment#createAlignment(boolean)}
+   *
+   * @param allowBackwardShift    flag that specifies if former aligned block may be shifted to right in order to align to subsequent
+   *                              aligned block
+   * @return                      alignment object with the given <code>'allow backward shift'</code> setting
+   */
+  Alignment createAlignment(boolean allowBackwardShift);
+
+  /**
+   * Provides 
+   *
+   * @param base    base alignment to use within returned alignment object
+   * @return        alignment object with the given alignment defined as a <code>'base alignment'</code>
+   */
   Alignment createChildAlignment(final Alignment base);
 }
