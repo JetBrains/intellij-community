@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.light;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -22,7 +23,11 @@ public class LightClass extends LightElement implements PsiClass {
   private final PsiClass myDelegate;
 
   public LightClass(PsiClass delegate) {
-    super(delegate.getManager(), StdLanguages.JAVA);
+    this(delegate, StdLanguages.JAVA);
+  }
+
+  public LightClass(PsiClass delegate, final Language language) {
+    super(delegate.getManager(), language);
     myDelegate = delegate;
   }
 

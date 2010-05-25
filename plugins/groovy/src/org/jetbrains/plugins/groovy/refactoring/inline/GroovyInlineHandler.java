@@ -25,6 +25,7 @@ import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitution;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -51,7 +52,7 @@ public class GroovyInlineHandler implements InlineHandler {
         String message = GroovyRefactoringBundle.message("wrong.element.to.inline");
         CommonRefactoringUtil.showErrorHint(element.getProject(), editor, message, INLINE_REFACTORING, HelpID.INLINE_VARIABLE);
       }
-      if (element instanceof GrTypeDefinition) {
+      if (element instanceof GrTypeDefinition || element instanceof GrClassSubstitution) {
         return null;      //todo inline to anonymous class, push members from super class
       }
     }
