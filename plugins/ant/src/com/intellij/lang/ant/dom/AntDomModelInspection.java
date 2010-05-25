@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.codeInspection.InspectionToolProvider;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,10 @@ public class AntDomModelInspection extends BasicDomElementsInspection<AntDomProj
   @NotNull
   public String getShortName() {
     return "AntDomInspection";
+  }
+
+  protected boolean shouldCheckResolveProblems(GenericDomValue value) {
+    return false;
   }
 
   public Class[] getInspectionClasses() {

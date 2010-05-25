@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class AntStringResolver extends PropertyProviderFinder{
   private final PropertyExpander myExpander;
 
-  public AntStringResolver(DomElement contextElement, PropertyExpander expander) {
+  private AntStringResolver(DomElement contextElement, PropertyExpander expander) {
     super(contextElement);
     myExpander = expander;
   }
