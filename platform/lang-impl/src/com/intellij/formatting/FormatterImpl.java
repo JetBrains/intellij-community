@@ -60,8 +60,8 @@ public class FormatterImpl extends FormatterEx
     FormattingModelProvider.setFactory(this);
   }
 
-  public Alignment createAlignment() {
-    return new AlignmentImpl();
+  public Alignment createAlignment(boolean applyToNonFirstBlocksOnLine) {
+    return new AlignmentImpl(applyToNonFirstBlocksOnLine);
   }
 
   public Alignment createChildAlignment(final Alignment base) {
