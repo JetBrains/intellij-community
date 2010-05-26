@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
+import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -27,17 +28,14 @@ import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import java.util.*;
 
 public class SimpleJavaBlock extends AbstractJavaBlock {
+
   private int myStartOffset = -1;
   private final Map<IElementType, Wrap> myReservedWrap = new HashMap<IElementType, Wrap>();
 
-  public SimpleJavaBlock(final ASTNode node, final Wrap wrap, final Alignment alignment, final Indent indent, CodeStyleSettings settings) {
+  public SimpleJavaBlock(final ASTNode node, final Wrap wrap, final AlignmentStrategy alignment, final Indent indent, CodeStyleSettings settings) {
     super(node, wrap, alignment, indent,settings);
   }
 
@@ -49,7 +47,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     Indent indent = null;
     while (child != null) {
       if (StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType()) || child.getElementType() == JavaDocElementType.DOC_COMMENT) {
-        result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, null));
+        result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
         indent = Indent.getNoneIndent();
       }
       else if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
@@ -66,7 +64,9 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final ASTNode astNode = child;
-        child = processChild(result, astNode, chooseAlignment(myReservedAlignment, myReservedAlignment2, child) , childWrap, indent, offset);
+        AlignmentStrategy alignmentStrategyToUse = ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(myNode.getElementType()) ? myAlignmentStrategy
+          : AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, child));
+        child = processChild(result, astNode, alignmentStrategyToUse, childWrap, indent, offset);
         if (astNode != child && child != null) {
           offset = child.getTextRange().getStartOffset();
         }

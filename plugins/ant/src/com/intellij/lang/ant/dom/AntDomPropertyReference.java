@@ -22,6 +22,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 21, 2010
@@ -44,7 +46,7 @@ public class AntDomPropertyReference extends AntDomReference{
     // todo: find proper context project considering includes
     final AntDomProject project = myInvocationContextElement.getParentOfType(AntDomProject.class, true);
     if (project != null) {
-      return PropertyResolver.resolve(project, getCanonicalText(), myInvocationContextElement);
+      return PropertyResolver.resolve(project, getCanonicalText(), myInvocationContextElement).getFirst();
     }
     return null;
   }
@@ -67,7 +69,11 @@ public class AntDomPropertyReference extends AntDomReference{
   @NotNull
   @Override
   public Object[] getVariants() {
-    // todo: suggest defined properties
+    final AntDomProject project = myInvocationContextElement.getParentOfType(AntDomProject.class, true);
+    if (project != null) {
+      final Collection<String> variants = PropertyResolver.resolve(project, getCanonicalText(), myInvocationContextElement).getSecond();
+      return variants.toArray(new String[variants.size()]);
+    }
     return super.getVariants();
   }
 

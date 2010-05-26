@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -66,11 +67,7 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     PsiElement selectedElement = getSelectedElement(editor, file);
     if (TestFinderHelper.isTest(selectedElement)) {
       HintManager.getInstance().showErrorHint(editor, ActionsBundle.message("action.GotoTestSubject.nothing.found"));
-      return;
     }
-
-    TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
-    if (creator != null) creator.createTest(project, editor, file);
   }
 
   protected String getChooserInFileTitleKey(PsiElement sourceElement) {
@@ -99,5 +96,16 @@ public class GotoTestOrCodeHandler extends GotoTargetHandler {
     else {
       element.navigate(true);
     }
+  }
+
+  @Override
+  protected void navigateToElement(@Nullable Object element, @NotNull Editor editor, @NotNull PsiFile file) {
+    final TestCreator creator = LanguageTestCreators.INSTANCE.forLanguage(file.getLanguage());
+    if (creator != null) creator.createTest(file.getProject(), editor, file);
+  }
+
+  @Override
+  protected boolean hasNullUsage() {
+    return true;
   }
 }

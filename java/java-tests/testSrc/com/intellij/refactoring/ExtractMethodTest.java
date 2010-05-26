@@ -338,6 +338,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testLocalClassDefinedInMethodWhichIsUsedLater() throws Exception {
+    doPrepareErrorTest("Cannot extract method because the selected code fragment defines variable of local class type used outside of the fragment");
+  }
+
   public void testForceBraces() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     int old = settings.IF_BRACE_FORCE;

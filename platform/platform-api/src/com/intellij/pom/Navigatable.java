@@ -15,6 +15,10 @@
  */
 package com.intellij.pom;
 
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+
 public interface Navigatable {
   /**
    * Open editor and select/navigate to the object there if possible.
@@ -49,6 +53,14 @@ public interface Navigatable {
 
     public boolean canNavigateToSource() {
       return true;
+    }
+
+    public static void navigate(Project project, VirtualFile file, boolean requestFocus) {
+      navigate(project, file, 0, requestFocus);
+    }
+
+    public static void navigate(Project project, VirtualFile file, int offset, boolean requestFocus) {
+      new OpenFileDescriptor(project, file, offset).navigate(requestFocus);
     }
   }
 }

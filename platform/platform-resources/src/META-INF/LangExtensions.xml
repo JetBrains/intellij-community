@@ -534,4 +534,5 @@
   <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider"/>
 
   <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
+  <gotoTargetRendererProvider implementation="com.intellij.testIntegration.GotoTestRendererProvider"/>
 </extensions>

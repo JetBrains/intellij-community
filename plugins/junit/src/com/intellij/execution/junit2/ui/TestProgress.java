@@ -132,14 +132,17 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
     if (n < getMaximum()) {
       if (icon.setProgress(TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)getMaximum(), myProblemsCounter == 0)) {
         if (myProblemsCounter > 0) {
-          icon.setBadge(String.valueOf(myProblemsCounter));
+          icon.setErrorBadge(String.valueOf(myProblemsCounter));
         }
       }
     } else {
       if (icon.hideProgress(TESTS)) {
         if (myProblemsCounter > 0) {
-          icon.setBadge(String.valueOf(myProblemsCounter));
+          icon.setErrorBadge(String.valueOf(myProblemsCounter));
           icon.requestAttention(true);
+        } else {
+          icon.setOkBadge(true);
+          icon.requestAttention(false);
         }
       }
     }
@@ -147,6 +150,6 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
 
   public void dispose() {
     AppIcon.getInstance().hideProgress(TESTS);
-    AppIcon.getInstance().setBadge(null);
+    AppIcon.getInstance().setErrorBadge(null);
   }
 }

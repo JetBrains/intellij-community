@@ -2957,4 +2957,30 @@ public void testSCR260() throws Exception {
     doTextTest("public interface TestInterface {\n" + "    @Deprecated\n" + "    <T> void parametrizedAnnotated(T data);\n" + "}",
                "public interface TestInterface {\n" + "    @Deprecated\n" + "    <T> void parametrizedAnnotated(T data);\n" + "}");
   }
+
+  public void testIDEA_54406() throws Exception {
+    doTextTest("public class Test1 {\n" +
+               "void func() {\n" +
+               "new Thread(new Runnable() {\n" +
+               "public void run() {\n" +
+               " // ...\n" +
+               "}\n" +
+               "}\n" +
+               ")\n" +
+               ";\n" +
+               "}\n" +
+               "}",
+
+               "public class Test1 {\n" +
+               "    void func() {\n" +
+               "        new Thread(new Runnable() {\n" +
+               "            public void run() {\n" +
+               "                // ...\n" +
+               "            }\n" +
+               "        }\n" +
+               "        )\n" +
+               "        ;\n" +
+               "    }\n" +
+               "}");
+  }
 }

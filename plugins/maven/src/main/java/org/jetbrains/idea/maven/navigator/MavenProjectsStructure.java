@@ -15,25 +15,14 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -52,8 +40,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -462,27 +448,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Nullable
     public Navigatable getNavigatable() {
-      final VirtualFile file = getVirtualFile();
-      if (file == null || !file.isValid()) return null;
-      final PsiFile result = PsiManager.getInstance(getProject()).findFile(file);
-      return result == null ? null : new Navigatable.Adapter() {
-        public void navigate(boolean requestFocus) {
-          int offset = 0;
-          if (result instanceof XmlFile) {
-            final XmlDocument xml = ((XmlFile)result).getDocument();
-            if (xml != null) {
-              final XmlTag rootTag = xml.getRootTag();
-              if (rootTag != null) {
-                final XmlTag[] id = rootTag.findSubTags("artifactId", rootTag.getNamespace());
-                if (id.length > 0) {
-                  offset = id[0].getValue().getTextRange().getStartOffset();
-                }
-              }
-            }
-          }
-          new OpenFileDescriptor(getProject(), file, offset).navigate(requestFocus);
-        }
-      };
+      return MavenNavigationUtil.createNavigatableForPom(getProject(), getVirtualFile());
     }
 
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
@@ -1130,39 +1096,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public Navigatable getNavigatable() {
-      final Module m = myProjectsManager.findModule(myMavenProject);
-      if (m == null) return null;
-      final File pom = MavenArtifactUtil.getArtifactFile(myProjectsManager.getLocalRepository(), myArtifact.getMavenId());
-      final VirtualFile vPom;
-      if (pom.exists()) {
-       vPom = LocalFileSystem.getInstance().findFileByIoFile(pom);
+      final MavenArtifactNode parent = myArtifactNode.getParent();
+      final VirtualFile file;
+      if (parent == null) {
+        file = getMavenProject().getFile();
       } else {
-        final MavenProject mavenProject = myProjectsManager.findProject(myArtifact);
-        vPom = mavenProject == null ? null : mavenProject.getFile();
+        final MavenId id = parent.getArtifact().getMavenId();
+        final MavenProject pr = myProjectsManager.findProject(id);
+        file = pr == null ? MavenNavigationUtil.getArtifactFile(getProject(), id) : pr.getFile();
       }
-      if (vPom != null) {
-        return new Navigatable.Adapter() {
-          public void navigate(boolean requestFocus) {
-            int offset = 0;
-            try {
-              int index = new String(vPom.contentsToByteArray()).indexOf("<artifactId>" + myArtifact.getArtifactId() + "</artifactId>");
-              if (index != -1) {
-                offset += index + 12;
-              }
-            }
-            catch (IOException e) {//
-            }
-            new OpenFileDescriptor(myProject, vPom, offset).navigate(requestFocus);
-          }
-        };
-      }
-      final OrderEntry e = MavenRootModelAdapter.findLibraryEntry(m, myArtifact);
-      if (e == null) return null;
-      return new Navigatable.Adapter() {
-        public void navigate(boolean requestFocus) {
-          ProjectSettingsService.getInstance(myProject).openProjectLibrarySettings(new NamedLibraryElement(m, e));
-        }
-      };
+      return file == null ? null : MavenNavigationUtil.createNavigatableForDependency(getProject(), file, getArtifact());
     }
 
     @Override

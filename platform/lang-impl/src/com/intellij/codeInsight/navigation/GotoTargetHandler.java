@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -62,13 +63,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   protected abstract Pair<PsiElement, PsiElement[]> getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  private void show(Project project, Editor editor, PsiFile file, final PsiElement sourceElement, final PsiElement[] elements) {
+  private void show(Project project, final Editor editor, final PsiFile file, final PsiElement sourceElement, final PsiElement[] elements) {
     if (elements == null || elements.length == 0) {
       handleNoVariansCase(project, editor, file);
       return;
     }
 
-    if (elements.length == 1) {
+    if (elements.length == 1 && elements[0] != null) {
       Navigatable descriptor = elements[0] instanceof Navigatable ? (Navigatable) elements[0] : EditSourceUtil.getDescriptor(elements[0]);
       if (descriptor != null && descriptor.canNavigate()) {
         navigateToElement(descriptor);
@@ -89,7 +90,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         titleKey = getChooserTitleKey(sourceElement);
       }
       String name = ((PsiNamedElement)sourceElement).getName();
-      String title = CodeInsightBundle.message(titleKey, name, elements.length);
+      String title = CodeInsightBundle.message(titleKey, name, hasNullUsage() ? elements.length - 1 : elements.length);
 
       if (shouldSortResult()) Arrays.sort(elements, renderer.getComparator());
 
@@ -103,9 +104,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           if (ids == null || ids.length == 0) return;
           Object[] selectedElements = list.getSelectedValues();
           for (Object element : selectedElements) {
-            Navigatable descriptor = element instanceof Navigatable ? (Navigatable) element : EditSourceUtil.getDescriptor((PsiElement)element);
-            if (descriptor != null && descriptor.canNavigate()) {
-              navigateToElement(descriptor);
+            final Navigatable descriptor = element instanceof Navigatable ? (Navigatable) element : EditSourceUtil.getDescriptor((PsiElement)element);
+            if (descriptor != null) {
+              if (descriptor.canNavigate()) {
+                navigateToElement(descriptor);
+              }
+            }
+            else {
+              navigateToElement(element, editor, file);
             }
           }
         }
@@ -119,6 +125,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           setMovable(true).
           createPopup().showInBestPositionFor(editor);
     }
+  }
+
+  protected void navigateToElement(@Nullable Object element, @NotNull Editor editor, @NotNull PsiFile file) {
+    //special case for null
+  }
+
+  protected boolean hasNullUsage() {
+    return false;
   }
 
   protected void navigateToElement(Navigatable descriptor) {

@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -117,7 +118,7 @@ public class XmlBlock extends AbstractXmlBlock {
           child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
         result.add(new XmlBlock(child, null, null, formattingPolicy, null, null));
       }
-      else {
+      else if (child.getElementType() != TokenType.ERROR_ELEMENT) {
         result.add(new ReadOnlyBlock(child));
       }
       child = child.getTreeNext();

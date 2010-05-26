@@ -37,6 +37,9 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, List<String> result) {
     String initialName = UsageViewUtil.getShortName(element);
     SuggestedNameInfo info = suggestNamesForElement(element);
+    if (info != null) {
+      info = JavaCodeStyleManager.getInstance(element.getProject()).suggestUniqueVariableName(info, element, true);
+    }
 
     String parameterName = null;
     String superMethodName = null;

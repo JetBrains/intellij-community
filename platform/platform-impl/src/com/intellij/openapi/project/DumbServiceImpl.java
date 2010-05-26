@@ -287,6 +287,7 @@ public class DumbServiceImpl extends DumbService {
                     AppIcon appIcon = AppIcon.getInstance();
                     if (appIcon.hideProgress("indexUpdate")) {
                       appIcon.requestAttention(false);
+                      appIcon.setOkBadge(true);
                     }
                   }
                 });

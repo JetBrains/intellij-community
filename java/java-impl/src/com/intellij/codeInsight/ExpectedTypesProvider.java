@@ -85,28 +85,28 @@ public class ExpectedTypesProvider {
   }
 
   public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion) {
-    return getExpectedTypes(expr, forCompletion, false);
+    return getExpectedTypes(expr, forCompletion, false, false);
   }
 
-  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, final boolean voidable) {
-    return getExpectedTypes(expr, forCompletion, ourGlobalScopeClassProvider, voidable);
+  public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, final boolean voidable, boolean usedAfter) {
+    return getExpectedTypes(expr, forCompletion, ourGlobalScopeClassProvider, voidable, usedAfter);
   }
 
   public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr,
-                                             boolean forCompletion,
-                                             ExpectedClassProvider classProvider) {
-    return getExpectedTypes(expr, forCompletion, classProvider, false);
+                                                    boolean forCompletion,
+                                                    ExpectedClassProvider classProvider, boolean usedAfter) {
+    return getExpectedTypes(expr, forCompletion, classProvider, false, usedAfter);
   }
 
   public static ExpectedTypeInfo[] getExpectedTypes(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider,
-                                             final boolean voidable) {
+                                                    final boolean voidable, boolean usedAfter) {
     if (expr == null) return null;
     PsiElement parent = expr.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
       expr = (PsiExpression)parent;
       parent = parent.getParent();
     }
-    MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable);
+    MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider, voidable, usedAfter);
     parent.accept(visitor);
     return visitor.getResult();
   }
@@ -196,16 +196,22 @@ public class ExpectedTypesProvider {
   private static class MyParentVisitor extends JavaElementVisitor {
     private PsiExpression myExpr;
     private final boolean myForCompletion;
+    private final boolean myUsedAfter;
     private final ExpectedClassProvider myClassProvider;
     private final boolean myVoidable;
     private ExpectedTypeInfo[] myResult = ExpectedTypeInfo.EMPTY_ARRAY;
     @NonNls private static final String LENGTH_SYNTHETIC_ARRAY_FIELD = "length";
 
-    private MyParentVisitor(PsiExpression expr, boolean forCompletion, ExpectedClassProvider classProvider, boolean voidable) {
+    private MyParentVisitor(PsiExpression expr,
+                            boolean forCompletion,
+                            ExpectedClassProvider classProvider,
+                            boolean voidable,
+                            boolean usedAfter) {
       myExpr = expr;
       myForCompletion = forCompletion;
       myClassProvider = classProvider;
       myVoidable = voidable;
+      myUsedAfter = usedAfter;
     }
 
     public ExpectedTypeInfo[] getResult() {
@@ -225,7 +231,7 @@ public class ExpectedTypesProvider {
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       if (myForCompletion) {
-        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider, myVoidable);
+        final MyParentVisitor visitor = new MyParentVisitor(expression, myForCompletion, myClassProvider, myVoidable, myUsedAfter);
         expression.getParent().accept(visitor);
         myResult = visitor.getResult();
         return;
@@ -448,8 +454,10 @@ public class ExpectedTypesProvider {
                 type = ((PsiAnonymousClass)resolved).getBaseClassType();
               }
             }
-            ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, type,
-                                                       TailType.NONE);
+            final int kind = assignment.getOperationSign().getTokenType() != JavaTokenType.EQ
+                             ? ExpectedTypeInfo.TYPE_STRICTLY
+                             : ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
+            ExpectedTypeInfoImpl info = createInfoImpl(type, kind, type, TailType.NONE);
             myResult = new ExpectedTypeInfo[]{info};
             return;
           }
@@ -543,7 +551,7 @@ public class ExpectedTypesProvider {
       PsiExpression op2 = expr.getROperand();
       PsiJavaToken sign = expr.getOperationSign();
       if (myForCompletion && op1.equals(myExpr)) {
-        final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable);
+        final MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable, myUsedAfter);
         myExpr = (PsiExpression)myExpr.getParent();
         expr.getParent().accept(visitor);
         myResult = visitor.getResult();
@@ -637,8 +645,8 @@ public class ExpectedTypesProvider {
           myResult = ExpectedTypeInfo.EMPTY_ARRAY;
         }
         else {
-          ExpectedTypeInfoImpl info = createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                     anotherType, TailType.NONE);
+          ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_BETWEEN,
+                                                     myExpr.getType(), TailType.NONE);
           myResult = new ExpectedTypeInfo[]{info};
         }
       }
@@ -667,12 +675,23 @@ public class ExpectedTypesProvider {
     @Override public void visitPrefixExpression(PsiPrefixExpression expr) {
       PsiJavaToken sign = expr.getOperationSign();
       IElementType i = sign.getTokenType();
+      final PsiType type = expr.getType();
       final TailType tailType = expr.getParent() instanceof PsiAssignmentExpression && ((PsiAssignmentExpression) expr.getParent()).getRExpression() == expr ?
                                 getAssignmentRValueTailType((PsiAssignmentExpression) expr.getParent()) :
                                 TailType.NONE;
       if (i == JavaTokenType.PLUSPLUS || i == JavaTokenType.MINUSMINUS || i == JavaTokenType.TILDE) {
-        ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                   PsiType.INT, tailType);
+        ExpectedTypeInfoImpl info;
+        if (myUsedAfter && type != null) {
+          info = createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, tailType);
+        }
+        else {
+          if (type != null) {
+            info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, tailType);
+          }
+          else {
+            info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType);
+          }
+        }
         myResult = new ExpectedTypeInfo[]{info};
       }
       else if (i == JavaTokenType.PLUS || i == JavaTokenType.MINUS) {
@@ -689,9 +708,19 @@ public class ExpectedTypesProvider {
 
     @Override public void visitPostfixExpression(PsiPostfixExpression expr) {
       if (myForCompletion) return;
-
-      ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                                 PsiType.INT, TailType.NONE);
+      PsiType type = expr.getType();
+      ExpectedTypeInfoImpl info;
+      if (myUsedAfter && type != null) {
+        info = createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+      }
+      else {
+        if (type != null) {
+          info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, TailType.NONE);
+        }
+        else {
+          info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, TailType.NONE);
+        }
+      }
       myResult = new ExpectedTypeInfo[]{info};
     }
 
@@ -745,7 +774,7 @@ public class ExpectedTypesProvider {
         }
 
         PsiElement parent = expr.getParent();
-        MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable);
+        MyParentVisitor visitor = new MyParentVisitor(expr, myForCompletion, myClassProvider, myVoidable, myUsedAfter);
         myExpr = (PsiExpression)myExpr.getParent();
         parent.accept(visitor);
         ExpectedTypeInfo[] componentTypeInfo = visitor.getResult();
