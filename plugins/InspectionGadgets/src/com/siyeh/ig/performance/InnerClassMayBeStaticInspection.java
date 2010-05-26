@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,26 @@ import java.util.Collection;
 
 public class InnerClassMayBeStaticInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "inner.class.may.be.static.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "inner.class.may.be.static.problem.descriptor");
     }
 
+    @Override
+    public boolean runForWholeFile() {
+        return true;
+    }
+
+    @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
         return new InnerClassMayBeStaticFix();
     }
@@ -55,6 +63,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
             return InspectionGadgetsBundle.message("make.static.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiJavaToken classNameToken =
@@ -88,6 +97,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
         return new InnerClassCanBeStaticVisitor();
     }
