@@ -278,6 +278,11 @@ public class LightClass extends LightElement implements PsiClass {
   }
 
   @Override
+  public boolean isValid() {
+    return myDelegate.isValid();
+  }
+
+  @Override
   public boolean isEquivalentTo(PsiElement another) {
     return this == another || getDelegate().isEquivalentTo(another);
   }
