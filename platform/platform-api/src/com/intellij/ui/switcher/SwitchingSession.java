@@ -68,7 +68,17 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private SwitchManager myManager;
   private Spotlight mySpotlight;
 
-  public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
+  private boolean myShowspots;
+  private Alarm myShowspotsAlarm;
+  private Runnable myShowspotsRunnable = new Runnable() {
+    public void run() {
+      if (!myShowspots) {
+        setShowspots(true);
+      }
+    }
+  };
+
+  public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected, boolean showSpots) {
     myManager = mgr;
     myProvider = provider;
     myInitialEvent = e;
@@ -111,6 +121,12 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     myRootComponent = myProvider.getComponent().getRootPane();
     mySpotlight = new Spotlight(myRootComponent);
     myGlassPane.addPainter(myRootComponent, mySpotlight, this);
+
+    myShowspotsAlarm = new Alarm(this);
+    restartShowspotsAlarm();
+
+    myShowspots = showSpots;
+    mySpotlight.setNeedsRepaint(true);
    }
 
 
@@ -122,11 +138,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     private BufferedImage myBackground;
 
-    private boolean myCanPaint = true;
-
     private Spotlight(Component root) {
       myRoot = root;
-      setNeedsRepaint(true);
     }
 
     @Override
@@ -136,24 +149,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-      if (!myCanPaint) return;
-
-      //if (myBackground == null) {
-      //  myCanPaint = false;
-      //  try {
-      //    myBackground = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
-      //    Graphics2D buffer = myBackground.createGraphics();
-      //    component.paint(buffer);
-      //  } finally {
-      //    myCanPaint = true;
-      //  }
-      //}
-
-      //g.setColor(Color.white);
-      //g.fillRect(0, 0, component.getWidth(), component.getHeight());
-      //g.drawImage(myBackground, null, null);
-
-      int inset = 0;
+      int inset = -1;
       int selectedInset = -8;
 
       Set<Area> shapes = new HashSet<Area>();
@@ -197,7 +193,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
 
       Color fillColor = new Color(0f, 0f, 0f, 0.25f);
-      if (!hasIntersections) {
+      if (!hasIntersections && myShowspots) {
         g.setColor(fillColor);
         g.fillRect(clip.x, clip.y, clip.width, clip.height);
         return;
@@ -213,19 +209,22 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
       GraphicsConfig cfg = new GraphicsConfig(g);
       cfg.setAntialiasing(true);
 
-      g.setColor(fillColor);
-      g.fill(myArea);
+      if (myShowspots) {
+        g.setColor(fillColor);
+        g.fill(myArea);
 
-      g.setColor(Color.lightGray);
-      for (Shape each : shapes) {
-        if (each != selected) {
-          g.draw(each);
+        g.setColor(Color.lightGray);
+        for (Shape each : shapes) {
+          if (each != selected) {
+            g.draw(each);
+          }
         }
       }
 
       if (selected != null) {
-        g.setColor(Color.darkGray);
-        g.setStroke(new BasicStroke(2));
+        Color bg = Color.darkGray;
+        g.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 180));
+        g.setStroke(new BasicStroke(3));
         g.draw(selected);
       }
 
@@ -249,59 +248,6 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   public boolean isSelectionWasMoved() {
     return mySelectionWasMoved;
-  }
-
-  private class TargetPainer extends AbstractPainter implements Disposable {
-
-    private SwitchTarget myTarget;
-
-    private RelativePoint myPoint;
-
-    private TargetPainer(SwitchTarget target) {
-      myTarget = target;
-    }
-
-    @Override
-    public void executePaint(Component component, Graphics2D g) {
-      GraphicsConfig cfg = new GraphicsConfig(g);
-      cfg.setAntialiasing(true);
-
-      g.setColor(Color.red);
-      Rectangle paintRect = myTarget.getRectangle().getRectangleOn(component);
-
-      boolean selected = myTarget.equals(getSelection());
-      if (selected) {
-        g.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] {2, 4}, 0));
-        g.draw(paintRect);
-      } else {
-        g.setColor(Color.red);
-        int d = 6;
-        int dX = 4;
-        int dY = -4;
-        g.fillOval(paintRect.x + dX - d / 2, paintRect.y + paintRect.height + dY - d / 2, d, d);
-      }
-
-      if (myPoint != null) {
-        g.setColor(Color.green);
-        Point p = myPoint.getPoint(component);
-        //g.fillOval(p.x - 2, p.y - 2, 4, 4);
-      }
-
-      cfg.restore();
-    }
-
-    public void setPoint(RelativePoint point) {
-      myPoint = point;
-    }
-
-    @Override
-    public boolean needsRepaint() {
-      return true;
-    }
-
-    public void dispose() {
-      myGlassPane.removePainter(this);
-    }
   }
 
   private enum Direction {
@@ -335,6 +281,8 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     myAutoApply.cancelAllRequests();
     myAutoApply.addRequest(myAutoApplyRunnable, Registry.intValue("actionSystem.autoSelectTimeout"));
+
+    restartShowspotsAlarm();
   }
 
   private SwitchTarget getNextTarget(Direction direction) {
@@ -491,5 +439,21 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   public boolean isFinished() {
     return myFinished;
+  }
+
+  public void setShowspots(boolean showspots) {
+    if (myShowspots != showspots) {
+      myShowspots = showspots;
+      mySpotlight.setNeedsRepaint(true);
+    }
+  }
+
+  public boolean isShowspots() {
+    return myShowspots;
+  }
+  
+  private void restartShowspotsAlarm() {
+    myShowspotsAlarm.cancelAllRequests();
+    myShowspotsAlarm.addRequest(myShowspotsRunnable, Registry.intValue("actionSystem.quickAccessShowSpotsTime"));
   }
 }
