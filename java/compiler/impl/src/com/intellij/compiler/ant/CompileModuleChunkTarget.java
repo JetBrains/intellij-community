@@ -56,17 +56,29 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
     final @NonNls String productionTargetName = mainTargetName + ".production";
     final @NonNls String testsTargetName = mainTargetName + ".tests";
 
+    final ChunkCustomCompilerExtension[] customCompilers = moduleChunk.getCustomCompilers();
+    final String customCompilersDependency = customCompilers.length != 0 || genOptions.enableFormCompiler ?
+                                             BuildProperties.TARGET_REGISTER_CUSTOM_COMPILERS : "";
     final int modulesCount = moduleChunk.getModules().length;
     Target mainTarget = new Target(mainTargetName, productionTargetName + "," + testsTargetName,
                                    CompilerBundle.message("generated.ant.build.compile.modules.main.target.comment", modulesCount,
                                                           moduleChunkName), null);
-    Target productionTarget = new Target(productionTargetName, getChunkDependenciesString(moduleChunk),
+    String dependenciesProduction = getChunkDependenciesString(moduleChunk);
+    if (customCompilersDependency.length() > 0) {
+      if (dependenciesProduction != null && dependenciesProduction.length() > 0) {
+        dependenciesProduction = customCompilersDependency + "," + dependenciesProduction;
+      }
+      else {
+        dependenciesProduction = customCompilersDependency;
+      }
+    }
+    Target productionTarget = new Target(productionTargetName, dependenciesProduction,
                                          CompilerBundle.message("generated.ant.build.compile.modules.production.classes.target.comment",
                                                                 modulesCount, moduleChunkName), null);
-    Target testsTarget = new Target(testsTargetName, productionTargetName,
+    String dependenciesTests = (customCompilersDependency.length() != 0 ? customCompilersDependency + "," : "") + productionTargetName;
+    Target testsTarget = new Target(testsTargetName, dependenciesTests,
                                     CompilerBundle.message("generated.ant.build.compile.modules.tests.target.comment", modulesCount,
                                                            moduleChunkName), BuildProperties.PROPERTY_SKIP_TESTS);
-    final ChunkCustomCompilerExtension[] customCompilers = moduleChunk.getCustomCompilers();
 
     if (sourceRoots.length > 0) {
       final String outputPathRef = BuildProperties.propertyRef(BuildProperties.getOutputPathProperty(moduleChunkName));
@@ -115,31 +127,31 @@ public class CompileModuleChunkTarget extends CompositeGenerator {
   /**
    * Create custom compiler tasks
    *
-   * @param project          the proejct
-   * @param moduleChunk      the module chunkc
+   * @param project          the project
+   * @param moduleChunk      the module chunk
    * @param genOptions       generation options
    * @param compileTests     if true tests are being compiled
-   * @param customCompilers  an array of custom compilers for this cunk
-   * @param compilerArgs     the javac compilier arguements
+   * @param customCompilers  an array of custom compilers for this chunk
+   * @param compilerArgs     the javac compiler arguments
    * @param bootclasspathTag the boot classpath element for the javac compiler
    * @param classpathTag     the classpath tag for the javac compiler
    * @param compilerExcludes the compiler excluded tag
-   * @param srcTag           the soruce tag
+   * @param srcTag           the source tag
    * @param outputPathRef    the output path references
    * @param target           the target where to add custom compiler
    */
   private static void createCustomCompilerTasks(Project project,
-                                         ModuleChunk moduleChunk,
-                                         GenerationOptions genOptions,
-                                         boolean compileTests,
-                                         ChunkCustomCompilerExtension[] customCompilers,
-                                         Tag compilerArgs,
-                                         Tag bootclasspathTag,
-                                         Tag classpathTag,
-                                         PatternSetRef compilerExcludes,
-                                         Tag srcTag,
-                                         String outputPathRef,
-                                         Target target) {
+                                                ModuleChunk moduleChunk,
+                                                GenerationOptions genOptions,
+                                                boolean compileTests,
+                                                ChunkCustomCompilerExtension[] customCompilers,
+                                                Tag compilerArgs,
+                                                Tag bootclasspathTag,
+                                                Tag classpathTag,
+                                                PatternSetRef compilerExcludes,
+                                                Tag srcTag,
+                                                String outputPathRef,
+                                                Target target) {
     if (customCompilers.length > 1) {
       target.add(new Tag("fail", Pair.create("message", CompilerBundle.message(
         "generated.ant.build.compile.modules.fail.custom.compilers"))));

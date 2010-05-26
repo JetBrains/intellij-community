@@ -39,6 +39,7 @@ public abstract class BuildProperties extends CompositeGenerator {
   public static final @NonNls String TARGET_BUILD_MODULES = "build.modules";
   public static final @NonNls String TARGET_CLEAN = "clean";
   public static final @NonNls String TARGET_INIT = "init";
+  public static final @NonNls String TARGET_REGISTER_CUSTOM_COMPILERS = "register.custom.compilers";
   public static final @NonNls String DEFAULT_TARGET = TARGET_ALL;
   public static final @NonNls String PROPERTY_COMPILER_NAME = "compiler.name";
   public static final @NonNls String PROPERTY_COMPILER_ADDITIONAL_ARGS = "compiler.args";
