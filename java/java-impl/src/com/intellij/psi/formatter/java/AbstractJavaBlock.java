@@ -256,6 +256,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     if (parentType == JavaDocElementType.DOC_INLINE_TAG) return Indent.getNoneIndent();
     if (parentType == JavaElementType.IMPORT_LIST) return Indent.getNoneIndent();
     if (parentType == JavaElementType.FIELD) return Indent.getContinuationWithoutFirstIndent();
+    if (parentType == JavaElementType.EXPRESSION_STATEMENT) return Indent.getNoneIndent();
     if (SourceTreeToPsiMap.treeElementToPsi(parent) instanceof PsiFile) {
       return Indent.getNoneIndent();
     }
