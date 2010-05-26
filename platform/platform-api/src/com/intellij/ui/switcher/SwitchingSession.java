@@ -35,6 +35,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 
@@ -107,7 +108,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     myStartSelection = mySelection;
 
     myGlassPane = IdeGlassPaneUtil.find(myProvider.getComponent());
-    myRootComponent = myProvider.getComponent().getRootPane().getContentPane();
+    myRootComponent = myProvider.getComponent().getRootPane();
     mySpotlight = new Spotlight(myRootComponent);
     myGlassPane.addPainter(myRootComponent, mySpotlight, this);
    }
@@ -119,9 +120,12 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     private Area myArea;
 
+    private BufferedImage myBackground;
+
+    private boolean myCanPaint = true;
+
     private Spotlight(Component root) {
       myRoot = root;
-      myArea = new Area(new Rectangle(new Point(), myRoot.getSize()));
       setNeedsRepaint(true);
     }
 
@@ -132,42 +136,100 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
+      if (!myCanPaint) return;
 
-      double inset = 0;
-      double selectedInset = -4;
+      //if (myBackground == null) {
+      //  myCanPaint = false;
+      //  try {
+      //    myBackground = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      //    Graphics2D buffer = myBackground.createGraphics();
+      //    component.paint(buffer);
+      //  } finally {
+      //    myCanPaint = true;
+      //  }
+      //}
+
+      //g.setColor(Color.white);
+      //g.fillRect(0, 0, component.getWidth(), component.getHeight());
+      //g.drawImage(myBackground, null, null);
+
+      int inset = 0;
+      int selectedInset = -8;
 
       Set<Area> shapes = new HashSet<Area>();
       Area selected = null;
+
+      boolean hasIntersections = false;
+
+      Rectangle clip = g.getClipBounds();
+      myArea = new Area(clip);
+
       for (SwitchTarget each : myTargets) {
         RelativeRectangle eachSimpleRec = each.getRectangle();
         if (eachSimpleRec == null) continue;
-        Rectangle eachRec = eachSimpleRec.getRectangleOn(myRoot);
-        Shape eachShape;
-        if (each.equals(mySelection)) {
-          eachShape = new RoundRectangle2D.Double(eachRec.getX() + selectedInset,
-                                                  eachRec.getY() + selectedInset,
-                                                  eachRec.width - selectedInset -selectedInset,
-                                                  eachRec.height - selectedInset -selectedInset,
-                                                  6, 6);
-          selected = new Area(eachShape);
+
+        boolean isSelected = each.equals(mySelection);
+
+        Rectangle eachBaseRec = eachSimpleRec.getRectangleOn(myRoot);
+        Rectangle eachShape;
+        if (isSelected) {
+          eachShape = new Rectangle(eachBaseRec.x + selectedInset,
+                                    eachBaseRec.y + selectedInset,
+                                    eachBaseRec.width - selectedInset -selectedInset,
+                                    eachBaseRec.height - selectedInset -selectedInset);
         } else {
-          eachShape = new RoundRectangle2D.Double(eachRec.getX() + inset, eachRec.getY() + inset, eachRec.width - inset -inset, eachRec.height - inset -inset, 6, 6);
+          eachShape = new Rectangle(eachBaseRec.x + inset,
+                                    eachBaseRec.y + inset,
+                                    eachBaseRec.width - inset -inset,
+                                    eachBaseRec.height - inset -inset);
         }
-        shapes.add(new Area(eachShape));
-        myArea.subtract(new Area(eachShape));
+
+        if (!hasIntersections) {
+          hasIntersections = clip.contains(eachShape) || clip.intersects(eachShape);
+        }
+
+        Area eachArea = new Area(new RoundRectangle2D.Double(eachShape.x, eachShape.y, eachShape.width, eachShape.height, 6, 6));
+        shapes.add(eachArea);
+        if (isSelected) {
+          selected = eachArea;
+        }
       }
 
-      g.setColor(new Color(0f, 0f, 0f, 0.15f));
+
+      Color fillColor = new Color(0f, 0f, 0f, 0.25f);
+      if (!hasIntersections) {
+        g.setColor(fillColor);
+        g.fillRect(clip.x, clip.y, clip.width, clip.height);
+        return;
+      }
+
+      for (Area each : shapes) {
+        myArea.subtract(each);
+        if (each != selected) {
+          each.subtract(selected);
+        }
+      }
+
+      GraphicsConfig cfg = new GraphicsConfig(g);
+      cfg.setAntialiasing(true);
+
+      g.setColor(fillColor);
       g.fill(myArea);
 
+      g.setColor(Color.lightGray);
       for (Shape each : shapes) {
-        if (each.equals(selected)) {
-          g.setColor(Color.gray);
-        } else {
-          g.setColor(Color.lightGray);
+        if (each != selected) {
+          g.draw(each);
         }
-        g.draw(each);
       }
+
+      if (selected != null) {
+        g.setColor(Color.darkGray);
+        g.setStroke(new BasicStroke(2));
+        g.draw(selected);
+      }
+
+      cfg.restore();
     }
   }
 
