@@ -1096,7 +1096,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public Navigatable getNavigatable() {
-      return MavenNavigationUtil.createNavigatableForDependency(getProject(), getMavenProject(), getArtifact());
+      final MavenArtifactNode parent = myArtifactNode.getParent();
+      final VirtualFile file;
+      if (parent == null) {
+        file = getMavenProject().getFile();
+      } else {
+        final MavenId id = parent.getArtifact().getMavenId();
+        final MavenProject pr = myProjectsManager.findProject(id);
+        file = pr == null ? MavenNavigationUtil.getArtifactFile(getProject(), id) : pr.getFile();
+      }
+      return file == null ? null : MavenNavigationUtil.createNavigatableForDependency(getProject(), file, getArtifact());
     }
 
     @Override
