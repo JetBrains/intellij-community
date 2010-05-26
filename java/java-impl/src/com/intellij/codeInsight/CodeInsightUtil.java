@@ -193,7 +193,14 @@ public class CodeInsightUtil {
   }
 
   public static boolean areExpressionsEquivalent(PsiExpression expr1, PsiExpression expr2) {
-    return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2);
+    return PsiEquivalenceUtil.areElementsEquivalent(expr1, expr2, new Comparator<PsiElement>() {
+      public int compare(PsiElement o1, PsiElement o2) {
+        if (o1 instanceof PsiParameter && o2 instanceof PsiParameter) {
+          return ((PsiParameter)o1).getName().compareTo(((PsiParameter)o2).getName());
+        }
+        return 1;
+      }
+    }, false);
   }
 
   public static Editor positionCursor(final Project project, PsiFile targetFile, PsiElement element) {

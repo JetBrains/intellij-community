@@ -29,6 +29,10 @@ public class IndentData {
     this(indentSpaces, 0);
   }
 
+  public int getTotalSpaces() {
+    return mySpaces + myIndentSpaces;
+  }
+
   public int getIndentSpaces() {
     return myIndentSpaces;
   }

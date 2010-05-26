@@ -15,10 +15,12 @@
  */
 package com.intellij.lang.ant.dom;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -27,27 +29,32 @@ import org.jetbrains.annotations.Nullable;
 public class PropertyResolver extends PropertyProviderFinder {
   private final String myPropertyName;
   private PropertiesProvider myResult;
+  private Set<String> myVariants = new HashSet<String>();
 
-  public PropertyResolver(@NotNull String propertyName, DomElement contextElement) {
+  private PropertyResolver(@NotNull String propertyName, DomElement contextElement) {
     super(contextElement);
     myPropertyName = propertyName;
   }
 
-  @Nullable
-  public static PsiElement resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
+  @NotNull
+  public static Pair<PsiElement, Collection<String>> resolve(@NotNull AntDomProject project, @NotNull String propertyName, DomElement contextElement) {
     final PropertyResolver resolver = new PropertyResolver(propertyName, contextElement);
     resolver.execute(project, project.getDefaultTarget().getRawText());
     return resolver.getResult();
 
   }
 
-  @Nullable
-  public PsiElement getResult() {
-    return myResult != null? myResult.getNavigationElement(myPropertyName) : null;
+  @NotNull
+  public Pair<PsiElement, Collection<String>> getResult() {
+    final PsiElement element = myResult != null ? myResult.getNavigationElement(myPropertyName) : null;
+    return new Pair<PsiElement, Collection<String>>(element, Collections.unmodifiableSet(myVariants));
   }
 
   @Override
   protected void propertyProviderFound(PropertiesProvider propertiesProvider) {
+    for (Iterator<String> it = propertiesProvider.getNamesIterator(); it.hasNext();) {
+      myVariants.add(it.next());
+    }
     if (propertiesProvider.getPropertyValue(myPropertyName) != null) {
       myResult = propertiesProvider;
       stop();

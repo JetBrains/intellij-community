@@ -32,14 +32,68 @@ public abstract class Alignment {
   }
 
   /**
-   * Creates an alignment object.
+   * Shorthand for calling {@link #createAlignment(boolean)} with <code>'false'</code>.
    *
-   * @return the alignment object.
+   * @return      alignment object with default settings
    */
   public static Alignment createAlignment() {
-    return myFactory.createAlignment();
+    return myFactory.createAlignment(false);
   }
 
+  /**
+   * Specifies if former aligned element may be shifted to right in order to align to subsequent element.
+   * <p/>
+   * Consider the following example:
+   * <p/>
+   * <pre>
+   *     int start  = 1;
+   *     int finish = 2;
+   * </pre>
+   * <p/>
+   * Here <code>'='</code> block of <code>'int start  = 1'</code> statement is shifted one symbol right in order to align
+   * to the <code>'='</code> block of <code>'int finish  = 1'</code> statement.
+   *
+   * @param allowBackwardShift    flag that specifies if former aligned block may be shifted to right in order to align to subsequent
+   *                              aligned block
+   * @return                      alignment object with the given <code>'allow backward shift'</code> setting
+   */
+  public static Alignment createAlignment(boolean allowBackwardShift) {
+    return myFactory.createAlignment(allowBackwardShift);
+  }
+
+  /**
+   * Allows to create alignment with the following feature - aligned blocks are aligned to block with the current alignment if the one
+   * if found; block with the given <code>'base'</code> alignment is checked otherwise.
+   * <p/>
+   * Example:
+   * <p/>
+   * <pre>
+   *     int i = a ? x
+   *               : y;
+   * </pre>
+   * <p/>
+   * Here <code>':'</code> is aligned to <code>'?'</code> and alignment of <code>'a'</code> is a <code>'base alignment'</code>
+   * of <code>'?'</code> alignment. I.e. the thing is that <code>':'</code> is not aligned to <code>'a'</code>.
+   * <p/>
+   * However, we can change example as follows:
+   * <p/>
+   * <pre>
+   *     int i = a
+   *             ? x : y;
+   * </pre>
+   * <p/>
+   * Here <code>'?'</code> is aligned to <code>'a'</code> because the later is set as a <code>'base alignment'</code> for <code>'?'</code>.
+   * Note that we can't just define the same {@link #createAlignment() simple alignment} for all blocks <code>'a'</code>,
+   * <code>'?'</code> and <code>':'</code> because it would produce formatting like the one below:
+   * <p/>
+   * <pre>
+   *     int i = a ? x
+   *             : y;
+   * </pre>
+   *
+   * @param base    base alignment to use within returned alignment object
+   * @return        alignment object with the given alignment defined as a <code>'base alignment'</code>
+   */
   public static Alignment createChildAlignment(final Alignment base) {
     return myFactory.createChildAlignment(base);
   }

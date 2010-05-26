@@ -18,22 +18,31 @@ package com.intellij.lang.ant.dom;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
+import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
 import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
+import com.intellij.lang.ant.psi.impl.ReflectedProject;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.references.PomService;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -41,9 +50,14 @@ import java.util.Map;
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 @DefinesXml
-public abstract class AntDomProject extends AntDomElement {
+public abstract class AntDomProject extends AntDomElement implements PropertiesProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomProject");
-  private ClassLoader myClassLoader;
+
+  @NonNls public static final String DEFAULT_ENVIRONMENT_PREFIX = "env.";
+
+  private volatile ClassLoader myClassLoader;
+  private volatile Map<String, String> myProperties;
+
 
   @Attribute("name")
   @NameValue
@@ -120,18 +134,147 @@ public abstract class AntDomProject extends AntDomElement {
         myClassLoader = buildFile.getClassLoader();
       }
       else {
-        final AntConfigurationBase configuration = AntConfigurationBase.getInstance(tag.getProject());
-        AntInstallation antInstallation = null;
-        if (configuration != null) {
-          antInstallation = configuration.getProjectDefaultAnt();
-        }
-        if (antInstallation == null) {
-          antInstallation = GlobalAntConfiguration.getInstance().getBundledAnt();
-        }
-        assert antInstallation != null;
+        AntInstallation antInstallation = getAntInstallation();
         myClassLoader = antInstallation.getClassLoader();
       }
     }
     return myClassLoader;
+  }
+
+  private AntInstallation getAntInstallation() {
+    final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getXmlTag().getProject());
+    AntInstallation antInstallation = null;
+    if (configuration != null) {
+      antInstallation = configuration.getProjectDefaultAnt();
+    }
+    if (antInstallation == null) {
+      antInstallation = GlobalAntConfiguration.getInstance().getBundledAnt();
+    }
+    assert antInstallation != null;
+    return antInstallation;
+  }
+
+  @Nullable
+  public final Sdk getTargetJdk() {
+    final XmlTag tag = getXmlTag();
+    final AntBuildFileImpl buildFile = (AntBuildFileImpl)tag.getCopyableUserData(AntBuildFile.ANT_BUILD_FILE_KEY);
+    if (buildFile != null) {
+      String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(buildFile.getAllOptions());
+      if (jdkName == null || jdkName.length() == 0) {
+        jdkName = AntConfigurationImpl.DEFAULT_JDK_NAME.get(buildFile.getAllOptions());
+      }
+      if (jdkName != null && jdkName.length() > 0) {
+        return ProjectJdkTable.getInstance().findJdk(jdkName);
+      }
+    }
+    return ProjectRootManager.getInstance(tag.getProject()).getProjectJdk();
+  }
+
+  @NotNull
+  public Iterator<String> getNamesIterator() {
+    return getProperties().keySet().iterator();
+  }
+
+  @Nullable
+  public String getPropertyValue(String propertyName) {
+    return getProperties().get(propertyName);
+  }
+
+  @Nullable
+  public PsiElement getNavigationElement(String propertyName) {
+    final DomTarget target = DomTarget.getTarget(this);
+    final PsiElement nameElementPsi = target != null ? PomService.convertToPsi(target) : null;
+    if (nameElementPsi != null) {
+      return nameElementPsi;
+    }
+    return getXmlElement();
+  }
+
+  private Map<String, String> getProperties() {
+    if (myProperties == null) {
+      final ReflectedProject reflected = ReflectedProject.getProject(getClassLoader());
+      synchronized (this) {
+        if (myProperties == null) {
+          myProperties = loadPredefinedProperties(reflected.getProperties(), Collections.<String, String>emptyMap()  /*todo*/);
+        }
+      }
+    }
+    return myProperties;
+  }
+
+  @SuppressWarnings({"UseOfObsoleteCollectionType"})
+  private Map<String, String> loadPredefinedProperties(final Hashtable properties, final Map<String, String> externalProps) {
+    final Map<String, String> destination = new HashMap<String, String>();
+    if (properties != null) {
+      final Enumeration props = properties.keys();
+      while (props.hasMoreElements()) {
+        final String name = (String)props.nextElement();
+        final String value = (String)properties.get(name);
+        appendProperty(destination, name, value);
+      }
+    }
+    final Map<String, String> envMap = System.getenv();
+    for (final String name : envMap.keySet()) {
+      if (name.length() > 0) {
+        final String value = envMap.get(name);
+        appendProperty(destination, DEFAULT_ENVIRONMENT_PREFIX + name, value);
+      }
+    }
+    if (externalProps != null) {
+      for (final String name : externalProps.keySet()) {
+        final String value = externalProps.get(name);
+        appendProperty(destination, name, value);
+      }
+    }
+
+    String basedir = getProjectBasedirPath();
+    if (basedir == null) {
+      basedir = ".";
+    }
+    if (!FileUtil.isAbsolute(basedir)) {
+      final String containigFileDir = getContainingFileDir();
+      if (containigFileDir != null) {
+        try {
+          basedir = new File(containigFileDir, basedir).getCanonicalPath();
+        }
+        catch (IOException e) {
+          // ignore
+        }
+      }
+    }
+    if (basedir != null) {
+      appendProperty(destination, "basedir", FileUtil.toSystemIndependentName(basedir));
+    }
+
+    final AntInstallation installation = getAntInstallation();
+    final String homeDir = installation.getHomeDir();
+    if (homeDir != null) {
+      appendProperty(destination, "ant.home", FileUtil.toSystemIndependentName(homeDir));
+    }
+    appendProperty(destination, "ant.version", installation.getVersion());
+
+    final String projectName = getName().getRawText();
+    appendProperty(destination, "ant.project.name", (projectName == null) ? "" : projectName);
+
+    final Sdk jdkToRunWith = getTargetJdk();
+    final String version = jdkToRunWith != null? jdkToRunWith.getVersionString() : null;
+    appendProperty(destination, "ant.java.version", version != null? version : SystemInfo.JAVA_VERSION);
+    
+    final VirtualFile containingFile = getXmlTag().getContainingFile().getOriginalFile().getVirtualFile();
+    if (containingFile != null) {
+      final String antFilePath = containingFile.getPath();
+      appendProperty(destination, "ant.file", antFilePath);
+      if (projectName != null) {
+        appendProperty(destination, "ant.file." + projectName, antFilePath);
+      }
+    }
+    return destination;
+  }
+
+  private static void appendProperty(final Map<String, String> map, String name, String value) {
+    final String previous = map.put(name, value);
+    if (previous != null) {
+      map.put(name, previous);
+    }
   }
 }

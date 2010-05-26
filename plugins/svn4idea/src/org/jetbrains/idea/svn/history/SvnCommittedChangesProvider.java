@@ -34,6 +34,8 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
@@ -200,7 +202,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
             consumer.consume(cl);
           }
         }
-      });
+      }, false, true);
     }
     finally {
       consumer.finished();
@@ -230,13 +232,108 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       public void consume(final SVNLogEntry svnLogEntry) {
         result.add(new SvnChangeList(myVcs, svnLocation, svnLogEntry, repositoryRoot));
       }
-    });
+    }, false, true);
     settings.filterChanges(result);
     return result;
   }
 
+  public void getCommittedChangesWithMergedRevisons(final ChangeBrowserSettings settings,
+                                                                   final RepositoryLocation location, final int maxCount,
+                                                                   final PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>> finalConsumer)
+    throws VcsException {
+    final SvnRepositoryLocation svnLocation = (SvnRepositoryLocation) location;
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    if (progress != null) {
+      progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
+      progress.setText2(SvnBundle.message("progress.text2.changes.establishing.connection", location));
+    }
+
+    final String repositoryRoot;
+    try {
+      final SVNRepository repository = myVcs.createRepository(svnLocation.getURL());
+      repositoryRoot = repository.getRepositoryRoot(true).toString();
+      repository.closeSession();
+    }
+    catch (SVNException e) {
+      throw new VcsException(e);
+    }
+
+    final MergeTrackerProxy proxy = new MergeTrackerProxy(new Consumer<TreeStructureNode<SVNLogEntry>>() {
+      public void consume(TreeStructureNode<SVNLogEntry> node) {
+        finalConsumer.consume(new SvnChangeList(myVcs, svnLocation, node.getMe(), repositoryRoot), node);
+      }
+    });
+    final SvnMergeSourceTracker mergeSourceTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
+      public void consume(Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
+        proxy.consume(svnLogEntryIntegerPair);
+      }
+    });
+
+    getCommittedChangesImpl(settings, svnLocation.getURL(), new String[]{""}, maxCount, new Consumer<SVNLogEntry>() {
+      public void consume(final SVNLogEntry svnLogEntry) {
+        try {
+          mergeSourceTracker.consume(svnLogEntry);
+        }
+        catch (SVNException e) {
+          throw new RuntimeException(e);
+          // will not occur actually but anyway never eat them
+        }
+      }
+    }, true, false);
+    
+    proxy.finish();
+  }
+
+
+  private static class MergeTrackerProxy implements ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException> {
+    private TreeStructureNode<SVNLogEntry> myCurrentHierarchy;
+    private final Consumer<TreeStructureNode<SVNLogEntry>> myConsumer;
+
+    private MergeTrackerProxy(Consumer<TreeStructureNode<SVNLogEntry>> consumer) {
+      myConsumer = consumer;
+    }
+
+    public void consume(Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
+      final SVNLogEntry logEntry = svnLogEntryIntegerPair.getFirst();
+      final Integer mergeLevel = svnLogEntryIntegerPair.getSecond();
+
+      if (mergeLevel < 0) {
+        if (myCurrentHierarchy != null) {
+          myConsumer.consume(myCurrentHierarchy);
+        }
+        if (logEntry.hasChildren()) {
+          myCurrentHierarchy = new TreeStructureNode<SVNLogEntry>(logEntry);
+        } else {
+          // just pass
+          myCurrentHierarchy = null;
+          myConsumer.consume(new TreeStructureNode<SVNLogEntry>(logEntry));
+        }
+      } else {
+        addToLevel(myCurrentHierarchy, logEntry, mergeLevel);
+      }
+    }
+
+    public void finish() {
+      if (myCurrentHierarchy != null) {
+        myConsumer.consume(myCurrentHierarchy);
+      }
+    }
+
+    private static void addToLevel(final TreeStructureNode<SVNLogEntry> tree, final SVNLogEntry entry, final int left) {
+      assert tree != null;
+      if (left == 0) {
+        tree.add(entry);
+      } else {
+        final List<TreeStructureNode<SVNLogEntry>> children = tree.getChildren();
+        assert ! children.isEmpty();
+        addToLevel(children.get(children.size() - 1), entry, left - 1);
+      }
+    }
+  }
+
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, final String url, final String[] filterUrls,
-                                                      final int maxCount, final Consumer<SVNLogEntry> resultConsumer) throws VcsException {
+                                       final int maxCount, final Consumer<SVNLogEntry> resultConsumer, final boolean includeMergedRevisions,
+                                       final boolean filterOutByDate) throws VcsException {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     if (progress != null) {
       progress.setText(SvnBundle.message("progress.text.changes.collecting.changes"));
@@ -272,9 +369,8 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
         revisionAfter = SVNRevision.create(1);
       }
 
-      // todo log in committed provider
       logger.doLog(SVNURL.parseURIEncoded(url), filterUrls, revisionBefore, revisionBefore, revisionAfter,
-                   settings.STOP_ON_COPY, true, maxCount,
+                   settings.STOP_ON_COPY, true, includeMergedRevisions, maxCount, null,
                    new ISVNLogEntryHandler() {
                      public void handleLogEntry(SVNLogEntry logEntry) {
                        if (myProject.isDisposed()) throw new ProcessCanceledException();
@@ -282,7 +378,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                          progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
                          progress.checkCanceled();
                        }
-                       if (logEntry.getDate() == null) {
+                       if (filterOutByDate && logEntry.getDate() == null) {
                          // do not add lists without info - this situation is possible for lists where there are paths that user has no rights to observe
                          return;
                        }

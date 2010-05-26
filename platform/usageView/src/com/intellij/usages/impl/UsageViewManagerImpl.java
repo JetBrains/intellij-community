@@ -38,11 +38,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
-import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
@@ -286,25 +284,17 @@ public class UsageViewManagerImpl extends UsageViewManager {
         public boolean process(final Usage usage) {
           checkSearchCanceled();
 
-          boolean incrementCounter = true;
-          final int i = myUsageCountWithoutDefinition.get();
+          boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
 
-          // Handle self reference (under definition we are invoked on) just to skip it
-          if (mySearchFor.length == 1 && usage instanceof PsiElementUsage &&  mySearchFor[0] instanceof PsiElementUsageTarget) {
-            final PsiElement element = ((PsiElementUsage)usage).getElement();
-            // TODO: self usage might be configurable
-            if (element != null && element.getParent() == ((PsiElementUsageTarget)mySearchFor[0]).getElement()) {
-              incrementCounter = false;
+          if (incrementCounter) {
+            int usageCount = myUsageCountWithoutDefinition.incrementAndGet();
+            if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
+              myFirstUsage.compareAndSet(null, usage);
             }
-          }
-
-          int usageCount = incrementCounter ? myUsageCountWithoutDefinition.incrementAndGet():i;
-          if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-            myFirstUsage.compareAndSet(null, usage);
-          }
-          UsageViewImpl usageView = getUsageView();
-          if (usageView != null) {
-            usageView.appendUsageLater(usage);
+            UsageViewImpl usageView = getUsageView();
+            if (usageView != null) {
+              usageView.appendUsageLater(usage);
+            }
           }
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           return indicator == null || !indicator.isCanceled();
@@ -390,4 +380,5 @@ public class UsageViewManagerImpl extends UsageViewManager {
     rangeBlinker.resetMarkers(usageInfo.getRangeMarkers());
     rangeBlinker.startBlinking();
   }
+
 }

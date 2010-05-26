@@ -56,6 +56,8 @@ class GrChangeInfoImpl implements JavaChangeInfo {
   private ThrownExceptionInfo[] myThrownExceptions;
   private boolean myExceptionSetChanged;
   private boolean myExceptionSetOrOrderChanged;
+  private String[] myOldParameterNames;
+  private String[] myOldParameterTypes;
 
   public GrChangeInfoImpl(GrMethod method,
                           String visibilityModifier,
@@ -77,7 +79,10 @@ class GrChangeInfoImpl implements JavaChangeInfo {
     myIsVisibilityChanged = !method.hasModifierProperty(visibilityModifier);
 
     if (!method.isConstructor()) {
-      PsiType oldReturnType = method.getReturnType();
+      PsiType oldReturnType = null;
+      if (method.getReturnTypeElementGroovy() != null) {
+        oldReturnType = method.getReturnType();
+      }
       try {
         PsiType newReturnType = returnType == null ? null : returnType.getType(method, getMethod().getManager());
         if ((oldReturnType == null && newReturnType != null) || (oldReturnType != null && !oldReturnType.equals(newReturnType))) {
@@ -91,6 +96,15 @@ class GrChangeInfoImpl implements JavaChangeInfo {
 
     GrParameter[] params = method.getParameters();
     final int oldParameterCount = this.method.getParameters().length;
+    myOldParameterNames=new String[oldParameterCount];
+    myOldParameterTypes=new String[oldParameterCount];
+
+    for (int i = 0; i < oldParameterCount; i++) {
+      GrParameter param = params[i];
+      myOldParameterNames[i] = param.getName();
+      myOldParameterTypes[i] = param.getType().getCanonicalText();
+    }
+
     if (oldParameterCount != this.parameters.size()) {
       changeParameters = true;
     }
@@ -175,6 +189,8 @@ class GrChangeInfoImpl implements JavaChangeInfo {
         }
       }
     }
+
+
   }
 
   @NotNull
@@ -241,12 +257,12 @@ class GrChangeInfoImpl implements JavaChangeInfo {
 
   @NotNull
   public String[] getOldParameterNames() {
-    return new String[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return myOldParameterNames;
   }
 
   @NotNull
   public String[] getOldParameterTypes() {
-    return new String[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return myOldParameterTypes;
   }
 
   public ThrownExceptionInfo[] getNewExceptions() {

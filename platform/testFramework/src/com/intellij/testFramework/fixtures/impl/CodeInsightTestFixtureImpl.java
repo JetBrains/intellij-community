@@ -520,13 +520,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     checkResultByFile(fileAfter);
   }
 
-  public void renameElementAtCaret(final String newName) throws Exception {
+  @NotNull
+  public PsiElement getElementAtCaret() {
     assertInitialized();
-    final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-                                                                                        TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
-    assert element != null : "element not found in file " + myFile.getName() + " at caret position, offset " +
-                             myEditor.getCaretModel().getOffset();
-    renameElement(element, newName);
+    final PsiElement element = TargetElementUtilBase.findTargetElement(getCompletionEditor(),
+        TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    assert element != null : "element not found in file " + myFile.getName() + " at caret position, offset " + myEditor.getCaretModel().getOffset();
+    return element;
+  }
+
+  public void renameElementAtCaret(final String newName) throws Exception {
+    renameElement(getElementAtCaret(), newName);
   }
 
   public void renameElement(final PsiElement element, final String newName) throws Exception {

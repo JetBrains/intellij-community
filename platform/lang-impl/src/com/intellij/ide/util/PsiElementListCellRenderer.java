@@ -117,8 +117,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         }
       }
       else {
-        setIcon(IconUtil.getEmptyIcon(false));
-        append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+        setIcon(getNullIcon());
+        append(value == null ? getNullPresentation() : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
       setPaintFocusBorder(false);
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
@@ -160,6 +160,14 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public abstract String getElementText(T element);
+
+  protected String getNullPresentation() {
+    return "";
+  }
+
+  protected Icon getNullIcon() {
+    return IconUtil.getEmptyIcon(false);
+  }
 
   @Nullable
   protected abstract String getContainerText(T element, final String name);

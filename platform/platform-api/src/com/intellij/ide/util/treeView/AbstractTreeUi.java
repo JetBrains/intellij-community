@@ -29,6 +29,9 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
+import com.intellij.util.concurrency.ReadWriteLock;
+import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
+import com.intellij.util.concurrency.Sync;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
@@ -105,8 +108,6 @@ public class AbstractTreeUi {
 
   private final Set<DefaultMutableTreeNode> myUpdatingChildren = new HashSet<DefaultMutableTreeNode>();
   private long myJanitorPollPeriod = Time.SECOND * 10;
-  private boolean myCheckStructure = false;
-
 
   private boolean myCanYield = false;
 
@@ -156,6 +157,8 @@ public class AbstractTreeUi {
   private SimpleTimerTask myCleanupTask;
 
   private AtomicBoolean myCancelRequest = new AtomicBoolean();
+  private ReadWriteLock myStateLock = new ReentrantWriterPreferenceReadWriteLock();
+
   private AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
   private Map<Progressive, ProgressIndicator> myBatchIndicators = new HashMap<Progressive, ProgressIndicator>();
@@ -827,13 +830,20 @@ public class AbstractTreeUi {
   private boolean _update(final NodeDescriptor nodeDescriptor) {
     try {
       final Ref<Boolean> update = new Ref<Boolean>();
-      execute(new Runnable() {
-        public void run() {
-          nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
-          update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
-        }
-      });
-
+      try {
+        myStateLock.readLock().acquire();
+        execute(new Runnable() {
+          public void run() {
+            nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
+            update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
+          }
+        });
+      }
+      catch (InterruptedException e) {
+        throw new ProcessCanceledException();
+      } finally {
+        myStateLock.readLock().release();
+      }
       return update.get();
     }
     catch (IndexNotReadyException e) {
@@ -1373,28 +1383,38 @@ public class AbstractTreeUi {
 
   //todo [kirillk] temporary consistency check
   private Object[] getChildrenFor(final Object element) {
-    final Object[] passOne;
+    final Ref<Object[]> passOne = new Ref<Object[]>();
     try {
-      passOne = getTreeStructure().getChildElements(element);
+      myStateLock.readLock().acquire();
+      execute(new Runnable() {
+        public void run() {
+          passOne.set(getTreeStructure().getChildElements(element));
+        }
+      });
     }
     catch (IndexNotReadyException e) {
       warnOnIndexNotReady();
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
+    catch (InterruptedException e) {
+      throw new ProcessCanceledException();
+    } finally {
+      myStateLock.readLock().release();
+    }
 
-    if (!myCheckStructure) return passOne;
+    if (!Registry.is("ide.tree.checkStructure")) return passOne.get();
 
     final Object[] passTwo = getTreeStructure().getChildElements(element);
 
     final HashSet two = new HashSet(Arrays.asList(passTwo));
 
-    if (passOne.length != passTwo.length) {
+    if (passOne.get().length != passTwo.length) {
       LOG.error(
         "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
         element);
     }
     else {
-      for (Object eachInOne : passOne) {
+      for (Object eachInOne : passOne.get()) {
         if (!two.contains(eachInOne)) {
           LOG.error(
             "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
@@ -1404,7 +1424,7 @@ public class AbstractTreeUi {
       }
     }
 
-    return passOne;
+    return passOne.get();
   }
 
   private void warnOnIndexNotReady() {
@@ -2006,13 +2026,30 @@ public class AbstractTreeUi {
       resetToReadyNow();
       done.setDone();
     } else {
-      myCancelRequest.set(true);
+      requestCancel();
       getReady(this).notify(done);
     }
 
     maybeReady();
 
     return done;
+  }
+
+  private void requestCancel() {
+    try {
+      if (isUnitTestingMode()) {
+        myStateLock.writeLock().acquire(); // in unit tests there should be solid sync, in production it's ok to have race conditions (to avoid blocking on acquire())
+      } else {
+        myStateLock.writeLock().attempt(Sync.ONE_SECOND);
+      }
+      myCancelRequest.set(true);
+    }
+    catch (InterruptedException e) {
+      return;
+    }
+    finally {
+      myStateLock.writeLock().release();
+    }
   }
 
   public ActionCallback batch(final Progressive progressive) {
@@ -3980,10 +4017,6 @@ public class AbstractTreeUi {
 
   public void setJantorPollPeriod(final long time) {
     myJanitorPollPeriod = time;
-  }
-
-  public void setCheckStructure(final boolean checkStructure) {
-    myCheckStructure = checkStructure;
   }
 
   private class MySelectionListener implements TreeSelectionListener {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -143,7 +144,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
     else if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
       // A bit hacky depends on navigation offset correctly overridden
-      if (parent.getTextOffset() == element.getTextRange().getStartOffset() && !(parent instanceof XmlAttribute)) {
+      if (parent.getTextOffset() == element.getTextRange().getStartOffset() && !(parent instanceof XmlAttribute)
+        && !(parent instanceof PsiFile && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent))) {
         return parent;
       }
     }

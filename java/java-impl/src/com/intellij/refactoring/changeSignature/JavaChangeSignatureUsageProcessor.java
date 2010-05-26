@@ -105,12 +105,12 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         PsiMethod constructor = defConstructorUsage.getConstructor();
         if (!constructor.isPhysical()) {
           final boolean toPropagate =
-            ((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.remove(constructor); //todo don't use explicit type cast
+            changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.remove(constructor);
           final PsiClass containingClass = defConstructorUsage.getContainingClass();
           constructor = (PsiMethod)containingClass.add(constructor);
           PsiUtil.setModifierProperty(constructor, VisibilityUtil.getVisibilityModifier(containingClass.getModifierList()), true);
           if (toPropagate) {
-            ((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.add(constructor);  //todo don't use explicit type cast
+            ((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.add(constructor);
           }
         }
         addSuperCall((JavaChangeInfo)changeInfo, constructor, defConstructorUsage.getBaseConstructor(), usages);
@@ -218,7 +218,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     final PsiMethod caller = RefactoringUtil.getEnclosingMethod(ref);
     if (toChangeArguments) {
       final PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(ref);
-      boolean toInsertDefaultValue = !((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.contains(caller);  //todo
+      boolean toInsertDefaultValue = !(changeInfo instanceof JavaChangeInfoImpl) || !((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.contains(caller);
       if (toInsertDefaultValue && ref instanceof PsiReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiReferenceExpression)ref).getQualifierExpression();
         if (qualifierExpression instanceof PsiSuperExpression && callerSignatureIsAboutToChangeToo(caller, usages)) {
@@ -355,8 +355,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                              boolean toInsertDefaultValue) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     if (changeInfo.isParameterSetOrOrderChanged()) {
-      if (((JavaChangeInfoImpl)changeInfo).isPropagationEnabled) { //todo
-        final ParameterInfoImpl[] createdParmsInfo = ((JavaChangeInfoImpl)changeInfo).getCreatedParmsInfoWithoutVarargs();  //todo
+      if (changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).isPropagationEnabled) {
+        final ParameterInfoImpl[] createdParmsInfo = ((JavaChangeInfoImpl)changeInfo).getCreatedParmsInfoWithoutVarargs();
         for (ParameterInfoImpl info : createdParmsInfo) {
           PsiExpression newArg;
           if (toInsertDefaultValue) {
@@ -459,7 +459,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                                   final JavaParameterInfo info,
                                                   final PsiExpressionList list)
     throws IncorrectOperationException {
-    if (((ParameterInfoImpl)info).isUseAnySingleVariable()) {  //todo
+    if (info.isUseAnySingleVariable()) {
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       final PsiType type = info.getTypeWrapper().getType(changeInfo.getMethod(), list.getManager());
       final VariablesProcessor processor = new VariablesProcessor(false) {
@@ -735,7 +735,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
   private static boolean needToCatchExceptions(JavaChangeInfo changeInfo, PsiMethod caller) {
     return changeInfo.isExceptionSetOrOrderChanged() &&
-           !((JavaChangeInfoImpl)changeInfo).propagateExceptionsMethods.contains(caller); //todo
+           !(changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).propagateExceptionsMethods.contains(caller));
   }
 
   private static class ParameterList implements ChangeSignatureUtil.ChildrenGenerator<PsiParameterList, PsiParameter> {

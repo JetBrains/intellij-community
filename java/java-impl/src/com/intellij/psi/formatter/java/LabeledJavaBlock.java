@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
+import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -42,7 +43,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
     Wrap currentWrap = null;
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
-        result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, null));
+        result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, AlignmentStrategy.getNullStrategy()));
         if (child.getElementType() == ElementType.COLON) {
           currentIndent = Indent.getNoneIndent();
           currentWrap =Wrap.createWrap(WrapType.ALWAYS, true);

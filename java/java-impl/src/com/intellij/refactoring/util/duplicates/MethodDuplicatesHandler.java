@@ -232,7 +232,9 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       final boolean needQualifier = match.getInstanceExpression() != null;
       final boolean needStaticQualifier = isExternal(match);
-      @NonNls final String text = needQualifier || needStaticQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
+      final boolean nameConflicts = nameConflicts(match);
+      @NonNls final String text = needQualifier || needStaticQualifier || nameConflicts
+                                  ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
       methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
       final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
@@ -247,13 +249,15 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
           methodCallExpression.getArgumentList().add(factory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(parameter.getType()), parameter));
         }
       }
-      if (needQualifier || needStaticQualifier) {
+      if (needQualifier || needStaticQualifier || nameConflicts) {
         final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
         LOG.assertTrue(qualifierExpression != null);
         if (needQualifier) {
           qualifierExpression.replace(match.getInstanceExpression());
-        } else {
+        } else if (needStaticQualifier || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
           qualifierExpression.replace(factory.createReferenceExpression(containingClass));
+        } else {
+          qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
         }
       }
       VisibilityUtil.escalateVisibility(myMethod, match.getMatchStart());
@@ -276,14 +280,27 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
 
 
     private boolean isExternal(final Match match) {
-      if (PsiTreeUtil.isAncestor(myMethod.getContainingClass(), match.getMatchStart(), false)) {
+      final PsiElement matchStart = match.getMatchStart();
+      final PsiClass containingClass = myMethod.getContainingClass();
+      if (PsiTreeUtil.isAncestor(containingClass, matchStart, false)) {
         return false;
       }
-      final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
+      final PsiClass psiClass = PsiTreeUtil.getParentOfType(matchStart, PsiClass.class);
       if (psiClass != null) {
-        if (InheritanceUtil.isInheritorOrSelf(psiClass, myMethod.getContainingClass(), true)) return false;
+        if (InheritanceUtil.isInheritorOrSelf(psiClass, containingClass, true)) return false;
       }
       return true;
+    }
+
+    private boolean nameConflicts(Match match) {
+      PsiClass matchClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
+      while (matchClass != null && matchClass != myMethod.getContainingClass()) {
+        if (matchClass.findMethodsBySignature(myMethod, false).length > 0) {
+          return true;
+        }
+        matchClass = PsiTreeUtil.getParentOfType(matchClass, PsiClass.class);
+      }
+      return false;
     }
 
     private boolean isEssentialStaticContextAbsent(final Match match) {

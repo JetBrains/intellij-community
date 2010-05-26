@@ -173,7 +173,6 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
       }
     });
 
-    getBuilder().getUi().setCheckStructure(false);
     Disposer.register(getRootDisposable(), getBuilder());
 
     showTree();

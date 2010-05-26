@@ -153,7 +153,7 @@ public class PsiMethodInsertHandler implements InsertHandler<LookupItem<PsiMetho
     if (expression == null) return;
 
     final Project project = file.getProject();
-    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expression, true, false);
+    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expression, true);
     if (expectedTypes == null) return;
 
     for (final ExpectedTypeInfo type : expectedTypes) {

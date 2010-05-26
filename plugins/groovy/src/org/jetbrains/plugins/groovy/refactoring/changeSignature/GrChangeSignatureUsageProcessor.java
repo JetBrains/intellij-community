@@ -358,7 +358,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
 
       boolean skipOptionals = false;
-      PsiElement anchor = null;
+      PsiElement anchor = null; //PsiTreeUtil.getChildOfAnyType(argumentList, GrExpression.class, GrNamedArgument.class);
       for (int i = 0; i < parameters.length; i++) {
         JavaParameterInfo parameter = parameters[i];
         int index = parameter.getOldIndex();
@@ -389,7 +389,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                 anchor = arg;
               }
               else {
-                anchor = argumentList.addBefore(arg, anchor);
+                final PsiElement copy = arg.copy();
+                arg.delete();
+                anchor = argumentList.addAfter(copy, anchor);
               }
             }
             else { //arg is skipped. Parameter is optional
@@ -406,7 +408,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           catch (IncorrectOperationException e) {
             LOG.error(e.getMessage());
           }
-          anchor = argumentList.addBefore(fromText, getNextOfType(argumentList, anchor, GrExpression.class));
+          anchor = argumentList.addAfter(fromText, anchor);
         }
       }
 

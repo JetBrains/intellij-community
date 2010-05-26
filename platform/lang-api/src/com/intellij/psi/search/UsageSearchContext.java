@@ -38,7 +38,7 @@ public interface UsageSearchContext {
   short IN_FOREIGN_LANGUAGES = 0x8;
 
   /**
-   * Plain text occurences are requested
+   * Plain text occurrences are requested
    */
   short IN_PLAIN_TEXT  = 0x10;
 

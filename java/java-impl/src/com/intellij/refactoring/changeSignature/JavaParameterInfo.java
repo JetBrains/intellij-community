@@ -34,4 +34,6 @@ public interface JavaParameterInfo extends ParameterInfo {
   PsiExpression getValue(PsiCallExpression callExpression);
 
   boolean isVarargType();
+
+  boolean isUseAnySingleVariable();
 }

@@ -424,6 +424,13 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean ALIGN_MULTILINE_ASSIGNMENT = false;
   public boolean ALIGN_MULTILINE_TERNARY_OPERATION = false;
   public boolean ALIGN_MULTILINE_THROWS_LIST = false;
+
+  /**
+   * Specifies if subsequent fields/variables declarations and initialisations should be aligned in columns like below:
+   *     int start = 1;
+   *     int end   = 10;
+   */
+  public boolean ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS = false;
   public boolean ALIGN_MULTILINE_EXTENDS_LIST = false;
   public boolean ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
 

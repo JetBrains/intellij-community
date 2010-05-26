@@ -80,6 +80,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/inspectionInProgress.png");
   private final String myShortcutText;
   private final SeverityRegistrar mySeverityRegistrar;
+  private boolean myFailFastOnAcquireReadAction;
 
   public LocalInspectionsPass(@NotNull PsiFile file, @Nullable Document document, int startOffset, int endOffset) {
     super(file.getProject(), document, IN_PROGRESS_ICON, PRESENTABLE_NAME, file, true);
@@ -102,21 +103,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     myDescriptors = new ArrayList<ProblemDescriptor>();
     myLevels = new ArrayList<HighlightInfoType>();
     myTools = new ArrayList<LocalInspectionTool>();
-    long startTime = System.nanoTime();
-    inspectRoot();
-    long endTime = System.nanoTime();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Inspections for " + myFile.getName() + " completed in " + (endTime - startTime) / 1000000 + " ms");
-    }
-  }
-
-  private void inspectRoot() {
     if (!HighlightLevelUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
     final List<LocalInspectionTool> tools = DumbService.getInstance(myProject).filterByDumbAwareness(getInspectionTools(profile));
 
-    inspect(tools, iManager, true, true);
+    inspect(tools, iManager, true, true, true);
   }
 
   public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers, boolean ignoreSuppressed) {
@@ -129,7 +121,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
     }
     List<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>(tool2Wrapper.keySet());
-    inspect(tools, iManager, false, ignoreSuppressed);
+    inspect(tools, iManager, false, ignoreSuppressed, false);
     addDescriptorsFromInjectedResults(tool2Wrapper, iManager);
     for (int i = 0; i < myTools.size(); i++) {
       final LocalInspectionTool tool = myTools.get(i);
@@ -184,7 +176,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void inspect(final List<LocalInspectionTool> tools, final InspectionManagerEx iManager, final boolean isOnTheFly, final boolean ignoreSuppressed) {
+  private void inspect(final List<LocalInspectionTool> tools,
+                       final InspectionManagerEx iManager,
+                       final boolean isOnTheFly,
+                       final boolean ignoreSuppressed,
+                       boolean failFastOnAcquireReadAction) {
+    myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
     if (tools.isEmpty()) return;
     final PsiElement[] elements = getElementsIntersectingRange(myFile, myStartOffset, myEndOffset);
 
@@ -223,7 +220,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
         return true;
       }
-    }, "Inspection tools");
+    }, myFailFastOnAcquireReadAction);
     if (!result) throw new ProcessCanceledException();
 
     indicator.checkCanceled();
@@ -249,7 +246,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         inspectInjectedPsi(injectedPsi, myInjectedPsiInspectionResults, tools);
         return true;
       }
-    }, "Inspect injected fragments")) throw new ProcessCanceledException();
+    }, myFailFastOnAcquireReadAction)) throw new ProcessCanceledException();
   }
 
   public Collection<HighlightInfo> getHighlights() {

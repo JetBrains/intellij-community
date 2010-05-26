@@ -5,6 +5,6 @@ class Test {
 }
 
 class Foo extends Test{
-  <warning descr="Method does not override method from its superclass">@Override</warning>
+  <warning descr="Method does not override method from its super class">@Override</warning>
   def foo(String s){}
 }

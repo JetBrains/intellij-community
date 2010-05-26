@@ -298,6 +298,10 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
     return myCenterPanel;
   }
 
+  protected boolean isOutputVariable(PsiVariable var) {
+    return false;
+  }
+
   private void createParametersPanel() {
     if (myParamTabel != null) {
       myCenterPanel.remove(myParamTabel);
@@ -318,6 +322,11 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
       protected boolean areTypesDirected() {
         return ExtractMethodDialog.this.areTypesDirected();
+      }
+
+      @Override
+      protected boolean isUsedAfter(PsiVariable variable) {
+        return isOutputVariable(variable);
       }
     };
     myParamTabel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("parameters.border.title")));
