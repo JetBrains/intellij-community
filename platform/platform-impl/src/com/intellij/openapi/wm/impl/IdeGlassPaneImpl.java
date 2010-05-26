@@ -299,7 +299,9 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
       if (component.getParent() == null) continue;
       final Rectangle componentBounds = SwingUtilities.convertRectangle(component.getParent(), component.getBounds(), this);
 
-      if (!painter.needsRepaint()) continue;
+      if (!painter.needsRepaint()) {
+        continue;
+      }
 
       if (clip.contains(componentBounds) || clip.intersects(componentBounds)) {
         final Point targetPoint = SwingUtilities.convertPoint(this, 0, 0, component);
@@ -309,6 +311,11 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
         g2d.translate(targetRect.x, targetRect.y);
       }
     }
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
   }
 
   public boolean hasPainters() {
@@ -339,5 +346,10 @@ private MouseEvent convertEvent(final MouseEvent e, final Component target) {
     final Point lpPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), container);
     final Component lpComponent = SwingUtilities.getDeepestComponentAt(container, lpPoint.x, lpPoint.y);
     return lpComponent;
+  }
+
+  @Override
+  public boolean isOptimizedDrawingEnabled() {
+    return hasPainters() ? false : super.isOptimizedDrawingEnabled();
   }
 }
