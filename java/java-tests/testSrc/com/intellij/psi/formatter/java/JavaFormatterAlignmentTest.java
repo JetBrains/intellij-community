@@ -140,7 +140,7 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   public void testVariableDeclarationAlignment() {
     // Inspired by IDEA-55147
-    getSettings().ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS = true;
+    getSettings().ALIGN_GROUP_FIELDS_VARIABLES = true;
     getSettings().FIELD_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
     getSettings().VARIABLE_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
 
