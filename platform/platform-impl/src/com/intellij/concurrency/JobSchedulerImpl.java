@@ -51,7 +51,7 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
   }
 
   public <T> Job<T> createJob(String title, int priority) {
-    return new JobImpl<T>(priority);
+    return new JobImpl<T>(priority, false);
   }
 
   public void dispose() {

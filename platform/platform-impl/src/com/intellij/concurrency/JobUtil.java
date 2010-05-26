@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,7 +35,9 @@ import java.util.concurrent.Callable;
 public class JobUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobUtil");
 
-  private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things, @NotNull final Processor<T> thingProcessor, @NotNull @NonNls String jobName) throws ProcessCanceledException {
+  private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
+                                                      @NotNull final Processor<T> thingProcessor,
+                                                      boolean failFastOnAcquireReadAction) throws ProcessCanceledException {
     if (things.isEmpty()) {
       return true;
     }
@@ -45,7 +46,7 @@ public class JobUtil {
       return thingProcessor.process(t);
     }
 
-    final Job<String> job = new JobImpl<String>(Job.DEFAULT_PRIORITY);
+    final Job<String> job = new JobImpl<String>(Job.DEFAULT_PRIORITY, failFastOnAcquireReadAction);
 
     final int chunkSize = Math.max(1, things.size() / JobSchedulerImpl.CORES_COUNT / 100);
     for (int i = 0; i < things.size(); i += chunkSize) {
@@ -88,7 +89,7 @@ public class JobUtil {
    * With checkCanceled in each thread delegated to our current progress
    * @param things to process concurrently
    * @param thingProcessor to be invoked concurrently on each element from the collection
-   * @param jobName the name of the job that invokes all the tasks
+   * @param failFastOnAcquireReadAction if true, returns false when failed to acquire read action
    * @return false if tasks have been canceled
    *         or at least one processor returned false
    *         or threw exception
@@ -97,7 +98,7 @@ public class JobUtil {
    */
   public static <T> boolean invokeConcurrentlyUnderMyProgress(@NotNull List<T> things,
                                                               @NotNull final Processor<T> thingProcessor,
-                                                              @NotNull @NonNls String jobName) throws ProcessCanceledException {
+                                                              boolean failFastOnAcquireReadAction) throws ProcessCanceledException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final ProgressWrapper wrapper = ProgressWrapper.wrap(indicator);
     return invokeConcurrentlyForAll(things, new Processor<T>() {
@@ -110,11 +111,11 @@ public class JobUtil {
         }, wrapper);
         return result[0];
       }
-    }, jobName);
+    }, failFastOnAcquireReadAction);
   }
 
   public static Job<Void> submitToJobThread(@NotNull final Runnable action, int priority) {
-    Job<Void> job = new JobImpl<Void>(priority);
+    Job<Void> job = new JobImpl<Void>(priority, false);
     Callable<Void> callable = new Callable<Void>() {
       public Void call() throws Exception {
         try {
