@@ -16,28 +16,32 @@
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.SVNException;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-public class OneShotMergeInfoHelper {
+public class OneShotMergeInfoHelper implements MergeChecker {
   private OneRecursiveShotMergeInfoWorker myWorker;
+  private final Map<Long, Collection<String>> myPartiallyMerged;
 
   public OneShotMergeInfoHelper(final Project project, final WCInfo wcInfo, final String branchPath) throws SVNException {
     myWorker = new OneRecursiveShotMergeInfoWorker(project, wcInfo, branchPath);
+    myPartiallyMerged = new HashMap<Long, Collection<String>>();
   }
 
   public void prepare() throws SVNException {
     myWorker.prepare();
   }
 
-  public Pair<SvnMergeInfoCache.MergeCheckResult, Set<String>> checkList(final SvnChangeList list) {
-    final Set<String> merged = new HashSet<String>();
-    boolean somethingAvailableForMergeFound = false;
+  public Collection<String> getNotMergedPaths(long number) {
+    return myPartiallyMerged.get(number);
+  }
+
+  public SvnMergeInfoCache.MergeCheckResult checkList(final SvnChangeList list) {
+    final Set<String> notMerged = new HashSet<String>();
+    boolean somethingMerged = false;
 
     final long number = list.getNumber();
     final Set<String> paths = new HashSet<String>(list.getAddedPaths());
@@ -47,13 +51,16 @@ public class OneShotMergeInfoHelper {
     for (String path : paths) {
       final SvnMergeInfoCache.MergeCheckResult pathResult = myWorker.isMerged(path, number);
       if (SvnMergeInfoCache.MergeCheckResult.MERGED.equals(pathResult)) {
-        merged.add(path);
+        somethingMerged = true;
       } else if (SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(pathResult)) {
-        somethingAvailableForMergeFound = true;
+        notMerged.add(path);
       }
     }
 
-    return new Pair<SvnMergeInfoCache.MergeCheckResult, Set<String>>(
-      SvnMergeInfoCache.MergeCheckResult.getInstance(! somethingAvailableForMergeFound), merged);
+    if (somethingMerged && (! notMerged.isEmpty())) {
+      myPartiallyMerged.put(number, notMerged);
+    }
+    if ((! somethingMerged) && notMerged.isEmpty()) return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
+    return SvnMergeInfoCache.MergeCheckResult.getInstance(somethingMerged && notMerged.isEmpty());
   }
 }
