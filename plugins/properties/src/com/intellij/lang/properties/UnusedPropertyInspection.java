@@ -94,12 +94,10 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
 
         return true;
       }
-    }, "Searching properties usages")) throw new ProcessCanceledException();
+    }, isOnTheFly)) throw new ProcessCanceledException();
 
     synchronized (descriptors) {
       return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
     }
   }
-
-
 }
