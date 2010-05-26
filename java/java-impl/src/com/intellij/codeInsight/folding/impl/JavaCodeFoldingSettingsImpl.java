@@ -128,6 +128,16 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
     COLLAPSE_I18N_MESSAGES = value;
   }
 
+  @Override
+  public boolean isCollapseSuppressWarnings() {
+    return COLLAPSE_SUPPRESS_WARNINGS;
+  }
+
+  @Override
+  public void setCollapseSuppressWarnings(boolean value) {
+    COLLAPSE_SUPPRESS_WARNINGS = value;
+  }
+
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ACCESSORS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
@@ -135,6 +145,7 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CLOSURES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
 
   @NotNull
   public File[] getExportFiles() {
