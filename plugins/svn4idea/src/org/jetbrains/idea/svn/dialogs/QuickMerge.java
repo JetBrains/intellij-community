@@ -45,8 +45,7 @@ import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesTask;
 import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
-import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
-import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
+import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
@@ -56,10 +55,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class QuickMerge {
   private final Project myProject;
@@ -188,7 +184,8 @@ public class QuickMerge {
 
     private final List<CommittedChangeList> myNotMerged;
     private String myMergeTitle;
-    private MergeChecker myMergeChecker;
+    private OneShotMergeInfoHelper myMergeInfoHelper;
+    private final Map<Long, Collection<String>> myPartiallyMerged;
 
     private MergeCalculator(Project project, WCInfo wcInfo, String sourceUrl, String branchName) {
       super(project, "Calculating not merged revisions", true, BackgroundFromStartOption.getInstance());
@@ -197,6 +194,7 @@ public class QuickMerge {
       myBranchName = branchName;
       myNotMerged = new LinkedList<CommittedChangeList>();
       myMergeTitle = "Merge from " + branchName;
+      myPartiallyMerged = new HashMap<Long, Collection<String>>();
     }
 
     public void run(@NotNull final ProgressIndicator indicator) {
@@ -211,8 +209,6 @@ public class QuickMerge {
           myIsReintegrate = !copyData.isTrunkSupposedCorrect();
           if (!myWcInfo.getFormat().supportsMergeInfo()) return;
           final long localLatest = !copyData.isTrunkSupposedCorrect() ? copyData.getCopyTargetRevision() : copyData.getCopySourceRevision();
-          myMergeChecker =
-            new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl, mySourceUrl, myVcs.createWCClient());
 
           final SvnCommittedChangesProvider committedChangesProvider = (SvnCommittedChangesProvider)myVcs.getCommittedChangesProvider();
           final ChangeBrowserSettings settings = new ChangeBrowserSettings();
@@ -225,6 +221,8 @@ public class QuickMerge {
           final LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>> list =
             new LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>>();
           try {
+            myMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWcInfo, mySourceUrl);
+            myMergeInfoHelper.prepare();
             committedChangesProvider.getCommittedChangesWithMergedRevisons(settings, new SvnRepositoryLocation(mySourceUrl), 0,
                        new PairConsumer<SvnChangeList, TreeStructureNode<SVNLogEntry>>() {
                          public void consume(SvnChangeList svnList, TreeStructureNode<SVNLogEntry> tree) {
@@ -237,11 +235,20 @@ public class QuickMerge {
           catch (VcsException e) {
             AbstractVcsHelper.getInstance(myProject).showErrors(Collections.singletonList(e), "Checking revisions for merge fault");
           }
+          catch (SVNException e) {
+            AbstractVcsHelper.getInstance(myProject).showErrors(Collections.singletonList(new VcsException(e)), "Checking revisions for merge fault");
+          }
 
           // to do not go into file system while asking something on the net 
           for (Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>> pair : list) {
             final SvnChangeList svnList = pair.getFirst();
-            final SvnMergeInfoCache.MergeCheckResult checkResult = myMergeChecker.checkList(svnList, myWcInfo.getPath());
+            final Pair<SvnMergeInfoCache.MergeCheckResult, Set<String>> result = myMergeInfoHelper.checkList(svnList);
+            final SvnMergeInfoCache.MergeCheckResult checkResult = result.getFirst();
+            final Set<String> notMergedSet = result.getSecond();
+            if (notMergedSet != null & (! notMergedSet.isEmpty())) {
+              myPartiallyMerged.put(svnList.getNumber(), notMergedSet);
+            }
+            
             if (SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(checkResult)) {
               // additionally check for being 'local'
               final List<TreeStructureNode<SVNLogEntry>> children = pair.getSecond().getChildren();
@@ -306,7 +313,7 @@ public class QuickMerge {
     }
 
     private void askParametersAndMerge() {
-      final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, myNotMerged, myMergeTitle, myMergeChecker);
+      final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, myNotMerged, myMergeTitle, myPartiallyMerged);
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
         return;
