@@ -76,7 +76,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
             && !JavaTokenType.COMMENT_BIT_SET.contains(child.getElementType()))
         {
           prevChild = child;
-          child = composeCodeBlock(result, child, Indent.getNoneIndent(), 0);
+          child = composeCodeBlock(result, child, Indent.getNoneIndent(), 0, null);
         }
         else {
           prevChild = child;
