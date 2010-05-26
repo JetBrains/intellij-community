@@ -47,7 +47,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   /**
    * Holds types of the elements for which <code>'align in column'</code> rule may be preserved.
    *
-   * @see CodeStyleSettings#ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS
+   * @see CodeStyleSettings#ALIGN_GROUP_FIELDS_VARIABLES
    */
   protected static final Set<IElementType> ALIGN_IN_COLUMNS_ELEMENT_TYPES = Collections.unmodifiableSet(new HashSet<IElementType>(asList(
     JavaElementType.FIELD, JavaElementType.DECLARATION_STATEMENT, JavaElementType.LOCAL_VARIABLE
@@ -58,10 +58,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   /**
    * Shared thread-safe config object to use during <code>'align in column'</code> processing.
    *
-   * @see CodeStyleSettings#ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS
+   * @see CodeStyleSettings#ALIGN_GROUP_FIELDS_VARIABLES
    */
   private static final AlignmentInColumnsConfig ALIGNMENT_IN_COLUMNS_CONFIG = new AlignmentInColumnsConfig(
-    JavaTokenType.IDENTIFIER, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET, ElementType.COMMENT_BIT_SET, JavaTokenType.EQ,
+    JavaTokenType.IDENTIFIER, ElementType.WHITE_SPACE_BIT_SET, ElementType.JAVA_COMMENT_BIT_SET, JavaTokenType.EQ,
     JavaElementType.FIELD, JavaElementType.LOCAL_VARIABLE
   );
 
@@ -861,14 +861,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    *
    * @param child   variable declaration child node which alignment is to be defined
    * @return        alignment to use for the given node
-   * @see CodeStyleSettings#ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS
+   * @see CodeStyleSettings#ALIGN_GROUP_FIELDS_VARIABLES
    */
   @Nullable
   private Alignment getVariableDeclarationSubElementAlignment(ASTNode child) {
     // The whole idea of variable declarations alignment is that complete declaration blocks which children are to be aligned hold
     // reference to the same AlignmentStrategy object, hence, reuse the same Alignment objects. So, there is no point in checking
     // if it's necessary to align sub-blocks if shared strategy is not defined.
-    if (myAlignmentStrategy == null || !mySettings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS) {
+    if (myAlignmentStrategy == null || !mySettings.ALIGN_GROUP_FIELDS_VARIABLES) {
       return null;
     }
 
@@ -1196,7 +1196,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  protected ASTNode composeCodeBlock(final ArrayList<Block> result, ASTNode child, final Indent indent, final int childrenIndent) {
+  protected ASTNode composeCodeBlock(final ArrayList<Block> result, ASTNode child, final Indent indent, final int childrenIndent,
+                                     final Wrap childWrap) {
     final ArrayList<Block> localResult = new ArrayList<Block>();
     processChild(localResult, child, AlignmentStrategy.getNullStrategy(), null, Indent.getNoneIndent());
     child = child.getTreeNext();
@@ -1207,7 +1208,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     while (child != null) {
       // We consider that subsequent fields shouldn't be aligned if they are separated by blank line(s).
       if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        if (!shouldUseVarDeclarationAlignment(child)) {
+        if (!ElementType.JAVA_COMMENT_BIT_SET.contains(child.getElementType()) && !shouldUseVarDeclarationAlignment(child)) {
           // Reset var declaration alignment.
           varDeclarationAlignmentStrategy = AlignmentStrategy.createAlignmentPerTypeStrategy(VAR_DECLARATION_ELEMENT_TYPES_TO_ALIGN, true);
         }
@@ -1215,7 +1216,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         final Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent);
         AlignmentStrategy alignmentStrategyToUse = ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(child.getElementType())
                                                       ? varDeclarationAlignmentStrategy : AlignmentStrategy.getNullStrategy();
-        child = processChild(localResult, child, alignmentStrategyToUse, null, childIndent);
+        child = processChild(localResult, child, alignmentStrategyToUse, childWrap, childIndent);
         if (rBrace) {
           result.add(createCodeBlockBlock(localResult, indent, childrenIndent));
           return child;
@@ -1244,7 +1245,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * @return
    */
   protected boolean shouldUseVarDeclarationAlignment(ASTNode node) {
-    return mySettings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS && ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(node.getElementType())
+    return mySettings.ALIGN_GROUP_FIELDS_VARIABLES && ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(node.getElementType())
            && !myAlignmentInColumnsHelper.useDifferentVarDeclarationAlignment(node, ALIGNMENT_IN_COLUMNS_CONFIG);
   }
 
