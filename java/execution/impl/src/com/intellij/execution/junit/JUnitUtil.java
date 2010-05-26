@@ -248,8 +248,8 @@ public class JUnitUtil {
       if (isTestClass(classLocation)) return classLocation.getPsiElement();
     }
     PsiElement element = location.getPsiElement();
-    if (element instanceof PsiJavaFile) {
-      PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+    if (element instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       if (classes.length == 1) return classes[0];
     }
     return null;
