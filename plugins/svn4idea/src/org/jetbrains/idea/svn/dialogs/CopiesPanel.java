@@ -50,6 +50,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class CopiesPanel {
@@ -90,6 +92,7 @@ public class CopiesPanel {
           }
           myCurrentInfoList = newList;
         }
+        Collections.sort(infoList, WCComparator.getInstance());
         updateList(infoList);
         myRefreshLabel.setEnabled(true);
         SwingUtilities.invokeLater(focus);
@@ -395,6 +398,18 @@ public class CopiesPanel {
       if (! Comparing.equal(val1.getUrl(), val2.getUrl())) return false;
 
       return true;
+    }
+  }
+
+  private static class WCComparator implements Comparator<WCInfo> {
+    private final static WCComparator ourComparator = new WCComparator();
+
+    public static WCComparator getInstance() {
+      return ourComparator;
+    }
+
+    public int compare(WCInfo o1, WCInfo o2) {
+      return o1.getPath().compareTo(o2.getPath());
     }
   }
 }
