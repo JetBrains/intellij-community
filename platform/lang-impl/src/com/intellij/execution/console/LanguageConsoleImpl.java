@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -259,7 +260,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     this.myTitle = title;
   }
 
-  public void printToHistory(final String text, final TextAttributes attributes) {
+  public void addToHistory(final String text, final TextAttributes attributes) {
+    printToHistory(text, attributes);
+  }
+
+  public void printToHistory(String text, final TextAttributes attributes) {
+    text = StringUtil.convertLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = history.getMarkupModel(myProject);
