@@ -158,7 +158,7 @@ public class TestRunnerUtil {
       }
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.class.not.found"), new Object[] {clazz}));
     }
-    catch (Throwable e) {
+    catch (Exception e) {
       runner.runFailed(MessageFormat.format(ourBundle.getString("junit.cannot.instantiate.tests"), new Object[]{e.toString()}));
     }
     return null;
