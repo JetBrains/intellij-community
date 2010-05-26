@@ -1,3 +1,3 @@
-def foo(String s) throws IOException{
+def foo(String s) throws IOException {
   print s;
 }
