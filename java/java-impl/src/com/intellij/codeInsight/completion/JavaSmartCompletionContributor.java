@@ -552,7 +552,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     PsiExpression expression = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
     if (expression == null) return ExpectedTypeInfo.EMPTY_ARRAY;
 
-    return ExpectedTypesProvider.getInstance(position.getProject()).getExpectedTypes(expression, true, parameters.getCompletionType() == CompletionType.SMART);
+    return ExpectedTypesProvider.getExpectedTypes(expression, true, parameters.getCompletionType() == CompletionType.SMART, false);
   }
 
   private static void addExpectedType(final CompletionResultSet result, final PsiType type, final CompletionParameters parameters, Collection<ExpectedTypeInfo> infos) {

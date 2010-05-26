@@ -43,7 +43,24 @@ class FormatProcessor {
   private final CodeStyleSettings.IndentOptions myIndentOption;
   private final CodeStyleSettings mySettings;
 
-  private final Collection<AlignmentImpl> myAlignedAlignments = new HashSet<AlignmentImpl>();
+  /**
+   * Remembers mappings between backward-shifted aligned block and blocks that cause that shift in order to detected
+   * infinite cycles that may occur when, for example following alignment is specified:
+   * <p/>
+   * <pre>
+   *     int i1     = 1;
+   *     int i2, i3 = 2;
+   * </pre>
+   * <p/>
+   * There is a possible case that <code>'i1'</code>, <code>'i2'</code> and <code>'i3'</code> blocks re-use
+   * the same alignment, hence, <code>'i1'</code> is shifted to right during <code>'i3'</code> processing but
+   * that causes <code>'i2'</code> to be shifted right as wll because it's aligned to <code>'i1'</code> that
+   * increases offset of <code>'i3'</code> that, in turn, causes backward shift of <code>'i1'</code> etc.
+   * <p/>
+   * This map remembers such backward shifts in order to be able to break such infinite cycles.
+   */
+  private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks
+    = new HashMap<LeafBlockWrapper, Set<LeafBlockWrapper>>();
 
   private LeafBlockWrapper myWrapCandidate = null;
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
@@ -136,7 +153,7 @@ class FormatProcessor {
   }
 
   private void reset() {
-    myAlignedAlignments.clear();
+    myBackwardShiftedAlignedBlocks.clear();
     myPreviousDependencies.clear();
     myWrapCandidate = null;
     if (myRootBlockWrapper != null) {
@@ -280,11 +297,8 @@ class FormatProcessor {
       }
     }
 
-    if (whiteSpace.containsLineFeeds()) {
-      adjustLineIndent();
-    }
-    else {
-      whiteSpace.arrangeSpaces(spaceProperty);
+    if (!adjustIndent()) {
+       return;
     }
 
     defineAlignOffset(myCurrentBlock);
@@ -459,8 +473,86 @@ class FormatProcessor {
   }
 
   private void onCurrentLineChanged() {
-    myAlignedAlignments.clear();
     myWrapCandidate = null;
+  }
+
+  /**
+   * Adjusts indent of the current block.
+   *
+   * @return    <code>true</code> if current formatting iteration should be continued;
+   *            <code>false</code> otherwise (e.g. if previously processed block is shifted inside this method for example
+   *            because of specified alignment options)
+   */
+  private boolean adjustIndent() {
+    IndentData alignOffset = getAlignOffset();
+    WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
+
+    if (alignOffset == null) {
+      if (whiteSpace.containsLineFeeds()) {
+        adjustSpacingByIndentOffset();
+      }
+      else {
+        whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
+      }
+      return true;
+    }
+
+    if (whiteSpace.containsLineFeeds()) {
+      whiteSpace.setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
+      return true;
+    }
+
+    IndentData indentBeforeBlock = myCurrentBlock.getNumberOfSymbolsBeforeBlock();
+    int diff = alignOffset.getTotalSpaces() - indentBeforeBlock.getTotalSpaces();
+    if (diff == 0) {
+      return true;
+    }
+
+    if (diff > 0) {
+      whiteSpace.setSpaces(whiteSpace.getSpaces(), whiteSpace.getIndentSpaces() + diff);
+      return true;
+    }
+    AlignmentImpl alignment = myCurrentBlock.getAlignmentAtStartOffset();
+    if (alignment == null) {
+      // Never expect to be here.
+      return true;
+    }
+
+    if (!alignment.isAllowBackwardShift()) {
+      return true;
+    }
+
+    LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
+    if (offsetResponsibleBlock == null) {
+      return true;
+    }
+
+    // There is a possible case that alignment options are defined incorrectly. Consider the following example:
+    //     int i1;
+    //     int i2, i3;
+    // There is a problem if all blocks above use the same alignment - block 'i1' is shifted to right in order to align
+    // to block 'i3' and reformatting starts back after 'i1'. Now 'i2' is shifted to left as well in order to align to the
+    // new 'i1' position. That changes 'i3' position as well that causes 'i1' to be shifted right one more time.
+    // Hence, we have endless cycle here. We remember information about blocks that caused indentation change because of
+    // alignment of blocks located before them and post error every time we detect endless cycle.
+    Set<LeafBlockWrapper> blocksCausedRealignment = myBackwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
+    if (blocksCausedRealignment != null && blocksCausedRealignment.contains(myCurrentBlock)) {
+      LOG.error(String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
+                              + "block %s more than once. I.e. moving the former block because of alignment algo causes "
+                              + "subsequent block to be shifted right as well - cyclic dependency",
+                              offsetResponsibleBlock.getTextRange(), myCurrentBlock.getTextRange()));
+      return true;
+    }
+    myBackwardShiftedAlignedBlocks.clear();
+    myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment = new HashSet<LeafBlockWrapper>());
+    blocksCausedRealignment.add(myCurrentBlock);
+
+    WhiteSpace previousWhiteSpace = offsetResponsibleBlock.getWhiteSpace();
+    previousWhiteSpace.setSpaces(previousWhiteSpace.getSpaces(), previousWhiteSpace.getIndentOffset() - diff);
+
+    myCurrentBlock = offsetResponsibleBlock.getNextBlock();
+    onCurrentLineChanged();
+    return false;
   }
 
   /**
@@ -469,15 +561,18 @@ class FormatProcessor {
    */
   private void adjustLineIndent() {
     IndentData alignOffset = getAlignOffset();
-    final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
     if (alignOffset == null) {
-      final IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
-      whiteSpace.setSpaces(offset.getSpaces(), offset.getIndentSpaces());
+      adjustSpacingByIndentOffset();
     }
     else {
-      whiteSpace.setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
+      myCurrentBlock.getWhiteSpace().setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
     }
+  }
+
+  private void adjustSpacingByIndentOffset() {
+    IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
+    myCurrentBlock.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
   }
 
   /**
@@ -617,9 +712,8 @@ class FormatProcessor {
     AbstractBlockWrapper current = myCurrentBlock;
     while (true) {
       final AlignmentImpl alignment = current.getAlignment();
-      if (alignment != null && !myAlignedAlignments.contains(alignment)) {
+      if (alignment != null) {
         alignment.setOffsetRespBlock(block);
-        myAlignedAlignments.add(alignment);
       }
       current = current.getParent();
       if (current == null) return;
@@ -707,6 +801,7 @@ class FormatProcessor {
     }
   }
 
+  @Nullable
   private LeafBlockWrapper getPrevBlock(final LeafBlockWrapper result) {
     if (result != null) {
       return result.getPreviousBlock();

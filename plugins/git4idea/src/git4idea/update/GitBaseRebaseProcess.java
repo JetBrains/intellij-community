@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChange;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -47,6 +48,7 @@ import git4idea.ui.GitConvertFilesDialog;
 import git4idea.ui.GitUIUtil;
 import git4idea.vfs.GitVFSListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -248,6 +250,29 @@ public abstract class GitBaseRebaseProcess {
       if (myShelvedChangeList != null) {
         // The changes are temporary copied to the first local change list, the next operation will restore them back
         myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
+        VirtualFile baseDir = myProject.getBaseDir();
+        assert baseDir != null;
+        String projectPath = baseDir.getPath() + "/";
+        // Refresh files that might be affected by unshelve
+        HashSet<File> filesToRefresh = new HashSet<File>();
+        for (ShelvedChange c : myShelvedChangeList.getChanges()) {
+          if( c.getBeforePath() != null) {
+            filesToRefresh.add(new File(projectPath+c.getBeforePath()));
+          }
+          if( c.getAfterPath() != null) {
+            filesToRefresh.add(new File(projectPath+c.getAfterPath()));
+          }
+        }
+        for (ShelvedBinaryFile f : myShelvedChangeList.getBinaryFiles()) {
+          if(f.BEFORE_PATH != null) {
+            filesToRefresh.add(new File(projectPath+f.BEFORE_PATH));
+          }
+          if(f.AFTER_PATH != null) {
+            filesToRefresh.add(new File(projectPath+f.BEFORE_PATH));
+          }
+        }
+        LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh);
+        // Do unshevle
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           public void run() {
             GitVFSListener l = GitVcs.getInstance(myProject).getVFSListener();
@@ -263,9 +288,6 @@ public abstract class GitBaseRebaseProcess {
           }
         });
         Collection<FilePath> paths = new ArrayList<FilePath>();
-        VirtualFile baseDir = myProject.getBaseDir();
-        assert baseDir != null;
-        String projectPath = baseDir.getPath() + "/";
         for (ShelvedChange c : myShelvedChangeList.getChanges()) {
           if (c.getBeforePath() == null || !c.getBeforePath().equals(c.getAfterPath()) || c.getFileStatus() == FileStatus.ADDED) {
             paths.add(VcsUtil.getFilePath(projectPath + c.getAfterPath()));
@@ -287,6 +309,7 @@ public abstract class GitBaseRebaseProcess {
         }
       }
     }
+    // Move files back to theirs change lists
     if (getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.SHELVE || getUpdatePolicy() == GitVcsSettings.UpdateChangesPolicy.STASH) {
       VcsDirtyScopeManager m = VcsDirtyScopeManager.getInstance(myProject);
       for (LocalChangeList changeList : myListsCopy) {

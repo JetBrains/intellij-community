@@ -1,0 +1,7 @@
+class XmlConstants {
+  String ROOT_TAG = "<root></root>";
+
+  void foo(){
+  "".replaceAll("[^a-b]", "");
+  }
+}

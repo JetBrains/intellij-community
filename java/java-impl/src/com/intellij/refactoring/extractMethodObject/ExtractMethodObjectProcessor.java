@@ -600,7 +600,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
       return new ExtractMethodObjectDialog(myProject, myTargetClass, myInputVariables, myReturnType, myTypeParameterList,
-                                           myThrownExceptions, myStatic, myCanBeStatic, myElements, myMultipleExitPoints);
+                                           myThrownExceptions, myStatic, myCanBeStatic, myElements, myMultipleExitPoints){
+        @Override
+        protected boolean isUsedAfter(PsiVariable variable) {
+          return ArrayUtil.find(myOutputVariables, variable) != -1;
+        }
+      };
     }
 
     @Override

@@ -26,6 +26,7 @@ public interface ExpectedTypeInfo {
   int TYPE_STRICTLY = 0;
   int TYPE_OR_SUBTYPE = 1;
   int TYPE_OR_SUPERTYPE = 2;
+  int TYPE_BETWEEN = 3;
   ExpectedTypeInfo[] EMPTY_ARRAY = new ExpectedTypeInfo[0];
 
   PsiMethod getCalledMethod();

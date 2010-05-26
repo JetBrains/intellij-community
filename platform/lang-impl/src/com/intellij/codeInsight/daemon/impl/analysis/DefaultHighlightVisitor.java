@@ -131,7 +131,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
         annotator.annotate(element, annotationHolder);
         return true;
       }
-    }, "annotators");
+    }, true);
 
     synchronized (annotationHolder) {
       if (annotationHolder.hasAnnotations()) {

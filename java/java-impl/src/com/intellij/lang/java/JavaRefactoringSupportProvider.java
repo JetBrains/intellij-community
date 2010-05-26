@@ -40,7 +40,7 @@ public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportPro
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
            (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) ||
-           element instanceof PsiPackage;
+           element instanceof PsiPackage || element instanceof PsiLocalVariable;
   }
 
   public RefactoringActionHandler getIntroduceConstantHandler() {

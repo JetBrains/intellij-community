@@ -197,6 +197,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("ab", true, true, false, "boolean"));
   }
 
+  public void testDuplicatesAnonymousClassCreationWithSimilarParameters () throws Exception {
+    doTest(new MockIntroduceVariableHandler("foo1", true, true, false, "Foo"));
+  }
+
   public void testNonExpressionPriorityFailure() throws Exception {
     doTest(new MockIntroduceVariableHandler("sum", true, true, false, "int"){
       @Override

@@ -61,8 +61,10 @@ public class ChunkBuild extends CompositeGenerator{
     add(new Property(BuildProperties.getOutputPathForTestsProperty(chunk.getName()), location));
 
     add(createBootclasspath(chunk), 1);
-    add(new ModuleChunkClasspath(chunk, genOptions, false), 1);
-    add(new ModuleChunkClasspath(chunk, genOptions, true), 1);
+    add(new ModuleChunkClasspath(chunk, genOptions, false, false), 1);
+    add(new ModuleChunkClasspath(chunk, genOptions, true, false), 1);
+    add(new ModuleChunkClasspath(chunk, genOptions, false, true), 1);
+    add(new ModuleChunkClasspath(chunk, genOptions, true, true), 1);
 
     final ModuleChunkSourcepath moduleSources = new ModuleChunkSourcepath(project, chunk, genOptions);
     add(moduleSources, 1);

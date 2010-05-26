@@ -28,10 +28,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.Convertor;
-import gnu.trove.THashSet;
 import junit.runner.BaseTestRunner;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -40,10 +38,12 @@ import org.junit.runners.Parameterized;
 
 import java.util.*;
 
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
   @NonNls private static final String TESTCASE_CLASS = "junit.framework.TestCase";
   @NonNls private static final String TEST_INTERFACE = "junit.framework.Test";
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
+  @NonNls private static final String TEST_ANNOTATION = "org.junit.Test";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
 
   public static boolean isSuiteMethod(final PsiMethod psiMethod) {
@@ -91,34 +91,28 @@ public class JUnitUtil {
   /**
    *
    * @param aClassLocation
-   * @return true iff aClassLocation can be used as JUnit test class.
+   * @return true if aClassLocation can be used as JUnit test class.
    */
   private static boolean isTestClass(final Location<? extends PsiClass> aClassLocation) {
     return isTestClass(aClassLocation.getPsiElement());
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {
-    return isTestClass(psiClass, true, null, true);
+    return isTestClass(psiClass, true, true);
   }
-  private static boolean isTestClass(final PsiClass psiClass, boolean checkAbstract, @Nullable Set<PsiClass> visited, boolean checkForTestCaseInheritance) {
+
+  private static boolean isTestClass(final PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
     if (checkForTestCaseInheritance && isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
 
-    for (final PsiMethod method : psiClass.getMethods()) {
+    for (final PsiMethod method : psiClass.getAllMethods()) {
       if (isSuiteMethod(method)) return true;
       if (isTestAnnotated(method)) return true;
     }
 
-    PsiClass superClass = psiClass.getSuperClass();
-    if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) && !superClass.isInterface()) {
-      if (visited != null && visited.contains(psiClass)) return false;
-      if (visited == null) visited = new THashSet<PsiClass>();
-      visited.add(psiClass);
-      return isTestClass(superClass, false, visited, false);
-    }
     return false;
   }
 
@@ -127,29 +121,24 @@ public class JUnitUtil {
   }
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {
-    return isJUnit4TestClass(psiClass, true,null);
+    return isJUnit4TestClass(psiClass, true);
   }
-  private static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract, @Nullable Set<PsiClass> visited) {
+
+  private static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
-    for (final PsiMethod method : psiClass.getMethods()) {
+    for (final PsiMethod method : psiClass.getAllMethods()) {
       if (isTestAnnotated(method)) return true;
     }
-    PsiClass superClass = psiClass.getSuperClass();
-    if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) && !superClass.isInterface()) {
-      if (visited != null && visited.contains(psiClass)) return false;
-      if (visited == null) visited = new THashSet<PsiClass>();
-      visited.add(psiClass);
-      return isJUnit4TestClass(superClass, false, visited);
-    }
+
     return false;
   }
 
   public static boolean isTestAnnotated(final PsiMethod method) {
-    if (AnnotationUtil.isAnnotated(method, "org.junit.Test", false)) {
+    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false)) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method.getContainingClass(), Collections.singleton(RUN_WITH));
       if (annotation != null) {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
@@ -248,8 +237,8 @@ public class JUnitUtil {
       if (isTestClass(classLocation)) return classLocation.getPsiElement();
     }
     PsiElement element = location.getPsiElement();
-    if (element instanceof PsiJavaFile) {
-      PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+    if (element instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner)element).getClasses();
       if (classes.length == 1) return classes[0];
     }
     return null;

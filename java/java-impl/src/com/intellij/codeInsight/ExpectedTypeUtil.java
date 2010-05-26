@@ -45,7 +45,7 @@ public class ExpectedTypeUtil {
       if (acc.isEmpty()) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
-      result = acc;
+      result = new ExpectedTypeInfos(acc.toArray());
     }
 
     return result.toArray();
@@ -123,6 +123,8 @@ public class ExpectedTypeUtil {
         return infoType.isAssignableFrom(type);
       case ExpectedTypeInfo.TYPE_OR_SUPERTYPE:
         return type.isAssignableFrom(infoType);
+      case ExpectedTypeInfo.TYPE_BETWEEN:
+        return type.isAssignableFrom(info.getDefaultType()) && infoType.isAssignableFrom(type);
     }
 
     LOG.error("Unexpected ExpectedInfo kind");

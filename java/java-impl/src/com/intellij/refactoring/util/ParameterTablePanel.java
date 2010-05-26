@@ -107,8 +107,14 @@ public abstract class ParameterTablePanel extends JPanel {
 
     myParameterTypeSelectors = new TypeSelector[getVariableData().length];
     for (int i = 0; i < myParameterTypeSelectors.length; i++) {
-      final PsiExpression[] occurrences = findVariableOccurrences(scopeElements, getVariableData()[i].variable);
-      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, getVariableData()[i].type, occurrences, areTypesDirected());
+      final PsiVariable variable = getVariableData()[i].variable;
+      final PsiExpression[] occurrences = findVariableOccurrences(scopeElements, variable);
+      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, getVariableData()[i].type, occurrences, areTypesDirected()) {
+        @Override
+        protected boolean isUsedAfter() {
+          return ParameterTablePanel.this.isUsedAfter(variable);
+        }
+      };
       myParameterTypeSelectors[i] = manager.getTypeSelector();
       getVariableData()[i].type = myParameterTypeSelectors[i].getSelectedType(); //reverse order
     }
@@ -291,7 +297,11 @@ public abstract class ParameterTablePanel extends JPanel {
     updateMoveButtons();
   }
 
-  private static PsiExpression[] findVariableOccurrences(final PsiElement[] scopeElements, final PsiVariable variable) {
+  protected boolean isUsedAfter(PsiVariable variable) {
+    return false;
+  }
+
+  public static PsiExpression[] findVariableOccurrences(final PsiElement[] scopeElements, final PsiVariable variable) {
     final ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
     for (final PsiElement element : scopeElements) {
       element.accept(new JavaRecursiveElementWalkingVisitor() {

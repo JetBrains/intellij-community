@@ -45,7 +45,7 @@ public abstract class SwitchAction extends AnAction implements DumbAware {
     SwitchingSession session = getSession(e);
     if (session == null || session.isFinished()) {
       SwitchProvider provider = getProvider(e);
-      session = new SwitchingSession(getManager(e), provider, (KeyEvent)e.getInputEvent(), null);
+      session = new SwitchingSession(getManager(e), provider, (KeyEvent)e.getInputEvent(), null, false);
       initSession(e, session);
     }
 

@@ -1,0 +1,3 @@
+class XmlConstants {
+  String ROOT_TAG = "<root></root>";
+}

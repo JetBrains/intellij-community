@@ -32,6 +32,10 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 
 public class JavaBlockUtil {
+  
+  private JavaBlockUtil() {
+  }
+
   public static boolean mayShiftIndentInside(final ASTNode leaf) {
     return (isComment(leaf) && !checkJspTexts(leaf))
            || leaf.getElementType() == TokenType.WHITE_SPACE
