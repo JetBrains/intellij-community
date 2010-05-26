@@ -94,7 +94,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
       }
       int rc = Messages
         .showOkCancelDialog(project, CompilerBundle.message("generate.ant.build.custom.compiler.conflict.message", msg.toString()),
-                            CompilerBundle.message("generate.ant.build.custom.compiler.conflict.titile"), Messages.getErrorIcon());
+                            CompilerBundle.message("generate.ant.build.custom.compiler.conflict.title"), Messages.getErrorIcon());
       if (rc != 0) {
         return false;
       }
