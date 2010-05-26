@@ -485,7 +485,16 @@ public class ExtractMethodProcessor implements MatchProvider {
       protected boolean areTypesDirected() {
         return direct;
       }
+
+      @Override
+      protected boolean isOutputVariable(PsiVariable var) {
+        return ExtractMethodProcessor.this.isOutputVariable(var);
+      }
     };
+  }
+
+  public boolean isOutputVariable(PsiVariable var) {
+    return ArrayUtil.find(myOutputVariables, var) != -1;
   }
 
   public boolean showDialog() {
@@ -1156,5 +1165,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return RefactoringBundle.message("replace.this.code.fragment");
+  }
+
+  public InputVariables getInputVariables() {
+    return myInputVariables;
   }
 }

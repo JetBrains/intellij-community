@@ -308,7 +308,16 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
       protected boolean areTypesDirected() {
         return true;
       }
+
+      @Override
+      protected boolean isUsedAfter(PsiVariable variable) {
+        return ExtractMethodObjectDialog.this.isUsedAfter(variable);
+      }
     };
+  }
+
+  protected boolean isUsedAfter(PsiVariable variable) {
+    return false;
   }
 
   protected void updateSignature() {

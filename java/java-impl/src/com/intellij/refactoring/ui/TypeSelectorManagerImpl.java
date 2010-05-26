@@ -111,7 +111,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   private PsiType[] getTypesForMain() {
-    final ExpectedTypeInfo[] expectedTypes = myExpectedTypesProvider.getExpectedTypes(myMainOccurence, false, myOccurrenceClassProvider);
+    final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurence, false, myOccurrenceClassProvider,
+                                                                                    false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
     RefactoringHierarchyUtil.processSuperTypes(myDefaultType, new RefactoringHierarchyUtil.SuperTypeVisitor() {
       public void visitType(PsiType aType) {
@@ -125,7 +126,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       private void checkIfAllowed(PsiType type) {
         if (expectedTypes != null && expectedTypes.length > 0) {
           final ExpectedTypeInfo
-              typeInfo = myExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+              typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
           for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               allowedTypes.add(type);
@@ -147,7 +148,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
     for (PsiExpression occurrence : myOccurrences) {
 
-      final ExpectedTypeInfo[] expectedTypes = myExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider);
+      final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider,
+                                                                                      isUsedAfter());
       if (expectedTypes.length > 0) {
         expectedTypesFromAll.add(expectedTypes);
       }
@@ -180,6 +182,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       Collections.reverse(result);
     }
     return result.toArray(new PsiType[result.size()]);
+  }
+
+  protected boolean isUsedAfter() {
+    return false;
   }
 
   private ArrayList<PsiType> normalizeTypeList(final ArrayList<PsiType> typeList) {
