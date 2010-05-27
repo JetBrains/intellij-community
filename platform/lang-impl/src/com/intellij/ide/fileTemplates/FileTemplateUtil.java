@@ -163,18 +163,20 @@ public class FileTemplateUtil{
     return mergeTemplate(content, context);
   }
 
-  private static String mergeTemplate(String templateContent, final VelocityContext context) throws IOException{
+  private static String mergeTemplate(String templateContent, final VelocityContext context) throws IOException {
     initVelocity();
     StringWriter stringWriter = new StringWriter();
     try {
       Velocity.evaluate(context, stringWriter, "", templateContent);
-    } catch (VelocityException e) {
+    }
+    catch (VelocityException e) {
+      LOG.info("Error evaluating template:\n"+templateContent,e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template"),
-                                     IdeBundle.message("title.velocity.error"));
-          }
-        });
+        public void run() {
+          Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template"),
+                                   IdeBundle.message("title.velocity.error"));
+        }
+      });
     }
     return stringWriter.toString();
   }

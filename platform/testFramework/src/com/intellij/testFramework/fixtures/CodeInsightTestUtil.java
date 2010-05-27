@@ -58,12 +58,20 @@ public class CodeInsightTestUtil {
   }
 
   public static void doIntentionTest(CodeInsightTestFixture fixture, @NonNls String file, @NonNls String actionText) throws Throwable {
-    final List<IntentionAction> list = fixture.getAvailableIntentions(file + ".xml");
-    assert list.size() > 0;
-    final IntentionAction intentionAction = findIntentionByText(list, actionText);
-    assert intentionAction != null : "Action not found: " + actionText;
-    fixture.launchAction(intentionAction);
-    fixture.checkResultByFile(file + "_after.xml");
+    doIntentionTest(fixture, actionText, file + ".xml", file + "_after.xml");
+  }
+
+  public static void doIntentionTest(@NotNull final CodeInsightTestFixture fixture, @NonNls final String action,
+                                     @NotNull final String before, @NotNull final String after) throws Exception {
+    fixture.configureByFile(before);
+    final IntentionAction intentionAction = findIntentionByText(fixture.getAvailableIntentions(), action);
+    assert intentionAction != null : "Action not found: " + action;
+    new WriteCommandAction(fixture.getProject()) {
+      protected void run(Result result) throws Throwable {
+        fixture.launchAction(intentionAction);
+      }
+    }.execute();
+    fixture.checkResultByFile(after, false);
   }
 
   public static void doWordSelectionTest(@NotNull final CodeInsightTestFixture fixture,

@@ -53,7 +53,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     myActualParameterTypes = actualParameterTypes;
   }
 
-  public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){    if (conflicts.isEmpty()) return null;
+  public CandidateInfo resolveConflict(List<CandidateInfo> conflicts){
+    if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
     boolean atLeastOneMatch = checkParametersNumber(conflicts, myActualParameterTypes.length, true);
@@ -135,10 +136,23 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new HashMap<MethodSignature, CandidateInfo>();
+    nextConflict:
     for (int i=0; i<conflicts.size();i++) {
       CandidateInfo info = conflicts.get(i);
       PsiMethod method = (PsiMethod)info.getElement();
       assert method != null;
+
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        for (int k=i-1; k>=0; k--) {
+          PsiMethod existingMethod = (PsiMethod)conflicts.get(k).getElement();
+          if (PsiSuperMethodUtil.isSuperMethod(existingMethod, method)) {
+            conflicts.remove(i);
+            i--;
+            continue nextConflict;
+          }
+        }
+      }
+
       PsiClass class1 = method.getContainingClass();
       PsiSubstitutor infoSubstitutor = info.getSubstitutor();
       MethodSignature signature = method.getSignature(infoSubstitutor);

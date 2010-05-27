@@ -12,11 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -27,8 +23,8 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgVcs;
 
-import java.util.List;
 import java.util.LinkedList;
+import java.util.List;
 
 abstract class HgAbstractFilesAction extends AnAction {
 
@@ -48,7 +44,7 @@ abstract class HgAbstractFilesAction extends AnAction {
 
     project.save();
 
-    final HgVcs vcs = getHgVcs(project);
+    final HgVcs vcs = HgVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
       return;
     }
@@ -85,12 +81,7 @@ abstract class HgAbstractFilesAction extends AnAction {
       return;
     }
 
-    HgVcs vcs = getHgVcs(project);
-    if (!vcs.isStarted()) {
-      presentation.setEnabled(false);
-      return;
-    }
-
+    final HgVcs vcs = HgVcs.getInstance(project);
     if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
       presentation.setEnabled(false);
       return;
@@ -135,10 +126,6 @@ abstract class HgAbstractFilesAction extends AnAction {
 
   private void doVcsRefresh(final Project project, final VirtualFile file) {
     VcsDirtyScopeManager.getInstance(project).fileDirty(file);
-  }
-
-  private HgVcs getHgVcs(Project project) {
-    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
   }
 
 }

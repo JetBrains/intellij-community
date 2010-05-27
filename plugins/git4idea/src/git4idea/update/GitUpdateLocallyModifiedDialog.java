@@ -18,6 +18,7 @@ package git4idea.update;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -27,6 +28,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
+import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.ui.GitUIUtil;
 
 import javax.swing.*;
@@ -198,12 +200,12 @@ public class GitUpdateLocallyModifiedDialog extends DialogWrapper {
    * @param files   the files to revert
    */
   private static void revertFiles(Project project, VirtualFile root, ArrayList<String> files) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.CHECKOUT);
-    h.endOptions();
-    h.setNoSSH(true);
+    // TODO consider deleted files
+    GitRollbackEnvironment rollback = GitRollbackEnvironment.getInstance(project);
+    ArrayList<FilePath> list = new ArrayList<FilePath>(files.size());
     for (String p : files) {
-      h.addRelativePaths(VcsUtil.getFilePath(p));
+      list.add(VcsUtil.getFilePath(p));
     }
-    h.run();
+    rollback.revert(root, list);
   }
 }

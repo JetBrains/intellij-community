@@ -426,6 +426,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public boolean ALIGN_MULTILINE_THROWS_LIST = false;
 
   public boolean ALIGN_MULTILINE_EXTENDS_LIST = false;
+  public boolean ALIGN_MULTILINE_METHOD_BRACKETS = false;
   public boolean ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
   public boolean ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = false;
 

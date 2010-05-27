@@ -534,4 +534,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
       info.put("selectedNodes", nodesText.toString());
     }
   }
+
+  @Override
+  public void reshape(int x, int y, int w, int h) {
+    super.reshape(x, y, w, h);
+  }
 }
