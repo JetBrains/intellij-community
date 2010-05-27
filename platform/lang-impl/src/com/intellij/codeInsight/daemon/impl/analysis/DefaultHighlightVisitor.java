@@ -49,6 +49,7 @@ import java.util.List;
  */
 public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl() {
+    // need synchronize since several annotators can run concurrently
     @Override
     protected synchronized Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
       return super.createAnnotation(range, severity, message);
@@ -58,10 +59,12 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   public static final ExtensionPointName<HighlightErrorFilter> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.highlightErrorFilter");
   private final HighlightErrorFilter[] myErrorFilters;
   private final Project myProject;
+  private final DumbService myDumbService;
 
   public DefaultHighlightVisitor(Project project) {
     myProject = project;
     myErrorFilters = Extensions.getExtensions(FILTER_EP_NAME, project);
+    myDumbService = DumbService.getInstance(project);
   }
                                                      
   public boolean suitableForFile(final PsiFile file) {
@@ -120,7 +123,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private void runAnnotators(final PsiElement element, HighlightInfoHolder holder, final AnnotationHolderImpl annotationHolder) {
     List<Annotator> annotators = cachedAnnotators.get(element.getLanguage());
     if (annotators.isEmpty()) return;
-    final boolean dumb = DumbService.getInstance(myProject).isDumb();
+    final boolean dumb = myDumbService.isDumb();
 
     JobUtil.invokeConcurrentlyUnderMyProgress(annotators, new Processor<Annotator>() {
       public boolean process(Annotator annotator) {
