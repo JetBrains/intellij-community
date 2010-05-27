@@ -199,7 +199,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                 try {
                   files.addAll(added);
                   files.addAll(removed);
-                  commit(myProject, root, files, messageFile, myNextCommitAuthor).run();
+                  commit(myProject, root, files, messageFile, myNextCommitAuthor);
                 }
                 catch (VcsException ex) {
                   if (!isMergeCommit(ex)) {
@@ -327,7 +327,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                                 GitBundle.getString("commit.partial.merge.title"), null);
 
           }
-        });
+        }                       );
       }
       catch (RuntimeException ex) {
         throw ex;
@@ -416,12 +416,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-        handler.addParameters("--ignore-unmatch");
-        handler.endOptions();
-        handler.addRelativePaths(removed);
-        handler.setNoSSH(true);
-        handler.run();
+        GitFileUtils.delete(project, root, removed, "--ignore-unmatch");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -489,21 +484,30 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @param message          a message file to use
    * @param nextCommitAuthor a author for the next commit
    * @return a simple handler that does the task
+   * @throws VcsException in case of git problem
    */
-  private static GitSimpleHandler commit(Project project,
-                                         VirtualFile root,
-                                         Collection<FilePath> files,
-                                         File message,
-                                         final String nextCommitAuthor) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
-    handler.setNoSSH(true);
-    handler.addParameters("--only", "-F", message.getAbsolutePath());
-    if (nextCommitAuthor != null) {
-      handler.addParameters("--author=" + nextCommitAuthor);
+  private static void commit(Project project,
+                             VirtualFile root,
+                             Collection<FilePath> files,
+                             File message,
+                             final String nextCommitAuthor) throws VcsException {
+    boolean isFirst = true;
+    for (List<String> paths : GitFileUtils.chunkPaths(root, files)) {
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      handler.setNoSSH(true);
+      if (isFirst) {
+        isFirst = false;
+      } else {
+        handler.addParameters("--amend");
+      }
+      handler.addParameters("--only", "-F", message.getAbsolutePath());
+      if (nextCommitAuthor != null) {
+        handler.addParameters("--author=" + nextCommitAuthor);
+      }
+      handler.endOptions();
+      handler.addParameters(paths);
+      handler.run();
     }
-    handler.endOptions();
-    handler.addRelativePaths(files);
-    return handler;
   }
 
 

@@ -264,21 +264,6 @@ public class GitMergeProvider implements MergeProvider2 {
     }
 
     /**
-     * Collect conflicts for virtual files
-     *
-     * @param root  the git root
-     * @param files the files to describe
-     */
-    public void collectConflicts(VirtualFile root, List<VirtualFile> files) {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
-      h.setNoSSH(true);
-      h.addParameters("-t", "--exclude-standard", "--unmerged");
-      h.endOptions();
-      h.addRelativeFiles(files);
-    }
-
-
-    /**
      * {@inheritDoc}
      */
     public ColumnInfo[] getMergeInfoColumns() {
