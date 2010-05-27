@@ -202,4 +202,9 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public boolean showTooltip() {
     return myShowTooltip;
   }
+
+  @Override
+  public String toString() {
+    return getDescriptionTemplate() + " " + getTextRange();
+  }
 }
