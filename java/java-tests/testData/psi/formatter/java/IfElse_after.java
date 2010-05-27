@@ -14,7 +14,7 @@ public class Foo {
                     if (x < 0) {
                         int someVariable = (y +
                                             z
-                                           );
+                        );
                         someVariable = x =
                                 x +
                                 y;

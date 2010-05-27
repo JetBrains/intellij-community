@@ -953,7 +953,14 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(doAlign, null), ElementType.COMMA);
     setChildIndent(internalIndent);
     setChildAlignment(alignmentStrategy.getAlignment(null));
-    Alignment bracketAlignment = mySettings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION ? Alignment.createAlignment() : null;
+    boolean methodParametersBlock = true;
+    ASTNode lBracketParent = child.getTreeParent();
+    if (lBracketParent != null) {
+      ASTNode methodCandidate = lBracketParent.getTreeParent();
+      methodParametersBlock = methodCandidate != null && (methodCandidate.getElementType() == JavaElementType.METHOD
+                                                          || methodCandidate.getElementType() == JavaElementType.METHOD_CALL_EXPRESSION);
+    }
+    Alignment bracketAlignment = methodParametersBlock && mySettings.ALIGN_MULTILINE_METHOD_BRACKETS ? Alignment.createAlignment() : null;
 
     boolean isAfterIncomplete = false;
 
