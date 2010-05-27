@@ -86,6 +86,9 @@ public class GenerationUtils {
                                         @NonNls final String baseDirPropertyName,
                                         GenerationOptions genOptions) {
         path = normalizePath(path);
+        if(path.length() == 0) {
+            return path;
+        }
         final String substitutedPath = genOptions.subsitutePathWithMacros(path);
         if (!substitutedPath.equals(path)) {
             // path variable substitution has highest priority
