@@ -20,12 +20,12 @@ package com.intellij.formatting;
  */
 
 interface IndentFactory {
-  public abstract Indent getNormalIndent();
-  public abstract Indent getNoneIndent();
-  public abstract Indent getAbsoluteNoneIndent();
-  public abstract Indent getAbsoluteLabelIndent();
-  public abstract Indent getLabelIndent();
-  public abstract Indent getContinuationIndent();
-  public abstract Indent getContinuationWithoutFirstIndent();//is default
-  public abstract Indent getSpaceIndent(final int spaces);
+  Indent getNormalIndent(boolean relative);
+  Indent getNoneIndent();
+  Indent getAbsoluteNoneIndent();
+  Indent getAbsoluteLabelIndent();
+  Indent getLabelIndent();
+  Indent getContinuationIndent(boolean relative);
+  Indent getContinuationWithoutFirstIndent(boolean relative);
+  Indent getSpaceIndent(final int spaces, boolean relative);
 }

@@ -15,8 +15,6 @@
  */
 package com.intellij.formatting;
 
-import com.intellij.openapi.diagnostic.Logger;
-
 /**
  * The indent setting for a formatting model block. Indicates how the block is indented
  * relative to its parent block.
@@ -28,8 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 public abstract class Indent {
   private static IndentFactory myFactory;
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.Indent");
-
   static void setFactory(IndentFactory factory) {
     myFactory = factory;
   }
@@ -37,11 +33,18 @@ public abstract class Indent {
   /**
    * Returns an instance of a regular indent, with the width specified
    * in "Project Code Style | General | Indent".
+   * <p/>
+   * <b>Note:</b> returned indent is not set to be <code>'relative'</code> to it's direct parent block
    *
    * @return the indent instance.
    */
   public static Indent getNormalIndent() {
-    return myFactory.getNormalIndent();
+    return myFactory.getNormalIndent(false);
+  }
+
+  //TODO den add doc
+  public static Indent getNormalIndent(boolean relative) {
+    return myFactory.getNormalIndent(relative);
   }
 
   /**
@@ -90,11 +93,17 @@ public abstract class Indent {
    * Returns the "continuation" indent instance, indicating that the block will be indented by
    * the number of spaces indicated in the "Project Code Style | General | Continuation indent"
    * setting relative to its parent block.
+   * //TODO den add doc
    *
    * @return the indent instance.
    */
   public static Indent getContinuationIndent() {
-    return myFactory.getContinuationIndent();
+    return myFactory.getContinuationIndent(false);
+  }
+
+  //TODO den add doc
+  public static Indent getContinuationIndent(boolean relative) {
+    return myFactory.getContinuationIndent(relative);
   }
 
   /**
@@ -103,20 +112,32 @@ public abstract class Indent {
    * setting relative to its parent block, unless this block is the first of the children of its
    * parent having the same indent type. This is used for things like parameter lists, where the first parameter
    * does not have any indent and the remaining parameters are indented by the continuation indent.
+   * //TODO den add doc
    *
    * @return the indent instance.
    */
   public static Indent getContinuationWithoutFirstIndent() {//is default
-    return myFactory.getContinuationWithoutFirstIndent();
+    return myFactory.getContinuationWithoutFirstIndent(false);
+  }
+
+  //TODO den add doc
+  public static Indent getContinuationWithoutFirstIndent(boolean relative) {
+    return myFactory.getContinuationWithoutFirstIndent(relative);
   }
 
   /**
    * Returns an indent with the specified width.
+   * //TODO den add doc
    *
    * @param spaces the number of spaces in the indent.
    * @return the indent instance.
    */
   public static Indent getSpaceIndent(final int spaces) {
-    return myFactory.getSpaceIndent(spaces);
+    return myFactory.getSpaceIndent(spaces, false);
+  }
+
+  //TODO den add doc
+  public static Indent getSpaceIndent(final int spaces, final boolean relative) {
+    return myFactory.getSpaceIndent(spaces, relative);
   }
 }

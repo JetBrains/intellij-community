@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 
 class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
+  private final boolean myRelativeToDirectParent;
 
   public boolean isContinuation() {
     return myType == Type.CONTINUATION_WITHOUT_FIRST;
@@ -52,14 +53,15 @@ class IndentImpl extends Indent {
   private final Type myType;
   private final int mySpaces;
 
-  public IndentImpl(final Type type, boolean absolute, final int spaces) {
+  public IndentImpl(final Type type, boolean absolute, final int spaces, boolean relativeToDirectParent) {
     myType = type;
     myIsAbsolute = absolute;
     mySpaces = spaces;
+    myRelativeToDirectParent = relativeToDirectParent;
   }
 
-  public IndentImpl(final Type type, boolean absolute) {
-    this(type, absolute, 0);
+  public IndentImpl(final Type type, boolean absolute, boolean relativeToDirectParent) {
+    this(type, absolute, 0, relativeToDirectParent);
   }
 
   Type getType() {
@@ -75,6 +77,11 @@ class IndentImpl extends Indent {
    */
   boolean isAbsolute(){
     return myIsAbsolute;
+  }
+
+  //TODO den add doc
+  public boolean isRelativeToDirectParent() {
+    return myRelativeToDirectParent;
   }
 
   @NonNls

@@ -83,7 +83,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
           child = processChild(result, child, childAlignment, childWrap, indent);
         }                
         for (int i = myIndentsBefore.size(); i < result.size(); i++) {
-          myIndentsBefore.add(Indent.getContinuationIndent());
+          myIndentsBefore.add(Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS));
         }
       }
       if (child != null) {
@@ -148,7 +148,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         return getCodeBlockInternalIndent(1);
       }
       else {
-        return Indent.getContinuationIndent();
+        return Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
       }
     }
   }
@@ -170,7 +170,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
     if (child.getElementType() == ElementType.ELSE_KEYWORD)
       return getCodeBlockExternalIndent();
 
-    return Indent.getContinuationIndent();
+    return Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
   }
 
   private static boolean isSimpleStatement(final ASTNode child) {
