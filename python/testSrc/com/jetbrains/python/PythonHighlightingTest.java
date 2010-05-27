@@ -32,6 +32,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
     scheme.setAttributes(xKey, xAttributes);
 
+    xKey = TextAttributesKey.find("PY.PREDEFINED_USAGE");
+    xAttributes = new TextAttributes(Color.yellow, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
+    scheme.setAttributes(xKey, xAttributes);
+
     doTest();
   }
 
