@@ -42,7 +42,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
   }
 
   @Nullable
-  protected RunnerAndConfigurationSettings createConfigurationByElement(Location location, ConfigurationContext context) {
+  protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, ConfigurationContext context) {
     PsiClass psiClass = null;
     PsiElement element = location.getPsiElement();
     while (element != null) {
