@@ -119,6 +119,7 @@ public class QuickMerge {
       showErrorBalloon("Cannot merge from self");
       return;
     }
+    
 
     correctSourceUrl(new Runnable() {
       public void run() {
@@ -166,8 +167,8 @@ public class QuickMerge {
             return;
           }
           final boolean reintegrate = result.isInvertedSense();
-          if (! prompt("You are going to reintegrate changes.\nThis will make " + mySourceUrl + " no longer usable for further work." +
-                       "\nAre you sure?")) return;
+          if (reintegrate && (! prompt("You are going to reintegrate changes.\nThis will make " + mySourceUrl + " no longer usable for further work." +
+                       "\nAre you sure?"))) return;
           final MergerFactory mergerFactory = new MergerFactory() {
             public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl) {
               return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName);
