@@ -153,6 +153,10 @@ class AlignmentImpl extends Alignment {
   }
 
   private boolean continueOffsetResponsibleBlockRetrieval(AbstractBlockWrapper block) {
+    // We don't want to align block that doesn't start new line if it's not configured for 'by columns' alignment.
+    if (!myAllowBackwardShift && !block.getWhiteSpace().containsLineFeeds()) {
+      return false;
+    }
     for (AbstractBlockWrapper offsetBlock : myOffsetRespBlocks) {
       if (offsetBlock == block) {
         continue;
