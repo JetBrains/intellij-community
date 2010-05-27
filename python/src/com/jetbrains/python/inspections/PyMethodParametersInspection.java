@@ -132,7 +132,7 @@ public class PyMethodParametersInspection extends LocalInspectionTool {
                 );
               }
             }
-            else if (!PyNames.CANONICAL_SELF.equals(pname) && !is_staticmethod) {
+            else if (!is_staticmethod && !first_param.isPositionalContainer() && !PyNames.CANONICAL_SELF.equals(pname)) {
               registerProblem(
                 PyUtil.sure(params[0].getNode()).getPsi(),
                 PyBundle.message("INSP.usually.named.self"),

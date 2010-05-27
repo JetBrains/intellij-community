@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -53,6 +54,12 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
 
   public void testPyArgumentListInspection() throws Throwable {
     LocalInspectionTool inspection = new PyArgumentListInspection();
+    doTest(getTestName(false), inspection);
+  }
+
+  public void testPyMethodParametersInspection() throws Throwable {
+    LocalInspectionTool inspection = new PyMethodParametersInspection();
+    LocalFileSystem.getInstance().refresh(false); // XXX
     doTest(getTestName(false), inspection);
   }
 
