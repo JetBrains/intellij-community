@@ -318,7 +318,7 @@ public class BranchInfo {
 
     final Map<String, SVNMergeRangeList> map;
     try {
-      map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(value.getString()), null);
+      map = SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(value.getString())), null);
     }
     catch (SVNException e) {
       LOG.info(e);
@@ -364,6 +364,10 @@ public class BranchInfo {
     return SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
   }
 
+  private String replaceSeparators(final String s) {
+    return s.replace('\r', '\n').replace("\n\n", "\n");
+  }
+
   public boolean isMixedRevisionsFound() {
     return myMixedRevisionsFound;
   }
@@ -371,5 +375,23 @@ public class BranchInfo {
   // if nothing, maybe all not merged or merged: here only partly not merged
   public Collection<String> getNotMergedPaths(final long number) {
     return myPartlyMerged.get(number);
+  }
+
+  public static class MyMergeCheckerWrapper implements MergeChecker {
+    private final BranchInfo myInfo;
+    private final String myBranchPath;
+
+    public MyMergeCheckerWrapper(String branchPath, BranchInfo info) {
+      myBranchPath = branchPath;
+      myInfo = info;
+    }
+
+    public SvnMergeInfoCache.MergeCheckResult checkList(SvnChangeList list) {
+      return myInfo.checkList(list, myBranchPath);
+    }
+
+    public Collection<String> getNotMergedPaths(long number) {
+      return myInfo.getNotMergedPaths(number);
+    }
   }
 }

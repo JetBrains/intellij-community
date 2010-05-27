@@ -42,144 +42,147 @@ import java.io.IOException;
 // todo: move path variables properties and jdk home properties into te generated property file
 public class BuildPropertiesImpl extends BuildProperties {
 
-    public BuildPropertiesImpl(Project project, final GenerationOptions genOptions) {
-        add(new Property(getPropertyFileName(project)));
+  public BuildPropertiesImpl(Project project, final GenerationOptions genOptions) {
+    add(new Property(getPropertyFileName(project)));
 
-        //noinspection HardCodedStringLiteral
-        add(new Comment(CompilerBundle.message("generated.ant.build.disable.tests.property.comment"),
-                        new Property(PROPERTY_SKIP_TESTS, "true")));
-        final JavacSettings javacSettings = JavacSettings.getInstance(project);
-        if (genOptions.enableFormCompiler) {
-            //noinspection HardCodedStringLiteral
-            add(new Property(PROPERTY_JAVAC2_HOME, propertyRelativePath(PROPERTY_IDEA_HOME, "lib")));
-            Path javac2 = new Path(PROPERTY_JAVAC2_CLASSPATH_ID);
-            javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "javac2.jar")));
-            javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jdom.jar")));
-            javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm.jar")));
-            javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm-commons.jar")));
-            add(javac2);
-            //noinspection HardCodedStringLiteral
-            add(new Tag("taskdef", Pair.create("name", "javac2"), Pair.create("classname", "com.intellij.ant.Javac2"),
-                        Pair.create("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
-            add(new Tag("taskdef", Pair.create("name", "instrumentIdeaExtensions"),
-                        Pair.create("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
-                        Pair.create("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
-        }
+    //noinspection HardCodedStringLiteral
+    add(new Comment(CompilerBundle.message("generated.ant.build.disable.tests.property.comment"),
+                    new Property(PROPERTY_SKIP_TESTS, "true")));
+    final JavacSettings javacSettings = JavacSettings.getInstance(project);
+    add(new Comment(CompilerBundle.message("generated.ant.build.compiler.options.comment")), 1);
+    //noinspection HardCodedStringLiteral
+    add(new Property(PROPERTY_COMPILER_GENERATE_DEBUG_INFO, javacSettings.DEBUGGING_INFO ? "on" : "off"), 1);
+    //noinspection HardCodedStringLiteral
+    add(new Property(PROPERTY_COMPILER_GENERATE_NO_WARNINGS, javacSettings.GENERATE_NO_WARNINGS ? "on" : "off"));
+    add(new Property(PROPERTY_COMPILER_ADDITIONAL_ARGS, javacSettings.ADDITIONAL_OPTIONS_STRING));
+    //noinspection HardCodedStringLiteral
+    add(new Property(PROPERTY_COMPILER_MAX_MEMORY, Integer.toString(javacSettings.MAXIMUM_HEAP_SIZE) + "m"));
 
-        add(new Comment(CompilerBundle.message("generated.ant.build.compiler.options.comment")), 1);
-        //noinspection HardCodedStringLiteral
-        add(new Property(PROPERTY_COMPILER_GENERATE_DEBUG_INFO, javacSettings.DEBUGGING_INFO ? "on" : "off"), 1);
-        //noinspection HardCodedStringLiteral
-        add(new Property(PROPERTY_COMPILER_GENERATE_NO_WARNINGS, javacSettings.GENERATE_NO_WARNINGS ? "on" : "off"));
-        add(new Property(PROPERTY_COMPILER_ADDITIONAL_ARGS, javacSettings.ADDITIONAL_OPTIONS_STRING));
-        //noinspection HardCodedStringLiteral
-        add(new Property(PROPERTY_COMPILER_MAX_MEMORY, Integer.toString(javacSettings.MAXIMUM_HEAP_SIZE) + "m"));
+    add(new IgnoredFiles());
 
-        add(new IgnoredFiles());
-
-        if (CompilerExcludes.isAvailable(project)) {
-            add(new CompilerExcludes(project, genOptions));
-        }
-
-        if (!genOptions.expandJarDirectories) {
-            add(new LibraryPatterns(project, genOptions));
-        }
-
-        add(new CompilerResourcePatterns(project));
-
-        if (genOptions.forceTargetJdk) {
-            createJdkGenerators(project);
-        }
-
-        LibraryDefinitionsGeneratorFactory factory = new LibraryDefinitionsGeneratorFactory((ProjectEx)project, genOptions);
-
-        final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
-        final Generator projectLibs = factory.create(registrar.getLibraryTable(project), getProjectBaseDir(project),
-                                                     CompilerBundle.message("generated.ant.build.project.libraries.comment"));
-        if (projectLibs != null) {
-            add(projectLibs);
-        }
-
-        final Generator globalLibs =
-                factory.create(registrar.getLibraryTable(), null, CompilerBundle.message("generated.ant.build.global.libraries.comment"));
-        if (globalLibs != null) {
-            add(globalLibs);
-        }
-
-        for (final LibraryTable table : registrar.getCustomLibraryTables()) {
-            if (table.getLibraries().length != 0) {
-                final Generator appServerLibs = factory.create(table, null, table.getPresentation().getDisplayName(true));
-                if (appServerLibs != null) {
-                    add(appServerLibs);
-                }
-            }
-        }
-
-        final ChunkCustomCompilerExtension[] customCompilers = genOptions.getCustomCompilers();
-        if (customCompilers.length > 0) {
-            add(new Comment(CompilerBundle.message("generated.ant.build.custom.compilers.comment")), 1);
-            for (ChunkCustomCompilerExtension ext : customCompilers) {
-                ext.generateCustomCompilerTaskRegistration(project, genOptions, this);
-            }
-        }
+    if (CompilerExcludes.isAvailable(project)) {
+      add(new CompilerExcludes(project, genOptions));
     }
 
-    protected void createJdkGenerators(final Project project) {
-        final Sdk[] jdks = getUsedJdks(project);
-
-        if (jdks.length > 0) {
-            add(new Comment(CompilerBundle.message("generated.ant.build.jdk.definitions.comment")), 1);
-
-            for (final Sdk jdk : jdks) {
-                if (jdk.getHomeDirectory() == null) {
-                    continue;
-                }
-                final SdkType sdkType = jdk.getSdkType();
-                if (!(sdkType instanceof JavaSdkType) || ((JavaSdkType)sdkType).getBinPath(jdk) == null) {
-                    continue;
-                }
-                final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
-                File homeDir;
-                try {
-                    // use canonical path in order to resolve symlinks
-                    homeDir = home.getCanonicalFile();
-                }
-                catch (IOException e) {
-                    homeDir = home;
-                }
-                final String jdkName = jdk.getName();
-                final String jdkHomeProperty = getJdkHomeProperty(jdkName);
-                final FileSet fileSet = new FileSet(propertyRef(jdkHomeProperty));
-                final String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-                for (String url : urls) {
-                    final String path = GenerationUtils.trimJarSeparator(VirtualFileManager.extractPath(url));
-                    final File pathElement = new File(path);
-                    final String relativePath = FileUtil.getRelativePath(homeDir, pathElement);
-                    if (relativePath != null) {
-                        fileSet.add(new Include(relativePath.replace(File.separatorChar, '/')));
-                    }
-                }
-
-                final File binPath = toCanonicalFile(new File(((JavaSdkType)sdkType).getBinPath(jdk)));
-                final String relativePath = FileUtil.getRelativePath(homeDir, binPath);
-                if (relativePath != null) {
-                    add(new Property(BuildProperties.getJdkBinProperty(jdkName),
-                                     propertyRef(jdkHomeProperty) + "/" + FileUtil.toSystemIndependentName(relativePath)), 1);
-                }
-                else {
-                    add(new Property(BuildProperties.getJdkBinProperty(jdkName), FileUtil.toSystemIndependentName(binPath.getPath())), 1);
-                }
-
-                final Path jdkPath = new Path(getJdkPathId(jdkName));
-                jdkPath.add(fileSet);
-                add(jdkPath);
-            }
-        }
-
-        final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
-        add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null ? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
-        add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null ? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""));
-        add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null ? getJdkPathId(projectJdk.getName()) : ""));
+    if (!genOptions.expandJarDirectories) {
+      add(new LibraryPatterns(project, genOptions));
     }
 
+    add(new CompilerResourcePatterns(project));
+
+    if (genOptions.forceTargetJdk) {
+      createJdkGenerators(project);
+    }
+
+    LibraryDefinitionsGeneratorFactory factory = new LibraryDefinitionsGeneratorFactory((ProjectEx)project, genOptions);
+
+    final LibraryTablesRegistrar registrar = LibraryTablesRegistrar.getInstance();
+    final Generator projectLibs = factory.create(registrar.getLibraryTable(project), getProjectBaseDir(project),
+                                                 CompilerBundle.message("generated.ant.build.project.libraries.comment"));
+    if (projectLibs != null) {
+      add(projectLibs);
+    }
+
+    final Generator globalLibs =
+      factory.create(registrar.getLibraryTable(), null, CompilerBundle.message("generated.ant.build.global.libraries.comment"));
+    if (globalLibs != null) {
+      add(globalLibs);
+    }
+
+    for (final LibraryTable table : registrar.getCustomLibraryTables()) {
+      if (table.getLibraries().length != 0) {
+        final Generator appServerLibs = factory.create(table, null, table.getPresentation().getDisplayName(true));
+        if (appServerLibs != null) {
+          add(appServerLibs);
+        }
+      }
+    }
+
+    final ChunkCustomCompilerExtension[] customCompilers = genOptions.getCustomCompilers();
+    if (genOptions.enableFormCompiler || customCompilers.length > 0) {
+      add(new Comment(CompilerBundle.message("generated.ant.build.custom.compilers.comment")));
+      Target register = new Target(TARGET_REGISTER_CUSTOM_COMPILERS, null, null, null);
+      if (genOptions.enableFormCompiler) {
+        //noinspection HardCodedStringLiteral
+        add(new Property(PROPERTY_JAVAC2_HOME, propertyRelativePath(PROPERTY_IDEA_HOME, "lib")));
+        Path javac2 = new Path(PROPERTY_JAVAC2_CLASSPATH_ID);
+        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "javac2.jar")));
+        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jdom.jar")));
+        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm.jar")));
+        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm-commons.jar")));
+        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jgoodies-forms.jar")));
+        add(javac2);
+        //noinspection HardCodedStringLiteral
+        register.add(new Tag("taskdef", Pair.create("name", "javac2"), Pair.create("classname", "com.intellij.ant.Javac2"),
+                    Pair.create("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+        register.add(new Tag("taskdef", Pair.create("name", "instrumentIdeaExtensions"),
+                    Pair.create("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
+                    Pair.create("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+      }
+      if (customCompilers.length > 0) {
+        for (ChunkCustomCompilerExtension ext : customCompilers) {
+          ext.generateCustomCompilerTaskRegistration(project, genOptions, register);
+        }
+      }
+      add(register);
+    }
+  }
+
+  protected void createJdkGenerators(final Project project) {
+    final Sdk[] jdks = getUsedJdks(project);
+
+    if (jdks.length > 0) {
+      add(new Comment(CompilerBundle.message("generated.ant.build.jdk.definitions.comment")), 1);
+
+      for (final Sdk jdk : jdks) {
+        if (jdk.getHomeDirectory() == null) {
+          continue;
+        }
+        final SdkType sdkType = jdk.getSdkType();
+        if (!(sdkType instanceof JavaSdkType) || ((JavaSdkType)sdkType).getBinPath(jdk) == null) {
+          continue;
+        }
+        final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
+        File homeDir;
+        try {
+          // use canonical path in order to resolve symlinks
+          homeDir = home.getCanonicalFile();
+        }
+        catch (IOException e) {
+          homeDir = home;
+        }
+        final String jdkName = jdk.getName();
+        final String jdkHomeProperty = getJdkHomeProperty(jdkName);
+        final FileSet fileSet = new FileSet(propertyRef(jdkHomeProperty));
+        final String[] urls = jdk.getRootProvider().getUrls(OrderRootType.CLASSES);
+        for (String url : urls) {
+          final String path = GenerationUtils.trimJarSeparator(VirtualFileManager.extractPath(url));
+          final File pathElement = new File(path);
+          final String relativePath = FileUtil.getRelativePath(homeDir, pathElement);
+          if (relativePath != null) {
+            fileSet.add(new Include(relativePath.replace(File.separatorChar, '/')));
+          }
+        }
+
+        final File binPath = toCanonicalFile(new File(((JavaSdkType)sdkType).getBinPath(jdk)));
+        final String relativePath = FileUtil.getRelativePath(homeDir, binPath);
+        if (relativePath != null) {
+          add(new Property(BuildProperties.getJdkBinProperty(jdkName),
+                           propertyRef(jdkHomeProperty) + "/" + FileUtil.toSystemIndependentName(relativePath)), 1);
+        }
+        else {
+          add(new Property(BuildProperties.getJdkBinProperty(jdkName), FileUtil.toSystemIndependentName(binPath.getPath())), 1);
+        }
+
+        final Path jdkPath = new Path(getJdkPathId(jdkName));
+        jdkPath.add(fileSet);
+        add(jdkPath);
+      }
+    }
+
+    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null ? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
+    add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null ? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""));
+    add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null ? getJdkPathId(projectJdk.getName()) : ""));
+  }
 }

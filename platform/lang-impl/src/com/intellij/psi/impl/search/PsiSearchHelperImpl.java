@@ -184,7 +184,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         public boolean process(PsiElement scopeElement) {
           return processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi, progress);
         }
-      }, "textsearch");
+      }, false);
     }
   }
 
@@ -260,7 +260,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
           return !canceled.get();
         }
-      }, "Process usages in files");
+      }, false);
 
       if (pceThrown.get()) {
         throw new ProcessCanceledException();

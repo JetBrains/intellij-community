@@ -113,7 +113,12 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals();
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
 
-    if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) return extractDependencies();
+    if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
+      return extractDependencies();
+    }
+    if (MavenDataKeys.MAVEN_PROJECTS_TREE.is(dataId)) {
+      return myTree;
+    }
 
     return super.getData(dataId);
   }

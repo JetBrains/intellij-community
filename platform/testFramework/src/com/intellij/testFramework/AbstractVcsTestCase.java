@@ -60,8 +60,9 @@ public class AbstractVcsTestCase {
 
   protected ProcessOutput runClient(String exeName, @Nullable String stdin, @Nullable final File workingDir, String[] commandLine) throws IOException {
     final List<String> arguments = new ArrayList<String>();
-    if (SystemInfo.isWindows) {
-      arguments.add(new File(myClientBinaryPath, exeName).toString());
+    final File client = new File(myClientBinaryPath, SystemInfo.isWindows ? exeName + ".exe" : exeName);
+    if (client.exists()) {
+      arguments.add(client.toString());
     }
     else {
       // assume client is in path

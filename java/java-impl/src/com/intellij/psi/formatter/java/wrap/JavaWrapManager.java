@@ -25,7 +25,7 @@ import com.intellij.psi.formatter.java.wrap.impl.JavaChildWrapArranger;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Defines common contract for {@link Wrap wraps} manipulation during java {@link Block blockes} processing
+ * Defines common contract for {@link Wrap wraps} manipulation during java {@link Block blocks} processing.
  * <p/>
  * This class is intended to serve as a facade for various fine-grained wrap processing classes.
  * <p/>

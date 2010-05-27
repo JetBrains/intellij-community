@@ -34,15 +34,22 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
   private final long myJobIndex;
   private final int myTaskIndex;
   private final int myPriority;
+  private final boolean myFailFastOnAcquireReadAction;
   private volatile boolean myParentThreadHasReadAccess;
   private volatile boolean myReportExceptions;
 
-  PrioritizedFutureTask(final Callable<T> callable, JobImpl<T> job, long jobIndex, int taskIndex, int priority) {
+  PrioritizedFutureTask(final Callable<T> callable,
+                        JobImpl<T> job,
+                        long jobIndex,
+                        int taskIndex,
+                        int priority,
+                        boolean failFastOnAcquireReadAction) {
     super(callable);
     myJob = job;
     myJobIndex = jobIndex;
     myTaskIndex = taskIndex;
     myPriority = priority;
+    myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
   }
 
   public void beforeRun(boolean parentThreadHasReadAccess, boolean reportExceptions) {
@@ -91,8 +98,20 @@ class PrioritizedFutureTask<T> extends FutureTask<T> implements Comparable<Prior
         ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
       }
       // have to start "real" read action so that we cannot start write action until we are finished here
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {
-        myJob.cancel();
+      if (myFailFastOnAcquireReadAction) {
+        if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {
+          myJob.cancel();
+        }
+      }
+      else {
+        // cannot runreadaction here because of possible deadlock when writeaction in the queue
+        boolean old = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
+        try {
+          runnable.run();
+        }
+        finally {
+          ApplicationImpl.setExceptionalThreadWithReadAccessFlag(old);
+        }
       }
     }
     else {

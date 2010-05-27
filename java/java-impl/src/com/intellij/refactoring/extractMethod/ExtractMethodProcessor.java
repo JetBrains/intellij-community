@@ -419,6 +419,13 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (!remainingReferences.isEmpty()) {
         throw new PrepareFailedException("Cannot extract method because the selected code fragment defines local classes used outside of the fragment", remainingReferences.get(0));
       }
+      if (classExtracted) {
+        for (PsiVariable variable : myControlFlowWrapper.getUsedVariables()) {
+          if (isDeclaredInside(variable) && !variable.equals(myOutputVariable) && PsiUtil.resolveClassInType(variable.getType()) == localClass) {
+            throw new PrepareFailedException("Cannot extract method because the selected code fragment defines variable of local class type used outside of the fragment", variable);
+          }
+        }
+      }
     }
   }
 
@@ -478,7 +485,16 @@ public class ExtractMethodProcessor implements MatchProvider {
       protected boolean areTypesDirected() {
         return direct;
       }
+
+      @Override
+      protected boolean isOutputVariable(PsiVariable var) {
+        return ExtractMethodProcessor.this.isOutputVariable(var);
+      }
     };
+  }
+
+  public boolean isOutputVariable(PsiVariable var) {
+    return ArrayUtil.find(myOutputVariables, var) != -1;
   }
 
   public boolean showDialog() {
@@ -1149,5 +1165,9 @@ public class ExtractMethodProcessor implements MatchProvider {
       return RefactoringBundle.message("replace.this.code.fragment.and.make.method.static");
     }
     return RefactoringBundle.message("replace.this.code.fragment");
+  }
+
+  public InputVariables getInputVariables() {
+    return myInputVariables;
   }
 }

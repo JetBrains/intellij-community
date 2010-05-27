@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +57,12 @@ public final class HgCommandService {
 
   HgCommandResult execute(@NotNull VirtualFile repo, List<String> config,
     String operation, List<String> arguments, Charset charset) {
+    
     if (hgVcs == null) {
-      hgVcs = (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
+      hgVcs = HgVcs.getInstance(project);
     }
 
-    if (hgVcs == null || !hgVcs.isStarted()) {
+    if (hgVcs == null || !hgVcs.validateHgExecutable()) {
       return HgCommandResult.EMPTY;
     }
 
@@ -72,8 +72,6 @@ public final class HgCommandService {
       cmdLine.add("--config");
       cmdLine.addAll(config);
     }
-    cmdLine.add("--repository");
-    cmdLine.add(repo.getPath());
     cmdLine.add(operation);
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);

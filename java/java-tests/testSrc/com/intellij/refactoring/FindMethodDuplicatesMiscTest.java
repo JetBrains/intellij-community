@@ -37,4 +37,16 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testPassArray2VarargMethodCall() throws Exception {
     doTest();
   }
+
+  public void testDetectNameConflicts() throws Exception {
+    doTest();
+  }
+
+  public void testNoDetectNameConflicts() throws Exception {
+    doTest();
+  }
+
+  public void testDetectNameConflictsWithStatic() throws Exception {
+    doTest();
+  }
 }

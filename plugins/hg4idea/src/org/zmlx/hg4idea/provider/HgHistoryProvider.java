@@ -16,37 +16,28 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.HistoryAsTreeProvider;
-import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
-import com.intellij.openapi.vcs.history.VcsDependentHistoryComponents;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgLogCommand;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.List;
-import java.util.LinkedList;
 
 public class HgHistoryProvider implements VcsHistoryProvider {
 
   private static final int DEFAULT_LIMIT = 500;
 
-  private final Project project;
+  private final Project myProject;
 
   public HgHistoryProvider(Project project) {
-    this.project = project;
+    this.myProject = project;
   }
 
-  public VcsDependentHistoryComponents getUICustomization(VcsHistorySession session,
-    JComponent forShortcutRegistration) {
+  public VcsDependentHistoryComponents getUICustomization(VcsHistorySession session, JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
   }
 
@@ -59,39 +50,18 @@ public class HgHistoryProvider implements VcsHistoryProvider {
   }
 
   public VcsHistorySession createSessionFor(FilePath filePath) throws VcsException {
-    final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
+    final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
     if (vcsRoot == null) {
       return null;
     }
-    HgFile hgFile = new HgFile(vcsRoot, filePath);
-    HgLogCommand logCommand = new HgLogCommand(project);
+    final HgLogCommand logCommand = new HgLogCommand(myProject);
     logCommand.setFollowCopies(true);
-    List<HgFileRevision> revisions = logCommand.execute(hgFile, DEFAULT_LIMIT);
-    final List<VcsFileRevision> result = new LinkedList<VcsFileRevision>();
-    result.addAll(revisions);
-    return new VcsHistorySession() {
-      public VcsRevisionNumber getCurrentRevisionNumber() {
-        return new HgWorkingCopyRevisionsCommand(project).identify(vcsRoot);
-      }
+    final HgFile file = new HgFile(vcsRoot, filePath);
+    final List<HgFileRevision> revisions = logCommand.execute(file, DEFAULT_LIMIT);
 
-      public List<VcsFileRevision> getRevisionList() {
-        return result;
-      }
-
-      public boolean isCurrentRevision(VcsRevisionNumber vcsRevisionNumber) {
-        return getCurrentRevisionNumber().equals(vcsRevisionNumber);
-      }
-
-      public boolean shouldBeRefreshed() {
-        return false;
-      }
-
-      public boolean allowAsyncRefresh() {
-        return false;
-      }
-
-      public boolean isContentAvailable(VcsFileRevision vcsFileRevision) {
-        return false;
+    return new VcsAbstractHistorySession(revisions) {
+      protected VcsRevisionNumber calcCurrentRevisionNumber() {
+        return logCommand.execute(file, 1).get(0).getRevisionNumber();
       }
 
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
@@ -104,11 +74,13 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     return new AnAction[0];
   }
 
-  public void reportAppendableHistory(FilePath filePath,
-    VcsAppendableHistorySessionPartner vcsAppendableHistorySessionPartner) throws VcsException {
+  public void reportAppendableHistory(FilePath filePath, final VcsAppendableHistorySessionPartner partner) throws VcsException {
+    final VcsHistorySession emptySession = createSessionFor(filePath);
+    partner.reportCreatedEmptySession((VcsAbstractHistorySession) emptySession);
   }
 
   public boolean supportsHistoryForDirectories() {
     return false;
   }
+
 }

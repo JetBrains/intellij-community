@@ -183,7 +183,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
             processTextUsages(processedKeyToFiles, property.getUnescapedKey(), processedValueToFiles, searchHelper, scope);
             return true;
           }
-        }, "Searching properties usages")) throw new ProcessCanceledException();
+        }, false)) throw new ProcessCanceledException();
 
         List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
         Map<String, Set<String>> keyToDifferentValues = new HashMap<String, Set<String>>();

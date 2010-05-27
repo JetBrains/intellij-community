@@ -93,6 +93,16 @@ public final class ReflectedProject {
     catch (ProcessCanceledException e) {
       throw e;
     }
+    catch (ExceptionInInitializerError e) {
+      final Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
+      }
+      else {
+        LOG.info(e);
+        myProject = null;
+      }
+    }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof ProcessCanceledException) {

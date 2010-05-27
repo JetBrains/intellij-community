@@ -111,8 +111,8 @@ class TextEditorComponent extends JPanel implements DataProvider{
 
     myVirtualFileListener = new MyVirtualFileListener();
     myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
-    myEditor=createEditor();
-    add (myEditor.getComponent (), BorderLayout.CENTER);
+    myEditor = createEditor();
+    add(myEditor.getComponent (), BorderLayout.CENTER);
     myModified = isModifiedImpl();
     myValid = isEditorValidImpl();
     LOG.assertTrue(myValid);
@@ -170,7 +170,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
    * method.
    */
   private Editor createEditor(){
-    Editor editor=EditorFactory.getInstance().createEditor(myDocument, myProject);
+    Editor editor = EditorFactory.getInstance().createEditor(myDocument, myProject);
     ((EditorMarkupModel) editor.getMarkupModel()).setErrorStripeVisible(true);
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     ((EditorEx) editor).setHighlighter(highlighter);

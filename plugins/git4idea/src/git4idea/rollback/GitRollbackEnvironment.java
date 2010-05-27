@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -167,12 +168,14 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @throws VcsException Id it breaks.
    */
   public void revert(final VirtualFile root, final List<FilePath> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.CHECKOUT);
-    handler.setNoSSH(true);
-    handler.addParameters("HEAD");
-    handler.endOptions();
-    handler.addRelativePaths(files);
-    handler.run();
+    for (List<String> paths : GitFileUtils.chunkPaths(root, files)) {
+      GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.CHECKOUT);
+      handler.setNoSSH(true);
+      handler.addParameters("HEAD");
+      handler.endOptions();
+      handler.addParameters(paths);
+      handler.run();
+    }
   }
 
   /**
@@ -183,13 +186,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @throws VcsException if there is a problem with running git
    */
   private void unindex(final VirtualFile root, final List<FilePath> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.RM);
-    handler.setNoSSH(true);
-    handler.addParameters("--cached");
-    handler.addParameters("-f");
-    handler.endOptions();
-    handler.addRelativePaths(files);
-    handler.run();
+    GitFileUtils.delete(myProject, root, files, "--cached", "-f");
   }
 
 

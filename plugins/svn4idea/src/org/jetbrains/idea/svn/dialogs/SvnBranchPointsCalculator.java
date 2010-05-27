@@ -73,8 +73,7 @@ public class SvnBranchPointsCalculator {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Put into persistent: key: " + dataHolder.toString() + " value: " + value.toString());
             }
-            myPersistentHolder.put(dataHolder.getRepoUrl(),
-                                   value.isInvertedSense() ? dataHolder.getSourceUrl() : dataHolder.getTargetUrl(), value.getWrapped());
+            myPersistentHolder.put(dataHolder.getRepoUrl(), value.getWrapped().getTarget(), value.getWrapped());
           }
           catch (IOException e) {
           }
@@ -231,7 +230,7 @@ public class SvnBranchPointsCalculator {
         if (sourceIsOut || targetMatching == null) {
           // if found by "target" url - we correctly thought that target of copy is target
           return sourceIsOut ? new WrapperInvertor<BranchCopyData>(false, map.get(targetMatching)) :
-                 new WrapperInvertor<BranchCopyData>(false, map.get(sourceMatching));
+                 new WrapperInvertor<BranchCopyData>(true, map.get(sourceMatching));
         }
         final BranchCopyData sourceData = map.get(sourceMatching);
         final BranchCopyData targetData = map.get(targetMatching);

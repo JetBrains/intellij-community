@@ -17,13 +17,14 @@ package com.intellij.lang.java;
 
 import com.intellij.lang.refactoring.DefaultRefactoringSupportProvider;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
@@ -39,7 +40,7 @@ public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportPro
   public boolean isSafeDeleteAvailable(PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
            (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) ||
-           element instanceof PsiPackage;
+           element instanceof PsiPackage || element instanceof PsiLocalVariable;
   }
 
   public RefactoringActionHandler getIntroduceConstantHandler() {
@@ -52,7 +53,6 @@ public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportPro
 
   public boolean doInplaceRenameFor(final PsiElement element, final PsiElement context) {
     return mayRenameInplace(element, context);
-    
   }
 
   public RefactoringActionHandler getIntroduceVariableHandler() {
@@ -91,8 +91,22 @@ public class JavaRefactoringSupportProvider extends DefaultRefactoringSupportPro
     SearchScope useScope = elementToRename.getUseScope();
     if (!(useScope instanceof LocalSearchScope)) return false;
     PsiElement[] scopeElements = ((LocalSearchScope) useScope).getScope();
-    if (scopeElements.length > 1) return false; //assume there are no elements with use scopes with holes in'em
+    if (scopeElements.length > 1 &&                          // assume there are no elements with use scopes with holes in'em
+        !isElementWithComment(scopeElements)) return false;  // except a case of element and it's doc comment
     PsiFile containingFile = elementToRename.getContainingFile();
     return PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false);
+  }
+
+  private static boolean isElementWithComment(final PsiElement[] scopeElements) {
+    if (scopeElements.length > 2) return false;
+
+    PsiDocComment comment = null;
+    PsiDocCommentOwner owner = null;
+    for (PsiElement element : scopeElements) {
+      if (element instanceof PsiDocComment) comment = (PsiDocComment)element;
+      else if (element instanceof PsiDocCommentOwner) owner = (PsiDocCommentOwner)element;
+    }
+
+    return comment != null && comment.getOwner() == owner;
   }
 }

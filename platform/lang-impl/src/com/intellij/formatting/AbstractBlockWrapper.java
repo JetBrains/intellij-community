@@ -35,10 +35,6 @@ public abstract class AbstractBlockWrapper {
     IndentImpl.Type.NORMAL, IndentImpl.Type.CONTINUATION, IndentImpl.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
-  private static final Set<IndentImpl.Type> CONTINUATION_INDENT_TYPES = new HashSet<IndentImpl.Type>(asList(
-    IndentImpl.Type.CONTINUATION, IndentImpl.Type.CONTINUATION_WITHOUT_FIRST
-  ));
-
   protected WhiteSpace myWhiteSpace;
   protected CompositeBlockWrapper myParent;
   protected int myStart;
@@ -194,9 +190,7 @@ public abstract class AbstractBlockWrapper {
         }
         return childIndent;
       }      
-      else if (options.USE_RELATIVE_INDENTS && child.getStartOffset() > getStartOffset()
-               && (CONTINUATION_INDENT_TYPES.contains(childIndentType)))
-      {
+      else if (child.getIndent().isRelativeToDirectParent() && child.getStartOffset() > getStartOffset()) {
         return childIndent.add(getNumberOfSymbolsBeforeBlock());
       }
     }
@@ -286,7 +280,7 @@ public abstract class AbstractBlockWrapper {
                                          int index) {
     IndentImpl childIndent = (IndentImpl)childAttributes.getChildIndent();
 
-    if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent();
+    if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent(indentOption.USE_RELATIVE_INDENTS);
 
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (myParent == null) {
@@ -299,6 +293,27 @@ public abstract class AbstractBlockWrapper {
       return indent.add(offsetFromParent);
     }
 
+  }
+
+  /**
+   * Allows to retrieve alignment applied to any block that conforms to the following conditions:
+   * <p/>
+   * <ul>
+   *   <li>that block is current block or its ancestor (direct or indirect parent);</li>
+   *   <li>that block starts at the same offset as the current one;</li>
+   * </ul>
+   *
+   * @return    alignment of the current block or it's ancestor that starts at the same offset as the current if any;
+   *            <code>null</code> otherwise
+   */
+  @Nullable
+  public AlignmentImpl getAlignmentAtStartOffset() {
+    for (AbstractBlockWrapper block = this; block != null && block.getStartOffset() == getStartOffset(); block = block.getParent()) {
+      if (block.getAlignment() != null) {
+        return block.getAlignment();
+      }
+    }
+    return null;
   }
 
   /**
@@ -320,27 +335,6 @@ public abstract class AbstractBlockWrapper {
 
     LeafBlockWrapper anchorOffsetBlock = alignment.getOffsetRespBlockBefore(child);
     return anchorOffsetBlock == null || anchorOffsetBlock.getStartOffset() >= getStartOffset();
-  }
-
-  /**
-   * Allows to retrieve alignment applied to any block that conforms to the following conditions:
-   * <p/>
-   * <ul>
-   *   <li>that block is current block or its ancestor (direct or indirect parent);</li>
-   *   <li>that block starts at the same offset as the current one;</li>
-   * </ul>
-   *
-   * @return    alignment of the current block or it's ancestor that starts at the same offset as the current if any;
-   *            <code>null</code> otherwise
-   */
-  @Nullable
-  private AlignmentImpl getAlignmentAtStartOffset() {
-    for (AbstractBlockWrapper block = this; block != null && block.getStartOffset() == getStartOffset(); block = block.getParent()) {
-      if (block.getAlignment() != null) {
-        return block.getAlignment();
-      }
-    }
-    return null;
   }
 
   /**

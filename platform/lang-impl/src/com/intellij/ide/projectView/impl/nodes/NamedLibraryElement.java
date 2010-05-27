@@ -52,7 +52,7 @@ public final class NamedLibraryElement {
     final NamedLibraryElement namedLibraryElement = (NamedLibraryElement)o;
 
     if (!myEntry.equals(namedLibraryElement.myEntry)) return false;
-    if (Comparing.equal(myContextModule, namedLibraryElement.myContextModule)) return false;
+    if (!Comparing.equal(myContextModule, namedLibraryElement.myContextModule)) return false;
 
     return true;
   }

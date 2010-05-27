@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
   public static final ExtensionPointName<SpellcheckingStrategy> EP_NAME = ExtensionPointName.create("com.intellij.spellchecker.support");
+  public static final Tokenizer EMPTY_TOKENIZER = new Tokenizer();
 
   @NotNull
   public Tokenizer getTokenizer(PsiElement element) {
@@ -36,7 +37,7 @@ public class SpellcheckingStrategy {
     if (element instanceof XmlAttributeValue) return new XmlAttributeTokenizer();
     if (element instanceof XmlText) return new XmlTextTokenizer();
     if (element instanceof PsiPlainText) return new TextTokenizer();
-    return new Tokenizer();
+    return EMPTY_TOKENIZER;
   }
 
   @NotNull

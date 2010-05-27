@@ -19,6 +19,20 @@ package com.intellij.openapi.roots;
 import org.jdom.Element;
 
 /**
+ * The table below specifies which order entries are used during compilation and runtime.
+ * <table border=1>
+ * <thead><td></td><td>Production<br/>Compile</td><td>Production<br/>Runtime</td>
+ * <td>Test<br/>Compile</td><td>Test<br/>Runtime</td></thead>
+ * <tbody>
+ * <tr><td>{@link #COMPILE}</td>      <td>*</td><td>*</td><td>*</td><td>*</td></tr>
+ * <tr><td>{@link #TEST}</td>         <td> </td><td> </td><td>*</td><td>*</td></tr>
+ * <tr><td>{@link #RUNTIME}</td>      <td> </td><td>*</td><td> </td><td>*</td></tr>
+ * <tr><td>{@link #PROVIDED}</td>     <td>*</td><td> </td><td>*</td><td>*</td></tr>
+ * <tr><td>Production<br/>Output</td> <td> </td><td>*</td><td>*</td><td>*</td></tr>
+ * <tr><td>Test<br/>Output</td>       <td> </td><td> </td><td> </td><td>*</td></tr>
+ * </tbody>
+ * </table>
+ *
  * @author yole
  */
 public enum DependencyScope {

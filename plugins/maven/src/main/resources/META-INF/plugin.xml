@@ -275,6 +275,8 @@
 
     <action id="Maven.Help"
             class="com.intellij.ide.actions.ContextHelpAction" text="Help"/>
+    <action id="Maven.ExpandAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$ExpandAll" text="Expand All" icon="/actions/expandall.png"/>
+    <action id="Maven.CollapseAll" class="org.jetbrains.idea.maven.navigator.actions.MavenTreeAction$CollapseAll" text="Collapse All" icon="/actions/collapseall.png"/>
 
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
@@ -316,7 +318,8 @@
       <separator/>
       <reference id="Maven.RunBuild"/>
       <reference id="Maven.ToggleOffline"/>
-      <reference id="Maven.ToggleSkipTests"/>
+      <reference id="Maven.ToggleSkipTests"/>            
+      <reference id="Maven.CollapseAll"/>
       <separator/>
       <reference id="Maven.ShowSettings"/>
       <reference id="Maven.Help"/>

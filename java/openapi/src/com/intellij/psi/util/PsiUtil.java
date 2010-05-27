@@ -802,7 +802,7 @@ public final class PsiUtil extends PsiUtilBase {
       }
     } else {
       final PsiClass superClass = clazz.getSuperClass();
-      return superClass == null || hasDefaultConstructor(superClass);
+      return superClass == null || hasDefaultConstructor(superClass, true);
     }
     return false;
   }

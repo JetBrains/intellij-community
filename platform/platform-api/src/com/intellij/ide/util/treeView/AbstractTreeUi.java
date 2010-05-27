@@ -29,6 +29,9 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
+import com.intellij.util.concurrency.ReadWriteLock;
+import com.intellij.util.concurrency.ReentrantWriterPreferenceReadWriteLock;
+import com.intellij.util.concurrency.Sync;
 import com.intellij.util.concurrency.WorkerThread;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
@@ -43,6 +46,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.*;
@@ -105,8 +110,6 @@ public class AbstractTreeUi {
 
   private final Set<DefaultMutableTreeNode> myUpdatingChildren = new HashSet<DefaultMutableTreeNode>();
   private long myJanitorPollPeriod = Time.SECOND * 10;
-  private boolean myCheckStructure = false;
-
 
   private boolean myCanYield = false;
 
@@ -138,6 +141,10 @@ public class AbstractTreeUi {
   };
   private final Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
   private TreePath myRequestedExpand;
+
+  private TreePath mySilentExpand;
+  private TreePath mySilentSelect;
+
   private final ActionCallback myInitialized = new ActionCallback();
   private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
     @Override
@@ -156,6 +163,8 @@ public class AbstractTreeUi {
   private SimpleTimerTask myCleanupTask;
 
   private AtomicBoolean myCancelRequest = new AtomicBoolean();
+  private ReadWriteLock myStateLock = new ReentrantWriterPreferenceReadWriteLock();
+
   private AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
   private Map<Progressive, ProgressIndicator> myBatchIndicators = new HashMap<Progressive, ProgressIndicator>();
@@ -219,6 +228,20 @@ public class AbstractTreeUi {
     Disposer.register(getBuilder(), uiNotify);
 
     myTree.addFocusListener(myFocusListener);
+
+    myTree.addComponentListener(new ComponentListener() {
+      public void componentResized(ComponentEvent e) {
+      }
+
+      public void componentMoved(ComponentEvent e) {
+      }
+
+      public void componentShown(ComponentEvent e) {
+      }
+
+      public void componentHidden(ComponentEvent e) {
+      }
+    });
   }
 
 
@@ -827,13 +850,20 @@ public class AbstractTreeUi {
   private boolean _update(final NodeDescriptor nodeDescriptor) {
     try {
       final Ref<Boolean> update = new Ref<Boolean>();
-      execute(new Runnable() {
-        public void run() {
-          nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
-          update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
-        }
-      });
-
+      try {
+        myStateLock.readLock().acquire();
+        execute(new Runnable() {
+          public void run() {
+            nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
+            update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
+          }
+        });
+      }
+      catch (InterruptedException e) {
+        throw new ProcessCanceledException();
+      } finally {
+        myStateLock.readLock().release();
+      }
       return update.get();
     }
     catch (IndexNotReadyException e) {
@@ -1237,6 +1267,30 @@ public class AbstractTreeUi {
     return !node.isNodeAncestor((DefaultMutableTreeNode)myTree.getModel().getRoot());
   }
 
+  private void expandSilently(TreePath path) {
+    assertIsDispatchThread();
+
+    try {
+      mySilentExpand = path;
+      getTree().expandPath(path);
+    }
+    finally {
+      mySilentExpand = null;
+    }
+  }
+
+  private void addSelectionSilently(TreePath path) {
+    assertIsDispatchThread();
+
+    try {
+      mySilentSelect = path;
+      getTree().getSelectionModel().addSelectionPath(path);
+    }
+    finally {
+      mySilentSelect = null;
+    }
+  }
+
   private void expand(DefaultMutableTreeNode node, boolean canSmartExpand) {
     expand(new TreePath(node.getPath()), canSmartExpand);
   }
@@ -1373,28 +1427,38 @@ public class AbstractTreeUi {
 
   //todo [kirillk] temporary consistency check
   private Object[] getChildrenFor(final Object element) {
-    final Object[] passOne;
+    final Ref<Object[]> passOne = new Ref<Object[]>();
     try {
-      passOne = getTreeStructure().getChildElements(element);
+      myStateLock.readLock().acquire();
+      execute(new Runnable() {
+        public void run() {
+          passOne.set(getTreeStructure().getChildElements(element));
+        }
+      });
     }
     catch (IndexNotReadyException e) {
       warnOnIndexNotReady();
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
+    catch (InterruptedException e) {
+      throw new ProcessCanceledException();
+    } finally {
+      myStateLock.readLock().release();
+    }
 
-    if (!myCheckStructure) return passOne;
+    if (!Registry.is("ide.tree.checkStructure")) return passOne.get();
 
     final Object[] passTwo = getTreeStructure().getChildElements(element);
 
     final HashSet two = new HashSet(Arrays.asList(passTwo));
 
-    if (passOne.length != passTwo.length) {
+    if (passOne.get().length != passTwo.length) {
       LOG.error(
         "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
         element);
     }
     else {
-      for (Object eachInOne : passOne) {
+      for (Object eachInOne : passOne.get()) {
         if (!two.contains(eachInOne)) {
           LOG.error(
             "AbstractTreeStructure.getChildren() must either provide same objects or new objects but with correct hashCode() and equals() methods. Wrong parent element=" +
@@ -1404,7 +1468,7 @@ public class AbstractTreeUi {
       }
     }
 
-    return passOne;
+    return passOne.get();
   }
 
   private void warnOnIndexNotReady() {
@@ -2006,13 +2070,30 @@ public class AbstractTreeUi {
       resetToReadyNow();
       done.setDone();
     } else {
-      myCancelRequest.set(true);
+      requestCancel();
       getReady(this).notify(done);
     }
 
     maybeReady();
 
     return done;
+  }
+
+  private void requestCancel() {
+    try {
+      if (isUnitTestingMode()) {
+        myStateLock.writeLock().acquire(); // in unit tests there should be solid sync, in production it's ok to have race conditions (to avoid blocking on acquire())
+      } else {
+        myStateLock.writeLock().attempt(Sync.ONE_SECOND);
+      }
+      myCancelRequest.set(true);
+    }
+    catch (InterruptedException e) {
+      return;
+    }
+    finally {
+      myStateLock.writeLock().release();
+    }
   }
 
   public ActionCallback batch(final Progressive progressive) {
@@ -3037,11 +3118,26 @@ public class AbstractTreeUi {
       if (!before.equals(all)) {
         processInnerChange(new Runnable() {
           public void run() {
+            Enumeration<TreePath> expanded = getTree().getExpandedDescendants(getPathFor(parentNode));
+            TreePath[] selected = getTree().getSelectionModel().getSelectionPaths();
+
             parentNode.removeAllChildren();
             for (TreeNode each : all) {
               parentNode.add((MutableTreeNode)each);
             }
             myTreeModel.nodeStructureChanged(parentNode);
+
+            while (expanded.hasMoreElements()) {
+              expandSilently(expanded.nextElement());
+            }
+
+            if (selected != null) {
+              for (TreePath each : selected) {
+                if (!getTree().getSelectionModel().isPathSelected(each)) {
+                  addSelectionSilently(each);
+                }
+              }
+            }
           }
         });
       }
@@ -3982,12 +4078,10 @@ public class AbstractTreeUi {
     myJanitorPollPeriod = time;
   }
 
-  public void setCheckStructure(final boolean checkStructure) {
-    myCheckStructure = checkStructure;
-  }
-
   private class MySelectionListener implements TreeSelectionListener {
     public void valueChanged(final TreeSelectionEvent e) {
+      if (mySilentSelect != null && mySilentSelect.equals(e.getNewLeadSelectionPath())) return;
+
       dropUpdaterStateIfExternalChange();
     }
   }
@@ -3995,9 +4089,11 @@ public class AbstractTreeUi {
 
   private class MyExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
-      dropUpdaterStateIfExternalChange();
-
       final TreePath path = event.getPath();
+
+      if (mySilentExpand != null && mySilentExpand.equals(path)) return;
+
+      dropUpdaterStateIfExternalChange();
 
       if (myRequestedExpand != null && !myRequestedExpand.equals(path)) {
         getReady(AbstractTreeUi.this).doWhenDone(new Runnable() {

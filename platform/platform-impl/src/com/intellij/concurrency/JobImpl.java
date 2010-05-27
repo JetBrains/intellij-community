@@ -35,9 +35,11 @@ public class JobImpl<T> implements Job<T> {
   private volatile boolean canceled = false;
   private final AtomicInteger runningTasks = new AtomicInteger();
   private volatile boolean scheduled;
+  private final boolean myFailFastOnAcquireReadAction;
 
-  JobImpl(int priority) {
+  JobImpl(int priority, boolean failFastOnAcquireReadAction) {
     myPriority = priority;
+    myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
   }
 
   public String getTitle() {
@@ -47,8 +49,9 @@ public class JobImpl<T> implements Job<T> {
   public void addTask(Callable<T> task) {
     checkNotScheduled();
 
+    PrioritizedFutureTask<T> future =
+      new PrioritizedFutureTask<T>(task, this, myJobIndex, JobSchedulerImpl.currentTaskIndex(), myPriority, myFailFastOnAcquireReadAction);
     synchronized (myFutures) {
-      PrioritizedFutureTask<T> future = createFuture(task, this, myJobIndex, myPriority);
       myFutures.add(future);
     }
     runningTasks.incrementAndGet();
@@ -207,7 +210,4 @@ public class JobImpl<T> implements Job<T> {
     runningTasks.decrementAndGet();
   }
 
-  private static <T> PrioritizedFutureTask<T> createFuture(Callable<T> task, JobImpl<T> job, long jobIndex, int priority) {
-    return new PrioritizedFutureTask<T>(task, job, jobIndex, JobSchedulerImpl.currentTaskIndex(), priority);
-  }
 }

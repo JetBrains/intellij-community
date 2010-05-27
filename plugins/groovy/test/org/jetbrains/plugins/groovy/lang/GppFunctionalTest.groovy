@@ -127,9 +127,13 @@ def foo(File f) {}
   fo<caret>o(['path'])
 }
 """)
-    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    def reference = findReference()
     def target = reference.resolve()
     assertEquals "foo", ((GrMethod)target).name
+  }
+
+  private PsiReference findReference() {
+    return myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
   }
 
   public void testOverloadingWithConversion() throws Exception {
@@ -140,7 +144,7 @@ def foo(File f) {}
   fo<caret>o(['path'])
 }
 """)
-    def reference = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    def reference = findReference()
     def target = reference.resolve()
     assertNotNull target
     assert target.text.contains("List l")
@@ -357,6 +361,18 @@ class Point {
 
     configureScript "Point p = [mo<caret>ve: { x, y -> z }]"
     assertEquals point.findMethodsByName("move", false)[0], resolveReference()
+  }
+
+  public void testResolveTraitMethod() throws Exception {
+    configureScript """
+@Trait
+class Some {
+	public void doSmth() { println "hello" }
+}
+Some s
+s.do<caret>Smth()
+"""
+    assertEquals "doSmth", ((PsiMethod) findReference().resolve()).name
   }
 
 }

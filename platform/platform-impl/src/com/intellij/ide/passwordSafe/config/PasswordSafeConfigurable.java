@@ -54,8 +54,7 @@ public class PasswordSafeConfigurable implements SearchableConfigurable {
    * {@inheritDoc}
    */
   public String getHelpTopic() {
-    // TODO add help
-    return null;
+    return "reference.ide.settings.password.safe";
   }
 
   /**

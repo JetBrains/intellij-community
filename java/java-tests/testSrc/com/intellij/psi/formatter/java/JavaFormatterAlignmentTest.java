@@ -99,16 +99,18 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     doTextTest(
       "@SuppressWarnings({\"UseOfSystemOutOrSystemErr\", \"AssignmentToCollectionOrArrayFieldFromParameter\", \"ReturnOfCollectionOrArrayField\"})\n" +
       "public class Some {\n" +
-      "}", "@SuppressWarnings({\"UseOfSystemOutOrSystemErr\",\n" +
-           "                   \"AssignmentToCollectionOrArrayFieldFromParameter\",\n" +
-           "                   \"ReturnOfCollectionOrArrayField\"})\n" +
-           "public class Some {\n" +
-           "}");
+      "}",
+      "@SuppressWarnings({\"UseOfSystemOutOrSystemErr\",\n" +
+      "                   \"AssignmentToCollectionOrArrayFieldFromParameter\",\n" +
+      "                   \"ReturnOfCollectionOrArrayField\"})\n" +
+      "public class Some {\n" +
+      "}");
   }
 
   public void testMethodBrackets() throws Exception {
     // Inspired by IDEA-53013
-    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true;
+    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
+    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
     getSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
@@ -133,6 +135,92 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "    foo(1,\n" +
       "        2\n" +
       "       );\n" +
+      "}"
+    );
+
+    // Inspired by IDEA-55306
+    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = false;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
+    String method =
+      "executeCommand(new Command<Boolean>() {\n" +
+      "    public Boolean run() throws ExecutionException {\n" +
+      "        return doInterrupt();\n" +
+      "    }\n" +
+      "});";
+    doMethodTest(method, method);
+  }
+
+  public void testVariableDeclarationAlignment() {
+    // Inspired by IDEA-55147
+    getSettings().ALIGN_GROUP_FIELDS_VARIABLES = true;
+    getSettings().FIELD_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+    getSettings().VARIABLE_ANNOTATION_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+
+    doTextTest(
+      "public class FormattingTest {\n" +
+      "\n" +
+      "    int start = 1;\n" +
+      "    double end = 2;\n" +
+      "\n" +
+      "    int i2 = 1;\n" +
+      "    double dd2,\n" +
+      "        dd3 = 2;\n" +
+      "\n" +
+      "    // asd\n" +
+      "    char ccc3 = 'a';\n" +
+      "    double ddd31, ddd32 = 1;\n" +
+      "\n" +
+      "    private\n" +
+      "    final String s4 = \"\";\n" +
+      "    private\n" +
+      "    transient int i4 = 1;\n" +
+      "\n" +
+      "    private final String s5 = \"xxx\";\n" +
+      "    private transient int iiii5 = 1;\n" +
+      "    /*sdf*/\n" +
+      "    @MyAnnotation(value = 1, text = 2) float f5 = 1;\n" +
+      "\n" +
+      "    public void foo() {\n" +
+      "        int start = 1;\n" +
+      "        int start2 = 1;\n" +
+      "        @NotNull int end = 2;\n" +
+      "        @NotNull long longValue = 1;\n" +
+      "        Serializable serializable;\n" +
+      "        Object o;\n" +
+      "    }\n" +
+      "}",
+
+      "public class FormattingTest {\n" +
+      "\n" +
+      "    int    start = 1;\n" +
+      "    double end   = 2;\n" +
+      "\n" +
+      "    int    i2   = 1;\n" +
+      "    double dd2,\n" +
+      "            dd3 = 2;\n" +
+      "\n" +
+      "    // asd\n" +
+      "    char   ccc3         = 'a';\n" +
+      "    double ddd31, ddd32 = 1;\n" +
+      "\n" +
+      "    private\n" +
+      "    final     String s4 = \"\";\n" +
+      "    private\n" +
+      "    transient int    i4 = 1;\n" +
+      "\n" +
+      "    private final                      String s5    = \"xxx\";\n" +
+      "    private transient                  int    iiii5 = 1;\n" +
+      "    /*sdf*/\n" +
+      "    @MyAnnotation(value = 1, text = 2) float  f5    = 1;\n" +
+      "\n" +
+      "    public void foo() {\n" +
+      "        int start = 1;\n" +
+      "        int start2 = 1;\n" +
+      "        @NotNull int end = 2;\n" +
+      "        @NotNull long longValue = 1;\n" +
+      "        Serializable serializable;\n" +
+      "        Object o;\n" +
+      "    }\n" +
       "}"
     );
   }

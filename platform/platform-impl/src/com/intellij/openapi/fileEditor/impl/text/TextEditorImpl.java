@@ -33,7 +33,7 @@ import java.beans.PropertyChangeSupport;
 /**
  * @author Vladimir Kondratyev
  */
-public class TextEditorImpl extends UserDataHolderBase implements TextEditor{
+public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   protected final Project myProject;
   private final PropertyChangeSupport myChangeSupport;
   private final TextEditorComponent myComponent;

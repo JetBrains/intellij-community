@@ -1702,6 +1702,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
+    public void testCancelUpdate() throws Exception {
+      super.testCancelUpdate();
+    }
+
+    @Override
     public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
       super.testThrowingProcessCancelledInterruptsUpdate();
     }
@@ -1710,6 +1715,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class Passthrough extends TreeUiTest {
     public Passthrough() {
       super(true);
+    }
+
+    @Override
+    public void testCancelUpdate() throws Exception {
+      super.testCancelUpdate();
     }
 
     public void testSelectionGoesToParentWhenOnlyChildMoved2() throws Exception {
@@ -1750,21 +1760,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class BgLoadingSyncUpdate extends TreeUiTest {
     public BgLoadingSyncUpdate() {
       super(false, true);
-    }
-
-    @Override
-    public void testCancelUpdate() throws Exception {
-      super.testCancelUpdate();
-    }
-
-    @Override
-    public void testBatchUpdate() throws Exception {
-      super.testBatchUpdate();
-    }
-
-    @Override
-    public void testCancelUpdateBatch() throws Exception {
-      super.testCancelUpdateBatch();
     }
 
     @Override

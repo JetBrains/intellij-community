@@ -111,6 +111,7 @@ public class CompositeElement extends TreeElement {
       final int textLength = child.getTextLength();
       if (textLength > offset) {
         if (child instanceof ForeignLeafPsiElement) {
+          child = child.getTreeNext();
           continue;
         }
         return child.findLeafElementAt(offset);

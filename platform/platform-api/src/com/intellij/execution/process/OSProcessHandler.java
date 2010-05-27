@@ -153,7 +153,8 @@ public class OSProcessHandler extends ProcessHandler {
               }
               catch (InterruptedException ignored) {
               }
-              catch (ExecutionException ignored) {
+              catch (ExecutionException ex) {
+                LOG.info(ex);
               }
               finally {
                 onOSProcessTerminated(exitCode);

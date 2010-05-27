@@ -315,16 +315,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitDocTagValue(PsiDocTagValue value) {
-    if (value.getReference() != null) {
-      PsiReference reference = value.getReference();
-      if (reference != null) {
-        PsiElement element = reference.resolve();
-        if (element instanceof PsiMethod) {
-          myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)element, ((PsiDocMethodOrFieldRef)value).getNameElement(), false));
-        }
-        else if (element instanceof PsiParameter) {
-          myHolder.add(HighlightNamesUtil.highlightVariable((PsiVariable)element, value.getNavigationElement()));
-        }
+    PsiReference reference = value.getReference();
+    if (reference != null) {
+      PsiElement element = reference.resolve();
+      if (element instanceof PsiMethod) {
+        myHolder.add(HighlightNamesUtil.highlightMethodName((PsiMethod)element, ((PsiDocMethodOrFieldRef)value).getNameElement(), false));
+      }
+      else if (element instanceof PsiParameter) {
+        myHolder.add(HighlightNamesUtil.highlightVariable((PsiVariable)element, value.getNavigationElement()));
       }
     }
   }

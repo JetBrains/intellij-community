@@ -13,32 +13,37 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
-import org.zmlx.hg4idea.command.HgVersionCommand;
 import org.zmlx.hg4idea.ui.HgSetExecutableDialog;
 
+import java.io.File;
+
+/**
+ * Validates the 'hg' executable file, which is specified in {@link HgGlobalSettings}}.
+ * Checks that the file specified exists and invokes the {@link org.zmlx.hg4idea.ui.HgSetExecutableDialog}
+ * if not. The dialog provides more detailed validation.
+ */
 class HgExecutableValidator {
 
-  private final Project project;
+  private final Project myProject;
 
   public HgExecutableValidator(Project project) {
-    this.project = project;
+    this.myProject = project;
   }
 
   public boolean check(HgGlobalSettings globalSettings) {
-    HgVersionCommand command = new HgVersionCommand();
-    if (command.isValid(globalSettings.getHgExecutable())) {
+    String hgPath = globalSettings.getHgExecutable();
+    if ((new File(hgPath)).exists()) {
       return true;
     }
 
-    String previousHgPath = globalSettings.getHgExecutable();
     boolean validHgExecutable;
     HgSetExecutableDialog dialog;
     do {
-      dialog = new HgSetExecutableDialog(project);
-      dialog.setBadHgPath(previousHgPath);
+      dialog = new HgSetExecutableDialog(myProject);
+      dialog.setBadHgPath(hgPath);
       dialog.show();
-      validHgExecutable = dialog.isOK() && command.isValid(dialog.getNewHgPath());
-      previousHgPath = dialog.getNewHgPath();
+      validHgExecutable = dialog.isOK();
+      hgPath = dialog.getNewHgPath();
     } while (!validHgExecutable && dialog.isOK());
 
     if (validHgExecutable) {

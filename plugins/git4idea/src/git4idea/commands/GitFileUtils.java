@@ -19,7 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -29,10 +31,72 @@ import java.util.List;
  */
 public class GitFileUtils {
   /**
+   * If multiple paths are specified on the command line, this limit is used to split paths into chunks.
+   * The limit is less than OS limit to leave space to quoting, spaces, charset conversion, and commands arguments.
+   */
+  public static final int FILE_PATH_LIMIT = 10000;
+
+  /**
    * The private constructor for static utility class
    */
   private GitFileUtils() {
     // do nothing
+  }
+
+  /**
+   * Chunk paths on the command line
+   *
+   * @param files the paths to chunk
+   * @return the a list of list of relative paths
+   */
+  public static List<List<String>> chunkRelativePaths(List<String> files) {
+    ArrayList<List<String>> rc = new ArrayList<List<String>>();
+    int start = 0;
+    int size = 0;
+    int i = 0;
+    for (; i < files.size(); i++) {
+      String p = files.get(i);
+      if (size + p.length() > FILE_PATH_LIMIT) {
+        if (start == i) {
+          rc.add(files.subList(i, i + 1));
+          start = i + 1;
+        }
+        else {
+          rc.add(files.subList(start, i));
+          start = i;
+        }
+        size = 0;
+      }
+      else {
+        size += p.length();
+      }
+    }
+    if (start != files.size()) {
+      rc.add(files.subList(start, i));
+    }
+    return rc;
+  }
+
+  /**
+   * The chunk paths
+   *
+   * @param root  the vcs root
+   * @param files the file list
+   * @return chunked relative paths
+   */
+  public static List<List<String>> chunkPaths(VirtualFile root, Collection<FilePath> files) {
+    return chunkRelativePaths(GitUtil.toRelativePaths(root, files));
+  }
+
+  /**
+   * The chunk paths
+   *
+   * @param root  the vcs root
+   * @param files the file list
+   * @return chunked relative paths
+   */
+  public static List<List<String>> chunkFiles(VirtualFile root, Collection<VirtualFile> files) {
+    return chunkRelativePaths(GitUtil.toRelativeFiles(root, files));
   }
 
   /**
@@ -44,12 +108,17 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static String delete(Project project, VirtualFile root, List<FilePath> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-    handler.endOptions();
-    handler.addRelativePaths(files);
-    handler.setNoSSH(true);
-    return handler.run();
+
+  public static void delete(Project project, VirtualFile root, Collection<FilePath> files, String... additionalOptions)
+    throws VcsException {
+    for (List<String> paths : chunkPaths(root, files)) {
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+      handler.addParameters(additionalOptions);
+      handler.endOptions();
+      handler.addParameters(paths);
+      handler.setNoSSH(true);
+      handler.run();
+    }
   }
 
   public static void cherryPick(final Project project, final VirtualFile root, final String hash) throws VcsException {
@@ -70,12 +139,14 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static String deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
-    handler.endOptions();
-    handler.addRelativeFiles(files);
-    handler.setNoSSH(true);
-    return handler.run();
+  public static void deleteFiles(Project project, VirtualFile root, List<VirtualFile> files) throws VcsException {
+    for (List<String> paths : chunkFiles(root, files)) {
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RM);
+      handler.endOptions();
+      handler.addParameters(paths);
+      handler.setNoSSH(true);
+      handler.run();
+    }
   }
 
   /**
@@ -87,8 +158,8 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static String deleteFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
-    return deleteFiles(project, root, Arrays.asList(files));
+  public static void deleteFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
+    deleteFiles(project, root, Arrays.asList(files));
   }
 
   /**
@@ -100,12 +171,14 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static String addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
-    handler.endOptions();
-    handler.addRelativeFiles(files);
-    handler.setNoSSH(true);
-    return handler.run();
+  public static void addFiles(Project project, VirtualFile root, Collection<VirtualFile> files) throws VcsException {
+    for (List<String> paths : chunkFiles(root, files)) {
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
+      handler.endOptions();
+      handler.addParameters(paths);
+      handler.setNoSSH(true);
+      handler.run();
+    }
   }
 
   /**
@@ -117,8 +190,8 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static String addFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
-    return addFiles(project, root, Arrays.asList(files));
+  public static void addFiles(Project project, VirtualFile root, VirtualFile... files) throws VcsException {
+    addFiles(project, root, Arrays.asList(files));
   }
 
   /**
@@ -130,11 +203,13 @@ public class GitFileUtils {
    * @return a result of operation
    * @throws VcsException in case of git problem
    */
-  public static String addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
-    handler.endOptions();
-    handler.addRelativePaths(files);
-    handler.setNoSSH(true);
-    return handler.run();
+  public static void addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
+    for (List<String> paths : chunkPaths(root, files)) {
+      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.ADD);
+      handler.endOptions();
+      handler.addParameters(paths);
+      handler.setNoSSH(true);
+      handler.run();
+    }
   }
 }

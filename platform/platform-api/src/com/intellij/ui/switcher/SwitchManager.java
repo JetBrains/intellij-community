@@ -101,7 +101,7 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
             IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
               public void run() {
                 if (myWaitingForAutoInitSession) {
-                  tryToInitSessionFromFocus(null);
+                  tryToInitSessionFromFocus(null, false);
                 }
               }
             });
@@ -118,13 +118,13 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
 
-  private ActionCallback tryToInitSessionFromFocus(@Nullable SwitchTarget preselected) {
+  private ActionCallback tryToInitSessionFromFocus(@Nullable SwitchTarget preselected, boolean showSpots) {
     if (mySession != null && !mySession.isFinished()) return new ActionCallback.Rejected();
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     SwitchProvider provider = SwitchProvider.KEY.getData(DataManager.getInstance().getDataContext(owner));
     if (provider != null) {
-      return initSession(new SwitchingSession(this, provider, myAutoInitSessionEvent, preselected));
+      return initSession(new SwitchingSession(this, provider, myAutoInitSessionEvent, preselected, showSpots));
     }
 
     return new ActionCallback.Rejected();
@@ -132,7 +132,6 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
 
   private void cancelWaitingForAutoInit() {
     myWaitingForAutoInitSession = false;
-    myAutoInitSessionEvent = null;
     myInitSessionAlarm.cancelAllRequests();
   }
 
@@ -180,6 +179,8 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   }
 
   public ActionCallback initSession(SwitchingSession session) {
+    cancelWaitingForAutoInit();
+
     disposeSession(mySession);
     mySession = session;
     return new ActionCallback.Done();
@@ -210,12 +211,13 @@ public class SwitchManager implements ProjectComponent, KeyEventDispatcher, AnAc
   public ActionCallback applySwitch() {
     final ActionCallback result = new ActionCallback();
     if (isSessionActive()) {
+      final boolean showSpots = mySession.isShowspots();
       mySession.finish().doWhenDone(new AsyncResult.Handler<SwitchTarget>() {
         public void run(final SwitchTarget switchTarget) {
           mySession = null;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
             public void run() {
-              tryToInitSessionFromFocus(switchTarget).doWhenProcessed(new Runnable() {
+              tryToInitSessionFromFocus(switchTarget, showSpots).doWhenProcessed(new Runnable() {
                 public void run() {
                   result.setDone();
                 }

@@ -36,7 +36,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
     final ArrayList<Block> result = new ArrayList<Block>();
     ArrayList<Block> elementsExceptKeyword = new ArrayList<Block>();
     myChildAlignment = createChildAlignment();
-    myChildIndent = Indent.getContinuationIndent();
+    myChildIndent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
     myUseChildAttributes = true;
     Wrap childWrap = createChildWrap();
     ASTNode child = myNode.getFirstChildNode();

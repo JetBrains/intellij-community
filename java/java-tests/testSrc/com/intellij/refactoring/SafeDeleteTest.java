@@ -2,7 +2,6 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -13,7 +12,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
-import java.util.Calendar;
 
 public class SafeDeleteTest extends MultiFileTestCase {
   private VirtualFile myRootBefore;
@@ -76,6 +74,24 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     finally {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
+  }
+
+  public void testLocalVariable() throws Exception {
+    myDoCompare = false;
+    doTest("Super");
+  }
+
+  public void testLocalVariableSideEffect() throws Exception {
+    myDoCompare = false;
+    try {
+      doTest("Super");
+      fail("Side effect was ignored");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertTrue(message, message.startsWith("local variable <b><code>varName</code></b> has 1 usage that is not safe to delete.\n" +
+                                             "Of those 0 usages are in strings, comments, or non-Java files."));
     }
   }
 

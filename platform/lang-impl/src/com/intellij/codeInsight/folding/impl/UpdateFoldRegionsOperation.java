@@ -92,7 +92,8 @@ class UpdateFoldRegionsOperation implements Runnable {
       final FoldingDescriptor descriptor = entry.getValue();
       FoldingGroup group = descriptor.getGroup();
       TextRange range = descriptor.getRange();
-      FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(), descriptor.getPlaceholderText(), group);
+      String placeholder = descriptor.getPlaceholderText();
+      FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(), placeholder == null ? "..." : placeholder, group);
       if (!foldingModel.addFoldRegion(region)) continue;
 
       info.addRegion(region, descriptor);

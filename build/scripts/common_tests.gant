@@ -24,7 +24,6 @@ target('default': 'The default target') {
 
   ant.junit(fork: "yes", showoutput: "true") {
     jvmarg (value: "-ea")
-    jvmarg (value: "-Didea.home.path=$home")
     pass("idea.test.group")
     pass("idea.test.patterns")
     pass("idea.fast.only")

@@ -43,13 +43,18 @@ public class FormatterImpl extends FormatterEx
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
 
   private int myIsDisabledCount = 0;
-  private final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false);
-  private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(IndentImpl.Type.NONE, true);
-  private final IndentImpl myLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, false);
-  private final IndentImpl myContinuationIndent = new IndentImpl(IndentImpl.Type.CONTINUATION, false);
-  private final IndentImpl myContinutationWithoutFirstIndent = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false);
-  private final IndentImpl myAbsoluteLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, true);
-  private final IndentImpl myNormalIndent = new IndentImpl(IndentImpl.Type.NORMAL, false);
+  private final IndentImpl NONE_INDENT = new IndentImpl(IndentImpl.Type.NONE, false, false);
+  private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(IndentImpl.Type.NONE, true, false);
+  private final IndentImpl myLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, false, false);
+  private final IndentImpl myContinuationIndentRelativeToDirectParent = new IndentImpl(IndentImpl.Type.CONTINUATION, false, true);
+  private final IndentImpl myContinuationIndentNotRelativeToDirectParent = new IndentImpl(IndentImpl.Type.CONTINUATION, false, false);
+  private final IndentImpl myContinuationWithoutFirstIndentRelativeToDirectParent
+    = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false, true);
+  private final IndentImpl myContinuationWithoutFirstIndentNotRelativeToDirectParent
+    = new IndentImpl(IndentImpl.Type.CONTINUATION_WITHOUT_FIRST, false, false);
+  private final IndentImpl myAbsoluteLabelIndent = new IndentImpl(IndentImpl.Type.LABEL, true, false);
+  private final IndentImpl myNormalIndentRelativeToDirectParent = new IndentImpl(IndentImpl.Type.NORMAL, false, true);
+  private final IndentImpl myNormalIndentNotRelativeToDirectParent = new IndentImpl(IndentImpl.Type.NORMAL, false, false);
   private final SpacingImpl myReadOnlySpacing = new SpacingImpl(0, 0, 0, true, false, true, 0, false, 0);
 
   public FormatterImpl() {
@@ -60,8 +65,8 @@ public class FormatterImpl extends FormatterEx
     FormattingModelProvider.setFactory(this);
   }
 
-  public Alignment createAlignment() {
-    return new AlignmentImpl();
+  public Alignment createAlignment(boolean applyToNonFirstBlocksOnLine) {
+    return new AlignmentImpl(applyToNonFirstBlocksOnLine);
   }
 
   public Alignment createChildAlignment(final Alignment base) {
@@ -70,8 +75,8 @@ public class FormatterImpl extends FormatterEx
     return result;
   }
 
-  public Indent getNormalIndent() {
-    return myNormalIndent;
+  public Indent getNormalIndent(boolean relative) {
+    return relative ? myNormalIndentRelativeToDirectParent : myNormalIndentNotRelativeToDirectParent;
   }
 
   public Indent getNoneIndent() {
@@ -500,8 +505,8 @@ public class FormatterImpl extends FormatterEx
     return new PsiBasedFormattingModel(file, rootBlock, FormattingDocumentModelImpl.createOn(file));
   }
 
-  public Indent getSpaceIndent(final int spaces) {
-    return new IndentImpl(IndentImpl.Type.SPACES, false, spaces);
+  public Indent getSpaceIndent(final int spaces, final boolean relative) {
+    return new IndentImpl(IndentImpl.Type.SPACES, false, spaces, relative);
   }
 
   public Indent getAbsoluteLabelIndent() {
@@ -562,13 +567,13 @@ public class FormatterImpl extends FormatterEx
     return myLabelIndent;
   }
 
-  public Indent getContinuationIndent() {
-    return myContinuationIndent;
+  public Indent getContinuationIndent(boolean relative) {
+    return relative ? myContinuationIndentRelativeToDirectParent : myContinuationIndentNotRelativeToDirectParent;
   }
 
-  public Indent getContinuationWithoutFirstIndent()//is default
+  public Indent getContinuationWithoutFirstIndent(boolean relative)//is default
   {
-    return myContinutationWithoutFirstIndent;
+    return relative ? myContinuationWithoutFirstIndentRelativeToDirectParent : myContinuationWithoutFirstIndentNotRelativeToDirectParent;
   }
 
   private final Object DISABLING_LOCK = new Object();

@@ -6,8 +6,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.usageView.UsageInfo;
 import org.junit.Assert;
+
+import java.util.HashMap;
 
 /**
  * @author sashache
@@ -164,5 +169,18 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
   @Override
   protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
+  }
+
+  public void testAllUsagesInCode() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtilBase
+        .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    final UsageInfo[] usageInfos = RenameUtil.findUsages(element, "newName", true, true, new HashMap<PsiElement, String>());
+    assertSize(1, usageInfos);
+    for (UsageInfo usageInfo : usageInfos) {
+      assertTrue(usageInfo instanceof MoveRenameUsageInfo);
+      assertFalse(usageInfo.isNonCodeUsage);
+    }
   }
 }

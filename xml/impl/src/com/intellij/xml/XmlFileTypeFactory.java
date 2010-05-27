@@ -32,6 +32,6 @@ public class XmlFileTypeFactory extends FileTypeFactory {
     consumer.consume(XHtmlFileType.INSTANCE, "xhtml");
     consumer.consume(new DTDFileType(), "dtd;ent;mod");
 
-    consumer.consume(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml;xul;xslt");
+    consumer.consume(XmlFileType.INSTANCE, "xml;xsd;tld;xsl;jnlp;wsdl;hs;jhm;ant;mxm;mxml;fxg;xul;xslt");
   }
 }

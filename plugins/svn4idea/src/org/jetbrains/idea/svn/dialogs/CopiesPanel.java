@@ -40,6 +40,7 @@ import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -50,6 +51,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class CopiesPanel {
@@ -90,6 +93,7 @@ public class CopiesPanel {
           }
           myCurrentInfoList = newList;
         }
+        Collections.sort(infoList, WCComparator.getInstance());
         updateList(infoList);
         myRefreshLabel.setEnabled(true);
         SwingUtilities.invokeLater(focus);
@@ -262,7 +266,7 @@ public class CopiesPanel {
   private void mergeFrom(final WCInfo wcInfo, final VirtualFile root, final LinkLabel mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
-        new QuickMerge(project, url, wcInfo, configuration.getBaseName(url), configuration, root).execute();
+        new QuickMerge(project, url, wcInfo, SVNPathUtil.tail(url), configuration, root).execute();
       }
     }, "Select branch", mergeLabel);
   }
@@ -395,6 +399,18 @@ public class CopiesPanel {
       if (! Comparing.equal(val1.getUrl(), val2.getUrl())) return false;
 
       return true;
+    }
+  }
+
+  private static class WCComparator implements Comparator<WCInfo> {
+    private final static WCComparator ourComparator = new WCComparator();
+
+    public static WCComparator getInstance() {
+      return ourComparator;
+    }
+
+    public int compare(WCInfo o1, WCInfo o2) {
+      return o1.getPath().compareTo(o2.getPath());
     }
   }
 }
