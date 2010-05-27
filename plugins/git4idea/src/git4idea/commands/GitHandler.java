@@ -301,6 +301,16 @@ public abstract class GitHandler {
   }
 
   /**
+   * Add parameters from the list
+   *
+   * @param parameters the parameters to add
+   */
+  public void addParameters(List<String> parameters) {
+    checkNotStarted();
+    myCommandLine.addParameters(parameters);
+  }
+
+  /**
    * Add file path parameters. The parameters are made relative to the working directory
    *
    * @param parameters a parameters to add
@@ -449,7 +459,7 @@ public abstract class GitHandler {
         public void onTextAvailable(final ProcessEvent event, final Key outputType) {
           GitHandler.this.onTextAvailable(event.getText(), outputType);
         }
-      });
+      }                           );
       myHandler.startNotify();
     }
     catch (Throwable t) {
@@ -652,5 +662,13 @@ public abstract class GitHandler {
   public synchronized void resumeWriteLock() {
     assert mySuspendAction != null;
     myResumeAction.run();
+  }
+
+
+  /**
+   * @return true if the command line is too big
+   */
+  public boolean isLargeCommandLine() {
+    return myCommandLine.getCommandLineString().length() > GitFileUtils.FILE_PATH_LIMIT;
   }
 }

@@ -17,15 +17,17 @@ package com.intellij.formatting;
 
 /**
  * Internal interface for creating indent instances.
+ * <p/>
+ * Methods of this interface define contract for implementing {@link Indent} factory methods, so, feel free to check
+ * their contracts. 
  */
-
 interface IndentFactory {
-  public abstract Indent getNormalIndent();
-  public abstract Indent getNoneIndent();
-  public abstract Indent getAbsoluteNoneIndent();
-  public abstract Indent getAbsoluteLabelIndent();
-  public abstract Indent getLabelIndent();
-  public abstract Indent getContinuationIndent();
-  public abstract Indent getContinuationWithoutFirstIndent();//is default
-  public abstract Indent getSpaceIndent(final int spaces);
+  Indent getNormalIndent(boolean relativeToDirectParent);
+  Indent getNoneIndent();
+  Indent getAbsoluteNoneIndent();
+  Indent getAbsoluteLabelIndent();
+  Indent getLabelIndent();
+  Indent getContinuationIndent(boolean relativeToDirectParent);
+  Indent getContinuationWithoutFirstIndent(boolean relativeToDirectParent);
+  Indent getSpaceIndent(final int spaces, boolean relativeToDirectParent);
 }

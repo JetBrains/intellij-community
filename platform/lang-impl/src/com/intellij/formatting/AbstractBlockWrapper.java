@@ -35,10 +35,6 @@ public abstract class AbstractBlockWrapper {
     IndentImpl.Type.NORMAL, IndentImpl.Type.CONTINUATION, IndentImpl.Type.CONTINUATION_WITHOUT_FIRST
   ));
 
-  private static final Set<IndentImpl.Type> CONTINUATION_INDENT_TYPES = new HashSet<IndentImpl.Type>(asList(
-    IndentImpl.Type.CONTINUATION, IndentImpl.Type.CONTINUATION_WITHOUT_FIRST
-  ));
-
   protected WhiteSpace myWhiteSpace;
   protected CompositeBlockWrapper myParent;
   protected int myStart;
@@ -194,9 +190,7 @@ public abstract class AbstractBlockWrapper {
         }
         return childIndent;
       }      
-      else if (options.USE_RELATIVE_INDENTS && child.getStartOffset() > getStartOffset()
-               && (CONTINUATION_INDENT_TYPES.contains(childIndentType)))
-      {
+      else if (child.getIndent().isRelativeToDirectParent() && child.getStartOffset() > getStartOffset()) {
         return childIndent.add(getNumberOfSymbolsBeforeBlock());
       }
     }
@@ -286,7 +280,7 @@ public abstract class AbstractBlockWrapper {
                                          int index) {
     IndentImpl childIndent = (IndentImpl)childAttributes.getChildIndent();
 
-    if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent();
+    if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent(indentOption.USE_RELATIVE_INDENTS);
 
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (myParent == null) {

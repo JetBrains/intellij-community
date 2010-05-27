@@ -50,17 +50,21 @@ public class PropertyReference extends PropertyReferenceBase implements QuickFix
     if (myBundleName == null) {
       return null;
     }
-    return I18nUtil.propertiesFilesByBundleName(myBundleName, myElement);
+    return retrievePropertyFilesByBundleName(myBundleName, myElement);
+  }
+
+  protected List<PropertiesFile> retrievePropertyFilesByBundleName(String bundleName, PsiElement element) {
+    return I18nUtil.propertiesFilesByBundleName(bundleName, element);
   }
 
   public void registerQuickfix(HighlightInfo info, PsiReference reference) {
-    List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myBundleName, reference.getElement());
+    List<PropertiesFile> propertiesFiles = retrievePropertyFilesByBundleName(myBundleName, reference.getElement());
     CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, propertiesFiles);
     QuickFixAction.registerQuickFixAction(info, fix);
   }
 
   public LocalQuickFix[] getQuickFixes() {
-    List<PropertiesFile> propertiesFiles = I18nUtil.propertiesFilesByBundleName(myBundleName, getElement());
+    List<PropertiesFile> propertiesFiles = retrievePropertyFilesByBundleName(myBundleName, getElement());
     CreatePropertyFix fix = new CreatePropertyFix(myElement, myKey, propertiesFiles);
     return new LocalQuickFix[] {fix};
   }

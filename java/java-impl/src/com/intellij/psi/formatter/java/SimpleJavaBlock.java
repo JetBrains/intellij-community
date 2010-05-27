@@ -71,7 +71,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
           offset = child.getTextRange().getStartOffset();
         }
         if (indent != null && !(myNode.getPsi() instanceof PsiFile) && child != null && child.getElementType() != ElementType.MODIFIER_LIST) {
-          indent = Indent.getContinuationIndent();
+          indent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
         }
         //indent = FormatterEx.getInstance().getContinuationIndent();
       }

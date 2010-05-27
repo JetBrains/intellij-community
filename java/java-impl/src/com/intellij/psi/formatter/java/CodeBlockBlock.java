@@ -217,7 +217,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         return Indent.getNoneIndent();
       }
       else {
-        return Indent.getContinuationIndent();
+        return Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
       }
     }
     else {

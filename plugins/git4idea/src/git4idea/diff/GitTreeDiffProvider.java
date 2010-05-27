@@ -18,19 +18,22 @@ package git4idea.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.TreeDiffProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranchesSearcher;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public class GitTreeDiffProvider implements TreeDiffProvider {
   private final static Logger LOG = Logger.getInstance("#git4idea.diff.GitTreeDiffProvider");
@@ -44,21 +47,24 @@ public class GitTreeDiffProvider implements TreeDiffProvider {
     try {
       final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
       if (searcher.getLocal() == null || searcher.getRemote() == null) return Collections.emptyList();
-
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, vcsRoot, GitCommand.DIFF);
-      handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD..." + searcher.getRemote().getFullName());
-      handler.setNoSSH(true);
-      handler.setSilent(true);
-      handler.setStdoutSuppressed(true);
-      handler.endOptions();
-      final Collection<File> files = new ArrayList<File>(paths.size());
+      ArrayList<String> rc = new ArrayList<String>();
+      final Collection<FilePath> files = new ArrayList<FilePath>(paths.size());
       for (String path : paths) {
-        files.add(new File(path));
+        files.add(VcsUtil.getFilePath(path));
       }
-      handler.addRelativePathsForFiles(files);
-
-      String output = handler.run();
-      return GitChangeUtils.parseDiffForPaths(vcsRoot.getPath(), new StringScanner(output));
+      for (List<String> pathList : GitFileUtils.chunkPaths(vcsRoot, files)) {
+        GitSimpleHandler handler = new GitSimpleHandler(myProject, vcsRoot, GitCommand.DIFF);
+        handler.addParameters("--name-status", "--diff-filter=ADCRUX", "-M", "HEAD..." + searcher.getRemote().getFullName());
+        handler.setNoSSH(true);
+        handler.setSilent(true);
+        handler.setStdoutSuppressed(true);
+        handler.endOptions();
+        handler.addParameters(pathList);
+        String output = handler.run();
+        Collection<String> pathCollection = GitChangeUtils.parseDiffForPaths(vcsRoot.getPath(), new StringScanner(output));
+        rc.addAll(pathCollection);
+      }
+      return rc;
     }
     catch (VcsException e) {
       LOG.info(e);
