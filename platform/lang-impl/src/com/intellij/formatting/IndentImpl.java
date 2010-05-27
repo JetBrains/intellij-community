@@ -22,14 +22,6 @@ class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
   private final boolean myRelativeToDirectParent;
 
-  public boolean isContinuation() {
-    return myType == Type.CONTINUATION_WITHOUT_FIRST;
-  }
-
-  public boolean isNone() {
-    return getType() == Type.NONE;
-  }
-
   static class Type{
     private final String myName;
 
@@ -79,7 +71,14 @@ class IndentImpl extends Indent {
     return myIsAbsolute;
   }
 
-  //TODO den add doc
+  /**
+   * Allows to answer if current indent object is configured to anchor direct parent that lays on a different line.
+   * <p/>
+   * Feel free to check {@link Indent} class-level javadoc in order to get more information and examples about expected
+   * usage of this property.
+   *
+   * @return      flag that indicates if this indent should anchor direct parent that lays on a different line
+   */
   public boolean isRelativeToDirectParent() {
     return myRelativeToDirectParent;
   }
