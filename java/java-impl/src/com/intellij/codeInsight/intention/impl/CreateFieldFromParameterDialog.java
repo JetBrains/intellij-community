@@ -24,8 +24,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
+import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -35,19 +38,23 @@ import java.awt.event.*;
 class CreateFieldFromParameterDialog extends DialogWrapper {
   private final Project myProject;
   private final String[] myNames;
-  private final String myType;
+  private final PsiType[] myTypes;
   private final PsiClass myTargetClass;
   private final boolean myFieldMayBeFinal;
 
   private JComponent myNameField;
   private JCheckBox myCbFinal;
   private static final @NonNls String PROPERTY_NAME = "CREATE_FIELD_FROM_PARAMETER_DECLARE_FINAL";
+  private TypeSelector myTypeSelector;
 
-  public CreateFieldFromParameterDialog(Project project, String[] names, String type, PsiClass targetClass, final boolean fieldMayBeFinal) {
+  public CreateFieldFromParameterDialog(Project project,
+                                        String[] names,
+                                        PsiClass targetClass,
+                                        final boolean fieldMayBeFinal, PsiType... types) {
     super(project, true);
     myProject = project;
     myNames = names;
-    myType = type;
+    myTypes = types;
     myTargetClass = targetClass;
     myFieldMayBeFinal = fieldMayBeFinal;
 
@@ -175,13 +182,21 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.anchor = GridBagConstraints.EAST;
     gbConstraints.fill = GridBagConstraints.BOTH;
 
-    gbConstraints.gridwidth = 2;
+    gbConstraints.gridwidth = 1;
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    JLabel type = new JLabel(CodeInsightBundle.message("dialog.create.field.from.parameter.field.type.label", myType));
-    panel.add(type, gbConstraints);
+    final JLabel typeLabel = new JLabel(CodeInsightBundle.message("dialog.create.field.from.parameter.field.type.label"));
+    panel.add(typeLabel, gbConstraints);
+    gbConstraints.gridx = 1;
+    if (myTypes.length > 1) {
+      myTypeSelector = new TypeSelector();
+      myTypeSelector.setTypes(myTypes);
+    } else {
+      myTypeSelector = new TypeSelector(myTypes[0]);
+    }
+    panel.add(myTypeSelector.getComponent(), gbConstraints);
 
     gbConstraints.gridwidth = 1;
     gbConstraints.weightx = 0;
@@ -248,5 +263,10 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
+  }
+
+  @Nullable
+  public PsiType getType() {
+    return myTypeSelector.getSelectedType();
   }
 }
