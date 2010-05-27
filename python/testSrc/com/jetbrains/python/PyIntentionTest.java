@@ -105,4 +105,5 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   public void testFlipComparison() throws Exception {
     doTest(PyBundle.message("INTN.flip.$0.to.$1", ">", "<"));
   }
+
 }

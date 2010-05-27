@@ -33,7 +33,6 @@ public class PyConsoleHighlightingUtil {
                                                         ColoredProcessHandler.getByKey(PyHighlighter.PY_NUMBER));
 
   public static void processOutput(final LanguageConsoleImpl console, String string, final Key attributes) {
-    string = StringUtil.convertLineSeparators(string);
     final ConsoleViewContentType type =
       attributes == ProcessOutputTypes.STDERR ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
     // Highlight output by pattern
