@@ -50,7 +50,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
 
   public PsiReference getReference() {
     PsiReference cachedReference = myCachedReference;
-    if (cachedReference != null) return cachedReference;
+    if (cachedReference != null && cachedReference.getElement().isValid()) return cachedReference;
     final PsiDocComment comment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
     if (comment == null) return null;
     final PsiDocCommentOwner owner = comment.getOwner();
