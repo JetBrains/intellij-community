@@ -892,7 +892,7 @@ class FormatProcessor {
     }
   }
 
-  private static int getAlignOffsetBefore(final Alignment alignment, final LeafBlockWrapper blockAfter) {
+  private static int getAlignOffsetBefore(final Alignment alignment, @Nullable final LeafBlockWrapper blockAfter) {
     if (alignment == null) return -1;
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
     if (alignRespBlock != null) {

@@ -92,7 +92,7 @@ class AlignmentImpl extends Alignment {
    *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; <code>null</code> otherwise
    */
   @Nullable
-  LeafBlockWrapper getOffsetRespBlockBefore(final AbstractBlockWrapper block) {
+  LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {
     if (!continueOffsetResponsibleBlockRetrieval(block)) {
       return null;
     }
@@ -152,9 +152,9 @@ class AlignmentImpl extends Alignment {
     myOffsetRespBlocks.add(block);
   }
 
-  private boolean continueOffsetResponsibleBlockRetrieval(AbstractBlockWrapper block) {
+  private boolean continueOffsetResponsibleBlockRetrieval(@Nullable AbstractBlockWrapper block) {
     // We don't want to align block that doesn't start new line if it's not configured for 'by columns' alignment.
-    if (!myAllowBackwardShift && !block.getWhiteSpace().containsLineFeeds()) {
+    if (!myAllowBackwardShift && block != null && !block.getWhiteSpace().containsLineFeeds()) {
       return false;
     }
     for (AbstractBlockWrapper offsetBlock : myOffsetRespBlocks) {
