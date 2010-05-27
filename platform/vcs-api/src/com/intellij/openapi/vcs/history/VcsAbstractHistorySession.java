@@ -38,13 +38,13 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     }
   }
 
-  public VcsAbstractHistorySession(List<VcsFileRevision> revisions) {
+  public VcsAbstractHistorySession(List<? extends VcsFileRevision> revisions) {
     myLock = new Object();
     myRevisions = new ArrayList<VcsFileRevision>(revisions);
     myCachedRevisionNumber = calcCurrentRevisionNumber();
   }
 
-  protected VcsAbstractHistorySession(List<VcsFileRevision> revisions, VcsRevisionNumber currentRevisionNumber) {
+  protected VcsAbstractHistorySession(List<? extends VcsFileRevision> revisions, VcsRevisionNumber currentRevisionNumber) {
     myLock = new Object();
     myRevisions = new ArrayList<VcsFileRevision>(revisions);
     myCachedRevisionNumber = currentRevisionNumber;

@@ -109,7 +109,8 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
   public void testMethodBrackets() throws Exception {
     // Inspired by IDEA-53013
-    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = true;
+    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = true;
+    getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
     getSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
@@ -136,6 +137,17 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "       );\n" +
       "}"
     );
+
+    // Inspired by IDEA-55306
+    getSettings().ALIGN_MULTILINE_METHOD_BRACKETS = false;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
+    String method =
+      "executeCommand(new Command<Boolean>() {\n" +
+      "    public Boolean run() throws ExecutionException {\n" +
+      "        return doInterrupt();\n" +
+      "    }\n" +
+      "});";
+    doMethodTest(method, method);
   }
 
   public void testVariableDeclarationAlignment() {
