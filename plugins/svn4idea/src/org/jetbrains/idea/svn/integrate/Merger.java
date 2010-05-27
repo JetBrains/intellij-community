@@ -52,8 +52,15 @@ public class Merger implements IMerger {
   private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
+  private final String myBranchName;
 
-  public Merger(final SvnVcs vcs, final List<CommittedChangeList> changeLists, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
+  public Merger(final SvnVcs vcs,
+                final List<CommittedChangeList> changeLists,
+                final File target,
+                final UpdateEventHandler handler,
+                final SVNURL currentBranchUrl,
+                String branchName) {
+    myBranchName = branchName;
     myProject = vcs.getProject();
     mySvnConfig = SvnConfiguration.getInstanceChecked(vcs.getProject());
     myCurrentBranchUrl = currentBranchUrl;
@@ -106,8 +113,7 @@ public class Merger implements IMerger {
       if (myCommitMessage.length() != 0) {
         myCommitMessage.append('\n');
       }
-      // todo
-      myCommitMessage.append(nextComment).append(" [merged from ").append(myLatestProcessed.getNumber()).append("]");
+      myCommitMessage.append(nextComment).append(" [merged from ").append(myBranchName).append(", revision ").append(myLatestProcessed.getNumber()).append("]");
     }
   }
 

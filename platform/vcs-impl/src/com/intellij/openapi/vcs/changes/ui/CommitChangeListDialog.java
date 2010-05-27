@@ -245,7 +245,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (comment != null) {
       setCommitMessage(comment);
       myLastKnownComment = comment;
-      myLastSelectedListName = initialSelection == null ? null : initialSelection.getName();
+      myLastSelectedListName = initialSelection == null ? myBrowser.getSelectedChangeList().getName() : initialSelection.getName();
     } else {
       setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
       updateComment();
