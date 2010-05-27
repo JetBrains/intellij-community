@@ -130,6 +130,7 @@ public class GitChangeUtils {
         // exit if there is no next character
         break;
       }
+      assert 'M' != s.peek() : "Moves are not yet handled";
       String[] tokens = s.line().split("\t");
       String path = tokens[tokens.length - 1];
       path = rootPath + File.separator + GitUtil.unescapePath(path);

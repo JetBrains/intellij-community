@@ -227,6 +227,15 @@ class ChangeCollector {
     handler.setStdoutSuppressed(true);
     handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
+    if (handler.isLargeCommandLine()) {
+      // if there are too much files, just get all changes for the project
+      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.DIFF);
+      handler.addParameters("--name-status", "--diff-filter=ADCMRUX", "-M", "HEAD");
+      handler.setNoSSH(true);
+      handler.setSilent(true);
+      handler.setStdoutSuppressed(true);
+      handler.endOptions();
+    }
     try {
       String output = handler.run();
       GitChangeUtils.parseChanges(myProject, myVcsRoot, null, GitChangeUtils.loadRevision(myProject, myVcsRoot, "HEAD"), output, myChanges,
@@ -282,6 +291,14 @@ class ChangeCollector {
     handler.setStdoutSuppressed(true);
     handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
+    if(handler.isLargeCommandLine()) {
+      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+      handler.addParameters("-v", "--others", "--exclude-standard");
+      handler.setSilent(true);
+      handler.setNoSSH(true);
+      handler.setStdoutSuppressed(true);
+      handler.endOptions();
+    }
     // run handler and collect changes
     parseFiles(handler.run());
   }
