@@ -59,11 +59,11 @@ public class ToBeMergedDialog extends DialogWrapper {
   private Splitter mySplitter;
 
   private final QuantitySelection<Long> myWiseSelection;
-  private final MergeChecker myMergeChecker;
 
   private final Set<Change> myAlreadyMerged;
+  private final MergeChecker myMergeChecker;
 
-  public ToBeMergedDialog(final Project project, final List<CommittedChangeList> lists, final String title, MergeChecker mergeChecker) {
+  public ToBeMergedDialog(final Project project, final List<CommittedChangeList> lists, final String title, final MergeChecker mergeChecker) {
     super(project, true);
     myMergeChecker = mergeChecker;
     setTitle(title);
@@ -226,7 +226,7 @@ public class ToBeMergedDialog extends DialogWrapper {
                   forCheck.addAll(svnList.getChangedPaths());
                   forCheck.addAll(svnList.getDeletedPaths());
                   for (String path : forCheck) {
-                    if (! notMerged.contains(path)) {
+                    if ((notMerged != null) && (! notMerged.isEmpty()) && ! notMerged.contains(path)) {
                       myAlreadyMerged.add(((SvnChangeList) cl).getByPath(path));
                     }
                   }

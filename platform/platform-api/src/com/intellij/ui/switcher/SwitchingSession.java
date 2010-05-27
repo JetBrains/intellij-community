@@ -17,6 +17,7 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
@@ -25,12 +26,16 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Area;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 
@@ -45,8 +50,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   private LinkedHashSet<SwitchTarget> myTargets = new LinkedHashSet<SwitchTarget>();
   private IdeGlassPane myGlassPane;
 
-  private Map<SwitchTarget, TargetPainer> myPainters = new Hashtable<SwitchTarget, TargetPainer>();
-  private JComponent myRootComponent;
+  private Component myRootComponent;
 
   private SwitchTarget mySelection;
   private SwitchTarget myStartSelection;
@@ -62,8 +66,19 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     }
   };
   private SwitchManager myManager;
+  private Spotlight mySpotlight;
 
-  public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected) {
+  private boolean myShowspots;
+  private Alarm myShowspotsAlarm;
+  private Runnable myShowspotsRunnable = new Runnable() {
+    public void run() {
+      if (!myShowspots) {
+        setShowspots(true);
+      }
+    }
+  };
+
+  public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected, boolean showSpots) {
     myManager = mgr;
     myProvider = provider;
     myInitialEvent = e;
@@ -103,15 +118,118 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
     myStartSelection = mySelection;
 
     myGlassPane = IdeGlassPaneUtil.find(myProvider.getComponent());
-    for (SwitchTarget each : myTargets) {
-      TargetPainer eachPainter = new TargetPainer(each);
-      Disposer.register(this, eachPainter);
+    myRootComponent = myProvider.getComponent().getRootPane();
+    mySpotlight = new Spotlight(myRootComponent);
+    myGlassPane.addPainter(myRootComponent, mySpotlight, this);
 
-      myRootComponent = myProvider.getComponent();
-      myGlassPane.addPainter(each.getComponent(), eachPainter, this);
-      myPainters.put(each, eachPainter);
+    myShowspotsAlarm = new Alarm(this);
+    restartShowspotsAlarm();
+
+    myShowspots = showSpots;
+    mySpotlight.setNeedsRepaint(true);
+   }
+
+
+  private class Spotlight extends AbstractPainter {
+
+    private Component myRoot;
+
+    private Area myArea;
+
+    private BufferedImage myBackground;
+
+    private Spotlight(Component root) {
+      myRoot = root;
     }
 
+    @Override
+    public boolean needsRepaint() {
+      return true;
+    }
+
+    @Override
+    public void executePaint(Component component, Graphics2D g) {
+      int inset = -1;
+      int selectedInset = -8;
+
+      Set<Area> shapes = new HashSet<Area>();
+      Area selected = null;
+
+      boolean hasIntersections = false;
+
+      Rectangle clip = g.getClipBounds();
+      myArea = new Area(clip);
+
+      for (SwitchTarget each : myTargets) {
+        RelativeRectangle eachSimpleRec = each.getRectangle();
+        if (eachSimpleRec == null) continue;
+
+        boolean isSelected = each.equals(mySelection);
+
+        Rectangle eachBaseRec = eachSimpleRec.getRectangleOn(myRoot);
+        Rectangle eachShape;
+        if (isSelected) {
+          eachShape = new Rectangle(eachBaseRec.x + selectedInset,
+                                    eachBaseRec.y + selectedInset,
+                                    eachBaseRec.width - selectedInset -selectedInset,
+                                    eachBaseRec.height - selectedInset -selectedInset);
+        } else {
+          eachShape = new Rectangle(eachBaseRec.x + inset,
+                                    eachBaseRec.y + inset,
+                                    eachBaseRec.width - inset -inset,
+                                    eachBaseRec.height - inset -inset);
+        }
+
+        if (!hasIntersections) {
+          hasIntersections = clip.contains(eachShape) || clip.intersects(eachShape);
+        }
+
+        Area eachArea = new Area(new RoundRectangle2D.Double(eachShape.x, eachShape.y, eachShape.width, eachShape.height, 6, 6));
+        shapes.add(eachArea);
+        if (isSelected) {
+          selected = eachArea;
+        }
+      }
+
+
+      Color fillColor = new Color(0f, 0f, 0f, 0.25f);
+      if (!hasIntersections && myShowspots) {
+        g.setColor(fillColor);
+        g.fillRect(clip.x, clip.y, clip.width, clip.height);
+        return;
+      }
+
+      for (Area each : shapes) {
+        myArea.subtract(each);
+        if (each != selected) {
+          each.subtract(selected);
+        }
+      }
+
+      GraphicsConfig cfg = new GraphicsConfig(g);
+      cfg.setAntialiasing(true);
+
+      if (myShowspots) {
+        g.setColor(fillColor);
+        g.fill(myArea);
+
+        g.setColor(Color.lightGray);
+        for (Shape each : shapes) {
+          if (each != selected) {
+            g.draw(each);
+          }
+        }
+      }
+
+      if (selected != null) {
+        Color bg = Color.darkGray;
+        g.setColor(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 180));
+        g.setStroke(new BasicStroke(3));
+        g.draw(selected);
+      }
+
+      cfg.restore();
+    }
   }
 
   public boolean dispatchKeyEvent(KeyEvent e) {
@@ -130,59 +248,6 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   public boolean isSelectionWasMoved() {
     return mySelectionWasMoved;
-  }
-
-  private class TargetPainer extends AbstractPainter implements Disposable {
-
-    private SwitchTarget myTarget;
-
-    private RelativePoint myPoint;
-
-    private TargetPainer(SwitchTarget target) {
-      myTarget = target;
-    }
-
-    @Override
-    public void executePaint(Component component, Graphics2D g) {
-      GraphicsConfig cfg = new GraphicsConfig(g);
-      cfg.setAntialiasing(true);
-
-      g.setColor(Color.red);
-      Rectangle paintRect = myTarget.getRectangle().getRectangleOn(component);
-
-      boolean selected = myTarget.equals(getSelection());
-      if (selected) {
-        g.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] {2, 4}, 0));
-        g.draw(paintRect);
-      } else {
-        g.setColor(Color.red);
-        int d = 6;
-        int dX = 4;
-        int dY = -4;
-        g.fillOval(paintRect.x + dX - d / 2, paintRect.y + paintRect.height + dY - d / 2, d, d);
-      }
-
-      if (myPoint != null) {
-        g.setColor(Color.green);
-        Point p = myPoint.getPoint(component);
-        //g.fillOval(p.x - 2, p.y - 2, 4, 4);
-      }
-
-      cfg.restore();
-    }
-
-    public void setPoint(RelativePoint point) {
-      myPoint = point;
-    }
-
-    @Override
-    public boolean needsRepaint() {
-      return true;
-    }
-
-    public void dispose() {
-      myGlassPane.removePainter(this);
-    }
   }
 
   private enum Direction {
@@ -212,12 +277,12 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
     mySelectionWasMoved = !mySelection.equals(myStartSelection);
 
-    for (TargetPainer each : myPainters.values()) {
-      each.setNeedsRepaint(true);
-    }
+    mySpotlight.setNeedsRepaint(true);
 
     myAutoApply.cancelAllRequests();
     myAutoApply.addRequest(myAutoApplyRunnable, Registry.intValue("actionSystem.autoSelectTimeout"));
+
+    restartShowspotsAlarm();
   }
 
   private SwitchTarget getNextTarget(Direction direction) {
@@ -263,13 +328,9 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
         }
         points.add(selected);
         target2Point.put(each, selected);
-
-        myPainters.get(each).setPoint(new RelativePoint(myRootComponent, selected));
       } else {
         points.add(eachPoint);
         target2Point.put(each, eachPoint);
-
-        myPainters.get(each).setPoint(new RelativePoint(myRootComponent, eachPoint));
       }
     }
 
@@ -378,5 +439,21 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
 
   public boolean isFinished() {
     return myFinished;
+  }
+
+  public void setShowspots(boolean showspots) {
+    if (myShowspots != showspots) {
+      myShowspots = showspots;
+      mySpotlight.setNeedsRepaint(true);
+    }
+  }
+
+  public boolean isShowspots() {
+    return myShowspots;
+  }
+  
+  private void restartShowspotsAlarm() {
+    myShowspotsAlarm.cancelAllRequests();
+    myShowspotsAlarm.addRequest(myShowspotsRunnable, Registry.intValue("actionSystem.quickAccessShowSpotsTime"));
   }
 }

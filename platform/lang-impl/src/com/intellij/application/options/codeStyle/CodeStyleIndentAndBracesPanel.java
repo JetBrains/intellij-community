@@ -73,6 +73,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
   private JCheckBox myAlignChainedMethods;
   private JCheckBox myAlignDeclarationParameters;
   private JCheckBox myAlignCallParameters;
+  private JCheckBox myAlignMethodBrackets;
   private JCheckBox myAlignExtendsList;
   private JCheckBox myAlignForStatement;
   private JCheckBox myAlignThrowsList;
@@ -206,13 +207,16 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     myAlignCallParameters = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.call.arguments"));
     optionGroup.add(myAlignCallParameters);
 
+    myAlignMethodBrackets = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.method.brackets"));
+    optionGroup.add(myAlignMethodBrackets);
+
     myAlignExtendsList = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.extends.list"));
     optionGroup.add(myAlignExtendsList);
 
     myAlignThrowsList = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.throws.list"));
     optionGroup.add(myAlignThrowsList);
 
-    myAlignSubsequentDeclarations = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.subsequent.declarations"));
+    myAlignSubsequentDeclarations = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.fields.variables.groups"));
     optionGroup.add(myAlignSubsequentDeclarations);
 
     myAlignParenthesizedExpression = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.parenthesized.expression"));
@@ -325,13 +329,14 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     isModified |= isModified(myAlignAssignment, settings.ALIGN_MULTILINE_ASSIGNMENT);
     isModified |= isModified(myAlignBinaryExpression, settings.ALIGN_MULTILINE_BINARY_OPERATION);
     isModified |= isModified(myAlignCallParameters, settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+    isModified |= isModified(myAlignMethodBrackets, settings.ALIGN_MULTILINE_METHOD_BRACKETS);
     isModified |= isModified(myAlignDeclarationParameters, settings.ALIGN_MULTILINE_PARAMETERS);
     isModified |= isModified(myAlignExtendsList, settings.ALIGN_MULTILINE_EXTENDS_LIST);
     isModified |= isModified(myAlignForStatement, settings.ALIGN_MULTILINE_FOR);
     isModified |= isModified(myAlignParenthesizedExpression, settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
     isModified |= isModified(myAlignTernaryExpression, settings.ALIGN_MULTILINE_TERNARY_OPERATION);
     isModified |= isModified(myAlignThrowsList, settings.ALIGN_MULTILINE_THROWS_LIST);
-    isModified |= isModified(myAlignSubsequentDeclarations, settings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS);
+    isModified |= isModified(myAlignSubsequentDeclarations, settings.ALIGN_GROUP_FIELDS_VARIABLES);
     isModified |= isModified(myAlignArrayInitializerExpression, settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
 
     isModified |= settings.FOR_BRACE_FORCE != getForceBracesValue(myForForceCombo);
@@ -370,6 +375,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     myAlignAssignment.setSelected(settings.ALIGN_MULTILINE_ASSIGNMENT);
     myAlignBinaryExpression.setSelected(settings.ALIGN_MULTILINE_BINARY_OPERATION);
     myAlignCallParameters.setSelected(settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
+    myAlignMethodBrackets.setSelected(settings.ALIGN_MULTILINE_METHOD_BRACKETS);
     myAlignChainedMethods.setSelected(settings.ALIGN_MULTILINE_CHAINED_METHODS);
     myAlignDeclarationParameters.setSelected(settings.ALIGN_MULTILINE_PARAMETERS);
     myAlignExtendsList.setSelected(settings.ALIGN_MULTILINE_EXTENDS_LIST);
@@ -377,7 +383,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     myAlignParenthesizedExpression.setSelected(settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION);
     myAlignTernaryExpression.setSelected(settings.ALIGN_MULTILINE_TERNARY_OPERATION);
     myAlignThrowsList.setSelected(settings.ALIGN_MULTILINE_THROWS_LIST);
-    myAlignSubsequentDeclarations.setSelected(settings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS);
+    myAlignSubsequentDeclarations.setSelected(settings.ALIGN_GROUP_FIELDS_VARIABLES);
     myAlignArrayInitializerExpression.setSelected(settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
 
     setForceBracesComboValue(myForForceCombo, settings.FOR_BRACE_FORCE);
@@ -410,6 +416,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     settings.ALIGN_MULTILINE_ASSIGNMENT = myAlignAssignment.isSelected();
     settings.ALIGN_MULTILINE_BINARY_OPERATION = myAlignBinaryExpression.isSelected();
     settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = myAlignCallParameters.isSelected();
+    settings.ALIGN_MULTILINE_METHOD_BRACKETS = myAlignMethodBrackets.isSelected();
     settings.ALIGN_MULTILINE_CHAINED_METHODS = myAlignChainedMethods.isSelected();
     settings.ALIGN_MULTILINE_PARAMETERS = myAlignDeclarationParameters.isSelected();
     settings.ALIGN_MULTILINE_EXTENDS_LIST = myAlignExtendsList.isSelected();
@@ -417,7 +424,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = myAlignParenthesizedExpression.isSelected();
     settings.ALIGN_MULTILINE_TERNARY_OPERATION = myAlignTernaryExpression.isSelected();
     settings.ALIGN_MULTILINE_THROWS_LIST = myAlignThrowsList.isSelected();
-    settings.ALIGN_MULTILINE_SUBSEQUENT_DECLARATIONS = myAlignSubsequentDeclarations.isSelected();
+    settings.ALIGN_GROUP_FIELDS_VARIABLES = myAlignSubsequentDeclarations.isSelected();
     settings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION = myAlignArrayInitializerExpression.isSelected();
 //    mySettings.LABEL_INDENT =
 
