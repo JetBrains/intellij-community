@@ -111,7 +111,7 @@ class ReloadClassesWorker {
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
     breakpointManager.disableBreakpoints(debugProcess);
     
-    virtualMachineProxy.suspend();
+    //virtualMachineProxy.suspend();
            
     try {
       final Map<ReferenceType, byte[]> redefineMap = new HashMap<ReferenceType,byte[]>();
@@ -192,12 +192,12 @@ class ReloadClassesWorker {
             catch (Exception e) {
               processException(e);
             }
-            try {
-              virtualMachineProxy.resume();
-            }
-            catch (Exception e) {
-              processException(e);
-            }
+            //try {
+            //  virtualMachineProxy.resume();
+            //}
+            //catch (Exception e) {
+            //  processException(e);
+            //}
           }
 
           public Priority getPriority() {
