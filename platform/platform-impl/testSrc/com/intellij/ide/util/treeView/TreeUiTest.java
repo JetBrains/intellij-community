@@ -3,10 +3,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import junit.framework.TestSuite;
@@ -1441,8 +1438,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertEquals(new NodeElement("openapi"), myStructure.getParentElement(newActionSystem));
 
     myStructure.setRevalidator(new Revalidator() {
-      public NodeElement revalidate(NodeElement element) {
-        return element == actionSystem ? newActionSystem : null;
+      public AsyncResult<Object> revalidate(NodeElement element) {
+        return element == actionSystem ? new AsyncResult.Done<Object>(newActionSystem) : null;
       }
     });
 
@@ -1730,7 +1727,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     buildAction.run();
 
-    boolean released = new WaitFor(5000) {
+    boolean released = new WaitFor(60000) {
       @Override
       protected boolean condition() {
         return getBuilder().getUi() == null;
