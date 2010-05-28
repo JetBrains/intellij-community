@@ -226,7 +226,13 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void _runBackgroundLoading(Runnable runnable) {
-    SimpleTimer.getInstance().setUp(runnable, getChildrenLoadingDelay());
+    try {
+      Thread.currentThread().sleep(getChildrenLoadingDelay());
+      runnable.run();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 

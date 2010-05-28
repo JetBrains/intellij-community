@@ -52,8 +52,17 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                 DefaultTreeModel treeModel,
                                 AbstractTreeStructure treeStructure,
                                 Comparator<NodeDescriptor> comparator) {
-    super(tree, treeModel, treeStructure, comparator);
+    init(tree, treeModel, new AbstractTreeStructure.Delegate(treeStructure) {
+      @Override
+      public AsyncResult revalidateElement(Object element) {
+        return _revalidateElement(element);
+      }
+    }, comparator, DEFAULT_UPDATE_INACTIVE);
     myProject = project;
+  }
+
+  private AsyncResult _revalidateElement(Object element) {
+    return new AsyncResult.Done<Object>(element);
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {

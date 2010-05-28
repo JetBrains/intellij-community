@@ -1,5 +1,6 @@
 package com.intellij.ide.util.treeView;
 
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.treeStructure.Tree;
@@ -525,7 +526,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
 
     @Override
-    public Object revalidateElement(Object element) {
+    public AsyncResult<Object> revalidateElement(Object element) {
       return myRevalidator != null ? myRevalidator.revalidate((NodeElement)element) : super.revalidateElement(element);
     }
 
@@ -535,7 +536,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   interface Revalidator {
-    NodeElement revalidate(NodeElement element);
+    AsyncResult<Object> revalidate(NodeElement element);
   }
 
   class MyBuilder extends BaseTreeBuilder {

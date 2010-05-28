@@ -3462,20 +3462,26 @@ public class AbstractTreeUi {
     _expand(element, _onDone, true, false, canSmartExpand);
   }
 
-  private void checkPathAndMaybeRevalidate(Object element, Runnable onDone, boolean parentsOnly, boolean checkIfInStructure, boolean canSmartExpand) {
+  private void checkPathAndMaybeRevalidate(Object element, final Runnable onDone, final boolean parentsOnly, final boolean checkIfInStructure, final boolean canSmartExpand) {
     boolean toRevalidate = getNodeForElement(element, false) == null && isInStructure(element);
     if (!toRevalidate) {
       runDone(onDone);
       return;
     }
 
-    Object actualElement = getTreeStructure().revalidateElement(element);
-    if (actualElement == null) {
-      runDone(onDone);
-      return;
-    }
-
-    _expand(actualElement, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
+    getTreeStructure().revalidateElement(element).doWhenDone(new AsyncResult.Handler<Object>() {
+      public void run(final Object o) {
+        invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
+          }
+        });
+      }
+    }).doWhenRejected(new Runnable() {
+      public void run() {
+        runDone(onDone);
+      }
+    });
   }
 
   public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {
