@@ -33,8 +33,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
-  public static List<Object> mergeSortedLists(List<Object> list1, List<Object> list2, Comparator<Object> comparator, boolean mergeEqualItems){
-    ArrayList<Object> result = new ArrayList<Object>();
+  public static <T> List<T> mergeSortedLists(List<T> list1, List<T> list2, Comparator<? super T> comparator, boolean mergeEqualItems){
+    List<T> result = new ArrayList<T>(list1.size() + list2.size());
 
     int index1 = 0;
     int index2 = 0;
@@ -46,8 +46,57 @@ public class ContainerUtil {
         result.add(list1.get(index1++));
       }
       else {
-        Object element1 = list1.get(index1);
-        Object element2 = list2.get(index2);
+        T element1 = list1.get(index1);
+        T element2 = list2.get(index2);
+        int c = comparator.compare(element1, element2);
+        if (c < 0) {
+          result.add(element1);
+          index1++;
+        }
+        else if (c > 0) {
+          result.add(element2);
+          index2++;
+        }
+        else {
+          result.add(element1);
+          if (!mergeEqualItems) {
+            result.add(element2);
+          }
+          index1++;
+          index2++;
+        }
+      }
+    }
+
+    return result;
+  }
+  public static <T> List<T> mergeSortedArrays(T[] list1, T[] list2, Comparator<? super T> comparator, boolean mergeEqualItems, @Nullable Processor<? super T> filter){
+    int index1 = 0;
+    int index2 = 0;
+    List<T> result = new ArrayList<T>(list1.length + list2.length);
+
+    while (index1 < list1.length || index2 < list2.length) {
+      if (index1 >= list1.length) {
+        T t = list2[index2++];
+        if (filter != null && !filter.process(t)) continue;
+        result.add(t);
+      }
+      else if (index2 >= list2.length) {
+        T t = list1[index1++];
+        if (filter != null && !filter.process(t)) continue;
+        result.add(t);
+      }
+      else {
+        T element1 = list1[index1];
+        if (filter != null && !filter.process(element1)) {
+          index1++;
+          continue;
+        }
+        T element2 = list2[index2];
+        if (filter != null && !filter.process(element2)) {
+          index2++;
+          continue;
+        }
         int c = comparator.compare(element1, element2);
         if (c < 0) {
           result.add(element1);
