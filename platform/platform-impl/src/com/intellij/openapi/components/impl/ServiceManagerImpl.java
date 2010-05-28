@@ -59,9 +59,9 @@ public class ServiceManagerImpl implements BaseComponent {
       public void extensionAdded(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
         if (descriptor.overrides) {
           ComponentAdapter oldAdapter =
-            picoContainer.unregisterComponent(descriptor.serviceInterface);// Allow to re-define service implementations in plugins.
+            picoContainer.unregisterComponent(descriptor.getInterface());// Allow to re-define service implementations in plugins.
           if (oldAdapter == null) {
-            throw new RuntimeException("Service: " + descriptor.serviceInterface + " doesn't override anything");
+            throw new RuntimeException("Service: " + descriptor.getInterface() + " doesn't override anything");
           }
         }
 
@@ -69,7 +69,7 @@ public class ServiceManagerImpl implements BaseComponent {
       }
 
       public void extensionRemoved(final ServiceDescriptor extension, final PluginDescriptor pluginDescriptor) {
-        picoContainer.unregisterComponent(extension.serviceInterface);
+        picoContainer.unregisterComponent(extension.getInterface());
       }
     };
     extensionPoint.addExtensionPointListener(myExtensionPointListener);
@@ -105,11 +105,11 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public Object getComponentKey() {
-      return myDescriptor.serviceInterface;
+      return myDescriptor.getInterface();
     }
 
     public Class getComponentImplementation() {
-      return loadClass(myDescriptor.serviceInterface);
+      return loadClass(myDescriptor.getInterface());
     }
 
     private Class loadClass(final String className) {
@@ -152,7 +152,8 @@ public class ServiceManagerImpl implements BaseComponent {
 
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.serviceImplementation), null, true));
+        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(
+          myDescriptor.getImplementation()), null, true));
       }
 
       return myDelegate;
@@ -171,7 +172,7 @@ public class ServiceManagerImpl implements BaseComponent {
     }
 
     public String getAssignableToClassName() {
-      return myDescriptor.serviceInterface;
+      return myDescriptor.getInterface();
     }
   }
 }

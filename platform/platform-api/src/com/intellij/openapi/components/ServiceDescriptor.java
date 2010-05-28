@@ -27,4 +27,12 @@ public class ServiceDescriptor {
 
   @Attribute("overrides")
   public boolean overrides = false;
+
+  public String getInterface() {
+    return serviceInterface != null ? serviceInterface : getImplementation();
+  }
+
+  public String getImplementation() {
+    return serviceImplementation;
+  }
 }
