@@ -3127,8 +3127,10 @@ public class AbstractTreeUi {
             }
             myTreeModel.nodeStructureChanged(parentNode);
 
-            while (expanded.hasMoreElements()) {
-              expandSilently(expanded.nextElement());
+            if (expanded != null) {
+              while (expanded.hasMoreElements()) {
+                expandSilently(expanded.nextElement());
+              }
             }
 
             if (selected != null) {
