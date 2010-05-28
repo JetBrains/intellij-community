@@ -24,7 +24,6 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -34,9 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +43,7 @@ import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceHandlerBase;
+import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -63,10 +60,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,11 +84,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
           editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
         }
         else {
-          showChooser(editor, expressions, new Pass<PsiExpression>(){
-            public void pass(final PsiExpression selectedValue) {
-              invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
-            }
-          });
+          IntroduceTargetChooser.showChooser(editor, expressions,
+            new Pass<PsiExpression>(){
+              public void pass(final PsiExpression selectedValue) {
+                invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
+              }
+            },
+            new PsiExpressionTrimRenderer.RenderFunction());
           return;
         }
       }
@@ -159,64 +154,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final int lineEnd = document.getLineEndOffset(lineNumber);
 
     return CodeInsightUtil.findStatementsInRange(file, lineStart, lineEnd);
-  }
-
-  public static void showChooser(final Editor editor, final List<PsiExpression> expressions, final Pass<PsiExpression> callback) {
-    final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
-    final DefaultListModel model = new DefaultListModel();
-    for (PsiExpression expr : expressions) {
-      model.addElement(expr);
-    }
-    final JList list = new JList(model);
-    list.setCellRenderer(new DefaultListCellRenderer() {
-
-      @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-
-        final StringBuffer buf = new StringBuffer();
-        final PsiExpression expr = (PsiExpression)value;
-        if (expr.isValid()) {
-          expr.accept(new PsiExpressionTrimRenderer(buf));
-          setText(buf.toString());
-        }
-        return rendererComponent;
-      }
-    });
-
-    list.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        highlighter.dropHighlight();
-        final int index = list.getSelectedIndex();
-        if (index < 0 ) return;
-        final PsiExpression expr = (PsiExpression)model.get(index);
-        final ArrayList<PsiElement> toExtract = new ArrayList<PsiElement>();
-        toExtract.add(expr);
-        highlighter.highlight(expr, toExtract);
-      }
-    });
-
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
-          .setTitle("Expressions")
-          .setMovable(false)
-          .setResizable(false)
-          .setRequestFocus(true)
-          .setItemChoosenCallback(new Runnable() {
-                                    public void run() {
-                                      callback.pass((PsiExpression)list.getSelectedValue());
-                                    }
-                                  })
-          .addListener(new JBPopupAdapter() {
-                          @Override
-                          public void onClosed(LightweightWindowEvent event) {
-                            highlighter.dropHighlight();
-                          }
-                       })
-          .createPopup().showInBestPositionFor(editor);
   }
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
