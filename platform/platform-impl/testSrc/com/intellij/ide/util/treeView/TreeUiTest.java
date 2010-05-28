@@ -1013,7 +1013,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       public void onElementAction(String action, Object element) {
         if (wasInterrupted[0]) {
           if (myCancelRequest == null) {
-            myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element);
+            myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element + " interruptAction=" + interruptAction + " interruptElement=" + interruptElement);
           }
         } else {
           if (element.equals(interruptElement) && action.equals(interruptAction)) {
@@ -1411,6 +1411,50 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     doTestSelectionOnDelete(true);
   }
 
+  public void testRevalidateStructure() throws Exception {
+    final NodeElement com = new NodeElement("com");
+    final NodeElement actionSystem = new NodeElement("actionSystem");
+    actionSystem.setForcedParent(com);
+
+    doAndWaitForBuilder(new Runnable() {
+      public void run() {
+        myRoot.addChild(com).addChild(actionSystem);
+        getBuilder().getUi().activate(true);
+      }
+    });
+
+    select(actionSystem, false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  [actionSystem]\n");
+
+
+    removeFromParentButKeepRef(actionSystem);
+
+    final NodeElement newActionSystem = new NodeElement("actionSystem");
+
+    myStructure.getNodeFor(com).addChild("intellij").addChild("openapi").addChild(newActionSystem);
+
+    assertSame(com, myStructure.getParentElement(actionSystem));
+    assertNotSame(com, newActionSystem);
+    assertEquals(new NodeElement("openapi"), myStructure.getParentElement(newActionSystem));
+
+    myStructure.setRevalidator(new Revalidator() {
+      public NodeElement revalidate(NodeElement element) {
+        return element == actionSystem ? newActionSystem : null;
+      }
+    });
+
+    updateFromRoot();
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -intellij\n" +
+               "   -openapi\n" +
+               "    [actionSystem]\n");
+  }
+
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
     myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
@@ -1702,13 +1746,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testCancelUpdate() throws Exception {
-      super.testCancelUpdate();
-    }
-
-    @Override
-    public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
-      super.testThrowingProcessCancelledInterruptsUpdate();
+    public void testRevalidateStructure() throws Exception {
+      super.testRevalidateStructure();
     }
   }
 

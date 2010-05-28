@@ -108,6 +108,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   protected void tearDown() throws Exception {
     myElementUpdate.clear();
     myElementUpdateHook = null;
+    myStructure.setRevalidator(null);
     super.tearDown();
   }
 
@@ -381,6 +382,12 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       return node;
     }
 
+    public Node addChild(NodeElement element) {
+      final Node node = new Node(this, element);
+      myChildElements.add(node);
+      return node;
+    }
+
     @Override
     public String toString() {
       return myElement.toString();
@@ -438,6 +445,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<NodeElement, NodeElement>();
     private final Map<NodeElement, Node> myElement2Node = new HashMap<NodeElement, Node>();
     private final Set<NodeElement> myLeaves = new HashSet<NodeElement>();
+    private Revalidator myRevalidator;
 
     public Object getRootElement() {
       return myRoot.myElement;
@@ -464,7 +472,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
 
     public Object getParentElement(final Object element) {
-      return myChild2Parent.get((NodeElement)element);
+      NodeElement nodeElement = (NodeElement)element;
+      return nodeElement.getForcedParent() != null ? nodeElement.getForcedParent() : myChild2Parent.get(nodeElement);
     }
 
 
@@ -514,6 +523,19 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     public Node getNodeFor(NodeElement element) {
       return myElement2Node.get(element);
     }
+
+    @Override
+    public Object revalidateElement(Object element) {
+      return myRevalidator != null ? myRevalidator.revalidate((NodeElement)element) : super.revalidateElement(element);
+    }
+
+    public void setRevalidator(Revalidator revalidator) {
+      myRevalidator = revalidator;
+    }
+  }
+
+  interface Revalidator {
+    NodeElement revalidate(NodeElement element);
   }
 
   class MyBuilder extends BaseTreeBuilder {

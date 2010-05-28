@@ -3447,14 +3447,35 @@ public class AbstractTreeUi {
                         final boolean deferred,
                         final boolean canBeCentered,
                         final boolean scrollToVisible,
-                        boolean canSmartExpand) {
+                        final boolean canSmartExpand) {
     final Runnable _onDone = new Runnable() {
       public void run() {
         if (!checkDeferred(deferred, onDone)) return;
-        selectVisible(element, onDone, addToSelection, canBeCentered, scrollToVisible);
+
+        checkPathAndMaybeRevalidate(element, new Runnable() {
+          public void run() {
+            selectVisible(element, onDone, addToSelection, canBeCentered, scrollToVisible);
+          }
+        }, true, false, canSmartExpand);
       }
     };
     _expand(element, _onDone, true, false, canSmartExpand);
+  }
+
+  private void checkPathAndMaybeRevalidate(Object element, Runnable onDone, boolean parentsOnly, boolean checkIfInStructure, boolean canSmartExpand) {
+    boolean toRevalidate = getNodeForElement(element, false) == null && isInStructure(element);
+    if (!toRevalidate) {
+      runDone(onDone);
+      return;
+    }
+
+    Object actualElement = getTreeStructure().revalidateElement(element);
+    if (actualElement == null) {
+      runDone(onDone);
+      return;
+    }
+
+    _expand(actualElement, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
   }
 
   public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {

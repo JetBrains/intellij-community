@@ -39,4 +39,8 @@ public abstract class AbstractTreeStructure {
     return false;
   }
 
+  public Object revalidateElement(Object element) {
+    return element;
+  }
+
 }
