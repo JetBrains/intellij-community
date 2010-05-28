@@ -25,9 +25,7 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
  */
 public class XsltResourceProvider implements StandardResourceProvider {
 
-  private static final String XSLT_SCHEMA_LOCATION = "resources/xslt-schema.xsd";
-
   public void registerResources(ResourceRegistrar registrar) {
-     registrar.addStdResource(XsltSupport.XSLT_NS, XSLT_SCHEMA_LOCATION, getClass());
+     registrar.addStdResource(XsltSupport.XSLT_NS, "/org/intellij/lang/xpath/xslt/resources/xslt-schema.xsd", getClass());
   }
 }
