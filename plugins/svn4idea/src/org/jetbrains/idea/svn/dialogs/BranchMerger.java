@@ -38,6 +38,7 @@ public class BranchMerger implements IMerger {
   private final boolean myReintegrate;
   private final String myBranchName;
   private boolean myAtStart;
+  private long mySourceLatestRevision;
 
   public BranchMerger(final SvnVcs vcs,
                       final SVNURL sourceUrl,
@@ -52,10 +53,16 @@ public class BranchMerger implements IMerger {
     myReintegrate = isReintegrate;
     myBranchName = branchName;
     myAtStart = true;
+    try {
+      mySourceLatestRevision = myVcs.createRepository(mySourceUrl).getLatestRevision();
+    }
+    catch (SVNException e) {
+      mySourceLatestRevision = SVNRevision.HEAD.getNumber();
+    }
   }
 
   public String getComment() {
-    return "Merge all from " + myBranchName;
+    return "Merge all from " + myBranchName + " at " + mySourceLatestRevision +(myReintegrate ? " (reintegration)" : "");
   }
 
   public boolean hasNext() {
@@ -74,9 +81,8 @@ public class BranchMerger implements IMerger {
       dc.doMergeReIntegrate(mySourceUrl, SVNRevision.UNDEFINED, new File(myTargetPath), false);
     } else {
       final long targetRevision = myVcs.createRepository(myTargetUrl).getLatestRevision();
-      final long sourceRevision = myVcs.createRepository(mySourceUrl).getLatestRevision();
 
-      dc.doMerge(myTargetUrl, SVNRevision.create(targetRevision), mySourceUrl, SVNRevision.create(sourceRevision),
+      dc.doMerge(myTargetUrl, SVNRevision.create(targetRevision), mySourceUrl, SVNRevision.create(mySourceLatestRevision),
         new File(myTargetPath), SVNDepth.INFINITY, true, true, false, false);
     }
   }

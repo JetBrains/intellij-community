@@ -37,20 +37,12 @@ import org.jetbrains.annotations.NotNull;
  * @author mike
  */
 public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValue {
-  private volatile PsiReference myCachedReference;
 
   public PsiDocParamRef() {
     super(Constants.DOC_PARAMETER_REF);
   }
 
-  public void clearCaches() {
-    myCachedReference = null;
-    super.clearCaches();
-  }
-
   public PsiReference getReference() {
-    PsiReference cachedReference = myCachedReference;
-    if (cachedReference != null && cachedReference.getElement().isValid()) return cachedReference;
     final PsiDocComment comment = PsiTreeUtil.getParentOfType(this, PsiDocComment.class);
     if (comment == null) return null;
     final PsiDocCommentOwner owner = comment.getOwner();
@@ -79,7 +71,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     }
 
     final PsiElement resultReference = reference;
-    myCachedReference = cachedReference = new PsiJavaReference() {
+    return new PsiJavaReference() {
       public PsiElement resolve() {
         return resultReference;
       }
@@ -155,7 +147,6 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
                : new JavaResolveResult[]{new CandidateInfo(resultReference, PsiSubstitutor.EMPTY)};
       }
     };
-    return cachedReference;
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

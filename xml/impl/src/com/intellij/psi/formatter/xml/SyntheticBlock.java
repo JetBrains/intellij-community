@@ -177,6 +177,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
 
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
+    if (isOuterLanguageBlock()) return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
     final List<Block> subBlocks = getSubBlocks();
     final int prevBlockIndex = newChildIndex - 1;
     if (prevBlockIndex >= 0 && prevBlockIndex < subBlocks.size()) {

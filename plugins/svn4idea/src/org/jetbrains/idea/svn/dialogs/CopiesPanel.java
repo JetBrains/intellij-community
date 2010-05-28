@@ -40,6 +40,7 @@ import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -265,7 +266,7 @@ public class CopiesPanel {
   private void mergeFrom(final WCInfo wcInfo, final VirtualFile root, final LinkLabel mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
-        new QuickMerge(project, url, wcInfo, configuration.getBaseName(url), configuration, root).execute();
+        new QuickMerge(project, url, wcInfo, SVNPathUtil.tail(url), configuration, root).execute();
       }
     }, "Select branch", mergeLabel);
   }

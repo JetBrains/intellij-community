@@ -27,6 +27,7 @@ import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.BranchSelectedCallback {
   private final SvnVcs myVcs;
@@ -51,6 +52,8 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
       return;
     }
 
+    // from name
+    final String name = SVNPathUtil.tail(myCurrentBranch.toString());
     final Pair<WorkingCopyInfo,SVNURL> pair = IntegratedSelectedOptionsDialog.selectWorkingCopy(myVcs.getProject(), myCurrentBranch, url, true,
                                                                                                 selectedLocalBranchPath, dialogTitle);
     if (pair == null) {
@@ -66,7 +69,7 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
       return;
     }
     final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(myVcs, info, myMergerFactory, sourceUrl, SvnBundle.message("action.Subversion.integrate.changes.messages.title"),
-                                                                     SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN);
+                                                                     SvnConfiguration.getInstance(myVcs.getProject()).MERGE_DRY_RUN, name);
     ProgressManager.getInstance().run(task);
   }
 

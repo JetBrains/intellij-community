@@ -55,8 +55,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,7 +137,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
   protected CompoundPositionManager myPositionManager = null;
   private volatile DebuggerManagerThreadImpl myDebuggerManagerThread;
   private final HashMap myUserData = new HashMap();
-  private static final int LOCAL_START_TIMEOUT = 15000;
+  private static final int LOCAL_START_TIMEOUT = 30000;
 
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myBreakpointsMuted = new AtomicBoolean(false);

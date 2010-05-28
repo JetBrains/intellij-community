@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.update.SvnUpdateRootOptionsPanel.SvnUpdateRootOptionsPanel");
@@ -53,10 +54,12 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
   private JLabel myCopyType;
   private String mySourceUrl;
   private SVNURL myBranchUrl;
+  private final boolean myIsNested;
 
-  public SvnUpdateRootOptionsPanel(FilePath root, final SvnVcs vcs) {
+  public SvnUpdateRootOptionsPanel(FilePath root, final SvnVcs vcs, Collection<FilePath> roots) {
     myRoot = root;
     myVcs = vcs;
+    myIsNested = FilePathUtil.isNested(roots, myRoot);
 
     myURLText.setEditable(true);
 
@@ -121,7 +124,7 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     myURLText.setEnabled(myUpdateToSpecificUrl.isSelected());
     myBranchField.setEnabled(myUpdateToSpecificUrl.isSelected() && (myBranchUrl != null) && (mySourceUrl != null));
 
-    final boolean revisionCanBeSpecifiedForRoot = isRevisionCanBeSpecifiedForRoot();
+    final boolean revisionCanBeSpecifiedForRoot = (! myIsNested) || isRevisionCanBeSpecifiedForRoot();
     myRevisionBox.setEnabled(revisionCanBeSpecifiedForRoot);
     myRevisionText.setEnabled(revisionCanBeSpecifiedForRoot);
     myCopyType.setVisible(! revisionCanBeSpecifiedForRoot);

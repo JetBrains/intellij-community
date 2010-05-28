@@ -509,6 +509,12 @@ public class ArrayUtil {
     }
     return -1;
   }
+  public static <T> int indexOf(@NotNull List<T> objects, T object, @NotNull Comparator<T> comparator) {
+    for (int i = 0; i < objects.size(); i++) {
+      if (comparator.compare(objects.get(i), object) == 0) return i;
+    }
+    return -1;
+  }
   public static <T> int indexOf(@NotNull T[] objects, T object, @NotNull Equality<T> comparator) {
     for (int i = 0; i < objects.length; i++) {
       if (comparator.equals(objects[i], object)) return i;

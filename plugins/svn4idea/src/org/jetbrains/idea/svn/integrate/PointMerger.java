@@ -41,10 +41,15 @@ public class PointMerger extends Merger {
   private final SvnVcs myVcs;
   private final UpdateEventHandler myHandler;
 
-  public PointMerger(final SvnVcs vcs, CommittedChangeList selectedChangeList, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl,
-                     final List<Change> selectedChanges) {
+  public PointMerger(final SvnVcs vcs,
+                     CommittedChangeList selectedChangeList,
+                     final File target,
+                     final UpdateEventHandler handler,
+                     final SVNURL currentBranchUrl,
+                     final List<Change> selectedChanges,
+                     String branchName) {
     super(vcs, new ArrayList<CommittedChangeList>(Arrays.<CommittedChangeList>asList(selectedChangeList)),
-          target, handler, currentBranchUrl);
+          target, handler, currentBranchUrl, branchName);
     myHandler = handler;
     myVcs = vcs;
     mySelectedChanges = selectedChanges;

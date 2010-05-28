@@ -34,7 +34,11 @@ public class ChangeListsMergerFactory implements MergerFactory {
     myChangeListsList = new ArrayList<CommittedChangeList>(changeListsList);
   }
 
-  public IMerger createMerger(final SvnVcs vcs, final File target, final UpdateEventHandler handler, final SVNURL currentBranchUrl) {
-    return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl);
+  public IMerger createMerger(final SvnVcs vcs,
+                              final File target,
+                              final UpdateEventHandler handler,
+                              final SVNURL currentBranchUrl,
+                              String branchName) {
+    return new Merger(vcs, myChangeListsList, target, handler, currentBranchUrl, branchName);
   }
 }

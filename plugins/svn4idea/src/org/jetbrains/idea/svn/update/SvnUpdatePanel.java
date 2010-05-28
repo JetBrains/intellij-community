@@ -71,8 +71,8 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel{
     return myConfigureRootsPanel;
   }
 
-  protected SvnPanel createRootPanel(final FilePath root, final SvnVcs vcs) {
-    return new SvnUpdateRootOptionsPanel(root, vcs);
+  protected SvnPanel createRootPanel(final FilePath root, final SvnVcs vcs, Collection<FilePath> roots) {
+    return new SvnUpdateRootOptionsPanel(root, vcs, roots);
   }
 
   protected JComponent getPanel() {
