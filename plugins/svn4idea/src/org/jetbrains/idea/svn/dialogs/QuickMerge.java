@@ -49,7 +49,6 @@ import org.jetbrains.idea.svn.integrate.IMerger;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
 import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesTask;
 import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
-import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
@@ -242,14 +241,14 @@ public class QuickMerge {
       myCopyData = copyData;
       myNotMerged = new LinkedList<CommittedChangeList>();
       myMergeTitle = "Merge from " + branchName;
-      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
+//      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
         myMergeChecker = new OneShotMergeInfoHelper(myProject, myWcInfo, mySourceUrl);
         ((OneShotMergeInfoHelper) myMergeChecker).prepare();
-      } else {
+/*      } else {
         myMergeChecker = new BranchInfo.MyMergeCheckerWrapper(myWcInfo.getPath(), new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(),
                                                                                                  myWcInfo.getRootUrl(), mySourceUrl,
                                                                                                  mySourceUrl, myVcs.createWCClient()));
-      }
+      }*/
     }
 
     public void run(@NotNull final ProgressIndicator indicator) {

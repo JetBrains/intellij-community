@@ -375,7 +375,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
   }
 
-  private final static int ourPageSize = 20;
+  private final static int ourPageSize = 30;
 
   private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<CommittedChangeList, CommittedChangeList>("fake column"){
     @Override
