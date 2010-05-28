@@ -57,6 +57,14 @@ public class ServiceManagerImpl implements BaseComponent {
 
     myExtensionPointListener = new ExtensionPointListener<ServiceDescriptor>() {
       public void extensionAdded(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
+        if (descriptor.overrides) {
+          ComponentAdapter oldAdapter =
+            picoContainer.unregisterComponent(descriptor.serviceInterface);// Allow to re-define service implementations in plugins.
+          if (oldAdapter == null) {
+            throw new RuntimeException("Service: " + descriptor.serviceInterface + " doesn't override anything");
+          }
+        }
+
         picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
       }
 
