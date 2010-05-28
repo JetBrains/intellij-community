@@ -52,11 +52,11 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   private MultiMap<Class,Class> myKnownSupers;
 
   private static final Comparator<Trinity<PsiReferenceProvider,ProcessingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
-    public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
-                       final Trinity<PsiReferenceProvider, ProcessingContext, Double> o2) {
-      return o2.getThird().compareTo(o1.getThird());
-    }
-  };
+      public int compare(final Trinity<PsiReferenceProvider, ProcessingContext, Double> o1,
+                         final Trinity<PsiReferenceProvider, ProcessingContext, Double> o2) {
+        return o2.getThird().compareTo(o1.getThird());
+      }
+    };
   private final Project myProject;
 
   private final static NotNullLazyKey<ReferenceProvidersRegistry, Project> INSTANCE_CACHE = ServiceManager.createLazyKey(ReferenceProvidersRegistry.class);
@@ -227,8 +227,8 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
       return PsiReference.EMPTY_ARRAY;
     }
 
-    final Trinity<PsiReferenceProvider, ProcessingContext, Double> firstProvider = providers.get(0);
     if (providers.size() == 1) {
+      final Trinity<PsiReferenceProvider, ProcessingContext, Double> firstProvider = providers.get(0);
       return firstProvider.getFirst().getReferencesByElement(context, firstProvider.getSecond());
     }
 
@@ -240,7 +240,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     }
 
     List<PsiReference> result = new ArrayList<PsiReference>();
-    final double maxPriority = firstProvider.getThird();
+    final double maxPriority = providers.get(0).getThird();
     next: for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
       if (trinity.getThird().doubleValue() != maxPriority) {
