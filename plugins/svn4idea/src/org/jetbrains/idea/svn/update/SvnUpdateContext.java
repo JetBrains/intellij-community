@@ -15,22 +15,27 @@
  */
 package org.jetbrains.idea.svn.update;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
+import com.intellij.util.FilePathByPathComparator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.FilePathUtil;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class SvnUpdateContext implements SequentialUpdatesContext {
   private final Set<File> myUpdatedExternals;
   private final SvnVcs myVcs;
+  private final List<FilePath> myContentRoots;
 
-  public SvnUpdateContext(final SvnVcs vcs) {
+  public SvnUpdateContext(final SvnVcs vcs, FilePath[] contentRoots) {
     myVcs = vcs;
+    myContentRoots = Arrays.asList(contentRoots);
+    Collections.sort(myContentRoots, FilePathByPathComparator.getInstance());
     myUpdatedExternals = new HashSet<File>();
   }
 
@@ -50,9 +55,11 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
 
   public boolean shouldRunFor(final File ioRoot) {
     if (myUpdatedExternals.contains(ioRoot)) return false;
-    final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(ioRoot);
-    if (info != null) {
-      return ! NestedCopyType.switched.equals(info.getType());
+    if (FilePathUtil.isNested(myContentRoots, ioRoot)) {
+      final RootUrlInfo info = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(ioRoot);
+      if (info != null) {
+        return ! NestedCopyType.switched.equals(info.getType());
+      }
     }
     return true;
   }
