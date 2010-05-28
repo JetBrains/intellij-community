@@ -207,7 +207,7 @@ public class CodeStyleIndentAndBracesPanel extends MultilanguageCodeStyleAbstrac
     myAlignCallParameters = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.call.arguments"));
     optionGroup.add(myAlignCallParameters);
 
-    myAlignMethodBrackets = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.method.brackets"));
+    myAlignMethodBrackets = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.method.parentheses"));
     optionGroup.add(myAlignMethodBrackets);
 
     myAlignExtendsList = createCheckBox(ApplicationBundle.message("checkbox.align.multiline.extends.list"));

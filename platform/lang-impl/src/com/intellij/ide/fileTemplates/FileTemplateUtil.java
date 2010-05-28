@@ -170,7 +170,7 @@ public class FileTemplateUtil{
       Velocity.evaluate(context, stringWriter, "", templateContent);
     }
     catch (VelocityException e) {
-      LOG.info("Error evaluating template:\n"+templateContent,e);
+      LOG.error("Error evaluating template:\n"+templateContent,e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template"),

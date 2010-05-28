@@ -83,6 +83,6 @@ public class FileListPasteProvider implements PasteProvider {
   public boolean isPasteEnabled(DataContext dataContext) {
     final Transferable contents = CopyPasteManager.getInstance().getContents();
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
-    return contents.isDataFlavorSupported(DataFlavor.javaFileListFlavor) && ideView != null;
+    return contents != null && contents.isDataFlavorSupported(DataFlavor.javaFileListFlavor) && ideView != null;
   }
 }
