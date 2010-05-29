@@ -205,11 +205,11 @@ class InitialInfoBuilder {
     return info;
   }
 
-  private static void setDefaultIndents(final List<AbstractBlockWrapper> list) {
+  private void setDefaultIndents(final List<AbstractBlockWrapper> list) {
     if (!list.isEmpty()) {
       for (AbstractBlockWrapper wrapper : list) {
         if (wrapper.getIndent() == null) {
-          wrapper.setIndent((IndentImpl)Indent.getContinuationWithoutFirstIndent());
+          wrapper.setIndent((IndentImpl)Indent.getContinuationWithoutFirstIndent(myOptions.USE_RELATIVE_INDENTS));
         }
       }
     }

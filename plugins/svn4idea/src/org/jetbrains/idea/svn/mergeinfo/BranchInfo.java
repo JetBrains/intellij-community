@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.File;
 import java.util.*;
 
-public class BranchInfo implements MergeChecker {
+public class BranchInfo {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.BranchInfo");
   // repo path in branch in format path@revision -> merged revisions
   private final Map<String, Set<Long>> myPathMergedMap;
@@ -375,5 +375,23 @@ public class BranchInfo implements MergeChecker {
   // if nothing, maybe all not merged or merged: here only partly not merged
   public Collection<String> getNotMergedPaths(final long number) {
     return myPartlyMerged.get(number);
+  }
+
+  public static class MyMergeCheckerWrapper implements MergeChecker {
+    private final BranchInfo myInfo;
+    private final String myBranchPath;
+
+    public MyMergeCheckerWrapper(String branchPath, BranchInfo info) {
+      myBranchPath = branchPath;
+      myInfo = info;
+    }
+
+    public SvnMergeInfoCache.MergeCheckResult checkList(SvnChangeList list) {
+      return myInfo.checkList(list, myBranchPath);
+    }
+
+    public Collection<String> getNotMergedPaths(long number) {
+      return myInfo.getNotMergedPaths(number);
+    }
   }
 }

@@ -72,13 +72,18 @@ public class FileUtil {
     return getRelativePath(basePath, filePath, separator, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  private static String ensureEnds(final String s, final char endsWith) {
+    return StringUtil.endsWithChar(s, endsWith) ? s : s + endsWith;
+  }
+
   public static String getRelativePath(String basePath, String filePath, final char separator, final boolean caseSensitive) {
-    if (!StringUtil.endsWithChar(basePath, separator)) basePath += separator;
+    basePath = ensureEnds(basePath, separator);
 
     int len = 0;
     int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
     String basePathToCompare = caseSensitive ? basePath : basePath.toLowerCase();
     String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
+    if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) return ".";
     while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
       if (basePath.charAt(len) == separator) {
         lastSeparatorIndex = len;

@@ -443,7 +443,7 @@
 
     <compiler.buildParticipantProvider implementation="com.intellij.compiler.impl.jarr.JarBuildParticipantProvider"/>
     <java.programPatcher implementation="com.intellij.execution.impl.JarProgramPatcher"/>
-
+    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Control Flow</category>

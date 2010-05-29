@@ -23,7 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 
 public abstract class JavaTestFrameworkDescriptor implements TestFrameworkDescriptor {
   public boolean isLibraryAttached(Module m) {
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(m);
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(m);
     PsiClass c = JavaPsiFacade.getInstance(m.getProject()).findClass(getMarkerClassFQName(), scope);
     return c != null;
   }

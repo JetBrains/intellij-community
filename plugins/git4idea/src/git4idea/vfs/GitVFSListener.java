@@ -218,7 +218,7 @@ public class GitVFSListener extends VcsVFSListener {
           try {
             final VirtualFile root = e.getKey();
             indicator.setText(root.getPresentableUrl());
-            GitFileUtils.delete(myProject, root, e.getValue());
+            GitFileUtils.delete(myProject, root, e.getValue(), "--ignore-unmatch");
             GitUtil.markFilesDirty(myProject, e.getValue());
           }
           catch (final VcsException ex) {

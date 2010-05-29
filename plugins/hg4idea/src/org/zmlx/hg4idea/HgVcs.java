@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -38,11 +38,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
-import org.zmlx.hg4idea.provider.HgCachingCommitedChangesProvider;
-import org.zmlx.hg4idea.provider.HgChangeProvider;
-import org.zmlx.hg4idea.provider.HgDiffProvider;
-import org.zmlx.hg4idea.provider.HgHistoryProvider;
-import org.zmlx.hg4idea.provider.HgRollbackEnvironment;
+import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
 import org.zmlx.hg4idea.provider.commit.HgCommitExecutor;
@@ -51,7 +47,7 @@ import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.ui.HgChangesetStatus;
 import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
-import javax.swing.Icon;
+import javax.swing.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -92,8 +88,6 @@ public class HgVcs extends AbstractVcs {
   private ScheduledFuture<?> changesUpdaterScheduledFuture;
   private final HgGlobalSettings globalSettings;
   private final HgProjectSettings projectSettings;
-
-  private boolean started = false;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
@@ -184,31 +178,24 @@ public class HgVcs extends AbstractVcs {
     return false;
   }
 
-  public boolean isStarted() {
-    return started;
-  }
-
   @Override
   protected void activate() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          started = true;
+        if (!validateHgExecutable()) {
+          return;
         }
-        else {
-          HgExecutableValidator validator = new HgExecutableValidator(myProject);
-          started = validator.check(globalSettings);
-        }
-        if (isStarted()) {
-          addListeners();
-        }
+        addListeners();
       }
     }, myProject.getDisposed());
   }
 
-  @Override
-  protected void shutdown() throws VcsException {
-    started = false;
+  public boolean validateHgExecutable() {
+    return (new HgExecutableValidator(myProject)).check(globalSettings);
+  }
+
+  public static HgVcs getInstance(Project project) {
+    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
   }
 
   public void addListeners() {
@@ -262,10 +249,6 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    if (!isStarted()) {
-      return;
-    }
-
     LocalFileSystem.getInstance().removeVirtualFileListener(virtualFileListener);
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (messageBusConnection != null) {

@@ -143,7 +143,9 @@ public class CreateTestDialog extends DialogWrapper {
           }
         }
       }
-      myDefaultLibraryButton = attachedLibraries.get(0).second;
+      if (myDefaultLibraryButton == null) {
+        myDefaultLibraryButton = attachedLibraries.get(0).second;
+      }
     }
     if (myDefaultLibraryButton == null) {
       myDefaultLibraryButton = myLibraryButtons.get(0);
@@ -415,7 +417,7 @@ public class CreateTestDialog extends DialogWrapper {
   protected void doOKAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myTargetPackageField.getText());
 
-    String errorMessage = null;
+    String errorMessage;
     try {
       myTargetDirectory = selectTargetDirectory();
       if (myTargetDirectory == null) return;
@@ -465,8 +467,9 @@ public class CreateTestDialog extends DialogWrapper {
   private PsiDirectory chooseDefaultDirectory(String packageName) {
     for (ContentEntry e : ModuleRootManager.getInstance(myTargetModule).getContentEntries()) {
       for (SourceFolder f : e.getSourceFolders()) {
-        if (f.getFile() != null && f.isTestSource()) {
-          return PsiManager.getInstance(myProject).findDirectory(f.getFile());
+        final VirtualFile file = f.getFile();
+        if (file != null && f.isTestSource()) {
+          return PsiManager.getInstance(myProject).findDirectory(file);
         }
       }
     }

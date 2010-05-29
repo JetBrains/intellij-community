@@ -484,6 +484,36 @@ public class GitUtil {
   }
 
   /**
+   * Covert list of files to relative paths
+   *
+   * @param filePaths a parameters to convert
+   * @return a list of relative paths
+   * @throws IllegalArgumentException if some path is not under root.
+   */
+  public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<FilePath> filePaths) {
+    ArrayList<String> rc = new ArrayList<String>(filePaths.size());
+    for (FilePath path : filePaths) {
+      rc.add(GitUtil.relativePath(root, path));
+    }
+    return rc;
+  }
+
+  /**
+   * Covert list of files to relative paths
+   *
+   * @param filePaths a parameters to convert
+   * @return a list of relative paths
+   * @throws IllegalArgumentException if some path is not under root.
+   */
+  public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<VirtualFile> files) {
+    ArrayList<String> rc = new ArrayList<String>(files.size());
+    for (VirtualFile file : files) {
+      rc.add(GitUtil.relativePath(root, file));
+    }
+    return rc;
+  }
+  
+  /**
    * Refresh files
    *
    * @param project       a project

@@ -20,14 +20,7 @@ import org.jetbrains.annotations.NonNls;
 
 class IndentImpl extends Indent {
   private final boolean myIsAbsolute;
-
-  public boolean isContinuation() {
-    return myType == Type.CONTINUATION_WITHOUT_FIRST;
-  }
-
-  public boolean isNone() {
-    return getType() == Type.NONE;
-  }
+  private final boolean myRelativeToDirectParent;
 
   static class Type{
     private final String myName;
@@ -52,14 +45,15 @@ class IndentImpl extends Indent {
   private final Type myType;
   private final int mySpaces;
 
-  public IndentImpl(final Type type, boolean absolute, final int spaces) {
+  public IndentImpl(final Type type, boolean absolute, final int spaces, boolean relativeToDirectParent) {
     myType = type;
     myIsAbsolute = absolute;
     mySpaces = spaces;
+    myRelativeToDirectParent = relativeToDirectParent;
   }
 
-  public IndentImpl(final Type type, boolean absolute) {
-    this(type, absolute, 0);
+  public IndentImpl(final Type type, boolean absolute, boolean relativeToDirectParent) {
+    this(type, absolute, 0, relativeToDirectParent);
   }
 
   Type getType() {
@@ -75,6 +69,18 @@ class IndentImpl extends Indent {
    */
   boolean isAbsolute(){
     return myIsAbsolute;
+  }
+
+  /**
+   * Allows to answer if current indent object is configured to anchor direct parent that lays on a different line.
+   * <p/>
+   * Feel free to check {@link Indent} class-level javadoc in order to get more information and examples about expected
+   * usage of this property.
+   *
+   * @return      flag that indicates if this indent should anchor direct parent that lays on a different line
+   */
+  public boolean isRelativeToDirectParent() {
+    return myRelativeToDirectParent;
   }
 
   @NonNls

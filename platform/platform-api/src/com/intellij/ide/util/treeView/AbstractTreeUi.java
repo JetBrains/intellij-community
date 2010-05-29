@@ -46,6 +46,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.*;
@@ -139,6 +141,10 @@ public class AbstractTreeUi {
   };
   private final Set<DefaultMutableTreeNode> myNotForSmartExpand = new HashSet<DefaultMutableTreeNode>();
   private TreePath myRequestedExpand;
+
+  private TreePath mySilentExpand;
+  private TreePath mySilentSelect;
+
   private final ActionCallback myInitialized = new ActionCallback();
   private BusyObject.Impl myBusyObject = new BusyObject.Impl() {
     @Override
@@ -222,6 +228,20 @@ public class AbstractTreeUi {
     Disposer.register(getBuilder(), uiNotify);
 
     myTree.addFocusListener(myFocusListener);
+
+    myTree.addComponentListener(new ComponentListener() {
+      public void componentResized(ComponentEvent e) {
+      }
+
+      public void componentMoved(ComponentEvent e) {
+      }
+
+      public void componentShown(ComponentEvent e) {
+      }
+
+      public void componentHidden(ComponentEvent e) {
+      }
+    });
   }
 
 
@@ -1245,6 +1265,30 @@ public class AbstractTreeUi {
 
   private boolean isDisposed(DefaultMutableTreeNode node) {
     return !node.isNodeAncestor((DefaultMutableTreeNode)myTree.getModel().getRoot());
+  }
+
+  private void expandSilently(TreePath path) {
+    assertIsDispatchThread();
+
+    try {
+      mySilentExpand = path;
+      getTree().expandPath(path);
+    }
+    finally {
+      mySilentExpand = null;
+    }
+  }
+
+  private void addSelectionSilently(TreePath path) {
+    assertIsDispatchThread();
+
+    try {
+      mySilentSelect = path;
+      getTree().getSelectionModel().addSelectionPath(path);
+    }
+    finally {
+      mySilentSelect = null;
+    }
   }
 
   private void expand(DefaultMutableTreeNode node, boolean canSmartExpand) {
@@ -3074,11 +3118,26 @@ public class AbstractTreeUi {
       if (!before.equals(all)) {
         processInnerChange(new Runnable() {
           public void run() {
+            Enumeration<TreePath> expanded = getTree().getExpandedDescendants(getPathFor(parentNode));
+            TreePath[] selected = getTree().getSelectionModel().getSelectionPaths();
+
             parentNode.removeAllChildren();
             for (TreeNode each : all) {
               parentNode.add((MutableTreeNode)each);
             }
             myTreeModel.nodeStructureChanged(parentNode);
+
+            while (expanded.hasMoreElements()) {
+              expandSilently(expanded.nextElement());
+            }
+
+            if (selected != null) {
+              for (TreePath each : selected) {
+                if (!getTree().getSelectionModel().isPathSelected(each)) {
+                  addSelectionSilently(each);
+                }
+              }
+            }
           }
         });
       }
@@ -4021,6 +4080,8 @@ public class AbstractTreeUi {
 
   private class MySelectionListener implements TreeSelectionListener {
     public void valueChanged(final TreeSelectionEvent e) {
+      if (mySilentSelect != null && mySilentSelect.equals(e.getNewLeadSelectionPath())) return;
+
       dropUpdaterStateIfExternalChange();
     }
   }
@@ -4028,9 +4089,11 @@ public class AbstractTreeUi {
 
   private class MyExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
-      dropUpdaterStateIfExternalChange();
-
       final TreePath path = event.getPath();
+
+      if (mySilentExpand != null && mySilentExpand.equals(path)) return;
+
+      dropUpdaterStateIfExternalChange();
 
       if (myRequestedExpand != null && !myRequestedExpand.equals(path)) {
         getReady(AbstractTreeUi.this).doWhenDone(new Runnable() {

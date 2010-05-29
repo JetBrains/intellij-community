@@ -45,12 +45,14 @@ public class ModuleChunkClasspath extends Path {
    * @param chunk                    a chunk to process
    * @param genOptions               a generation options
    * @param generateRuntimeClasspath if true, runtime classpath is being generated. Otherwise a compile time classpath is constructed
+   * @param generateTestClasspath    if true, a test classpath is generated.
    */
   @SuppressWarnings({"unchecked"})
-  public ModuleChunkClasspath(final ModuleChunk chunk, final GenerationOptions genOptions, final boolean generateRuntimeClasspath) {
-    super(generateRuntimeClasspath
-          ? BuildProperties.getRuntimeClasspathProperty(chunk.getName())
-          : BuildProperties.getClasspathProperty(chunk.getName()));
+  public ModuleChunkClasspath(final ModuleChunk chunk,
+                              final GenerationOptions genOptions,
+                              final boolean generateRuntimeClasspath,
+                              final boolean generateTestClasspath) {
+    super(generateClasspathName(chunk, generateRuntimeClasspath, generateTestClasspath));
 
     final OrderedSet<ClasspathItem> pathItems =
       new OrderedSet<ClasspathItem>((TObjectHashingStrategy<ClasspathItem>)TObjectHashingStrategy.CANONICAL);
@@ -87,6 +89,28 @@ public class ModuleChunkClasspath extends Path {
             if (!orderEntry.isValid()) {
               continue;
             }
+            if (orderEntry instanceof ExportableOrderEntry) {
+              ExportableOrderEntry e = (ExportableOrderEntry)orderEntry;
+              switch (e.getScope()) {
+                case COMPILE:
+                  break;
+                case PROVIDED:
+                  if (generateRuntimeClasspath && !generateTestClasspath) {
+                    continue;
+                  }
+                  break;
+                case RUNTIME:
+                  if (!generateRuntimeClasspath) {
+                    continue;
+                  }
+                  break;
+                case TEST:
+                  if (!generateTestClasspath) {
+                    continue;
+                  }
+                  break;
+              }
+            }
             if (!generateRuntimeClasspath) {
               // needed for compilation classpath only
               if ((orderEntry instanceof ModuleSourceOrderEntry)) {
@@ -122,7 +146,9 @@ public class ModuleChunkClasspath extends Path {
                   if (!processedChunks.contains(depChunk)) {
                     // chunk references are included in the runtime classpath only once
                     processedChunks.add(depChunk);
-                    pathItems.add(new PathRefItem(BuildProperties.getRuntimeClasspathProperty(depChunk.getName())));
+                    String property = generateTestClasspath ? BuildProperties.getTestRuntimeClasspathProperty(depChunk.getName())
+                                                            : BuildProperties.getRuntimeClasspathProperty(depChunk.getName());
+                    pathItems.add(new PathRefItem(property));
                   }
                 }
                 else {
@@ -145,9 +171,10 @@ public class ModuleChunkClasspath extends Path {
                 pathItems.add(new PathRefItem(BuildProperties.getLibraryPathId(libraryName)));
               }
             }
-            else {
+            else if (orderEntry instanceof ModuleSourceOrderEntry) {
               // Module source entry?
-              for (String url : getCompilationClasses(orderEntry, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath)) {
+              for (String url : getCompilationClasses(orderEntry, ((GenerationOptionsImpl)genOptions), generateRuntimeClasspath,
+                                                      generateTestClasspath, dependencyLevel == 0)) {
                 if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
                   url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
                 }
@@ -162,6 +189,11 @@ public class ModuleChunkClasspath extends Path {
                 }
               }
             }
+            else {
+              // Unknown order entry type. If it is actually encountered, extension point should be implemented
+              pathItems.add(new GeneratorItem(orderEntry.getClass().getName(),
+                                              new Comment("Unknown OrderEntryType: " + orderEntry.getClass().getName())));
+            }
           }
         }
       }.processModule(module, 0, false);
@@ -172,16 +204,45 @@ public class ModuleChunkClasspath extends Path {
     }
   }
 
+  /**
+   * Generate classpath name
+   *
+   * @param chunk                    a chunk
+   * @param generateRuntimeClasspath
+   * @param generateTestClasspath
+   * @return a name for the classpath
+   */
+  private static String generateClasspathName(ModuleChunk chunk, boolean generateRuntimeClasspath, boolean generateTestClasspath) {
+    if (generateTestClasspath) {
+      return generateRuntimeClasspath
+             ? BuildProperties.getTestRuntimeClasspathProperty(chunk.getName())
+             : BuildProperties.getTestClasspathProperty(chunk.getName());
+    }
+    else {
+      return generateRuntimeClasspath
+             ? BuildProperties.getRuntimeClasspathProperty(chunk.getName())
+             : BuildProperties.getClasspathProperty(chunk.getName());
+    }
+  }
+
   private static String[] getCompilationClasses(final OrderEntry orderEntry,
                                                 final GenerationOptionsImpl options,
-                                                final boolean forRuntime) {
+                                                final boolean forRuntime,
+                                                final boolean forTest,
+                                                final boolean firstLevel) {
     if (!forRuntime) {
-      return orderEntry.getUrls(OrderRootType.COMPILATION_CLASSES);
+      if (forTest) {
+        return orderEntry.getUrls(firstLevel ? OrderRootType.PRODUCTION_COMPILATION_CLASSES : OrderRootType.COMPILATION_CLASSES);
+      }
+      else {
+        return firstLevel ? new String[0] : orderEntry.getUrls(OrderRootType.PRODUCTION_COMPILATION_CLASSES);
+      }
     }
     final Set<String> jdkUrls = options.getAllJdkUrls();
 
     final OrderedSet<String> urls = new OrderedSet<String>();
-    urls.addAll(Arrays.asList(orderEntry.getUrls(OrderRootType.CLASSES_AND_OUTPUT)));
+    urls.addAll(Arrays.asList(orderEntry.getUrls(forTest ? OrderRootType.COMPILATION_CLASSES
+                                                         : OrderRootType.PRODUCTION_COMPILATION_CLASSES)));
     urls.removeAll(jdkUrls);
     return ArrayUtil.toStringArray(urls);
   }

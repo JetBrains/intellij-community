@@ -87,12 +87,12 @@ public class CodeBlockBlock extends AbstractJavaBlock {
           child = processCaseAndStatementAfter(result, child, childAlignment, childWrap, indent);
         }
         else if (myNode.getElementType() == ElementType.CLASS && child.getElementType() == ElementType.LBRACE) {
-          child = composeCodeBlock(result, child, getCodeBlockExternalIndent(), myChildrenIndent);
+          child = composeCodeBlock(result, child, getCodeBlockExternalIndent(), myChildrenIndent, null);
         }
         else if (myNode.getElementType() == ElementType.CODE_BLOCK && child.getElementType() == ElementType.LBRACE
                  && myNode.getTreeParent().getElementType() == JavaElementType.METHOD)
         {
-          child = composeCodeBlock(result, child, indent, myChildrenIndent);
+          child = composeCodeBlock(result, child, indent, myChildrenIndent, childWrap);
         }
         else {
           child = processChild(result, child, childAlignment, childWrap, indent);
@@ -217,7 +217,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
         return Indent.getNoneIndent();
       }
       else {
-        return Indent.getContinuationIndent();
+        return Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
       }
     }
     else {

@@ -21,6 +21,18 @@ import com.intellij.util.xmlb.annotations.Attribute;
 public class ServiceDescriptor {
   @Attribute("serviceInterface")
   public String serviceInterface;
+
   @Attribute("serviceImplementation")
   public String serviceImplementation;
+
+  @Attribute("overrides")
+  public boolean overrides = false;
+
+  public String getInterface() {
+    return serviceInterface != null ? serviceInterface : getImplementation();
+  }
+
+  public String getImplementation() {
+    return serviceImplementation;
+  }
 }
