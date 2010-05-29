@@ -139,10 +139,10 @@ class GrChangeSignatureConflictSearcher {
       final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();
       String newMethodName = myChangeInfo.getNewName();
       if (returnType != null) {
-        prototype = factory.createMethodFromText("", newMethodName, returnType.getTypeText(), ArrayUtil.EMPTY_STRING_ARRAY);
+        prototype = factory.createMethodFromText("", newMethodName, returnType.getTypeText(), ArrayUtil.EMPTY_STRING_ARRAY, method);
       }
       else {
-        prototype = factory.createConstructorFromText(newMethodName, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}");
+        prototype = factory.createConstructorFromText(newMethodName, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{}", method);
       }
       JavaParameterInfo[] parameters = myChangeInfo.getNewParameters();
 

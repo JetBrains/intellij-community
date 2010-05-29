@@ -6,6 +6,7 @@ def bar() {
   try{
 foo("")
 }catch(IOException e){
+e.printStackTrace()
 }
 }
 

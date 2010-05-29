@@ -72,6 +72,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   @SuppressWarnings({"UnusedDeclaration"}) private JPanel myParameterButtonPanel;
   private JBTable myExceptionsTable;
   @SuppressWarnings({"UnusedDeclaration"}) private JPanel myExceptionsButtonPanel;
+  private JPanel myDelegatePanel;
   private GrParameterTableModel myParameterModel;
   private GrMethod myMethod;
   private PsiTypeCodeFragment myReturnTypeCodeFragment;
@@ -96,6 +97,11 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
 
   protected void init() {
     super.init();
+    final PsiClass psiClass = myMethod.getContainingClass();
+    if (psiClass == null) return;
+    if (psiClass.isInterface()) {
+      myDelegatePanel.setVisible(false);
+    }
   }
 
   private void stopEditing() {

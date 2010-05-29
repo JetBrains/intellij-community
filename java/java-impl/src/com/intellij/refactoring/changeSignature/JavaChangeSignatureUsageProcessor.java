@@ -403,14 +403,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           newArgsLength = newParms.length;
         }
         final PsiExpression[] newArgs = new PsiExpression[newArgsLength];
-        final JavaParameterInfo[] newParameters = changeInfo.getNewParameters();
         for (int i = 0; i < newNonVarargCount; i++) {
           newArgs[i] = createActualArgument(changeInfo, list, newParms[i], toInsertDefaultValue, args);
         }
         if (changeInfo.isArrayToVarargs()) {
           if (newVarargInitializers == null) {
             newArgs[newNonVarargCount] =
-              createActualArgument(changeInfo, list, newParameters[newNonVarargCount], toInsertDefaultValue, args);
+              createActualArgument(changeInfo, list, newParms[newNonVarargCount], toInsertDefaultValue, args);
           }
           else {
             System.arraycopy(newVarargInitializers, 0, newArgs, newNonVarargCount, newVarargInitializers.length);

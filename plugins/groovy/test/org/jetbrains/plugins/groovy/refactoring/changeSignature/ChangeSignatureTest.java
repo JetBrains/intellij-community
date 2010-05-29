@@ -183,16 +183,26 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
           );
   }
 
-  public void testGenerateDelegateForConstructor() {
-    //todo
+  public void testGenerateDelegateForConstructor() throws Exception {
+    doTest("public", "Foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
+           new ThrownExceptionInfo[0], true);
   }
 
-  public void testGenerateDelegateForAbstract() {
-    //todo
+  public void testGenerateDelegateForAbstract() throws Exception {
+    doTest("public", "foo", null, new SimpleInfo[]{new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiType.INT)},
+           new ThrownExceptionInfo[0], true);
+  }
+
+  public void testTypeParameters() throws Exception {
+    doTest(new SimpleInfo[]{new SimpleInfo("list", -1, "null", null, createType("java.util.List<T>")), new SimpleInfo(0)});
   }
 
   public void testEnumConstructor() throws Exception {
     doTest(new SimpleInfo[]{new SimpleInfo("a", -1, "2", null, PsiType.INT)});
+  }
+
+  public void testMoveArrayToTheEnd() throws Exception {
+    doTest(new SimpleInfo[] {new SimpleInfo(1), new SimpleInfo(0)});
   }
 
   private PsiType createType(String typeText) {

@@ -144,15 +144,27 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createDotToken(String newDot);
 
-  public abstract GrMethod createMethodFromText(String methodText);
+  public abstract GrMethod createMethodFromText(String methodText, PsiElement context);
+
+  public GrMethod createMethodFromText(String methodText) {
+    return createMethodFromText(methodText, null);
+  }
 
   public abstract GrAnnotation createAnnotationFromText(String annoText);
 
   public abstract GroovyFile createGroovyFile(String text, boolean isPhisical, PsiElement context);
 
-  public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes);
+  public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, PsiElement context);
 
-  public abstract GrMethod createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body);
+  public abstract GrMethod createConstructorFromText(@NotNull String constructorName,
+                                                     String[] paramTypes,
+                                                     String[] paramNames,
+                                                     String body,
+                                                     PsiElement context);
+
+  public GrMethod createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
+    return createConstructorFromText(constructorName, paramTypes, paramNames, body, null);
+  }
 
   public abstract GrLabel createLabel(@NotNull String name);
 
@@ -163,4 +175,6 @@ public abstract class GroovyPsiElementFactory {
   public abstract PsiReferenceList createThrownList(PsiClassType[] exceptionTypes);
 
   public abstract GrCatchClause createCatchClause(PsiClassType type, String parameterName);
+
+  public abstract GrArgumentList createArgumentList();
 }

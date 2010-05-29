@@ -206,9 +206,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   protected boolean isProcessCovariantOverriders() {
     return Messages
-      .showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
-                       JavaChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon())
-           == DialogWrapper.OK_EXIT_CODE;
+             .showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),
+                              JavaChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon()) == DialogWrapper.OK_EXIT_CODE;
   }
 
   protected void performRefactoring(UsageInfo[] usages) {

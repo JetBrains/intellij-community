@@ -4,5 +4,6 @@ new Object().each {
   try{
 foo("")
 }catch(IOException e){
+e.printStackTrace()
 }
 }

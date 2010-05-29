@@ -34,7 +34,10 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -146,7 +149,10 @@ class GrChageSignatureUsageSearcher {
               }
             }
           };
-        GrUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, method.getBlock(), variableVisitor);
+        final GrOpenBlock block = method.getBlock();
+        if (block != null) {
+          GrUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, block, variableVisitor);
+        }
       }
     }
   }
@@ -204,10 +210,22 @@ class GrChageSignatureUsageSearcher {
         //todo check for applicability of arguments to method
         if (PsiUtil.isMethodUsage(element)) {
           GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
-          GrClosureSignatureUtil.ArgInfo[] map = GrClosureSignatureUtil
-            .mapParametersToArguments(signature, PsiUtil.getArgumentsList(element), method.getManager(), method.getResolveScope());
-          result.add(
-            new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs, isToCatchExceptions, map));
+          final GrArgumentList argList = PsiUtil.getArgumentsList(element);
+          //enum constant may not have argList
+          if (argList == null) {
+            if (element instanceof GrEnumConstant) {
+              result.add(
+                new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs,
+                                          isToCatchExceptions, new GrClosureSignatureUtil.ArgInfo[0]));
+            }
+          }
+          else {
+            GrClosureSignatureUtil.ArgInfo[] map =
+              GrClosureSignatureUtil.mapParametersToArguments(signature, argList, method.getManager(), method.getResolveScope());
+            result.add(
+              new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs,
+                                        isToCatchExceptions, map));
+          }
         }
         else if (element instanceof GrDocTagValueToken) {
           result.add(new UsageInfo(ref.getElement()));

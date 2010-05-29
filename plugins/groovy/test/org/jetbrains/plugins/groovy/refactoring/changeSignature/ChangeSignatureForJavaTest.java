@@ -11,8 +11,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.File;
-
 /**
  * @author Maxim.Medvedev
  */
@@ -125,7 +123,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
   }
   */
 
-  //todo?
+  /*//todo?
   public void testUseAnyVariable() throws Exception {
     doTest(null, null, null, new GenParams() {
       public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
@@ -135,20 +133,21 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
         };
       }
     }, false);
-  }
+  }*/
 
   /*
   public void testRemoveVarargParameter() throws Exception {
     doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
   }
-  */
+
 
   public void testEnumConstructor() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(-1, "i", PsiType.INT, "10")
     }, false);
   }
-
+  */
+  
   public void testVarargs1() throws Exception {
     doTest(null, new ParameterInfoImpl[] {
       new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "true"),
@@ -166,6 +165,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
            false);
   }
 
+  /*
   public void testAlreadyHandled() throws Exception {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new GenExceptions() {
@@ -176,8 +176,9 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
              }
            },
            false);
-  }
+  }*/
 
+  /*
   public void testAddRuntimeException() throws Exception {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
            new GenExceptions() {
@@ -189,6 +190,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
            },
            false);
   }
+  */
 
   public void testAddException() throws Exception {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
@@ -202,6 +204,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
            false);
   }
 
+  /*
   //todo
   public void testReorderWithVarargs() throws Exception {  // IDEADEV-26977
     final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
@@ -210,10 +213,7 @@ public class ChangeSignatureForJavaTest extends LightCodeInsightFixtureTestCase 
         new ParameterInfoImpl(0, "s", factory.createTypeFromText("java.lang.String...", myFixture.getFile()))
     }, false);
   }
-
-  public void testIntroduceParameterWithDefaultValueInHierarchy() throws Exception {
-    doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(-1, "i", PsiType.INT, "0")}, false);
-  }
+  */
 
   private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
