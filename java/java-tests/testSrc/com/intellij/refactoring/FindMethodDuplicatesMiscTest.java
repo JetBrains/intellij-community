@@ -49,4 +49,8 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testDetectNameConflictsWithStatic() throws Exception {
     doTest();
   }
+
+  public void testCorrectThis() throws Exception {
+    doTest();
+  }
 }

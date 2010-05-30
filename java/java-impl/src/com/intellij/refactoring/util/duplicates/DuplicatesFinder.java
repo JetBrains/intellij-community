@@ -406,6 +406,10 @@ public class DuplicatesFinder {
                 if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
                   contextClass = thisClass;
                 }
+                final PsiClass thisCandidate = RefactoringUtil.getThisClass(candidate);
+                if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
+                  contextClass = thisCandidate;
+                }
                 return contextClass != null && match.putParameter(parameter, RefactoringUtil.createThisExpression(patternQualifier.getManager(), contextClass));
               }
 
