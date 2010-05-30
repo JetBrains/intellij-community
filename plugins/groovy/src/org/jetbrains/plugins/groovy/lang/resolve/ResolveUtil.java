@@ -321,14 +321,9 @@ public class ResolveUtil {
                 final GrExpression[] args = argList.getExpressionArguments();
                 if (args.length == 1 && args[0] instanceof GrReferenceExpression) {
                   final PsiElement resolved = ((GrReferenceExpression)args[0]).resolve();
-                  if (resolved instanceof PsiClass) {
-                    try {
-                      processor.setCurrentFileResolveContext(call);
-                      if (!resolved.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
-                    }
-                    finally {
-                      processor.setCurrentFileResolveContext(null);
-                    }
+                  if (resolved instanceof PsiClass &&
+                      !resolved.processDeclarations(processor, ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, call), null, place)) {
+                    return false;
                   }
                 }
               }
