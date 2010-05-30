@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -123,7 +124,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       else if (usage instanceof MethodCallUsageInfo) {
         final MethodCallUsageInfo methodCallInfo = (MethodCallUsageInfo)usage;
         processMethodUsage(methodCallInfo.getElement(), (JavaChangeInfo)changeInfo, methodCallInfo.isToChangeArguments(),
-                           methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod(), usages);
+                           methodCallInfo.isToCatchExceptions(), methodCallInfo.getReferencedMethod(), methodCallInfo.getSubstitutor(), usages);
         return true;
       }
       else if (usage instanceof ChangeSignatureParameterUsageInfo) {
@@ -137,7 +138,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         return true;
       }
       else if (element instanceof PsiEnumConstant) {
-        fixActualArgumentsList(((PsiEnumConstant)element).getArgumentList(), (JavaChangeInfo)changeInfo, true);
+        fixActualArgumentsList(((PsiEnumConstant)element).getArgumentList(), (JavaChangeInfo)changeInfo, true, PsiSubstitutor.EMPTY);
         return true;
       }
       else if (!(usage instanceof OverriderUsageInfo)) {
@@ -179,7 +180,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       final PsiElement parent = aClass.getParent();
       if (parent instanceof PsiNewExpression) {
         final PsiExpressionList argumentList = ((PsiNewExpression)parent).getArgumentList();
-        fixActualArgumentsList(argumentList, changeInfo, true);
+        final PsiClass baseClass = changeInfo.getMethod().getContainingClass();
+        final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
+        fixActualArgumentsList(argumentList, changeInfo, true, substitutor);
       }
     }
   }
@@ -198,14 +201,17 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       superCall = (PsiExpressionStatement)body.add(superCall);
     }
     PsiMethodCallExpression callExpression = (PsiMethodCallExpression)superCall.getExpression();
-    processMethodUsage(callExpression.getMethodExpression(), changeInfo, true, false, callee, usages);
+    final PsiClass aClass = constructor.getContainingClass();
+    final PsiClass baseClass = changeInfo.getMethod().getContainingClass();
+    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
+    processMethodUsage(callExpression.getMethodExpression(), changeInfo, true, false, callee, substitutor, usages);
   }
 
   private static void processMethodUsage(PsiElement ref,
                                   JavaChangeInfo changeInfo,
                                   boolean toChangeArguments,
                                   boolean toCatchExceptions,
-                                  PsiMethod callee, final UsageInfo[] usages) throws IncorrectOperationException {
+                                  PsiMethod callee, PsiSubstitutor subsitutor, final UsageInfo[] usages) throws IncorrectOperationException {
     if (changeInfo.isNameChanged()) {
       if (ref instanceof PsiJavaCodeReferenceElement) {
         PsiElement last = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
@@ -226,7 +232,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
 
-      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue);
+      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue, subsitutor);
     }
 
     if (toCatchExceptions) {
@@ -352,7 +358,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
   //This methods works equally well for primary usages as well as for propagated callers' usages
   private static void fixActualArgumentsList(PsiExpressionList list,
                                              JavaChangeInfo changeInfo,
-                                             boolean toInsertDefaultValue) throws IncorrectOperationException {
+                                             boolean toInsertDefaultValue, PsiSubstitutor substitutor) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     if (changeInfo.isParameterSetOrOrderChanged()) {
       if (changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).isPropagationEnabled) {
@@ -402,8 +408,31 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           newNonVarargCount = newParms.length;
           newArgsLength = newParms.length;
         }
+
+        String[] oldVarargs = null;
+        if (changeInfo.wasVararg() && !changeInfo.isRetainsVarargs()) {
+          oldVarargs = new String[varargCount];
+          for (int i = nonVarargCount; i < args.length; i++) {
+            oldVarargs[i - nonVarargCount] = args[i].getText();
+          }
+        }
+
         final PsiExpression[] newArgs = new PsiExpression[newArgsLength];
         for (int i = 0; i < newNonVarargCount; i++) {
+          if (newParms[i].getOldIndex() == nonVarargCount && oldVarargs != null) {
+            PsiType type = newParms[i].createType(changeInfo.getMethod(), list.getManager());
+            if (type instanceof PsiArrayType) {
+              type = substitutor.substitute(type);
+              type = TypeConversionUtil.erasure(type);
+              String typeText = type.getCanonicalText();
+              if (type instanceof PsiEllipsisType) {
+                typeText = typeText.replace("...", "[]");
+              }
+              String text = "new " + typeText + "{" + StringUtil.join(oldVarargs, ",") + "}";
+              newArgs[i] = factory.createExpressionFromText(text, changeInfo.getMethod());
+              continue;
+            }
+          }
           newArgs[i] = createActualArgument(changeInfo, list, newParms[i], toInsertDefaultValue, args);
         }
         if (changeInfo.isArrayToVarargs()) {
@@ -839,7 +868,11 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
 
         for (JavaParameterInfo info : parameters) {
-          final PsiType parameterType = info.createType(method, manager);
+          PsiType parameterType = info.createType(method, manager);
+          if (parameterType == null) {
+            parameterType =
+              JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
+          }
           PsiParameter param = factory.createParameter(info.getName(), parameterType);
           prototype.getParameterList().add(param);
         }

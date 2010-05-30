@@ -39,8 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -207,24 +205,16 @@ class GrChageSignatureUsageSearcher {
         if (!GroovyFileType.GROOVY_LANGUAGE.equals(element.getLanguage())) continue;
 
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
-        //todo check for applicability of arguments to method
         if (PsiUtil.isMethodUsage(element)) {
-          GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
           final GrArgumentList argList = PsiUtil.getArgumentsList(element);
           //enum constant may not have argList
           if (argList == null) {
             if (element instanceof GrEnumConstant) {
-              result.add(
-                new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs,
-                                          isToCatchExceptions, new GrClosureSignatureUtil.ArgInfo[0]));
+              result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
             }
           }
           else {
-            GrClosureSignatureUtil.ArgInfo[] map =
-              GrClosureSignatureUtil.mapParametersToArguments(signature, argList, method.getManager(), method.getResolveScope());
-            result.add(
-              new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs,
-                                        isToCatchExceptions, map));
+            result.add(new GrMethodCallUsageInfo(element, isToModifyArgs,isToCatchExceptions));
           }
         }
         else if (element instanceof GrDocTagValueToken) {
@@ -239,11 +229,7 @@ class GrChageSignatureUsageSearcher {
           LOG.assertTrue(method.isConstructor());
           final PsiClass psiClass = (PsiClass)element;
           if (psiClass instanceof GrAnonymousClassDefinition) {
-            GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
-            GrClosureSignatureUtil.ArgInfo[] map = GrClosureSignatureUtil
-              .mapParametersToArguments(signature, PsiUtil.getArgumentsList(element), method.getManager(), method.getResolveScope());
-            result.add(
-              new GrMethodCallUsageInfo(element, GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY), isToModifyArgs, isToCatchExceptions, map));
+            result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
             continue;
           }
           /*if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue; todo propagate methods
@@ -295,6 +281,9 @@ class GrChageSignatureUsageSearcher {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);
+    }
+    if (info.getName() != parameter.getName()) {
+      
     }
   }
 

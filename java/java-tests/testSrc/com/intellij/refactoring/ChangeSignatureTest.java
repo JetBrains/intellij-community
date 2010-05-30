@@ -210,6 +210,18 @@ public class ChangeSignatureTest extends LightCodeInsightTestCase {
     doTest(null, new ParameterInfoImpl[] {new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
   }
 
+  public void testReplaceVarargWithArray() throws Exception {
+    doTest(null, null, null, new GenParams() {
+      public ParameterInfoImpl[] genParams(PsiMethod method) throws IncorrectOperationException {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+        return new ParameterInfoImpl[] {
+          new ParameterInfoImpl(1, "l", factory.createTypeFromText("List<T>[]", method.getParameterList()), "null", false),
+          new ParameterInfoImpl(0, "s", factory.createTypeFromText("String", method.getParameterList()))
+        };
+      }
+    }, false);
+  }
+
   private void doTest(String newReturnType, ParameterInfoImpl[] parameterInfos, final boolean generateDelegate) throws Exception {
     doTest(null, null, newReturnType, parameterInfos, new ThrownExceptionInfo[0], generateDelegate);
   }

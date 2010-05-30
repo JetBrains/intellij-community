@@ -16,15 +16,13 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -84,42 +82,42 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
       GrParameter[] params = method.getParameterList().getParameters();
       GrParameterInfo[] result = new GrParameterInfo[myInfos.length];
       for (int i = 0; i < myInfos.length; i++) {
+
         final SimpleInfo sim = myInfos[i];
         int oldIndex = sim.myOldIndex;
+
         final GrParameterInfo info;
+        String name = null;
+        String defInitializer = null;
+        PsiType type = null;
+        String defValue = null;
         if (oldIndex > -1) {
-          info = new GrParameterInfo(params[oldIndex], oldIndex);
+          final GrParameter p = params[oldIndex];
+          name = p.getName();
+          final GrExpression initializer = p.getDefaultInitializer();
+          defInitializer = initializer != null ? initializer.getText() : null;
+          type = p.getDeclaredType();
         }
-        else {
-          info = new GrParameterInfo(myProject, method);
-        }
+
         if (sim.myNewName != null) {
-          setText(info.getNameFragment(), sim.myNewName);
+          name = sim.myNewName;
         }
-        if (sim.myType != null) {
-          setText(info.getTypeFragment(), sim.myType.getCanonicalText());
+        if (sim.myType != null && sim.myType.length() > 0) {
+          type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(sim.myType, method);
         }
         if (sim.myDefaultInitializer != null) {
-          setText(info.getDefaultInitializerFragment(), sim.myDefaultInitializer);
+          defInitializer = sim.myDefaultInitializer;
         }
         if (sim.myDefaultValue != null) {
-          setText(info.getDefaultValueFragment(), sim.myDefaultValue);
+          defValue = sim.myDefaultValue;
         }
+
+        assert (oldIndex < 0 && defValue != null) || oldIndex >= 0;
+        assert name != null;
+        info = new GrParameterInfo(name, defValue, defInitializer, type, oldIndex);
         result[i] = info;
       }
       return result;
-    }
-
-    private void setText(final PsiCodeFragment codeFragment, final String newText) {
-      new WriteAction() {
-        @Override
-        protected void run(Result result) throws Throwable {
-          final PsiDocumentManager docManager = PsiDocumentManager.getInstance(myProject);
-          final Document document = docManager.getDocument(codeFragment);
-          document.setText(newText);
-          docManager.commitDocument(document);
-        }
-      }.execute();
     }
   }
 
@@ -151,22 +149,26 @@ public abstract class ChangeSignatureTestCase extends LightCodeInsightFixtureTes
     String myNewName;
     String myDefaultValue;
     String myDefaultInitializer;
-    private PsiType myType;
+    private String myType;
 
     SimpleInfo(int oldIndex) {
       this(null, oldIndex);
     }
 
     SimpleInfo(String newName, int oldIndex) {
-      this(newName, oldIndex, "", null, null);
+      this(newName, oldIndex, "", null, "");
     }
 
-    SimpleInfo(String newName, int oldIndex, String defaultValue, String defaultInitializer, PsiType type) {
+    SimpleInfo(String newName, int oldIndex, String defaultValue, String defaultInitializer, String type) {
       myOldIndex = oldIndex;
       myNewName = newName;
       myDefaultValue = defaultValue;
       myDefaultInitializer = defaultInitializer;
       myType = type;
+    }
+
+    SimpleInfo(String newName, int oldIndex, String defaultValue, String defaultInitializer, PsiType type) {
+      this(newName, oldIndex, defaultValue, defaultInitializer, type.getCanonicalText());
     }
   }
 }

@@ -17,10 +17,12 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -28,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -37,6 +40,7 @@ public class GrMethodCallUsageInfo extends UsageInfo {
   private final boolean myToCatchExceptions;
   private final PsiMethod myReferencedMethod;
   private GrClosureSignatureUtil.ArgInfo[] myMapToArguments;
+  private PsiSubstitutor mySubstitutor;
 
   public boolean isToCatchExceptions() {
     return myToCatchExceptions;
@@ -46,35 +50,39 @@ public class GrMethodCallUsageInfo extends UsageInfo {
     return myToChangeArguments;
   }
 
-  public GrMethodCallUsageInfo(PsiElement element,
-                               GrClosureSignature oldSignature,
-                               boolean isToChangeArguments,
-                               boolean isToCatchExceptions, GrClosureSignatureUtil.ArgInfo[] mapToArguments) {
+  public GrMethodCallUsageInfo(PsiElement element, boolean isToChangeArguments, boolean isToCatchExceptions) {
     super(element);
     myToChangeArguments = isToChangeArguments;
     myToCatchExceptions = isToCatchExceptions;
-    myMapToArguments = mapToArguments;
-    myReferencedMethod = resolveMethod(element);
+    final GroovyResolveResult resolveResult = resolveMethod(element);
+    myReferencedMethod = (PsiMethod)resolveResult.getElement();
+    mySubstitutor = resolveResult.getSubstitutor();
+    final GrArgumentList list = PsiUtil.getArgumentsList(element);
+    if (list == null) {
+      myMapToArguments = GrClosureSignatureUtil.ArgInfo.EMPTY_ARRAY;
+    }
+    else {
+      final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(myReferencedMethod, mySubstitutor);
+      myMapToArguments =
+        GrClosureSignatureUtil.mapParametersToArguments(signature, list, element.getManager(), myReferencedMethod.getResolveScope());
+    }
   }
 
   @Nullable
-  private static PsiMethod resolveMethod(final PsiElement ref) {
-    if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).resolveConstructor();
+  private static GroovyResolveResult resolveMethod(final PsiElement ref) {
+    if (ref instanceof GrEnumConstant) return ((GrEnumConstant)ref).resolveConstructorGenerics();
     PsiElement parent = ref.getParent();
     if (parent instanceof GrCallExpression) {
-      return ((GrCallExpression)parent).resolveMethod();
+      return ((GrCallExpression)parent).getMethodVariants()[0];
     }
     else if (parent instanceof GrApplicationStatement) {
       final GrExpression expression = ((GrApplicationStatement)parent).getFunExpression();
       if (expression instanceof GrReferenceExpression) {
-        final PsiElement element = ((GrReferenceExpression)expression).resolve();
-        if (element instanceof PsiMethod) {
-          return (PsiMethod)element;
-        }
+        return ((GrReferenceExpression)expression).advancedResolve();
       }
     }
     else if (parent instanceof GrConstructorInvocation) {
-      return ((PsiNewExpression)parent.getParent()).resolveConstructor();
+      return ((GrConstructorInvocation)parent).resolveConstructorGenerics();
     }
 
     return null;
@@ -86,5 +94,9 @@ public class GrMethodCallUsageInfo extends UsageInfo {
 
   public GrClosureSignatureUtil.ArgInfo[] getMapToArguments() {
     return myMapToArguments;
+  }
+
+  public PsiSubstitutor getSubstitutor() {
+    return mySubstitutor;
   }
 }

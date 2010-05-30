@@ -15,7 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
@@ -35,7 +38,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
 
   public void testOneNewParameter() throws Exception {
     doTest(new SimpleInfo[]{
-      new SimpleInfo("p", -1, "\"5\"", null, createType(CommonClassNames.JAVA_LANG_STRING))});
+      new SimpleInfo("p", -1, "\"5\"", null, CommonClassNames.JAVA_LANG_STRING)});
   }
 
   public void testRemoveParameter() throws Exception {
@@ -194,7 +197,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
   }
 
   public void testTypeParameters() throws Exception {
-    doTest(new SimpleInfo[]{new SimpleInfo("list", -1, "null", null, createType("java.util.List<T>")), new SimpleInfo(0)});
+    doTest(new SimpleInfo[]{new SimpleInfo("list", -1, "null", null, "java.util.List<T>"), new SimpleInfo(0)});
   }
 
   public void testEnumConstructor() throws Exception {
@@ -203,6 +206,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
 
   public void testMoveArrayToTheEnd() throws Exception {
     doTest(new SimpleInfo[] {new SimpleInfo(1), new SimpleInfo(0)});
+  }
+
+  public void testReplaceVarargWithArray() throws Exception {
+    doTest(new SimpleInfo[]{new SimpleInfo("l", 1, null, null, "List<T>[]"), new SimpleInfo(0)});
   }
 
   private PsiType createType(String typeText) {

@@ -52,7 +52,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -291,7 +292,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       if (usageInfo instanceof GrMethodCallUsageInfo) {
         processMethodUsage(element, ((JavaChangeInfo)changeInfo), ((GrMethodCallUsageInfo)usageInfo).isToChangeArguments(),
                            ((GrMethodCallUsageInfo)usageInfo).isToCatchExceptions(),
-                           ((GrMethodCallUsageInfo)usageInfo).getMapToArguments());
+                           ((GrMethodCallUsageInfo)usageInfo).getMapToArguments(), ((GrMethodCallUsageInfo)usageInfo).getSubstitutor());
         return true;
       }
       else if (usageInfo instanceof DefaultConstructorImplicitUsageInfo) {
@@ -334,18 +335,21 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
 
     constructor = (GrConstructor)psiClass.add(constructor);
-
     processConstructor(constructor, changeInfo);
   }
 
   private static void processConstructor(GrMethod constructor, JavaChangeInfo changeInfo) {
+    final PsiClass containingClass = constructor.getContainingClass();
+    final PsiClass baseClass = changeInfo.getMethod().getContainingClass();
+    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, containingClass, PsiSubstitutor.EMPTY);
+
     GrOpenBlock block = constructor.getBlock();
     GrConstructorInvocation invocation =
       GroovyPsiElementFactory.getInstance(constructor.getProject()).createConstructorInvocation("super()");
     invocation = (GrConstructorInvocation)block.addStatementBefore(invocation, getFirstStatement(block));
     processMethodUsage(invocation.getThisOrSuperKeyword(), changeInfo,
                        changeInfo.isParameterSetOrOrderChanged() || changeInfo.isParameterNamesChanged(),
-                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.EMPTY_ARRAY);
+                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.EMPTY_ARRAY, substitutor);
   }
 
   @Nullable
@@ -359,7 +363,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                                          JavaChangeInfo changeInfo,
                                          boolean toChangeArguments,
                                          boolean toCatchExceptions,
-                                         GrClosureSignatureUtil.ArgInfo[] map) {
+                                         GrClosureSignatureUtil.ArgInfo[] map, PsiSubstitutor substitutor) {
     if (map == null) return;
     if (changeInfo.isNameChanged()) {
       if (element instanceof GrReferenceElement) {
@@ -414,10 +418,17 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                 argument.delete();
               }
               argText.replace(argText.length() - 2, argText.length(), "]");
-              if (!(arguments.size() > 0 && arguments.iterator().next() instanceof GrNamedArgument)) {
-                argText.append(" as ").append(parameter.getTypeText());
+              PsiType type = parameter.createType(changeInfo.getMethod().getParameterList(), argumentList.getManager());
+              if (type instanceof PsiArrayType) {
+                type = substitutor.substitute(type);
+                String typeText = type.getCanonicalText();
+                if (type instanceof PsiEllipsisType) {
+                  typeText = typeText.replace("...", "[]");
+                }
+                argText.append(" as ").append(typeText);
               }
               anchor = argumentList.addAfter(factory.createExpressionFromText(argText.toString()), anchor);
+              PsiUtil.shortenReferences((GroovyPsiElement)anchor);
             }
           }
           else {  //arguments for simple parameters

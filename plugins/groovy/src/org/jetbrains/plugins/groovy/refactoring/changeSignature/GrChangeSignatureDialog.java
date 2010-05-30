@@ -217,10 +217,10 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     builder.append(type).append(' ');
     builder.append(name).append('(');
 
-    final List<GrParameterInfo> infos = myParameterModel.getParameterInfos();
+    final List<GrTableParameterInfo> infos = myParameterModel.getParameterInfos();
     if (infos.size() > 0) {
-      final List<String> paramsText = ContainerUtil.map(infos, new Function<GrParameterInfo, String>() {
-        public String fun(GrParameterInfo grParameterInfo) {
+      final List<String> paramsText = ContainerUtil.map(infos, new Function<GrTableParameterInfo, String>() {
+        public String fun(GrTableParameterInfo grParameterInfo) {
           return generateParameterText(grParameterInfo);
         }
       });
@@ -245,7 +245,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
   }
 
 
-  private static String generateParameterText(GrParameterInfo info) {
+  private static String generateParameterText(GrTableParameterInfo info) {
     StringBuilder builder = new StringBuilder();
     final PsiTypeCodeFragment typeFragment = info.getTypeFragment();
     String typeText = typeFragment != null ? typeFragment.getText().trim() : GrModifier.DEF;
@@ -290,14 +290,19 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     }
 
     String newName = getNewName();
-    final List<GrParameterInfo> parameterInfos = myParameterModel.getParameterInfos();
-
+    final List<GrTableParameterInfo> tableParameterInfos = myParameterModel.getParameterInfos();
+    final List<GrParameterInfo> parameterInfos = ContainerUtil.map(tableParameterInfos, new Function<GrTableParameterInfo, GrParameterInfo>() {
+      public GrParameterInfo fun(GrTableParameterInfo info) {
+        return info.generateParameterInfo();
+      }
+    });
     final ThrownExceptionInfo[] exceptionInfos = myExceptionTableModel.getThrownExceptions();
-    invokeRefactoring(new GrChangeSignatureProcessor(
-      myProject,
-      new GrChangeInfoImpl(myMethod, modifier, returnType == null ? null : CanonicalTypes.createTypeWrapper(returnType), newName,
-                           parameterInfos, exceptionInfos, myDelegateRadioButton.isSelected())));
-
+    invokeRefactoring(new GrChangeSignatureProcessor(myProject, new GrChangeInfoImpl(myMethod, modifier, returnType == null
+                                                                                                         ? null
+                                                                                                         : CanonicalTypes
+                                                                                                           .createTypeWrapper(returnType),
+                                                                                     newName, parameterInfos, exceptionInfos,
+                                                                                     myDelegateRadioButton.isSelected())));
   }
 
   private String getNewName() {
@@ -319,7 +324,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
       return false;
     }
 
-    for (GrParameterInfo info : myParameterModel.getParameterInfos()) {
+    for (GrTableParameterInfo info : myParameterModel.getParameterInfos()) {
       if (!StringUtil.isJavaIdentifier(info.getName())) {
         showErrorHint(message("name.is.wrong", info.getName()));
       }

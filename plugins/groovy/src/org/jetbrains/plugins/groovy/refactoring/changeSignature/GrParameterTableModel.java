@@ -32,7 +32,7 @@ import java.util.List;
  * @author Maxim.Medvedev
  */
 public class GrParameterTableModel extends AbstractTableModel implements RowEditableTableModel {
-  private final List<GrParameterInfo> infos;
+  private final List<GrTableParameterInfo> infos;
   private final GrMethod myMethod;
   private final GrChangeSignatureDialog myDialog;
   private final Project myProject;
@@ -41,17 +41,17 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
     myMethod = method;
     myDialog = dialog;
     final GrParameter[] parameters = myMethod.getParameters();
-    infos = new ArrayList<GrParameterInfo>(parameters.length);
+    infos = new ArrayList<GrTableParameterInfo>(parameters.length);
     for (int i = 0; i < parameters.length; i++) {
       GrParameter parameter = parameters[i];
-      infos.add(new GrParameterInfo(parameter, i));
+      infos.add(new GrTableParameterInfo(parameter, i));
     }
     myProject = project;
   }
 
   public void addRow() {
     final int row = infos.size();
-    infos.add(new GrParameterInfo(myProject, myMethod));
+    infos.add(new GrTableParameterInfo(myProject, myMethod));
     fireTableRowsInserted(row, row);
   }
 
@@ -61,7 +61,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   }
 
   public void exchangeRows(int index1, int index2) {
-    final GrParameterInfo info = infos.get(index1);
+    final GrTableParameterInfo info = infos.get(index1);
     infos.set(index1, infos.get(index2));
     infos.set(index2, info);
     fireTableRowsUpdated(Math.min(index1, index2), Math.max(index1, index2));
@@ -79,7 +79,7 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   @Nullable
   public Object getValueAt(int rowIndex, int columnIndex) {
     if (rowIndex < 0 || rowIndex >= infos.size()) return null;
-    final GrParameterInfo info = infos.get(rowIndex);
+    final GrTableParameterInfo info = infos.get(rowIndex);
     switch (columnIndex) {
       case 0:
         return info.getTypeFragment();
@@ -135,11 +135,11 @@ public class GrParameterTableModel extends AbstractTableModel implements RowEdit
   @Override
   public boolean isCellEditable(int rowIndex, int columnIndex) {
     if (columnIndex < 3) return true;
-    GrParameterInfo info = infos.get(rowIndex);
+    GrTableParameterInfo info = infos.get(rowIndex);
     return info.getOldIndex() < 0;
   }
 
-  public List<GrParameterInfo> getParameterInfos() {
+  public List<GrTableParameterInfo> getParameterInfos() {
     return infos;
   }
 }

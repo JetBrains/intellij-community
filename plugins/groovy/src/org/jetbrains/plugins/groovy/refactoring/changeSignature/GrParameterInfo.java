@@ -17,12 +17,11 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
@@ -30,60 +29,52 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author Maxim.Medvedev
  */
 public class GrParameterInfo implements JavaParameterInfo {
-  private GroovyCodeFragment myName;
-  private GroovyCodeFragment myDefaultValue;
-  private PsiTypeCodeFragment myType;
-  private GroovyCodeFragment myDefaultInitializer;
+  private String myName;
+  private final String myDefaultValue;
+  private final String myDefaultInitializer;
   private final int myPosition;
   private CanonicalTypes.Type myTypeWrapper;
 
   public GrParameterInfo(GrParameter parameter, int position) {
     myPosition = position;
     final Project project = parameter.getProject();
-    myName = new GroovyCodeFragment(project, parameter.getName());
+    myName = parameter.getName();
     final PsiType type = parameter.getDeclaredType();
     if (type != null) {
-      myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type.getCanonicalText(), parameter, true, true);
+      myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
     }
     else {
-      myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", parameter, true, true);
+      myTypeWrapper = null;
     }
     final GrExpression defaultInitializer = parameter.getDefaultInitializer();
     if (defaultInitializer != null) {
-      myDefaultInitializer = new GroovyCodeFragment(project, defaultInitializer.getText());
+      myDefaultInitializer = defaultInitializer.getText();
     }
     else {
-      myDefaultInitializer = new GroovyCodeFragment(project, "");
+      myDefaultInitializer = "";
     }
-    myDefaultValue = new GroovyCodeFragment(project, "");
+    myDefaultValue = "";
   }
 
-  public GrParameterInfo(Project project, PsiElement context) {
-    this.myPosition = -1;
-    myName = new GroovyCodeFragment(project, "");
-    myDefaultValue = new GroovyCodeFragment(project, "");
-    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", context, true, true);
-    myDefaultInitializer = new GroovyCodeFragment(project, "");
-  }
-
-  public GroovyCodeFragment getNameFragment() {
-    return myName;
-  }
-
-  public GroovyCodeFragment getDefaultValueFragment() {
-    return myDefaultValue;
-  }
-
-  public PsiTypeCodeFragment getTypeFragment() {
-    return myType;
-  }
-
-  public GroovyCodeFragment getDefaultInitializerFragment() {
-    return myDefaultInitializer;
+  public GrParameterInfo(@NotNull String name,
+                         @Nullable String defaultValue,
+                         @Nullable String defaultInitializer,
+                         @Nullable PsiType type,
+                         int position) {
+    myName = name;
+    myDefaultValue = defaultValue;
+    myDefaultInitializer = defaultInitializer;
+    myPosition = position;
+    if (type != null) {
+      myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
+    }
+    else {
+      myTypeWrapper = null;
+    }
   }
 
   public String getName() {
-    return myName.getText().trim();
+    return myName;
   }
 
   public int getOldIndex() {
@@ -91,46 +82,30 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public String getDefaultValue() {
-    return myDefaultValue.getText().trim();
+    return myDefaultValue;
   }
 
   @Nullable
   public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
-    try {
-      return myType.getType();
-    }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
-      return JavaPsiFacade.getElementFactory(manager.getProject())
-        .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(manager.getProject()));
-    }
+    if (myTypeWrapper == null) return null;
+    return myTypeWrapper.getType(context, manager);
   }
 
-
   public String getTypeText() {
-    CanonicalTypes.Type type = getTypeWrapper();
-    if (type != null) {
-      return type.getTypeText();
+    if (myTypeWrapper != null) {
+      return myTypeWrapper.getTypeText();
     }
     return "";
   }
 
   @Nullable
   public CanonicalTypes.Type getTypeWrapper() {
-    if (myTypeWrapper == null) {
-      PsiType type = createType(myType.getContext(), myType.getManager());
-      if (type != null) {
-        myTypeWrapper = CanonicalTypes.createTypeWrapper(type);
-      }
-    }
     return myTypeWrapper;
   }
 
   public PsiExpression getValue(PsiCallExpression callExpression) {
     return JavaPsiFacade.getInstance(callExpression.getProject()).getElementFactory()
-      .createExpressionFromText(myDefaultValue.getText(), callExpression);
+      .createExpressionFromText(myDefaultValue, callExpression);
   }
 
   public boolean isVarargType() {
@@ -146,10 +121,17 @@ public class GrParameterInfo implements JavaParameterInfo {
   }
 
   public String getDefaultInitializer() {
-    return myDefaultInitializer.getText().trim();
+    return myDefaultInitializer;
   }
 
   public boolean hasNoType() {
-    return myType.getText().trim().length() == 0;
+    return getTypeText().length() == 0;
+  }
+
+  /**
+   * for testing only
+   */
+  public void setName(String newName) {
+    myName = newName;
   }
 }
