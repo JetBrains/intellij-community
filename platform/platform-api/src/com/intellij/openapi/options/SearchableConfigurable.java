@@ -17,6 +17,7 @@
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import javax.swing.*;
  * Date: 08-Feb-2006
  */
 public interface SearchableConfigurable extends Configurable {
+  @NotNull
   @NonNls String getId();
 
   @Nullable Runnable enableSearch(String option);
