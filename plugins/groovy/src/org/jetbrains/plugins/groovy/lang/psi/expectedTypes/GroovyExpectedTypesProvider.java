@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -44,28 +46,38 @@ import java.util.*;
  * @author ven
  */
 public class GroovyExpectedTypesProvider {
+  private static final Key<CachedValue<TypeConstraint[]>> CACHED_EXPECTED_TYPES = Key.create("CACHED_EXPECTED_TYPES");
+
   private GroovyExpectedTypesProvider() {
   }
 
-  public static TypeConstraint[] calculateTypeConstraints(GrExpression expression) {
-    MyCalculator calculator = new MyCalculator(expression);
-    ((GroovyPsiElement)expression.getParent()).accept(calculator);
-    final TypeConstraint[] result = calculator.getResult();
+  public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
+    CachedValue<TypeConstraint[]> cached = expression.getUserData(CACHED_EXPECTED_TYPES);
+    if (cached == null) {
+      expression.putUserData(CACHED_EXPECTED_TYPES, cached = CachedValuesManager.getManager(expression.getProject()).createCachedValue(new CachedValueProvider<TypeConstraint[]>() {
+        public Result<TypeConstraint[]> compute() {
+          MyCalculator calculator = new MyCalculator(expression);
+          ((GroovyPsiElement)expression.getParent()).accept(calculator);
+          final TypeConstraint[] result = calculator.getResult();
 
-    List<TypeConstraint> custom = new ArrayList<TypeConstraint>();
-    for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
-      custom.addAll(contributor.calculateTypeConstraints(expression));
+          List<TypeConstraint> custom = new ArrayList<TypeConstraint>();
+          for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
+            custom.addAll(contributor.calculateTypeConstraints(expression));
+          }
+
+          if (!custom.isEmpty()) {
+            custom.addAll(0, Arrays.asList(result));
+            return Result.create(custom.toArray(new TypeConstraint[custom.size()]), PsiModificationTracker.MODIFICATION_COUNT);
+          }
+
+          return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      }, false));
     }
-
-    if (!custom.isEmpty()) {
-      custom.addAll(0, Arrays.asList(result));
-      return custom.toArray(new TypeConstraint[custom.size()]);
-    }
-
-    return result;
+    return cached.getValue();
   }
 
-  public static Set<PsiType> getDefaultExpectedTypes(GrExpression element) {
+  public static Set<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
     final LinkedHashSet<PsiType> result = new LinkedHashSet<PsiType>();
     for (TypeConstraint constraint : calculateTypeConstraints(element)) {
       result.add(constraint.getDefaultType());
