@@ -71,7 +71,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
     throws ProcessCanceledException {
 
     if (context.isNull()) {
-      context.set(new SvnUpdateContext(myVcs));
+      context.set(new SvnUpdateContext(myVcs, contentRoots));
     }
 
     final ArrayList<VcsException> exceptions = new ArrayList<VcsException>();

@@ -445,7 +445,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   protected void doOKAction() {
     final String text = myEditor.getDocument().getText();
-    if (text.trim().length() == 0) return;
+    //if (text.trim().length() == 0) return;
 
     myLastParsedText = text;
     myLastParsedTextHashCode = text.hashCode();

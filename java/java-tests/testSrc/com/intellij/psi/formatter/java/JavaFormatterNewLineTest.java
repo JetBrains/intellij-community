@@ -192,4 +192,22 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                "}"
     );
   }
+
+  public void testSimpleAnnotatedMethodAndBraceOnNextLineStyle() throws Exception {
+    // Inspired by IDEA-53542
+    getSettings().METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().KEEP_LINE_BREAKS = true;
+    getSettings().KEEP_BLANK_LINES_IN_CODE = 2;
+
+    String methodWithAnnotation = "@Override\n" +
+                                  "void foo() {}";
+
+    String methodWithAnnotationAndVisibility = "@Override\n" +
+                                               "public void foo() {}";
+
+    // Don't expect that simple method to be spread on multiple lines.
+    doClassTest(methodWithAnnotation, methodWithAnnotation);
+    doClassTest(methodWithAnnotationAndVisibility, methodWithAnnotationAndVisibility);
+  }
 }

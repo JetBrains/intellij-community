@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util;
 
-package com.intellij.openapi.components;
+import com.intellij.openapi.vcs.FilePath;
 
-import com.intellij.util.xmlb.annotations.Attribute;
+import java.util.Comparator;
 
-public class ServiceDescriptor {
-  @Attribute("serviceInterface")
-  public String serviceInterface;
+public class FilePathByPathComparator implements Comparator<FilePath> {
+  private final static FilePathByPathComparator ourInstance = new FilePathByPathComparator();
 
-  @Attribute("serviceImplementation")
-  public String serviceImplementation;
-
-  @Attribute("overrides")
-  public boolean overrides = false;
-
-  public String getInterface() {
-    return serviceInterface != null ? serviceInterface : getImplementation();
+  public static FilePathByPathComparator getInstance() {
+    return ourInstance;
   }
 
-  public String getImplementation() {
-    return serviceImplementation;
+  public int compare(FilePath o1, FilePath o2) {
+    return o1.getPath().compareTo(o2.getPath());
   }
 }
