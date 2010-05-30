@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -77,7 +78,11 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
       return Arrays.asList(ModuleManager.getInstance(project).getModules());
     }
     else {
-      return ModuleUtil.collectModulesDependsOn(modules);
+      final Set<Module> result = new HashSet<Module>();
+      for (Module module : modules) {
+        ModuleUtil.collectModulesDependsOn(module, result);
+      }
+      return result;
     }
   }
 

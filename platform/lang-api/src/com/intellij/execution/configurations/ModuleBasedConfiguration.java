@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends RuntimeConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
@@ -106,7 +108,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public void restoreOriginalModule(final Module originalModule) {
     if (originalModule == null) return;
     final Module[] classModules = getModules();
-    final Collection<Module> modules = ModuleUtil.collectModulesDependsOn(Arrays.asList(classModules));
+    final Set<Module> modules = new HashSet<Module>();
+    for (Module classModule : classModules) {
+      ModuleUtil.collectModulesDependsOn(classModule, modules);
+    }
     if (modules.contains(originalModule)) setModule(originalModule);
   }
 }
