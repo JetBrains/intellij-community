@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -74,7 +75,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     } else if (!myFromToMap.containsKey(psiType)) {
       return false;
     }
-    return true;
+    return AllowedApiFilterExtension.isClassAllowed(AtomicReference.class.getName(), element);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
