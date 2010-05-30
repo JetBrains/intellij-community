@@ -80,7 +80,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
     if (o instanceof NamedPresentably) {
       name = ((NamedPresentably)o).getPresentableName();
     } else {
-      name = o.toString();
+      name = o.getText(null);
     }
     return myName.compareTo(name);
   }
