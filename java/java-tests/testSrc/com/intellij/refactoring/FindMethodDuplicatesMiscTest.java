@@ -53,4 +53,12 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testCorrectThis() throws Exception {
     doTest();
   }
+
+  public void testSuperInTheSameContext() throws Exception {
+    doTest(false);
+  }
+
+  public void testSuperInTheSameContextQualified() throws Exception {
+    doTest();
+  }
 }

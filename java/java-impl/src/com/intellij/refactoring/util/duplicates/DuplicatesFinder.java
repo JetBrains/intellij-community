@@ -435,6 +435,13 @@ public class DuplicatesFinder {
         final PsiElement candidateContextClass = candidateQualifier == null ? PsiTreeUtil.getParentOfType(candidate, PsiClass.class) : candidateQualifier.resolve();
         return contextClass == candidateContextClass;
       }
+    } else if (pattern instanceof PsiSuperExpression) {
+      final PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression)pattern).getQualifier();
+      final PsiElement contextClass = qualifier == null ? PsiTreeUtil.getParentOfType(pattern, PsiClass.class) : qualifier.resolve();
+      if (candidate instanceof PsiSuperExpression) {
+        final PsiJavaCodeReferenceElement candidateQualifier = ((PsiSuperExpression)candidate).getQualifier();
+        return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : PsiTreeUtil.getParentOfType(candidate, PsiClass.class));
+      }
     }
 
     PsiElement[] children1 = getFilteredChildren(pattern);
