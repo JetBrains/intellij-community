@@ -271,6 +271,13 @@ public class AbstractTreeUi {
     }
   }
 
+  private void setHoldSize(boolean holdSize) {
+    if (myTree instanceof com.intellij.ui.treeStructure.Tree) {
+      final com.intellij.ui.treeStructure.Tree tree = (Tree)myTree;
+      tree.setHoldSize(holdSize);
+    }
+  }
+
   private void cleanUpAll() {
     final long now = System.currentTimeMillis();
     final AbstractTreeUi[] uis = ourUi2Countdown.keySet().toArray(new AbstractTreeUi[ourUi2Countdown.size()]);
@@ -962,7 +969,10 @@ public class AbstractTreeUi {
   }
 
   final void updateSubtreeNow(TreeUpdatePass pass, boolean canSmartExpand) {
+
+
     maybeSetBusyAndScheduleWaiterForReady(true);
+    setHoldSize(true);
 
     boolean consumed = initRootNodeNowIfNeeded(pass);
     if (consumed) return;
@@ -1803,6 +1813,8 @@ public class AbstractTreeUi {
           return;
         }
       }
+
+      setHoldSize(false);
 
       if (myTree.isShowing()) {
         if (getBuilder().isToEnsureSelectionOnFocusGained() && Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
@@ -3526,6 +3538,7 @@ public class AbstractTreeUi {
     }
 
     if (Registry.is("ide.tree.autoscrollToVCenter") && canBeCentered) {
+      setHoldSize(false);
       runDone(new Runnable() {
         public void run() {
           TreeUtil.showRowCentered(myTree, row, false, scroll).doWhenDone(new Runnable() {
@@ -3537,6 +3550,7 @@ public class AbstractTreeUi {
       });
     }
     else {
+      setHoldSize(false);
       TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection, scroll).doWhenDone(new Runnable() {
         public void run() {
           runDone(onDone);

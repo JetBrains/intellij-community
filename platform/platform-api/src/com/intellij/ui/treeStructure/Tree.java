@@ -47,6 +47,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   private boolean myBusy;
   private Rectangle myLastVisibleRec;
 
+  private Dimension myHoldSize;
+
   public Tree() {
     initTree_();
   }
@@ -538,5 +540,25 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
   @Override
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
+  }
+
+  public void setHoldSize(boolean hold) {
+    if (hold && myHoldSize == null) {
+      myHoldSize = getPreferredSize();
+    } else if (!hold && myHoldSize != null) {
+      myHoldSize = null;
+      revalidate();
+    }
+  }
+
+  public Dimension getPreferredSize() {
+    Dimension size = super.getPreferredSize();
+
+    if (myHoldSize != null) {
+      size.width = Math.max(size.width, myHoldSize.width);
+      size.height = Math.max(size.height, myHoldSize.height);      
+    }
+
+    return size;
   }
 }
