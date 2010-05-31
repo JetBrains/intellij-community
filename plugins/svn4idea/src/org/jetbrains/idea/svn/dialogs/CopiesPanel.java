@@ -49,6 +49,7 @@ import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -59,8 +60,10 @@ import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
+import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -183,6 +186,27 @@ public class CopiesPanel {
       ++ gb1.gridy;
       final JTextField depth = createField("Depth: " + wcInfo.getStickyDepth().getName());
       copyPanel.add(depth, gb1);
+
+      if (! SVNDepth.INFINITY.equals(wcInfo.getStickyDepth())) {
+        gb1.gridx = 2;
+        final LinkLabel fixDepthLabel = new LinkLabel("Make infinity", null, new LinkListener() {
+          public void linkSelected(LinkLabel aSource, Object aLinkData) {
+            final int result =
+              Messages.showDialog(myVcs.getProject(), "You are going to checkout into '" + wcInfo.getPath() + "' with 'infinity' depth.\n" +
+                                                      "This will update your working copy to HEAD revision as well.",
+                                  "Set working copy infinity depth",
+                                  new String[]{"Ok", "Cancel"}, 0, Messages.getWarningIcon());
+            if (result == 0) {
+              // update of view will be triggered by roots changed event
+              SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
+                                             SVNDepth.INFINITY, false, null, wcInfo.getFormat());
+            }
+          }
+        });
+        copyPanel.add(fixDepthLabel, gb1);
+        setFocusableForLinks(fixDepthLabel);
+        gb1.gridx = 0;
+      }
 
       final NestedCopyType type = wcInfo.getType();
       if (NestedCopyType.external.equals(type) || NestedCopyType.switched.equals(type)) {
