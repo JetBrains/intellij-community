@@ -40,7 +40,7 @@ import java.awt.*;
 
 public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     if (PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(PsiNewExpression.class)).accepts(element)) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false);
       if (expression != null) {

@@ -38,7 +38,7 @@ public interface StatusBar extends StatusBarInfo {
     private Info() {}
 
     public static void set(@Nullable final String text, @Nullable final Project project) {
-      if (project != null && !project.isInitialized()) {
+      if (project != null && !project.isInitialized() && !project.isDisposed()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
            public void run() {
              project.getMessageBus().syncPublisher(TOPIC).setInfo(text);

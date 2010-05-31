@@ -61,8 +61,7 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
     return CodeInsightBundle.message("intention.implement.abstract.class.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
         psiClass.hasModifierProperty(PsiModifier.FINAL)) {

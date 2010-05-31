@@ -44,7 +44,7 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
     return QuickFixBundle.message("remove.redundant.else.fix");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (element instanceof PsiKeyword &&
         element.getParent() instanceof PsiIfStatement &&
         PsiKeyword.ELSE.equals(element.getText())) {

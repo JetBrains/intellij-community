@@ -39,7 +39,6 @@ import com.intellij.testIntegration.TestFrameworkDescriptor;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -54,8 +53,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME).length == 0) return false;
 
     if (!isAvailableForElement(element)) return false;

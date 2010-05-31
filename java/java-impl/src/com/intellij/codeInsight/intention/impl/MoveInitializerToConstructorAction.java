@@ -54,8 +54,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     return CodeInsightBundle.message("intention.move.initializer.to.constructor");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (element instanceof PsiCompiledElement) return false;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
     if (field == null || field.hasModifierProperty(PsiModifier.STATIC)) return false;

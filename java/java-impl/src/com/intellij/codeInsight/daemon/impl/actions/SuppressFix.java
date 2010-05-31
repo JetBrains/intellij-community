@@ -81,7 +81,7 @@ public class SuppressFix extends SuppressIntentionAction {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     PsiDocCommentOwner container = getContainer(context);
     boolean isValid = container != null && !(container instanceof JspHolderMethod);
     if (!isValid) {

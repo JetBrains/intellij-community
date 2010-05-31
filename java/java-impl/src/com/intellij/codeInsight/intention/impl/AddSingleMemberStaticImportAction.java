@@ -43,8 +43,8 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     return CodeInsightBundle.message("intention.add.single.member.static.import.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null || !PsiUtil.isLanguageLevel5OrHigher(element)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     PsiFile file = element.getContainingFile();
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)element.getParent()).getQualifierExpression() != null) {

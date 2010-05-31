@@ -55,7 +55,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     return getExpression(element) != null;
  }
 

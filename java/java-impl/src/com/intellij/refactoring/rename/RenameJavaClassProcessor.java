@@ -217,7 +217,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         }
       }
     }
-    else {
+    else if (!(aClass instanceof PsiTypeParameter)) {
       final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass.getQualifiedName(), newName);
       Project project = element.getProject();
       final PsiClass conflictingClass =

@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction {
 
@@ -42,12 +41,14 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    * @param element the element under caret.
    * @return true if the intention is available, false otherwise.
    */
-  public abstract boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element);
+  public abstract boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element);
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!file.getManager().isInProject(file)) return false;
     final CaretModel caretModel = editor.getCaretModel();
     final int position = caretModel.getOffset();
-    return isAvailable(project, editor, file.findElementAt(position));
+    final PsiElement element = file.findElementAt(position);
+    if (element == null) return false;
+    return isAvailable(project, editor, element);
   }
 }

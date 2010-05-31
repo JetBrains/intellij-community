@@ -104,8 +104,8 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
     return listOwner;
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-    if (element == null || !element.isValid()) return false;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+    if (!element.isValid()) return false;
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
@@ -139,7 +139,7 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
       final int position = caretModel.getOffset();
       element = file.findElementAt(position);
     }
-    return isAvailable(project, editor, element);
+    return element != null && isAvailable(project, editor, element);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

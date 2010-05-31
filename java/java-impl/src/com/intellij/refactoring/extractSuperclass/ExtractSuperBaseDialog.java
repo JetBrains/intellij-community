@@ -132,11 +132,13 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
 
   protected void updateDialogForExtractSubclass() {
     getClassNameLabel().setText(RefactoringBundle.message("extractSuper.rename.original.class.to"));
+    getPackageNameLabel().setText(getPackageNameLabelText());
     getPreviewAction().setEnabled(true);
   }
 
   protected void updateDialogForExtractSuperclass() {
     getClassNameLabel().setText(getClassNameLabelText());
+    getPackageNameLabel().setText(getPackageNameLabelText());
     getPreviewAction().setEnabled(false);
   }
 
@@ -157,6 +159,8 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
   protected abstract JLabel getClassNameLabel();
 
   protected abstract JLabel getPackageNameLabel();
+
+  protected abstract String getPackageNameLabelText();
 
   protected abstract String getEntityName();
 
