@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,7 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents a Java <code>this</code> expression.
- */
-public interface PsiThisExpression extends PsiQualifiedExpression {
-  /**
-   * Returns the expression representing the class name qualifying the <code>this</code>
-   * expression.
-   *
-   * @return the qualifier, or null if the expression has no qualifier.
-   */
+public interface PsiQualifiedExpression extends PsiExpression {
   @Nullable
   PsiJavaCodeReferenceElement getQualifier();
 }
