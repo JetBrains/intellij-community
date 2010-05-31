@@ -16,6 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
@@ -26,8 +27,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GotoLineNumberDialog extends DialogWrapper {
-  private JLabel myLabel;
   private JTextField myField;
+  private JTextField myOffsetField;
   private final Editor myEditor;
 
   public GotoLineNumberDialog(Project project, Editor editor){
@@ -40,6 +41,22 @@ public class GotoLineNumberDialog extends DialogWrapper {
   protected void doOKAction(){
     final LogicalPosition currentPosition = myEditor.getCaretModel().getLogicalPosition();
     int lineNumber = getLineNumber(currentPosition.line + 1);
+    if (isInternal() && myOffsetField.getText().length() > 0) {
+      try {
+        final int offset = Integer.parseInt(myOffsetField.getText());
+        if (offset < myEditor.getDocument().getTextLength()) {
+          myEditor.getCaretModel().moveToOffset(offset);
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+          myEditor.getSelectionModel().removeSelection();
+          super.doOKAction();
+        }
+        return;
+      }
+      catch (NumberFormatException e) {
+        return;
+      }
+    }
+
     if (lineNumber <= 0) return;
 
     int columnNumber = getColumnNumber(currentPosition.column);
@@ -76,6 +93,10 @@ public class GotoLineNumberDialog extends DialogWrapper {
     }
   }
 
+  private static boolean isInternal() {
+    return ApplicationManagerEx.getApplicationEx().isInternal();
+  }
+
   public JComponent getPreferredFocusedComponent() {
     return myField;
   }
@@ -108,14 +129,28 @@ public class GotoLineNumberDialog extends DialogWrapper {
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    myLabel = new JLabel(IdeBundle.message("editbox.line.number"));
-    panel.add(myLabel, gbConstraints);
+    JLabel label = new JLabel(IdeBundle.message("editbox.line.number"));
+    panel.add(label, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
     myField = new MyTextField();
     panel.add(myField, gbConstraints);
     myField.setToolTipText(IdeBundle.message("tooltip.syntax.linenumber.columnnumber"));
+
+    if (isInternal()) {
+      gbConstraints.gridy = 1;
+      gbConstraints.weightx = 0;
+      gbConstraints.weighty = 1;
+      gbConstraints.anchor = GridBagConstraints.EAST;
+      final JLabel offsetLabel = new JLabel("Offset:");
+      panel.add(offsetLabel, gbConstraints);
+
+      gbConstraints.fill = GridBagConstraints.BOTH;
+      gbConstraints.weightx = 1;
+      myOffsetField = new MyTextField();
+      panel.add(myOffsetField, gbConstraints);
+    }
 
     return panel;
   }
