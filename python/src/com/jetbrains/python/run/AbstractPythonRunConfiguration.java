@@ -52,15 +52,6 @@ public abstract class AbstractPythonRunConfiguration extends ModuleBasedConfigur
     return result;
   }
 
-  @Nullable
-  public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider configurationInfoProvider) {
-    return null;
-  }
-
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
-    return null;
-  }
-
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
