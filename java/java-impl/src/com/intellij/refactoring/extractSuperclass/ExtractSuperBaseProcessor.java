@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,11 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
       final String oldQualifiedName = myClass.getQualifiedName();
       myClass.setName(myNewClassName);
       PsiClass superClass = extractSuper(superClassName);
+      final PsiDirectory initialDirectory = myClass.getContainingFile().getContainingDirectory();
+      if (myTargetDirectory != initialDirectory) {
+        myTargetDirectory.add(myClass.getContainingFile().copy());
+        myClass.getContainingFile().delete();
+      }
       for (final UsageInfo usage : usages) {
         if (usage instanceof BindToOldUsageInfo) {
           final PsiReference reference = usage.getReference();

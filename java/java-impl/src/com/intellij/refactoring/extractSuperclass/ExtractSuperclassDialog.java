@@ -96,7 +96,7 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
 
     _panel = new JPanel(new BorderLayout());
     myPackageLabel = new JLabel();
-    myPackageLabel.setText(RefactoringBundle.message("package.for.new.superclass"));
+    myPackageLabel.setText(getPackageNameLabelText());
     _panel.add(myPackageLabel, BorderLayout.NORTH);
     _panel.add(myPackageNameField, BorderLayout.CENTER);
     //_panel.add(myBtnPackageChooser, BorderLayout.EAST);
@@ -118,6 +118,11 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
 
   protected JLabel getPackageNameLabel() {
     return myPackageLabel;
+  }
+
+  @Override
+  protected String getPackageNameLabelText() {
+    return isExtractSuperclass() ? RefactoringBundle.message("package.for.new.superclass") : "Package name for original class";
   }
 
   protected String getEntityName() {
