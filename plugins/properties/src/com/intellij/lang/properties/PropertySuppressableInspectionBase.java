@@ -106,7 +106,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
       final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
       return property != null && property.isValid();
     }
@@ -146,8 +146,8 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-      return element != null && element.isValid() && element.getContainingFile() instanceof PropertiesFile;
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+      return element.isValid() && element.getContainingFile() instanceof PropertiesFile;
     }
 
     public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {

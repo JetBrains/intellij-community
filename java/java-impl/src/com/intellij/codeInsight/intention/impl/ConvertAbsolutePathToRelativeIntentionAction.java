@@ -39,8 +39,7 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends PsiElementBase
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return false;
 

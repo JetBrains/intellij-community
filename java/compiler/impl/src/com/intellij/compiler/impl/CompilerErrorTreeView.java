@@ -48,7 +48,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -222,7 +221,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       return new SuppressFix(id) {
         @Override
         @SuppressWarnings({"SimplifiableIfStatement"})
-        public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+        public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
           if (getContainer(context) instanceof PsiClass) return false;
           return super.isAvailable(project, editor, context);
         }

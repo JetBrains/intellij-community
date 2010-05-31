@@ -94,8 +94,8 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
     container.getParent().addBefore(comment, container);
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
-    return context != null && context.getManager().isInProject(context) && getContainer(context) != null;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
+    return context.getManager().isInProject(context) && getContainer(context) != null;
   }
 
   public void invoke(final Project project, @Nullable Editor editor, final PsiElement element) throws IncorrectOperationException {

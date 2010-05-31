@@ -50,7 +50,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       return getText();
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
       return PsiTreeUtil.getParentOfType(element, XmlTag.class) != null;
     }
 
@@ -84,8 +84,8 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForFile(element, myInspectionId);
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-      return element != null && element.isValid() && element.getContainingFile() instanceof XmlFile;
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+      return  element.isValid() && element.getContainingFile() instanceof XmlFile;
     }
 
 

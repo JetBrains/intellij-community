@@ -85,7 +85,7 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     final GrDocCommentOwner container = getContainer(context);
     myKey = container instanceof PsiClass
             ? "suppress.inspection.class"

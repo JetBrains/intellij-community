@@ -71,8 +71,8 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null || !element.isValid()) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!element.isValid()) {
       return false;
     }
     // find java code up there, going through injecttions if necessary

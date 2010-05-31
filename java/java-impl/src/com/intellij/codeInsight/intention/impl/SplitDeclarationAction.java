@@ -37,8 +37,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     return CodeInsightBundle.message("intention.split.declaration.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
 
     int offset = editor.getCaretModel().getOffset();
     if (!(element instanceof PsiJavaToken)) return false;

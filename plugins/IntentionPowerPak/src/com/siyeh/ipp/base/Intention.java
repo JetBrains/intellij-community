@@ -192,7 +192,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   }
 
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
       while (element != null) {
         if (predicate.satisfiedBy(element)) {
           return true;

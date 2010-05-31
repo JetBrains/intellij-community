@@ -36,7 +36,7 @@ public class AddDeprecationAnnotationFix extends AddAnnotationFix {
 
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     if (!super.isAvailable(project, editor, element)) {
       return false;
     }
