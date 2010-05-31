@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.concurrency.*;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.*;
@@ -212,8 +213,12 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   protected void start() throws VcsException {
-    HgExecutableValidator validator = new HgExecutableValidator(myProject);
-    started = validator.check(globalSettings);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      started = true;
+    } else {
+      HgExecutableValidator validator = new HgExecutableValidator(myProject);
+      started = validator.check(globalSettings);
+    }
   }
 
   @Override
