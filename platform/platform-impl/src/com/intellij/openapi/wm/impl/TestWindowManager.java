@@ -72,6 +72,12 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   private static final class DummyStatusBar implements StatusBarEx {
     public final void setInfo(final String s) {}
 
+    public void addCustomIndicationComponent(@NotNull JComponent c) {
+    }
+
+    public void removeCustomIndicationComponent(@NotNull JComponent c) {
+    }
+
     public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
     }
 
