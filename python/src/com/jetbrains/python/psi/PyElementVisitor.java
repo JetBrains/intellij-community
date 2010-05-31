@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.psi.impl.PyConditionalStatementPartImpl;
 
 /**
  * Visitor for python-specific nodes.
@@ -219,6 +220,10 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPyStarImportElement(PyStarImportElement node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyConditionalStatementPart(PyConditionalStatementPart node) {
     visitPyElement(node);
   }
 }

@@ -7,16 +7,13 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.SimplifyBooleanCheckQuickFix;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   17.03.2010
- * Time:   18:03:35
+ * @author Alexey.Ivanov
  */
 public class PySimplifyBooleanCheckInspection extends LocalInspectionTool {
   @Nls
@@ -57,13 +54,30 @@ public class PySimplifyBooleanCheckInspection extends LocalInspectionTool {
     }
 
     @Override
+    public void visitPyConditionalStatementPart(PyConditionalStatementPart node) {
+      super.visitPyConditionalStatementPart(node);
+      final PyExpression condition = node.getCondition();
+      if (condition != null) {
+        condition.accept(new PyBinaryExpressionVisitor(getHolder()));
+      }
+    }
+  }
+
+  private static class PyBinaryExpressionVisitor extends PyInspectionVisitor {
+    public PyBinaryExpressionVisitor(@Nullable final ProblemsHolder holder) {
+      super(holder);
+    }
+
+    @Override
     public void visitPyBinaryExpression(PyBinaryExpression node) {
+      super.visitPyBinaryExpression(node);
       final PyElementType operator = node.getOperator();
-      if (node.getRightExpression() == null) {
+      final PyExpression rightExpression = node.getRightExpression();
+      if (rightExpression == null) {
         return;
       }
       final String leftExpressionText = node.getLeftExpression().getText();
-      final String rightExpressionText = node.getRightExpression().getText();
+      final String rightExpressionText = rightExpression.getText();
       if ("True".equals(leftExpressionText) ||
           "False".equals(leftExpressionText) ||
           "True".equals(rightExpressionText) ||
