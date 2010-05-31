@@ -63,37 +63,30 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     List<HgFileRevision> revisions = getHistory(filePath, vcsRoot, project, DEFAULT_LIMIT);
     final List<VcsFileRevision> result = new LinkedList<VcsFileRevision>(revisions);
     return new VcsHistorySession() {
-      @Override
       public VcsRevisionNumber getCurrentRevisionNumber() {
         return new HgWorkingCopyRevisionsCommand(project).firstParent(vcsRoot);
       }
 
-      @Override
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
         return null;
       }
 
-      @Override
       public List<VcsFileRevision> getRevisionList() {
         return result;
       }
 
-      @Override
       public boolean isCurrentRevision(VcsRevisionNumber vcsRevisionNumber) {
         return vcsRevisionNumber.equals(getCurrentRevisionNumber());
       }
 
-      @Override
       public boolean shouldBeRefreshed() {
         return false;
       }
 
-      @Override
       public boolean allowAsyncRefresh() {
         return false;
       }
 
-      @Override
       public boolean isContentAvailable(VcsFileRevision vcsFileRevision) {
         return false;
       }
