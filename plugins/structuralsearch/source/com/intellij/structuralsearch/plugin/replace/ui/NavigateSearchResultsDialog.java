@@ -138,8 +138,8 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
         matchingProcess.stop();
       }
     };
-//todo
-    statusBar.add(myMatchingProcess, new TaskInfo() {
+
+    statusBar.addProgress(myMatchingProcess, new TaskInfo() {
       public String getProcessId() {
         return "<unknown>";
       }
@@ -160,6 +160,7 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
         return false;
       }
     });
+    
     init();
   }
 
