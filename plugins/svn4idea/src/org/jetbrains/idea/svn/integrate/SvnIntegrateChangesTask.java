@@ -82,6 +82,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     myAccomulatedFiles = new UpdatedFilesReverseSide(UpdatedFiles.create());
     myExceptions = new ArrayList<VcsException>();
+    myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
+    myMerger = myMergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, myCurrentBranchUrl, myBranchName);
   }
 
   private void indicatorOnStart() {
@@ -95,8 +97,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   public void run(@NotNull final ProgressIndicator indicator) {
-    myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    myMerger = myMergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, myCurrentBranchUrl, myBranchName);
+    myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
 
     BlockReloadingUtil.block();

@@ -39,7 +39,7 @@ import java.io.File;
  * @author lesya
 */
 public class UpdateEventHandler implements ISVNEventHandler {
-  private final ProgressIndicator myProgressIndicator;
+  private ProgressIndicator myProgressIndicator;
   private UpdatedFiles myUpdatedFiles;
   private int myExternalsCount;
   private final SvnVcs myVCS;
@@ -210,5 +210,9 @@ public class UpdateEventHandler implements ISVNEventHandler {
 
   private static FileGroup createFileGroup(String name, String id) {
     return new FileGroup(name, name, false, id, true);
+  }
+
+  public void setProgressIndicator(ProgressIndicator progressIndicator) {
+    myProgressIndicator = progressIndicator;
   }
 }
