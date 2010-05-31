@@ -17,15 +17,11 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
@@ -193,6 +189,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     final Balloon balloon = builder.createBalloon();
+    balloon.addListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        notification.setBalloon(null);
+      }
+    });
+
     notification.setBalloon(balloon);
 
     final Runnable show = new Runnable() {
@@ -209,13 +212,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
         if (window instanceof IdeFrameImpl) {
           final BalloonLayout balloonLayout = ((IdeFrameImpl)window).getBalloonLayout();
           balloonLayout.add(balloon);
-          if (project != null) {
-            Disposer.register(project, new Disposable() {
-              public void dispose() {
-                balloon.hide();
-              }
-            });
-          }
         }
       }
     };

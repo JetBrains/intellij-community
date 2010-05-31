@@ -38,7 +38,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ import java.awt.event.MouseEvent;
 public class TogglePopupHintsPanel implements StatusBarWidget, StatusBarWidget.IconPresentation {
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/ide/hectorOn.png");
   private static final Icon INSPECTIONS_OFF_ICON = IconLoader.getIcon("/ide/hectorOff.png");
-  private static final Icon EMPTY_ICON = new EmptyIcon(INSPECTIONS_ICON.getIconWidth(), INSPECTIONS_ICON.getIconHeight());
+  private static final Icon EMPTY_ICON = IconLoader.getIcon("/ide/hectorNo.png");
 
   private Icon myCurrentIcon;
   private String myToolTipText;
