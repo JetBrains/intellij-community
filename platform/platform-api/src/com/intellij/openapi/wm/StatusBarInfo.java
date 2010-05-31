@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2010 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm.impl.status;
+package com.intellij.openapi.wm;
 
-import com.intellij.openapi.editor.Editor;
-
-import javax.swing.*;
+import org.jetbrains.annotations.*;
 
 /**
- * @author cdr
+ * User: spLeaner
  */
-public interface StatusBarPatch {
-  JComponent getComponent();
+public interface StatusBarInfo {
 
-  //returns updated tooltip/text
-  String updateStatusBar(Editor selected, final JComponent componentSelected);
-
-  void clear();
+  /**
+   * Set status bar text
+   * @param s text to be shown in the status bar
+   */
+  void setInfo(@Nullable String s);
+  
+  String getInfo();
 }

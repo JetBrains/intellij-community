@@ -15,19 +15,15 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 /**
  *  @author dsl
@@ -46,8 +42,7 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
     return CodeInsightBundle.message("intention.make.type.generic.text", variableName, newTypeName);
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     if (!element.isWritable()) return false;
     return findVariable(element) != null;

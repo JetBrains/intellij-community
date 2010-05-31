@@ -257,7 +257,12 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
         } else if (needStaticQualifier || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
           qualifierExpression.replace(factory.createReferenceExpression(containingClass));
         } else {
-          qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
+          final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
+          if (psiClass != null && psiClass.isInheritor(containingClass, true)) {
+            qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), psiClass));
+          } else {
+            qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
+          }
         }
       }
       VisibilityUtil.escalateVisibility(myMethod, match.getMatchStart());

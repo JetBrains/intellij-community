@@ -3,70 +3,65 @@
   <name>hg4idea</name>
   <description>
   <![CDATA[
-  <b>IntelliJ IDEA</b> plugin for Mercurial integration.<br>
+  <b>IntelliJ IDEA</b> plugin for Mercurial integration - Luciad fork<br>
   RubyMine and WebIDE should work but hg4idea was never tested against them.
   <p>
   System Requirements:
   <ul>
     <li>IntelliJ IDEA (Ultimate or Community)
     <li>Java 5+
-    <li>Mercurial 1.5+
+    <li>Mercurial 1.3+
   </ul>
   <p>
-  If you found a bug or would like to see some features added to hg4idea please open a ticket in <a href="http://www.bitbucket.org/viacoban/hg4idea/issues/">bugtracker</a>.
-  <p>
-  When opening bugs don't forget to include:
-  <ul>
-    <li>IntelliJ IDEA version
-    <li>hg4idea version
-    <li>Mercurial version
-    <li>Exact steps to reproduce
-  </ul>
+  Please refer to the bitbucket site for more information.
   ]]>
   </description>
   <category>VCS Integration</category>
   <version>10.0</version>
-  <vendor email="victor.iacoban@gmail.com" logo="/images/mercurial.png" url="http://www.bitbucket.org/viacoban/hg4idea">Victor Iacoban</vendor>
+  <vendor email="victor.iacoban@gmail.com, willem.verstraeten@gmail.com" logo="/images/mercurial.png" url="http://www.bitbucket.org/willemv/hg4idea">Victor Iacoban and Willem Verstraeten</vendor>
   <depends>com.intellij.modules.vcs</depends>
-  
+  <idea-version since-build="95.66" until-build="95.99" />
+
   <extensions defaultExtensionNs="com.intellij">
-    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs"/>
+    <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <applicationConfigurable implementation="org.zmlx.hg4idea.HgIdeConfigurable"/>
   </extensions>
 
   <actions>
-    
     <group id="MercurialFileGroup" text="Mercurial">
       <separator/>
       <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository"/>
       <separator/>
       <add-to-group group-id="VcsGroups" anchor="after" relative-to-action="VcsGlobalGroup"/>
     </group>
-
+    
     <group id="hg4idea.file.menu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
-      <reference id="ChangesView.AddUnversioned"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
       <separator/>
-      <reference id="Annotate"/>
-      <reference id="Vcs.ShowTabbedFileHistory"/>
-      <reference id="Vcs.ShowHistoryForBlock"/>
+      <reference ref="CheckinFiles"/>
+      <reference ref="ChangesView.Rollback"/>
+      <reference ref="ChangesView.AddUnversioned"/>
+      <separator/>
+      <reference ref="Compare.SameVersion"/>
+      <reference ref="Compare.Selected"/>
+      <reference ref="Vcs.ShowTabbedFileHistory"/>
+      <reference ref="Vcs.ShowHistoryForBlock"/>
+      <reference ref="Annotate"/>
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
     <group id="hg4idea.global.submenu" popup="true" icon="/images/mercurial.png" class="org.zmlx.hg4idea.action.HgMercurialMenu">
+      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" icon="/actions/checkOut.png"/>
+      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction" icon="/actions/commit.png"/>
+      <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
       <action id="hg4idea.mq.rebase" class="org.zmlx.hg4idea.action.HgMqRebaseAction"/>
       <separator/>
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
       <action id="hg4idea.switch" class="org.zmlx.hg4idea.action.HgSwitchWorkingDirectoryAction"/>
       <add-to-group group-id="VcsGlobalGroup" anchor="last"/>
-    </group>
-    
-    <group id="hg4idea.global.menu" popup="false" text="Mercurial Global Actions">
-      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction"/>
-      <action id="hg4idea.push" class="org.zmlx.hg4idea.action.HgPushAction"/>
-      <add-to-group group-id="VcsGlobalGroup" relative-to-action="Vcs.IntegrateProject" anchor="after"/>
     </group>
   </actions>
 
@@ -84,29 +79,58 @@
     </component>
   </project-components>
   <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>
+  
   <change-notes>
   <![CDATA[
-  <h3>Changes since 0.6.0</h3>
+  <h3>Changes in 0.6.16-luciad.9-9.0.2</h3>
   <ul>
-    <li>[feature] Folders under mercurial control are auto-detected on project creation
-    <li>[feature] New status notifications for incoming and outgoing changesets
-    <li>[enhancement] User was required to enter the hg executable path for every project
-    <li>[enhancement] Added support for multi-line commit messages
+    <li>[enhancement] you can now diff to renamed versions of a file in the history window
+    <li>[enhancement] you can now clone from within IntelliJ
+    <li>[bugfix] the revert command now also works during a merge operation
+    <li>[bugfix] moving a file between two mercurial repositories now works
+    <li>[bugfix] reduced the number of temporary files created and made sure that they and all their derivatives are deleted (again ...)
   </ul>
-  <h3>Changes since 0.5</h3>
+  <h3>Changes in 0.6.16-luciad.8-9.0.2</h3>
   <ul>
-    <li>[feature] Unresolved files show in red
-    <li>[feature] Added new action to resolve all conflicts, will open the merge dialog
-    <li>[feature] Added mercurial context action to mark a file as resolved
-    <li>[feature] New Mercurial menu action to rebase MQ patches
-    <li>[enhancement] When file is moved/renamed, it has a status of modified
-    <li>[enhancement] Added tooltip to mercurial status component
-    <li>[bugfix] exception clicking annotate in history view
-    <li>[bugfix] NPE on project integration
-    <li>Re-organized mercurial menu
-    <li>Performance improvements
+    <li>compatible with IntelliJ 9.0.2
+    <li>[enhancement] the local pane of the diff window invoked from the 'Changes' view is now editable
+    <li>[bugfix] the history items are now sorted numerically on revision instead of lexically
+    <li>[bugfix] the history of a file now contains all revisions in which it changed
+    <li>[bugfix] renames are now shown properly in the changes view
+    <li>[bugfix] paths to hg.exe on Windows now also work
   </ul>
-  For full changelog visit <a href="http://bitbucket.org/viacoban/hg4idea/wiki/Changelog">wiki changelog page</a>.
+  <h3>Changes in 0.6.14-luciad.7-9.0.1</h3>
+  <ul>
+    <li>[bugfix] the plugin now deletes _all_ temporary files it creates
+  </ul>
+  <h3>Changes in 0.6.14-luciad.6-9.0.1</h3>
+  <ul>
+    <li>[bugfix] fixed possible exceptions when parsing revisions
+  </ul>
+  <h3>Changes in 0.6.14-luciad.5-9.0.1</h3>
+  <ul>
+    <li>[bugfix] fixed distribution, the plugin can now be installed again
+  </ul>
+  <h3>Changes in 0.6.14-luciad.4-9.0.1</h3>
+  <ul>
+    <li>[enhancement] the update behavior now emulates the fetch extension, except that it allows local modifications where possible
+    <li>[enhancement] added more VCS-related actions to the popup menus of files
+    <li>[bugfix] the plugin now cleans up the temporary files it creates
+  </ul>
+  <h3>Changes in 0.6.14-luciad.3-9.0.1</h3>
+  <ul>
+    <li>[bugfix] committing a merge no longer complains about ignored files
+    <li>[enhancement] 'Add to VCS' action is now available in right-click of files (merged from upstream) 
+  </ul>
+  <h3>Changes from the regular hg4idea</h3>
+  <ul>
+    <li>[bugfix] three-way merge editor now shows the correct content
+    <li>[bugfix] prompts during merge and update etc. are now shown in the IDE instead of ignored
+    <li>[bugfix] authentication dialog is now shown on the correct thread, allowing push and pull to secured servers
+    <li>[enhancement] better error and warning reporting
+    <li>[enhancement] update now works more consistently, especially when not at head revisions
+    <li>[enhancement] default commit button now also works when committing merges
+  </ul>
   ]]>
   </change-notes>
 </idea-plugin>

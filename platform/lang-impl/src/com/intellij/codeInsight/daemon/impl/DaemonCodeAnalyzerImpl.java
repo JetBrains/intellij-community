@@ -16,54 +16,35 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.codeHighlighting.*;
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.ReferenceImporter;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
-import com.intellij.concurrency.Job;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.hint.*;
+import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.concurrency.*;
+import com.intellij.lang.annotation.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.*;
+import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.util.Alarm;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.vfs.*;
+import com.intellij.packageDependencies.*;
+import com.intellij.psi.*;
+import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.util.*;
+import com.intellij.util.containers.*;
+import gnu.trove.*;
+import org.jdom.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -101,7 +82,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NonNls private static final String FILE_TAG = "file";
   @NonNls private static final String URL_ATT = "url";
   private DaemonListeners myDaemonListeners;
-  private StatusBarUpdater myStatusBarUpdater;
   private final PassExecutorService myPassExecutorService;
   private static final Key<List<HighlightInfo>> HIGHLIGHTS_TO_REMOVE_KEY = Key.create("HIGHLIGHTS_TO_REMOVE");
   private int myModificationCount = 0;
@@ -146,9 +126,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
   public void projectOpened() {
     assert !myInitialized : "Double Initializing";
-    myStatusBarUpdater = new StatusBarUpdater(myProject);
-    Disposer.register(myProject, myStatusBarUpdater);
-
     myDaemonListeners = new DaemonListeners(myProject, this, myEditorTracker);
     Disposer.register(myProject, myDaemonListeners);
     reloadScopes();
@@ -474,11 +451,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     markup.putUserData(HIGHLIGHTS_IN_EDITOR_DOCUMENT_KEY, Collections.unmodifiableList(highlightsToSet));
 
     markup.putUserData(HIGHLIGHTS_TO_REMOVE_KEY, Collections.unmodifiableList(highlightsToRemove));
-
-    DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    if (codeAnalyzer instanceof DaemonCodeAnalyzerImpl && ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater != null) {
-      ((DaemonCodeAnalyzerImpl)codeAnalyzer).myStatusBarUpdater.updateStatus();
-    }
   }
 
   private static void stripWarningsCoveredByErrors(final Project project, List<HighlightInfo> highlights, MarkupModel markup) {

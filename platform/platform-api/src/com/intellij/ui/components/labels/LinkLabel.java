@@ -15,23 +15,18 @@
  */
 package com.intellij.ui.components.labels;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.*;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
+import javax.swing.border.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-import java.util.HashSet;
-import java.util.Set;
+import java.awt.event.*;
+import java.util.*;
 
 /**
  * @author kir
@@ -246,14 +241,11 @@ public class LinkLabel extends JLabel {
     setActive(false);
   }
 
-  private void setStatusBarText(String statusBarText) {
+  private static void setStatusBarText(String statusBarText) {
     if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      final StatusBar bar = WindowManager.getInstance().getStatusBar(project);
-      if (bar != null) {
-        bar.setInfo(statusBarText);
-      }
+      StatusBar.Info.set(statusBarText, project);
     }
   }
 

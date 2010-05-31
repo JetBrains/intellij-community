@@ -15,23 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.codeInspection.*;
+import com.intellij.lang.xml.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.psi.*;
 import com.intellij.psi.XmlElementFactory;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlProlog;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.*;
+import com.intellij.psi.xml.*;
+import com.intellij.util.*;
+import com.intellij.xml.util.*;
+import org.jetbrains.annotations.*;
 
 abstract class SuppressInspectionAction extends SuppressIntentionAction {
     private final String myToolId;
@@ -55,8 +49,8 @@ abstract class SuppressInspectionAction extends SuppressIntentionAction {
     @Nullable
     protected abstract XmlTag getAnchor(@NotNull PsiElement element);
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-        return element != null && getAnchor(element) != null;
+    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+        return getAnchor(element) != null;
     }
 
     public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {

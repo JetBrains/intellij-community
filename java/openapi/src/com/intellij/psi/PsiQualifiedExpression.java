@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package com.intellij.psi;
 
-public interface SelectionManipulation<T> {
-  void add(T t);
-  void remove(T t);
-  void clearAll();
-  void setAll();
+import org.jetbrains.annotations.Nullable;
+
+public interface PsiQualifiedExpression extends PsiExpression {
+  @Nullable
+  PsiJavaCodeReferenceElement getQualifier();
 }

@@ -15,91 +15,108 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.GotoLineNumberDialog;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.ui.UIBundle;
+import com.intellij.ide.*;
+import com.intellij.ide.util.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
-import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 
-class PositionPanel extends TextPanel implements StatusBarPatch {
-  public PositionPanel(StatusBar statusBar) {
-    super(false, "#############");
+public class PositionPanel implements StatusBarWidget, StatusBarWidget.TextPresentation, CaretListener {
+  private String myText;
+  private StatusBar myStatusBar;
 
-    addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        if (e.getClickCount() == 2) {
-          final Project project = getProject();
-          if (project == null) return;
-          final Editor editor = getEditor(project);
-          if (editor == null) return;
-          final CommandProcessor processor = CommandProcessor.getInstance();
-          processor.executeCommand(
-              project, new Runnable(){
-              public void run() {
-                final GotoLineNumberDialog dialog = new GotoLineNumberDialog(project, editor);
-                dialog.show();
-                IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-              }
-            },
-              UIBundle.message("go.to.line.command.name"),
-            null
-          );
-        }
+  public PositionPanel(@NotNull final Project project) {
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
+        final Editor editor = source.getSelectedTextEditor();
+        if (editor != null) updatePosition(editor);
       }
     });
-
-    StatusBarTooltipper.install(this, statusBar);
   }
 
-  public JComponent getComponent() {
+  @NotNull
+  public String ID() {
+    return "Position";
+  }
+
+  public Presentation getPresentation(@NotNull final Type type) {
     return this;
   }
 
-  public String updateStatusBar(final Editor editor, final JComponent componentSelected) {
-    if (editor != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!editor.isDisposed()) {
-            StringBuilder message = new StringBuilder();
+  @NotNull
+  public String getText() {
+    return myText == null ? "" : myText;
+  }
 
-            SelectionModel selectionModel = editor.getSelectionModel();
-            if (selectionModel.hasBlockSelection()) {
-              LogicalPosition start = selectionModel.getBlockStart();
-              LogicalPosition end = selectionModel.getBlockEnd();
-              appendLogicalPosition(start, message);
-              message.append("-");
-              appendLogicalPosition(new LogicalPosition(Math.abs(end.line - start.line), Math.abs(end.column - start.column) - 1), message);
+  @NotNull
+  public String getMaxPossibleText() {
+    return "#############";
+  }
+
+  public String getTooltipText() {
+    return UIBundle.message("go.to.line.command.double.click");
+  }
+
+  public Consumer<MouseEvent> getClickConsumer() {
+    return new Consumer<MouseEvent>() {
+      public void consume(MouseEvent mouseEvent) {
+        final Project project = getProject();
+        if (project == null) return;
+        final Editor editor = getEditor();
+        if (editor == null) return;
+        final CommandProcessor processor = CommandProcessor.getInstance();
+        processor.executeCommand(
+          project, new Runnable() {
+            public void run() {
+              final GotoLineNumberDialog dialog = new GotoLineNumberDialog(project, editor);
+              dialog.show();
+              IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
             }
-            else {
-              LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+          },
+          UIBundle.message("go.to.line.command.name"),
+          null
+        );
+      }
+    };
+  }
 
-              appendLogicalPosition(caret, message);
-              if (selectionModel.hasSelection()) {
-                int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
-                message.append("/");
-                message.append(len);
-              }
-            }
-
-            setText(message.toString());
-          }
-        }
-      });
-      return UIBundle.message("go.to.line.command.double.click");
+  @Nullable
+  private Editor getEditor() {
+    final Project project = getProject();
+    if (project != null) {
+      final FileEditorManager manager = FileEditorManager.getInstance(project);
+      return manager.getSelectedTextEditor();
     }
-    clear();
+
     return null;
+  }
+
+  @Nullable
+  private Project getProject() {
+    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component)myStatusBar));
+  }
+
+  public void dispose() {
+    EditorFactory.getInstance().getEventMulticaster().removeCaretListener(this);
+    myStatusBar = null;
+  }
+
+  public void install(@NotNull StatusBar statusBar) {
+    EditorFactory.getInstance().getEventMulticaster().addCaretListener(this);
+    myStatusBar = statusBar;
   }
 
   private static void appendLogicalPosition(LogicalPosition caret, StringBuilder message) {
@@ -108,15 +125,43 @@ class PositionPanel extends TextPanel implements StatusBarPatch {
     message.append(caret.column + 1);
   }
 
-  public void clear() {
-    setText("");
+  public void caretPositionChanged(final CaretEvent e) {
+    updatePosition(e.getEditor());
   }
 
-  private static Editor getEditor(final Project project) {
-    return FileEditorManager.getInstance(project).getSelectedTextEditor();
+  private void updatePosition(final Editor editor) {
+    if (editor == null) return;
+    myText = getPositionText(editor);
+    myStatusBar.updateWidget(ID());
   }
 
-  private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
+  private String getPositionText(Editor editor) {
+    if (!editor.isDisposed() && myStatusBar != null) {
+      StringBuilder message = new StringBuilder();
+
+      SelectionModel selectionModel = editor.getSelectionModel();
+      if (selectionModel.hasBlockSelection()) {
+        LogicalPosition start = selectionModel.getBlockStart();
+        LogicalPosition end = selectionModel.getBlockEnd();
+        appendLogicalPosition(start, message);
+        message.append("-");
+        appendLogicalPosition(new LogicalPosition(Math.abs(end.line - start.line), Math.abs(end.column - start.column) - 1), message);
+      }
+      else {
+        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+
+        appendLogicalPosition(caret, message);
+        if (selectionModel.hasSelection()) {
+          int len = Math.abs(selectionModel.getSelectionStart() - selectionModel.getSelectionEnd());
+          message.append("/");
+          message.append(len);
+        }
+      }
+
+      return message.toString();
+    }
+    else {
+      return "";
+    }
   }
 }

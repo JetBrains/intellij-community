@@ -15,23 +15,18 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.highlighting.*;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import gnu.trove.*;
+import org.jetbrains.annotations.*;
 
 /**
  * @author ven
@@ -44,8 +39,8 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null || !PsiUtil.isLanguageLevel5OrHigher(element)) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiReferenceExpression)) {
       return false;
     }

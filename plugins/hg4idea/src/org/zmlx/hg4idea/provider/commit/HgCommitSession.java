@@ -12,23 +12,18 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.commit;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.CommitSession;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgCommandException;
-import org.zmlx.hg4idea.command.HgCommitCommand;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.vcsUtil.*;
+import org.apache.commons.lang.*;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.*;
 
-import javax.swing.JComponent;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import javax.swing.*;
+import java.util.*;
 
 public class HgCommitSession implements CommitSession {
 
@@ -59,10 +54,11 @@ public class HgCommitSession implements CommitSession {
         VcsUtil.showStatusMessage(
           project, HgVcsMessages.message("hg4idea.commit.success", root.getPath())
         );
-        VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-        vcsDirtyScopeManager.dirDirtyRecursively(root);
+        HgUtil.markDirectoryDirty(project, root);
         root.refresh(true, true);
       } catch (HgCommandException e) {
+        VcsUtil.showErrorMessage(project, e.getMessage(), "Error");
+      } catch (VcsException e) {
         VcsUtil.showErrorMessage(project, e.getMessage(), "Error");
       }
     }

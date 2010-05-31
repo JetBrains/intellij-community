@@ -16,18 +16,15 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
-import com.intellij.javaee.ResourceRegistrar;
-import com.intellij.javaee.StandardResourceProvider;
-import org.intellij.lang.xpath.xslt.XsltSupport;
+import com.intellij.javaee.*;
+import org.intellij.lang.xpath.xslt.*;
 
 /**
  * @author Dmitry Avdeev
  */
 public class XsltResourceProvider implements StandardResourceProvider {
 
-  private static final String XSLT_SCHEMA_LOCATION = "resources/xslt-schema.xsd";
-
   public void registerResources(ResourceRegistrar registrar) {
-     registrar.addStdResource(XsltSupport.XSLT_NS, XSLT_SCHEMA_LOCATION, getClass());
+     registrar.addStdResource(XsltSupport.XSLT_NS, "/org/intellij/lang/xpath/xslt/resources/xslt-schema.xsd", getClass());
   }
 }

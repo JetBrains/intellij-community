@@ -15,37 +15,56 @@
  */
 package com.intellij.openapi.wm;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.startup.*;
+import com.intellij.util.messages.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 
-public interface StatusBar {
-  /**
-   * Set status bar text
-   * @param s text to be shown in the status bar
-   */
-  void setInfo(@Nullable String s);
+/**
+ * @author spleaner
+ */
+public interface StatusBar extends StatusBarInfo {
+  @SuppressWarnings({"AbstractClassNeverImplemented"})
+  abstract class Info implements StatusBarInfo {
+    public static final Topic<StatusBarInfo> TOPIC = Topic.create("IdeStatusBar.Text", StatusBarInfo.class);
+
+    private Info() {}
+
+    public static void set(@Nullable final String text, @Nullable final Project project) {
+      if (project != null && !project.isInitialized() && !project.isDisposed()) {
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+           public void run() {
+             project.getMessageBus().syncPublisher(TOPIC).setInfo(text);
+           }
+         });
+        return;
+      }
+
+      final MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+      bus.syncPublisher(TOPIC).setInfo(text);
+    }
+  }
+
+  void addWidget(@NotNull StatusBarWidget widget);
+  void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor);
+  
+  void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable);
+  void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable);
 
   /**
-   * Add arbitrary component indicating something related to status in the status bar. The component shall be
-   * small enough to keep visual status bar appearance metaphor.
-   * @param c - custom component to be added to the status bar.
+   * @deprecated use addWidget instead
    */
+  @Deprecated
   void addCustomIndicationComponent(@NotNull JComponent c);
-
-  /**
-   * Shows animated notification popup.
-   * @param content Content of the notification
-   * @param backgroundColor background color for the notification. Be sure use light colors since bright onces
-   * look noisy. See {@link com.intellij.ui.LightColors} for convinient colors
-   */
-  void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor);
-
   void removeCustomIndicationComponent(@NotNull JComponent c);
 
-  void startRefreshIndication(String tooltipText);
+  void removeWidget(@NotNull String id);
+  void updateWidget(@NotNull String id);
 
-  void stopRefreshIndication();
+  void fireNotificationPopup(@NotNull JComponent content, Color backgroundColor);
 }

@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package com.intellij.openapi.wm;
 
-import java.util.Set;
+import javax.swing.*;
 
-public interface SelectionResult<T> {
-  Set<T> getMarked();
-  boolean isAll();
+/**
+ * User: spLeaner
+ */
+public interface CustomStatusBarWidget extends StatusBarWidget {
+
+  JComponent getComponent();
+
 }

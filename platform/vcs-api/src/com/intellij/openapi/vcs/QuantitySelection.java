@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package com.intellij.openapi.vcs;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-public class QuantitySelection<T> implements SelectionManipulation<T> {
+public class QuantitySelection<T> implements SelectionManipulation<T>, SelectionState<T> {
   private final Group<T> mySelected;
   private final Group<T> myUnselected;
 

@@ -15,115 +15,131 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.DataManager;
+import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup;
-import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.actionSystem.impl.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.encoding.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
-import javax.swing.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.nio.charset.Charset;
+import java.awt.*;
+import java.awt.event.*;
+import java.nio.charset.*;
 
 /**
  * @author cdr
  */
-public class EncodingPanel extends TextPanel implements StatusBarPatch {
-  public EncodingPanel(final StatusBarImpl statusBar) {
-    super(false, "windows-1251");
-    StatusBarTooltipper.install(this, statusBar);
-    addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        EncodingPanel.this.mouseClicked(statusBar);
+public class EncodingPanel implements StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
+  private StatusBar myStatusBar;
+  private String mySelected;
+
+  public EncodingPanel(@NotNull final Project project) {
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+      @Override
+      public void selectionChanged(FileEditorManagerEvent event) {
+        update();
+      }
+
+      @Override
+      public void fileOpened(FileEditorManager source, VirtualFile file) {
+        update();
       }
     });
   }
 
-  public JComponent getComponent() {
+  @NotNull
+  public String ID() {
+    return "Encoding";
+  }
+
+  public Presentation getPresentation(@NotNull Type type) {
     return this;
   }
 
-  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
-    boolean enabled;
-    String text;
-    if (selected != null) {
-      VirtualFile file = getSelectedFile(selected);
-      Pair<String,Boolean> result = ChangeEncodingUpdateGroup.update(file);
-      text = result.getFirst();
-      enabled = result.getSecond();
-      if (file != null) {
-        Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
-        if (charset == null) charset = file.getCharset();
-        setText(charset.displayName());
-      }
-    }
-    else {
-      text = "";
-      enabled = false;
-      setText("");
-    }
-    setEnabled(enabled);
-    return text;
+  public void dispose() {
+    myStatusBar = null;
   }
 
-  private static VirtualFile getSelectedFile(final Editor selected) {
-    if (selected == null) return null;
-    Document document = selected.getDocument();
+  public void install(@NotNull StatusBar statusBar) {
+    myStatusBar = statusBar;
+  }
+
+  @NotNull
+  public String getMaxValue() {
+    return "windows-1251";
+  }
+
+  @NotNull
+  public ListPopup getPopupStep() {
+    final DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
+    final DataContext dataContext =
+      SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), getSelectedFile(),
+                                         SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), getProject(), parent));
+    return JBPopupFactory.getInstance().createActionGroupPopup(null, new ChooseFileEncodingAction(getSelectedFile()) {
+      @Override
+      protected void chosen(VirtualFile virtualFile, Charset charset) {
+        if (virtualFile != null) {
+          EncodingManager.getInstance().setEncoding(virtualFile, charset);
+          EncodingPanel.this.update();
+        }
+      }
+    }.createGroup(false), dataContext, false, false, false, null, 30, null);
+  }
+
+  public String getTooltipText() {
+    return null;
+  }
+
+  public Consumer<MouseEvent> getClickConsumer() {
+    return null;
+  }
+
+  private void setSelectedValue(@NotNull final Charset charset) {
+    mySelected = charset.displayName();
+  }
+
+  public String getSelectedValue() {
+    return mySelected;
+  }
+
+  private void update() {
+    final VirtualFile file = getSelectedFile();
+    if (file != null) {
+      Charset charset = ChooseFileEncodingAction.charsetFromContent(file);
+      if (charset == null) charset = file.getCharset();
+      setSelectedValue(charset);
+      myStatusBar.updateWidget(ID());
+    }
+  }
+
+  @Nullable
+  private VirtualFile getSelectedFile() {
+    final Editor editor = getEditor();
+    if (editor == null) return null;
+    Document document = editor.getDocument();
     return FileDocumentManager.getInstance().getFile(document);
   }
 
-  public void clear() {
-    setText("");
-  }
-
+  @Nullable
   private Editor getEditor() {
     final Project project = getProject();
     if (project == null) return null;
     return getEditor(project);
   }
 
-  private static Editor getEditor(final Project project) {
+  @Nullable
+  private static Editor getEditor(@NotNull final Project project) {
     return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
+  @Nullable
   private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
-  }
-
-  private void mouseClicked(final StatusBarImpl statusBar) {
-    VirtualFile virtualFile = getSelectedFile(getEditor());
-    if (virtualFile == null) return;
-    if (!isEnabled()) return;
-
-    ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(virtualFile) {
-      protected void chosen(final VirtualFile virtualFile, final Charset charset) {
-        EncodingManager.getInstance().setEncoding(virtualFile, charset);
-      }
-    };
-    DataContext context = DataManager.getInstance().getDataContext(statusBar);
-    DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), virtualFile,
-                              SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), getProject(), context));
-    Presentation presentation = changeAction.getTemplatePresentation();
-    AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, presentation, ActionManager.getInstance(), 0);
-    changeAction.update(event);
-
-    DefaultActionGroup group = changeAction.createGroup(false);
-
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext,
-                                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
-                                                                                null,
-                                                                                30);
-    popup.showUnderneathOf(this);
+    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component)myStatusBar));
   }
 }

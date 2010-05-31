@@ -16,33 +16,24 @@
 package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
-import com.intellij.notification.impl.ui.NotificationsUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.SystemNotifications;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairFunction;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.notification.impl.ui.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.*;
+import com.intellij.ui.*;
+import com.intellij.ui.components.panels.*;
+import com.intellij.util.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.border.*;
+import javax.swing.event.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -193,6 +184,13 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
     }
 
     final Balloon balloon = builder.createBalloon();
+    balloon.addListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        notification.setBalloon(null);
+      }
+    });
+
     notification.setBalloon(balloon);
 
     final Runnable show = new Runnable() {
@@ -209,13 +207,6 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
         if (window instanceof IdeFrameImpl) {
           final BalloonLayout balloonLayout = ((IdeFrameImpl)window).getBalloonLayout();
           balloonLayout.add(balloon);
-          if (project != null) {
-            Disposer.register(project, new Disposable() {
-              public void dispose() {
-                balloon.hide();
-              }
-            });
-          }
         }
       }
     };

@@ -15,44 +15,31 @@
  */
 package com.intellij.cvsSupport2.cvsExecution;
 
-import com.intellij.CvsBundle;
-import com.intellij.cvsSupport2.CvsResultEx;
-import com.intellij.cvsSupport2.config.CvsConfiguration;
-import com.intellij.cvsSupport2.config.ui.ConfigureCvsGlobalSettingsDialog;
-import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
-import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
-import com.intellij.cvsSupport2.errorHandling.CvsException;
-import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.cvsIntegration.CvsResult;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.*;
+import com.intellij.cvsSupport2.*;
+import com.intellij.cvsSupport2.config.*;
+import com.intellij.cvsSupport2.config.ui.*;
+import com.intellij.cvsSupport2.cvshandlers.*;
+import com.intellij.cvsSupport2.errorHandling.*;
+import com.intellij.cvsSupport2.ui.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.cvsIntegration.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.errorView.ContentManagerProvider;
-import com.intellij.ui.errorView.ErrorViewFactory;
-import com.intellij.util.ui.ErrorTreeView;
-import com.intellij.util.ui.MessageCategory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.content.*;
+import com.intellij.ui.errorView.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * author: lesya
@@ -120,14 +107,10 @@ public class CvsOperationExecutor {
           finally {
 
             if ((myProject != null) && (handler != CvsHandler.NULL)) {
-              StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-              if (statusBar != null) {
-                statusBar.setInfo(getStatusMessage(handler));
-              }
+              StatusBar.Info.set(getStatusMessage(handler), myProject);
             }
           }
         }
-
       }
     };
 

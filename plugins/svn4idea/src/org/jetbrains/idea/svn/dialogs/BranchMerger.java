@@ -15,19 +15,14 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.util.NotNullFunction;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.integrate.IMerger;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import com.intellij.util.*;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.integrate.*;
+import org.jetbrains.idea.svn.update.*;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.*;
 
-import java.io.File;
+import java.io.*;
 
 public class BranchMerger implements IMerger {
   private final SvnVcs myVcs;
@@ -37,6 +32,7 @@ public class BranchMerger implements IMerger {
   private final UpdateEventHandler myHandler;
   private final boolean myReintegrate;
   private final String myBranchName;
+  private final long mySourceCopyRevision;
   private boolean myAtStart;
   private long mySourceLatestRevision;
 
@@ -44,7 +40,7 @@ public class BranchMerger implements IMerger {
                       final SVNURL sourceUrl,
                       final SVNURL targetUrl, final String targetPath,
                       final UpdateEventHandler handler,
-                      final boolean isReintegrate, final String branchName) {
+                      final boolean isReintegrate, final String branchName, final long sourceCopyRevision) {
     myVcs = vcs;
     myTargetPath = targetPath;
     mySourceUrl = sourceUrl;
@@ -52,6 +48,7 @@ public class BranchMerger implements IMerger {
     myHandler = handler;
     myReintegrate = isReintegrate;
     myBranchName = branchName;
+    mySourceCopyRevision = sourceCopyRevision;
     myAtStart = true;
     try {
       mySourceLatestRevision = myVcs.createRepository(mySourceUrl).getLatestRevision();
@@ -80,9 +77,7 @@ public class BranchMerger implements IMerger {
     if (myReintegrate) {
       dc.doMergeReIntegrate(mySourceUrl, SVNRevision.UNDEFINED, new File(myTargetPath), false);
     } else {
-      final long targetRevision = myVcs.createRepository(myTargetUrl).getLatestRevision();
-
-      dc.doMerge(myTargetUrl, SVNRevision.create(targetRevision), mySourceUrl, SVNRevision.create(mySourceLatestRevision),
+      dc.doMerge(mySourceUrl, SVNRevision.create(mySourceCopyRevision), mySourceUrl, SVNRevision.create(mySourceLatestRevision),
         new File(myTargetPath), SVNDepth.INFINITY, true, true, false, false);
     }
   }

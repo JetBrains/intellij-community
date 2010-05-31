@@ -16,20 +16,14 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.module.*;
+import com.intellij.openapi.util.*;
+import org.jdom.*;
+import org.jetbrains.annotations.*;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends RuntimeConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
@@ -106,7 +100,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public void restoreOriginalModule(final Module originalModule) {
     if (originalModule == null) return;
     final Module[] classModules = getModules();
-    final Collection<Module> modules = ModuleUtil.collectModulesDependsOn(Arrays.asList(classModules));
+    final Set<Module> modules = new HashSet<Module>();
+    for (Module classModule : classModules) {
+      ModuleUtil.collectModulesDependsOn(classModule, modules);
+    }
     if (modules.contains(originalModule)) setModule(originalModule);
   }
 }

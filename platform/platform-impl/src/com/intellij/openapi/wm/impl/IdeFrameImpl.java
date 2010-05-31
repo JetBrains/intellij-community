@@ -15,40 +15,28 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.DataManager;
+import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.FocusTrackback;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.ui.*;
+import com.intellij.openapi.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.*;
+import com.intellij.openapi.keymap.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.*;
+import com.intellij.openapi.wm.impl.status.*;
+import com.intellij.ui.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.File;
+import java.awt.event.*;
+import java.io.*;
 
 /**
  * @author Anton Katilin
@@ -168,7 +156,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     );
   }
 
-  public StatusBarEx getStatusBar() {
+  public StatusBar getStatusBar() {
     return ((IdeRootPane)getRootPane()).getStatusBar();
   }
 
@@ -226,12 +214,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   }
 
   public void setProject(final Project project) {
-    getStatusBar().cleanupCustomComponents();
     myProject = project;
     if (project != null) {
       if (myRootPane != null) {
         myRootPane.installNorthComponents(project);
       }
+
+      project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, myRootPane.getStatusBar());
+      installDefaultProjectStatusBarWidgets(myProject);
     }
     else {
       if (myRootPane != null) { //already disposed
@@ -242,6 +232,37 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     if (project == null) {
       FocusTrackback.release(this);
     }
+  }
+
+  private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
+    final StatusBar statusBar = getStatusBar();
+
+    final PositionPanel positionPanel = new PositionPanel(project);
+    statusBar.addWidget(positionPanel, "before Notifications");
+
+    final EncodingPanel encodingPanel = new EncodingPanel(project);
+    statusBar.addWidget(encodingPanel, "after Position");
+
+    final ToggleReadOnlyAttributePanel readOnlyAttributePanel = new ToggleReadOnlyAttributePanel();
+
+    InsertOverwritePanel insertOverwritePanel = null;
+    if (!SystemInfo.isMac) {
+      insertOverwritePanel = new InsertOverwritePanel();
+      statusBar.addWidget(insertOverwritePanel, "after Encoding");
+      statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
+    } else {
+      statusBar.addWidget(readOnlyAttributePanel, "after Encoding");
+    }
+
+    final InsertOverwritePanel finalInsertOverwritePanel = insertOverwritePanel;
+    Disposer.register(project, new Disposable() {
+      public void dispose() {
+        statusBar.removeWidget(encodingPanel.ID());
+        statusBar.removeWidget(positionPanel.ID());
+        statusBar.removeWidget(readOnlyAttributePanel.ID());
+        if (finalInsertOverwritePanel != null) statusBar.removeWidget(finalInsertOverwritePanel.ID());
+      }
+    });
   }
 
   public Project getProject() {
