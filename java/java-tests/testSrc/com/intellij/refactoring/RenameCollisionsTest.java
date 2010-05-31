@@ -157,6 +157,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
     fail("Conflicts were not found");
   }
 
+  public void testRenameTypeParameterToExistingClassName() throws Exception {
+    doTest("P");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase
