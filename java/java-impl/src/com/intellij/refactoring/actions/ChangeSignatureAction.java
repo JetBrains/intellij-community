@@ -21,9 +21,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ChangeSignatureAction extends BaseRefactoringAction {
@@ -38,18 +41,60 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   protected boolean isAvailableOnElementInEditor(final PsiElement element, final Editor editor) {
     final Document document = editor.getDocument();
     final PsiFile file = PsiDocumentManager.getInstance(element.getProject()).getPsiFile(document);
-    final ChangeSignatureHandler handler = getChangeSignatureHandler(element.getLanguage());
-    if (handler == null) return false;
-    if (file != null && handler.findTargetMember(file, editor) != null) {
-      return true;
+    if (file == null) return false;
+    PsiElement targetMember = findTargetMember(file, editor);
+    if (targetMember == null) return false;
+    final ChangeSignatureHandler targetHandler = getChangeSignatureHandler(targetMember.getLanguage());
+    if (targetHandler == null) return false;
+    return true;
+  }
+
+  @Nullable
+  private static PsiElement findTargetMember(PsiFile file, Editor editor) {
+    final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiElement targetMember = findTargetMember(element);
+    if (targetMember != null) return targetMember;
+
+    final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
+    if (reference == null) return null;
+    return reference.resolve();
+  }
+
+  @Nullable
+  private static PsiElement findTargetMember(@Nullable PsiElement element) {
+    if (element == null) return null;
+    final ChangeSignatureHandler fileHandler = getChangeSignatureHandler(element.getLanguage());
+    if (fileHandler != null) {
+      final PsiElement targetMember = fileHandler.findTargetMember(element);
+      if (targetMember != null) return targetMember;
     }
-    return element instanceof PsiMethod || element instanceof PsiClass;
+    final PsiReference reference = element.getReference();
+    if (reference == null) return null;
+    return reference.resolve();
   }
 
   public RefactoringActionHandler getHandler(DataContext dataContext) {
     final Language language = LangDataKeys.LANGUAGE.getData(dataContext);
     if (language != null) {
-      return getChangeSignatureHandler(language);
+      return new RefactoringActionHandler() {
+        public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+          final PsiElement targetMember = findTargetMember(file, editor);
+          if (targetMember == null) return;
+          final ChangeSignatureHandler handler = getChangeSignatureHandler(targetMember.getLanguage());
+          if (handler == null) return;
+          handler.invoke(project, new PsiElement[]{targetMember}, dataContext);
+        }
+
+        public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+          if (elements.length != 1) return;
+          final PsiElement targetMember = findTargetMember(elements[0]);
+          if (targetMember == null) return;
+          final ChangeSignatureHandler handler = getChangeSignatureHandler(targetMember.getLanguage());
+          if (handler == null) return;
+          handler.invoke(project, new PsiElement[]{targetMember}, dataContext);
+        }
+      };
     }
     return null;
   }

@@ -35,6 +35,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -313,8 +314,19 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     CommonRefactoringUtil.showErrorHint(myProject, null, hint, GroovyRefactoringBundle.message("incorrect.data"), HelpID.CHANGE_SIGNATURE);
   }
 
+  private boolean isGroovyMethodName(String name) {
+    String methodText = "def " + name + "(){}";
+    try {
+      final GrMethod method = GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(methodText);
+      return method != null;
+    }
+    catch (Throwable e) {
+      return false;
+    }
+  }
+
   private boolean validateInputData() {
-    if (!StringUtil.isJavaIdentifier(getNewName())) {
+    if (!isGroovyMethodName(getNewName())) {
       showErrorHint(message("name.is.wrong", getNewName()));
       return false;
     }
@@ -327,6 +339,7 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     for (GrTableParameterInfo info : myParameterModel.getParameterInfos()) {
       if (!StringUtil.isJavaIdentifier(info.getName())) {
         showErrorHint(message("name.is.wrong", info.getName()));
+        return false;
       }
       if (!checkType(info.getTypeFragment())) {
         showErrorHint(message("type.for.parameter.is.incorrect", info.getName()));

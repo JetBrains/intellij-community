@@ -7,6 +7,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -43,8 +44,8 @@ public class ChangeSignatureTargetTest extends LightCodeInsightTestCase {
     String basePath = "/refactoring/changeSignatureTarget/" + getTestName(true);
     @NonNls final String filePath = basePath + ".java";
     configureByFile(filePath);
-    final PsiMember member = new JavaChangeSignatureHandler().findTargetMember(getFile(), getEditor());
+    final PsiElement member = new JavaChangeSignatureHandler().findTargetMember(getFile(), getEditor());
     assertNotNull(member);
-    assertEquals(expectedMemberName, member.getName());
+    assertEquals(expectedMemberName, ((PsiMember)member).getName());
   }
 }

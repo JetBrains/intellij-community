@@ -204,6 +204,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   protected void preprocessCovariantOverriders(final List<UsageInfo> covariantOverriderInfos) {
   }
 
+  @Override
+  protected boolean isPreviewUsages(UsageInfo[] usages) {
+    for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+      if (processor.shouldPreviewUsages(myChangeInfo, usages)) return true;
+    }
+    return super.isPreviewUsages(usages);
+  }
+
   protected boolean isProcessCovariantOverriders() {
     return Messages
              .showYesNoDialog(myProject, RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type"),

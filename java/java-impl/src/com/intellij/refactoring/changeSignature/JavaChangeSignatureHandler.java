@@ -97,10 +97,18 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Nullable
-  public PsiMember findTargetMember(PsiFile file, Editor editor) {
+  public PsiElement findTargetMember(PsiFile file, Editor editor) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    return findTargetMember(element);
+  }
+
+  public PsiElement findTargetMember(PsiElement element) {
     if (PsiTreeUtil.getParentOfType(element, PsiParameterList.class) != null) {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    }
+
+    if (element.getParent() instanceof PsiMethod && ((PsiMethod)element.getParent()).getNameIdentifier()==element) {
+      return element.getParent();
     }
 
     final PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -133,10 +141,10 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
       if (referenceElement != null) {
         final PsiElement resolved = referenceElement.resolve();
         if (resolved instanceof PsiClass) {
-          return (PsiMember)resolved;
+          return resolved;
         }
         else if (resolved instanceof PsiMethod) {
-          return (PsiMember)resolved;
+          return resolved;
         }
       }
     }

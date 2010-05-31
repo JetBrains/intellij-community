@@ -524,6 +524,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     return true;
   }
 
+  public boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages) {
+    return false;
+  }
+
   private static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)changeInfo.getMethod().copy();
     final PsiClass targetClass = changeInfo.getMethod().getContainingClass();
@@ -854,6 +858,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       try {
         PsiMethod prototype;
         final PsiMethod method = myChangeInfo.getMethod();
+        if (!StdLanguages.JAVA.equals(method.getLanguage())) return;
         PsiManager manager = PsiManager.getInstance(method.getProject());
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final CanonicalTypes.Type returnType = myChangeInfo.getNewReturnType();

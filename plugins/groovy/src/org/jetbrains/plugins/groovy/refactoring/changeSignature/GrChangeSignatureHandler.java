@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -87,15 +88,36 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Nullable
-  public PsiMethod findTargetMember(PsiFile file, Editor editor) {
+  public PsiElement findTargetMember(PsiFile file, Editor editor) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    final PsiElement targetMember = findTargetMember(element);
+    if (targetMember != null) return targetMember;
+
+    final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
+    if (reference != null) {
+      return reference.resolve();
+    }
+    return null;
+  }
+
+  @Nullable
+  public PsiElement findTargetMember(PsiElement element) {
     final GrParameterList parameterList = PsiTreeUtil.getParentOfType(element, GrParameterList.class);
     if (parameterList != null) {
       final PsiElement parent = parameterList.getParent();
-      if (parent instanceof PsiMethod) return (PsiMethod)parent;
+      if (parent instanceof PsiMethod) return parent;
+    }
+
+    if (element.getParent() instanceof GrMethod && ((GrMethod)element.getParent()).getNameIdentifierGroovy() == element) {
+      return element.getParent();
     }
     final GrMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, GrMethodCallExpression.class);
-    if (expression == null) return null;
-    return expression.resolveMethod();
+    if (expression != null) {
+      return expression.resolveMethod();
+    }
+
+    final PsiReference ref = element.getReference();
+    if (ref == null) return null;
+    return ref.resolve();
   }
 }

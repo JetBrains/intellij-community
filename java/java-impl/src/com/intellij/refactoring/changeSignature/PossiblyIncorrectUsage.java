@@ -15,22 +15,10 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
-import org.jetbrains.annotations.Nullable;
-
 /**
+ * All Usages that may be incorrect must implement this interface. In other case incorrect usages will be processed by default processor  
  * @author Maxim.Medvedev
  */
-public interface ChangeSignatureHandler extends RefactoringActionHandler {
-  String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
-
-  @Nullable
-  PsiElement findTargetMember(PsiFile file, Editor editor);
-
-  @Nullable
-  PsiElement findTargetMember(PsiElement element);
+public interface PossiblyIncorrectUsage {
+  boolean isCorrect();
 }

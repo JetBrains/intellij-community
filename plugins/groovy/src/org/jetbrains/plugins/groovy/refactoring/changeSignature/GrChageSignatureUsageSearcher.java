@@ -34,10 +34,8 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -206,16 +204,7 @@ class GrChageSignatureUsageSearcher {
 
         boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
         if (PsiUtil.isMethodUsage(element)) {
-          final GrArgumentList argList = PsiUtil.getArgumentsList(element);
-          //enum constant may not have argList
-          if (argList == null) {
-            if (element instanceof GrEnumConstant) {
-              result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
-            }
-          }
-          else {
-            result.add(new GrMethodCallUsageInfo(element, isToModifyArgs,isToCatchExceptions));
-          }
+          result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions, method));
         }
         else if (element instanceof GrDocTagValueToken) {
           result.add(new UsageInfo(ref.getElement()));
@@ -229,7 +218,7 @@ class GrChageSignatureUsageSearcher {
           LOG.assertTrue(method.isConstructor());
           final PsiClass psiClass = (PsiClass)element;
           if (psiClass instanceof GrAnonymousClassDefinition) {
-            result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
+            result.add(new GrMethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions, method));
             continue;
           }
           /*if (!(myChangeInfo instanceof JavaChangeInfoImpl)) continue; todo propagate methods
@@ -273,6 +262,8 @@ class GrChageSignatureUsageSearcher {
 
     return overridingMethods;
   }
+
+
 
   private static void addParameterUsages(PsiParameter parameter, ArrayList<UsageInfo> results, ParameterInfo info) {
     PsiManager manager = parameter.getManager();

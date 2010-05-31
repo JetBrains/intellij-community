@@ -35,4 +35,6 @@ public interface ChangeSignatureUsageProcessor {
   boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages);
 
   boolean processPrimaryMethod(ChangeInfo changeInfo);
+
+  boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages);
 }

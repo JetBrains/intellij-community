@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaParameterInfo;
@@ -151,7 +152,11 @@ class GrChangeInfoImpl implements JavaChangeInfo {
     }
 
     if (myIsNameChanged) {
-      myNewNameIdentifier = JavaPsiFacade.getElementFactory(getMethod().getProject()).createIdentifier(newName);
+      if (StringUtil.isJavaIdentifier(newName)) {
+        myNewNameIdentifier = JavaPsiFacade.getElementFactory(getMethod().getProject()).createIdentifier(newName);
+      } else {
+        myNewNameIdentifier = getMethod().getNameIdentifier();
+      }
     }
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
@@ -189,8 +194,6 @@ class GrChangeInfoImpl implements JavaChangeInfo {
         }
       }
     }
-
-
   }
 
   @NotNull

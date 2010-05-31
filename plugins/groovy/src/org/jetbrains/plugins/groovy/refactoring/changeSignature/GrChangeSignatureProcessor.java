@@ -23,6 +23,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
+import com.intellij.refactoring.changeSignature.PossiblyIncorrectUsage;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -85,7 +86,9 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
       else {
         moveRenameInfos.remove(element);
         usedElements.add(element);
-        result.add(info);
+        if (!(info instanceof PossiblyIncorrectUsage) || ((PossiblyIncorrectUsage)info).isCorrect()) {
+          result.add(info);
+        }
       }
     }
     result.addAll(moveRenameInfos.values());
@@ -157,5 +160,13 @@ public class GrChangeSignatureProcessor extends BaseRefactoringProcessor {
     refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
     prepareSuccessful();
     return true;
+  }
+
+  @Override
+  protected boolean isPreviewUsages(UsageInfo[] usages) {
+    for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
+      if (processor.shouldPreviewUsages(myChangeInfo, usages)) return true;
+    }
+    return super.isPreviewUsages(usages);
   }
 }

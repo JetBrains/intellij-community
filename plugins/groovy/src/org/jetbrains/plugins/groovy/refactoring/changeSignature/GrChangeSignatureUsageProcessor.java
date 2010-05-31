@@ -106,6 +106,17 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     return processPrimaryMethodInner(grInfo, method, null);
   }
 
+  public boolean shouldPreviewUsages(ChangeInfo changeInfo, UsageInfo[] usages) {
+    if (!StringUtil.isJavaIdentifier(changeInfo.getNewName())) return true;
+
+    for (UsageInfo usage : usages) {
+      if (usage instanceof GrMethodCallUsageInfo) {
+        if (((GrMethodCallUsageInfo)usage).isPossibleUsage()) return true;
+      }
+    }
+    return false;
+  }
+
   private static boolean generateDelegate(GrChangeInfoImpl grInfo) {
     final GrMethod method = grInfo.getMethod();
     final PsiClass psiClass = method.getContainingClass();
