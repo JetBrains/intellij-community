@@ -59,13 +59,11 @@ public abstract class HgUtil {
   public static void markDirectoryDirty( final Project project, final FilePath file ) {
     Application application = ApplicationManager.getApplication();
     application.runReadAction(new Runnable() {
-      @Override
       public void run() {
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
       }
     } );
     application.runWriteAction(new Runnable() {
-      @Override
       public void run() {
         VirtualFile virtualFile = VcsUtil.getVirtualFile(file.getPath());
         if (virtualFile != null) {
@@ -78,13 +76,11 @@ public abstract class HgUtil {
   public static void markDirectoryDirty( final Project project, final VirtualFile file ) {
     Application application = ApplicationManager.getApplication();
     application.runReadAction(new Runnable() {
-      @Override
       public void run() {
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
       }
     } );
     application.runWriteAction(new Runnable() {
-      @Override
       public void run() {
         file.refresh(true, true);
       }
@@ -94,13 +90,11 @@ public abstract class HgUtil {
   public static void markFileDirty( final Project project, final FilePath file ) {
     Application application = ApplicationManager.getApplication();
     application.runReadAction(new Runnable() {
-      @Override
       public void run() {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
     } );
     application.runWriteAction(new Runnable() {
-      @Override
       public void run() {
         VirtualFile virtualFile = VcsUtil.getVirtualFile(file.getPath());
         if (virtualFile != null) {
@@ -113,13 +107,11 @@ public abstract class HgUtil {
   public static void markFileDirty( final Project project, final VirtualFile file ) {
     Application application = ApplicationManager.getApplication();
     application.runReadAction(new Runnable() {
-      @Override
       public void run() {
         VcsDirtyScopeManager.getInstance(project).fileDirty(file);
       }
     } );
     application.runWriteAction(new Runnable() {
-      @Override
       public void run() {
         file.refresh(true, false);
       }
@@ -143,7 +135,6 @@ public abstract class HgUtil {
         @Override
         public void run() {
           File[] files = file.getParentFile().listFiles(new FilenameFilter() {
-            @Override
             public boolean accept(File dir, String name) {
               return name.startsWith(fileName);
             }
