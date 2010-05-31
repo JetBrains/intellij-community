@@ -59,11 +59,12 @@ import java.util.Properties;
  */
 public class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
+  private static final String JAVA_LANG_OVERRIDE = "java.lang.Override";
 
   private GroovyOverrideImplementUtil() {
   }
 
-  public static void invokeOverrideImplement(final Project project, final Editor editor, final PsiFile file, boolean isImplement) {
+  public static void invokeOverrideImplement(final Project project, final Editor editor, final PsiFile file, final boolean isImplement) {
     final int offset = editor.getCaretModel().getOffset();
 
     PsiElement parent = file.findElementAt(offset);
@@ -119,6 +120,9 @@ public class GroovyOverrideImplementUtil {
             modifierList.setModifierProperty(PsiModifier.NATIVE, false);
 
             setupOverridingMethodBody(project, method, result, template, substitutor);
+            if (!isImplement) {
+              result.getModifierList().addAnnotation(JAVA_LANG_OVERRIDE);
+            }
 
             final GrTypeDefinitionBody classBody = aClass.getBody();
             final PsiMethod[] methods = aClass.getMethods();
