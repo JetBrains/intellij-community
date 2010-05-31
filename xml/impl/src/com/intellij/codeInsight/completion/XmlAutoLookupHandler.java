@@ -19,10 +19,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.xml.util.XmlUtil;
 
 /**
@@ -53,6 +55,27 @@ public class XmlAutoLookupHandler extends CodeCompletionHandlerBase {
     PsiElement lastElement = InjectedLanguageUtil.findElementAtNoCommit(file, offset - 1);
     if (lastElement == null) return;
 
+    if(!doCompleteIfNeeded(offset1, offset2, context, dummyIdentifier, editor, invocationCount, file, lastElement)) {
+      // In template language based file we need to check element from template data language tree, not from base language 
+      FileViewProvider fileViewProvider = file.getViewProvider();
+      Language templateDataLanguage;
+      
+      if (fileViewProvider instanceof TemplateLanguageFileViewProvider &&
+          (templateDataLanguage = ((TemplateLanguageFileViewProvider)fileViewProvider).getTemplateDataLanguage()) != lastElement.getParent().getLanguage()
+         ) {
+        lastElement = fileViewProvider.findElementAt(offset - 1, templateDataLanguage);
+        if (lastElement == null) return;
+        doCompleteIfNeeded(offset1, offset2, context, dummyIdentifier, editor, invocationCount, file, lastElement);
+      }
+    }
+  }
+
+  private boolean doCompleteIfNeeded(int offset1,
+                      int offset2,
+                      CompletionContext context,
+                      FileCopyPatcher dummyIdentifier,
+                      Editor editor,
+                      int invocationCount, PsiFile file, PsiElement lastElement) {
     final Ref<Boolean> isRelevantLanguage = new Ref<Boolean>();
     final Ref<Boolean> isAnt = new Ref<Boolean>();
     String text = lastElement.getText();
@@ -66,7 +89,10 @@ public class XmlAutoLookupHandler extends CodeCompletionHandlerBase {
         text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
         text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
       super.doComplete(offset1, offset2, context, dummyIdentifier, editor, invocationCount);
+      return true;
     }
+    
+    return false;
   }
 
   private static boolean isLanguageRelevant(final PsiElement element,
