@@ -1,1 +1,1 @@
-a = (<warning descr="Expression can be simplified"><caret>b != False</warning>)
+if <warning descr="Expression can be simplified"><caret>b != False</warning>: pass

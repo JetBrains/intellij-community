@@ -1,1 +1,1 @@
-a = (b)
+if b: pass
