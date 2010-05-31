@@ -61,4 +61,8 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testSuperInTheSameContextQualified() throws Exception {
     doTest();
   }
+
+  public void testInsertSuperQualifierWhenNameConflicts() throws Exception {
+    doTest();
+  }
 }
