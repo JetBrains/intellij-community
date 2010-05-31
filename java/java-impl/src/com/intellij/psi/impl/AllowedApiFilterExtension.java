@@ -23,13 +23,14 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class AllowedApiFilterExtension {
   public static final ExtensionPointName<AllowedApiFilterExtension> EP_NAME = ExtensionPointName.create("com.intellij.allowedApiFilter");
 
-  public abstract boolean isClassForbidden(String fqn, PsiElement place);
+  public abstract boolean isClassForbidden(@NotNull String fqn, PsiElement place);
 
-  public static boolean isClassAllowed(String fqn, PsiElement place) {
+  public static boolean isClassAllowed(@NotNull String fqn, PsiElement place) {
     for (AllowedApiFilterExtension extension : Extensions.getExtensions(EP_NAME)) {
       if (extension.isClassForbidden(fqn, place)) return false;
     }
