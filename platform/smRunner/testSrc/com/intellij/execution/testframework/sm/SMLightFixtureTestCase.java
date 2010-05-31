@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -37,6 +38,11 @@ import java.io.IOException;
  * @author Roman.Chernyatchik
  */
 public abstract class SMLightFixtureTestCase extends UsefulTestCase {
+
+  protected SMLightFixtureTestCase() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
+
   protected static final LightProjectDescriptor ourDescriptor = new LightProjectDescriptor() {
     public ModuleType getModuleType() {
       return ModuleType.EMPTY;
