@@ -18,11 +18,14 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataCache;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -37,7 +40,10 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,9 +66,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -70,7 +74,7 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
-  private static final Key<CachedValue<FactoryMap<String, PsiClass>>> IMPLICITLY_IMPORTABLE_CLASSES = Key.create("IMplicitlyImportable");
+  private static final Key<CachedValue<FactoryMap<String, Set<String>>>> IMPLICITLY_IMPORTABLE_CLASSES = Key.create("IMplicitlyImportable");
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
   private static final Object lock = new Object();
 
@@ -158,7 +162,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
 
-    if (processClasses && !processImplicitImports(processor, state, lastParent, place)) {
+    if (processClasses && !processImplicitImports(processor, state, lastParent, place, expectedName)) {
       return false;
     }
 
@@ -189,7 +193,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       }
     }
     for (String pkg : getImplicitlyImportedPackages()) {
-      if (qname.equals(pkg + "." + expectedName)) {
+      if (qname.equals(pkg + "." + expectedName) || pkg.length() == 0 && qname.equals(expectedName)) {
         return true;
       }
     }
@@ -208,9 +212,16 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   }
 
   private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent,
-                                         PsiElement place) {
+                                         PsiElement place, @Nullable String className) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+
+    final FactoryMap<String, Set<String>> cache = getImplicitlyImportableClassNames();
+
     for (final String implicitlyImported : getImplicitlyImportedPackages()) {
+      if (className != null && !cache.get(implicitlyImported).contains(className)) {
+        continue;
+      }
+
       PsiPackage aPackage = facade.findPackage(implicitlyImported);
       if (aPackage != null && !aPackage.processDeclarations(processor, state, lastParent, place)) return false;
     }
@@ -221,6 +232,35 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
     return true;
   }
+
+  @NotNull
+  private FactoryMap<String, Set<String>> getImplicitlyImportableClassNames() {
+    final Module module = ModuleUtil.findModuleForPsiElement(this);
+    UserDataHolder holder = module != null ? module : this;
+
+    return CachedValuesManager.getManager(getProject()).getCachedValue(holder, IMPLICITLY_IMPORTABLE_CLASSES, new CachedValueProvider<FactoryMap<String, Set<String>>>() {
+      public Result<FactoryMap<String, Set<String>>> compute() {
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+
+        final FactoryMap<String, Set<String>> result = new ConcurrentFactoryMap<String, Set<String>>() {
+          @Override
+          protected Set<String> create(String pkgName) {
+            final HashSet<String> shortNames = new HashSet<String>();
+            PsiPackage aPackage = facade.findPackage(pkgName);
+            if (aPackage != null) {
+              for (PsiClass aClass : aPackage.getClasses()) {
+                ContainerUtil.addIfNotNull(aClass.getName(), shortNames);
+              }
+            }
+            return shortNames;
+          }
+        };
+
+        return Result.create(result, ProjectRootManager.getInstance(getProject()), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    }, false);
+  }
+
 
 
   private static boolean processChildrenScopes(PsiElement element,
