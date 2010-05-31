@@ -12,13 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.util.IconLoader;
-import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.HgVcsMessages;
+import com.intellij.openapi.util.*;
+import org.apache.commons.lang.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
 
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
+import javax.swing.*;
+import java.util.*;
 
 public class HgCurrentBranchStatus extends JLabel {
 
@@ -29,12 +29,21 @@ public class HgCurrentBranchStatus extends JLabel {
     setVisible(false);
   }
 
-  public void setCurrentBranch(String branch) {
+  public void updateFor(@Nullable String branch, @NotNull List<HgRevisionNumber> parents) {
+    StringBuffer parentsBuffer = new StringBuffer();
+    for (HgRevisionNumber parent : parents) {
+      String rev = parent.getRevision();
+      parentsBuffer.append(rev).append(", ");
+    }
+    int length = parentsBuffer.length();
+    if (length > 2) {
+      parentsBuffer.delete(length - 2, length);
+    }
     String statusText = StringUtils.isNotBlank(branch)
-      ? HgVcsMessages.message("hg4idea.status.currentBranch.text", branch) : "";
+      ? HgVcsMessages.message("hg4idea.status.currentSituationtext", branch, parentsBuffer.toString()) : "";
 
-    String toolTipText = StringUtils.isNotBlank(branch)
-      ? HgVcsMessages.message("hg4idea.status.currentBranch.description") : "";
+    String toolTipText = StringUtils.isNotBlank(statusText)
+      ? HgVcsMessages.message("hg4idea.status.currentSituation.description") : "";
 
     setVisible(StringUtils.isNotBlank(branch));
     setText(statusText);

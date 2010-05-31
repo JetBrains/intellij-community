@@ -12,16 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.*;
 
-import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.nio.charset.*;
+import java.util.*;
 
 public class HgVersionCommand {
 
   public boolean isValid(String executable) {
     String hgExecutable = StringUtils.trim(executable);
-    if (!hgExecutable.contains("hg")) {
+    if (!hgExecutable.endsWith("hg")) {
       return false;
     }
     ShellCommand shellCommand = new ShellCommand();

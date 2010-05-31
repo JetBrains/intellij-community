@@ -12,40 +12,45 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.zmlx.hg4idea.command.HgCatCommand;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.history.*;
+import org.apache.commons.lang.builder.*;
+import org.zmlx.hg4idea.command.*;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.nio.charset.*;
+import java.util.*;
 
 public class HgFileRevision implements VcsFileRevision {
 
   private final Project project;
   private final HgFile hgFile;
   private final HgRevisionNumber vcsRevisionNumber;
-
-  private String branchName;
-  private Date revisionDate;
-  private String author;
-  private String commitMessage;
-  private Set<String> filesModified;
-  private Set<String> filesAdded;
-  private Map<String, String> filesCopied;
-  private Set<String> filesDeleted;
+  private final String branchName;
+  private final Date revisionDate;
+  private final String author;
+  private final String commitMessage;
+  private final Set<String> filesModified;
+  private final Set<String> filesAdded;
+  private final Set<String> filesDeleted;
   private byte[] content;
+  private Map<String,String> filesCopied;
 
-  public HgFileRevision(Project project, HgFile hgFile, HgRevisionNumber vcsRevisionNumber) {
+  public HgFileRevision(Project project, HgFile hgFile, HgRevisionNumber vcsRevisionNumber,
+    String branchName, Date revisionDate, String author, String commitMessage,
+    Set<String> filesModified, Set<String> filesAdded, Set<String> filesDeleted, Map<String, String> filesCopied) {
     this.project = project;
     this.hgFile = hgFile;
     this.vcsRevisionNumber = vcsRevisionNumber;
+    this.branchName = branchName;
+    this.revisionDate = revisionDate;
+    this.author = author;
+    this.commitMessage = commitMessage;
+    this.filesModified = filesModified;
+    this.filesAdded = filesAdded;
+    this.filesDeleted = filesDeleted;
+    this.filesCopied = filesCopied;
   }
 
   public HgRevisionNumber getRevisionNumber() {
@@ -68,52 +73,20 @@ public class HgFileRevision implements VcsFileRevision {
     return commitMessage;
   }
 
-  public void setBranchName(String branchName) {
-    this.branchName = branchName;
-  }
-
-  public void setRevisionDate(Date revisionDate) {
-    this.revisionDate = revisionDate;
-  }
-
-  public void setAuthor(String author) {
-    this.author = author;
-  }
-
-  public void setCommitMessage(String commitMessage) {
-    this.commitMessage = commitMessage;
-  }
-
-  public Set<String> getFilesModified() {
+  public Set<String> getModifiedFiles() {
     return filesModified;
   }
 
-  public void setFilesModified(Set<String> filesModified) {
-    this.filesModified = filesModified;
-  }
-
-  public Set<String> getFilesAdded() {
+  public Set<String> getAddedFiles() {
     return filesAdded;
   }
 
-  public void setFilesAdded(Set<String> filesAdded) {
-    this.filesAdded = filesAdded;
-  }
-
-  public Map<String, String> getFilesCopied() {
-    return filesCopied;
-  }
-
-  public void setFilesCopied(Map<String, String> filesCopied) {
-    this.filesCopied = filesCopied;
-  }
-
-  public Set<String> getFilesDeleted() {
+  public Set<String> getDeletedFiles() {
     return filesDeleted;
   }
 
-  public void setFilesDeleted(Set<String> filesDeleted) {
-    this.filesDeleted = filesDeleted;
+  public Map<String, String> getCopiedFiles() {
+    return filesCopied;
   }
 
   public void loadContent() throws VcsException {

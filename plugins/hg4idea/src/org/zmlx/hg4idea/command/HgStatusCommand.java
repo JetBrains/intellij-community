@@ -12,18 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.HgFile;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import org.apache.commons.lang.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 public class HgStatusCommand {
 
@@ -41,6 +38,8 @@ public class HgStatusCommand {
   private boolean includeUnknown = true;
   private boolean includeIgnored = true;
   private boolean includeCopySource = true;
+  private HgRevisionNumber baseRevision;
+  private HgRevisionNumber targetRevision;
 
   public HgStatusCommand(Project project) {
     this.project = project;
@@ -74,7 +73,24 @@ public class HgStatusCommand {
     this.includeCopySource = includeCopySource;
   }
 
+  public void setBaseRevision(HgRevisionNumber base) {
+    baseRevision = base;
+  }
+
+  public void setTargetRevision(HgRevisionNumber target) {
+    targetRevision = target;
+  }
+
   public Set<HgChange> execute(VirtualFile repo) {
+    return doExecute(repo, null);
+  }
+
+  public HgChange execute(VirtualFile repo, @NotNull String file) {
+    Set<HgChange> changes = doExecute(repo, file);
+    return changes.isEmpty() ? null : changes.iterator().next();
+  }
+
+  private Set<HgChange> doExecute(VirtualFile repo, String file) {
     if (repo == null) {
       return Collections.emptySet();
     }
@@ -103,6 +119,18 @@ public class HgStatusCommand {
     if (includeCopySource) {
       arguments.add("--copies");
     }
+    if (baseRevision != null) {
+      arguments.add("--rev");
+      arguments.add(baseRevision.getChangeset());
+      if (targetRevision != null) {
+        arguments.add("--rev");
+        arguments.add(targetRevision.getChangeset());
+      }
+    }
+
+    if (file != null) {
+      arguments.add(file);
+    }
 
     HgCommandResult result = service.execute(repo, "status", arguments);
     Set<HgChange> changes = new HashSet<HgChange>();
@@ -126,5 +154,4 @@ public class HgStatusCommand {
     }
     return changes;
   }
-
 }

@@ -12,11 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.actions.StandardVcsGroup;
-import org.zmlx.hg4idea.HgVcs;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.actions.*;
+import org.zmlx.hg4idea.*;
 
 public class HgMercurialMenu extends StandardVcsGroup {
 
@@ -24,4 +23,8 @@ public class HgMercurialMenu extends StandardVcsGroup {
     return ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
   }
 
+  @Override
+  public String getVcsName(Project project) {
+    return HgVcs.VCS_NAME;
+  }
 }

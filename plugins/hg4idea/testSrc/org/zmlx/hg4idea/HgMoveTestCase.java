@@ -12,10 +12,10 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import org.testng.annotations.Test;
+import com.intellij.openapi.vfs.*;
+import org.testng.annotations.*;
 
-import java.io.File;
+import java.io.*;
 
 public class HgMoveTestCase extends HgTestCase {
 
@@ -27,19 +27,19 @@ public class HgMoveTestCase extends HgTestCase {
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHg("status"), "A org/a.txt");
+    verify(runHgOnProjectRepo("status"), added("org", "a.txt"));
   }
 
   @Test
   public void testMoveUnchangedFile() throws Exception {
     VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "com");
     VirtualFile file = createFileInCommand(parent1, "a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHg("status"), "A org/a.txt", "R com/a.txt");
+    verify(runHgOnProjectRepo("status"), added("org", "a.txt"), removed("com", "a.txt"));
   }
 
   @Test
@@ -47,12 +47,12 @@ public class HgMoveTestCase extends HgTestCase {
     VirtualFile parent1 = createDirInCommand(myWorkingCopyDir, "com");
     VirtualFile dir = createDirInCommand(parent1, "zzz");
     createFileInCommand(dir, "a.txt", "new file content");
-    runHg("commit", "-m", "added file");
+    runHgOnProjectRepo("commit", "-m", "added file");
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(dir, parent2);
 
-    verify(runHg("status"), "A org/zzz/a.txt", "R com/zzz/a.txt");
+    verify(runHgOnProjectRepo("status"), added("org", "zzz", "a.txt"), removed("com", "zzz", "a.txt"));
   }
 
   @Test
@@ -62,12 +62,12 @@ public class HgMoveTestCase extends HgTestCase {
     File unversionedFile = new File(parent1.getPath(), "a.txt");
     VirtualFile file = makeFile(unversionedFile);
 
-    verify(runHg("status"), "? com/a.txt");
+    verify(runHgOnProjectRepo("status"), unknown("com", "a.txt"));
 
     VirtualFile parent2 = createDirInCommand(myWorkingCopyDir, "org");
     moveFileInCommand(file, parent2);
 
-    verify(runHg("status"), "? org/a.txt");
+    verify(runHgOnProjectRepo("status"), unknown("org", "a.txt"));
   }
 
 }

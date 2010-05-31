@@ -12,23 +12,20 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.ui.HgUsernamePasswordDialog;
-import org.zmlx.hg4idea.HgVcs;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import org.apache.commons.lang.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.net.URISyntaxException;
+import java.util.*;
 
 public class HgPushCommand {
 
   private final Project project;
   private final VirtualFile repo;
   private final String destination;
+  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
 
   private String revision;
 
@@ -49,25 +46,8 @@ public class HgPushCommand {
       arguments.add(revision);
     }
     arguments.add(destination);
-    HgCommandResult result = HgCommandService.getInstance(project).execute(repo, "push", arguments);
-    if (HgErrorUtil.isAbort(result) && HgErrorUtil.isAuthorizationRequiredAbort(result)) {
-      try {
-        HgUrl hgUrl = new HgUrl(destination);
-        if (hgUrl.supportsAuthentication()) {
-          HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project);
-          dialog.setUsername(hgUrl.getUsername());
-          dialog.show();
-          if (dialog.isOK()) {
-            hgUrl.setUsername(dialog.getUsername());
-            hgUrl.setPassword(String.valueOf(dialog.getPassword()));
-            arguments.set(arguments.size() - 1, hgUrl.asString());
-            result = HgCommandService.getInstance(project).execute(repo, "push", arguments);
-          }
-        }
-      } catch (URISyntaxException e) {
-        VcsUtil.showErrorMessage(project, "Invalid destination: " + destination, "Error");
-      }
-    }
+
+    HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(project, repo, destination, "push", arguments);
 
     project.getMessageBus().syncPublisher(HgVcs.OUTGOING_TOPIC).update(project);
 

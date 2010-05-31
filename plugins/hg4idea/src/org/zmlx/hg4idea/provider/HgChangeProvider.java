@@ -12,35 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.changes.ChangelistBuilder;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgContentRevision;
-import org.zmlx.hg4idea.command.HgChange;
-import org.zmlx.hg4idea.command.HgFileStatusEnum;
-import org.zmlx.hg4idea.command.HgResolveCommand;
-import org.zmlx.hg4idea.command.HgResolveStatusEnum;
-import org.zmlx.hg4idea.command.HgStatusCommand;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.vcsUtil.*;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.*;
 
-import java.util.EnumMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HgChangeProvider implements ChangeProvider {
 
@@ -97,7 +79,7 @@ public class HgChangeProvider implements ChangeProvider {
     sendChanges(builder, hgChanges,
       new HgResolveCommand(project).list(repo),
       new HgWorkingCopyRevisionsCommand(project).identify(repo),
-      new HgWorkingCopyRevisionsCommand(project).parent(repo)
+      new HgWorkingCopyRevisionsCommand(project).firstParent(repo)
     );
     processedRoots.add(repo);
   }
@@ -115,9 +97,15 @@ public class HgChangeProvider implements ChangeProvider {
         builder.processChange(
           new Change(
             new HgContentRevision(project, beforeFile, parentRevision),
-            HgCurrentContentRevisionFactory.build(afterFile, workingRevision),
+            HgCurrentContentRevision.create(afterFile, workingRevision),
             FileStatus.MERGED_WITH_CONFLICTS
           ), vcsKey);
+        continue;
+      }
+
+      if (isDeleteOfCopiedFile(change, changes)) {
+        // Don't register the 'delete' change for renamed or moved files; IDEA already handles these
+        // itself.
         continue;
       }
 
@@ -129,131 +117,156 @@ public class HgChangeProvider implements ChangeProvider {
     }
   }
 
-}
-
-
-enum HgChangeProcessor {
-  ADDED() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      processChange(
-        null,
-        HgCurrentContentRevisionFactory.build(afterFile, currentNumber),
-        FileStatus.ADDED,
-        builder,
-        vcsKey
-      );
+  private boolean isDeleteOfCopiedFile(HgChange change, Set<HgChange> changes) {
+    if (change.getStatus().equals(HgFileStatusEnum.DELETED)) {
+      for (HgChange otherChange : changes) {
+        if (otherChange.getStatus().equals(HgFileStatusEnum.COPY) &&
+          otherChange.beforeFile().equals(change.afterFile())) {
+          return true;
+        }
+      }
     }
-  },
 
-  DELETED() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      processChange(
-        new HgContentRevision(project, beforeFile, parentRevision),
-        null,
-        FileStatus.DELETED,
-        builder,
-        vcsKey
-      );
-    }
-  },
+    return false;
+  }
 
-  IGNORED() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      builder.processIgnoredFile(VcsUtil.getVirtualFile(afterFile.getFile()));
-    }
-  },
+  private enum HgChangeProcessor {
+    ADDED() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        processChange(
+          null,
+          HgCurrentContentRevision.create(afterFile, currentNumber),
+          FileStatus.ADDED,
+          builder,
+          vcsKey
+        );
+      }
+    },
 
-  MISSING() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      processChange(
-        new HgContentRevision(project, beforeFile, parentRevision),
-        null,
-        FileStatus.DELETED_FROM_FS,
-        builder,
-        vcsKey
-      );
-    }
-  },
+    DELETED() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        processChange(
+          new HgContentRevision(project, beforeFile, parentRevision),
+          null,
+          FileStatus.DELETED,
+          builder,
+          vcsKey
+        );
+      }
+    },
 
-  COPIED() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      processChange(
-        new HgContentRevision(project, beforeFile, parentRevision),
-        HgCurrentContentRevisionFactory.build(afterFile, currentNumber),
-        FileStatus.MODIFIED,
-        builder,
-        vcsKey
-      );
-    }
-  },
+    IGNORED() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        builder.processIgnoredFile(VcsUtil.getVirtualFile(afterFile.getFile()));
+      }
+    },
 
-  MODIFIED() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      processChange(
-        new HgContentRevision(project, beforeFile, parentRevision),
-        HgCurrentContentRevisionFactory.build(afterFile, currentNumber),
-        FileStatus.MODIFIED,
-        builder,
-        vcsKey
-      );
-    }
-  },
+    MISSING() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        processChange(
+          new HgContentRevision(project, beforeFile, parentRevision),
+          null,
+          FileStatus.DELETED_FROM_FS,
+          builder,
+          vcsKey
+        );
+      }
+    },
 
-  UNMODIFIED() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      //DO NOTHING
-    }
-  },
+    COPIED() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        if (beforeFile.getFile().exists()) {
+          // The original file exists so this is a duplication of the file.
+          // Don't create the before ContentRevision or IDEA will think
+          // this was a rename.
+          processChange(
+            null,
+            HgCurrentContentRevision.create(afterFile, currentNumber),
+            FileStatus.ADDED,
+            builder,
+            vcsKey
+          );
+        } else {
+          // The original file does not exists so this is a rename.
+          processChange(
+            new HgContentRevision(project, beforeFile, parentRevision),
+            HgCurrentContentRevision.create(afterFile, currentNumber),
+            FileStatus.MODIFIED,
+            builder,
+            vcsKey
+          );
+        }
+      }
+    },
 
-  UNVERSIONED() {
-    @Override
-    void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
-      HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
-      HgFile beforeFile, HgFile afterFile) {
-      builder.processUnversionedFile(VcsUtil.getVirtualFile(afterFile.getFile()));
-    }
-  };
+    MODIFIED() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        processChange(
+          new HgContentRevision(project, beforeFile, parentRevision),
+          HgCurrentContentRevision.create(afterFile, currentNumber),
+          FileStatus.MODIFIED,
+          builder,
+          vcsKey
+        );
+      }
+    },
 
-  abstract void process(
-    Project project,
-    VcsKey vcsKey,
-    ChangelistBuilder builder,
-    HgRevisionNumber currentNumber,
-    HgRevisionNumber parentRevision,
-    HgFile beforeFile,
-    HgFile afterFile
-  );
+    UNMODIFIED() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        //DO NOTHING
+      }
+    },
 
-  final void processChange(ContentRevision contentRevisionBefore,
-    ContentRevision contentRevisionAfter, FileStatus fileStatus,
-    ChangelistBuilder builder, VcsKey vcsKey) {
-    if (contentRevisionBefore == null && contentRevisionAfter == null) {
-      return;
-    }
-    builder.processChange(
-      new Change(contentRevisionBefore, contentRevisionAfter, fileStatus),
-      vcsKey
+    UNVERSIONED() {
+      @Override
+      void process(Project project, VcsKey vcsKey, ChangelistBuilder builder,
+        HgRevisionNumber currentNumber, HgRevisionNumber parentRevision,
+        HgFile beforeFile, HgFile afterFile) {
+        builder.processUnversionedFile(VcsUtil.getVirtualFile(afterFile.getFile()));
+      }
+    };
+
+    abstract void process(
+      Project project,
+      VcsKey vcsKey,
+      ChangelistBuilder builder,
+      HgRevisionNumber currentNumber,
+      HgRevisionNumber parentRevision,
+      HgFile beforeFile,
+      HgFile afterFile
     );
+
+    final void processChange(ContentRevision contentRevisionBefore,
+      ContentRevision contentRevisionAfter, FileStatus fileStatus,
+      ChangelistBuilder builder, VcsKey vcsKey) {
+      if (contentRevisionBefore == null && contentRevisionAfter == null) {
+        return;
+      }
+      builder.processChange(
+        new Change(contentRevisionBefore, contentRevisionAfter, fileStatus),
+        vcsKey
+      );
+    }
   }
 }

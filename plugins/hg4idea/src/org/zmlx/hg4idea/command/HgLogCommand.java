@@ -12,20 +12,23 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.HgFile;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import org.zmlx.hg4idea.*;
 
-import java.util.List;
-import java.util.LinkedList;
+import java.util.*;
 
 public class HgLogCommand extends HgRevisionsCommand {
-
+  private boolean includeRemoved;
   private boolean followCopies;
   private boolean logFile = true;
 
   public HgLogCommand(Project project) {
     super(project);
+  }
+
+  public void setIncludeRemoved(boolean includeRemoved) {
+    this.includeRemoved = includeRemoved;
   }
 
   public void setFollowCopies(boolean followCopies) {
@@ -43,10 +46,20 @@ public class HgLogCommand extends HgRevisionsCommand {
     if (followCopies) {
       arguments.add("--follow");
     }
+    if (includeRemoved) {
+      // There is a bug in mercurial that causes --follow --removed <file> to cause
+      // an error (http://mercurial.selenic.com/bts/issue2139). Avoid this combination
+      // for now, preferring to use --follow over --removed. 
+      if (!(followCopies && logFile)) {
+        arguments.add("--removed");
+      }
+    }
     arguments.add("--template");
     arguments.add(template);
-    arguments.add("--limit");
-    arguments.add(String.valueOf(limit));
+    if (limit != -1) {
+      arguments.add("--limit");
+      arguments.add(String.valueOf(limit));
+    }
     if (logFile) {
       arguments.add(hgFile.getRelativePath());
     }

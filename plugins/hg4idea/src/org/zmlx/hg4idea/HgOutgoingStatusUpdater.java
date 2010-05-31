@@ -12,23 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.application.ApplicationManager;
-import org.zmlx.hg4idea.command.HgOutgoingCommand;
-import org.zmlx.hg4idea.ui.HgChangesetStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.ui.*;
 
-import java.io.File;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 class HgOutgoingStatusUpdater implements HgUpdater {
-
-  private static final int LIMIT = 10;
 
   private final HgChangesetStatus status;
   private final HgProjectSettings projectSettings;
@@ -46,31 +40,30 @@ class HgOutgoingStatusUpdater implements HgUpdater {
       public void run() {
         new Task.Backgroundable(project, "Checking Outgoing Changesets", true) {
           public void run(@NotNull ProgressIndicator indicator) {
-            if (project.isDisposed()) return;
             HgOutgoingCommand command = new HgOutgoingCommand(project);
             VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
-            List<HgFileRevision> outgoing = new LinkedList<HgFileRevision>();
+            List<HgRevisionNumber> outgoing = new LinkedList<HgRevisionNumber>();
             for (VcsRoot root : roots) {
-              HgFile hgFile = new HgFile(root.path, new File("."));
-              outgoing.addAll(command.execute(hgFile, LIMIT - outgoing.size()));
+              outgoing.addAll(command.execute(root.path));
             }
             status.setChanges(outgoing.size(), new OutgoingChangesetFormatter(outgoing));
+            indicator.stop();
           }
         }.queue();
       }
-    }, project.getDisposed());
+    });
   }
 
   private final class OutgoingChangesetFormatter implements HgChangesetStatus.ChangesetWriter {
     private final StringBuilder builder = new StringBuilder();
 
-    private OutgoingChangesetFormatter(List<HgFileRevision> changesets) {
+    private OutgoingChangesetFormatter(List<HgRevisionNumber> changesets) {
       builder.append("<html>");
       builder.append("<b>Outgoing changesets</b>:<br>");
-      for (HgFileRevision changeset : changesets) {
+      for (HgRevisionNumber revisionNumber : changesets) {
         builder
-          .append(changeset.getRevisionNumber().asString()).append(" ")
-          .append(changeset.getCommitMessage()).append("<br>");
+          .append(revisionNumber.asString()).append(" ")
+          .append(revisionNumber.getCommitMessage()).append("<br>");
       }
       builder.append("</html>");
     }
