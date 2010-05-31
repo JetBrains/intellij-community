@@ -98,6 +98,13 @@ public class Notification {
   public void setBalloon(@Nullable final Balloon balloon) {
     if (balloon != null) {
       myBalloonRef = new WeakReference<Balloon>(balloon);
+    } else {
+      myBalloonRef = null;
     }
+  }
+
+  @Nullable
+  public Balloon getBalloon() {
+    return myBalloonRef == null ? null : myBalloonRef.get();
   }
 }
