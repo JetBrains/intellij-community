@@ -215,12 +215,20 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)
         .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
           public void run(AbstractTreeNode node) {
-            select(node, onDone);
+            if (virtualSelectTarget == null) {
+              select(node, onDone);
+            } else if (onDone != null) {
+              onDone.run();
+            }
           }
         }).notifyWhenRejected(result);
     }
     else {
-      select(alreadySelected, onDone);
+      if (virtualSelectTarget == null) {
+        select(alreadySelected, onDone);
+      } else if (onDone != null) {
+        onDone.run();
+      }
     }
   }
 
