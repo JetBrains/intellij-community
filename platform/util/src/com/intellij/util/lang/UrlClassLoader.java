@@ -34,7 +34,7 @@ public class UrlClassLoader extends ClassLoader {
   protected static final long NS_THRESHOLD = 10000000;
 
   public UrlClassLoader(ClassLoader parent) {
-    this(Arrays.asList(((URLClassLoader)parent).getURLs()), null, true, true);
+    this(Arrays.asList(((URLClassLoader)parent).getURLs()), parent.getParent(), true, true);
   }
 
   public UrlClassLoader(List<URL> urls, ClassLoader parent) {
