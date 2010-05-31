@@ -180,6 +180,10 @@ public class CopiesPanel {
       final JTextField format = createField("Format: " + wcInfo.getFormat().getName());
       copyPanel.add(format, gb1);
 
+      ++ gb1.gridy;
+      final JTextField depth = createField("Depth: " + wcInfo.getStickyDepth().getName());
+      copyPanel.add(depth, gb1);
+
       final NestedCopyType type = wcInfo.getType();
       if (NestedCopyType.external.equals(type) || NestedCopyType.switched.equals(type)) {
         ++ gb1.gridy;
