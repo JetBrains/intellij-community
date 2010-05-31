@@ -108,12 +108,12 @@ public class Merger implements IMerger {
   }
 
   private void appendComment() {
+    if (myCommitMessage.length() == 0) {
+      myCommitMessage.append("Merged from ").append(myBranchName);
+    }
     final String nextComment = myLatestProcessed.getComment();
     if (nextComment.trim().length() > 0) {
-      if (myCommitMessage.length() != 0) {
-        myCommitMessage.append('\n');
-      }
-      myCommitMessage.append(nextComment).append(" [merged from ").append(myBranchName).append(", revision ").append(myLatestProcessed.getNumber()).append("]");
+      myCommitMessage.append('\n').append(nextComment).append(" [from revision ").append(myLatestProcessed.getNumber()).append("]");
     }
   }
 
