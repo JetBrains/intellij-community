@@ -28,11 +28,14 @@ public class PyDynamicMember {
   private final String myResolveModuleName;
   private final PsiElement myTarget;
 
-  public PyDynamicMember(final String name, final String type, final boolean resolveToInstance) {
+  public PyDynamicMember(@NotNull final String name, @NotNull final String type, final boolean resolveToInstance) {
     this(name, type, type, resolveToInstance);
   }
 
-  public PyDynamicMember(final String name, final String type, final String resolveTo, final boolean resolveToInstance) {
+  public PyDynamicMember(@NotNull final String name,
+                         @NotNull final String type,
+                         @NotNull final String resolveTo,
+                         final boolean resolveToInstance) {
     myName = name;
     myResolveToInstance = resolveToInstance;
     myTypeName = type;
@@ -44,7 +47,7 @@ public class PyDynamicMember {
     myTarget = null;
   }
 
-  public PyDynamicMember(final String name, final PsiElement target) {
+  public PyDynamicMember(@NotNull final String name, @Nullable final PsiElement target) {
     myName = name;
     myTarget = target;
     myResolveToInstance = false;
@@ -99,6 +102,7 @@ public class PyDynamicMember {
 
   private class MyInstanceElement extends PyElementImpl implements PyExpression {
     private final PyClass myClass;
+
     public MyInstanceElement(PyClass clazz, PsiElement resolveTarget) {
       super(resolveTarget != null ? resolveTarget.getNode() : clazz.getNode());
       myClass = clazz;
