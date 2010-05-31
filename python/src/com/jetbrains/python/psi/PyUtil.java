@@ -341,7 +341,7 @@ public class PyUtil {
    * @return type, or null (if type cannot be determined, reference is not to a known attribute, etc.)
    */
   @Nullable
-  public static PyType getSpecialAttributeType(PyReferenceExpression ref) {
+  public static PyType getSpecialAttributeType(@Nullable PyReferenceExpression ref) {
     if (ref != null) {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {

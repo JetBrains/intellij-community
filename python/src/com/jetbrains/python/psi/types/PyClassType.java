@@ -34,7 +34,8 @@ public class PyClassType implements PyType {
    * the type system :)
    * Note that classes' and instances' member list can change during execution, so it is important to construct an instance of PyClassType
    * right in the place of reference, so that such changes could possibly be accounted for.
-   * @param source PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
+   *
+   * @param source        PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
    * @param is_definition whether this type describes an instance or a definition of the class.
    */
   public PyClassType(final @Nullable PyClass source, boolean is_definition) {
@@ -102,10 +103,19 @@ public class PyClassType implements PyType {
 
   @Nullable
   private static PsiElement resolveClassMember(PyClass aClass, String name) {
-    for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+    PsiElement result = resolveInner(aClass, name);
+    if (result != null) {
+      return result;
+    }
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       final PsiElement resolveResult = provider.resolveMember(aClass, name);
       if (resolveResult != null) return resolveResult;
     }
+
+    return null;
+  }
+
+  private static PsiElement resolveInner(PyClass aClass, String name) {
     ResolveProcessor processor = new ResolveProcessor(name);
     aClass.processDeclarations(processor, ResolveState.initial(), null, aClass); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
@@ -123,7 +133,7 @@ public class PyClassType implements PyType {
     List<Object> ret = new ArrayList<Object>();
     Condition<String> underscore_filter = new PyUtil.UnderscoreFilter(PyUtil.getInitialUnderscores(referenceExpression.getName()));
     // from providers
-    for(PyClassMembersProvider provider: Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myClass)) {
         final String name = member.getName();
         if (underscore_filter.value(name)) {
@@ -140,20 +150,23 @@ public class PyClassType implements PyType {
       for (LookupElement le : processor.getResultList()) {
         String name = le.getLookupString();
         if (names_already.contains(name)) continue;
-        if (! within_our_class && isClassPrivate(name)) continue;
+        if (!within_our_class && isClassPrivate(name)) continue;
         names_already.add(name);
         ret.add(le);
       }
     }
-    else ret.addAll(processor.getResultList());
+    else {
+      ret.addAll(processor.getResultList());
+    }
     for (PyClass ancestor : myClass.getSuperClasses()) {
       Object[] ancestry = (new PyClassType(ancestor, true)).getCompletionVariants(referenceExpression, context);
       for (Object ob : ancestry) {
         if (ob instanceof LookupElementBuilder) {
           final LookupElementBuilder lookup_elt = (LookupElementBuilder)ob;
-          if (! isClassPrivate(lookup_elt.getLookupString())) ret.add(lookup_elt.setTypeText(ancestor.getName()));
-        } else {
-          if (! isClassPrivate(ob.toString())) ret.add(ob);
+          if (!isClassPrivate(lookup_elt.getLookupString())) ret.add(lookup_elt.setTypeText(ancestor.getName()));
+        }
+        else {
+          if (!isClassPrivate(ob.toString())) ret.add(ob);
         }
       }
       ret.addAll(Arrays.asList(ancestry));
@@ -162,14 +175,17 @@ public class PyClassType implements PyType {
   }
 
   private static boolean isClassPrivate(String lookup_string) {
-    return lookup_string.startsWith("__") && ! lookup_string.endsWith("__");
+    return lookup_string.startsWith("__") && !lookup_string.endsWith("__");
   }
 
   public String getName() {
     PyClass cls = getPyClass();
-    if (cls != null)
-    return cls.getName();
-    else return null;
+    if (cls != null) {
+      return cls.getName();
+    }
+    else {
+      return null;
+    }
   }
 
   @NotNull
@@ -182,7 +198,7 @@ public class PyClassType implements PyType {
     }
     */
     // TODO: add our own ideas here, e.g. from methods other than constructor
-    return Collections.unmodifiableSet(ret); 
+    return Collections.unmodifiableSet(ret);
   }
 
   @Override
@@ -207,7 +223,7 @@ public class PyClassType implements PyType {
 
   public static boolean is(@NotNull String qName, PyType type) {
     if (type instanceof PyClassType) {
-      return qName.equals(((PyClassType) type).getClassQName());
+      return qName.equals(((PyClassType)type).getClassQName());
     }
     return false;
   }
