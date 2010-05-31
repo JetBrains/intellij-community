@@ -74,6 +74,7 @@ public class IdeaSVNConfigFile {
     }
     // remove group from groups
     mySVNConfigFile.setPropertyValue(GROUPS_GROUP_NAME, name, null, false);
+    mySVNConfigFile.deleteGroup(name, false);
   }
 
   public void addGroup(final String name, final String patterns, final Map<String, String> properties) {
