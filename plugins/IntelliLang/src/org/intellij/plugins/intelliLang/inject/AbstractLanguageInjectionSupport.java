@@ -19,7 +19,6 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
@@ -27,6 +26,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.ui.SimpleColoredText;
@@ -99,10 +99,11 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
   public static AnAction createDefaultAddAction(final Project project,
                                                 final Consumer<BaseInjection> consumer,
                                                 final AbstractLanguageInjectionSupport support) {
-    return new AnAction("Generic "+support.getId().toUpperCase(), null, Icons.FILE_ICON) {
+    return new AnAction("Generic "+ StringUtil.capitalize(support.getId()), null, Icons.FILE_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final BaseInjection injection = new BaseInjection(support.getId());
+        injection.setDisplayName("New "+support.getId()+" Injection");
         final BaseInjection newInjection = showInjectionUI(project, injection);
         if (newInjection != null) {
           consumer.consume(injection);
