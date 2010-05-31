@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.diagnostic.IdeMessagePanel;
+import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CustomizeUIAction;
@@ -23,6 +25,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,11 +35,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarCustomComponentFactory;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.status.StatusBarImpl;
+import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreen;
 import com.intellij.ui.PopupHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,14 +57,14 @@ import java.util.List;
  */
 
 // Made public and non-final for Fabrique
-public class IdeRootPane extends JRootPane{
+public class IdeRootPane extends JRootPane implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeRootPane");
 
   /**
    * Toolbar and status bar.
    */
   private JComponent myToolbar;
-  private StatusBarImpl myStatusBar;
+  private IdeStatusBarImpl myStatusBar;
 
   private final Box myNorthPanel = Box.createVerticalBox();
   private final List<IdeRootPaneNorthExtension> myNorthComponents = new ArrayList<IdeRootPaneNorthExtension>();
@@ -77,6 +83,8 @@ public class IdeRootPane extends JRootPane{
   private final IdeGlassPaneImpl myGlassPane;
 
   private final Application myApplication;
+  private MemoryUsagePanel myMemoryWidget;
+  private StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
 
   IdeRootPane(ActionManager actionManager, UISettings uiSettings, DataManager dataManager, KeymapManager keymapManager,
               final Application application, final String[] commandLineArgs){
@@ -85,6 +93,8 @@ public class IdeRootPane extends JRootPane{
 
     updateToolbar();
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
+
+    myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
 
     createStatusBar();
     updateStatusBarVisibility();
@@ -111,9 +121,6 @@ public class IdeRootPane extends JRootPane{
 
     myGlassPane.setVisible(false);
     myApplication = application;
-
-    myStatusBar.setCustomComponentsFactory(Arrays.asList(StatusBarCustomComponentFactory.EP_NAME.getExtensions()));
-
   }
 
 
@@ -206,11 +213,53 @@ public class IdeRootPane extends JRootPane{
   }
  
   private void createStatusBar() {
-    myStatusBar = new StatusBarImpl(myUISettings);
+    myUISettings.addUISettingsListener(this);
+
+    myStatusBar = new IdeStatusBarImpl();
+
+    myMemoryWidget = new MemoryUsagePanel();
+    myStatusBar.addWidget(myMemoryWidget);
+    myStatusBar.addWidget(new IdeNotificationArea(), "before Memory");
+    myStatusBar.addWidget(new IdeMessagePanel(MessagePool.getInstance()), "before Memory");
+
+    if (myStatusBarCustomComponentFactories != null) {
+      for (final StatusBarCustomComponentFactory componentFactory : myStatusBarCustomComponentFactories) {
+        final JComponent c = componentFactory.createComponent(myStatusBar);
+        myStatusBar.addWidget(new CustomStatusBarWidget() {
+          public JComponent getComponent() {
+            return c;
+          }
+
+          @NotNull
+          public String ID() {
+            return c.getClass().getSimpleName();
+          }
+
+          public Presentation getPresentation(@NotNull Type type) {
+            return null;
+          }
+
+          public void install(@NotNull StatusBar statusBar) {
+          }
+
+          public void dispose() {
+            componentFactory.disposeComponent(myStatusBar, c);
+          }
+        }, "before Memory");
+      }
+    }
+
+    setMemoryIndicatorVisible(myUISettings.SHOW_MEMORY_INDICATOR);
+  }
+
+  void setMemoryIndicatorVisible(final boolean visible) {
+    if (myMemoryWidget != null) {
+      myMemoryWidget.setShowing(visible);
+    }
   }
 
   @Nullable
-  final StatusBarEx getStatusBar() {
+  final StatusBar getStatusBar() {
     return myStatusBar;
   }
 
@@ -245,6 +294,10 @@ public class IdeRootPane extends JRootPane{
       }
     }
     return null;
+  }
+
+  public void uiSettingsChanged(UISettings source) {
+    setMemoryIndicatorVisible(source.SHOW_MEMORY_INDICATOR);
   }
 
   private final class MyUISettingsListenerImpl implements UISettingsListener{

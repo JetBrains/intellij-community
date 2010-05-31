@@ -42,7 +42,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.errorView.ContentManagerProvider;
 import com.intellij.ui.errorView.ErrorViewFactory;
@@ -120,14 +119,10 @@ public class CvsOperationExecutor {
           finally {
 
             if ((myProject != null) && (handler != CvsHandler.NULL)) {
-              StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-              if (statusBar != null) {
-                statusBar.setInfo(getStatusMessage(handler));
-              }
+              StatusBar.Info.set(getStatusMessage(handler), myProject);
             }
           }
         }
-
       }
     };
 

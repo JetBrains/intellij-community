@@ -204,9 +204,9 @@ public class HgVcs extends AbstractVcs {
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
-      statusBar.addCustomIndicationComponent(hgCurrentBranchStatus);
-      statusBar.addCustomIndicationComponent(incomingChangesStatus);
-      statusBar.addCustomIndicationComponent(outgoingChangesStatus);
+      statusBar.addWidget(hgCurrentBranchStatus, myProject);
+      statusBar.addWidget(incomingChangesStatus, myProject);
+      statusBar.addWidget(outgoingChangesStatus, myProject);
     }
 
     final HgIncomingStatusUpdater incomingUpdater =
@@ -258,9 +258,9 @@ public class HgVcs extends AbstractVcs {
       changesUpdaterScheduledFuture.cancel(true);
     }
     if (statusBar != null) {
-      statusBar.removeCustomIndicationComponent(incomingChangesStatus);
-      statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
-      statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
+      //statusBar.removeCustomIndicationComponent(incomingChangesStatus);
+      //statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
+      //statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
     }
   }
 

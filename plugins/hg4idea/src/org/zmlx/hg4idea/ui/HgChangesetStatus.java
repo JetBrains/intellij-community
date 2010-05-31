@@ -13,12 +13,13 @@
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
+import com.intellij.openapi.wm.StatusBar;
+import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 
-public class HgChangesetStatus extends JLabel {
+public class HgChangesetStatus extends JLabel implements CustomStatusBarWidget {
 
   public HgChangesetStatus(Icon icon) {
     super(icon, SwingConstants.TRAILING);
@@ -43,4 +44,22 @@ public class HgChangesetStatus extends JLabel {
     String asString();
   }
 
+  public JComponent getComponent() {
+    return this;
+  }
+
+  @NotNull
+  public String ID() {
+    return "HgChangeSetStatus";
+  }
+
+  public Presentation getPresentation(@NotNull Type type) {
+    return null;
+  }
+
+  public void install(@NotNull StatusBar statusBar) {
+  }
+
+  public void dispose() {
+  }
 }

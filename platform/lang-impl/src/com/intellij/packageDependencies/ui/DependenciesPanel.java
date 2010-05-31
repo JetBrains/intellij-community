@@ -45,7 +45,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.*;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesHandler;
 import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
@@ -177,16 +176,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           PackageDependenciesNode selectedNode = (PackageDependenciesNode)path.getLastPathComponent();
           traverseToLeaves(selectedNode, denyRules, allowRules);
         }
-        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
         if (denyRules.length() + allowRules.length() > 0) {
-          statusBar.setInfo(AnalysisScopeBundle.message("status.bar.rule.violation.message",
+          StatusBar.Info.set(AnalysisScopeBundle.message("status.bar.rule.violation.message",
                                                         ((denyRules.length() == 0 || allowRules.length() == 0) ? 1 : 2),
                                                         (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ") +
-                                                        (allowRules.length() > 0 ? allowRules.toString() : " ")));
-
+                                                        (allowRules.length() > 0 ? allowRules.toString() : " ")), myProject);
         }
         else {
-          statusBar.setInfo(AnalysisScopeBundle.message("status.bar.no.rule.violation.message"));
+          StatusBar.Info.set(AnalysisScopeBundle.message("status.bar.no.rule.violation.message"), myProject);
         }
       }
     });

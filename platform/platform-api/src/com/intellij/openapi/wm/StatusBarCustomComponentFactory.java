@@ -21,6 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.EventListener;
 
+/**
+ * @deprecated use StatusBarWidget instead
+ */
+@Deprecated
 public abstract class StatusBarCustomComponentFactory<T extends JComponent> implements EventListener {
   public static final ExtensionPointName<StatusBarCustomComponentFactory> EP_NAME = ExtensionPointName.create("com.intellij.statusBarComponent");
 

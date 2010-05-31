@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -532,7 +533,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
    public static void printToConsole(final LanguageConsoleImpl console, final String string, final TextAttributes textAttributes) {
-     final TextAttributes attributes = TextAttributes.merge(ConsoleHighlighter.OUT.getDefaultAttributes(), textAttributes);
+     final TextAttributes outAttrs = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleHighlighter.OUT);
+     final TextAttributes attributes = TextAttributes.merge(outAttrs, textAttributes);
      ApplicationManager.getApplication().invokeLater(new Runnable() {
        public void run() {
          console.printToHistory(string, attributes);

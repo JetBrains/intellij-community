@@ -16,6 +16,8 @@
 
 package com.intellij.ide.util;
 
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -33,7 +35,20 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
                                                     final boolean isSelected,
                                                     final boolean cellHasFocus) {
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        setText("");
+
+        String text = "";
+        if (value instanceof NavigationItem) {
+          final ItemPresentation presentation = ((NavigationItem)value).getPresentation();
+          if (presentation != null) {
+            String containerText = presentation.getLocationString();
+            if (containerText != null && containerText.length() > 0) {
+              text = " " + containerText;
+            }
+          }
+        }
+
+
+        setText(text);
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
         setHorizontalTextPosition(SwingConstants.LEFT);
         setBackground(isSelected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground());
@@ -41,5 +56,10 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
         return component;
       }
     };
+  }
+
+  @Override
+  public boolean rendersLocationString() {
+    return true;
   }
 }

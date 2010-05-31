@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
@@ -496,16 +497,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     frame.setTitle(null);
     frame.setFileTitle(null, null);
 
-    final StatusBarEx statusBar = frame.getStatusBar();
-    statusBar.clear();
-
     myProject2Frame.remove(project);
     if (myProject2Frame.isEmpty()) {
       myProject2Frame.put(null, frame);
     }
     else {
-
-      statusBar.dispose();
+      Disposer.dispose((StatusBarEx) frame.getStatusBar());
       frame.dispose();
     }
   }

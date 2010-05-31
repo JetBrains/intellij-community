@@ -50,7 +50,7 @@ public class RefreshProgress extends ProgressIndicatorBase {
         }
 
         for (Project project : projects) {
-          final StatusBarEx statusBar = (StatusBarEx)windowManager.getStatusBar(project);
+          final StatusBarEx statusBar = (StatusBarEx) windowManager.getStatusBar(project);
           if (statusBar == null) continue;
 
           statusBar.startRefreshIndication(myMessage);
@@ -75,7 +75,7 @@ public class RefreshProgress extends ProgressIndicatorBase {
         }
 
         for (Project project : projects) {
-          final StatusBarEx statusBar = (StatusBarEx)windowManager.getStatusBar(project);
+          final StatusBarEx statusBar = (StatusBarEx) windowManager.getStatusBar(project);
           if (statusBar == null) continue;
 
           statusBar.stopRefreshIndication();
