@@ -186,14 +186,26 @@ public class Tree extends JTree implements ComponentWithEmptyText, Autoscroll, Q
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
+        myBusyIcon.addMouseListener(new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            if (!UIUtil.isActionClick(e)) return;
+            AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(Tree.this);
+            if (builder != null) {
+              builder.cancelUpdate();
+            }
+          }
+        });
       }
     }
 
     if (myBusyIcon != null) {
       if (myBusy) {
         myBusyIcon.resume();
+        myBusyIcon.setToolTipText("Update is in progress. Click to cancel");
       } else {
         myBusyIcon.suspend();
+        myBusyIcon.setToolTipText(null);
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             if (myBusyIcon != null) {

@@ -2082,8 +2082,13 @@ public class AbstractTreeUi {
       resetToReadyNow();
       done.setDone();
     } else {
-      requestCancel();
-      getReady(this).notify(done);
+      if (isIdle() && hasPendingWork()) {
+        resetToReadyNow();
+        done.setDone();
+      } else {
+        requestCancel();
+        getReady(this).notify(done);
+      }
     }
 
     maybeReady();
