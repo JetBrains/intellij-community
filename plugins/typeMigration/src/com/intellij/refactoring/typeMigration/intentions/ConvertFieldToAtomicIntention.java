@@ -24,7 +24,6 @@ import com.intellij.refactoring.typeMigration.rules.AtomicConversionRule;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,8 +54,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiVariable == null) psiVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
     if (psiVariable == null) return false;
