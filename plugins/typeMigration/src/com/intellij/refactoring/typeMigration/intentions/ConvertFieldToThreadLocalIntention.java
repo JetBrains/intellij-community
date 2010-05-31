@@ -48,6 +48,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
+    if (element == null) return false;
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiField == null) return false;
     if (psiField.getTypeElement() == null) return false;
