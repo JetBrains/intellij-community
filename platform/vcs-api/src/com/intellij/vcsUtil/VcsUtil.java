@@ -40,7 +40,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -343,7 +343,7 @@ public class VcsUtil {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (project.isOpen()) {
-          WindowManager.getInstance().getStatusBar(project).setInfo(message);
+          StatusBar.Info.set(message, project);
         }
       }
     });

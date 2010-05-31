@@ -55,12 +55,18 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
     Font editorFont = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
     setFont(editorFont);
     removeAll();
-    final Component leftCellRendererComponent =
-      new LeftRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+    final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
+    final ModuleRendererFactory factory = ModuleRendererFactory.getInstance();
+
+    final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString());
+    final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
-    if  (UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION){
-      final DefaultListCellRenderer moduleRenderer = ModuleRendererFactory.getInstance().getModuleRenderer();
+
+    if  (hasRightRenderer){
+      final DefaultListCellRenderer moduleRenderer = factory.getModuleRenderer();
+
       final Component rightCellRendererComponent =
         moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       rightCellRendererComponent.setBackground(listBg);
@@ -76,6 +82,12 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
   }
 
   private static class LeftRenderer extends ColoredListCellRenderer {
+    public final boolean myRenderLocation;
+
+    public LeftRenderer(boolean renderLocation) {
+      myRenderLocation = renderLocation;
+    }
+
     protected void customizeCellRenderer(
       JList list,
       Object value,
@@ -129,10 +141,12 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         append(name, nameAttributes);
         setIcon(presentation.getIcon(false));
 
-        String containerText = presentation.getLocationString();
+        if (myRenderLocation) {
+          String containerText = presentation.getLocationString();
 
-        if (containerText != null && containerText.length() > 0) {
-          append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
+          if (containerText != null && containerText.length() > 0) {
+            append(" " + containerText, new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
+          }
         }
       }
       else {

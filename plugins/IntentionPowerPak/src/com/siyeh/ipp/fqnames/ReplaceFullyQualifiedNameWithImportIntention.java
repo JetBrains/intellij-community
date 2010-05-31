@@ -18,7 +18,6 @@ package com.siyeh.ipp.fqnames;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -103,16 +102,17 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
     }
 
     private static void showStatusMessage(Project project, int elementCount) {
-        final WindowManager windowManager = WindowManager.getInstance();
-        final StatusBar statusBar = windowManager.getStatusBar(project);
+      final String text;
         if (elementCount == 1) {
-            statusBar.setInfo(IntentionPowerPackBundle.message(
-                    "1.fully.qualified.name.status.bar.escape.highlighting.message"));
+            text = IntentionPowerPackBundle.message(
+                    "1.fully.qualified.name.status.bar.escape.highlighting.message");
         } else {
-            statusBar.setInfo(IntentionPowerPackBundle.message(
+            text = IntentionPowerPackBundle.message(
                     "multiple.fully.qualified.names.status.bar.escape.highlighting.message",
-                              Integer.valueOf(elementCount - 1)));
+                              Integer.valueOf(elementCount - 1));
         }
+
+      StatusBar.Info.set(text, project);
     }
 
     private static void addImport(PsiImportList importList, PsiClass aClass)

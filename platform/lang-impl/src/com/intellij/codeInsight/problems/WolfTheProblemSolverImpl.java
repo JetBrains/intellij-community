@@ -316,10 +316,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return true;
   }
 
-  private static String saveStatusBarInfo(StatusBar statusBar) {
+  private static String saveStatusBarInfo(final StatusBar statusBar) {
     String oldInfo = null;
     if (statusBar instanceof StatusBarEx) {
-      oldInfo = ((StatusBarEx)statusBar).getInfo();
+      oldInfo = statusBar.getInfo();
     }
     return oldInfo;
   }

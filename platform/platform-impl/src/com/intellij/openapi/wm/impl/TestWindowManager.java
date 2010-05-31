@@ -15,20 +15,19 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.WindowManagerListener;
-import com.intellij.openapi.wm.impl.status.StatusBarPatch;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.notification.impl.IdeNotificationArea;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ import java.awt.event.ComponentEvent;
  * @author Vladimir Kondratyev
  */
 public final class TestWindowManager extends WindowManagerEx implements ApplicationComponent{
-  private static final StatusBar ourStatusBar = new DummyStatusBar();
+  private static final StatusBarEx ourStatusBar = new DummyStatusBar();
   
   public final void doNotSuggestAsParent(final Window window) {
   }
@@ -73,40 +72,44 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   private static final class DummyStatusBar implements StatusBarEx {
     public final void setInfo(final String s) {}
 
-    public void addFileStatusComponent(final StatusBarPatch component) {
-
+    public void addCustomIndicationComponent(@NotNull JComponent c) {
     }
 
-    public void removeFileStatusComponent(final StatusBarPatch component) {
+    public void removeCustomIndicationComponent(@NotNull JComponent c) {
+    }
 
+    public void addProgress(ProgressIndicatorEx indicator, TaskInfo info) {
+    }
+
+    public void addWidget(@NotNull StatusBarWidget widget, @NotNull Disposable parentDisposable) {
+    }
+
+    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor, @NotNull Disposable parentDisposable) {
+    }
+
+    public void updateWidgets() {
+    }
+
+    public void addWidget(@NotNull StatusBarWidget widget) {
+    }
+
+    public void dispose() {
+    }
+
+    public void addWidget(@NotNull StatusBarWidget widget, @NotNull String anchor) {
+    }
+
+    public void updateWidget(@NotNull String id) {
+    }
+
+    public void removeWidget(@NotNull String id) {
     }
 
     public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) {
     }
 
-    public IdeNotificationArea getNotificationArea() {
-      return null;
-    }
-
     public final String getInfo() {
       return null;
-    }
-
-    public final void clear() {}
-
-    public void addCustomIndicationComponent(@NotNull JComponent c) {}
-
-    public void removeCustomIndicationComponent(@NotNull final JComponent c) {
-    }
-
-    public void dispose() {
-      
-    }
-
-    public void cleanupCustomComponents() {
-    }
-
-    public void add(ProgressIndicatorEx indicator, TaskInfo info) {
     }
 
     public void startRefreshIndication(final String tooltipText) {
@@ -137,10 +140,6 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
         public void hide() {
         }
       };
-    }
-
-    public void update(final Editor editor) {
-
     }
   }
 

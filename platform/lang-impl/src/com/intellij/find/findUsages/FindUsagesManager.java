@@ -42,7 +42,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -446,8 +445,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private void clearStatusBar() {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    statusBar.setInfo("");
+    StatusBar.Info.set("", myProject);
   }
 
   private static String getSearchAgainMessage(PsiElement element, final FileSearchScope direction) {
@@ -481,8 +479,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       showEditorHint(message, textEditor.getEditor());
     }
     else {
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      statusBar.setInfo(message);
+      StatusBar.Info.set(message, myProject);
     }
   }
 

@@ -29,4 +29,8 @@ public abstract class ModuleRendererFactory {
   }
 
   public abstract DefaultListCellRenderer getModuleRenderer();
+  
+  public boolean rendersLocationString() {
+    return false;
+  }
 }

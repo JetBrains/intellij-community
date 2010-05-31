@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 public class MostlySingularMultiMap<K, V> {
   private final Map<K, Object> myMap = new THashMap<K, Object>();
@@ -47,6 +48,10 @@ public class MostlySingularMultiMap<K, V> {
     else {
       myMap.put(key, new Object[]{current, value});
     }
+  }
+
+  public Set<K> keySet() {
+    return myMap.keySet();
   }
 
   public boolean processForKey(K key, Processor<V> p) {

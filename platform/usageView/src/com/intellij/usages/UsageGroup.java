@@ -27,7 +27,7 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
   Icon getIcon(boolean isOpen);
 
   @NotNull
-  String getText(UsageView view);
+  String getText(@Nullable UsageView view);
 
   @Nullable
   FileStatus getFileStatus();

@@ -140,7 +140,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   private void doBackground() {
-    myStatusBar.add(this, myInfo);
+    myStatusBar.addProgress(this, myInfo);
   }
 
   public void dispose() {

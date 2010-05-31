@@ -120,6 +120,12 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     assertInstanceOf(resolved, PsiClass.class);
   }
 
+  public void testEnumVsProperty() throws Exception {
+    PsiReference ref = configureByFile("enumVsProperty/Test.groovy");
+    final PsiElement resolved = ref.resolve();
+    assertInstanceOf(resolved, PsiClass.class);
+  }
+
   private void doTest() throws Exception {
     doTest(getTestName(true) + "/" + getTestName(false) + ".groovy");
   }
