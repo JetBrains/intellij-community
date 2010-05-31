@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsRoot;
 
@@ -24,6 +25,7 @@ import java.util.Set;
 
 public class DirtBuilder implements DirtBuilderReader {
   private final VcsGuess myGuess;
+  private final FileTypeManager myFileTypeManager;
 
   private final Set<FilePathUnderVcs> myFiles;
   private final Set<FilePathUnderVcs> myDirs;
@@ -34,6 +36,7 @@ public class DirtBuilder implements DirtBuilderReader {
     myDirs = new HashSet<FilePathUnderVcs>();
     myFiles = new HashSet<FilePathUnderVcs>();
     myEverythingDirty = false;
+    myFileTypeManager = FileTypeManager.getInstance();
   }
 
   public DirtBuilder(final DirtBuilder builder) {
@@ -41,6 +44,7 @@ public class DirtBuilder implements DirtBuilderReader {
     myDirs = new HashSet<FilePathUnderVcs>(builder.myDirs);
     myFiles = new HashSet<FilePathUnderVcs>(builder.myFiles);
     myEverythingDirty = builder.myEverythingDirty;
+    myFileTypeManager = FileTypeManager.getInstance();
   }
 
   public void reset() {
@@ -54,18 +58,22 @@ public class DirtBuilder implements DirtBuilderReader {
   }
 
   public void addDirtyFile(final VcsRoot root) {
+    if (myFileTypeManager.isFileIgnored(root.path.getName())) return;
     myFiles.add(new FilePathUnderVcs(new FilePathImpl(root.path), root.vcs));
   }
 
   public void addDirtyDirRecursively(final VcsRoot root) {
+    if (myFileTypeManager.isFileIgnored(root.path.getName())) return;
     myDirs.add(new FilePathUnderVcs(new FilePathImpl(root.path), root.vcs));
   }
 
   public void addDirtyFile(final FilePathUnderVcs root) {
+    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
     myFiles.add(root);
   }
 
   public void addDirtyDirRecursively(final FilePathUnderVcs root) {
+    if (myFileTypeManager.isFileIgnored(root.getPath().getName())) return;
     myDirs.add(root);
   }
 
