@@ -105,9 +105,9 @@ public class LibrariesUtil {
 
   @Nullable
   public static String getGroovyHomePath(@NotNull Module module) {
-    final PsiClass cUnit = JavaPsiFacade.getInstance(module.getProject())
-      .findClass("org.codehaus.groovy.control.CompilationUnit", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
-    if (cUnit != null) {
+    final PsiClass[] classes = JavaPsiFacade.getInstance(module.getProject())
+      .findClasses("org.codehaus.groovy.control.CompilationUnit", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    for (PsiClass cUnit : classes) {
       final VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(cUnit.getContainingFile().getVirtualFile());
       if (local != null) {
         final VirtualFile parent = local.getParent();
