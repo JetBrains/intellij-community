@@ -40,6 +40,7 @@ class HgIncomingStatusUpdater implements HgUpdater {
       public void run() {
         new Task.Backgroundable(project, "Checking Incoming Changesets", true) {
           public void run(@NotNull ProgressIndicator indicator) {
+            if (project.isDisposed()) return;
             HgIncomingCommand command = new HgIncomingCommand(project);
             VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
             List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
@@ -50,7 +51,7 @@ class HgIncomingStatusUpdater implements HgUpdater {
           }
         }.queue();
       }
-    });
+    }, project.getDisposed());
   }
 
   private final class IncomingChangesetFormatter implements HgChangesetStatus.ChangesetWriter {
