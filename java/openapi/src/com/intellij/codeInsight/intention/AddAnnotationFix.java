@@ -139,7 +139,7 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
       final int position = caretModel.getOffset();
       element = file.findElementAt(position);
     }
-    return isAvailable(project, editor, element);
+    return element != null && isAvailable(project, editor, element);
   }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
