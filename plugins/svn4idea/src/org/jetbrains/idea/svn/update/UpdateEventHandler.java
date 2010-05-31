@@ -20,7 +20,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
@@ -34,7 +33,6 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.util.SVNLogType;
 
-import javax.swing.*;
 import java.io.File;
 
 /**
@@ -159,17 +157,7 @@ public class UpdateEventHandler implements ISVNEventHandler {
       myText2 = SvnBundle.message("progres.text2.updated.to.revision", event.getRevision());
       if (myExternalsCount == 0) {
         myExternalsCount = 1;
-
-        final long revision = event.getRevision();
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myVCS.getProject());
-            if (statusBar != null) {
-              statusBar.setInfo(SvnBundle.message("status.text.updated.to.revision", revision));
-            }
-          }
-        });
+        StatusBar.Info.set(SvnBundle.message("status.text.updated.to.revision", event.getRevision()), myVCS.getProject());
       }
     }
     else if (event.getAction() == SVNEventAction.SKIP) {

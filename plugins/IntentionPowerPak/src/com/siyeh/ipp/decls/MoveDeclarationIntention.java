@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -97,10 +96,8 @@ public class MoveDeclarationIntention extends Intention {
         highlightManager.addOccurrenceHighlights(editor, elements,
                 textattributes, true, null);
 
-        final WindowManager windowManager = WindowManager.getInstance();
-        final StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo(IntentionPowerPackBundle.message(
-                "status.bar.escape.highlighting.message"));
+      StatusBar.Info.set(IntentionPowerPackBundle.message(
+                "status.bar.escape.highlighting.message"), project);
     }
 
     private static PsiDeclarationStatement moveDeclarationToReference(

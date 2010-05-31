@@ -18,7 +18,6 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.ui.MessageType;
@@ -27,9 +26,10 @@ import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -44,8 +44,6 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
@@ -55,9 +53,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
-public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
+public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
-  private final TextPanel myInfoPanel = new TextPanel(true);
+
+  private final TextPanel myInfoPanel = new TextPanel();
+  private final AsyncProcessIcon myProgressIcon;
 
   private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
   private final ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
@@ -67,21 +67,15 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     = new MultiValuesMap<ProgressIndicatorEx, InlineProgressIndicator>();
 
   private final MergingUpdateQueue myUpdateQueue;
-  private final AsyncProcessIcon myProgressIcon;
   private final Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
-  private final CompoundBorder myCompoundBorder;
 
-  public InfoAndProgressPanel(final StatusBar statusBar) {
+  public InfoAndProgressPanel() {
     setOpaque(false);
-    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
-    myInfoPanel.setBorder(emptyBorder);
-    myInfoPanel.setOpaque(false);
-
-    myCompoundBorder = BorderFactory.createCompoundBorder(new StatusBarImpl.SeparatorBorder.Left(), new EmptyBorder(0, 2, 0, 2));
 
     myProgressIcon = new AsyncProcessIcon("Background process");
+    myProgressIcon.setOpaque(false);
 
     myProgressIcon.addMouseListener(new MouseAdapter() {
       @Override
@@ -95,8 +89,8 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     });
 
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-    StatusBarTooltipper.install(this, myProgressIcon, statusBar);
+    myProgressIcon.setBorder(StatusBarWidget.WidgetBorder.INSTANCE);
+    myProgressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.double.click"));
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 50, true, MergingUpdateQueue.ANY_COMPONENT);
     myPopup = new ProcessPopup(this);
@@ -104,16 +98,23 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     restoreEmptyStatus();
   }
 
+  @NotNull
+  public String ID() {
+    return "InfoAndProgress";
+  }
+
+  public Presentation getPresentation(@NotNull Type type) {
+    return null;
+  }
+
+  public void install(@NotNull StatusBar statusBar) {
+  }
+
+  public void dispose() {
+  }
+
   public JComponent getComponent() {
     return this;
-  }
-
-  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
-    return ActionsBundle.message("action.ShowProcessWindow.double.click");
-  }
-
-  public void clear() {
-
   }
 
   public void addProgress(final ProgressIndicatorEx original, TaskInfo info) {
@@ -226,19 +227,24 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     removeAll();
     setLayout(new BorderLayout());
 
-    final JPanel progressCountPanel = new JPanel(new BorderLayout(0, 2));
+    final JPanel progressCountPanel = new JPanel(new BorderLayout(0, 0));
+    progressCountPanel.setOpaque(false);
     String processWord = myOriginals.size() == 1 ? " process" : " processes";
     final LinkLabel label = new LinkLabel(myOriginals.size() + processWord + " running...", null, new LinkListener() {
       public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
         triggerPopupShowing();
       }
     });
-    label.setOpaque(true);
+
+    if (SystemInfo.isMac) label.setFont(UIUtil.getLabelFont().deriveFont(11.0f));
+
+    label.setOpaque(false);
 
     final Wrapper labelComp = new Wrapper(label);
+    labelComp.setOpaque(false);
     progressCountPanel.add(labelComp, BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(myCompoundBorder);
+    //myProgressIcon.setBorder(new IdeStatusBarImpl.MacStatusBarWidgetBorder());
     progressCountPanel.add(myProgressIcon, BorderLayout.WEST);
 
     add(myInfoPanel, BorderLayout.CENTER);
@@ -263,12 +269,15 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     };
 
     inline.getComponent().setBorder(new EmptyBorder(0, 0, 0, 2));
-    inlinePanel.add(inline.getComponent(), BorderLayout.CENTER);
+    final JComponent inlineComponent = inline.getComponent();
+    inlineComponent.setOpaque(false);
+    inlinePanel.add(inlineComponent, BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(myCompoundBorder);
+    //myProgressIcon.setBorder(new IdeStatusBarImpl.MacStatusBarWidgetBorder());
     inlinePanel.add(myProgressIcon, BorderLayout.WEST);
 
     inline.updateProgressNow();
+    inlinePanel.setOpaque(false);
 
     add(inlinePanel);
 
@@ -386,13 +395,15 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
     setLayout(new BorderLayout());
     add(myInfoPanel, BorderLayout.CENTER);
 
-    myProgressIcon.setBorder(myCompoundBorder);
+    //myProgressIcon.setBorder(new IdeStatusBarImpl.MacStatusBarWidgetBorder());
 
     long wastedTime = ProgressManagerImpl.getWastedTime();
     if (ApplicationManagerEx.getApplicationEx().isInternal() && wastedTime > 10 * 60 * 1000) {
       JPanel wrapper = new JPanel(new BorderLayout());
+      wrapper.setOpaque(false);
       JLabel label = new JLabel(" Wasted time: " + formatTime(wastedTime) + " ");
       label.setForeground(UIUtil.getPanelBackground().darker());
+      label.setOpaque(false);
       wrapper.add(label, BorderLayout.CENTER);
       wrapper.add(myProgressIcon, BorderLayout.EAST);
 

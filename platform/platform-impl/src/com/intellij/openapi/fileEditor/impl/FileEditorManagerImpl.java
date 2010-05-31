@@ -1177,6 +1177,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
       else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName()) || VirtualFile.PROP_ENCODING.equals(e.getPropertyName())) {
+        // TODO: message bus?
         updateIconAndStatusbar(e);
       }
     }
@@ -1189,7 +1190,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (file.equals(getSelectedFiles()[0])) { // update "write" status
           final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
           assert statusBar != null;
-          statusBar.update(getSelectedTextEditor());
+          statusBar.updateWidgets();
         }
       }
     }

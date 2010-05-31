@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,22 +28,15 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.openapi.wm.*;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.ide.DataManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -51,7 +48,6 @@ public class IncomingChangesIndicator implements ProjectComponent {
 
   private final Project myProject;
   private final CommittedChangesCache myCache;
-  private StatusBar myStatusBar;
   private IndicatorComponent myIndicatorComponent;
 
   public IncomingChangesIndicator(Project project, CommittedChangesCache cache, MessageBus bus) {
@@ -69,12 +65,13 @@ public class IncomingChangesIndicator implements ProjectComponent {
   }
 
   public void projectOpened() {
-    myStatusBar = WindowManager.getInstance().getStatusBar(myProject);
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     myIndicatorComponent = new IndicatorComponent();
-    myStatusBar.addCustomIndicationComponent(myIndicatorComponent);
+
+    statusBar.addWidget(myIndicatorComponent);
     Disposer.register(myProject, new Disposable() {
       public void dispose() {
-        myStatusBar.removeCustomIndicationComponent(myIndicatorComponent);
+        statusBar.removeWidget(myIndicatorComponent.ID());
       }
     });
   }
@@ -99,47 +96,83 @@ public class IncomingChangesIndicator implements ProjectComponent {
     if (list == null || list.isEmpty()) {
       debug("Refreshing indicator: no changes");
       myIndicatorComponent.clear();
-      myIndicatorComponent.setToolTipText("");
     }
     else {
       debug("Refreshing indicator: " + list.size() + " changes");
-      myIndicatorComponent.showIcon();
-      myIndicatorComponent.setToolTipText(VcsBundle.message("incoming.changes.indicator.tooltip", list.size()));
+      myIndicatorComponent.setChangesAvailable(VcsBundle.message("incoming.changes.indicator.tooltip", list.size()));
     }
-    myIndicatorComponent.repaint();
   }
 
   private static void debug(@NonNls final String message) {
     LOG.debug(message);
   }
 
-  private static class IndicatorComponent extends SimpleColoredComponent {
+  private static class IndicatorComponent implements StatusBarWidget, StatusBarWidget.IconPresentation {
+    private StatusBar myStatusBar;
+
+    private static final Icon CHANGES_AVAILABLE_ICON = IconLoader.getIcon("/ide/incomingChangesOn.png");
+    private static final Icon CHANGES_NOT_AVAILABLE_ICON = IconLoader.getIcon("/ide/incomingChangesOff.png");
+
+    private Icon myCurrentIcon = CHANGES_NOT_AVAILABLE_ICON;
+    private String myToolTipText;
+
     private IndicatorComponent() {
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(final MouseEvent e) {
-          if (!e.isPopupTrigger()) {
-            DataContext dataContext = DataManager.getInstance().getDataContext(IndicatorComponent.this);
-            final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-            if (project != null) {
-              ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-              changesView.show(new Runnable() {
-                public void run() {
-                  ChangesViewContentManager.getInstance(project).selectContent("Incoming");
-                }
-              });
-            }
+    }
+
+    void clear() {
+      update(CHANGES_NOT_AVAILABLE_ICON, null);
+    }
+
+    void setChangesAvailable(@NotNull final String toolTipText) {
+      update(CHANGES_AVAILABLE_ICON, toolTipText);
+    }
+
+    private void update(@NotNull final Icon icon, @Nullable final String toolTipText) {
+      myCurrentIcon = icon;
+      myToolTipText = toolTipText;
+    }
+
+    @NotNull
+    public Icon getIcon() {
+      return myCurrentIcon;
+    }
+
+    public String getTooltipText() {
+      return myToolTipText;
+    }
+
+    public Consumer<MouseEvent> getClickConsumer() {
+      return new Consumer<MouseEvent>() {
+        public void consume(final MouseEvent mouseEvent) {
+          DataContext dataContext = DataManager.getInstance().getDataContext((Component) myStatusBar);
+          final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+          if (project != null) {
+            ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+            changesView.show(new Runnable() {
+              public void run() {
+                ChangesViewContentManager.getInstance(project).selectContent("Incoming");
+              }
+            });
           }
         }
-      });
+      };
     }
 
-    private void showIcon() {
-      setIcon(IconLoader.getIcon("/actions/get.png"));
+    @NotNull
+    public String ID() {
+      return "IncomingChanges";
     }
 
-    public Dimension getPreferredSize() {
-      return new Dimension(18, 18);
+    public Presentation getPresentation(@NotNull Type type) {
+      return this;
+    }
+
+    public void install(@NotNull StatusBar statusBar) {
+      myStatusBar = statusBar;
+    }
+
+    public void dispose() {
+      myStatusBar = null;
     }
   }
 }

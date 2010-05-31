@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   public boolean isSelected(final AnActionEvent e) {
     final IdeFrameImpl frame = getFrame();
     if (frame == null) return false;
-    return frame.getStatusBar().isProcessWindowOpen();
+    return ((StatusBarEx) frame.getStatusBar()).isProcessWindowOpen();
   }
 
   public void update(final AnActionEvent e) {
@@ -43,7 +44,7 @@ public class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Nullable
-  private IdeFrameImpl getFrame() {
+  private static IdeFrameImpl getFrame() {
     Container window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     while (window != null) {
       if (window instanceof IdeFrameImpl) return (IdeFrameImpl)window;
@@ -56,6 +57,6 @@ public class ShowProcessWindowAction extends ToggleAction implements DumbAware {
   public void setSelected(final AnActionEvent e, final boolean state) {
     final IdeFrameImpl frame = getFrame();
     if (frame == null) return;
-    frame.getStatusBar().setProcessWindowOpen(state);
+    ((StatusBarEx) frame.getStatusBar()).setProcessWindowOpen(state);
   }
 }

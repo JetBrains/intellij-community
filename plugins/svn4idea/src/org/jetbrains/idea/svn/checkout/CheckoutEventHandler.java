@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.checkout;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -62,10 +61,7 @@ public class CheckoutEventHandler implements ISVNEventHandler {
         myExternalsCount = 1;
         Project project = myVCS.getProject();
         if (project != null) {
-          StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-          if (statusBar != null) {
-            statusBar.setInfo(SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "status.text.checked.out.revision", event.getRevision()));
-          }
+          StatusBar.Info.set(SvnBundle.message(myIsExport ? "progress.text2.exported.revision" : "status.text.checked.out.revision", event.getRevision()), project);
         }
       }
     } else if (event.getAction() == SVNEventAction.COMMIT_ADDED) {

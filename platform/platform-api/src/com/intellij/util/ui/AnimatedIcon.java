@@ -186,6 +186,9 @@ public abstract class AnimatedIcon extends JComponent implements Disposable {
     return myPaintPassive ? myPassiveIcon : myEmptyPassiveIcon;
   }
 
+  public boolean isRunning() {
+    return myAnimator.isRunning();
+  }
 
   public boolean isAnimated() {
     return true;

@@ -66,10 +66,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.pom.java.LanguageLevel;
@@ -512,7 +509,7 @@ public class CompileDriver {
             final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
             if (statusBar != null) { // because this code is in invoke later, the code may work for already closed project
               // in case another project was opened in the frame while the compiler was working (See SCR# 28591)
-              statusBar.setInfo(statusMessage);
+              StatusBar.Info.set(statusMessage, myProject);
               if (duration > ONE_MINUTE_MS) {
                 final MessageType messageType = errorCount > 0 ? MessageType.ERROR : warningCount > 0 ? MessageType.WARNING : MessageType.INFO;
                 ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, statusMessage);

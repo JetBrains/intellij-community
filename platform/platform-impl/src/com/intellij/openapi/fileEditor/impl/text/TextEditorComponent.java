@@ -151,7 +151,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
   void deselectNotify(){
     StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar == null) return;
-    statusBar.clear();
+    //statusBar.clear();
   }
 
   private static void assertThread(){
@@ -261,7 +261,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
   private void updateStatusBar(){
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar == null) return;
-    statusBar.update(getEditor());
+    statusBar.updateWidgets(); // TODO: do we need this?!
   }
 
   @Nullable

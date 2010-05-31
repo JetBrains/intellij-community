@@ -30,7 +30,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.plaf.beg.BegBorders;
 import org.jetbrains.annotations.NotNull;
@@ -124,9 +123,7 @@ public class QuickEditEditor {
   }
 
   private void setStatusBarText(String text) {
-    WindowManager wm = WindowManager.getInstance();
-    final StatusBar statusBar = wm.getStatusBar(myProject);
-    statusBar.setInfo(text);
+    StatusBar.Info.set(text, myProject);
   }
 
   public void uninstall() {
