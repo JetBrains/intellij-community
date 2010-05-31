@@ -202,6 +202,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON30);
   }
 
+  public void testDictMissingComma() throws Exception {  // PY-1025
+    doTest();
+  }
+
   public void doTest() throws Exception {
     doTest(LanguageLevel.PYTHON25);
   }

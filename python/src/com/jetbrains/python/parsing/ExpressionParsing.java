@@ -151,8 +151,7 @@ public class ExpressionParsing extends Parsing {
     final PsiBuilder.Marker expr = myBuilder.mark();
     myBuilder.advanceLexer();
 
-    if (myBuilder.getTokenType() == PyTokenTypes.RBRACE) {
-      myBuilder.advanceLexer();
+    if (matchToken(PyTokenTypes.RBRACE)) {
       expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
       return;
     }
@@ -165,15 +164,14 @@ public class ExpressionParsing extends Parsing {
       return;
     }
 
-    if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
-      myBuilder.advanceLexer();
+    if (matchToken(PyTokenTypes.COLON)) {
       parseDictLiteralTail(expr, firstExprMarker);
     }
-    else if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.RBRACE) {
+    else if (atToken(PyTokenTypes.COMMA) || atToken(PyTokenTypes.RBRACE)) {
       firstExprMarker.drop();
       parseSetLiteralTail(expr);
     }
-    else if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+    else if (atToken(PyTokenTypes.FOR_KEYWORD)) {
       firstExprMarker.drop();
       parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.SET_COMP_EXPRESSION);
     }
@@ -196,15 +194,10 @@ public class ExpressionParsing extends Parsing {
       parseComprehension(startMarker, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
     }
     else {
-      if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
-        myBuilder.advanceLexer();
-      }
       while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
+        checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
         if (!parseKeyValueExpression()) {
           break;
-        }
-        if (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
-          checkMatches(PyTokenTypes.COMMA, message("PARSE.expected.comma"));
         }
       }
       myBuilder.advanceLexer();
