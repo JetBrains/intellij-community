@@ -65,4 +65,14 @@ public class FindMethodDuplicatesMiscTest extends FindMethodDuplicatesBaseTest {
   public void testInsertSuperQualifierWhenNameConflicts() throws Exception {
     doTest();
   }
+
+  public void testUnqualifiedStaticAccess() throws Exception {
+    doTest();
+  }
+
+  public void testCandidateUnqualifiedStaticAccess() throws Exception {
+    doTest();
+  }
+
+
 }
