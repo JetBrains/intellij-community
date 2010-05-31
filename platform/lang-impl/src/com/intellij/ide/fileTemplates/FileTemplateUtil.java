@@ -213,7 +213,7 @@ public class FileTemplateUtil{
       };
       Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
       Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "file,class");
-      //todo[myakovlev] implement my oun Loader, with ability to load templates from classpath
+      //todo[myakovlev] implement my own Loader, with ability to load templates from classpath
       Velocity.setProperty("file.resource.loader.class", MyFileResourceLoader.class.getName());
       Velocity.setProperty("class.resource.loader.class", MyClasspathResourceLoader.class.getName());
       Velocity.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
@@ -321,7 +321,7 @@ public class FileTemplateUtil{
       File modifiedPatternsPath = new File(PathManager.getConfigPath());
       modifiedPatternsPath = new File(modifiedPatternsPath, INCLUDES_PATH);
 
-      try{
+      try {
         Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
         pathsField.setAccessible(true);
         Collection<String> paths = (Collection)pathsField.get(this);
@@ -333,12 +333,13 @@ public class FileTemplateUtil{
           paths.add(testsDir.getAbsolutePath());
         }
       }
-      catch (Exception e){
+      catch (Exception e) {
+        LOG.error(e);
         throw new RuntimeException(e);
       }
     }
   }
-                         
+
   public static boolean canCreateFromTemplate (PsiDirectory[] dirs, FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     if (fileType.equals(FileTypes.UNKNOWN)) return false;
