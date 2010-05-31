@@ -15,23 +15,16 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.psiutils.BoolUtils;
-import com.siyeh.ipp.psiutils.ComparisonUtils;
-import com.siyeh.ipp.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.util.*;
+import com.siyeh.*;
+import com.siyeh.ipp.psiutils.*;
+import org.jetbrains.annotations.*;
 
 public abstract class Intention extends PsiElementBaseIntentionAction {
     private final PsiElementPredicate predicate;
@@ -192,7 +185,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
   }
 
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
       while (element != null) {
         if (predicate.satisfiedBy(element)) {
           return true;

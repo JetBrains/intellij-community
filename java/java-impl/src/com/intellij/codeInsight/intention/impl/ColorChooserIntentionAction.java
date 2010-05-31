@@ -22,25 +22,23 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ColorChooser;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.util.*;
+import com.intellij.ui.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 
 public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     if (PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(PsiNewExpression.class)).accepts(element)) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class, false);
       if (expression != null) {

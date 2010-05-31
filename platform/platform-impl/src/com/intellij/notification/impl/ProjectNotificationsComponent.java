@@ -15,16 +15,16 @@
  */
 package com.intellij.notification.impl;
 
-import com.intellij.notification.Notifications;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.Disposable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.notification.*;
+import com.intellij.openapi.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.*;
+import org.jetbrains.annotations.*;
+
+import java.util.*;
 
 /**
  * @author spleaner
@@ -58,6 +58,11 @@ public class ProjectNotificationsComponent implements Notifications, ProjectComp
   }
 
   public void projectClosed() {
+    final Collection<Notification> collection = NotificationsManagerImpl.getNotificationsManagerImpl().getByType(null, myProject);
+    for (final Notification notification : collection) {
+      final Balloon balloon = notification.getBalloon();
+      if (balloon != null) balloon.hide();
+    }
   }
 
   private static boolean isDummyEnvironment() {

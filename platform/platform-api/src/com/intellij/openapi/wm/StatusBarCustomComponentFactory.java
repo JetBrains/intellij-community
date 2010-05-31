@@ -15,12 +15,16 @@
  */
 package com.intellij.openapi.wm;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.EventListener;
+import java.util.*;
 
+/**
+ * @deprecated use StatusBarWidget instead
+ */
+@Deprecated
 public abstract class StatusBarCustomComponentFactory<T extends JComponent> implements EventListener {
   public static final ExtensionPointName<StatusBarCustomComponentFactory> EP_NAME = ExtensionPointName.create("com.intellij.statusBarComponent");
 

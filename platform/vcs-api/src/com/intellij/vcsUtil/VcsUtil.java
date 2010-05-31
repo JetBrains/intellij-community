@@ -15,38 +15,28 @@
  */
 package com.intellij.vcsUtil;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.wm.WindowManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.actions.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.wm.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
@@ -343,7 +333,7 @@ public class VcsUtil {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         if (project.isOpen()) {
-          WindowManager.getInstance().getStatusBar(project).setInfo(message);
+          StatusBar.Info.set(message, project);
         }
       }
     });

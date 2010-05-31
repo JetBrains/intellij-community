@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.*;
 import org.apache.commons.lang.*;
 import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.*;
@@ -20,8 +21,7 @@ import org.zmlx.hg4idea.*;
 import javax.swing.*;
 import java.util.*;
 
-public class HgCurrentBranchStatus extends JLabel {
-
+public class HgCurrentBranchStatus extends JLabel implements CustomStatusBarWidget {
   private static final Icon MERCURIAL_ICON = IconLoader.getIcon("/images/mercurial.png");
 
   public HgCurrentBranchStatus() {
@@ -50,4 +50,22 @@ public class HgCurrentBranchStatus extends JLabel {
     setToolTipText(toolTipText);
   }
 
+  public JComponent getComponent() {
+    return this;
+  }
+
+  @NotNull
+  public String ID() {
+    return "HgCurrentBranchStatus";
+  }
+
+  public Presentation getPresentation(@NotNull Type type) {
+    return null;
+  }
+
+  public void install(@NotNull StatusBar statusBar) {
+  }
+
+  public void dispose() {
+  }
 }

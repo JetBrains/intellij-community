@@ -15,28 +15,23 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.lang.java.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.module.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.roots.impl.storage.*;
+import com.intellij.openapi.ui.*;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.impl.source.jsp.jspJava.*;
+import com.intellij.psi.javadoc.*;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 /**
  * @author ven
@@ -81,7 +76,7 @@ public class SuppressFix extends SuppressIntentionAction {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
     PsiDocCommentOwner container = getContainer(context);
     boolean isValid = container != null && !(container instanceof JspHolderMethod);
     if (!isValid) {

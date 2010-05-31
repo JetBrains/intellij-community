@@ -16,21 +16,17 @@
 
 package com.intellij.codeInsight.hint;
 
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.SplittingUtil;
-import com.intellij.ui.StrikeoutLabel;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.psi.*;
+import com.intellij.ui.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
+import javax.swing.border.*;
 import java.awt.*;
-import java.util.EnumSet;
+import java.util.*;
 
 class ParameterInfoComponent extends JPanel{
   private final Object[] myObjects;
@@ -182,7 +178,7 @@ class ParameterInfoComponent extends JPanel{
     public void setup(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
       removeAll();
 
-      String[] lines = SplittingUtil.splitText(text, getFontMetrics(BOLD_FONT), myWidthLimit, ',');
+      String[] lines = UIUtil.splitText(text, getFontMetrics(BOLD_FONT), myWidthLimit, ',');
 
       myOneLineComponents = new OneLineComponent[lines.length];
 

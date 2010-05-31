@@ -15,23 +15,16 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.PropertiesList;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInspection.*;
+import com.intellij.lang.properties.psi.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 /**
  * User: cdr
@@ -106,7 +99,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
       final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
       return property != null && property.isValid();
     }
@@ -146,8 +139,8 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-      return element != null && element.isValid() && element.getContainingFile() instanceof PropertiesFile;
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+      return element.isValid() && element.getContainingFile() instanceof PropertiesFile;
     }
 
     public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {

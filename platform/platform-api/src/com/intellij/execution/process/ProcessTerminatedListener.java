@@ -15,12 +15,12 @@
  */
 package com.intellij.execution.process;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.wm.WindowManager;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.ide.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.*;
+import org.jetbrains.annotations.*;
 
 /**
  * @author dyoma
@@ -67,7 +67,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
     if (myProject != null) ApplicationManager.getApplication().invokeLater(new Runnable(){
       public void run() {
         if (myProject.isDisposed()) return;
-        WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
+        StatusBar.Info.set(message, myProject);
       }
     });
   }

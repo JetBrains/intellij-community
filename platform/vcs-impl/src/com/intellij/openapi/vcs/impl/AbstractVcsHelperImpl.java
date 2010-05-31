@@ -15,71 +15,39 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
-import com.intellij.ide.errorTreeView.HotfixData;
-import com.intellij.ide.errorTreeView.SimpleErrorData;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.actions.*;
+import com.intellij.ide.errorTreeView.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.*;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.Annotater;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.MessageView;
-import com.intellij.util.AsynchConsumer;
-import com.intellij.util.BufferedListConsumer;
-import com.intellij.util.Consumer;
-import com.intellij.util.ContentsUtil;
-import com.intellij.util.ui.ConfirmationDialog;
-import com.intellij.util.ui.ErrorTreeView;
-import com.intellij.util.ui.MessageCategory;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.merge.*;
+import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.content.*;
+import com.intellij.util.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.text.MessageFormat;
+import java.io.*;
+import java.text.*;
 import java.util.*;
 import java.util.List;
 
@@ -126,7 +94,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private final String myRepositoryPath;
     private final AbstractVcs myVcs;
     private final Runnable myRefresher;
-    private VcsAbstractHistorySession mySession;
+    private volatile VcsAbstractHistorySession mySession;
     private final BufferedListConsumer<VcsFileRevision> myBuffer;
 
     private MyVcsAppendableHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
@@ -145,7 +113,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           mySession.getRevisionList().addAll(vcsFileRevisions);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              myFileHistoryPanel.getHistoryPanelRefresh().consume(mySession);
+              ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(mySession);
             }
           });
         }
@@ -156,23 +124,23 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer.consumeOne(revision);
     }
 
+    private FileHistoryPanelImpl ensureHistoryPanelCreated() {
+      if (myFileHistoryPanel == null) {
+        ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
+        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs.getProject(), myPath, myRepositoryPath, mySession, myVcsHistoryProvider,
+                                                      myAnnotationProvider, contentManager, myRefresher);
+      }
+      return myFileHistoryPanel;
+    }
+
     public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
       mySession = session;
-      if (myFileHistoryPanel != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myFileHistoryPanel.getHistoryPanelRefresh().consume(mySession);
-          }
-        });
-        return;
-      }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           String actionName = VcsBundle.message("action.name.file.history", myPath.getName());
           ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
 
-          myFileHistoryPanel = new FileHistoryPanelImpl(myVcs.getProject(), myPath, myRepositoryPath, session, myVcsHistoryProvider,
-                                                        myAnnotationProvider, contentManager, myRefresher);
+          myFileHistoryPanel = ensureHistoryPanelCreated();
           Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);
           ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
@@ -191,9 +159,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer.flush();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (myFileHistoryPanel != null) {
-            myFileHistoryPanel.getHistoryPanelRefresh().finished();
-          }
+          ensureHistoryPanelCreated().getHistoryPanelRefresh().finished();
         }
       });
     }

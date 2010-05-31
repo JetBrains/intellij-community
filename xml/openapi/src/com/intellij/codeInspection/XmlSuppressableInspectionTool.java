@@ -16,16 +16,13 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.psi.*;
+import com.intellij.psi.util.*;
+import com.intellij.psi.xml.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   @NonNls static final String ALL = "ALL";
@@ -50,7 +47,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       return getText();
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
       return PsiTreeUtil.getParentOfType(element, XmlTag.class) != null;
     }
 
@@ -84,8 +81,8 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForFile(element, myInspectionId);
     }
 
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-      return element != null && element.isValid() && element.getContainingFile() instanceof XmlFile;
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+      return  element.isValid() && element.getContainingFile() instanceof XmlFile;
     }
 
 

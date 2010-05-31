@@ -16,22 +16,17 @@
 
 package com.intellij.uiDesigner.designSurface;
 
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadContainer;
-import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.command.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.lw.*;
+import com.intellij.uiDesigner.radComponents.*;
+import gnu.trove.*;
+import org.jetbrains.annotations.*;
 
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
 
 /**
  * @author yole
@@ -82,8 +77,8 @@ public class PasteProcessor extends EventProcessor {
     }
     this.myMinRow = myMinRow;
     this.myMinCol = myMinCol;
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
-    statusBar.setInfo(UIDesignerBundle.message("paste.choose.destination.prompt"));
+
+    StatusBar.Info.set(UIDesignerBundle.message("paste.choose.destination.prompt"), myEditor.getProject());
   }
 
   protected void processKeyEvent(KeyEvent e) {

@@ -22,12 +22,11 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.project.*;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public class AddDeprecationAnnotationFix extends AddAnnotationFix {
   public AddDeprecationAnnotationFix() {
@@ -36,7 +35,7 @@ public class AddDeprecationAnnotationFix extends AddAnnotationFix {
 
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     if (!super.isAvailable(project, editor, element)) {
       return false;
     }

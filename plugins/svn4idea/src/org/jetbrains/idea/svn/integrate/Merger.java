@@ -15,31 +15,19 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNDiffClient;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.util.*;
+import com.intellij.util.messages.*;
+import org.jetbrains.annotations.*;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.update.*;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.*;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class Merger implements IMerger {
   protected final List<CommittedChangeList> myChangeLists;
@@ -108,12 +96,12 @@ public class Merger implements IMerger {
   }
 
   private void appendComment() {
+    if (myCommitMessage.length() == 0) {
+      myCommitMessage.append("Merged from ").append(myBranchName);
+    }
     final String nextComment = myLatestProcessed.getComment();
     if (nextComment.trim().length() > 0) {
-      if (myCommitMessage.length() != 0) {
-        myCommitMessage.append('\n');
-      }
-      myCommitMessage.append(nextComment).append(" [merged from ").append(myBranchName).append(", revision ").append(myLatestProcessed.getNumber()).append("]");
+      myCommitMessage.append('\n').append(nextComment).append(" [from revision ").append(myLatestProcessed.getNumber()).append("]");
     }
   }
 

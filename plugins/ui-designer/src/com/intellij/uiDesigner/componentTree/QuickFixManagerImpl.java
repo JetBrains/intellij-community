@@ -15,20 +15,17 @@
  */
 package com.intellij.uiDesigner.componentTree;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.uiDesigner.ErrorAnalyzer;
-import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
-import com.intellij.uiDesigner.quickFixes.QuickFixManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.designSurface.*;
+import com.intellij.uiDesigner.quickFixes.*;
+import com.intellij.uiDesigner.radComponents.*;
+import org.jetbrains.annotations.*;
 
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreePath;
 import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.tree.*;
 import java.awt.*;
 
 /**
@@ -64,13 +61,17 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
       updateIntentionHintVisibility();
 
       ErrorInfo[] errorInfos = getErrorInfos();
-      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myComponent.getProject());
+
+
+      final String text;
       if (errorInfos.length > 0 && errorInfos [0].myDescription != null) {
-        statusBar.setInfo(errorInfos [0].myDescription);
+        text = errorInfos [0].myDescription;
       }
       else {
-        statusBar.setInfo("");
+        text = "";
       }
+
+      StatusBar.Info.set(text, myComponent.getProject());
     }
   }
 }

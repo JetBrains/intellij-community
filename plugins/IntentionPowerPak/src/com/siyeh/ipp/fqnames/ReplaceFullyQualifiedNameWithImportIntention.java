@@ -15,26 +15,19 @@
  */
 package com.siyeh.ipp.fqnames;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.wm.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.HighlightUtil;
-import com.siyeh.ipp.psiutils.ImportUtils;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import com.siyeh.*;
+import com.siyeh.ipp.base.*;
+import com.siyeh.ipp.psiutils.*;
+import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
 
@@ -103,16 +96,17 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
     }
 
     private static void showStatusMessage(Project project, int elementCount) {
-        final WindowManager windowManager = WindowManager.getInstance();
-        final StatusBar statusBar = windowManager.getStatusBar(project);
+      final String text;
         if (elementCount == 1) {
-            statusBar.setInfo(IntentionPowerPackBundle.message(
-                    "1.fully.qualified.name.status.bar.escape.highlighting.message"));
+            text = IntentionPowerPackBundle.message(
+                    "1.fully.qualified.name.status.bar.escape.highlighting.message");
         } else {
-            statusBar.setInfo(IntentionPowerPackBundle.message(
+            text = IntentionPowerPackBundle.message(
                     "multiple.fully.qualified.names.status.bar.escape.highlighting.message",
-                              Integer.valueOf(elementCount - 1)));
+                              Integer.valueOf(elementCount - 1));
         }
+
+      StatusBar.Info.set(text, project);
     }
 
     private static void addImport(PsiImportList importList, PsiClass aClass)
