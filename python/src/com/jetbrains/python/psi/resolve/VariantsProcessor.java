@@ -104,7 +104,7 @@ public class VariantsProcessor implements PsiScopeProcessor {
     else if (element instanceof NameDefiner) {
       final NameDefiner definer = (NameDefiner)element;
       for (PyElement expr : definer.iterateNames()) {
-        if (expr != null) { // NOTE: maybe rather have SingleIterables skip nulls outright?
+        if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
           String referencedName = expr.getName();
           Icon icon = expr.getIcon(0);
           // things like PyTargetExpression cannot have a general icon, but here we only have variables
