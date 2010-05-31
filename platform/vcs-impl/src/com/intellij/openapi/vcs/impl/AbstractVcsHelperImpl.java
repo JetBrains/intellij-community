@@ -126,7 +126,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private final String myRepositoryPath;
     private final AbstractVcs myVcs;
     private final Runnable myRefresher;
-    private VcsAbstractHistorySession mySession;
+    private volatile VcsAbstractHistorySession mySession;
     private final BufferedListConsumer<VcsFileRevision> myBuffer;
 
     private MyVcsAppendableHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
@@ -145,7 +145,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           mySession.getRevisionList().addAll(vcsFileRevisions);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
-              myFileHistoryPanel.getHistoryPanelRefresh().consume(mySession);
+              ensureHistoryPanelCreated().getHistoryPanelRefresh().consume(mySession);
             }
           });
         }
@@ -156,23 +156,23 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer.consumeOne(revision);
     }
 
+    private FileHistoryPanelImpl ensureHistoryPanelCreated() {
+      if (myFileHistoryPanel == null) {
+        ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
+        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs.getProject(), myPath, myRepositoryPath, mySession, myVcsHistoryProvider,
+                                                      myAnnotationProvider, contentManager, myRefresher);
+      }
+      return myFileHistoryPanel;
+    }
+
     public void reportCreatedEmptySession(final VcsAbstractHistorySession session) {
       mySession = session;
-      if (myFileHistoryPanel != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myFileHistoryPanel.getHistoryPanelRefresh().consume(mySession);
-          }
-        });
-        return;
-      }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           String actionName = VcsBundle.message("action.name.file.history", myPath.getName());
           ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
 
-          myFileHistoryPanel = new FileHistoryPanelImpl(myVcs.getProject(), myPath, myRepositoryPath, session, myVcsHistoryProvider,
-                                                        myAnnotationProvider, contentManager, myRefresher);
+          myFileHistoryPanel = ensureHistoryPanelCreated();
           Content content = ContentFactory.SERVICE.getInstance().createContent(myFileHistoryPanel, actionName, true);
           ContentsUtil.addOrReplaceContent(contentManager, content, true);
 
@@ -191,9 +191,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       myBuffer.flush();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          if (myFileHistoryPanel != null) {
-            myFileHistoryPanel.getHistoryPanelRefresh().finished();
-          }
+          ensureHistoryPanelCreated().getHistoryPanelRefresh().finished();
         }
       });
     }
