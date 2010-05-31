@@ -140,7 +140,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       if (elementAtCaret instanceof PyStatement) {
         break;
       }
-      if (elementAtCaret instanceof PyExpression) {
+      if (elementAtCaret instanceof PyExpression && isValidIntroduceVariant(elementAtCaret)) {
         expressions.add((PyExpression)elementAtCaret);
       }
       elementAtCaret = elementAtCaret.getParent();
@@ -163,6 +163,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       return true;
     }
     return false;
+  }
+
+  private static boolean isValidIntroduceVariant(PsiElement element) {
+    final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
+    if (call != null && PsiTreeUtil.isAncestor(call.getCallee(), element, false)) {
+      return false;
+    }
+    return true;
   }
 
   private void performActionOnElement(Editor editor,
