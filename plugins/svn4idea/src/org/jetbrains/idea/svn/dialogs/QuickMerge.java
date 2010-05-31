@@ -179,7 +179,7 @@ public class QuickMerge {
     // suppose we're in branch
     myVcs.getSvnBranchPointsCalculator().getFirstCopyPoint(myWcInfo.getRepositoryRoot(), mySourceUrl, myWcInfo.getRootUrl(),
       new Consumer<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>>() {
-        public void consume(SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> result) {
+        public void consume(final SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> result) {
           if (result == null) {
             showErrorBalloon("Merge start wasn't found");
             return;
@@ -189,7 +189,8 @@ public class QuickMerge {
                        "\nAre you sure?"))) return;
           final MergerFactory mergerFactory = new MergerFactory() {
             public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-              return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName);
+              return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName, 
+                                      reintegrate ? result.getWrapped().getTargetRevision() : result.getWrapped().getSourceRevision());
             }
           };
 
