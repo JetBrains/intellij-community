@@ -152,6 +152,9 @@ public class SvnChangeList implements CommittedChangeList {
   }
 
   public Change getByPath(final String path) {
+    if (myListsHolder == null) {
+      createLists();
+    }
     return myListsHolder.getByPath(path);
   }
 

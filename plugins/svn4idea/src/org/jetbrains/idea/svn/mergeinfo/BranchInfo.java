@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 import java.io.File;
 import java.util.*;
 
-public class BranchInfo {
+public class BranchInfo implements MergeChecker {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.mergeinfo.BranchInfo");
   // repo path in branch in format path@revision -> merged revisions
   private final Map<String, Set<Long>> myPathMergedMap;
