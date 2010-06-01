@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.CalledInAwt;
@@ -60,6 +61,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -119,7 +121,8 @@ public class QuickMerge {
       showErrorBalloon("Cannot merge from self");
       return;
     }
-    
+
+    if (! checkForSwitchedRoots()) return;
 
     correctSourceUrl(new Runnable() {
       public void run() {
@@ -151,6 +154,26 @@ public class QuickMerge {
     });
   }
 
+  private boolean checkForSwitchedRoots() {
+    final List<WCInfo> infoList = myVcs.getAllWcInfos();
+    boolean switchedFound = false;
+    for (WCInfo wcInfo : infoList) {
+      try {
+        if (FileUtil.isAncestor(new File(myWcInfo.getPath()), new File(wcInfo.getPath()), true)) {
+          switchedFound = true;
+          break;
+        }
+      }
+      catch (IOException e) {
+        //
+      }
+    }
+    if (switchedFound) {
+      return prompt("There are some switched paths in the working copy. Do you want to continue?");
+    }
+    return true;
+  }
+
   @CalledInAny
   private void showErrorBalloon(final String s) {
     ChangesViewBalloonProblemNotifier.showMe(myProject, s, MessageType.ERROR);
@@ -170,7 +193,7 @@ public class QuickMerge {
           if (reintegrate && (! prompt("You are going to reintegrate changes.\nThis will make " + mySourceUrl + " no longer usable for further work." +
                        "\nAre you sure?"))) return;
           final MergerFactory mergerFactory = new MergerFactory() {
-            public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl) {
+            public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
               return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName);
             }
           };
@@ -191,7 +214,7 @@ public class QuickMerge {
       return;
     }
     final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(SvnVcs.getInstance(myProject),
-                                             new WorkingCopyInfo(myWcInfo.getPath(), true), factory, sourceUrlUrl, mergeTitle, false);
+                                             new WorkingCopyInfo(myWcInfo.getPath(), true), factory, sourceUrlUrl, mergeTitle, false, myBranchName);
     RunBackgroundable.run(task);
   }
 
