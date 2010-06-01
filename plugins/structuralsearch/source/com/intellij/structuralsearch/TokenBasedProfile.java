@@ -70,6 +70,9 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
 
   protected abstract boolean canBeVariable(PsiElement element);
 
+  @NotNull
+  protected abstract MatchingStrategy getMatchingStrategy(PsiElement root);
+
   protected class MyCompilingVisitor extends PsiRecursiveElementVisitor {
     protected final GlobalCompilingVisitor myGlobalVisitor;
 
@@ -109,6 +112,8 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
     }
 
     private void initTopLevelElement(PsiElement element, CompiledPattern pattern) {
+      MatchingStrategy strategy = null;
+
       for (PsiElement el = element.getFirstChild(); el != null; el = el.getNextSibling()) {
         if (GlobalCompilingVisitor.getFilter().accepts(el)) {
           if (el instanceof PsiWhiteSpace) {
@@ -118,6 +123,13 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
         else {
           el.accept(this);
           if (myGlobalVisitor.getCodeBlockLevel() == 1) {
+            MatchingStrategy newstrategy = getMatchingStrategy(el);
+            if (strategy == null) {
+              strategy = newstrategy;
+            }
+            else if (strategy.getClass() != newstrategy.getClass()) {
+              throw new UnsupportedPatternException(SSRBundle.message("different.strategies.for.top.level.nodes.error.message"));
+            }
             final MatchingHandler matchingHandler = myGlobalVisitor.getContext().getPattern().getHandler(el);
             myGlobalVisitor.getContext().getPattern().setHandler(el, new TopLevelMatchingHandler(matchingHandler));
           }
@@ -125,12 +137,14 @@ public abstract class TokenBasedProfile extends StructuralSearchProfile {
       }
 
       if (myGlobalVisitor.getCodeBlockLevel() == 1) {
-        // todo: pass smart strategy
-        myGlobalVisitor.getContext().getPattern().setStrategy(new MatchingStrategy() {
-          public boolean continueMatching(PsiElement start) {
-            return true;
-          }
-        });
+        if (strategy == null) {
+          strategy = new MatchingStrategy() {
+            public boolean continueMatching(PsiElement start) {
+              return true;
+            }
+          };
+        }
+        myGlobalVisitor.getContext().getPattern().setStrategy(strategy);
       }
       pattern.setHandler(element, new TopLevelMatchingHandler(pattern.getHandler(element)));
     }

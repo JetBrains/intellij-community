@@ -20,6 +20,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisito
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -98,6 +99,12 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
       return true;
     }
     return false;
+  }
+
+  @NotNull
+  @Override
+  protected MatchingStrategy getMatchingStrategy(PsiElement root) {
+    return JSMatchingStrategy.getInstance();
   }
 
   @NotNull
