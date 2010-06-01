@@ -68,6 +68,7 @@ import org.jetbrains.idea.svn.actions.ShowPropertiesDiffWithLocalAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
+import org.jetbrains.idea.svn.dialogs.SvnBranchPointsCalculator;
 import org.jetbrains.idea.svn.dialogs.SvnFormatWorker;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.history.*;
@@ -143,6 +144,8 @@ public class SvnVcs extends AbstractVcs {
 
   public static final Topic<Runnable> ROOTS_RELOADED = new Topic<Runnable>("ROOTS_RELOADED", Runnable.class);
   private VcsListener myVcsListener;
+
+  private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
 
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
@@ -365,6 +368,7 @@ public class SvnVcs extends AbstractVcs {
     FrameStateManager.getInstance().addListener(myFrameStateListener);
 
     myAuthNotifier.init();
+    mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -466,6 +470,8 @@ public class SvnVcs extends AbstractVcs {
 
     myAuthNotifier.stop();
     myAuthNotifier.clear();
+
+    mySvnBranchPointsCalculator = null;
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -1037,5 +1043,9 @@ public class SvnVcs extends AbstractVcs {
   @Override
   public CommittedChangeList getRevisionChanges(VcsFileRevision revision, VirtualFile file) throws VcsException {
     return ShowAllSubmittedFilesAction.loadRevisions(getProject(), (SvnFileRevision)revision, file, false);
+  }
+
+  public SvnBranchPointsCalculator getSvnBranchPointsCalculator() {
+    return mySvnBranchPointsCalculator;
   }
 }

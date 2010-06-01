@@ -17,56 +17,29 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.util.AsynchConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
-import org.jetbrains.idea.svn.history.FirstInBranch;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.jetbrains.idea.svn.integrate.IMerger;
-import org.jetbrains.idea.svn.integrate.MergerFactory;
-import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesTask;
-import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
-import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
-import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
@@ -77,8 +50,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class CopiesPanel {
@@ -291,147 +262,9 @@ public class CopiesPanel {
   private void mergeFrom(final WCInfo wcInfo, final VirtualFile root, final LinkLabel mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
-        if (url.equals(wcInfo.getRootUrl())) {
-          showErrorBalloon("Cannot merge from self");
-          return;
-        }
-        ProgressManager.getInstance().run(new MergeCalculator(wcInfo, root, url, configuration.getBaseName(url)));
+        new QuickMerge(project, url, wcInfo, configuration.getBaseName(url)).execute();
       }
     }, "Select branch", mergeLabel);
-  }
-
-  private void showErrorBalloon(final String s) {
-    ChangesViewBalloonProblemNotifier.showMe(myProject, s, MessageType.ERROR);
-  }
-
-  private class MergeCalculator extends Task.Backgroundable {
-    private final WCInfo myWcInfo;
-    private final VirtualFile myRoot;
-    private final String mySourceUrl;
-    private final String myBranchName;
-    private boolean myIsReintegrate;
-
-    private final List<CommittedChangeList> myNotMerged;
-    private String myMergeTitle;
-    private BranchInfo myBranchInfo;
-
-    private MergeCalculator(WCInfo wcInfo, VirtualFile root, String sourceUrl, String branchName) {
-      super(CopiesPanel.this.myProject, "Calculating not merged revisions", true, BackgroundFromStartOption.getInstance());
-      myWcInfo = wcInfo;
-      myRoot = root;
-      mySourceUrl = sourceUrl;
-      myBranchName = branchName;
-      myNotMerged = new LinkedList<CommittedChangeList>();
-      myMergeTitle = "Merge from " + branchName;
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      // branch is info holder
-      new FirstInBranch(myVcs, myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl,
-                        new Consumer<FirstInBranch.CopyData>() {
-                          public void consume(FirstInBranch.CopyData copyData) {
-          if (copyData == null) {
-            showErrorBalloon("Merge start wasn't found");
-            return;
-          }
-
-          myIsReintegrate = ! copyData.isTrunkSupposedCorrect();
-          if (! myWcInfo.getFormat().supportsMergeInfo()) return;
-          final long localLatest = Math.max(copyData.getCopyTargetRevision(), copyData.getCopySourceRevision());
-          myBranchInfo = new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl(), mySourceUrl, mySourceUrl, myVcs.createWCClient());
-
-          final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider =
-            myVcs.getCommittedChangesProvider();
-          final ChangeBrowserSettings settings = new ChangeBrowserSettings();
-          settings.CHANGE_AFTER = Long.toString(localLatest);
-          try {
-            committedChangesProvider.loadCommittedChanges(settings, new SvnRepositoryLocation(mySourceUrl),
-                                          committedChangesProvider.getUnlimitedCountValue(), new AsynchConsumer<CommittedChangeList>() {
-                public void finished() {
-                }
-
-                public void consume(CommittedChangeList committedChangeList) {
-                  final SvnChangeList svnList = (SvnChangeList)committedChangeList;
-                  if (localLatest >= svnList.getNumber()) return;
-
-                  final SvnMergeInfoCache.MergeCheckResult checkResult =
-                    myBranchInfo.checkList(svnList, myWcInfo.getPath());
-                  if (SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(checkResult)) {
-                    myNotMerged.add(svnList);
-                  }
-                }
-              });
-          }
-          catch (VcsException e) {
-            AbstractVcsHelper.getInstance(myProject).showErrors(Collections.singletonList(e), "Checking revisions for merge fault");
-          }
-        }
-      }).run();
-    }
-
-    @Override
-    public void onCancel() {
-      onSuccess();
-    }
-
-    @Nullable
-    private MergerFactory askParameters() {
-      final int result = Messages.showDialog(myProject, myNotMerged.size() + " not merged revision(s) found.", myMergeTitle,
-                          new String[]{"Merge &all", "&Select revisions to merge", "Cancel"}, 0, Messages.getQuestionIcon());
-      if (result == 2) return null;
-
-      final MergerFactory factory;
-      if (result == 0) {
-        factory = createMergeAllFactory();
-      } else {
-        final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, myNotMerged, myMergeTitle, myBranchInfo);
-        dialog.show();
-        if (dialog.getExitCode() == DialogWrapper.CANCEL_EXIT_CODE) {
-          return null;
-        }
-          final List<CommittedChangeList> lists = dialog.getSelected();
-          if (lists.isEmpty()) return null;
-          factory = new ChangeListsMergerFactory(lists);
-      }
-      return factory;
-    }
-
-    private MergerFactory createMergeAllFactory() {
-      return new MergerFactory() {
-        public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl) {
-          return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, myIsReintegrate, myBranchName);
-        }
-      };
-    }
-
-    @Override
-    public void onSuccess() {
-      if (! myWcInfo.getFormat().supportsMergeInfo()) {
-        doMerge(createMergeAllFactory());
-        return;
-      }
-      if (myNotMerged.isEmpty()) {
-        ChangesViewBalloonProblemNotifier.showMe(myProject, "Everything is up-to-date", MessageType.WARNING);
-        return;
-      }
-      final MergerFactory factory = askParameters();
-      if (factory == null) return;
-      doMerge(factory);
-    }
-
-    private void doMerge(MergerFactory factory) {
-      final SVNURL sourceUrlUrl;
-      try {
-        sourceUrlUrl = SVNURL.parseURIEncoded(mySourceUrl);
-      } catch (SVNException e) {
-        showErrorBalloon("Cannot merge: " + e.getMessage());
-        return;
-      }
-      final SvnIntegrateChangesTask task = new SvnIntegrateChangesTask(SvnVcs.getInstance(myProject),
-                                               new WorkingCopyInfo(myWcInfo.getPath(), true), factory, sourceUrlUrl, myMergeTitle, false);
-      ProgressManager.getInstance().run(task);
-    }
   }
 
   private void setFocusableForLinks(final LinkLabel label) {
