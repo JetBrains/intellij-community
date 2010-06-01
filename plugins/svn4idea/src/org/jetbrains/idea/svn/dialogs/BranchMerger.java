@@ -73,7 +73,10 @@ public class BranchMerger implements IMerger {
     if (myReintegrate) {
       dc.doMergeReIntegrate(mySourceUrl, SVNRevision.UNDEFINED, new File(myTargetPath), false);
     } else {
-      dc.doMerge(myTargetUrl, SVNRevision.HEAD, mySourceUrl, SVNRevision.HEAD,
+      final long targetRevision = myVcs.createRepository(myTargetUrl).getLatestRevision();
+      final long sourceRevision = myVcs.createRepository(mySourceUrl).getLatestRevision();
+
+      dc.doMerge(myTargetUrl, SVNRevision.create(targetRevision), mySourceUrl, SVNRevision.create(sourceRevision),
         new File(myTargetPath), SVNDepth.INFINITY, true, true, false, false);
     }
   }
