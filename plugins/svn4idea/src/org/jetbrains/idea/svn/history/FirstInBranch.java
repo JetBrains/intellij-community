@@ -120,11 +120,11 @@ public class FirstInBranch implements Runnable {
 
       if ('A' == path.getType()) {
         if ((myBranchUrl.equals(localPath) || SVNPathUtil.isAncestor(localPath, myBranchUrl)) &&
-            (myTrunkUrl.equals(copyPath)) || SVNPathUtil.isAncestor(copyPath, myTrunkUrl)) {
+            ((myTrunkUrl.equals(copyPath)) || SVNPathUtil.isAncestor(copyPath, myTrunkUrl))) {
           result.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), true));
         } else {
           if ((myBranchUrl.equals(copyPath) || SVNPathUtil.isAncestor(copyPath, myBranchUrl)) &&
-              (myTrunkUrl.equals(localPath)) || SVNPathUtil.isAncestor(localPath, myTrunkUrl)) {
+              ((myTrunkUrl.equals(localPath)) || SVNPathUtil.isAncestor(localPath, myTrunkUrl))) {
             result.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), false));
           }
         }
