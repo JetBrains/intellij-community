@@ -30,6 +30,7 @@ public abstract class RunOrContinuation<T> {
   protected final Project myProject;
   private final String myTaskTitle;
   private boolean myWasCanceled;
+  private boolean myResultWasSet;
 
   protected RunOrContinuation(final Project project, final String taskTitle) {
     myProject = project;
@@ -43,7 +44,12 @@ public abstract class RunOrContinuation<T> {
   @CalledInBackground
   protected abstract T calculateLong();
   @CalledInAwt
-  protected abstract void processResult(final T t);
+  protected final void processResult(final T t) {
+    myResultWasSet = true;
+    processResultImpl(t);
+  }
+  @CalledInAwt
+  protected abstract void processResultImpl(final T t);
 
   protected void cancel() {
     myWasCanceled = true;
@@ -53,7 +59,7 @@ public abstract class RunOrContinuation<T> {
   public void execute() {
     final Ref<T> refT = new Ref<T>();
     refT.set(calculate());
-    if ((! myWasCanceled) && (! refT.isNull())) {
+    if ((! myWasCanceled) && myResultWasSet) {
       processResult(refT.get());
       return;
     }
@@ -63,7 +69,7 @@ public abstract class RunOrContinuation<T> {
       }
       @Override
       public void onSuccess() {
-        if ((! myWasCanceled) && (! refT.isNull())) processResult(refT.get());
+        if ((! myWasCanceled) && myResultWasSet) processResult(refT.get());
       }
     });
   }

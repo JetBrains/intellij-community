@@ -25,18 +25,15 @@ import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.AbstractTagInjection;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.inject.config.XmlAttributeInjection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.*;
 
 /**
@@ -206,9 +203,23 @@ public class PatternBasedInjectionHelper {
     }
   }
 
-  public static ElementPattern<PsiElement> compileElementPattern(final String text, final String supportId) {  
+  public static ElementPattern<PsiElement> compileElementPattern(final String text, final String supportId) {
+    final Set<Method> staticMethods = getStaticMethods(supportId);
+    return createElementPatternNoGroovy(text, new Function<Frame, Object>() {
+      public Object fun(final Frame frame) {
+        try {
+          return invokeMethod(frame.target, frame.methodName, frame.params.toArray(), staticMethods);
+        }
+        catch (Throwable throwable) {
+          throw new IllegalArgumentException(text, throwable);
+        }
+      }
+    });
+  }
+
+  private static Set<Method> getStaticMethods(String supportId) {
     final Class[] patternClasses = getPatternClasses(supportId);
-    final Set<Method> staticMethods = new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
+    return new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
       public Collection<Method> fun(final Class aClass) {
         return ContainerUtil.findAll(ReflectionCache.getMethods(aClass), new Condition<Method>() {
           public boolean value(final Method method) {
@@ -220,16 +231,6 @@ public class PatternBasedInjectionHelper {
         });
       }
     }));
-    return createElementPatternNoGroovy(text, new Function<Frame, Object>() {
-      public Object fun(final Frame frame) {
-        try {
-          return invokeMethod(frame.target, frame.methodName, frame.params.toArray(), staticMethods);
-        }
-        catch (Throwable throwable) {
-          throw new IllegalArgumentException(text, throwable);
-        }
-      }
-    });
   }
 
   private static enum State {
@@ -447,6 +448,154 @@ public class PatternBasedInjectionHelper {
         return String.valueOf(o);
       }
     }, ", ")+")");
+  }
+
+
+  public static String dumpContextDeclarations(String injectorId) {
+    final Set<Method> methods = getStaticMethods(injectorId);
+    final StringBuilder sb = new StringBuilder();
+    final THashMap<Class, Collection<Class>> classes = new THashMap<Class, Collection<Class>>();
+    final THashSet<Class> missingClasses = new THashSet<Class>();
+    classes.put(Object.class, missingClasses);
+    for (Method method : methods) {
+      for (Class<?> type = method.getReturnType(); type != null && ElementPattern.class.isAssignableFrom(type); type = type.getSuperclass()) {
+        final Class<?> enclosingClass = type.getEnclosingClass();
+        if (enclosingClass != null) {
+          Collection<Class> list = classes.get(enclosingClass);
+          if (list == null) {
+            list = new THashSet<Class>();
+            classes.put(enclosingClass, list);
+          }
+          list.add(type);
+        }
+        else if (!classes.containsKey(type)) {
+          classes.put(type, null);
+        }
+      }
+    }
+    for (Class aClass : classes.keySet()) {
+      if (aClass == Object.class) continue;
+      printClass(aClass, classes, sb);
+    }
+    for (Method method : methods) {
+      printMethodDeclaration(method, sb, classes);
+    }
+    for (Class aClass : missingClasses) {
+      sb.append("class ").append(aClass.getSimpleName());
+      final Class superclass = aClass.getSuperclass();
+      if (missingClasses.contains(superclass)) {
+        sb.append(" extends ").append(superclass.getSimpleName());
+      }
+      sb.append("{}\n");
+    }
+    //System.out.println(sb);
+    return sb.toString();
+  }
+
+  private static void printClass(Class aClass, Map<Class, Collection<Class>> classes, StringBuilder sb) {
+    final boolean isInterface = aClass.isInterface();
+    sb.append(isInterface ? "interface ": "class ");
+    dumpType(aClass, aClass, sb, classes);
+    final Type superClass = aClass.getGenericSuperclass();
+    final Class rawSuperClass = (Class)(superClass instanceof ParameterizedType ? ((ParameterizedType)superClass).getRawType() : superClass);
+    if (superClass != null && classes.containsKey(rawSuperClass)) {
+      sb.append(" extends ");
+      dumpType(null, superClass, sb, classes);
+    }
+    int implementsIdx = 1;
+    for (Type superInterface : aClass.getGenericInterfaces()) {
+      final Class rawSuperInterface = (Class)(superInterface instanceof ParameterizedType ? ((ParameterizedType)superInterface).getRawType() : superClass);
+      if (classes.containsKey(rawSuperInterface)) {
+        if (implementsIdx++ == 1) sb.append(isInterface? " extends " : " implements ");
+        else sb.append(", ");
+        dumpType(null, superInterface, sb, classes);
+      }
+    }
+    sb.append(" {\n");
+    for (Method method : aClass.getDeclaredMethods()) {
+      if (Modifier.isStatic(method.getModifiers()) ||
+          !Modifier.isPublic(method.getModifiers()) ||
+          Modifier.isVolatile(method.getModifiers())) continue;
+      printMethodDeclaration(method, sb.append("  "), classes);
+    }
+    final Collection<Class> innerClasses = classes.get(aClass);
+    sb.append("}\n");
+    if (innerClasses != null) {
+      for (Class innerClass : innerClasses) {
+        printClass(innerClass, classes, sb);
+      }
+    }
+  }
+
+  private static void dumpType(GenericDeclaration owner, Type type, StringBuilder sb, Map<Class, Collection<Class>> classes) {
+    if (type instanceof Class) {
+      final Class aClass = (Class)type;
+      final Class enclosingClass = aClass.getEnclosingClass();
+      if (enclosingClass != null) {
+        sb.append(enclosingClass.getSimpleName()).append("_");
+      }
+      else if (!aClass.isArray() && !aClass.isPrimitive() && !aClass.getName().startsWith("java.") && !classes.containsKey(aClass)) {
+        classes.get(Object.class).add(aClass);
+      }
+      sb.append(aClass.getSimpleName());
+      if (owner == aClass) {
+        dumpTypeParametersArray(owner, aClass.getTypeParameters(), sb, "<", ">", classes);
+      }
+    }
+    else if (type instanceof TypeVariable) {
+      TypeVariable typeVariable = (TypeVariable)type;
+      sb.append(typeVariable.getName());
+      if (typeVariable.getGenericDeclaration() == owner) {
+        dumpTypeParametersArray(null, typeVariable.getBounds(), sb, " extends ", "", classes);
+      }
+    }
+    else if (type instanceof WildcardType) {
+      final WildcardType wildcardType = (WildcardType)type;
+      sb.append("?");
+      dumpTypeParametersArray(owner, wildcardType.getUpperBounds(), sb, " extends ", "", classes);
+      dumpTypeParametersArray(owner, wildcardType.getLowerBounds(), sb, " super ", "", classes);
+    }
+    else if (type instanceof ParameterizedType) {
+      final ParameterizedType parameterizedType = (ParameterizedType)type;
+      final Type raw = parameterizedType.getRawType();
+      dumpType(null, raw, sb, classes);
+      dumpTypeParametersArray(owner, parameterizedType.getActualTypeArguments(), sb, "<", ">", classes);
+    }
+    else if (type instanceof GenericArrayType) {
+      dumpType(owner, ((GenericArrayType)type).getGenericComponentType(), sb, classes);
+      sb.append("[]");
+    }
+  }
+
+  private static void dumpTypeParametersArray(GenericDeclaration owner, final Type[] typeVariables,
+                                              final StringBuilder sb,
+                                              final String prefix, final String suffix, Map<Class, Collection<Class>> classes) {
+    int typeVarIdx = 1;
+    for (Type typeVariable : typeVariables) {
+      if (typeVariable == Object.class) continue;
+      if (typeVarIdx++ == 1) sb.append(prefix);
+      else sb.append(", ");
+      dumpType(owner, typeVariable, sb, classes);
+    }
+    if (typeVarIdx > 1) sb.append(suffix);
+  }
+
+  private static void printMethodDeclaration(Method method, StringBuilder sb, Map<Class, Collection<Class>> classes) {
+    if (Modifier.isStatic(method.getModifiers())) {
+      sb.append("static ");
+    }
+    dumpTypeParametersArray(method, method.getTypeParameters(), sb, "<", "> ", classes);
+    dumpType(null, method.getGenericReturnType(), sb, classes);
+    sb.append(" ").append(method.getName()).append("(");
+    int paramIdx = 1;
+    for (Type parameter : method.getGenericParameterTypes()) {
+      if (paramIdx != 1) sb.append(", ");
+      dumpType(null, parameter, sb, classes);
+      sb.append(" ").append("p").append(paramIdx++);
+    }
+    sb.append(")");
+    if (!method.getDeclaringClass().isInterface()) sb.append("{}");
+    sb.append("\n");
   }
 
 }

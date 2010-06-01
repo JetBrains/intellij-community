@@ -117,36 +117,6 @@ public class DuringChangeListManagerUpdateTestScheme {
     }
   }
 
-  private static class TimeoutWaiter {
-    private Getter<Boolean> myControlled;
-    private final static long ourTimeout = 5000;
-    private final Object myLock;
-
-    private TimeoutWaiter() {
-      myLock = new Object();
-    }
-
-    public void setControlled(final Getter<Boolean> controlled) {
-      myControlled = controlled;
-    }
-
-    public void startTimeout() {
-      assert myControlled != null;
-
-      final long start = System.currentTimeMillis();
-      synchronized (myLock) {
-        while (((System.currentTimeMillis() - start) < ourTimeout) && (! Boolean.TRUE.equals(myControlled.get()))) {
-          try {
-            myLock.wait(300);
-          }
-          catch (InterruptedException e) {
-            //
-          }
-        }
-      }
-    }
-  }
-
   public static void checkFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
     System.out.println("Checking files for list: " + listName);
     assert manager.findChangeList(listName) != null;
