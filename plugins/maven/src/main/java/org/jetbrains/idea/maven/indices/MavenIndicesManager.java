@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -47,7 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class MavenIndicesManager implements ApplicationComponent {
+public class MavenIndicesManager {
   private static final String ELEMENT_ARCHETYPES = "archetypes";
   private static final String ELEMENT_ARCHETYPE = "archetype";
   private static final String ELEMENT_GROUP_ID = "groupId";
@@ -75,15 +76,7 @@ public class MavenIndicesManager implements ApplicationComponent {
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<MavenArchetype>();
 
   public static MavenIndicesManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(MavenIndicesManager.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return getClass().getSimpleName();
-  }
-
-  public void initComponent() {
+    return ServiceManager.getService(MavenIndicesManager.class);
   }
 
   @TestOnly
@@ -99,7 +92,6 @@ public class MavenIndicesManager implements ApplicationComponent {
   private synchronized void ensureInitialized() {
     if (myIndices != null) return;
 
-    // todo remove defaultProject
     myIndexer = MavenFacadeManager.getInstance().createIndexer();
     myIndices = new MavenIndices(myIndexer, getIndicesDir(), new MavenIndex.IndexListener() {
       public void indexIsBroken(MavenIndex index) {

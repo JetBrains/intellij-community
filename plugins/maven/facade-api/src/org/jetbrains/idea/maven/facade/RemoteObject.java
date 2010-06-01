@@ -53,29 +53,24 @@ public abstract class RemoteObject implements Remote, Unreferenced {
     }
   }
 
-  protected static void handleException(Exception e) {
-    Throwable cause = e;
-    while (cause.getCause() != null) {
-      cause = cause.getCause();
-    }
-    cause = wrapException(cause);
-    throw cause instanceof RuntimeException ? (RuntimeException)cause : new RuntimeException(cause);
-  }
-
   public static Throwable wrapException(Throwable ex) {
-    if (!ex.getClass().getName().startsWith("java")) {
-      final Throwable replaceWith = new RuntimeException(ex.toString());
-      replaceWith.setStackTrace(ex.getStackTrace());
-      ex = replaceWith;
+    boolean foreignException = false;
+    Throwable each = ex;
+    while(each != null) {
+      String name = each.getClass().getName();
+      if (!name.startsWith("java") && !name.startsWith(RemoteObject.class.getPackage().getName())) {
+        foreignException = true;
+        break;
+      }
+      each = each.getCause();
+    }
+
+    if (foreignException) {
+      Throwable wrapper = new Throwable(ex.toString());
+      wrapper.setStackTrace(ex.getStackTrace());
+      ex = wrapper;
     }
     return ex;
-  }
-
-  public Object wrapIfNeeded(Object o) throws RemoteException {
-    if (o == null) return o;
-    if (o.getClass().getClassLoader() == null ||
-        o.getClass().getName().startsWith("com.intellij")) return o;
-    return o.toString();
   }
 
   public void unreferenced() {

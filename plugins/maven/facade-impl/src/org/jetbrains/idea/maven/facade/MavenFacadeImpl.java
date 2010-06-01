@@ -38,34 +38,64 @@ import java.util.List;
 
 public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
   public void setLogger(MavenFacadeLogger logger) throws RemoteException {
-    MavenFacadeLoggerManager.setLogger(logger);
+    try {
+      MavenFacadeLoggerManager.setLogger(logger);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public MavenFacadeEmbedder createEmbedder(MavenFacadeSettings settings) throws RemoteException {
-    MavenFacadeEmbedderImpl result = MavenFacadeEmbedderImpl.create(settings);
-    UnicastRemoteObject.exportObject(result, 0);
-    return result;
+    try {
+      MavenFacadeEmbedderImpl result = MavenFacadeEmbedderImpl.create(settings);
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (RemoteException e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public MavenFacadeIndexer createIndexer() throws RemoteException {
-    MavenFacadeIndexerImpl result = new MavenFacadeIndexerImpl();
-    UnicastRemoteObject.exportObject(result, 0);
-    return result;
+    try {
+      MavenFacadeIndexerImpl result = new MavenFacadeIndexerImpl();
+      UnicastRemoteObject.exportObject(result, 0);
+      return result;
+    }
+    catch (RemoteException e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
-    return MavenFacadeEmbedderImpl.interpolateAndAlignModel(model, basedir);
+    try {
+      return MavenFacadeEmbedderImpl.interpolateAndAlignModel(model, basedir);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) {
-    return MavenFacadeEmbedderImpl.assembleInheritance(model, parentModel);
+    try {
+      return MavenFacadeEmbedderImpl.assembleInheritance(model, parentModel);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 Collection<String> explicitProfiles,
                                                 Collection<String> alwaysOnProfiles) {
-    return MavenFacadeEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    try {
+      return MavenFacadeEmbedderImpl.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public List<MavenRepositoryInfo> getRepositories(String nexusUrl) throws RemoteException {
@@ -79,8 +109,7 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       return result;
     }
     catch (Exception e) {
-      handleException(e);
-      throw new AssertionError();
+      throw new RuntimeException(wrapException(e));
     }
   }
 
@@ -105,9 +134,8 @@ public class MavenFacadeImpl extends RemoteObject implements MavenFacade {
       }
       return result;
     }
-    catch (Exception ex) {
-      handleException(ex);
-      throw new AssertionError();
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
     }
   }
 }

@@ -29,10 +29,8 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -40,9 +38,8 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SystemProperties;
@@ -96,8 +93,8 @@ public class MavenFacadeManager {
       }
     };
 
-    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
-      public void dispose() {
+    ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+      public void run() {
         mySupport.stopAll();
 
         if (myLogger != null) {
@@ -149,7 +146,7 @@ public class MavenFacadeManager {
         addPluginLibraries(params.getClassPath());
 
         params.setMainClass(MAIN_CLASS);
-        params.getVMParametersList().add("-Xmx512m -agentlib:yjpagent=disablej2ee");
+        params.getVMParametersList().addParametersString("-d32 -Xmx512m");
         return params;
       }
 
@@ -176,7 +173,6 @@ public class MavenFacadeManager {
         ProcessTerminatedListener.attach(processHandler);
         return processHandler;
       }
-
     };
   }
 
@@ -192,7 +188,7 @@ public class MavenFacadeManager {
       libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "facade-impl/lib");
     }
     else {
-      libDir = pluginFileOrDir;
+      libDir = pluginFileOrDir.getParentFile();
     }
     MavenLog.LOG.assertTrue(libDir.exists() && libDir.isDirectory(), "Maven Facade libraries dir not found: " + libDir);
 
@@ -202,11 +198,6 @@ public class MavenFacadeManager {
         classPath.add(jar.getPath());
       }
     }
-  }
-
-  public static String getJarPath(@NotNull final Class<?> context, @NotNull final String mainClassName) {
-    final String s = PathManager.getResourceRoot(context, "/" + mainClassName.replace('.', '/') + CommonClassNames.CLASS_FILE_EXTENSION);
-    return new File(s).getAbsoluteFile().getAbsolutePath();
   }
 
   public MavenEmbedderWrapper createEmbedder(Project project) {

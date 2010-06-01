@@ -488,7 +488,7 @@ public class MavenModelConverter {
     result.setId(r.getId());
     result.setName(r.getName());
     result.setUrl(r.getUrl());
-    result.setLayout(r.getLayout());
+    result.setLayout(r.getLayout() == null ? "default" : r.getLayout());
 
     if (r.getReleasesPolicy() != null) result.setReleases(toNativePolicy(r.getReleasesPolicy()));
     if (r.getSnapshotsPolicy() != null) result.setSnapshots(toNativePolicy(r.getSnapshotsPolicy()));
@@ -514,7 +514,7 @@ public class MavenModelConverter {
                                  t.getVersion(),
                                  t.getPackaging(),
                                  t.getClassifier(),
-                                 t.getClassNames(),
+                                 null,
                                  t.getRepoId());
   }
 

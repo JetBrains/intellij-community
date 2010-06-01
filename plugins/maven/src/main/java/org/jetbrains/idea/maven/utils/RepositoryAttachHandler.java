@@ -32,14 +32,13 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryTableAttachHandler;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
@@ -192,21 +191,23 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   }
 
   public static void searchArtifacts(final Project project, String coord,
-                                     final PairProcessor<Collection<MavenArtifactInfo>, Boolean> resultProcessor,
+                                     final PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean> resultProcessor,
                                      final Processor<Collection<MavenRepositoryInfo>> repoProcessor) {
     if (coord == null) return;
     final MavenArtifactInfo template = createTemplate(coord, null);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
-        final Ref<List<MavenArtifactInfo>> result = Ref.create(Collections.<MavenArtifactInfo>emptyList());
+        final Ref<List<Pair<MavenArtifactInfo, MavenRepositoryInfo>>> result
+          = Ref.create(Collections.<Pair<MavenArtifactInfo, MavenRepositoryInfo>>emptyList());
         final Ref<List<MavenRepositoryInfo>> result2 = Ref.create(Collections.<MavenRepositoryInfo>emptyList());
         final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
         try {
           MavenFacadeManager facade = MavenFacadeManager.getInstance();
 
           final String[] nexusUrls = getDefaultNexusUrls();
-          final List<MavenArtifactInfo> resultList = new ArrayList<MavenArtifactInfo>();
+          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList
+            = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
           final List<MavenRepositoryInfo> result2List = new ArrayList<MavenRepositoryInfo>();
           for (String nexusUrl : nexusUrls) {
             final List<MavenArtifactInfo> artifacts;
@@ -221,8 +222,15 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
               tooManyRef.set(Boolean.TRUE);
             }
             else if (!artifacts.isEmpty()) {
-              result2List.addAll(facade.getRepositories(nexusUrl));
-              resultList.addAll(artifacts);
+              final List<MavenRepositoryInfo> repositories = facade.getRepositories(nexusUrl);
+              final HashMap<String, MavenRepositoryInfo> map = new HashMap<String, MavenRepositoryInfo>();
+              for (MavenRepositoryInfo repository : repositories) {
+                map.put(repository.getId(), repository);
+              }
+              result2List.addAll(repositories);
+              for (MavenArtifactInfo artifact : artifacts) {
+                resultList.add(Pair.create(artifact, map.get(artifact.getRepositoryId())));
+              }
             }
           }
           result.set(resultList);
@@ -288,7 +296,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
       return new MavenArtifactInfo(parts.length > 0 ? parts[0] : null,
                                    parts.length > 1 ? parts[1] : null,
                                    parts.length > 2 ? parts[2] : null,
-                                   null,
+                                   packaging,
                                    null);
     }
   }
@@ -299,21 +307,21 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
 
   public static void resolveLibrary(final Project project,
                                     final String libName,
-                                    Collection<MavenRepositoryInfo> repositories,
+                                    final Collection<MavenRepositoryInfo> repositories,
                                     boolean modal,
                                     final Processor<List<MavenArtifact>> resultProcessor) {
     Task task;
     if (modal) {
       task = new Task.Modal(project, "Maven", false) {
         public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, Collections.singletonList(createTemplate(libName, "jar")), resultProcessor, indicator);
+          doResolveInner(project, createTemplate(libName, "jar"), repositories, resultProcessor, indicator);
         }
       };
     }
     else {
       task = new Task.Backgroundable(project, "Maven", false, PerformInBackgroundOption.DEAF) {
         public void run(@NotNull ProgressIndicator indicator) {
-          doResolveInner(project, Collections.singletonList(createTemplate(libName, "jar")), resultProcessor, indicator);
+          doResolveInner(project, createTemplate(libName, "jar"), repositories, resultProcessor, indicator);
         }
 
         @Override
@@ -327,7 +335,8 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
   }
 
   private static void doResolveInner(Project project,
-                                     List<MavenArtifactInfo> artifacts,
+                                     MavenArtifactInfo artifact,
+                                     Collection<MavenRepositoryInfo> repositories,
                                      final Processor<List<MavenArtifact>> resultProcessor,
                                      ProgressIndicator indicator) {
     final Ref<List<MavenArtifact>> result = new Ref<List<MavenArtifact>>();
@@ -336,7 +345,13 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     try {
       embedder.customizeForResolve(new SoutMavenConsole(), new MavenProgressIndicator(indicator));
-      result.set(embedder.resolveTransitively(artifacts, convertRepositories(getDefaultRepositories())));
+      List<MavenArtifact> resolved = embedder.resolveTransitively(Collections.singletonList(artifact),
+                                                                  convertRepositories(repositories));
+      result.set(ContainerUtil.findAll(resolved, new Condition<MavenArtifact>() {
+        public boolean value(MavenArtifact mavenArtifact) {
+          return mavenArtifact.isResolved();
+        }
+      }));
     }
     catch (MavenProcessCanceledException e) {
       return;
@@ -351,7 +366,7 @@ public class RepositoryAttachHandler implements LibraryTableAttachHandler {
     }
   }
 
-  private static List<MavenRemoteRepository> convertRepositories(List<MavenRepositoryInfo> infos) {
+  private static List<MavenRemoteRepository> convertRepositories(Collection<MavenRepositoryInfo> infos) {
     List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(infos.size());
     for (MavenRepositoryInfo each : infos) {
       result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));

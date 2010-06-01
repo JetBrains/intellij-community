@@ -80,11 +80,8 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
       myIndices.put(id, context);
       return id;
     }
-    catch (IOException e) {
-      throw new MavenFacadeIndexerException(e);
-    }
-    catch (UnsupportedExistingLuceneIndexException e) {
-      throw new MavenFacadeIndexerException(e.getMessage());
+    catch (Exception e) {
+      throw new MavenFacadeIndexerException(wrapException(e));
     }
   }
 
@@ -92,8 +89,8 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
     try {
       myIndexer.removeIndexingContext(getIndex(id), false);
     }
-    catch (IOException e) {
-      throw new MavenFacadeIndexerException(e);
+    catch (Exception e) {
+      throw new MavenFacadeIndexerException(wrapException(e));
     }
   }
 
@@ -163,8 +160,8 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
     catch (MavenFacadeProgressIndicatorWrapper.RuntimeCanceledException e) {
       throw new MavenFacadeProcessCanceledException();
     }
-    catch (IOException e) {
-      throw new MavenFacadeIndexerException(e);
+    catch (Exception e) {
+      throw new MavenFacadeIndexerException(wrapException(e));
     }
   }
 
@@ -189,8 +186,8 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
       }
       return result;
     }
-    catch (IOException e) {
-      throw new MavenFacadeIndexerException(e);
+    catch (Exception e) {
+      throw new MavenFacadeIndexerException(wrapException(e));
     }
   }
 
@@ -205,8 +202,8 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
       org.sonatype.nexus.index.ArtifactInfo a = artifactContext.getArtifactInfo();
       return new MavenId(a.groupId, a.artifactId, a.version);
     }
-    catch (IOException e) {
-      throw new MavenFacadeIndexerException(e);
+    catch (Exception e) {
+      throw new MavenFacadeIndexerException(wrapException(e));
     }
   }
 
@@ -238,8 +235,8 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
       }
       return result;
     }
-    catch (IOException e) {
-      throw new MavenFacadeIndexerException(e);
+    catch (Exception e) {
+      throw new MavenFacadeIndexerException(wrapException(e));
     }
   }
 
@@ -265,9 +262,13 @@ public class MavenFacadeIndexerImpl extends RemoteObject implements MavenFacadeI
   }
 
   public void release() {
-    myEmbedder.release();
+    try {
+      myEmbedder.release();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
-
 
   private static class MyScanningListener implements ArtifactScanningListener {
     private final MavenFacadeProgressIndicatorWrapper p;

@@ -24,7 +24,6 @@ public class MavenFacadeUtil {
   private static volatile Properties mySystemPropertiesCache;
 
   public static Properties collectSystemProperties() {
-
     if (mySystemPropertiesCache == null) {
       Properties result = new Properties();
       result.putAll(getSystemProperties());
@@ -37,10 +36,6 @@ public class MavenFacadeUtil {
     }
 
     return mySystemPropertiesCache;
-  }
-
-  public static void resetSystemPropertiesCache() {
-    mySystemPropertiesCache = null;
   }
 
   @SuppressWarnings({"unchecked"})

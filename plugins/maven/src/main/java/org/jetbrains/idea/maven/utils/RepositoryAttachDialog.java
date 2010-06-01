@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private final Project myProject;
   private final boolean myManaged;
   private final AsyncProcessIcon myProgressIcon;
-  private final THashMap<String, MavenArtifactInfo> myCoordinates = new THashMap<String, MavenArtifactInfo>();
+  private final THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates
+    = new THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
   private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
   private final ArrayList<String> myShownItems = new ArrayList<String>();
   private final JComboBox myCombobox = new JComboBox(new CollectionComboBoxModel(myShownItems, null));
@@ -170,14 +172,14 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (myProgressIcon.isVisible()) return false;
     myProgressIcon.setVisible(true);
     myProgressIcon.resume();
-    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<MavenArtifactInfo>, Boolean>() {
-      public boolean process(Collection<MavenArtifactInfo> artifacts, Boolean tooMany) {
+    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
+      public boolean process(Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>> artifacts, Boolean tooMany) {
         if (myProgressIcon.isDisposed()) return true;
         myProgressIcon.suspend();
         myProgressIcon.setVisible(false);
         final int prevSize = myCoordinates.size();
-        for (MavenArtifactInfo each : artifacts) {
-          myCoordinates.put(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion(), each);
+        for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
+          myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
         }
 
         myRepositoryUrl.setModel(new CollectionComboBoxModel(new ArrayList<String>(myRepositories.keySet()), myRepositoryUrl.getEditor().getItem()));
@@ -328,21 +330,10 @@ public class RepositoryAttachDialog extends DialogWrapper {
       return Collections.singletonList(new MavenRepositoryInfo("custom", null, selectedRepository));
     }
     else {
-      final MavenArtifactInfo artifact = myCoordinates.get(getCoordinateText());
-      final MavenRepositoryInfo repository =
-        artifact != null ? findRepositoryFor(artifact) : null;
+      final Pair<MavenArtifactInfo, MavenRepositoryInfo> artifactAndRepo = myCoordinates.get(getCoordinateText());
+      final MavenRepositoryInfo repository = artifactAndRepo.second;
       return repository != null? Collections.singletonList(repository) : ContainerUtil.findAll(myRepositories.values(), Condition.NOT_NULL);
     }
-  }
-
-  private MavenRepositoryInfo findRepositoryFor(MavenArtifactInfo artifact) {
-    String soughtFor = artifact.getRepositoryId();
-    if (soughtFor == null) return null;
-    
-    for (MavenRepositoryInfo each : myRepositories.values()) {
-      if (each.getId().equals(soughtFor)) return each;
-    }
-    return null;
   }
 
   private boolean isValidCoordinateSelected() {

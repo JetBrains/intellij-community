@@ -90,8 +90,6 @@ public class ArtifactType implements Serializable {
   @XmlElement(required = true)
   protected String artifactLink;
 
-  protected String classNames;
-
   public ArtifactType() {
 
   }
@@ -320,15 +318,6 @@ public class ArtifactType implements Serializable {
    */
   public void setArtifactLink(String value) {
     this.artifactLink = value;
-  }
-
-  @Nullable
-  public String getClassNames() {
-    return classNames;
-  }
-
-  public void setClassNames(@Nullable String classNames) {
-    this.classNames = classNames;
   }
 
   @Override

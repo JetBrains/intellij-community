@@ -20,7 +20,7 @@ public class MavenFacadeIndexerException extends Exception {
     super(message);
   }
 
-  public MavenFacadeIndexerException(Exception cause) {
+  public MavenFacadeIndexerException(Throwable cause) {
     super(null, cause);
   }
 }

@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.facade.embedder;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
 import gnu.trove.THashMap;
@@ -75,10 +74,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.jetbrains.idea.maven.facade.RemoteObject.wrapException;
+
 public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacadeEmbedder {
   private final MavenEmbedder myImpl;
   private final MavenFacadeConsoleWrapper myConsoleWrapper;
-  private volatile MavenFacadeProgressIndicator myCurrentIndicator;
+  private volatile MavenFacadeProgressIndicatorWrapper myCurrentIndicatorWrapper;
 
   public static MavenFacadeEmbedderImpl create(MavenFacadeSettings facadeSettings) {
     MavenEmbedderSettings settings = new MavenEmbedderSettings();
@@ -184,15 +185,14 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
   }
 
   @NotNull
-  public List<MavenArtifact> resolveTransitively(
-    @NotNull final List<MavenArtifactInfo> artifacts,
-    @NotNull final List<MavenRemoteRepository> remoteRepositories)  {
-
-    Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
-    for (MavenArtifactInfo each : artifacts) {
-      toResolve.add(createArtifact(each));
-    }
+  public List<MavenArtifact> resolveTransitively(@NotNull final List<MavenArtifactInfo> artifacts,
+                                                 @NotNull final List<MavenRemoteRepository> remoteRepositories) {
     try {
+      Set<Artifact> toResolve = new LinkedHashSet<Artifact>();
+      for (MavenArtifactInfo each : artifacts) {
+        toResolve.add(createArtifact(each));
+      }
+
       return MavenModelConverter.convertArtifacts(myImpl.resolveTransitively(toResolve, convertRepositories(remoteRepositories)),
                                                   new THashMap<Artifact, MavenArtifact>(), getLocalRepositoryFile());
     }
@@ -201,6 +201,10 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
     }
     catch (ArtifactNotFoundException e) {
       MavenFacadeLoggerManager.getLogger().info(e);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+
     }
     return Collections.emptyList();
   }
@@ -469,7 +473,6 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
 
   private interface Executor<T> {
     T execute() throws Exception;
-
   }
 
   private <T> T doExecute(final Executor<T> executor) throws MavenFacadeProcessCanceledException {
@@ -491,23 +494,17 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
       }
     });
 
-    MavenFacadeProgressIndicator indicator = myCurrentIndicator;
+    MavenFacadeProgressIndicatorWrapper indicator = myCurrentIndicatorWrapper;
     while (true) {
-      boolean canceled = false;
-      try {
-        canceled = indicator.isCanceled();
-      }
-      catch (RemoteException e) {
-        throw new RuntimeException(e);
-      }
-      if (canceled) throw new MavenFacadeProcessCanceledException();
+      if (indicator.isCanceled()) throw new MavenFacadeProcessCanceledException();
+
       try {
         future.get(50, TimeUnit.MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
       catch (ExecutionException e) {
-        throw new RuntimeException(e.getCause());
+        throw new RuntimeException(wrapException(e.getCause()));
       }
       catch (InterruptedException e) {
         throw new MavenFacadeProcessCanceledException();
@@ -526,8 +523,7 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
 
   private RuntimeException getRethrowable(Throwable throwable) {
     if (throwable instanceof InvocationTargetException) throwable = throwable.getCause();
-    if (throwable instanceof RuntimeException) return (RuntimeException)throwable;
-    return new RuntimeException(throwable);
+    return new RuntimeException(wrapException(throwable));
   }
 
   private static void setupContainer(PlexusContainer c) {
@@ -556,16 +552,21 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
                            boolean strict,
                            MavenFacadeConsole logger,
                            MavenFacadeProgressIndicator process) {
-    ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
-    ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
-    ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, strict);
-    ((CustomWagonManager)getComponent(WagonManager.class)).customize(strict);
+    try {
+      ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
+      ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
+      ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(projectIdToFileMap, strict);
+      ((CustomWagonManager)getComponent(WagonManager.class)).customize(strict);
 
-    setConsoleAndLogger(logger, process);
+      setConsoleAndLogger(logger, process);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   private void setConsoleAndLogger(MavenFacadeConsole logger, MavenFacadeProgressIndicator process) {
-    myCurrentIndicator = process;
+    myCurrentIndicatorWrapper = new MavenFacadeProgressIndicatorWrapper(process);
     myConsoleWrapper.setWrappee(logger);
 
     WagonManager wagon = getComponent(WagonManager.class);
@@ -573,16 +574,26 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
   }
 
   public void reset() {
-    setConsoleAndLogger(null, null);
+    try {
+      setConsoleAndLogger(null, null);
 
-    ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).reset();
-    ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
-    ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).reset();
-    ((CustomWagonManager)getComponent(WagonManager.class)).reset();
+      ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).reset();
+      ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).reset();
+      ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).reset();
+      ((CustomWagonManager)getComponent(WagonManager.class)).reset();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public void release() {
-    myImpl.release();
+    try {
+      myImpl.release();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(wrapException(e));
+    }
   }
 
   public void clearCaches() {
@@ -620,6 +631,9 @@ public class MavenFacadeEmbedderImpl extends RemoteObject implements MavenFacade
     }
     catch (IllegalAccessException e) {
       MavenFacadeLoggerManager.getLogger().info(e);
+    }
+    catch(Exception e) {
+      throw new RuntimeException(wrapException(e));
     }
   }
 }

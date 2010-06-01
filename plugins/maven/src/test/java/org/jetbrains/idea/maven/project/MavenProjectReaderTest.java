@@ -1132,16 +1132,13 @@ public class MavenProjectReaderTest extends MavenTestCase {
   }
 
   public void testActivatingProfilesByProperty() throws Exception {
-    System.setProperty("maven.test.property", "foo");
-    MavenFacadeUtil.resetSystemPropertiesCache();
-
     createProjectPom("<profiles>" +
                      "  <profile>" +
                      "    <id>one</id>" +
                      "    <activation>" +
                      "      <property>" +
-                     "        <name>maven.test.property</name>" +
-                     "        <value>foo</value>" +
+                     "        <name>os.name</name>" +
+                     "        <value>" + System.getProperty("os.name") + "</value>" +
                      "      </property>" +
                      "    </activation>" +
                      "  </profile>" +
@@ -1149,8 +1146,8 @@ public class MavenProjectReaderTest extends MavenTestCase {
                      "    <id>two</id>" +
                      "    <activation>" +
                      "      <property>" +
-                     "        <name>maven.test.property</name>" +
-                     "        <value>bar</value>" +
+                     "        <name>os.name</name>" +
+                     "        <value>xxx</value>" +
                      "      </property>" +
                      "    </activation>" +
                      "  </profile>" +
