@@ -53,7 +53,7 @@ public abstract class RunOrContinuation<T> {
   public void execute() {
     final Ref<T> refT = new Ref<T>();
     refT.set(calculate());
-    if ((! myWasCanceled) && (! refT.isNull())) {
+    if (! myWasCanceled) {
       processResult(refT.get());
       return;
     }
@@ -63,7 +63,7 @@ public abstract class RunOrContinuation<T> {
       }
       @Override
       public void onSuccess() {
-        if ((! myWasCanceled) && (! refT.isNull())) processResult(refT.get());
+        if (! myWasCanceled) processResult(refT.get());
       }
     });
   }
