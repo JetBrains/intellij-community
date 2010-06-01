@@ -3,10 +3,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.util.Time;
 import com.intellij.util.WaitFor;
 import junit.framework.TestSuite;
@@ -1013,7 +1010,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       public void onElementAction(String action, Object element) {
         if (wasInterrupted[0]) {
           if (myCancelRequest == null) {
-            myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element);
+            myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element + " interruptAction=" + interruptAction + " interruptElement=" + interruptElement);
           }
         } else {
           if (element.equals(interruptElement) && action.equals(interruptAction)) {
@@ -1411,6 +1408,50 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     doTestSelectionOnDelete(true);
   }
 
+  public void testRevalidateStructure() throws Exception {
+    final NodeElement com = new NodeElement("com");
+    final NodeElement actionSystem = new NodeElement("actionSystem");
+    actionSystem.setForcedParent(com);
+
+    doAndWaitForBuilder(new Runnable() {
+      public void run() {
+        myRoot.addChild(com).addChild(actionSystem);
+        getBuilder().getUi().activate(true);
+      }
+    });
+
+    select(actionSystem, false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  [actionSystem]\n");
+
+
+    removeFromParentButKeepRef(actionSystem);
+
+    final NodeElement newActionSystem = new NodeElement("actionSystem");
+
+    myStructure.getNodeFor(com).addChild("intellij").addChild("openapi").addChild(newActionSystem);
+
+    assertSame(com, myStructure.getParentElement(actionSystem));
+    assertNotSame(com, newActionSystem);
+    assertEquals(new NodeElement("openapi"), myStructure.getParentElement(newActionSystem));
+
+    myStructure.setRevalidator(new Revalidator() {
+      public AsyncResult<Object> revalidate(NodeElement element) {
+        return element == actionSystem ? new AsyncResult.Done<Object>(newActionSystem) : null;
+      }
+    });
+
+    updateFromRoot();
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  -intellij\n" +
+               "   -openapi\n" +
+               "    [actionSystem]\n");
+  }
+
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
     myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
@@ -1686,7 +1727,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     buildAction.run();
 
-    boolean released = new WaitFor(5000) {
+    boolean released = new WaitFor(60000) {
       @Override
       protected boolean condition() {
         return getBuilder().getUi() == null;
@@ -1702,13 +1743,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testCancelUpdate() throws Exception {
-      super.testCancelUpdate();
-    }
-
-    @Override
-    public void testThrowingProcessCancelledInterruptsUpdate() throws Exception {
-      super.testThrowingProcessCancelledInterruptsUpdate();
+    public void testRevalidateStructure() throws Exception {
+      super.testRevalidateStructure();
     }
   }
 

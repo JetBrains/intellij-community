@@ -172,6 +172,8 @@ public class AbstractTreeUi {
 
   private Map<DefaultMutableTreeNode, DefaultMutableTreeNode> myCancelledBuild = new WeakHashMap<DefaultMutableTreeNode, DefaultMutableTreeNode>();
 
+  private boolean mySelectionIsAdjusted;
+
   protected void init(AbstractTreeBuilder builder,
                       JTree tree,
                       DefaultTreeModel treeModel,
@@ -268,6 +270,13 @@ public class AbstractTreeUi {
       else {
         tree.setPaintBusy(false);
       }
+    }
+  }
+
+  private void setHoldSize(boolean holdSize) {
+    if (myTree instanceof com.intellij.ui.treeStructure.Tree) {
+      final com.intellij.ui.treeStructure.Tree tree = (Tree)myTree;
+      tree.setHoldSize(holdSize);
     }
   }
 
@@ -962,7 +971,10 @@ public class AbstractTreeUi {
   }
 
   final void updateSubtreeNow(TreeUpdatePass pass, boolean canSmartExpand) {
+
+
     maybeSetBusyAndScheduleWaiterForReady(true);
+    setHoldSize(true);
 
     boolean consumed = initRootNodeNowIfNeeded(pass);
     if (consumed) return;
@@ -1804,6 +1816,8 @@ public class AbstractTreeUi {
         }
       }
 
+      setHoldSize(false);
+
       if (myTree.isShowing()) {
         if (getBuilder().isToEnsureSelectionOnFocusGained() && Registry.is("ide.tree.ensureSelectionOnFocusGained")) {
           TreeUtil.ensureSelection(myTree);
@@ -1812,6 +1826,17 @@ public class AbstractTreeUi {
 
       if (myInitialized.isDone()) {
         myBusyObject.onReady();
+      }
+
+      TreePath[] selection = getTree().getSelectionPaths();
+      Rectangle visible = getTree().getVisibleRect();
+      if (selection != null) {
+        for (TreePath each : selection) {
+          Rectangle bounds = getTree().getPathBounds(each);
+          if (bounds != null && (visible.contains(bounds) || visible.intersects(bounds))) {
+            getTree().repaint(bounds);
+          }
+        }
       }
     }
   }
@@ -2070,8 +2095,13 @@ public class AbstractTreeUi {
       resetToReadyNow();
       done.setDone();
     } else {
-      requestCancel();
-      getReady(this).notify(done);
+      if (isIdle() && hasPendingWork()) {
+        resetToReadyNow();
+        done.setDone();
+      } else {
+        requestCancel();
+        getReady(this).notify(done);
+      }
     }
 
     maybeReady();
@@ -2134,6 +2164,10 @@ public class AbstractTreeUi {
 
   public boolean isCancelProcessed() {
     return myCancelRequest.get() || myResettingToReadyNow.get();
+  }
+
+  public boolean isToPaintSelection() {
+    return isReady() || !mySelectionIsAdjusted;
   }
 
   static class ElementNode extends DefaultMutableTreeNode {
@@ -2749,6 +2783,8 @@ public class AbstractTreeUi {
         }
 
         if (toSelect != null) {
+          mySelectionIsAdjusted = isAdjustedSelection;
+
           myTree.addSelectionPath(toSelect);
 
           if (isAdjustedSelection && myUpdaterState != null) {
@@ -3127,8 +3163,10 @@ public class AbstractTreeUi {
             }
             myTreeModel.nodeStructureChanged(parentNode);
 
-            while (expanded.hasMoreElements()) {
-              expandSilently(expanded.nextElement());
+            if (expanded != null) {
+              while (expanded.hasMoreElements()) {
+                expandSilently(expanded.nextElement());
+              }
             }
 
             if (selected != null) {
@@ -3447,14 +3485,41 @@ public class AbstractTreeUi {
                         final boolean deferred,
                         final boolean canBeCentered,
                         final boolean scrollToVisible,
-                        boolean canSmartExpand) {
+                        final boolean canSmartExpand) {
     final Runnable _onDone = new Runnable() {
       public void run() {
         if (!checkDeferred(deferred, onDone)) return;
-        selectVisible(element, onDone, addToSelection, canBeCentered, scrollToVisible);
+
+        checkPathAndMaybeRevalidate(element, new Runnable() {
+          public void run() {
+            selectVisible(element, onDone, addToSelection, canBeCentered, scrollToVisible);
+          }
+        }, true, false, canSmartExpand);
       }
     };
     _expand(element, _onDone, true, false, canSmartExpand);
+  }
+
+  private void checkPathAndMaybeRevalidate(Object element, final Runnable onDone, final boolean parentsOnly, final boolean checkIfInStructure, final boolean canSmartExpand) {
+    boolean toRevalidate = getNodeForElement(element, false) == null && isInStructure(element);
+    if (!toRevalidate) {
+      runDone(onDone);
+      return;
+    }
+
+    getTreeStructure().revalidateElement(element).doWhenDone(new AsyncResult.Handler<Object>() {
+      public void run(final Object o) {
+        invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
+          }
+        });
+      }
+    }).doWhenRejected(new Runnable() {
+      public void run() {
+        runDone(onDone);
+      }
+    });
   }
 
   public void scrollSelectionToVisible(@Nullable Runnable onDone, boolean shouldBeCentered) {
@@ -3497,6 +3562,7 @@ public class AbstractTreeUi {
     }
 
     if (Registry.is("ide.tree.autoscrollToVCenter") && canBeCentered) {
+      setHoldSize(false);
       runDone(new Runnable() {
         public void run() {
           TreeUtil.showRowCentered(myTree, row, false, scroll).doWhenDone(new Runnable() {
@@ -3508,6 +3574,7 @@ public class AbstractTreeUi {
       });
     }
     else {
+      setHoldSize(false);
       TreeUtil.showAndSelect(myTree, row - 2, row + 2, row, -1, addToSelection, scroll).doWhenDone(new Runnable() {
         public void run() {
           runDone(onDone);
@@ -3900,6 +3967,7 @@ public class AbstractTreeUi {
     if (!isInnerChange()) {
       clearUpdaterState();
       myAutoExpandRoots.clear();
+      mySelectionIsAdjusted = false;
     }
   }
 

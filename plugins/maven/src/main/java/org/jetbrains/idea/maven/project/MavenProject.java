@@ -193,8 +193,6 @@ public class MavenProject {
     state.myDependencyTree = new ArrayList<MavenArtifactNode>(newDependencyTree);
     state.myPlugins = new ArrayList<MavenPlugin>(newPlugins);
     state.myExtensions = new ArrayList<MavenArtifact>(newExtensions);
-
-    // todo remove non-default managed plugins
   }
 
   private MavenProjectChanges setFolders(MavenProjectReaderResult readerResult) {
