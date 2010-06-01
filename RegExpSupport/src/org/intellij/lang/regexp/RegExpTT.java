@@ -64,8 +64,10 @@ public interface RegExpTT {
     IElementType DOT = new RegExpElementType("DOT");
     IElementType UNION = new RegExpElementType("UNION");
 
-    // > in Python named group
+    // > in Python/Ruby named group
     IElementType GT = new RegExpElementType("GT");
+    // ' in Ruby quoted named group
+    IElementType QUOTE = new RegExpElementType("QUOTE");
 
     // "\b" | "\t" | "\f" | "\r" | "\n"
     IElementType CTRL_CHARACTER = new RegExpElementType("CTRL_CHARACTER");
@@ -107,6 +109,11 @@ public interface RegExpTT {
     // (?(id/name)yes-pattern|no-pattern)
     IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF"); 
   
+    // (?<name>...
+    IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
+
+    // (?'name'...
+    IElementType RUBY_QUOTED_NAMED_GROUP = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP");
 
     TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
 

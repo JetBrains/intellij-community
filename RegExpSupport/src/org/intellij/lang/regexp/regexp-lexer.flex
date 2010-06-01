@@ -62,7 +62,8 @@ import com.intellij.psi.StringEscapesTokenTypes;
 %state PROP
 %xstate OPTIONS
 %xstate COMMENT
-%xstate PY_NAMED_GROUP
+%xstate NAMED_GROUP
+%xstate QUOTED_NAMED_GROUP
 %xstate PY_NAMED_GROUP_REF
 %xstate PY_COND_REF
 
@@ -208,9 +209,12 @@ HEX_CHAR=[0-9a-fA-F]
   "(?<="      { return RegExpTT.POS_LOOKBEHIND;  }
   "(?<!"      { return RegExpTT.NEG_LOOKBEHIND;  }
   "(?#" [^)]+ ")" { return RegExpTT.COMMENT;    }
-  "(?P<" { yybegin(PY_NAMED_GROUP); return RegExpTT.PYTHON_NAMED_GROUP; }
+  "(?P<" { yybegin(NAMED_GROUP); return RegExpTT.PYTHON_NAMED_GROUP; }
   "(?P=" { yybegin(PY_NAMED_GROUP_REF); return RegExpTT.PYTHON_NAMED_GROUP_REF; }
   "(?("  { yybegin(PY_COND_REF); return RegExpTT.PYTHON_COND_REF; }
+
+  "(?<" { yybegin(NAMED_GROUP); return RegExpTT.RUBY_NAMED_GROUP; }
+  "(?'" { yybegin(QUOTED_NAMED_GROUP); return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }
@@ -225,9 +229,16 @@ HEX_CHAR=[0-9a-fA-F]
   {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
 }
 
-<PY_NAMED_GROUP> {
+<NAMED_GROUP> {
   [:letter:]([:letter:]|_|[:digit:])* { return RegExpTT.NAME; }
   ">"               { yybegin(YYINITIAL); return RegExpTT.GT; }
+  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
+}
+
+<QUOTED_NAMED_GROUP> {
+  [:letter:]([:letter:]|_|[:digit:])* { return RegExpTT.NAME; }
+  "'"               { yybegin(YYINITIAL); return RegExpTT.QUOTE; }
+  {ANY}             { yybegin(YYINITIAL); return RegExpTT.BAD_CHARACTER; }
 }
 
 <PY_NAMED_GROUP_REF> {

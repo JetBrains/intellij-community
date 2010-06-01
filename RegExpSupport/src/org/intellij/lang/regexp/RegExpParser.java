@@ -346,10 +346,10 @@ public class RegExpParser implements PsiParser {
         } else if (type == RegExpTT.BACKREF) {
             builder.advanceLexer();
             marker.done(RegExpElementTypes.BACKREF);
-        } else if (type == RegExpTT.PYTHON_NAMED_GROUP) {
+        } else if (type == RegExpTT.PYTHON_NAMED_GROUP || type == RegExpTT.RUBY_NAMED_GROUP || type == RegExpTT.RUBY_QUOTED_NAMED_GROUP) {
             builder.advanceLexer();
             checkMatches(builder, RegExpTT.NAME, "Group name expected");
-            checkMatches(builder, RegExpTT.GT, "Unclosed group name");
+            checkMatches(builder, type == RegExpTT.RUBY_QUOTED_NAMED_GROUP ? RegExpTT.QUOTE : RegExpTT.GT, "Unclosed group name");
             if (!parsePattern(builder)) {
                 patternExpected(builder);
             } else {
