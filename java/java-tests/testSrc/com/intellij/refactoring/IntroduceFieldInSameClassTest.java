@@ -33,6 +33,43 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     checkResultByFile("/refactoring/introduceField/afterOuterClass.java");
   }
 
+  public void testOnClassLevelNoDuplicates() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeOnClassLevelNoDuplicates.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterOnClassLevelNoDuplicates.java");
+  }
+
+  public void testOnClassLevelDuplicates() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeOnClassLevelDuplicates.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterOnClassLevelDuplicates.java");
+  }
+
+  public void testOnClassLevelDuplicates1() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeOnClassLevelDuplicates1.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterOnClassLevelDuplicates1.java");
+  }
+
+  public void testOnClassLevelBinary() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeOnClassLevelBinary.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterOnClassLevelBinary.java");
+  }
+  //multiple error elements on class level corresponding to the extracted fragment ------------------
+  public void testOnClassLevelNewExpression() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeOnClassLevelNewExpression.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterOnClassLevelNewExpression.java");
+  }
+
+  public void testOnClassLevelClassForName() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeOnClassLevelClassForName.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterOnClassLevelClassForName.java");
+  }
+  //-------------------------------------------------------------------------------------------------
+
   private static void performRefactoring(final BaseExpressionToFieldHandler.InitializationPlace initializationPlace, final boolean declareStatic) {
     new MockIntroduceFieldHandler(initializationPlace, declareStatic).invoke(getProject(), myEditor, myFile, null);
   }
