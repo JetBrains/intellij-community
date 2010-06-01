@@ -39,7 +39,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -59,13 +58,13 @@ public class ToBeMergedDialog extends DialogWrapper {
   private Splitter mySplitter;
 
   private final QuantitySelection<Long> myWiseSelection;
-  private final MergeChecker myMergeChecker;
 
   private final Set<Change> myAlreadyMerged;
+  private final Map<Long, Collection<String>> myPartiallyMerged;
 
-  public ToBeMergedDialog(final Project project, final List<CommittedChangeList> lists, final String title, MergeChecker mergeChecker) {
+  public ToBeMergedDialog(final Project project, final List<CommittedChangeList> lists, final String title, final Map<Long, Collection<String>> partiallyMerged) {
     super(project, true);
-    myMergeChecker = mergeChecker;
+    myPartiallyMerged = partiallyMerged;
     setTitle(title);
     myProject = project;
 
@@ -218,7 +217,7 @@ public class ToBeMergedDialog extends DialogWrapper {
               public CommittedChangeList convert(Object o) {
                 if (o instanceof CommittedChangeList) {
                   final CommittedChangeList cl = (CommittedChangeList)o;
-                  final Collection<String> notMerged = myMergeChecker.getNotMergedPaths(cl.getNumber());
+                  final Collection<String> notMerged = myPartiallyMerged.get(cl.getNumber());
                   final SvnChangeList svnList = (SvnChangeList) cl;
 
                   final Collection<String> forCheck = new HashSet<String>();
@@ -226,7 +225,7 @@ public class ToBeMergedDialog extends DialogWrapper {
                   forCheck.addAll(svnList.getChangedPaths());
                   forCheck.addAll(svnList.getDeletedPaths());
                   for (String path : forCheck) {
-                    if (! notMerged.contains(path)) {
+                    if ((notMerged != null) && ! notMerged.contains(path)) {
                       myAlreadyMerged.add(((SvnChangeList) cl).getByPath(path));
                     }
                   }
