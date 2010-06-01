@@ -131,7 +131,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     };
   }
 
-  protected String getActionId(AnAction anAction) {
+  protected String getActionId(final @NotNull AnAction anAction) {
     return myActionManager.getId(anAction);
   }
 
@@ -219,13 +219,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   private void collectActions(String id, Map<AnAction, String> result, ActionGroup group, final String containingGroupName){
     final AnAction[] actions = group.getChildren(null);
     for (AnAction action : actions) {
-      if (action instanceof ActionGroup) {
-        final ActionGroup actionGroup = (ActionGroup)action;
-        final String groupName = actionGroup.getTemplatePresentation().getText();
-        collectActions(id, result, actionGroup, groupName != null ? groupName : containingGroupName);
-      } else if (getActionId(action) == id) {
-        final String groupName = group.getTemplatePresentation().getText();
-        result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
+      if (action != null) {
+        if (action instanceof ActionGroup) {
+          final ActionGroup actionGroup = (ActionGroup)action;
+          final String groupName = actionGroup.getTemplatePresentation().getText();
+          collectActions(id, result, actionGroup, groupName != null ? groupName : containingGroupName);
+        } else if (getActionId(action) == id) {
+          final String groupName = group.getTemplatePresentation().getText();
+          result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
+        }
       }
     }
   }
