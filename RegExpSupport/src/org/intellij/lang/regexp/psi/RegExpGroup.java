@@ -18,15 +18,17 @@ package org.intellij.lang.regexp.psi;
 import org.jetbrains.annotations.Nullable;
 
 public interface RegExpGroup extends RegExpAtom {
-    boolean isCapturing();
-  
-    boolean isSimple();
+  boolean isCapturing();
 
-    @Nullable
-    RegExpPattern getPattern();
+  boolean isSimple();
 
-    boolean isPythonNamedGroup();
+  @Nullable
+  RegExpPattern getPattern();
 
-    @Nullable
-    String getGroupName();
+  boolean isPythonNamedGroup();
+
+  boolean isRubyNamedGroup();
+
+  @Nullable
+  String getGroupName();
 }
