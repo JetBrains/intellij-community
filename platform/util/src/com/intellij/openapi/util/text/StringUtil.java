@@ -1172,7 +1172,7 @@ public class StringUtil {
   }
 
   @NotNull public static String replaceSubstring(@NotNull String string, @NotNull TextRange range, @NotNull String replacement) {
-    return string.substring(0, range.getStartOffset()) + replacement + string.substring(range.getEndOffset());
+    return range.replace(string, replacement);
   }
 
   public static boolean startsWith(@NotNull CharSequence text, @NotNull CharSequence prefix) {
