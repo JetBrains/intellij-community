@@ -26,10 +26,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import gnu.trove.TIntArrayList;
+import com.intellij.util.containers.Stack;
+import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CollectHighlightsUtil {
-  private static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+  public static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil");
 
@@ -76,65 +79,58 @@ public class CollectHighlightsUtil {
     final int currentOffset = commonParent.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
 
-    final PsiElementVisitor visitor = new PsiElementVisitor() {
-      int offset = currentOffset;
-      
-      final TIntArrayList starts = new TIntArrayList(STARTING_TREE_HEIGHT);
-      final List<PsiElement> elements = new ArrayList<PsiElement>(STARTING_TREE_HEIGHT);
-      final List<PsiElement> children = new ArrayList<PsiElement>(STARTING_TREE_HEIGHT);
-      
-      @Override public void visitElement(PsiElement element) {
-        children.add(PsiUtilBase.NULL_PSI_ELEMENT);
-        
-        while (true) {
-          ProgressManager.checkCanceled();
-          
-          PsiElement child = children.remove(children.size() - 1);
+    int offset = currentOffset;
 
-          for (Condition<PsiElement> filter : filters) {
-            if (!filter.value(element)) {
-              assert child == PsiUtilBase.NULL_PSI_ELEMENT;
-              child = null; // do not want to process children
-              break;
-            }
-          }
+    final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
+    final Stack<PsiElement> elements = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
+    final Stack<PsiElement> children = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
+    PsiElement element = commonParent;
 
-          boolean startChildrenVisiting = false;
+    PsiElement child = PsiUtilBase.NULL_PSI_ELEMENT;
+    while (true) {
+      ProgressManager.checkCanceled();
 
-          if (child == PsiUtilBase.NULL_PSI_ELEMENT) {
-            startChildrenVisiting = true;
-            child = element.getFirstChild();
-          }
-
-          if (child == null) {
-            if (startChildrenVisiting) {
-              // leaf element
-              offset += element.getTextLength();
-            }
-            
-            if (elements.size() == 0) break;
-            int start = starts.remove(starts.size() - 1);
-            if (startOffset <= start && offset <= endOffset) result.add(element);
-            
-            element = elements.remove(elements.size() - 1);
-          }
-          else {
-            // composite element
-            if (offset <= endOffset) {
-              starts.add(offset);
-              children.add(child.getNextSibling());
-              children.add(PsiUtilBase.NULL_PSI_ELEMENT);
-              elements.add(element);
-              element = child;
-            } else {
-              break;
-            }
-          }
+      for (Condition<PsiElement> filter : filters) {
+        if (!filter.value(element)) {
+          assert child == PsiUtilBase.NULL_PSI_ELEMENT;
+          child = null; // do not want to process children
+          break;
         }
       }
-    };
-    commonParent.accept(visitor);
-        
+
+      boolean startChildrenVisiting;
+      if (child == PsiUtilBase.NULL_PSI_ELEMENT) {
+        startChildrenVisiting = true;
+        child = element.getFirstChild();
+      }
+      else {
+        startChildrenVisiting = false;
+      }
+
+      if (child == null) {
+        if (startChildrenVisiting) {
+          // leaf element
+          offset += element.getTextLength();
+        }
+
+        if (elements.isEmpty()) break;
+        int start = starts.pop();
+        if (startOffset <= start && offset <= endOffset) result.add(element);
+
+        element = elements.pop();
+        child = children.pop();
+      }
+      else {
+        // composite element
+        if (offset > endOffset) break;
+        children.push(child.getNextSibling());
+        starts.push(offset);
+        elements.push(element);
+        element = child;
+        child = PsiUtilBase.NULL_PSI_ELEMENT;
+      }
+    }
+
     return result;
   }
 
