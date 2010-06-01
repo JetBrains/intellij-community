@@ -90,7 +90,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         runnable.run();
       }
       else {
-        ApplicationManager.getApplication().invokeLater(runnable);
+        ApplicationManager.getApplication().executeOnPooledThread(runnable);
       }
       if (ref.isNull()) {
         try {

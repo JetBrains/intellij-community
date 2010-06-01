@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.facade;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -43,7 +42,7 @@ public class MavenEmbedderWrapper {
 
   public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator) {
     try {
-      resetConsole(MavenFacadeManager.wrapandExport(console));
+      resetConsole(MavenFacadeManager.wrapAndExport(console));
       resetIndicator(MavenFacadeManager.wrapAndExport(indicator));
 
       myWrappee.customizeForResolve(myConsole, myIndicator);
@@ -55,7 +54,7 @@ public class MavenEmbedderWrapper {
 
   public void customizeForResolve(Map<MavenId, File> projectIdToFileMap, MavenConsole console, MavenProgressIndicator indicator) {
     try {
-      resetConsole(MavenFacadeManager.wrapandExport(console));
+      resetConsole(MavenFacadeManager.wrapAndExport(console));
       resetIndicator(MavenFacadeManager.wrapAndExport(indicator));
 
       myWrappee.customizeForResolve(projectIdToFileMap, myConsole, myIndicator);
@@ -69,7 +68,7 @@ public class MavenEmbedderWrapper {
                                         MavenConsole console,
                                         MavenProgressIndicator indicator) {
     try {
-      resetConsole(MavenFacadeManager.wrapandExport(console));
+      resetConsole(MavenFacadeManager.wrapAndExport(console));
       resetIndicator(MavenFacadeManager.wrapAndExport(indicator));
 
       myWrappee.customizeForStrictResolve(projectIdToFileMap, myConsole, myIndicator);

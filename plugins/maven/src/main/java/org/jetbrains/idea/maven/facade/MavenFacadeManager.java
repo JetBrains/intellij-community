@@ -119,7 +119,6 @@ public class MavenFacadeManager {
         myFacade.setLogger(myLogger);
       }
       catch (Exception e) {
-        // todo
         throw new RuntimeException(e);
       }
     }
@@ -146,6 +145,7 @@ public class MavenFacadeManager {
         addPluginLibraries(params.getClassPath());
 
         params.setMainClass(MAIN_CLASS);
+        // todo pass sensible parameters, MAVEN_OPTS?
         params.getVMParametersList().addParametersString("-d32 -Xmx512m");
         return params;
       }
@@ -207,7 +207,6 @@ public class MavenFacadeManager {
       return new MavenEmbedderWrapper(facade.createEmbedder(convertSettings(settings)));
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -217,7 +216,6 @@ public class MavenFacadeManager {
       return new MavenIndexerWrapper(getFacade().createIndexer());
     }
     catch (RemoteException e) {
-      //todo
       throw new RuntimeException(e);
     }
   }
@@ -227,7 +225,6 @@ public class MavenFacadeManager {
       return getFacade().getRepositories(nexusUrl);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -237,7 +234,6 @@ public class MavenFacadeManager {
       return getFacade().findArtifacts(template, nexusUrl);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -247,7 +243,6 @@ public class MavenFacadeManager {
       return getFacade().interpolateAndAlignModel(model, basedir);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -257,7 +252,6 @@ public class MavenFacadeManager {
       return getFacade().assembleInheritance(model, parentModel);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -270,7 +264,6 @@ public class MavenFacadeManager {
       return getFacade().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (RemoteException e) {
-      // todo
       throw new RuntimeException(e);
     }
   }
@@ -288,7 +281,7 @@ public class MavenFacadeManager {
     return result;
   }
 
-  public static MavenFacadeConsole wrapandExport(final MavenConsole console) {
+  public static MavenFacadeConsole wrapAndExport(final MavenConsole console) {
     try {
       RemoteMavenFacadeConsole result = new RemoteMavenFacadeConsole(console);
       UnicastRemoteObject.exportObject(result, 0);
