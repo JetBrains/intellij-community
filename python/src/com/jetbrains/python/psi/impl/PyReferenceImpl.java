@@ -445,7 +445,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     @Override
     public void visitPyCallExpression(PyCallExpression node) {
       String callName = node.getCallee().getName();
-      if (callName.equals("pop") || callName.equals("get")) {
+      if (callName.equals("pop") || callName.equals("get") || callName.equals("getattr")) {
         PyReferenceExpression child = PsiTreeUtil.getChildOfType(node.getCallee(), PyReferenceExpression.class);
         if (child != null) {
           String operandName = child.getName();
