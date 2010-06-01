@@ -13,19 +13,15 @@
 package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgCommandException;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.vcsUtil.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.*;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 abstract class HgAbstractGlobalAction extends AnAction {
 
@@ -47,9 +43,8 @@ abstract class HgAbstractGlobalAction extends AnAction {
     } catch (HgCommandException e) {
       VcsUtil.showErrorMessage(project, e.getMessage(), "Error");
     }
-    VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    vcsDirtyScopeManager.dirDirtyRecursively(command.getRepo());
-    command.getRepo().refresh(true, true);
+
+    HgUtil.markDirectoryDirty(project,command.getRepo());
   }
 
   @Override
@@ -63,6 +58,12 @@ abstract class HgAbstractGlobalAction extends AnAction {
     if (project == null) {
       presentation.setEnabled(false);
       return;
+    }
+
+    HgVcs vcs = (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(HgVcs.VCS_NAME);
+
+    if (!vcs.isStarted()) {
+      presentation.setEnabled(false);
     }
   }
 

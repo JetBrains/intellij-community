@@ -15,33 +15,55 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.SplittingUtil;
+import com.intellij.openapi.util.*;
+import com.intellij.util.ui.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
-public class TextPanel extends JLabel {
+public class TextPanel extends JComponent {
   private String myText;
-  private final String[] myPossibleStrings;
+  private final String myMaxPossibleString;
 
-  public TextPanel(final boolean shouldShowTooltip, final String... possibleStrings) {
-    myText = "";
-    myPossibleStrings = possibleStrings;
+  TextPanel() {
+    this(null);
+  }
 
-    if (shouldShowTooltip) {
-      addMouseListener(new MyMouseListener());
+  TextPanel(@Nullable final String maxPossibleString) {
+    myMaxPossibleString = maxPossibleString;
+
+    setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
+    setOpaque(false);
+  }
+
+  @Override
+  protected void paintComponent(final Graphics g) {
+    final String s = getText();
+    if (s != null) {
+      final Rectangle bounds = getBounds();
+      final Insets insets = getInsets();
+
+      final Graphics2D g2 = (Graphics2D)g;
+      g2.setFont(getFont());
+
+      final int y = UIUtil.getStringY(s, bounds, g2);
+      if (SystemInfo.isMac) {
+        g2.setColor(new Color(215, 215, 215));
+        g2.drawString(s, insets.left, y+1);
+      }
+
+      UIUtil.applyRenderingHints(g2);
+
+      g2.setColor(getForeground());
+      g2.drawString(s, insets.left, y);
     }
   }
 
   private static String splitText(final JLabel label, final String text, final int widthLimit){
     final FontMetrics fontMetrics = label.getFontMetrics(label.getFont());
 
-    final String[] lines = SplittingUtil.splitText(text, fontMetrics, widthLimit, ' ');
+    final String[] lines = UIUtil.splitText(text, fontMetrics, widthLimit, ' ');
 
     final StringBuilder result = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
@@ -54,72 +76,18 @@ public class TextPanel extends JLabel {
     return result.toString();
   }
 
-
-
   public final void setText(final String text) {
-    super.setText(text);
-    myText = text;
+    myText = text == null ? "" : text;
+    repaint();
   }
 
-  public void setDisplayedMnemonic(int key) {
-    // status bar may not have mnemonics
+  public String getText() {
+    return myText;
   }
 
-  public void setDisplayedMnemonicIndex(int index) throws IllegalArgumentException {
-    // status bar may not have mnemonics
-    super.setDisplayedMnemonicIndex(-1);
-  }
-
-  public final Dimension getPreferredSize(){
+  public Dimension getPreferredSize(){
     int max = 0;
-    for (String possibleString : myPossibleStrings) {
-      max = Math.max(max, getFontMetrics(getFont()).stringWidth(possibleString));
-    }
+    if (myMaxPossibleString != null) max = getFontMetrics(getFont()).stringWidth(myMaxPossibleString);
     return new Dimension(20 + max, getMinimumSize().height);
-  }
-
-  private final class MyMouseListener extends MouseAdapter {
-    private LightweightHint myHint;
-
-    public void mouseEntered(final MouseEvent e){
-      if (myHint != null) {
-        myHint.hide();
-        myHint = null;
-      }
-
-      final int widthLimit = getSize().width - 20;
-
-      if (getFontMetrics(getFont()).stringWidth(myText) < widthLimit) return;
-
-      final JLabel label = new JLabel();
-      label.setBorder(
-        BorderFactory.createCompoundBorder(
-          BorderFactory.createLineBorder(Color.black),
-          BorderFactory.createEmptyBorder(0,5,0,5)
-        )
-      );
-      label.setForeground(Color.black);
-      label.setBackground(HintUtil.INFORMATION_COLOR);
-      label.setOpaque(true);
-      label.setUI(new MultiLineLabelUI());
-
-      final JLayeredPane layeredPane = getRootPane().getLayeredPane();
-
-
-      label.setText(splitText(label, myText, layeredPane.getWidth() - 10));
-
-      final Point p = SwingUtilities.convertPoint(TextPanel.this, 1, getHeight() - 1, layeredPane);
-      p.y -= label.getPreferredSize().height;
-
-      myHint = new LightweightHint(label);
-      myHint.show(layeredPane, p.x, p.y, null);
-    }
-
-    public void mouseExited(final MouseEvent e){
-      if (myHint != null) {
-        myHint.hide();
-        myHint = null;
-      }
-    }
   }
 }

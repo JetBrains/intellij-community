@@ -19,19 +19,15 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.graph.Graph;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.graph.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -169,6 +165,7 @@ public class ModuleUtil {
     return element.getUserData(KEY_MODULE);
   }
 
+  //ignores export flag
   public static void getDependencies(@NotNull Module module, Set<Module> modules) {
     if (modules.contains(module)) return;
     modules.add(module);
@@ -178,16 +175,32 @@ public class ModuleUtil {
     }
   }
 
-  public static Collection<Module> collectModulesDependsOn(@NotNull final Collection<Module> modules) {
-    if (modules.isEmpty()) return Collections.emptyList();
-    final HashSet<Module> result = new HashSet<Module>();
-    final Project project = modules.iterator().next().getProject();
-    final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    for (final Module module : modules) {
-      result.add(module);
-      result.addAll(moduleManager.getModuleDependentModules(module));
+  /**
+   * collect transitive module dependants
+   * @param module to find dependencies on
+   * @param result resulted set
+   */
+  public static void collectModulesDependsOn(@NotNull final Module module, final Set<Module> result) {
+    if (result.contains(module)) return;
+    result.add(module);
+    final ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
+    final List<Module> dependentModules = moduleManager.getModuleDependentModules(module);
+    for (final Module dependentModule : dependentModules) {
+      final OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
+      for (OrderEntry o : orderEntries) {
+        if (o instanceof ModuleOrderEntry) {
+          final ModuleOrderEntry orderEntry = (ModuleOrderEntry)o;
+          if (orderEntry.getModule() == module) {
+            if (orderEntry.isExported()) {
+              collectModulesDependsOn(dependentModule, result);
+            } else {
+              result.add(dependentModule);
+            }
+            break;
+          }
+        }
+      }
     }
-    return result;
   }
 
   @NotNull

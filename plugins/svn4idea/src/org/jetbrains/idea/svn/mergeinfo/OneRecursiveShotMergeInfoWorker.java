@@ -15,22 +15,18 @@
  */
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.PairProcessor;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.*;
+import com.intellij.util.*;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.dialogs.*;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNMergeInfoUtil;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.internal.util.*;
+import org.tmatesoft.svn.core.wc.*;
 
-import java.io.File;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   private final Project myProject;
@@ -61,8 +57,9 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient client = vcs.createWCClient();
 
+    final SVNDepth depth = SvnConfiguration.getInstance(myProject).CHECK_NESTED_FOR_QUICK_MERGE ? SVNDepth.INFINITY : SVNDepth.EMPTY;
     client.doGetProperty(new File(myWCInfo.getPath()), SVNProperty.MERGE_INFO, SVNRevision.UNDEFINED, SVNRevision.WORKING,
-                         SVNDepth.INFINITY, new ISVNPropertyHandler() {
+                         depth, new ISVNPropertyHandler() {
         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
           final String key = keyFromFile(path);
           myDataMap.put(key, SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(property.getValue().getString())), null));

@@ -12,44 +12,31 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.diff.DiffProvider;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
-import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
-import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.Topic;
+import com.intellij.concurrency.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.checkin.*;
+import com.intellij.openapi.vcs.diff.*;
+import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.rollback.*;
+import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.util.messages.*;
 import org.zmlx.hg4idea.provider.*;
-import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
-import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
-import org.zmlx.hg4idea.provider.commit.HgCommitExecutor;
-import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
-import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
-import org.zmlx.hg4idea.ui.HgChangesetStatus;
-import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.provider.annotate.*;
+import org.zmlx.hg4idea.provider.commit.*;
+import org.zmlx.hg4idea.provider.update.*;
+import org.zmlx.hg4idea.ui.*;
 
 import javax.swing.*;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class HgVcs extends AbstractVcs {
 
@@ -89,6 +76,8 @@ public class HgVcs extends AbstractVcs {
   private final HgGlobalSettings globalSettings;
   private final HgProjectSettings projectSettings;
 
+  private boolean started = false;
+
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings) {
     super(project, VCS_NAME);
@@ -118,21 +107,37 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public ChangeProvider getChangeProvider() {
+    if (!started) {
+      return null;
+    }
+
     return changeProvider;
   }
 
   @Override
   public RollbackEnvironment getRollbackEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return rollbackEnvironment;
   }
 
   @Override
   public DiffProvider getDiffProvider() {
+    if (!started) {
+      return null;
+    }
+
     return diffProvider;
   }
 
   @Override
   public VcsHistoryProvider getVcsHistoryProvider() {
+    if (!started) {
+      return null;
+    }
+
     return historyProvider;
   }
 
@@ -143,31 +148,55 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public CheckinEnvironment getCheckinEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return checkinEnvironment;
   }
 
   @Override
   public AnnotationProvider getAnnotationProvider() {
+    if (!started) {
+      return null;
+    }
+
     return annotationProvider;
   }
 
   @Override
   public UpdateEnvironment getUpdateEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return updateEnvironment;
   }
 
   @Override
   public UpdateEnvironment getIntegrateEnvironment() {
+    if (!started) {
+      return null;
+    }
+
     return integrateEnvironment;
   }
 
   @Override
   public CommittedChangesProvider getCommittedChangesProvider() {
-    return commitedChangesProvider;
+    if (!started) {
+      return null;
+    }
+    return null;
+//    return commitedChangesProvider;
   }
 
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
+    if (!started) {
+      return false;
+    }
+
     VirtualFile currentDir = dir;
     while (currentDir != null) {
       if (currentDir.findFileByRelativePath(".hg") != null) {
@@ -178,35 +207,36 @@ public class HgVcs extends AbstractVcs {
     return false;
   }
 
+  public boolean isStarted() {
+    return started;
+  }
+
   @Override
-  protected void activate() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (!validateHgExecutable()) {
-          return;
-        }
-        addListeners();
-      }
-    }, myProject.getDisposed());
+  protected void shutdown() throws VcsException {
+    started = false;
   }
 
-  public boolean validateHgExecutable() {
-    return (new HgExecutableValidator(myProject)).check(globalSettings);
-  }
+  @Override
+  public void activate() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      started = true;
+    } else {
+      HgExecutableValidator validator = new HgExecutableValidator(myProject);
+      started = validator.check(globalSettings);
+    }
 
-  public static HgVcs getInstance(Project project) {
-    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
-  }
+    if (!started) {
+      return;
+    }
 
-  public void addListeners() {
     LocalFileSystem.getInstance().addVirtualFileListener(virtualFileListener);
     ChangeListManager.getInstance(myProject).registerCommitExecutor(commitExecutor);
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {
-      statusBar.addCustomIndicationComponent(hgCurrentBranchStatus);
-      statusBar.addCustomIndicationComponent(incomingChangesStatus);
-      statusBar.addCustomIndicationComponent(outgoingChangesStatus);
+      statusBar.addWidget(hgCurrentBranchStatus, myProject);
+      statusBar.addWidget(incomingChangesStatus, myProject);
+      statusBar.addWidget(outgoingChangesStatus, myProject);
     }
 
     final HgIncomingStatusUpdater incomingUpdater =
@@ -249,6 +279,10 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
+    if (!started) {
+      return;
+    }
+
     LocalFileSystem.getInstance().removeVirtualFileListener(virtualFileListener);
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (messageBusConnection != null) {
@@ -258,10 +292,14 @@ public class HgVcs extends AbstractVcs {
       changesUpdaterScheduledFuture.cancel(true);
     }
     if (statusBar != null) {
-      statusBar.removeCustomIndicationComponent(incomingChangesStatus);
-      statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
-      statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
+      //statusBar.removeCustomIndicationComponent(incomingChangesStatus);
+      //statusBar.removeCustomIndicationComponent(outgoingChangesStatus);
+      //statusBar.removeCustomIndicationComponent(hgCurrentBranchStatus);
     }
+  }
+
+  public static HgVcs getInstance(Project project) {
+    return (HgVcs) ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
   }
 
 }

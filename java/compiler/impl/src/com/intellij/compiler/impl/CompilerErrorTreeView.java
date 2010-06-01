@@ -15,40 +15,31 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.codeInsight.daemon.impl.actions.SuppressFix;
-import com.intellij.codeInsight.daemon.impl.actions.SuppressForClassFix;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.HelpID;
-import com.intellij.compiler.options.CompilerConfigurable;
+import com.intellij.codeInsight.daemon.impl.actions.*;
+import com.intellij.compiler.*;
+import com.intellij.compiler.options.*;
 import com.intellij.ide.errorTreeView.*;
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.command.*;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.options.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.module.*;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.pom.*;
+import com.intellij.pom.java.*;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -222,7 +213,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       return new SuppressFix(id) {
         @Override
         @SuppressWarnings({"SimplifiableIfStatement"})
-        public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+        public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
           if (getContainer(context) instanceof PsiClass) return false;
           return super.isAvailable(project, editor, context);
         }

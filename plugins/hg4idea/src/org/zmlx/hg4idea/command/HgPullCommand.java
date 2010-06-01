@@ -12,17 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.ui.HgUsernamePasswordDialog;
-import org.zmlx.hg4idea.HgVcs;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import org.apache.commons.lang.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.net.URISyntaxException;
+import java.util.*;
 
 public class HgPullCommand {
 
@@ -33,6 +29,8 @@ public class HgPullCommand {
   private String revision;
   private boolean update = true;
   private boolean rebase = !update;
+  
+  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
 
   public HgPullCommand(Project project, @NotNull VirtualFile repo) {
     this.project = project;
@@ -70,25 +68,7 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    HgCommandResult result = HgCommandService.getInstance(project).execute(repo, "pull", arguments);
-    if (HgErrorUtil.isAbort(result) && HgErrorUtil.isAuthorizationRequiredAbort(result)) {
-      try {
-        HgUrl hgUrl = new HgUrl(source);
-        if (hgUrl.supportsAuthentication()) {
-          HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(project);
-          dialog.setUsername(hgUrl.getUsername());
-          dialog.show();
-          if (dialog.isOK()) {
-            hgUrl.setUsername(dialog.getUsername());
-            hgUrl.setPassword(String.valueOf(dialog.getPassword()));
-            arguments.set(arguments.size() - 1, hgUrl.asString());
-            result = HgCommandService.getInstance(project).execute(repo, "pull", arguments);
-          }
-        }
-      } catch (URISyntaxException e) {
-        VcsUtil.showErrorMessage(project, "Invalid source: " + source, "Error");
-      }
-    }
+    HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(project, repo, source, "pull", arguments);
 
     project.getMessageBus().syncPublisher(HgVcs.INCOMING_TOPIC).update(project);
 

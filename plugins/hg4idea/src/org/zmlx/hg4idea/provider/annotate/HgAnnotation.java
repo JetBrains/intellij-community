@@ -12,21 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.annotate;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.AnnotationListener;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
-import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
-import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgFileRevision;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.history.*;
+import org.apache.commons.lang.*;
+import org.zmlx.hg4idea.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class HgAnnotation implements FileAnnotation {
 
@@ -108,11 +102,6 @@ public class HgAnnotation implements FileAnnotation {
     return result;
   }
 
-  public boolean revisionsNotEmpty() {
-    List<VcsFileRevision> revisions = getRevisions();
-    return revisions != null && !revisions.isEmpty();
-  }
-
   class HgLineAnnotationAspect implements LineAnnotationAspect {
     private final FIELD aspectType;
 
@@ -135,4 +124,7 @@ public class HgAnnotation implements FileAnnotation {
     }
   }
 
+  public boolean revisionsNotEmpty() {
+    return true;
+  }
 }

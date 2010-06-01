@@ -12,25 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.HgHeadsCommand;
-import org.zmlx.hg4idea.command.HgMQCommand;
-import org.zmlx.hg4idea.command.HgPullCommand;
-import org.zmlx.hg4idea.command.HgRebaseCommand;
-import org.zmlx.hg4idea.command.HgResolveCommand;
-import org.zmlx.hg4idea.command.HgResolveStatusEnum;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
-import org.zmlx.hg4idea.provider.update.HgConflictResolver;
-import org.zmlx.hg4idea.ui.HgPullDialog;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import org.apache.commons.lang.*;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.provider.update.*;
+import org.zmlx.hg4idea.ui.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HgMqRebaseAction extends HgAbstractGlobalAction {
 
@@ -73,11 +63,7 @@ public class HgMqRebaseAction extends HgAbstractGlobalAction {
           return;
         }
 
-        List<HgRevisionNumber> heads =
-          new HgHeadsCommand(project, repository).execute(currentBranch);
-
-        new HgConflictResolver(project, Collections.max(heads), Collections.min(heads))
-          .resolve(repository);
+        new HgConflictResolver(project).resolve(repository);
 
         HgResolveCommand resolveCommand = new HgResolveCommand(project);
         Map<HgFile, HgResolveStatusEnum> status = resolveCommand.list(repository);

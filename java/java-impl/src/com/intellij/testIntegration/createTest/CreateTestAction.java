@@ -15,33 +15,29 @@
  */
 package com.intellij.testIntegration.createTest;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.fileEditor.ex.*;
+import com.intellij.openapi.module.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.testIntegration.TestFrameworkDescriptor;
-import com.intellij.testIntegration.TestIntegrationUtils;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.impl.source.*;
+import com.intellij.psi.search.*;
+import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.classMembers.*;
+import com.intellij.testIntegration.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
-import java.util.Collection;
+import java.util.*;
 
 public class CreateTestAction extends PsiElementBaseIntentionAction {
   @NotNull
@@ -54,8 +50,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return getText();
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
-    if (element == null) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (Extensions.getExtensions(TestFrameworkDescriptor.EXTENSION_NAME).length == 0) return false;
 
     if (!isAvailableForElement(element)) return false;

@@ -166,6 +166,7 @@
     <extensionPoint name="java.compiler" area="IDEA_PROJECT" interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
 
     <extensionPoint name="classNameInsertHandler" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

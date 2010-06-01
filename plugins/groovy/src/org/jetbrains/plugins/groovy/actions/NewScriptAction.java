@@ -70,20 +70,24 @@ public class NewScriptAction extends CreateTemplateInPackageAction<GroovyFile> i
     return createdFile.getLastChild();
   }
 
+  @Override
+  protected void doCheckCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
+    dir.checkCreateFile(className + "." + extractExtension(templateName));
+  }
 
   @NotNull
   protected GroovyFile doCreate(PsiDirectory directory, String newName, String templateName) throws IncorrectOperationException {
-    PsiFile file = null;
-    if (GROOVY_DSL_SCRIPT_TMPL.equals(templateName)) {
-      file = GroovyTemplatesFactory
-        .createFromTemplate(directory, newName, newName + ".gdsl", templateName);
-    } else {
-      file = GroovyTemplatesFactory
-        .createFromTemplate(directory, newName, newName + "." + GroovyFileType.DEFAULT_EXTENSION, templateName);
-    }
+    PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, newName, newName + "." + extractExtension(templateName), templateName);
     assert file instanceof GroovyFile;
-    return ((GroovyFile)file);
+    return (GroovyFile)file;
   }
-  
+
+  private static String extractExtension(String templateName) {
+    if (GROOVY_DSL_SCRIPT_TMPL.equals(templateName)) {
+      return "gdsl";
+    }
+    return GroovyFileType.DEFAULT_EXTENSION;
+  }
+
 
 }

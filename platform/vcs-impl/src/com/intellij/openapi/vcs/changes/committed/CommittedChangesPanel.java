@@ -22,35 +22,26 @@
  */
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.*;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.text.*;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.FilterComponent;
-import com.intellij.util.AsynchConsumer;
-import com.intellij.util.BufferedListConsumer;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.ui.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import javax.swing.event.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
@@ -63,7 +54,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final RepositoryLocation myLocation;
   private int myMaxCount = 0;
   private final MyFilterComponent myFilterComponent = new MyFilterComponent();
-  private List<CommittedChangeList> myChangesFromProvider;
   private final JLabel myErrorLabel = new JLabel();
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
@@ -200,8 +190,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
                                      new Consumer<List<CommittedChangeList>>() {
                                        public void consume(final List<CommittedChangeList> committedChangeLists) {
-                                         myChangesFromProvider = committedChangeLists;
-                                         updateFilteredModel(false);
+                                         updateFilteredModel(false, committedChangeLists);
                                          }
                                        },
                                      new Consumer<List<VcsException>>() {
@@ -241,18 +230,18 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
   }
 
-  private void updateFilteredModel(final boolean keepFilter) {
-    if (myChangesFromProvider == null) {
+  private void updateFilteredModel(final boolean keepFilter, List<CommittedChangeList> committedChangeLists) {
+    if (committedChangeLists == null) {
       return;
     }
     myBrowser.setEmptyText(VcsBundle.message("committed.changes.empty.message"));
     if (StringUtil.isEmpty(myFilterComponent.getFilter())) {
-      myBrowser.setItems(myChangesFromProvider, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
+      myBrowser.setItems(committedChangeLists, keepFilter, CommittedChangesBrowserUseCase.COMMITTED);
     }
     else {
       final FilterHelper filterHelper = new FilterHelper(myFilterComponent.getFilter());
       List<CommittedChangeList> filteredChanges = new ArrayList<CommittedChangeList>();
-      for(CommittedChangeList changeList: myChangesFromProvider) {
+      for(CommittedChangeList changeList: committedChangeLists) {
         if (filterHelper.filter(changeList)) {
           filteredChanges.add(changeList);
         }
@@ -331,9 +320,20 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void passCachedListsToListener(final VcsConfigurationChangeListener.DetailedNotification notification,
                                         final Project project, final VirtualFile root) {
-    if ((myChangesFromProvider != null) && (! myChangesFromProvider.isEmpty())) {
-      notification.execute(project, root, myChangesFromProvider);
-    }
+    final LinkedList<CommittedChangeList> resultList = new LinkedList<CommittedChangeList>();
+    myBrowser.reportLoadedLists(new CommittedChangeListsListener() {
+      public void onBeforeStartReport() {
+      }
+      public boolean report(CommittedChangeList list) {
+        resultList.add(list);
+        return false;
+      }
+      public void onAfterEndReport() {
+        if (! resultList.isEmpty()) {
+          notification.execute(project, root, resultList);
+        }
+      }
+    });
   }
 
   public boolean isInLoad() {

@@ -12,11 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vcs.VcsException;
-import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.command.HgMQCommand;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vfs.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.command.*;
 
 class HgUpdaterFactory {
 
@@ -26,13 +26,13 @@ class HgUpdaterFactory {
     this.project = project;
   }
 
-  HgUpdater buildUpdater(@NotNull VirtualFile repository) throws VcsException {
+  HgUpdater buildUpdater(@NotNull VirtualFile repository, @NotNull HgUpdater.UpdateConfiguration configuration) throws VcsException {
     HgMQCommand mqCommand = new HgMQCommand(project);
     boolean foundAppliedPatches = !mqCommand.qapplied(repository).isEmpty();
     if (foundAppliedPatches) {
       throw new VcsException("Cannot update with applied MQ patches, please use rebase");
     } else {
-      return new HgRegularUpdater(project, repository);
+      return new HgRegularUpdater(project, repository, configuration);
     }
   }
 

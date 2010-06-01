@@ -15,26 +15,20 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.codeInsight.*;
+import com.intellij.lang.*;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.extractMethod.InputVariables;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.IntArrayList;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.impl.source.*;
+import com.intellij.psi.tree.*;
+import com.intellij.psi.util.*;
+import com.intellij.refactoring.extractMethod.*;
+import com.intellij.refactoring.util.*;
+import com.intellij.util.*;
+import com.intellij.util.containers.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -384,6 +378,12 @@ public class DuplicatesFinder {
       final PsiExpression candidateQualifier = candidateRefExpr.getQualifierExpression();
       if (patternQualifier == null) {
         PsiClass contextClass = PsiTreeUtil.getParentOfType(pattern, PsiClass.class);
+        if (candidateQualifier instanceof PsiReferenceExpression) {
+          final PsiElement resolved = ((PsiReferenceExpression)candidateQualifier).resolve();
+          if (resolved instanceof PsiClass && contextClass != null && contextClass.isInheritor((PsiClass)resolved, true)) {
+            return true;
+          }
+        }
         return contextClass != null && match.registerInstanceExpression(candidateQualifier, contextClass);
       } else {
         if (candidateQualifier == null) {
@@ -406,7 +406,19 @@ public class DuplicatesFinder {
                 if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
                   contextClass = thisClass;
                 }
+                final PsiClass thisCandidate = RefactoringUtil.getThisClass(candidate);
+                if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
+                  contextClass = thisCandidate;
+                }
                 return contextClass != null && match.putParameter(parameter, RefactoringUtil.createThisExpression(patternQualifier.getManager(), contextClass));
+              } else if (patternQualifier instanceof PsiReferenceExpression) {
+                final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
+                if (resolved instanceof PsiClass) {
+                  final PsiClass classContext = PsiTreeUtil.getParentOfType(candidate, PsiClass.class);
+                  if (classContext != null && classContext.isInheritor((PsiClass)resolved, true)) {
+                    return true;
+                  }
+                }
               }
 
               return false;
@@ -436,6 +448,13 @@ public class DuplicatesFinder {
         final PsiJavaCodeReferenceElement candidateQualifier = ((PsiThisExpression)candidate).getQualifier();
         final PsiElement candidateContextClass = candidateQualifier == null ? PsiTreeUtil.getParentOfType(candidate, PsiClass.class) : candidateQualifier.resolve();
         return contextClass == candidateContextClass;
+      }
+    } else if (pattern instanceof PsiSuperExpression) {
+      final PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression)pattern).getQualifier();
+      final PsiElement contextClass = qualifier == null ? PsiTreeUtil.getParentOfType(pattern, PsiClass.class) : qualifier.resolve();
+      if (candidate instanceof PsiSuperExpression) {
+        final PsiJavaCodeReferenceElement candidateQualifier = ((PsiSuperExpression)candidate).getQualifier();
+        return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : PsiTreeUtil.getParentOfType(candidate, PsiClass.class));
       }
     }
 

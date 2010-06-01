@@ -15,41 +15,83 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ui.UIBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.ide.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 
-import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
 /**
  * @author cdr
  */
-public class InsertOverwritePanel extends TextPanel implements StatusBarPatch{
-  public InsertOverwritePanel() {
-    super(false, UIBundle.message("status.bar.column.status.text"), UIBundle.message("status.bar.insert.status.text"), UIBundle.message("status.bar.overwrite.status.text"));
+public class InsertOverwritePanel implements StatusBarWidget, StatusBarWidget.TextPresentation {
+  private StatusBar myStatusBar;
+
+  @NotNull
+  public String ID() {
+    return "InsertOverwrite";
   }
 
-  public JComponent getComponent() {
+  public Presentation getPresentation(@NotNull Type type) {
     return this;
   }
 
-  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
-    boolean enabled = false;
-    if (selected != null) {
-      enabled = selected.getDocument().isWritable();
+  public void install(@NotNull StatusBar statusBar) {
+    myStatusBar = statusBar;
+  }
 
-      String text = selected.isColumnMode()
-                    ? UIBundle.message("status.bar.column.status.text")
-                    : selected.isInsertMode()
-                      ? UIBundle.message("status.bar.insert.status.text")
-                      : UIBundle.message("status.bar.overwrite.status.text");
-      setText(text);
+  public void dispose() {
+    myStatusBar = null;
+  }
+
+  @NotNull
+  public String getText() {
+    final Editor editor = getEditor();
+    if (editor != null) {
+      return editor.isColumnMode()
+             ? UIBundle.message("status.bar.column.status.text")
+             : editor.isInsertMode()
+               ? UIBundle.message("status.bar.insert.status.text")
+               : UIBundle.message("status.bar.overwrite.status.text");
+
     }
-    setEnabled(enabled);
+
+    return "";
+  }
+
+  @NotNull
+  public String getMaxPossibleText() {
+    return UIBundle.message("status.bar.overwrite.status.text");
+  }
+
+  public String getTooltipText() {
     return null;
   }
 
-  public void clear() {
-    setEnabled(false);
-    setText("");
+  public Consumer<MouseEvent> getClickConsumer() {
+    return null;
+  }
+
+  @Nullable
+  private Editor getEditor() {
+    final Project project = getProject();
+    if (project != null) {
+      final FileEditorManager manager = FileEditorManager.getInstance(project);
+      return manager.getSelectedTextEditor();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private Project getProject() {
+    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
   }
 }

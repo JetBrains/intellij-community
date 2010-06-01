@@ -15,36 +15,23 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.update.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.svn.*;
-import org.jetbrains.idea.svn.update.SvnStatusWorker;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusType;
+import org.jetbrains.idea.svn.update.*;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.wc.*;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
@@ -82,6 +69,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     myAccomulatedFiles = new UpdatedFilesReverseSide(UpdatedFiles.create());
     myExceptions = new ArrayList<VcsException>();
+    myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
+    myMerger = myMergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, myCurrentBranchUrl, myBranchName);
   }
 
   private void indicatorOnStart() {
@@ -95,8 +84,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   public void run(@NotNull final ProgressIndicator indicator) {
-    myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    myMerger = myMergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, myCurrentBranchUrl, myBranchName);
+    myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
 
     BlockReloadingUtil.block();

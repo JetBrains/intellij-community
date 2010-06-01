@@ -15,13 +15,12 @@
  */
 package com.intellij.notification;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.popup.Balloon;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.openapi.ui.popup.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.lang.ref.WeakReference;
+import java.lang.ref.*;
 
 /**
  * @author spleaner
@@ -98,6 +97,13 @@ public class Notification {
   public void setBalloon(@Nullable final Balloon balloon) {
     if (balloon != null) {
       myBalloonRef = new WeakReference<Balloon>(balloon);
+    } else {
+      myBalloonRef = null;
     }
+  }
+
+  @Nullable
+  public Balloon getBalloon() {
+    return myBalloonRef == null ? null : myBalloonRef.get();
   }
 }

@@ -15,24 +15,20 @@
  */
 package com.siyeh.ipp.decls;
 
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.codeInsight.highlighting.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.wm.*;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.search.searches.*;
+import com.intellij.psi.util.*;
+import com.intellij.util.*;
+import com.siyeh.*;
+import com.siyeh.ipp.base.*;
+import org.jetbrains.annotations.*;
 
 public class MoveDeclarationIntention extends Intention {
 
@@ -97,10 +93,8 @@ public class MoveDeclarationIntention extends Intention {
         highlightManager.addOccurrenceHighlights(editor, elements,
                 textattributes, true, null);
 
-        final WindowManager windowManager = WindowManager.getInstance();
-        final StatusBar statusBar = windowManager.getStatusBar(project);
-        statusBar.setInfo(IntentionPowerPackBundle.message(
-                "status.bar.escape.highlighting.message"));
+      StatusBar.Info.set(IntentionPowerPackBundle.message(
+                "status.bar.escape.highlighting.message"), project);
     }
 
     private static PsiDeclarationStatement moveDeclarationToReference(

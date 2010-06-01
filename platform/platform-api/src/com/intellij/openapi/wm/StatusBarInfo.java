@@ -13,11 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package com.intellij.openapi.wm;
 
-import java.util.Set;
+import org.jetbrains.annotations.*;
 
-public interface SelectionResult<T> {
-  Set<T> getMarked();
-  boolean isAll();
+/**
+ * User: spLeaner
+ */
+public interface StatusBarInfo {
+
+  /**
+   * Set status bar text
+   * @param s text to be shown in the status bar
+   */
+  void setInfo(@Nullable String s);
+  
+  String getInfo();
 }

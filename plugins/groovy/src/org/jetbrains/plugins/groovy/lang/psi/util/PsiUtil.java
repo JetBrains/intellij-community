@@ -72,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
 
@@ -760,12 +761,11 @@ public class PsiUtil {
         PsiClass clazz = (PsiClass)element;
         String className = clazz.getName();
         PsiType thisType = JavaPsiFacade.getInstance(place.getProject()).getElementFactory().createType(clazz, classResult.getSubstitutor());
-        final MethodResolverProcessor processor = new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY)
-          ;
-        processor.setCurrentFileResolveContext(context);
+        final MethodResolverProcessor processor = new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
         PsiSubstitutor substitutor = classResult.getSubstitutor();
-        final boolean toBreak =
-          element.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), null, place);
+        final ResolveState state =
+          ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
+        final boolean toBreak = element.processDeclarations(processor, state, null, place);
 
         for (NonCodeMembersProcessor membersProcessor : NonCodeMembersProcessor.EP_NAME.getExtensions()) {
           if (!membersProcessor.processNonCodeMembers(thisType, processor, place, true)) break;

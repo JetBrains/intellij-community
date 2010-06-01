@@ -12,31 +12,22 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
-import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vcs.update.UpdateSession;
-import com.intellij.openapi.vcs.update.UpdateSessionAdapter;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.HgMergeCommand;
-import org.zmlx.hg4idea.command.HgTagBranch;
-import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.ui.HgIntegrateDialog;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.update.*;
+import com.intellij.openapi.vfs.*;
+import org.apache.commons.lang.*;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.ui.*;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class HgIntegrateEnvironment implements UpdateEnvironment {
 
@@ -82,19 +73,28 @@ public class HgIntegrateEnvironment implements UpdateEnvironment {
       incomingRevision = HgRevisionNumber.getLocalInstance(revision);
     }
 
+    HgRevisionNumber otherHead = mergeDialog.getOtherHead();
+    if (otherHead != null) {
+      hgMergeCommand.setRevision(otherHead.getRevision());
+      incomingRevision = otherHead;
+    }
+
     if (incomingRevision != null) {
       try {
-        new HgHeadMerger(project, hgMergeCommand)
-          .merge(repo, updatedFiles, progressIndicator, incomingRevision);
+        progressIndicator.setText2(HgVcsMessages.message("hg4idea.progress.merging"));
+        String warnings = new HgHeadMerger(project, hgMergeCommand)
+          .merge(repo, updatedFiles, incomingRevision).getWarnings();
 
-        final HgRevisionNumber localRevision =
-          new HgWorkingCopyRevisionsCommand(project).parent(repo);
+        if (!StringUtils.isBlank(warnings)) {
+          //noinspection ThrowableInstanceNeverThrown
+          VcsException warning = new VcsException(warnings);
+          warning.setIsWarning(true);
+          exceptions.add(warning);
+        }
 
-        final HgRevisionNumber incomingRevisionFinal = incomingRevision;
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {
-            new HgConflictResolver(project, incomingRevisionFinal, localRevision, updatedFiles)
-              .resolve(repo);
+            new HgConflictResolver(project, updatedFiles).resolve(repo);
           }
         }, ModalityState.defaultModalityState());
 

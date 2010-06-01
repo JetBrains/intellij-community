@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.usages.NamedPresentably;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
@@ -53,7 +54,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  protected static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider {
+  protected static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
     private String myPresentableName;
@@ -138,6 +139,11 @@ public class FileGroupingRule implements UsageGroupingRule {
     @Nullable
     public PsiFile getPsiFile() {
       return myFile != null && myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
+    }
+
+    @NotNull
+    public String getPresentableName() {
+      return myPresentableName;
     }
   }
 }

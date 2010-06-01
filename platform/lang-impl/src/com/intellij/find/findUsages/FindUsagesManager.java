@@ -16,57 +16,41 @@
 
 package com.intellij.find.findUsages;
 
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.find.FindBundle;
-import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInsight.hint.*;
+import com.intellij.find.*;
+import com.intellij.lang.findUsages.*;
+import com.intellij.navigation.*;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorLocation;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.keymap.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.text.*;
+import com.intellij.openapi.wm.*;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.ui.LightweightHint;
+import com.intellij.psi.search.*;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.*;
 import com.intellij.usageView.UsageViewManager;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
-import com.intellij.usages.impl.UsageViewManagerImpl;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.usages.impl.*;
+import com.intellij.util.*;
+import com.intellij.util.containers.*;
+import org.jdom.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
 public class FindUsagesManager implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.findParameterUsages.FindUsagesManager");
@@ -446,8 +430,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   private void clearStatusBar() {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    statusBar.setInfo("");
+    StatusBar.Info.set("", myProject);
   }
 
   private static String getSearchAgainMessage(PsiElement element, final FileSearchScope direction) {
@@ -481,8 +464,7 @@ public class FindUsagesManager implements JDOMExternalizable {
       showEditorHint(message, textEditor.getEditor());
     }
     else {
-      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-      statusBar.setInfo(message);
+      StatusBar.Info.set(message, myProject);
     }
   }
 

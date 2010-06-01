@@ -22,18 +22,12 @@
  */
 package com.intellij.openapi.progress.impl;
 
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.*;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.*;
+import org.jetbrains.annotations.*;
 
 public class BackgroundableProcessIndicator extends ProgressWindow {
   protected StatusBarEx myStatusBar;
@@ -140,7 +134,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   private void doBackground() {
-    myStatusBar.add(this, myInfo);
+    myStatusBar.addProgress(this, myInfo);
   }
 
   public void dispose() {

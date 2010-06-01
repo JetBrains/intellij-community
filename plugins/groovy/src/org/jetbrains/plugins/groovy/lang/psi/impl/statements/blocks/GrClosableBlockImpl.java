@@ -63,39 +63,34 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState state,
+                                     @NotNull ResolveState _state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (lastParent == null) return true;
 
-    if (processor instanceof ResolverProcessor) ((ResolverProcessor)processor).setCurrentFileResolveContext(this);
-    try {
-      if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+    ResolveState state = _state.put(ResolverProcessor.RESOLVE_CONTEXT, this);
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-      for (final PsiParameter parameter : getAllParameters()) {
-        if (!ResolveUtil.processElement(processor, parameter)) return false;
-      }
-
-      if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
-        processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
-      }
-
-      if (!ResolveUtil.processElement(processor, getOwner())) return false;
-
-      final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GROOVY_LANG_CLOSURE, getResolveScope());
-      if (closureClass != null) {
-        if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
-
-        // Process non-code in closures
-        PsiType clType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(closureClass, PsiSubstitutor.EMPTY);
-        if (!ResolveUtil.processNonCodeMethods(clType, processor, getProject(), place, true)) return false;
-      }
-
-      return true;
+    for (final PsiParameter parameter : getAllParameters()) {
+      if (!ResolveUtil.processElement(processor, parameter)) return false;
     }
-    finally {
-      if (processor instanceof ResolverProcessor) ((ResolverProcessor)processor).setCurrentFileResolveContext(null);
+
+    if (processor instanceof PropertyResolverProcessor && OWNER_NAME.equals(((PropertyResolverProcessor)processor).getName())) {
+      processor.handleEvent(ResolveUtil.DECLARATION_SCOPE_PASSED, this);
     }
+
+    if (!ResolveUtil.processElement(processor, getOwner())) return false;
+
+    final PsiClass closureClass = JavaPsiFacade.getInstance(getProject()).findClass(GROOVY_LANG_CLOSURE, getResolveScope());
+    if (closureClass != null) {
+      if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
+
+      // Process non-code in closures
+      PsiType clType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(closureClass, PsiSubstitutor.EMPTY);
+      if (!ResolveUtil.processNonCodeMethods(clType, processor, getProject(), place, true)) return false;
+    }
+
+    return true;
   }
 
   public String toString() {

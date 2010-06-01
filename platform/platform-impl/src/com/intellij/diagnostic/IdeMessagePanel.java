@@ -15,23 +15,20 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.status.StatusBarPatch;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.popup.NotificationPopup;
+import com.intellij.concurrency.*;
+import com.intellij.ide.util.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.*;
+import com.intellij.ui.*;
+import com.intellij.ui.popup.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.concurrent.TimeUnit;
+import java.awt.event.*;
+import java.util.concurrent.*;
 
-public class IdeMessagePanel extends JPanel implements MessagePoolListener, StatusBarPatch {
+public class IdeMessagePanel extends JPanel implements MessagePoolListener, CustomStatusBarWidget {
   private final IconPane myIdeFatal;
 
   private final IconPane[] myIcons;
@@ -42,11 +39,12 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
   private boolean myOpeningInProgress;
   private final MessagePool myMessagePool;
   private boolean myNotificationPopupAlreadyShown = false;
-  private final Icon myIcon = IconLoader.getIcon("/general/ideFatalError.png");
+  private final Icon myIcon = IconLoader.getIcon("/ide/fatalError.png");
+  private final Icon myEmptyIcon = IconLoader.getIcon("/ide/emptyFatalError.png");
 
   public IdeMessagePanel(MessagePool messagePool) {
     super(new BorderLayout());
-    myIdeFatal = new IconPane(myIcon,
+    myIdeFatal = new IconPane(myIcon, myEmptyIcon,
                               DiagnosticBundle.message("error.notification.empty.text"), new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         openFatals();
@@ -63,18 +61,27 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
 
     JobScheduler.getScheduler().scheduleAtFixedRate(new Blinker(), (long)1, (long)1, TimeUnit.SECONDS);
     updateFatalErrorsIcon();
+
+    setOpaque(false);
+  }
+
+  @NotNull
+  public String ID() {
+    return "FatalError";
+  }
+
+  public Presentation getPresentation(@NotNull Type type) {
+    return null;
+  }
+
+  public void dispose() {
+  }
+
+  public void install(@NotNull StatusBar statusBar) {
   }
 
   public JComponent getComponent() {
     return this;
-  }
-
-  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
-    return null;
-  }
-
-  public void clear() {
-
   }
 
   private void openFatals() {
@@ -222,11 +229,13 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
     private boolean myIsActive;
     private final ActionListener myListener;
 
-    public IconPane(Icon aIcon, String aEmptyText, ActionListener aListener) {
-      myIcon = new IconWrapper(aIcon);
+    public IconPane(Icon aIcon, Icon offIcon, String aEmptyText, ActionListener aListener) {
+      myIcon = new IconWrapper(aIcon, offIcon);
       myEmptyText = aEmptyText;
       myListener = aListener;
       setIcon(myIcon);
+
+      setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
 
       addMouseListener(new MouseAdapter() {
         public void mouseClicked(MouseEvent e) {
@@ -268,9 +277,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
     private final Icon myIcon;
     private boolean myEnabled;
     private boolean myShouldPaint = true;
+    private Icon myOffIcon;
 
-    public IconWrapper(Icon aIcon) {
+    public IconWrapper(Icon aIcon, Icon offIcon) {
       myIcon = aIcon;
+      myOffIcon = offIcon;
     }
 
     public void setIconPainted(boolean aPainted) {
@@ -288,6 +299,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Stat
     public void paintIcon(Component c, Graphics g, int x, int y) {
       if (myEnabled && myShouldPaint) {
         myIcon.paintIcon(c, g, x, y);
+      } else if (myOffIcon != null) {
+        myOffIcon.paintIcon(c, g, x, y);
       }
     }
 

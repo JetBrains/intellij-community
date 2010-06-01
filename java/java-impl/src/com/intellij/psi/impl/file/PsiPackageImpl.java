@@ -496,7 +496,8 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage, Querya
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclaractionKind.CLASS)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       if (nameHint != null) {
-        if (processClassesByName(processor, state, place, scope, nameHint.getName(state))) return false;
+        final String shortName = nameHint.getName(state);
+        if (containsClassNamed(shortName) && processClassesByName(processor, state, place, scope, shortName)) return false;
       }
       else if (prefixMatcher != null && migration == null) {
         for (String className : getClassNamesCache()) {

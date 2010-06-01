@@ -1,18 +1,17 @@
 package com.intellij.refactoring;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.usageView.UsageInfo;
-import org.junit.Assert;
+import com.intellij.*;
+import com.intellij.codeInsight.*;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.*;
+import com.intellij.psi.*;
+import com.intellij.refactoring.rename.*;
+import com.intellij.refactoring.util.*;
+import com.intellij.testFramework.*;
+import com.intellij.usageView.*;
+import org.junit.*;
 
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * @author sashache
@@ -155,6 +154,10 @@ public class RenameCollisionsTest extends LightCodeInsightTestCase {
       return;
     }
     fail("Conflicts were not found");
+  }
+
+  public void testRenameTypeParameterToExistingClassName() throws Exception {
+    doTest("P");
   }
 
   private void doTest(final String newName) throws Exception {

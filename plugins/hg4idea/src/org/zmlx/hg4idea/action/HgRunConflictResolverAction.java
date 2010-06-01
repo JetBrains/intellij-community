@@ -12,52 +12,55 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.HgHeadsCommand;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
-import org.zmlx.hg4idea.provider.update.HgConflictResolver;
-import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.vfs.*;
+import org.zmlx.hg4idea.provider.update.*;
+import org.zmlx.hg4idea.ui.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 
   protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
     return new HgGlobalCommandBuilder() {
       public HgGlobalCommand build(Collection<VirtualFile> repos) {
-        HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project);
-        dialog.setRoots(repos);
-        dialog.show();
-
-        if (dialog.isOK()) {
-          return buildCommand(dialog, project);
+        VirtualFile repository;
+        if (repos.size() > 1) {
+          repository = letUserSelectRepository(repos, project);
         }
-        return null;
+        else if (repos.size() == 1) {
+          repository = repos.iterator().next();
+        } else {
+          repository = null;
+        }
+        if (repository != null) {
+          return buildResolverCommand(project, repository);
+        }
+        else return null;
       }
     };
   }
 
-  private HgGlobalCommand buildCommand(HgRunConflictResolverDialog dialog, final Project project) {
-    final VirtualFile repository = dialog.getRepository();
+  private VirtualFile letUserSelectRepository(Collection<VirtualFile> repos, Project project) {
+    HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project);
+    dialog.setRoots(repos);
+    dialog.show();
+
+    if (dialog.isOK()) {
+      return dialog.getRepository();
+    } else {
+      return null;
+    }
+  }
+
+  private HgGlobalCommand buildResolverCommand(final Project project, final VirtualFile repository) {
     return new HgGlobalCommand() {
       public VirtualFile getRepo() {
         return repository;
       }
 
       public void execute() {
-        String currentBranch = new HgTagBranchCommand(project, repository).getCurrentBranch();
-        if (currentBranch == null) {
-          return;
-        }
-        List<HgRevisionNumber> heads =
-          new HgHeadsCommand(project, repository).execute(currentBranch);
-
-        new HgConflictResolver(project, Collections.max(heads), Collections.min(heads))
-          .resolve(repository);
+        new HgConflictResolver(project).resolve(repository);
       }
     };
   }

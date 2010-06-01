@@ -10,6 +10,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.impl.rules.FileGroupingRule;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import javax.swing.*;
 /**
  * @author Maxim.Mossienko
  */
-public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & NavigationItem> implements UsageGroup {
+public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & NavigationItem> implements UsageGroup, NamedPresentably {
   private final SmartPsiElementPointer myElementPointer;
   private final String myName;
   private final Icon myIcon;
@@ -75,7 +76,13 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
   }
 
   public int compareTo(final UsageGroup o) {
-    return myName.compareTo(((PsiNamedElementUsageGroupBase)o).myName);
+    String name;
+    if (o instanceof NamedPresentably) {
+      name = ((NamedPresentably)o).getPresentableName();
+    } else {
+      name = o.getText(null);
+    }
+    return myName.compareTo(name);
   }
 
   public boolean equals(final Object obj) {
@@ -102,5 +109,10 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
         sink.put(UsageView.USAGE_INFO_KEY, new UsageInfo(element));
       }
     }
+  }
+
+  @NotNull
+  public String getPresentableName() {
+    return myName;
   }
 }

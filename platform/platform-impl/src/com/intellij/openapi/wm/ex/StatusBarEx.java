@@ -15,43 +15,31 @@
  */
 package com.intellij.openapi.wm.ex;
 
-import com.intellij.notification.impl.IdeNotificationArea;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.impl.status.StatusBarPatch;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.wm.*;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.event.*;
 
-public interface StatusBarEx extends StatusBar {
-  String getInfo();
+/**
+ * @author spleaner
+ */
+public interface StatusBarEx extends StatusBar, Disposable {
+  void startRefreshIndication(String tooltipText);
+  void stopRefreshIndication();
 
-  void clear();
+  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody);
+  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);
 
-  void addFileStatusComponent(StatusBarPatch component);
+  void addProgress(ProgressIndicatorEx indicator, TaskInfo info);
 
-  void removeFileStatusComponent(StatusBarPatch component);
-
-  void cleanupCustomComponents();
-
-  void add(ProgressIndicatorEx indicator, TaskInfo info);
+  void updateWidgets();
 
   boolean isProcessWindowOpen();
 
   void setProcessWindowOpen(boolean open);
-
-  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody);
-
-  BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener);
-
-  void update(Editor editor);
-
-  void dispose();
-
-  IdeNotificationArea getNotificationArea();
 }

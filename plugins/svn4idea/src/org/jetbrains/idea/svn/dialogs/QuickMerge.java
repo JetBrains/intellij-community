@@ -15,73 +15,43 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.CalledInAny;
-import com.intellij.openapi.vcs.CalledInAwt;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
-import com.intellij.openapi.vcs.changes.committed.RunBackgroundable;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
-import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.jetbrains.idea.svn.history.TreeStructureNode;
-import org.jetbrains.idea.svn.integrate.IMerger;
-import org.jetbrains.idea.svn.integrate.MergerFactory;
-import org.jetbrains.idea.svn.integrate.SvnIntegrateChangesTask;
-import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
-import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
-import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
-import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
-import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.project.*;
+import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.committed.*;
+import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.versionBrowser.*;
+import com.intellij.openapi.vfs.*;
+import com.intellij.util.*;
+import org.jetbrains.annotations.*;
+import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.actions.*;
+import org.jetbrains.idea.svn.history.*;
+import org.jetbrains.idea.svn.integrate.*;
+import org.jetbrains.idea.svn.mergeinfo.*;
+import org.jetbrains.idea.svn.update.*;
+import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.internal.util.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 public class QuickMerge {
   private final Project myProject;
   private final String myBranchName;
-  private final SvnBranchConfigurationNew myConfiguration;
   private final VirtualFile myRoot;
   private final WCInfo myWcInfo;
   private String mySourceUrl;
   private SvnVcs myVcs;
   private final String myTitle;
 
-  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final SvnBranchConfigurationNew configuration,
-                    final VirtualFile root) {
+  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final VirtualFile root) {
     myProject = project;
     myBranchName = branchName;
-    myConfiguration = configuration;
     myRoot = root;
     myVcs = SvnVcs.getInstance(project);
     mySourceUrl = sourceUrl;
@@ -184,7 +154,7 @@ public class QuickMerge {
     // suppose we're in branch
     myVcs.getSvnBranchPointsCalculator().getFirstCopyPoint(myWcInfo.getRepositoryRoot(), mySourceUrl, myWcInfo.getRootUrl(),
       new Consumer<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>>() {
-        public void consume(SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> result) {
+        public void consume(final SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData> result) {
           if (result == null) {
             showErrorBalloon("Merge start wasn't found");
             return;
@@ -194,7 +164,8 @@ public class QuickMerge {
                        "\nAre you sure?"))) return;
           final MergerFactory mergerFactory = new MergerFactory() {
             public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-              return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName);
+              return new BranchMerger(vcs, currentBranchUrl, myWcInfo.getUrl(), myWcInfo.getPath(), handler, reintegrate, myBranchName, 
+                                      reintegrate ? result.getWrapped().getTargetRevision() : result.getWrapped().getSourceRevision());
             }
           };
 
@@ -242,14 +213,14 @@ public class QuickMerge {
       myCopyData = copyData;
       myNotMerged = new LinkedList<CommittedChangeList>();
       myMergeTitle = "Merge from " + branchName;
-      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
+//      if (Boolean.TRUE.equals(Boolean.getBoolean(ourOneShotStrategy))) {
         myMergeChecker = new OneShotMergeInfoHelper(myProject, myWcInfo, mySourceUrl);
         ((OneShotMergeInfoHelper) myMergeChecker).prepare();
-      } else {
+/*      } else {
         myMergeChecker = new BranchInfo.MyMergeCheckerWrapper(myWcInfo.getPath(), new BranchInfo(myVcs, myWcInfo.getRepositoryRoot(),
                                                                                                  myWcInfo.getRootUrl(), mySourceUrl,
                                                                                                  mySourceUrl, myVcs.createWCClient()));
-      }
+      }*/
     }
 
     public void run(@NotNull final ProgressIndicator indicator) {

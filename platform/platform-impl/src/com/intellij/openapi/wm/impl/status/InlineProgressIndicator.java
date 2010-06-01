@@ -15,32 +15,27 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.ui.popup.IconButton;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ide.*;
+import com.intellij.ide.ui.*;
+import com.intellij.openapi.*;
+import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.*;
+import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.impl.content.*;
+import com.intellij.ui.*;
+import com.intellij.ui.components.panels.*;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
 
-  private final FixedHeightLabel myText = new FixedHeightLabel();
-  private final FixedHeightLabel myText2 = new FixedHeightLabel();
+  private final TextPanel myText = new TextPanel();
+  private final TextPanel myText2 = new TextPanel();
 
   private MyProgressBar myProgress;
 
@@ -71,20 +66,22 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }).setFillBg(true);
 
     myCancelButton.setVisible(myInfo.isCancellable());
-    myCancelButton.setOpaque(true);
+    myCancelButton.setOpaque(false);
     myCancelButton.setToolTipText(processInfo.getCancelTooltipText());
+    myCancelButton.setFillBg(false);
 
     myProgress = new MyProgressBar(JProgressBar.HORIZONTAL, compact);
 
     myComponent = new MyComponent(compact, myProcessName);
     if (myCompact) {
-      myComponent.setOpaque(true);
+      myComponent.setOpaque(false);
       myComponent.setLayout(new BorderLayout(2, 0));
       final JPanel textAndProgress = new JPanel(new BorderLayout());
-      myText.setHorizontalAlignment(JLabel.LEFT);
+      textAndProgress.setOpaque(false);
       textAndProgress.add(myText, BorderLayout.CENTER);
 
       final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
+      if (!myInfo.isCancellable()) progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));
       final GridBagConstraints c = new GridBagConstraints();
       c.weightx = 1;
       c.weighty = 1;
@@ -113,7 +110,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
-      content.setBorder(new EmptyBorder(2, 2, 2, 2));
+      content.setBorder(new EmptyBorder(2, 2, 2, myInfo.isCancellable() ? 2 : 4));
       myComponent.add(content, BorderLayout.CENTER);
 
       final Wrapper cancelWrapper = new Wrapper(myCancelButton);
@@ -132,8 +129,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     UIUtil.removeQuaquaVisualMarginsIn(myComponent);
 
     if (!myCompact) {
-      myText.recomputeSize();
-      myText2.recomputeSize();
       myProcessName.recomputeSize();
     }
 
@@ -279,10 +274,13 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return myInfo;
   }
 
+  // TODO: use TextPanel instead
   private static class FixedHeightLabel extends JLabel {
     private Dimension myPrefSize;
 
     public FixedHeightLabel() {
+      setOpaque(false);
+      if (SystemInfo.isMac) setFont(UIUtil.getLabelFont().deriveFont(11.0f));
     }
 
     public void recomputeSize() {
