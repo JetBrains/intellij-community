@@ -57,6 +57,7 @@ public class ConcurrentTasks<T> {
           try {
             task.consume(new Consumer<T>() {
               public void consume(T t) {
+                if (myResultKnown) return;
                 myResult = t;
                 myResultKnown = true;
                 -- myCntAlive;
