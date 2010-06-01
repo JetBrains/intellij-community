@@ -157,6 +157,7 @@ public class BranchInfo {
       final String absoluteInTrunkPath = SVNPathUtil.append(myRepositoryRoot, path);
       if (! absoluteInTrunkPath.startsWith(myTrunkPathCorrespondingToLocalBranchPath)) {
         result.putValue(SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS, path);
+        continue;
       }
       final String relativeToTrunkPath = absoluteInTrunkPath.substring(myTrunkPathCorrespondingToLocalBranchPath.length());
       final String localPathInBranch = new File(branchPath, relativeToTrunkPath).getAbsolutePath();

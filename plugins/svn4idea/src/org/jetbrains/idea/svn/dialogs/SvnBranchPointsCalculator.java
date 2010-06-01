@@ -169,6 +169,10 @@ public class SvnBranchPointsCalculator {
       if (! excRef.isNull()) {
         throw excRef.get();
       }
+
+      for (String key : myForSearchMap.keySet()) {
+        Collections.sort((List<String>) myForSearchMap.get(key));
+      }
     }
 
     public void put(final String uid, final String target, final BranchCopyData data) throws IOException {
@@ -180,7 +184,16 @@ public class SvnBranchPointsCalculator {
         }
         map.put(target, data);
         myPersistentMap.put(uid, map);
-        myForSearchMap.putValue(uid, target);
+        if (myForSearchMap.containsKey(uid)) {
+          final List<String> list = (List<String>)myForSearchMap.get(uid);
+          final int idx = Collections.binarySearch(list, target);
+          if (idx < 0) {
+            final int insertionIdx = - idx - 1;
+            list.add(insertionIdx, target);
+          }
+        } else {
+          myForSearchMap.putValue(uid, target);
+        }
       }
       myPersistentMap.force();
     }

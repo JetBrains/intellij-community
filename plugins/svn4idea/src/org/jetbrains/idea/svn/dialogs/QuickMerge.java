@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -47,6 +48,7 @@ import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.util.Collections;
@@ -56,22 +58,49 @@ import java.util.List;
 public class QuickMerge {
   private final Project myProject;
   private final String myBranchName;
+  private final SvnBranchConfigurationNew myConfiguration;
   private final WCInfo myWcInfo;
-  private final String mySourceUrl;
+  private String mySourceUrl;
   private SvnVcs myVcs;
+  private final String myTitle;
 
-  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName) {
+  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final SvnBranchConfigurationNew configuration) {
     myProject = project;
     myBranchName = branchName;
+    myConfiguration = configuration;
     myVcs = SvnVcs.getInstance(project);
     mySourceUrl = sourceUrl;
     myWcInfo = wcInfo;
+    myTitle = "Merge from " + myBranchName;
+  }
+
+  private void correctSourceUrl() throws SVNException {
+    final SVNURL branch = myConfiguration.getWorkingBranch(myWcInfo.getUrl());
+    if (branch != null && (! myWcInfo.getUrl().equals(branch))) {
+      final String branchString = branch.toString();
+      if (SVNPathUtil.isAncestor(branchString, myWcInfo.getRootUrl())) {
+        final String subPath = SVNPathUtil.getRelativePath(branchString, myWcInfo.getRootUrl());
+        mySourceUrl = SVNPathUtil.append(mySourceUrl, subPath);
+      }
+    }
+  }
+
+  private boolean prompt(final String question) {
+    return Messages.showOkCancelDialog(myProject, question, myTitle, Messages.getQuestionIcon()) == 0;
   }
   
   @CalledInAwt
   public void execute() {
-    if (mySourceUrl.equals(myWcInfo.getRootUrl())) {
+    if (SVNPathUtil.isAncestor(mySourceUrl, myWcInfo.getRootUrl()) || SVNPathUtil.isAncestor(myWcInfo.getRootUrl(), mySourceUrl)) {
       showErrorBalloon("Cannot merge from self");
+      return;
+    }
+
+    try {
+      correctSourceUrl();
+    }
+    catch (SVNException e) {
+      showErrorBalloon(e.getMessage());
       return;
     }
 
@@ -80,7 +109,7 @@ public class QuickMerge {
       return;
     }
 
-    final int result = Messages.showDialog(myProject, "Merge all?", "Merge from " + myBranchName,
+    final int result = Messages.showDialog(myProject, "Merge all?", myTitle,
                         new String[]{"Merge &all", "&Select revisions to merge", "Cancel"}, 0, Messages.getQuestionIcon());
     if (result == 2) return;
     if (result == 0) {
