@@ -1,6 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReferenceList;
@@ -26,6 +27,7 @@ import java.util.Map;
  */
 @SuppressWarnings({"RefusedBequest"})
 public class GlobalMatchingVisitor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor");
 
   // the pattern element for visitor check
   private PsiElement myElement;
@@ -132,7 +134,9 @@ public class GlobalMatchingVisitor {
         el1.accept(myJavaVisitor);
       }*/
       PsiElementVisitor visitor = getVisitorForElement(el1);
-      el1.accept(visitor);
+      if (visitor != null) {
+        el1.accept(visitor);
+      }
     }
     catch (ClassCastException ex) {
       myResult = false;
@@ -144,6 +148,7 @@ public class GlobalMatchingVisitor {
     return myResult;
   }
 
+  @Nullable
   private PsiElementVisitor getVisitorForElement(PsiElement element) {
     Language language = element.getLanguage();
     PsiElementVisitor visitor = myLanguage2MatchingVisitor.get(language);
@@ -154,12 +159,18 @@ public class GlobalMatchingVisitor {
     return visitor;
   }
 
+  @Nullable
   private PsiElementVisitor createMatchingVisitor(Language language) {
     PsiElementVisitor visitor;
     StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
-    assert profile != null;
-    visitor = profile.createMatchingVisitor(this);
-    return visitor;
+    if (profile == null) {
+      LOG.warn("there is no StructuralSearchProfile for language " + language.getID());
+      return null;
+    }
+    else {
+      visitor = profile.createMatchingVisitor(this);
+      return visitor;
+    }
   }
 
   public boolean shouldAdvanceThePattern(final PsiElement element, PsiElement match) {
@@ -337,7 +348,7 @@ public class GlobalMatchingVisitor {
   }
 
   public boolean matchOptionally(@Nullable PsiElement element1, @Nullable PsiElement element2) {
-    return element1 == null && matchContext.getOptions().isLooseMatching() || 
+    return element1 == null && matchContext.getOptions().isLooseMatching() ||
            match(element1, element2);
   }
 
