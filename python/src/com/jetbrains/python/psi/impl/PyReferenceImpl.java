@@ -1,12 +1,13 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.codeInsight.completion.PrioritizedLookupElement;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -14,6 +15,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SortedList;
+import com.jetbrains.appengine.util.PythonUtil;
+import com.jetbrains.appengine.util.StringUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
@@ -54,16 +57,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * Imported module names: to module file (or directory for a qualifier).
    * Other identifiers: to most recent definition before this reference.
    * This implementation is cached.
+   *
    * @see #resolveInner().
-  **/
+   */
   @Nullable
   public PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
-   return results.length >= 1 && !(results [0] instanceof ImplicitResolveResult) ? results[0].getElement() : null;
+    return results.length >= 1 && !(results[0] instanceof ImplicitResolveResult) ? results[0].getElement() : null;
   }
 
   // it is *not* final so that it can be changed in debug time. if set to false, caching is off
-  private static boolean USE_CACHE = true; 
+  private static boolean USE_CACHE = true;
 
   /**
    * Resolves reference to possible referred elements.
@@ -72,8 +76,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * todo Local identifiers: a list of definitions in the most recent compound statement
    * (e.g. <code>if X: a = 1; else: a = 2</code> has two definitions of <code>a</code>.).
    * todo Identifiers not found locally: similar definitions in imported files and builtins.
+   *
    * @see com.intellij.psi.PsiPolyVariantReference#multiResolve(boolean)
-  **/
+   */
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiManager manager = getElement().getManager();
@@ -87,6 +92,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   // sorts and modifies results of resolveInner
+
   private ResolveResult[] multiResolveInner(boolean incomplete) {
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
@@ -134,6 +140,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   protected static class ResultList extends ArrayList<RatedResolveResult> {
     // Allows to add non-null elements and discard nulls in a hassle-free way.
+
     public boolean poke(final PsiElement what, final int rate) {
       if (what == null) return false;
       super.add(new RatedResolveResult(rate, what));
@@ -144,6 +151,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   /**
    * Does actual resolution of resolve().
+   *
    * @return resolution result.
    * @see #resolve()
    */
@@ -166,7 +174,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       PsiElement one = myElement;
       do {
         one = PyUtil.getConcealingParent(one);
-      } while (one instanceof PyFunction);
+      }
+      while (one instanceof PyFunction);
       if (one instanceof PyClass) roof = one;
     }
     if (roof == null) roof = realContext.getContainingFile();
@@ -221,6 +230,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   // NOTE: very crude
+
   private static int getRate(PsiElement elt) {
     int rate;
     if (elt instanceof PyImportElement || elt instanceof PyStarImportElement) {
@@ -298,10 +308,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         if (PsiTreeUtil.getParentOfType(myElement, PyKeywordArgument.class) == null) {
           PsiElement def = ((PyReferenceExpression)callee).getReference().resolve();
           if (def instanceof PyFunction) {
-            addKeywordArgumentVariants((PyFunction) def, ret);
+            addKeywordArgumentVariants((PyFunction)def, ret);
           }
           else if (def instanceof PyClass) {
-            PyFunction init = ((PyClass) def).findMethodByName(PyNames.INIT, true);  // search in superclasses
+            PyFunction init = ((PyClass)def).findMethodByName(PyNames.INIT, true);  // search in superclasses
             if (init != null) {
               addKeywordArgumentVariants(init, ret);
             }
@@ -353,9 +363,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     visited.add(def);
     final Set<PyFunction.Flag> flags = def.getContainingClass() != null ? PyUtil.detectDecorationsAndWrappersOf(def) : null;
-    final KeywordArgumentCollector collector = new KeywordArgumentCollector(flags, ret);
+    final KwArgParameterCollector collector = new KwArgParameterCollector(flags, ret);
     def.getParameterList().acceptChildren(collector);
-    if (collector.myCount == 2 && collector.myHasSelf && collector.myHasKwArgs) {
+    if (collector.hasKwArgs()) {
+      def.getStatementList().acceptChildren(new KwArgStatementCallCollector(ret, collector.getKwArgs()));
+    }
+    if (collector.hasOnlySelfAndKwArgs()) {
       // nothing interesting besides self and **kwargs, let's look at superclass (PY-778)
       final PsiElement superMethod = PySuperMethodsSearch.search(def).findFirst();
       if (superMethod instanceof PyFunction) {
@@ -364,14 +377,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
   }
 
-  private static class KeywordArgumentCollector extends PyElementVisitor {
+  private static class KwArgParameterCollector extends PyElementVisitor {
     private int myCount;
     private final Set<PyFunction.Flag> myFlags;
     private final List<Object> myRet;
     private boolean myHasSelf = false;
     private boolean myHasKwArgs = false;
+    private PyParameter kwArgsParam = null;
 
-    public KeywordArgumentCollector(Set<PyFunction.Flag> flags, List<Object> ret) {
+    public KwArgParameterCollector(Set<PyFunction.Flag> flags, List<Object> ret) {
       myFlags = flags;
       myRet = ret;
     }
@@ -383,14 +397,74 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         myHasSelf = true;
         return;
       }
-      PyNamedParameter n_param = par.getAsNamed();
-      assert n_param != null;
-      if (! n_param.isKeywordContainer() && ! n_param.isPositionalContainer()) {
-        final LookupElementBuilder item = LookupElementBuilder.create(n_param.getName() + "=").setIcon(n_param.getIcon(0));
-        myRet.add(PrioritizedLookupElement.withGrouping(item, 1));
+      PyNamedParameter namedParam = par.getAsNamed();
+      assert namedParam != null;
+      if (!namedParam.isKeywordContainer() && !namedParam.isPositionalContainer()) {
+        final LookupElement item = PyUtil.createNamedParameterLookup(namedParam.getName());
+        myRet.add(item);
       }
-      else if (n_param.isKeywordContainer()) {
+      else if (namedParam.isKeywordContainer()) {
         myHasKwArgs = true;
+        kwArgsParam = namedParam;
+      }
+    }
+
+    public PyParameter getKwArgs() {
+      return kwArgsParam;
+    }
+
+    public boolean hasKwArgs() {
+      return myHasKwArgs;
+    }
+
+    public boolean hasOnlySelfAndKwArgs() {
+      return myCount == 2 && myHasSelf && myHasKwArgs;
+    }
+  }
+
+  private static class KwArgStatementCallCollector extends PyElementVisitor {
+    private final List<Object> myRet;
+    private final PyParameter myKwArgs;
+
+    public KwArgStatementCallCollector(List<Object> ret, @NotNull PyParameter kwArgs) {
+      myRet = ret;
+      this.myKwArgs = kwArgs;
+    }
+
+    @Override
+    public void visitPyElement(PyElement node) {
+      node.acceptChildren(this);
+    }
+
+    @Override
+    public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+      String operandName = node.getOperand().getName();
+      processGet(operandName, node.getIndexExpression());
+    }
+
+    @Override
+    public void visitPyCallExpression(PyCallExpression node) {
+      String callName = node.getCallee().getName();
+      if (callName.equals("pop") || callName.equals("get")) {
+        PyReferenceExpression child = PsiTreeUtil.getChildOfType(node.getCallee(), PyReferenceExpression.class);
+        if (child != null) {
+          String operandName = child.getName();
+          if (node.getArguments().length > 0) {
+            PyExpression argument = node.getArguments()[0];
+            processGet(operandName, argument);
+          }
+        }
+      }
+      super.visitPyCallExpression(node);
+    }
+
+    private void processGet(String operandName, PyExpression argument) {
+      if (myKwArgs.getName().equals(operandName) &&
+          argument instanceof PyStringLiteralExpression) {
+        String name = ((PyStringLiteralExpression)argument).getStringValue();
+        if (PyUtil.isPythonIdentifier(name)) {
+          myRet.add(PyUtil.createNamedParameterLookup(name));
+        }
       }
     }
   }
@@ -424,6 +498,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
 
   // our very own caching resolver
+
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
     public static CachingResolver INSTANCE = new CachingResolver();
     private ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
