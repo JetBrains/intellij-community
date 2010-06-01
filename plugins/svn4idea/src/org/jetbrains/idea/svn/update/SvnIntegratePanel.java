@@ -17,9 +17,9 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.idea.svn.DepthCombo;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.DepthCombo;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -50,7 +50,7 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
     myDepthLabel.setLabelFor(myDepthCombo);
   }
 
-  protected SvnPanel createRootPanel(final FilePath root, final SvnVcs p1) {
+  protected SvnPanel createRootPanel(final FilePath root, final SvnVcs p1, Collection<FilePath> roots) {
     return new SvnIntegrateRootOptionsPanel(myVCS, root);
   }
 

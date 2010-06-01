@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package com.intellij.openapi.vcs.changes.committed;
 
-import java.util.Set;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import org.jetbrains.annotations.NotNull;
 
-public interface SelectionResult<T> {
-  Set<T> getMarked();
-  boolean isAll();
+public class RunBackgroundable {
+  private RunBackgroundable() {
+  }
+
+  public static void run(@NotNull final Task task) {
+    final ProgressManager pm = ProgressManager.getInstance();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      pm.run(task);
+    } else {
+      task.run(pm.getProgressIndicator());
+    }
+  }
 }

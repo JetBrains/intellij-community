@@ -42,19 +42,22 @@ import java.util.StringTokenizer;
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
   private final Project myProject;
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
+  private SvnConfiguration myConfig;
 
   public SvnAuthenticationManager(final Project project, final File configDirectory) {
         super(configDirectory, true, null, null);
       myProject = project;
+      myConfig = SvnConfiguration.getInstance(myProject);
       if (myPersistentAuthenticationProviderProxy != null) {
         myPersistentAuthenticationProviderProxy.setProject(myProject);
       }
     }
 
-    protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir) {
-      myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir));
-      return myPersistentAuthenticationProviderProxy;
-    }
+  @Override
+  protected ISVNAuthenticationProvider createCacheAuthenticationProvider(File authDir, String userName) {
+    myPersistentAuthenticationProviderProxy = new PersistentAuthenticationProviderProxy(super.createCacheAuthenticationProvider(authDir, userName));
+    return myPersistentAuthenticationProviderProxy;
+  }
 
   private static class PersistentAuthenticationProviderProxy implements ISVNAuthenticationProvider, IPersistentAuthenticationProvider {
     private final Map<SvnAuthWrapperEqualable, Long> myRewritePreventer;
@@ -114,7 +117,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager {
       Map properties = getHostProperties(host);
       String proxyHost = (String) properties.get("http-proxy-host");
     if ((proxyHost == null) || "".equals(proxyHost.trim())) {
-      if (SvnConfiguration.getInstanceChecked(myProject).isIsUseDefaultProxy()) {
+      if (myConfig.isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
         final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
         final String ideaWideProxyHost = httpConfigurable.PROXY_HOST;

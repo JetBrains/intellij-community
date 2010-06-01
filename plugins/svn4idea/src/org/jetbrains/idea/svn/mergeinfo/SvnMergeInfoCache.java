@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
+import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
@@ -66,9 +67,9 @@ public class SvnMergeInfoCache {
 
     final MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
     if (rootMapping != null) {
-      final BranchInfo branchInfo = rootMapping.getBranchInfo(branchPath);
-      if (branchInfo != null) {
-        branchInfo.clear();
+      final BranchInfo mergeChecker = rootMapping.getBranchInfo(branchPath);
+      if (mergeChecker != null) {
+        mergeChecker.clear();
       }
     }
   }
@@ -99,19 +100,19 @@ public class SvnMergeInfoCache {
     final String branchUrl = selectedBranch.getUrl();
 
     MyCurrentUrlData rootMapping = myState.getCurrentUrlMapping().get(currentUrl);
-    BranchInfo branchInfo = null;
+    BranchInfo mergeChecker = null;
     if (rootMapping == null) {
       rootMapping = new MyCurrentUrlData();
       myState.getCurrentUrlMapping().put(currentUrl, rootMapping);
     } else {
-      branchInfo = rootMapping.getBranchInfo(branchPath);
+      mergeChecker = rootMapping.getBranchInfo(branchPath);
     }
-    if (branchInfo == null) {
-      branchInfo = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot(), myClient);
-      rootMapping.addBranchInfo(branchPath, branchInfo);
+    if (mergeChecker == null) {
+      mergeChecker = new BranchInfo(SvnVcs.getInstance(myProject), info.getRepoUrl(), branchUrl, currentUrl, info.getTrunkRoot(), myClient);
+      rootMapping.addBranchInfo(branchPath, mergeChecker);
     }
 
-    return branchInfo.checkList(list, branchPath);
+    return mergeChecker.checkList(list, branchPath);
   }
 
   public boolean isMixedRevisions(final WCInfoWithBranches info, final String branchPath) {
@@ -167,8 +168,9 @@ public class SvnMergeInfoCache {
       myRevision = -1;
 
       ApplicationManager.getApplication().executeOnPooledThread(new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl,
-                                                                                  new Consumer<FirstInBranch.CopyData>() {
-                                                                                    public void consume(FirstInBranch.CopyData copyData) {
+                                                                                  new Consumer<CopyData>() {
+                                                                                    public void consume(CopyData copyData) {
+                                                                                      if (copyData == null) return;
                                                                                       myRevision = copyData.getCopySourceRevision();
                                                                                       if (myRevision != -1) {
                                                                                         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -202,8 +204,8 @@ public class SvnMergeInfoCache {
       return myBranchInfo.get(branchUrl);
     }
 
-    public void addBranchInfo(final String branchUrl, final BranchInfo branchInfo) {
-      myBranchInfo.put(branchUrl, branchInfo);
+    public void addBranchInfo(final String branchUrl, final BranchInfo mergeChecker) {
+      myBranchInfo.put(branchUrl, mergeChecker);
     }
   }
 

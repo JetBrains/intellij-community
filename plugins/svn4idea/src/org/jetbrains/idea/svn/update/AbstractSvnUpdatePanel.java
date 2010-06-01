@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.util.FilePathByPathComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.DepthCombo;
@@ -30,9 +31,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class AbstractSvnUpdatePanel {
   protected final SvnVcs myVCS;
@@ -47,10 +46,12 @@ public abstract class AbstractSvnUpdatePanel {
     final JPanel configureRootsPanel = getRootsPanel();
     configureRootsPanel.setLayout(new BorderLayout());
 
-    for (FilePath root : roots) {
+    final ArrayList<FilePath> rootsCopy = new ArrayList<FilePath>(roots);
+    Collections.sort(rootsCopy, FilePathByPathComparator.getInstance());
+    for (FilePath root : rootsCopy) {
       SVNURL url = getUrlFor(root);
       if (url != null) {
-        myRootToPanel.put(root, createRootPanel(root, myVCS));
+        myRootToPanel.put(root, createRootPanel(root, myVCS, roots));
       }
 
       if (myRootToPanel.size() == 1) {
@@ -75,7 +76,7 @@ public abstract class AbstractSvnUpdatePanel {
     }
   }
 
-  protected abstract SvnPanel createRootPanel(final FilePath root, final SvnVcs p1);
+  protected abstract SvnPanel createRootPanel(final FilePath root, final SvnVcs p1, Collection<FilePath> roots);
 
   protected abstract JPanel getRootsPanel();
 

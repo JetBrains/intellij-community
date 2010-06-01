@@ -56,18 +56,24 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private final List<VcsException> myExceptions;
 
-  private final UpdateEventHandler myHandler;
-  private final IMerger myMerger;
-  private final ResolveWorker myResolveWorker;
+  private UpdateEventHandler myHandler;
+  private IMerger myMerger;
+  private ResolveWorker myResolveWorker;
   private FilePathImpl myMergeTarget;
   private final String myTitle;
+  private final String myBranchName;
+  private final MergerFactory myMergerFactory;
+  private final SVNURL myCurrentBranchUrl;
   private boolean myDryRun;
 
   public SvnIntegrateChangesTask(final SvnVcs vcs, final WorkingCopyInfo info, final MergerFactory mergerFactory,
-                                 final SVNURL currentBranchUrl, final String title, final boolean dryRun) {
+                                 final SVNURL currentBranchUrl, final String title, final boolean dryRun, String branchName) {
     super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
+    myMergerFactory = mergerFactory;
+    myCurrentBranchUrl = currentBranchUrl;
     myDryRun = dryRun;
     myTitle = title;
+    myBranchName = branchName;
 
     myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
     myVcs = vcs;
@@ -76,10 +82,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     myAccomulatedFiles = new UpdatedFilesReverseSide(UpdatedFiles.create());
     myExceptions = new ArrayList<VcsException>();
-
     myHandler = new IntegrateEventHandler(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    myMerger = mergerFactory.createMerger(myVcs, new File(info.getLocalPath()), myHandler, currentBranchUrl);
-    myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
+    myMerger = myMergerFactory.createMerger(myVcs, new File(myInfo.getLocalPath()), myHandler, myCurrentBranchUrl, myBranchName);
   }
 
   private void indicatorOnStart() {
@@ -93,6 +97,9 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   public void run(@NotNull final ProgressIndicator indicator) {
+    myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
+    myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
+
     BlockReloadingUtil.block();
     myProjectLevelVcsManager.startBackgroundVcsOperation();
 
