@@ -51,7 +51,7 @@ public class FactsCalculator<In, Out> {
         return result;
       }
       @Override
-      protected void processResultImpl(Out out) {
+      protected void processResult(Out out) {
         resultConsumer.consume(out);
       }
     }.execute();
