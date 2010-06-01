@@ -86,7 +86,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           startProcess(target, configuration, key);
         }
       };
-      if (ApplicationManager.getApplication().isDispatchThread()) {
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
         runnable.run();
       }
       else {

@@ -32,7 +32,6 @@ import java.io.File;
 public class MavenEnvironmentForm {
   private JPanel panel;
   private LabeledComponent<TextFieldWithBrowseButton> mavenHomeComponent;
-  private LabeledComponent<TextFieldWithBrowseButton> localRepositoryComponent;
   private LabeledComponent<TextFieldWithBrowseButton> mavenSettingsFileComponent;
   private JCheckBox mavenHomeOverrideCheckBox;
   private JCheckBox mavenSettingsFileOverrideCheckBox;
@@ -79,9 +78,6 @@ public class MavenEnvironmentForm {
                                                               new FileChooserDescriptor(false, true, false, false, false, false));
     mavenSettingsFileComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.maven.settings.file"), "", null,
                                                                       new FileChooserDescriptor(true, false, false, false, false, false));
-    localRepositoryComponent.getComponent().addBrowseFolderListener(ProjectBundle.message("maven.select.local.repository"), "", null,
-                                                                    new FileChooserDescriptor(false, true, false, false, false, false));
-
     return panel;
   }
 

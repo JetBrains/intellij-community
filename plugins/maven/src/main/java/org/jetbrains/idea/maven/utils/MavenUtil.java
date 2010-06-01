@@ -49,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.facade.MavenFacadeManager;
 import org.jetbrains.idea.maven.facade.MavenFacadeUtil;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -546,8 +547,7 @@ public class MavenUtil {
   public static VirtualFile resolveSuperPomFile(@Nullable File mavenHome) {
     VirtualFile result = doResolveSuperPomFile(mavenHome);
     if (result == null) {
-      URL resource = MavenFacadeUtil.class.getResource("/" + SUPER_POM_PATH);
-      return VfsUtil.findFileByURL(resource);
+      doResolveSuperPomFile(MavenFacadeManager.collectClassPathAndLIbsFolder().second);
     }
     return result;
   }
