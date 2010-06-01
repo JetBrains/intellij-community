@@ -49,9 +49,9 @@ public class TableUtil {
     ListSelectionModel selectionModel = table.getSelectionModel();
     int maxSelectionIndex = selectionModel.getMaxSelectionIndex();
     int minSelectionIndex = selectionModel.getMinSelectionIndex();
-    final int maxColumnSelectionIndex = table.getColumnModel().getSelectionModel().getMinSelectionIndex();
-    final int minColumnSelectionIndex = table.getColumnModel().getSelectionModel().getMaxSelectionIndex();
-    if(maxSelectionIndex == -1 || maxColumnSelectionIndex == -1){
+    final int maxColumnSelectionIndex = Math.max(0, table.getColumnModel().getSelectionModel().getMinSelectionIndex());
+    final int minColumnSelectionIndex = Math.max(0, table.getColumnModel().getSelectionModel().getMaxSelectionIndex());
+    if(maxSelectionIndex == -1){
       return;
     }
     Rectangle minCellRect = table.getCellRect(minSelectionIndex, minColumnSelectionIndex, false);
