@@ -33,7 +33,7 @@ public class EncodingAwareProperties extends java.util.Properties{
     propText = StringUtil.convertLineSeparators(propText);
     StringTokenizer stringTokenizer = new StringTokenizer(propText, "\n");
     while (stringTokenizer.hasMoreElements()){
-      String line = (String)stringTokenizer.nextElement();
+      String line = stringTokenizer.nextElement();
       int i = line.indexOf('=');
       String propName = i == -1 ? line : line.substring(0,i);
       String propValue = i == -1 ? "" : line.substring(i+1);

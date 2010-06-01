@@ -212,22 +212,19 @@ public class HgVcs extends AbstractVcs {
   }
 
   @Override
-  protected void start() throws VcsException {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      started = true;
-    } else {
-      HgExecutableValidator validator = new HgExecutableValidator(myProject);
-      started = validator.check(globalSettings);
-    }
-  }
-
-  @Override
   protected void shutdown() throws VcsException {
     started = false;
   }
 
   @Override
   public void activate() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      started = true;
+    } else {
+      HgExecutableValidator validator = new HgExecutableValidator(myProject);
+      started = validator.check(globalSettings);
+    }
+
     if (!started) {
       return;
     }

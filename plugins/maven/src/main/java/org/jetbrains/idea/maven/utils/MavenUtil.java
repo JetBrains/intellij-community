@@ -39,24 +39,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.maven.model.Model;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.facade.MavenFacadeManager;
+import org.jetbrains.idea.maven.facade.MavenFacadeUtil;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -67,6 +67,17 @@ import java.util.regex.PatternSyntaxException;
 
 public class MavenUtil {
   public static final String MAVEN_NOTIFICATION_GROUP = "Maven";
+  public static final String SETTINGS_XML = "settings.xml";
+  public static final String DOT_M2_DIR = ".m2";
+  public static final String PROP_USER_HOME = "user.home";
+  public static final String ENV_M2_HOME = "M2_HOME";
+  public static final String M2_DIR = "m2";
+  public static final String BIN_DIR = "bin";
+  public static final String CONF_DIR = "conf";
+  public static final String M2_CONF_FILE = "m2.conf";
+  public static final String REPOSITORY_DIR = "repository";
+  public static final String LIB_DIR = "lib";
+  public static final String SUPER_POM_PATH = "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML;
 
   public static void invokeLater(Project p, Runnable r) {
     invokeLater(p, ModalityState.defaultModalityState(), r);
@@ -342,56 +353,6 @@ public class MavenUtil {
     return true;
   }
 
-  public static <T extends Serializable> T cloneObject(T object) {
-    try {
-      return (T)BeanUtils.cloneBean(object);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-    catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static void stripDown(Object object) {
-    try {
-      for (Field each : ReflectionUtil.collectFields(object.getClass())) {
-        Class<?> type = each.getType();
-        each.setAccessible(true);
-        Object value = each.get(object);
-        if (shouldStrip(value)) {
-          each.set(object, null);
-        }
-        else {
-          if (value != null) {
-            Package pack = type.getPackage();
-            if (pack != null && Model.class.getPackage().getName().equals(pack.getName())) {
-              stripDown(value);
-            }
-          }
-        }
-      }
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static boolean shouldStrip(Object value) {
-    if (value == null) return false;
-    return value.getClass().isArray()
-           || value instanceof Collection
-           || value instanceof Map
-           || value instanceof Xpp3Dom;
-  }
-
   public static void run(Project project, String title, final MavenTask task) throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
 
@@ -467,6 +428,159 @@ public class MavenUtil {
       });
       return handler;
     }
+  }
+
+  @Nullable
+  public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
+    if (!isEmptyOrSpaces(overrideMavenHome)) {
+      return new File(overrideMavenHome);
+    }
+
+    String m2home = System.getenv(ENV_M2_HOME);
+    if (!isEmptyOrSpaces(m2home)) {
+      final File homeFromEnv = new File(m2home);
+      if (isValidMavenHome(homeFromEnv)) {
+        return homeFromEnv;
+      }
+    }
+
+    String userHome = System.getProperty(PROP_USER_HOME);
+    if (!isEmptyOrSpaces(userHome)) {
+      final File underUserHome = new File(userHome, M2_DIR);
+      if (isValidMavenHome(underUserHome)) {
+        return underUserHome;
+      }
+    }
+
+    return null;
+  }
+
+  public static boolean isEmptyOrSpaces(@Nullable String str) {
+    return str == null || str.length() == 0 || str.trim().length() == 0;
+  }
+
+  public static boolean isValidMavenHome(File home) {
+    return getMavenConfFile(home).exists();
+  }
+
+  public static File getMavenConfFile(File mavenHome) {
+    return new File(new File(mavenHome, BIN_DIR), M2_CONF_FILE);
+  }
+
+  @Nullable
+  public static File resolveGlobalSettingsFile(@Nullable String overriddenMavenHome) {
+    File directory = resolveMavenHomeDirectory(overriddenMavenHome);
+    if (directory == null) return null;
+
+    return new File(new File(directory, CONF_DIR), SETTINGS_XML);
+  }
+
+  @NotNull
+  public static File resolveUserSettingsFile(@Nullable String overriddenUserSettingsFile) {
+    if (!isEmptyOrSpaces(overriddenUserSettingsFile)) return new File(overriddenUserSettingsFile);
+    return new File(resolveM2Dir(), SETTINGS_XML);
+  }
+
+  @NotNull
+  public static File resolveM2Dir() {
+    return new File(System.getProperty(PROP_USER_HOME), DOT_M2_DIR);
+  }
+
+  @NotNull
+  public static File resolveLocalRepository(@Nullable String overridenLocalRepository,
+                                            @Nullable String overridenMavenHome,
+                                            @Nullable String overriddenUserSettingsFile) {
+    File result = null;
+    if (!isEmptyOrSpaces(overridenLocalRepository)) result = new File(overridenLocalRepository);
+    if (result == null) {
+      result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
+                                        resolveGlobalSettingsFile(overridenMavenHome));
+    }
+    try {
+      return result.getCanonicalFile();
+    }
+    catch (IOException e) {
+      return result;
+    }
+  }
+
+  @NotNull
+  public static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
+    if (userSettingsFile != null) {
+      final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
+      if (!StringUtil.isEmpty(fromUserSettings)) {
+        return new File(fromUserSettings);
+      }
+    }
+
+    if (globalSettingsFile != null) {
+      final String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
+      if (!StringUtil.isEmpty(fromGlobalSettings)) {
+        return new File(fromGlobalSettings);
+      }
+    }
+
+    return new File(resolveM2Dir(), REPOSITORY_DIR);
+  }
+
+  @Nullable
+  public static String getRepositoryFromSettings(final File file) {
+    try {
+      byte[] bytes = FileUtil.loadFileBytes(file);
+      return expandProperties(MavenJDOMUtil.findChildValueByPath(MavenJDOMUtil.read(bytes, null), "localRepository", null));
+    }
+    catch (IOException e) {
+      return null;
+    }
+  }
+
+  public static String expandProperties(String text) {
+    if (StringUtil.isEmptyOrSpaces(text)) return text;
+    Properties props = MavenFacadeUtil.collectSystemProperties();
+    for (Map.Entry<Object, Object> each : props.entrySet()) {
+      text = text.replace("${" + each.getKey() + "}", (CharSequence)each.getValue());
+    }
+    return text;
+  }
+
+  @NotNull
+  public static VirtualFile resolveSuperPomFile(@Nullable File mavenHome) {
+    VirtualFile result = doResolveSuperPomFile(mavenHome);
+    if (result == null) {
+      result = doResolveSuperPomFile(MavenFacadeManager.collectClassPathAndLIbsFolder().second);
+    }
+    return result;
+  }
+
+  @Nullable
+  public static VirtualFile doResolveSuperPomFile(@Nullable File mavenHome) {
+    File lib = resolveMavenLib(mavenHome);
+    if (lib == null) return null;
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(lib);
+    if (file == null) return null;
+
+    VirtualFile root = JarFileSystem.getInstance().getJarRootForLocalFile(file);
+    if (root == null) return null;
+
+    return root.findFileByRelativePath(SUPER_POM_PATH);
+  }
+
+  @Nullable
+  public static File resolveMavenLib(@Nullable File mavenHome) {
+    if (mavenHome == null) return null;
+
+    File libs = new File(mavenHome, LIB_DIR);
+    File[] files = libs.listFiles();
+    if (files != null) {
+      Pattern pattern = Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar");
+      for (File each : files) {
+        if (pattern.matcher(each.getName()).matches()) {
+          return each;
+        }
+      }
+    }
+    return null;
   }
 
   public interface MavenTaskHandler {

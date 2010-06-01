@@ -109,20 +109,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       LOG.assertTrue(element.isValid());
     }
     element.accept(this);
-
-    if (myRefCountHolder != null) {
-      instantiateInjections(element);
-    }
   }
 
-  private void instantiateInjections(final PsiElement element) {
-    InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        // no op
-      }
-    }, false);
-  }
-  
   private void registerReferencesFromInjectedFragments(final PsiElement element) {
     InjectedLanguageUtil.enumerate(element, myFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {

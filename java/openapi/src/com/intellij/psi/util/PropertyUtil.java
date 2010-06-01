@@ -54,16 +54,17 @@ public class PropertyUtil {
 
     String methodName = method.getName();
     PsiType returnType = method.getReturnType();
-    if (methodName.startsWith("get") && methodName.length() > "get".length()) {
+    int methodNameLength = methodName.length();
+    if (methodName.startsWith("get") && methodNameLength > "get".length()) {
       if (Character.isLowerCase(methodName.charAt("get".length()))
-          && (methodName.length() == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
+          && (methodNameLength == "get".length() + 1 || Character.isLowerCase(methodName.charAt("get".length() + 1)))) {
         return false;
       }
       if (returnType != null && PsiType.VOID.equals(returnType)) return false;
     }
-    else if (methodName.startsWith("is") && methodName.length() > "is".length()) {
+    else if (methodName.startsWith("is") && methodNameLength > "is".length()) {
       if (Character.isLowerCase(methodName.charAt("is".length()))
-          && (methodName.length() == "is".length() + 1 || Character.isLowerCase(methodName.charAt("is".length() + 1)))) {
+          && (methodNameLength == "is".length() + 1 || Character.isLowerCase(methodName.charAt("is".length() + 1)))) {
         return false;
       }
       return isBoolean(returnType);
@@ -209,7 +210,8 @@ public class PropertyUtil {
     return null;
   }
 
-  @Nullable public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  @Nullable
+  public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -252,7 +254,8 @@ public class PropertyUtil {
     return null;
   }
 
-  @Nullable public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  @Nullable
+  public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -500,7 +503,8 @@ public class PropertyUtil {
   /**
    *  "xxx", "void setMyProperty(String pp)" -> "setXxx"
    */
-  @Nullable public static String suggestPropertyAccessor(String name, PsiMethod accessorTemplate) {
+  @Nullable
+  public static String suggestPropertyAccessor(String name, PsiMethod accessorTemplate) {
     if (isSimplePropertyGetter(accessorTemplate)) {
       PsiType type = accessorTemplate.getReturnType();
       return suggestGetterName(name, type, accessorTemplate.getName());

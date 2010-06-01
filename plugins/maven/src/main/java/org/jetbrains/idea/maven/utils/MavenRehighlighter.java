@@ -21,12 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import org.jetbrains.idea.maven.facade.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.SimpleProjectComponent;
 
 import java.util.List;
 
@@ -51,7 +50,7 @@ public class MavenRehighlighter extends SimpleProjectComponent {
       }
 
       public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  org.apache.maven.project.MavenProject nativeMavenProject,
+                                  NativeMavenProjectHolder nativeMavenProject,
                                   Object message) {
         rehighlight(myProject);
       }

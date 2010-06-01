@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
@@ -48,6 +49,8 @@ import java.util.regex.Pattern;
  * Injection base class: Contains properties for language-id, prefix and suffix.
  */
 public class BaseInjection implements Injection, PersistentStateComponent<Element> {
+
+  public static final Key<BaseInjection> INJECTION_KEY = Key.create("INJECTION_KEY");
 
   @NotNull private final String mySupportId;
   private String myDisplayName;
@@ -87,6 +90,10 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @NotNull
   public String getDisplayName() {
     return myDisplayName;
+  }
+
+  public void setDisplayName(String displayName) {
+    myDisplayName = displayName;
   }
 
   public void setInjectedLanguageId(@NotNull String injectedLanguageId) {

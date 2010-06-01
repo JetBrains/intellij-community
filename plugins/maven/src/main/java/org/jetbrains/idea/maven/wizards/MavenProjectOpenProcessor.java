@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;

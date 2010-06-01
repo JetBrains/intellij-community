@@ -138,7 +138,9 @@ public class PsiClassReferenceType extends PsiClassType {
       return factory.createType(aClass, rawSubstitutor, getLanguageLevel(), getAnnotations());
     }
     String qualifiedName = myReference.getQualifiedName();
-    LightClassReference reference = new LightClassReference(myReference.getManager(), myReference.getReferenceName(), qualifiedName, myReference.getResolveScope());
+    String name = myReference.getReferenceName();
+    if (name==null) name="";
+    LightClassReference reference = new LightClassReference(myReference.getManager(), name, qualifiedName, myReference.getResolveScope());
     return new PsiClassReferenceType(reference, null,getAnnotations());
   }
 

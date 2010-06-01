@@ -23,12 +23,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.indices.ArchetypeInfo;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenId;
 
-import java.io.File;
 import java.util.List;
 
 public class MavenModuleBuilderTest extends MavenImportingTestCase {
@@ -77,7 +76,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
   public void testCreatingFromArchetype() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
+    setArchetype(new MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
     MavenId id = new MavenId("org.foo", "module", "1.0");
     createNewModule(id);
 
@@ -220,7 +219,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
     setInheritedOptions(true, true);
-    setArchetype(new ArchetypeInfo("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
+    setArchetype(new MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
     assertEquals("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
@@ -311,7 +310,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     myBuilder.setInheritedOptions(groupId, version);
   }
 
-  private void setArchetype(ArchetypeInfo archetype) {
+  private void setArchetype(MavenArchetype archetype) {
     myBuilder.setArchetype(archetype);
   }
 

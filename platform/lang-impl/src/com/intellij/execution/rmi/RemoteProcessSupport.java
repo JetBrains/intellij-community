@@ -13,8 +13,8 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -34,18 +34,14 @@ import java.util.List;
  * @author Gregory.Shrago
  */
 public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
-  private final Project myProject;
+  public static final Logger LOG = Logger.getInstance("#" + RemoteProcessSupport.class);
+
   private final Class<EntryPoint> myValueClass;
   private final HashMap<Pair<Target, Parameters>, Object> myProcMap =
     new HashMap<Pair<Target, Parameters>, Object>();
 
-  public RemoteProcessSupport(Project project, Class<EntryPoint> valueClass) {
-    myProject = project;
+  public RemoteProcessSupport(Class<EntryPoint> valueClass) {
     myValueClass = valueClass;
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 
   protected abstract void fireModificationCountChanged();
@@ -54,7 +50,6 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   protected void logText(Parameters configuration, ProcessEvent event, Key outputType, Object info) {
   }
-
 
   public void stopAll() {
     final ArrayList<ProcessHandler> allHandlers = new ArrayList<ProcessHandler>();
@@ -86,17 +81,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     final Ref<Info> ref = Ref.create(null);
     final Pair<Target, Parameters> key = Pair.create(target, configuration);
     if (!getExistingInfo(ref, key)) {
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          startProcess(target, configuration, key);
-        }
-      };
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        runnable.run();
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(runnable);
-      }
+      startProcess(target, configuration, key);
       if (ref.isNull()) {
         try {
           synchronized (ref) {
@@ -166,7 +151,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
   }
 
-  protected abstract RunProfileState getRunProfileState(Target target, Parameters configuration, Executor executor) throws ExecutionException;
+  protected abstract RunProfileState getRunProfileState(Target target, Parameters configuration, Executor executor)
+    throws ExecutionException;
 
   private boolean getExistingInfo(Ref<Info> ref, final Pair<Target, Parameters> key) {
     Object info;
@@ -214,7 +200,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   private static <T> T narrowImpl(Remote remote, Class<T> to) {
-    return (T) (to.isInstance(remote)? remote : PortableRemoteObject.narrow(remote, to));
+    return (T)(to.isInstance(remote) ? remote : PortableRemoteObject.narrow(remote, to));
   }
 
   private ProcessListener getProcessListener(final Pair<Target, Parameters> key) {
@@ -240,6 +226,13 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       }
 
       public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (outputType == ProcessOutputTypes.STDERR) {
+          LOG.warn(event.getText());
+        }
+        else {
+          LOG.info(event.getText());
+        }
+
         Info result = null;
         final PendingInfo info;
         synchronized (myProcMap) {
@@ -262,7 +255,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
               info.stderr.append(event.getText());
             }
           }
-          else info = null;
+          else {
+            info = null;
+          }
         }
         if (result != null) {
           synchronized (info.ref) {
@@ -280,8 +275,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     final PendingInfo pendingInfo;
     synchronized (myProcMap) {
       o = myProcMap.remove(key);
-      pendingInfo = o instanceof PendingInfo? (PendingInfo)o : null;
-      if (pendingInfo != null &&  (pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull())) {
+      pendingInfo = o instanceof PendingInfo ? (PendingInfo)o : null;
+      if (pendingInfo != null && (pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull())) {
         if (errorMessage != null) pendingInfo.stderr.append(errorMessage);
         pendingInfo.ref.set(new Info(null, -1, pendingInfo.stderr.toString()));
       }

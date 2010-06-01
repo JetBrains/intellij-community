@@ -20,6 +20,7 @@ import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.TemplateInvokationListener;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -191,7 +192,7 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     if (template == null && !isXML11ValidQName(prefix)) {
       return null;
     }
-    XmlTemplateToken token = parseSelectors(key);
+    final XmlTemplateToken token = parseSelectors(key);
     if (token == null) {
       return null;
     }
@@ -203,13 +204,17 @@ public class XmlZenCodingTemplate extends ZenCodingTemplate {
     }
     assert prefix.equals(token.getKey());
     token.setTemplate(template);
-    XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
+    final XmlTag tag = parseXmlTagInTemplate(template.getString(), callback, true);
     if (token.getAttribute2Value().size() > 0 && tag == null) {
       return null;
     }
     if (tag != null) {
       if (!XmlZenCodingInterpreter.containsAttrsVar(template) && token.getAttribute2Value().size() > 0) {
-        addMissingAttributes(tag, token.getAttribute2Value());
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            addMissingAttributes(tag, token.getAttribute2Value());
+          }
+        });
       }
       token.setTag(tag);
     }

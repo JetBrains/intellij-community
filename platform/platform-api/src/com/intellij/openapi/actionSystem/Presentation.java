@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -174,13 +175,14 @@ public final class Presentation implements Cloneable {
     setText(presentation.getTextWithMnemonic());
   }
 
-  public static String restoreTextWithMnemonic(final String text, final int mnemonic) {
-    if (text != null) {
-     for (int i = 0; i < text.length(); i++) {
-       if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
-         return text.replaceFirst(String.valueOf(text.charAt(i)), "_" + text.charAt(i));
-       }
-     }
+  public static String restoreTextWithMnemonic(@Nullable String text, final int mnemonic) {
+    if (text == null) {
+      return null;
+    }
+    for (int i = 0; i < text.length(); i++) {
+      if (Character.toUpperCase(text.charAt(i)) == mnemonic) {
+        return text.substring(0, i) + "_" + text.substring(i);
+      }
     }
     return text;
   }

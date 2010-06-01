@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -133,6 +134,9 @@ public class SimpleTimer {
       for (SimpleTimerTask each : toRun) {
         try {
           each.run();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;  
         }
         catch (Throwable e) {
           LOG.error(e);

@@ -951,6 +951,8 @@ public class SmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testEnumAsDefaultAnnotationParam() throws Throwable { doTest(); }
 
+  public void testNewAbstractInsideAnonymous() throws Throwable { doTest(); }
+
   public void testFilterPrivateConstructors() throws Throwable { doTest(); }
 
   public void testExplicitMethodTypeParametersQualify() throws Throwable { doTest(); }

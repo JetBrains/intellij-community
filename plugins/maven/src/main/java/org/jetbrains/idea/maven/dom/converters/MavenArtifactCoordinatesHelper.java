@@ -19,7 +19,7 @@ import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.project.MavenId;
+import org.jetbrains.idea.maven.model.MavenId;
 
 public class MavenArtifactCoordinatesHelper {
   public static MavenId getId(ConvertContext context) {

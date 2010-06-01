@@ -231,6 +231,7 @@
           <keyword name="static"/>
           <keyword name="struct"/>
           <keyword name="switch"/>
+          <keyword name="true"/>
           <keyword name="typedef"/>
           <keyword name="union"/>
           <keyword name="unsigned"/>
@@ -258,7 +259,6 @@
           <keyword name="static_cast"/>
           <keyword name="this"/>
           <keyword name="throw"/>
-          <keyword name="true"/>
           <keyword name="try"/>
           <keyword name="typeid"/>
           <keyword name="typename"/>

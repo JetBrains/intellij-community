@@ -16,6 +16,7 @@
 package git4idea.vfs;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -27,14 +28,14 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitFileUtils;
+import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.StringScanner;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -98,6 +99,58 @@ public class GitVFSListener extends VcsVFSListener {
    */
   protected String getSingleFileAddPromptTemplate() {
     return GitBundle.getString("vfs.listener.add.single.prompt");
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  protected void executeAdd() {
+    // Filter added files before further processing
+    final Map<VirtualFile, List<VirtualFile>> sortedFiles;
+    try {
+      sortedFiles = GitUtil.sortFilesByGitRoot(myAddedFiles, true);
+    }
+    catch (VcsException e) {
+      throw new RuntimeException("The exception is not expected here", e);
+    }
+    final HashSet<VirtualFile> retainedFiles = new HashSet<VirtualFile>();
+    final ProgressManager progressManager = ProgressManager.getInstance();
+    progressManager.runProcessWithProgressSynchronously(new Runnable() {
+      public void run() {
+        ProgressIndicator pi = progressManager.getProgressIndicator();
+        for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
+          VirtualFile root = e.getKey();
+          pi.setText(root.getPresentableUrl());
+          for (List<String> paths : GitFileUtils.chunkFiles(root, e.getValue())) {
+            pi.setText2(paths.get(0) + "...");
+            try {
+              GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
+              h.setNoSSH(true);
+              h.addParameters("--exclude-standard", "--others");
+              h.endOptions();
+              h.addParameters(paths);
+              for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
+                String l = s.line();
+                String p = GitUtil.unescapePath(l);
+                VirtualFile f = root.findFileByRelativePath(p);
+                assert f != null : "The virtual file must be available at this point: " + p + " (" + root.getPresentableUrl() + ")";
+                retainedFiles.add(f);
+              }
+            }
+            catch (final VcsException ex) {
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                public void run() {
+                  gitVcs().showMessages(ex.getMessage());
+                }
+              });
+            }
+          }
+        }
+      }
+    }, GitBundle.getString("vfs.listener.checking.ignored"), false, myProject);
+    myAddedFiles.retainAll(retainedFiles);
+    super.executeAdd();
   }
 
   /**
@@ -212,7 +265,7 @@ public class GitVFSListener extends VcsVFSListener {
       return;
     }
     gitVcs().runInBackground(new Task.Backgroundable(myProject, GitBundle.getString("remove.removing")) {
-      
+
       public void run(@NotNull ProgressIndicator indicator) {
         for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
           try {

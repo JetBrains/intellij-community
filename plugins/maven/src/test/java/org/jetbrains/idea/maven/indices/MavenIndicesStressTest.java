@@ -17,7 +17,10 @@ package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import org.jetbrains.idea.maven.embedder.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.facade.MavenFacadeManager;
+import org.jetbrains.idea.maven.facade.MavenIndexerWrapper;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 import java.io.File;
 import java.util.Random;
@@ -33,10 +36,10 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     //setRepositoryPath(fixture.getTestDataPath("local1"));
 
-    final MavenEmbedderWrapper embedder = MavenEmbedderWrapper.create(getMavenGeneralSettings());
+    final MavenIndexerWrapper indexer = MavenFacadeManager.getInstance().createIndexer();
     File indicesDir = new File(myDir, "indices");
 
-    final MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
+    final MavenIndices indices = new MavenIndices(indexer, indicesDir, this);
     final MavenIndex index = indices.add("id", getRepositoryPath(), MavenIndex.Kind.LOCAL);
 
     final AtomicBoolean isFinished = new AtomicBoolean(false);
@@ -46,10 +49,10 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
         try {
           for (int i = 0; i < 3; i++) {
             System.out.println("INDEXING #" + i);
-            indices.updateOrRepair(index, embedder, true, new EmptyProgressIndicator());
+            indices.updateOrRepair(index, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
           }
         }
-        catch (ProcessCanceledException e) {
+        catch (MavenProcessCanceledException e) {
           throw new RuntimeException(e);
         }
         finally {
@@ -93,18 +96,18 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     helper.copy("local2", "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
 
-    MavenEmbedderWrapper embedder = MavenEmbedderWrapper.create(getMavenGeneralSettings());
+    final MavenIndexerWrapper indexer = MavenFacadeManager.getInstance().createIndexer();
     File indicesDir = new File(myDir, "indices");
 
-    MavenIndices indices = new MavenIndices(embedder, indicesDir, this);
+    MavenIndices indices = new MavenIndices(indexer, indicesDir, this);
     MavenIndex index = indices.add("id", getRepositoryPath(), MavenIndex.Kind.LOCAL);
 
     //index.addArtifact(new MavenId("group1", "artifact1", "1"));
     fail();
     indices.close();
 
-    MavenIndices indices1 = new MavenIndices(embedder, indicesDir, this);
-    MavenIndices indices2 = new MavenIndices(embedder, indicesDir, this);
+    MavenIndices indices1 = new MavenIndices(indexer, indicesDir, this);
+    MavenIndices indices2 = new MavenIndices(indexer, indicesDir, this);
 
     AtomicInteger finishedCount = new AtomicInteger(0);
 

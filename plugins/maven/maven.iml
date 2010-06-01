@@ -10,110 +10,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-embedder-1.0-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/classworlds-1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-beanutils.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-logging-1.1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/archetype-common-2.0-alpha-4-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/lucene-core-2.3.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/nexus-indexer-1.2.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.5.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module" module-name="idea-ui" exported="" />
+    <orderEntry type="module" module-name="maven-facade-api" exported="" />
     <orderEntry type="module" module-name="openapi" exported="" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="xml" exported="" />
+    <orderEntry type="module" module-name="IntelliLang-xml" />
     <orderEntry type="module" module-name="dom-openapi" exported="" />
     <orderEntry type="module" module-name="dom-impl" exported="" />
     <orderEntry type="module" module-name="properties" />
@@ -121,14 +23,13 @@
     <orderEntry type="module" module-name="compiler-impl" exported="" />
     <orderEntry type="module" module-name="execution-openapi" exported="" />
     <orderEntry type="module" module-name="execution-impl" exported="" />
-    <orderEntry type="module" module-name="maven-facade" />
+    <orderEntry type="module" module-name="idea-ui" exported="" />
     <orderEntry type="module" module-name="forms_rt" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
-    <orderEntry type="module" module-name="IntelliLang-xml" />
-    <orderEntry type="module" module-name="idea-tests" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

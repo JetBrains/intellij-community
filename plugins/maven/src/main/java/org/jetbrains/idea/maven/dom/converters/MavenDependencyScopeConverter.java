@@ -16,9 +16,8 @@
 package org.jetbrains.idea.maven.dom.converters;
 
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependencyManagement;
-import org.jetbrains.idea.maven.utils.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.Arrays;
 import java.util.List;

@@ -21,10 +21,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
-import org.jetbrains.idea.maven.indices.MavenCustomRepositoryHelper;
-import org.jetbrains.idea.maven.project.MavenProjectProblem;
+import org.jetbrains.idea.maven.model.MavenProjectProblem;
 
 import java.io.File;
 import java.util.List;
