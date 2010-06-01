@@ -26,6 +26,8 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 /**
  * @author Gregory.Shrago
@@ -38,13 +40,18 @@ public class PatternEditorContextMembersProvider implements NonCodeMembersProces
     final PsiFile file = place.getContainingFile().getOriginalFile();
     final BaseInjection injection = file.getUserData(BaseInjection.INJECTION_KEY);
     if (injection == null) return true;
-    return ((UserDataHolderEx)file).putUserDataIfAbsent(INJECTION_PARSED_CONTEXT, new AtomicNotNullLazyValue<PsiFile>() {
-      @NotNull
-      @Override
-      protected PsiFile compute() {
-        return parseInjectionContext(injection, file.getProject());
-      }
-    }).getValue().processDeclarations(processor, ResolveState.initial(), null, place);
+    final PsiFile contextFile =
+      ((UserDataHolderEx)file).putUserDataIfAbsent(INJECTION_PARSED_CONTEXT, new AtomicNotNullLazyValue<PsiFile>() {
+        @NotNull
+        @Override
+        protected PsiFile compute() {
+          return parseInjectionContext(injection, file.getProject());
+        }
+      }).getValue();
+    for (PsiElement cur = contextFile.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof PsiNamedElement && !ResolveUtil.processElement(processor, (PsiNamedElement)cur)) return false;
+    }
+    return true;
   }
 
   private static PsiFile parseInjectionContext(@NotNull BaseInjection injection, Project project) {
