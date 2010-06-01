@@ -38,10 +38,12 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -142,7 +144,7 @@ public class MavenFacadeManager {
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Element.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);
         params.getClassPath().addAll(classPath);
-        addPluginLibraries(params.getClassPath());
+        params.getClassPath().addAllFiles(collectClassPathAndLIbsFolder().first);
 
         params.setMainClass(MAIN_CLASS);
         // todo pass sensible parameters, MAVEN_OPTS?
@@ -176,14 +178,15 @@ public class MavenFacadeManager {
     };
   }
 
-  private void addPluginLibraries(PathsList classPath) {
-    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(this.getClass()));
+  public static Pair<List<File>, File> collectClassPathAndLIbsFolder() {
+    File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenFacadeManager.class));
 
     File libDir;
+    List<File> classpath = new SmartList<File>();
 
     if (pluginFileOrDir.isDirectory()) {
-      classPath.add(new File(pluginFileOrDir.getParent(), "maven-facade-api"));
-      classPath.add(new File(pluginFileOrDir.getParent(), "maven-facade-impl"));
+      classpath.add(new File(pluginFileOrDir.getParent(), "maven-facade-api"));
+      classpath.add(new File(pluginFileOrDir.getParent(), "maven-facade-impl"));
       File luceneLib = new File(PathUtil.getJarPathForClass(Query.class));
       libDir = new File(luceneLib.getParentFile().getParentFile().getParentFile(), "facade-impl/lib");
     }
@@ -195,9 +198,10 @@ public class MavenFacadeManager {
     File[] files = libDir.listFiles();
     for (File jar : files) {
       if (jar.isFile() && jar.getName().endsWith(".jar") && !jar.equals(pluginFileOrDir)) {
-        classPath.add(jar.getPath());
+        classpath.add(jar);
       }
     }
+    return Pair.create(classpath, libDir);
   }
 
   public MavenEmbedderWrapper createEmbedder(Project project) {
