@@ -24,6 +24,8 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.QuantitySelection;
+import com.intellij.openapi.vcs.SelectionResult;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListDecorator;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;

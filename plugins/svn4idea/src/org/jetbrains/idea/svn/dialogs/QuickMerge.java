@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.ChangeListsMergerFactory;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
@@ -69,18 +68,15 @@ import java.util.Map;
 public class QuickMerge {
   private final Project myProject;
   private final String myBranchName;
-  private final SvnBranchConfigurationNew myConfiguration;
   private final VirtualFile myRoot;
   private final WCInfo myWcInfo;
   private String mySourceUrl;
   private SvnVcs myVcs;
   private final String myTitle;
 
-  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final SvnBranchConfigurationNew configuration,
-                    final VirtualFile root) {
+  public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final VirtualFile root) {
     myProject = project;
     myBranchName = branchName;
-    myConfiguration = configuration;
     myRoot = root;
     myVcs = SvnVcs.getInstance(project);
     mySourceUrl = sourceUrl;
